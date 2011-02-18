@@ -1,0 +1,91 @@
+/*
+ * Copyright (C) 2011 Samuel Audet
+ *
+ * This file is part of JavaCPP.
+ *
+ * JavaCPP is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or
+ * (at your option) any later version (subject to the "Classpath" exception
+ * as provided in the LICENSE.txt file that accompanied this code).
+ *
+ * JavaCPP is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with JavaCPP.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+package com.googlecode.javacpp;
+
+import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
+
+/**
+ *
+ * @author Samuel Audet
+ */
+public class BytePointer extends Pointer {
+    public BytePointer(String s, String charsetName)
+            throws UnsupportedEncodingException {
+        this(s.getBytes(charsetName).length+1);
+        putString(s, charsetName);
+    }
+    public BytePointer(String s) {
+        this(s.getBytes().length+1);
+        putString(s);
+    }
+    public BytePointer(byte[] array) {
+        this(array.length);
+        asBuffer(array.length).put(array);
+    }
+    public BytePointer(int size) { allocateArray(size); }
+    public BytePointer(Pointer p) { super(p); }
+    private native void allocateArray(int size);
+
+    @Override public BytePointer position(int position) {
+        return (BytePointer)super.position(position);
+    }
+
+    public byte[] getStringBytes() {
+        // This may be kind of slow, and should be moved to a JNI function.
+        byte[] buffer = new byte[16];
+        int i = 0, j = position();
+        while ((buffer[i] = position(j).get()) != 0) {
+            i++; j++;
+            if (i >= buffer.length) {
+                buffer = Arrays.copyOf(buffer, 2*buffer.length);
+            }
+        }
+        return Arrays.copyOf(buffer, i);
+    }
+    public String getString(String charsetName)
+            throws UnsupportedEncodingException {
+        return new String(getStringBytes(), charsetName);
+    }
+    public String getString() {
+        return new String(getStringBytes());
+    }
+
+    public BytePointer putString(String s, String charsetName)
+            throws UnsupportedEncodingException {
+        byte[] bytes = s.getBytes(charsetName);
+        asBuffer(bytes.length+1).put(bytes).put((byte)0);
+        return this;
+    }
+    public BytePointer putString(String s) {
+        byte[] bytes = s.getBytes();
+        asBuffer(bytes.length+1).put(bytes).put((byte)0);
+        return this;
+    }
+
+    public native byte get();
+    public native BytePointer put(byte b);
+
+    @Override public final ByteBuffer asBuffer(int capacity) {
+        return (ByteBuffer)super.asBuffer(capacity);
+    }
+}
