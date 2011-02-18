@@ -220,7 +220,7 @@ public class Builder {
                     }
                 }
             }
-            ZipEntry e = new ZipEntry(name);
+            ZipEntry e = new ZipEntry(name.replace(File.separatorChar, '/'));
             e.setTime(f.lastModified());
             jos.putNextEntry(e);
             FileInputStream fis = new FileInputStream(f);
@@ -231,8 +231,8 @@ public class Builder {
             }
             fis.close();
             jos.closeEntry();
-            f.delete();
-            f.getParentFile().delete();
+//            f.delete();
+//            f.getParentFile().delete();
         }
         jos.close();
     }

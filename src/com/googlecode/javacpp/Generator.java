@@ -1156,7 +1156,7 @@ public class Generator implements Closeable {
                 info.allocator = true;
             } else if (canBeArrayAllocator && "allocateArray".equals(info.name)) {
                 info.allocator = info.arrayAllocator = true;
-            } else if (info.returnType.isAssignableFrom(ByteBuffer.class) && "asNativeBuffer".equals(info.name) &&
+            } else if (info.returnType.isAssignableFrom(ByteBuffer.class) && "asDirectBuffer".equals(info.name) &&
                     !Modifier.isStatic(info.modifiers) && info.parameterTypes.length == 1 &&
                     (info.parameterTypes[0] == int.class || info.parameterTypes[0] == long.class)) {
                 info.bufferGetter = true;

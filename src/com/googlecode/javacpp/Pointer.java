@@ -172,21 +172,24 @@ import com.googlecode.javacpp.annotation.Opaque;
         address = 0;
     }
 
-    private native ByteBuffer asNativeBuffer(int capacity);
+    private native ByteBuffer asDirectBuffer(int capacity);
     public ByteBuffer asByteBuffer(int capacity) {
         if (isNull()) {
             return null;
         }
+        int valueSize = 1;
         try {
-            int valueSize = Loader.sizeof(getClass());
-            int arrayPosition = position;
-            position = valueSize*arrayPosition;
-            ByteBuffer b = asNativeBuffer(valueSize*capacity).order(ByteOrder.nativeOrder());
-            position = arrayPosition;
-            return b;
-        } catch(NullPointerException e) {
-            return asNativeBuffer(capacity).order(ByteOrder.nativeOrder());
-        }
+            Class<? extends Pointer> c = getClass();
+            if (c != Pointer.class) {
+                valueSize = Loader.sizeof(c);
+            }
+        } catch(NullPointerException e) { /* default to 1 byte */ }
+
+        int arrayPosition = position;
+        position = valueSize*arrayPosition;
+        ByteBuffer b = asDirectBuffer(valueSize*capacity).order(ByteOrder.nativeOrder());
+        position = arrayPosition;
+        return b;
     }
     public Buffer asBuffer(int capacity) {
         return asByteBuffer(capacity);
