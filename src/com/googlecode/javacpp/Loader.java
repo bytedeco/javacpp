@@ -25,7 +25,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -71,7 +70,7 @@ public class Loader {
     public static Properties getProperties(String name) {
         Properties p = new Properties();
         p.put("platform.name", name);
-        name = "/com/googlecode/javacpp/properties/" + name + ".properties";
+        name = "properties/" + name + ".properties";
         InputStream is = Loader.class.getResourceAsStream(name);
         try {
             try {
@@ -80,7 +79,7 @@ public class Loader {
                 p.load(is);
             }
         } catch (Exception e) {
-            name = "/com/googlecode/javacpp/properties/generic.properties";
+            name = "properties/generic.properties";
             is = Loader.class.getResourceAsStream(name);
             try {
                 try {
@@ -139,7 +138,7 @@ public class Loader {
             }
         }
 
-        String s = File.pathSeparator;
+        String s = properties.getProperty("path.separator");
         appendProperty(properties, "generator.define",   "\u0000", define);
         appendProperty(properties, "generator.include",  "\u0000", include);
         appendProperty(properties, "generator.cinclude", "\u0000", cinclude);
@@ -211,20 +210,29 @@ public class Loader {
         if (is == null) {
             return null;
         }
-        File file;
-        if (prefix == null && suffix == null) {
-            file = new File(directory, new File(name).getName());
-        } else {
-            file = File.createTempFile(prefix, suffix, directory);
+        File file = null;
+        boolean fileExisted = false;
+        try {
+            if (prefix == null && suffix == null) {
+                file = new File(directory, new File(name).getName());
+                fileExisted = file.exists();
+            } else {
+                file = File.createTempFile(prefix, suffix, directory);
+            }
+            FileOutputStream os = new FileOutputStream(file);
+            byte[] data = new byte[is.available()];
+            int n;
+            while ((n = is.read(data)) > 0) {
+                os.write(data, 0, n);
+            }
+            is.close();
+            os.close();
+        } catch (IOException e) {
+            if (file != null && !fileExisted) {
+                file.delete();
+            }
+            throw e;
         }
-        FileOutputStream os = new FileOutputStream(file);
-        byte[] data = new byte[is.available()];
-        int n;
-        while ((n = is.read(data)) > 0) {
-            os.write(data, 0, n);
-        }
-        is.close();
-        os.close();
         return file;
     }
 
@@ -232,7 +240,7 @@ public class Loader {
         for (int i = 0; i < libnames.length; i++) {
             boolean loaded = false;
             for (int j = 0; j < paths.length; j++) {
-                String filename = paths[j] + "/" + System.mapLibraryName(libnames[i]);
+                String filename = paths[j] + File.separator + System.mapLibraryName(libnames[i]);
                 if (!new File(filename).exists()) {
                     continue;
                 } else try {
@@ -251,7 +259,7 @@ public class Loader {
 
 
     static boolean loadLibraries = true;
-    static Map<Class,File> loadedLibraries = Collections.synchronizedMap(new HashMap<Class,File>());
+    static Map<Class,String> loadedLibraries = Collections.synchronizedMap(new HashMap<Class,String>());
 
     public static String load() {
         Class<?> cls = getCallerClass(3);
@@ -264,63 +272,124 @@ public class Loader {
         }
 
         // Find the top enclosing class, to match the library filename
-        while (cls.getDeclaringClass() != null) {
-            cls = cls.getDeclaringClass();
+//        while (cls.getDeclaringClass() != null) {
+//            cls = cls.getDeclaringClass();
+//        }
+        String className = cls.getName();
+        int topIndex = className.indexOf('$');
+        if (topIndex > 0) {
+            className = className.substring(0, topIndex);
+            try {
+                cls = Class.forName(className, false, cls.getClassLoader());
+            } catch (ClassNotFoundException ex) {
+                Error e = new NoClassDefFoundError(ex.toString());
+                e.initCause(ex);
+                throw e;
+            }
         }
 
-        // Preinit our class and all its nested classes so we don't end up
-        // calling System.load() within System.load() via JNI_OnLoad()...
-        LinkedList<Class> classes = new LinkedList<Class>();
-        classes.add(cls);
-        classes.addAll(Arrays.asList(cls.getDeclaredClasses()));
-        Class c;
-        while ((c = classes.poll()) != null) {
-            try {
-                classes.addAll(Arrays.asList(c.getDeclaredClasses()));
-                Class.forName(c.getName());
-            } catch(Exception e) { }
+        String filename = loadedLibraries.get(cls);
+        if (filename != null) {
+            return filename;
         }
 
         // Preload native libraries desired by our class
         Properties p = (Properties)getProperties().clone();
         appendProperties(p, cls);
+        String pathSeparator = p.getProperty("path.separator");
+        String platformRoot  = p.getProperty("platform.root");
+        if (platformRoot != null && !platformRoot.endsWith(File.separator)) {
+            platformRoot += File.separator;
+        }
         String preloadPath      = p.getProperty("loader.preloadpath");
         String preloadLibraries = p.getProperty("loader.preload");
         if (preloadPath != null && preloadLibraries != null) {
-            preload(preloadPath.split(File.pathSeparator),
-                    preloadLibraries.split(File.pathSeparator));
+            String[] preloadPaths = preloadPath.split(pathSeparator);
+            if (platformRoot != null) {
+                for (int i = 0; i < preloadPaths.length; i++) {
+                    if (!new File(preloadPaths[i]).isAbsolute()) {
+                        preloadPaths[i] = platformRoot + preloadPaths[i];
+                    }
+                }
+            }
+            preload(preloadPaths, preloadLibraries.split(pathSeparator));
         }
 
-        File tempFile = loadedLibraries.get(cls);
+        File tempFile = null;
         try {
             // If we do not already have the native library file,
-            // extract it from our resources
-            if (tempFile == null) {
-                String libname = getLibraryName(cls);
-                String prefix = p.get("library.prefix") + libname;
-                String suffix = p.getProperty("library.suffix");
-                String resourceName = p.get("platform.name") + "/" + prefix + suffix;
-                tempFile = extractResource(cls, resourceName, null, prefix, suffix);
-                if (tempFile != null) {
-                    loadedLibraries.put(cls, tempFile);
-                    // And load it already!
-                    String tempFilename = tempFile.getAbsolutePath();
-                    System.load(tempFilename);
-                    return tempFilename;
-                } else {
-                    // Try to load it via the system instead
-                    System.loadLibrary(libname);
-                    return libname;
-                    // throw new UnsatisfiedLinkError("Library resource not found: " + resourceName);
-                }
+            // extract it from our resources...
+            String libname = getLibraryName(cls);
+            String prefix = p.getProperty("library.prefix") + libname;
+            String suffix = p.getProperty("library.suffix");
+            String resourceName = p.getProperty("platform.name") + '/' + prefix + suffix;
+            tempFile = extractResource(cls, resourceName, null, prefix, suffix);
+            if (tempFile != null) {
+                // ... and load it already!
+                String tempFilename = tempFile.getAbsolutePath();
+                System.load(tempFilename);
+                loadedLibraries.put(cls, tempFilename);
+                return tempFilename;
             } else {
-                return tempFile.getAbsolutePath();
+                // throw new UnsatisfiedLinkError("Could not find library resource: " + resourceName);
+                // Try to load it via the system instead
+                System.loadLibrary(libname);
+                loadedLibraries.put(cls, libname);
+                return libname;
             }
-        } catch (IOException e) {
-            throw new UnsatisfiedLinkError(e.getMessage());
+        } catch (UnsatisfiedLinkError e) {
+            if (tempFile != null) {
+                tempFile.delete();
+            }
+            throw e;
+        } catch (IOException ex) {
+            if (tempFile != null) {
+                tempFile.delete();
+            }
+            Error e = new UnsatisfiedLinkError(ex.toString());
+            e.initCause(ex);
+            throw e;
         } finally {
             if (tempFile != null) {
                 tempFile.deleteOnExit();
+            }
+            // But under Windows, it won't get deleted!
+        }
+    }
+
+    // So, let's use a shutdown hook...
+    static {
+        if (getPlatformName().startsWith("windows")) {
+            Runtime.getRuntime().addShutdownHook(new Thread() {
+                @Override public void run() {
+                    if (loadedLibraries.isEmpty()) {
+                        return;
+                    }
+                    try {
+                        // ... to launch a separate process ...
+                        LinkedList<String> command = new LinkedList<String>();
+                        command.add(System.getProperty("java.home") + "/bin/java");
+                        command.add("-classpath");
+                        command.add(System.getProperty("java.class.path"));
+                        command.add(Loader.class.getName());
+                        command.addAll(loadedLibraries.values());
+                        new ProcessBuilder(command).start();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+        }
+    }
+
+    // ... that makes sure to delete all our files.
+    public static void main(String[] args) {
+        for (String filename : args) {
+            File file = new File(filename);
+            while (file.exists() && !file.delete()) {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) { }
             }
         }
     }
@@ -329,6 +398,10 @@ public class Loader {
     static WeakHashMap<Class<? extends Pointer>,HashMap<String,Integer>> memberOffsets =
             new WeakHashMap<Class<? extends Pointer>,HashMap<String,Integer>>();
 
+    static void putMemberOffset(String typeName, String member, int offset) throws ClassNotFoundException {
+        Class<?> c = Class.forName(typeName.replace('/', '.'), false, Loader.class.getClassLoader());
+        putMemberOffset(c.asSubclass(Pointer.class), member, offset);
+    }
     static synchronized void putMemberOffset(Class<? extends Pointer> type, String member, int offset) {
         HashMap<String,Integer> offsets = memberOffsets.get(type);
         if (offsets == null) {

@@ -26,6 +26,7 @@ import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -60,13 +61,16 @@ public class Builder {
         for (File f : javaHome.getParentFile().listFiles(filter)) {
             for (File f2 : f.listFiles(filter)) {
                 for (File f3 : f2.listFiles(filter)) {
+                    for (File f4 : f3.listFiles(filter)) {
+                    }
                 }
             }
         }
         if (jnipath[0] != null && jnipath[0].equals(jnipath[1])) {
             jnipath[1] = null;
         }
-        Loader.appendProperty(properties, "compiler.includepath", File.pathSeparator, jnipath);
+        Loader.appendProperty(properties, "compiler.includepath", 
+                properties.getProperty("path.separator"), jnipath);
     }
 
     private Properties properties;
@@ -79,41 +83,65 @@ public class Builder {
     public int build(String sourceFilename, String outputFilename)
             throws IOException, InterruptedException {
         LinkedList<String> command = new LinkedList<String>();
-        command.add(properties.getProperty("compiler.path"));
+
+        String pathSeparator = properties.getProperty("path.separator");
+        String platformRoot  = properties.getProperty("platform.root");
+        if (platformRoot != null && !platformRoot.endsWith(File.separator)) {
+            platformRoot += File.separator;
+        }
+
+        String compilerPath = properties.getProperty("compiler.path");
+        if (platformRoot != null && !new File(compilerPath).isAbsolute()) {
+            compilerPath = platformRoot + compilerPath;
+        }
+        command.add(compilerPath);
+
         String includepath = properties.getProperty("compiler.includepath");
         if (includepath != null && includepath.length() > 0) {
-            for (String s : includepath.split(File.pathSeparator)) {
+            for (String s : includepath.split(pathSeparator)) {
+                if (platformRoot != null && !new File(s).isAbsolute()) {
+                    s = platformRoot + s;
+                }
                 if (new File(s).isDirectory()) {
                     command.add(properties.getProperty("compiler.includepath.prefix", "") + s);
                 }
             }
         }
+
         command.add(sourceFilename);
+
         String options = properties.getProperty("compiler.options");
         if (options != null && options.length() > 0) {
             command.addAll(Arrays.asList(options.split(" ")));
         }
+
         String outputPrefix = properties.getProperty("compiler.output.prefix");
         if (outputPrefix != null && outputPrefix.length() > 0) {
             command.addAll(Arrays.asList(outputPrefix.split(" ")));
         }
+
         if (outputPrefix == null || outputPrefix.length() == 0 ||
                 outputPrefix.charAt(outputPrefix.length()-1) == ' ') {
             command.add(outputFilename);
         } else {
             command.add(command.removeLast() + outputFilename);
         }
+
         String linkpath = properties.getProperty("compiler.linkpath");
         if (linkpath != null && linkpath.length() > 0) {
-            for (String s : linkpath.split(File.pathSeparator)) {
+            for (String s : linkpath.split(pathSeparator)) {
+                if (platformRoot != null && !new File(s).isAbsolute()) {
+                    s = platformRoot + s;
+                }
                 if (new File(s).isDirectory()) {
                     command.add(properties.getProperty("compiler.linkpath.prefix", "") + s);
                 }
             }
         }
+
         String link = properties.getProperty("compiler.link");
         if (link != null && link.length() > 0) {
-            for (String s : link.split(File.pathSeparator)) {
+            for (String s : link.split(pathSeparator)) {
                 command.add(properties.getProperty("compiler.link.prefix", "") + s +
                             properties.getProperty("compiler.link.suffix", ""));
             }
@@ -139,25 +167,9 @@ public class Builder {
     }
 
 
-    static void printHelp() {
-        System.err.println("Usage: java -jar javacpp.jar [options] <classes>");
-        System.err.println();
-        System.err.println("where options include:");
-        System.err.println();
-        System.err.println("    -classpath <path>      Load user classes from path");
-        System.err.println("    -d <directory>         Dump all output files in directory");
-        System.err.println("    -cpp                   Do not build or delete the generated .cpp files");
-        System.err.println("    -o <name>              Output everything in a file named after given name");
-        System.err.println("    -jarprefix <prefix>    Move everything to jar file named \"<prefix>-<platform.name>.jar\"");
-        System.err.println("    -properties <resource> Load all properties from resource");
-        System.err.println("    -propertyfile <file>   Load all properties from file");
-        System.err.println("    -D<property>=<value>   Set property to value");
-        System.err.println();
-    }
-
-    static void generateAndBuild(Class[] classes, Properties properties, File outputDirectory,
-            String outputName, boolean build, LinkedList<File> outputFiles)
-            throws IOException, InterruptedException, URISyntaxException {
+    public static LinkedList<File> generateAndBuild(Class[] classes, Properties properties, File outputDirectory,
+            String outputName, boolean build) throws IOException, InterruptedException, URISyntaxException {
+        LinkedList<File> outputFiles = new LinkedList<File>();
         properties = (Properties)properties.clone();
         for (Class c : classes) {
             Loader.appendProperties(properties, c);
@@ -202,9 +214,10 @@ public class Builder {
         } else {
             System.out.println("No need to generate source file: " + sourceFile);
         }
+        return outputFiles;
     }
 
-    static void createJar(File jarFile, String[] classpath, LinkedList<File> files) throws IOException {
+    public static void createJar(File jarFile, String[] classpath, LinkedList<File> files) throws IOException {
         System.out.println("Creating jar file: " + jarFile);
         JarOutputStream jos = new JarOutputStream(new FileOutputStream(jarFile));
         for (File f : files) {
@@ -212,11 +225,18 @@ public class Builder {
             if (classpath != null) {
                 // Store only the path relative to the classpath so that
                 // our Loader may use the package name of the associated
-                // class to get the file as a resource from the ClassLoader
-                for (String path : classpath) {
-                    path = new File(path).getCanonicalPath();
+                // class to get the file as a resource from the ClassLoader.
+                String[] names = new String[classpath.length];
+                for (int i = 0; i < classpath.length; i++) {
+                    String path = new File(classpath[i]).getCanonicalPath();
                     if (name.startsWith(path)) {
-                        name = name.substring(path.length() + 1);
+                        names[i] = name.substring(path.length() + 1);
+                    }
+                }
+                // Retain only the shortest relative name.
+                for (int i = 0; i < names.length; i++) {
+                    if (names[i] != null && names[i].length() < name.length()) {
+                        name = names[i];
                     }
                 }
             }
@@ -237,15 +257,46 @@ public class Builder {
         jos.close();
     }
 
+    public static class UserClassLoader extends URLClassLoader {
+        private LinkedList<String> paths = new LinkedList<String>();
+        public UserClassLoader() throws MalformedURLException {
+            super(new URL[0]);
+            addPaths(System.getProperty("user.dir"));
+        }
+        public void addPaths(String ... paths) throws MalformedURLException {
+            for (String path : paths) {
+                this.paths.add(path);
+                addURL(new File(path).toURI().toURL());
+            }
+        }
+        public String[] getPaths() {
+            return paths.toArray(new String[paths.size()]);
+        }
+    }
+
+    public static void printHelp() {
+        System.err.println("Usage: java -jar javacpp.jar [options] <classes>");
+        System.err.println();
+        System.err.println("where options include:");
+        System.err.println();
+        System.err.println("    -classpath <path>      Load user classes from path");
+        System.err.println("    -d <directory>         Dump all output files in directory");
+        System.err.println("    -cpp                   Do not build or delete the generated .cpp files");
+        System.err.println("    -o <name>              Output everything in a file named after given name");
+        System.err.println("    -jarprefix <prefix>    Also create a JAR file named \"<prefix>-<platform.name>.jar\"");
+        System.err.println("    -properties <resource> Load all properties from resource");
+        System.err.println("    -propertyfile <file>   Load all properties from file");
+        System.err.println("    -D<property>=<value>   Set property to value");
+        System.err.println();
+    }
+
     public static void main(String[] args) throws Exception {
         if (args.length == 0) {
             printHelp();
             System.exit(1);
         }
 
-        String[] classpath = { System.getProperty("user.dir") };
-        URL url = new File(classpath[0]).toURI().toURL();
-        ClassLoader classLoader = new URLClassLoader(new URL[] { url });
+        UserClassLoader classLoader = new UserClassLoader();
         File outputDirectory = null;
         String outputName = null, jarPrefix = null;
         boolean build = true;
@@ -257,12 +308,7 @@ public class Builder {
                 printHelp();
                 System.exit(0);
             } else if ("-classpath".equals(args[i]) || "-cp".equals(args[i]) || "-lib".equals(args[i])) {
-                classpath = args[++i].split(File.pathSeparator);
-                URL[] urls = new URL[classpath.length];
-                for (int j = 0; j < classpath.length; j++) {
-                    urls[j] = new File(classpath[j]).toURI().toURL();
-                }
-                classLoader = new URLClassLoader(urls);
+                classLoader.addPaths(args[++i].split(File.pathSeparator));
             } else if ("-d".equals(args[i])) {
                 outputDirectory = new File(args[++i]);
             } else if ("-cpp".equals(args[i])) {
@@ -312,15 +358,16 @@ public class Builder {
             }
         }
 
-        LinkedList<File> outputFiles = new LinkedList<File>();
+        LinkedList<File> outputFiles;
         if (outputName == null) {
+            outputFiles = new LinkedList<File>();
             for (Class c : classes) {
-                generateAndBuild(new Class[] { c }, properties,
-                        outputDirectory, Loader.getLibraryName(c), build, outputFiles);
+                outputFiles.addAll(generateAndBuild(new Class[] { c }, properties,
+                        outputDirectory, Loader.getLibraryName(c), build));
             }
         } else {
-            generateAndBuild(classes.toArray(new Class[0]), properties,
-                    outputDirectory, outputName, build, outputFiles);
+            outputFiles = generateAndBuild(classes.toArray(new Class[classes.size()]),
+                    properties, outputDirectory, outputName, build);
         }
 
         if (jarPrefix != null && !outputFiles.isEmpty()) {
@@ -329,7 +376,7 @@ public class Builder {
             if (!d.exists()) {
                 d.mkdir();
             }
-            createJar(jarFile, outputDirectory == null ? classpath : null, outputFiles);
+            createJar(jarFile, outputDirectory == null ? classLoader.getPaths() : null, outputFiles);
         }
     }
 }

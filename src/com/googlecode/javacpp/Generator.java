@@ -189,6 +189,7 @@ public class Generator implements Closeable {
         out.println("#endif");
         out.println("#include <stdlib.h>");
         out.println("#include <stddef.h>");
+        out.println("#include <string.h>");
         out.println("#include <exception>");
         out.println();
         out.println("#define jlong_to_ptr(a) ((void*)(uintptr_t)(a))");
@@ -196,6 +197,14 @@ public class Generator implements Closeable {
         out.println("#ifdef ANDROID");
         out.println("    #define NewWeakGlobalRef(o) NewGlobalRef(o)");
         out.println("    #define DeleteWeakGlobalRef(o) DeleteGlobalRef(o)");
+        out.println("#endif");
+        out.println();
+        out.println("#if defined(_MSC_VER)");
+        out.println("    #define noinline __declspec(noinline)");
+        out.println("#elif defined(__GNUC__)");
+        out.println("    #define noinline __attribute__((noinline))");
+        out.println("#else");
+        out.println("    #define noinline");
         out.println("#endif");
         out.println();
         out.println("extern \"C\" {");
@@ -224,23 +233,12 @@ public class Generator implements Closeable {
         }
         out.println();
         out.println("static JavaVM *JavaCPP_vm = NULL;");
-        out.println("static jclass JavaCPP_classes[" + jclasses.size() + "] = { NULL };");
-        out.println("static jmethodID JavaCPP_initMethodID = NULL;");
-        out.println("static jfieldID JavaCPP_addressFieldID = NULL;");
-        out.println("static jfieldID JavaCPP_positionFieldID = NULL;");
-        out.println("JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {");
-        out.println("    JavaCPP_vm = vm;");
-        out.println("    JNIEnv* e;");
-        out.println("    if (vm->GetEnv((void**)&e, " + JNI_VERSION + ") != JNI_OK) {");
-        out.println("        fprintf(stderr, \"Could not get JNIEnv for " + JNI_VERSION + " inside JNI_OnLoad().\");");
-        out.println("        return 0;");
-        out.println("    }");
-        out.println("    const char *classNames[" + jclasses.size() + "] = {");
+        out.println("static const char *JavaCPP_classNames[" + jclasses.size() + "] = {");
         Iterator<Class> classIterator = jclasses.iterator();
         int maxMemberSize = 0;
         while (classIterator.hasNext()) {
             Class c = classIterator.next();
-            out.print("            \"" + c.getName().replace('.','/') + "\"");
+            out.print("        \"" + c.getName().replace('.','/') + "\"");
             if (classIterator.hasNext()) {
                 out.println(",");
             }
@@ -250,6 +248,55 @@ public class Generator implements Closeable {
             }
         }
         out.println(" };");
+        out.println("static jclass JavaCPP_classes[" + jclasses.size() + "] = { NULL };");
+        out.println("static jmethodID JavaCPP_initMethodID = NULL;");
+        out.println("static jfieldID JavaCPP_addressFieldID = NULL;");
+        out.println("static jfieldID JavaCPP_positionFieldID = NULL;");
+        out.println();
+        out.println("static noinline jclass JavaCPP_getClass(JNIEnv *e, int i) {");
+        out.println("    if (JavaCPP_classes[i] == NULL) {");
+        out.println("        jclass c = e->FindClass(JavaCPP_classNames[i]);");
+        out.println("        if (c == NULL) {");
+        out.println("            fprintf(stderr, \"Error loading class %s.\", JavaCPP_classNames[i]);");
+        out.println("            return NULL;");
+        out.println("        }");
+        out.println("        JavaCPP_classes[i] = (jclass)e->NewWeakGlobalRef(c);");
+        out.println("        if (JavaCPP_classes[i] == NULL) {");
+        out.println("            fprintf(stderr, \"Error creating global reference of class %s.\", JavaCPP_classNames[i]);");
+        out.println("            return NULL;");
+        out.println("        }");
+        out.println("    }");
+        out.println("    return JavaCPP_classes[i];");
+        out.println("}");
+        out.println();
+        out.println("static noinline void JavaCPP_handleException(JNIEnv *e) {");
+        out.println("    try {");
+        out.println("        throw;");
+        out.println("    } catch (std::exception& ex) {");
+        out.println("        e->ThrowNew(JavaCPP_getClass(e, " +
+                jclasses.register(RuntimeException.class) + "), ex.what());");
+        out.println("    } catch (...) {");
+        out.println("        e->ThrowNew(JavaCPP_getClass(e, " +
+                jclasses.register(RuntimeException.class) + "), \"Unknown exception.\");");
+        out.println("    }");
+        out.println("}");
+        out.println();
+        out.println("static inline int JavaCPP_checkNull(JNIEnv *e, uintptr_t pointer) {");
+        out.println("    if (pointer == 0) {");
+        out.println("        e->ThrowNew(JavaCPP_getClass(e, " +
+                jclasses.register(NullPointerException.class) + "), \"Pointer address is NULL.\");");
+        out.println("        return 1;");
+        out.println("    }");
+        out.println("    return 0;");
+        out.println("}");
+        out.println();
+        out.println("JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {");
+        out.println("    JavaCPP_vm = vm;");
+        out.println("    JNIEnv* e;");
+        out.println("    if (vm->GetEnv((void**)&e, " + JNI_VERSION + ") != JNI_OK) {");
+        out.println("        fprintf(stderr, \"Could not get JNIEnv for " + JNI_VERSION + " inside JNI_OnLoad().\");");
+        out.println("        return 0;");
+        out.println("    }");
         out.println("    const char *members[" + jclasses.size() + "][" + maxMemberSize + "] = {");
         classIterator = jclasses.iterator();
         while (classIterator.hasNext()) {
@@ -307,20 +354,8 @@ public class Generator implements Closeable {
             }
         }
         out.println(" };");
-        out.println("    for (int i = 0; i < " + jclasses.size() + "; i++) {");
-        out.println("        jclass c = e->FindClass(classNames[i]);");
-        out.println("        if (c == NULL) {");
-        out.println("            fprintf(stderr, \"Error loading class %s.\", classNames[i]);");
-        out.println("            return 0;");
-        out.println("        }");
-        out.println("        JavaCPP_classes[i] = (jclass)e->NewWeakGlobalRef(c);");
-        out.println("        if (JavaCPP_classes[i] == NULL) {");
-        out.println("            fprintf(stderr, \"Error creating global reference of class %s.\", classNames[i]);");
-        out.println("            return 0;");
-        out.println("        }");
-        out.println("    }");
-        out.println("    jmethodID putMemberOffsetMethodID = e->GetStaticMethodID(JavaCPP_classes[" +
-                jclasses.register(Loader.class) + "], \"putMemberOffset\", \"(Ljava/lang/Class;Ljava/lang/String;I)V\");");
+        out.println("    jmethodID putMemberOffsetMethodID = e->GetStaticMethodID(JavaCPP_getClass(e, " +
+                jclasses.register(Loader.class) + "), \"putMemberOffset\", \"(Ljava/lang/String;Ljava/lang/String;I)V\");");
         out.println("    if (putMemberOffsetMethodID == NULL) {");
         out.println("        fprintf(stderr, \"Error getting putMemberOffset method ID of Loader class.\");");
         out.println("        return 0;");
@@ -328,27 +363,27 @@ public class Generator implements Closeable {
         out.println("    for (int i = 0; i < " + jclasses.size() + "; i++) {");
         out.println("        for (int j = 0; j < memberOffsetSizes[i]; j++) {");
         out.println("            jvalue args[3];");
-        out.println("            args[0].l = JavaCPP_classes[i];");
+        out.println("            args[0].l = e->NewStringUTF(JavaCPP_classNames[i]);");
         out.println("            args[1].l = e->NewStringUTF(members[i][j]);");
         out.println("            args[2].i = offsets[i][j];");
-        out.println("            e->CallStaticVoidMethodA(JavaCPP_classes[" +
-                jclasses.register(Loader.class) + "], putMemberOffsetMethodID, args);");
+        out.println("            e->CallStaticVoidMethodA(JavaCPP_getClass(e, " +
+                jclasses.register(Loader.class) + "), putMemberOffsetMethodID, args);");
         out.println("        }");
         out.println("    }");
-        out.println("    JavaCPP_initMethodID = e->GetMethodID(JavaCPP_classes[" +
-                jclasses.register(Pointer.class) + "], \"init\", \"(JJ)V\");");
+        out.println("    JavaCPP_initMethodID = e->GetMethodID(JavaCPP_getClass(e, " +
+                jclasses.register(Pointer.class) + "), \"init\", \"(JJ)V\");");
         out.println("    if (JavaCPP_initMethodID == NULL) {");
         out.println("        fprintf(stderr, \"Error getting init method ID of Pointer class.\");");
         out.println("        return 0;");
         out.println("    }");
-        out.println("    JavaCPP_addressFieldID = e->GetFieldID(JavaCPP_classes[" +
-                jclasses.register(Pointer.class) + "], \"address\", \"J\");");
+        out.println("    JavaCPP_addressFieldID = e->GetFieldID(JavaCPP_getClass(e, " +
+                jclasses.register(Pointer.class) + "), \"address\", \"J\");");
         out.println("    if (JavaCPP_addressFieldID == NULL) {");
         out.println("        fprintf(stderr, \"Error getting address field ID of Pointer class.\");");
         out.println("        return 0;");
         out.println("    }");
-        out.println("    JavaCPP_positionFieldID = e->GetFieldID(JavaCPP_classes[" +
-                jclasses.register(Pointer.class) + "], \"position\", \"I\");");
+        out.println("    JavaCPP_positionFieldID = e->GetFieldID(JavaCPP_getClass(e, " +
+                jclasses.register(Pointer.class) + "), \"position\", \"I\");");
         out.println("    if (JavaCPP_positionFieldID == NULL) {");
         out.println("        fprintf(stderr, \"Error getting position field ID of Pointer class.\");");
         out.println("        return 0;");
@@ -367,18 +402,6 @@ public class Generator implements Closeable {
         }
         out.println("    for (int i = 0; i < " + jclasses.size() + "; i++) {");
         out.println("        e->DeleteWeakGlobalRef(JavaCPP_classes[i]);");
-        out.println("    }");
-        out.println("}");
-        out.println();
-        out.println("static void JavaCPP_handleException(JNIEnv *e) { ");
-        out.println("    try {");
-        out.println("        throw;");
-        out.println("    } catch (std::exception& ex) {");
-        out.println("        e->ThrowNew(JavaCPP_classes[" + 
-                jclasses.register(RuntimeException.class) + "], ex.what());");
-        out.println("    } catch (...) {");
-        out.println("        e->ThrowNew(JavaCPP_classes[" + 
-                jclasses.register(RuntimeException.class) + "], \"Unknown exception.\");");
         out.println("    }");
         out.println("}");
         out.println();
@@ -493,15 +516,13 @@ public class Generator implements Closeable {
                         "char*" : typeName;
                 out.println("    " + thisType + " pointer = (" + thisType + ")" +
                         "jlong_to_ptr(e->GetLongField(o, JavaCPP_addressFieldID));");
-                out.println("    if (pointer == NULL) {");
-                out.println("        e->ThrowNew(JavaCPP_classes[" + 
-                        jclasses.register(NullPointerException.class) + "], \"Pointer address is NULL.\");");
+                out.println("    if (JavaCPP_checkNull(e, (uintptr_t)pointer)) {");
                 out.println("        return" + (methodInfo.returnType == void.class ? ";" : " 0;"));
                 out.println("    }");
                 if (!cls.isAnnotationPresent(Opaque.class) || methodInfo.bufferGetter) {
                     out.println("    jint position = e->GetIntField(o, JavaCPP_positionFieldID);");
                     if (FunctionPointer.class.isAssignableFrom(cls)) {
-                        out.println("    pointer = position == 0 ? pointer : (" + thisType + ")((void**)pointer + position);");
+                        out.println("    pointer = position == 0 ? pointer : (" + thisType + ")((uintptr_t)pointer + position);");
                     } else {
                         out.println("    pointer += position;");
                     }
@@ -543,7 +564,7 @@ public class Generator implements Closeable {
                             ", JavaCPP_positionFieldID);");
                     if (FunctionPointer.class.isAssignableFrom(methodInfo.parameterTypes[j])) {
                         out.println("    pointer" + j + " = position" + j + " == 0 ? pointer" + j +
-                                " : (" + typeName + ")((void**)pointer" + j + " + position" + j + ");");
+                                " : (" + typeName + ")((uintptr_t)pointer" + j + " + position" + j + ");");
                     } else {
                         out.println("    pointer" + j + " += position" + j + ";");
                     }
@@ -576,8 +597,8 @@ public class Generator implements Closeable {
         if (methodInfo.returnType == void.class) {
             String typeName = getCPPTypeName(cls);
             if (methodInfo.allocator || methodInfo.arrayAllocator) {
-                out.println("    if (!e->IsSameObject(e->GetObjectClass(o), JavaCPP_classes[" +
-                        jclasses.register(cls) + "])) {");
+                out.println("    if (!e->IsSameObject(e->GetObjectClass(o), JavaCPP_getClass(e, " +
+                        jclasses.register(cls) + "))) {");
                 out.println("        return;");
                 out.println("    }");
                 out.println("    " + typeName + " rpointer;");
@@ -760,8 +781,8 @@ public class Generator implements Closeable {
                     out.println("_deallocate);");
                     deallocators.register(cls);
                 }
-                out.println(indent + "e->CallNonvirtualVoidMethodA(o, JavaCPP_classes[" +
-                        jclasses.register(Pointer.class) + "], JavaCPP_initMethodID, args);");
+                out.println(indent + "e->CallNonvirtualVoidMethodA(o, JavaCPP_getClass(e, " +
+                        jclasses.register(Pointer.class) + "), JavaCPP_initMethodID, args);");
             }
         } else {
             if (methodInfo.valueSetter || methodInfo.memberSetter) {
@@ -784,16 +805,16 @@ public class Generator implements Closeable {
                 } else {
                     out.println(indent + "if (rpointer != NULL) {");
                 }
-                out.println(indent + "    r = e->AllocObject(JavaCPP_classes[" +
-                        jclasses.register(methodInfo.returnType) + "]);");
+                out.println(indent + "    r = e->AllocObject(JavaCPP_getClass(e, " +
+                        jclasses.register(methodInfo.returnType) + "));");
                 if (returnBy == ByVal.class && !methodInfo.valueGetter &&
                         !methodInfo.memberGetter && !methodInfo.bufferGetter) {
                     out.println(indent + "    jvalue args[2];");
                     out.println(indent + "    args[0].j = ptr_to_jlong(rpointer);");
                     out.println(indent + "    args[1].j = ptr_to_jlong(&JavaCPP_" +
                             mangle(methodInfo.returnType.getName()) +"_deallocate);");
-                    out.println(indent + "    e->CallNonvirtualVoidMethodA(r, JavaCPP_classes[" +
-                            jclasses.register(Pointer.class) + "], JavaCPP_initMethodID, args);");
+                    out.println(indent + "    e->CallNonvirtualVoidMethodA(r, JavaCPP_getClass(e, " +
+                            jclasses.register(Pointer.class) + "), JavaCPP_initMethodID, args);");
                     deallocators.register(methodInfo.returnType);
                 } else {
                     out.println(indent + "    e->SetLongField(r, JavaCPP_addressFieldID, ptr_to_jlong(rpointer));");
@@ -921,8 +942,8 @@ public class Generator implements Closeable {
                     } else { // ByPtr.class || ByPtrRef.class
                         out.println("p" + j + ";");
                     }
-                    String s = "    o" + j + " = e->AllocObject(JavaCPP_classes[" +
-                            jclasses.register(callbackParameterTypes[j]) + "]);";
+                    String s = "    o" + j + " = e->AllocObject(JavaCPP_getClass(e, " +
+                            jclasses.register(callbackParameterTypes[j]) + "));";
                     if (passBy == ByPtrPtr.class || passBy == ByPtrRef.class) {
                         out.println(s);
                     } else {
@@ -1071,7 +1092,7 @@ public class Generator implements Closeable {
         }
         info.parameterTypes       = method.getParameterTypes();
         info.parameterAnnotations = method.getParameterAnnotations();
-        Class role = getMethodRole(method);
+        Class behavior = getBehavior(method);
 
         boolean canBeGetter = info.returnType != void.class;
         boolean canBeSetter = true;
@@ -1134,20 +1155,20 @@ public class Generator implements Closeable {
             }
         }
 
-        if (canBeGetter && role == ValueGetter.class) {
+        if (canBeGetter && behavior == ValueGetter.class) {
             info.valueGetter = true;
-        } else if (canBeSetter && role == ValueSetter.class) {
+        } else if (canBeSetter && behavior == ValueSetter.class) {
             info.valueSetter = true;
-        } else if (canBeGetter && role == MemberGetter.class) {
+        } else if (canBeGetter && behavior == MemberGetter.class) {
             info.memberGetter = true;
-        } else if (canBeSetter && role == MemberSetter.class) {
+        } else if (canBeSetter && behavior == MemberSetter.class) {
             info.memberSetter = true;
-        } else if (canBeAllocator && role == Allocator.class) {
+        } else if (canBeAllocator && behavior == Allocator.class) {
             info.allocator = true;
-        } else if (canBeArrayAllocator && role == ArrayAllocator.class) {
+        } else if (canBeArrayAllocator && behavior == ArrayAllocator.class) {
             info.allocator = info.arrayAllocator = true;
-        } else if (role == null) {
-            // try to guess the role of the method
+        } else if (behavior == null) {
+            // try to guess the behavior of the method
             if (info.returnType == void.class && "deallocate".equals(info.name) &&
                     !Modifier.isStatic(info.modifiers) && info.parameterTypes.length == 2 &&
                     info.parameterTypes[0] == long.class && info.parameterTypes[1] == long.class) {
@@ -1174,8 +1195,8 @@ public class Generator implements Closeable {
                 info.pairedMethod = pairedMethod;
             }
         } else {
-            logger.log(Level.WARNING, "Method \"" + method + "\" cannot take on the role of \"" +
-                    role + "\". No code will be generated.");
+            logger.log(Level.WARNING, "Method \"" + method + "\" cannot behave like a \"" +
+                    behavior + "\". No code will be generated.");
             return null;
         }
 
@@ -1218,22 +1239,22 @@ public class Generator implements Closeable {
         return byAnnotation == null ? null : byAnnotation.annotationType();
     }
 
-    public static Class<? extends Annotation> getMethodRole(Method method) {
+    public static Class<? extends Annotation> getBehavior(Method method) {
         Annotation[] annotations = method.getAnnotations();
-        Annotation roleAnnotation = null;
+        Annotation behaviorAnnotation = null;
         for (Annotation a: annotations) {
             if (a instanceof Function || a instanceof Allocator || a instanceof ArrayAllocator ||
                     a instanceof ValueSetter || a instanceof ValueGetter ||
                     a instanceof MemberGetter || a instanceof MemberSetter) {
-                if (roleAnnotation != null) {
-                    logger.log(Level.WARNING, "Role annotation \"" + roleAnnotation +
+                if (behaviorAnnotation != null) {
+                    logger.log(Level.WARNING, "Behavior annotation \"" + behaviorAnnotation +
                             "\" already found. Ignoring superfluous annotation \"" + a + "\".");
                 } else {
-                    roleAnnotation = a;
+                    behaviorAnnotation = a;
                 }
             }
         }
-        return roleAnnotation == null ? null : roleAnnotation.annotationType();
+        return behaviorAnnotation == null ? null : behaviorAnnotation.annotationType();
     }
 
     public static String[] getAnnotatedCPPTypeName(Annotation[] annotations, Class<?> type) {

@@ -1,7 +1,7 @@
 =JavaCPP=
 
 ==Introduction==
-JavaCPP provides efficient access to native C++ inside Java, not unlike the way some C/C++ compilers interact with assembly language. No need to invent [http://www.ecma-international.org/publications/standards/Ecma-372.htm a whole new language], whatever Microsoft may opine about it. Under the hood, it uses JNI, so it works with all Java implementations, including Android. It naturally supports many features of the C++ language often considered problematic, including overloaded operators, templates, function pointers, callback functions, complex struct definitions, variable length arguments, namespaces, large data structures containing arbitrary cycles, multiple inheritance, passing/returning by value/reference, anonymous unions, bit fields, exceptions, destructors and garbage collection, etc. Obviously, neatly supporting the whole of C++ would require more work (although one could argue about the intrinsic neatness of C++), but I am releasing it here as a proof of concept. I have already used it to produce complete interfaces to OpenCV, FFmpeg, libdc1394, PGR FlyCapture, and ARToolKitPlus as part of [http://code.google.com/p/javacv/ JavaCV].
+JavaCPP provides efficient access to native C++ inside Java, not unlike the way some C/C++ compilers interact with assembly language. No need to invent [http://www.ecma-international.org/publications/standards/Ecma-372.htm a whole new language], whatever Microsoft may opine about it. Under the hood, it uses JNI, so it works with all Java implementations, [#Instructions_for_Android including Android]. In contrast to other approaches ([http://www.swig.org/ SWIG], [http://www.teamdev.com/jniwrapper/ JNIWrapper], [http://msdn.microsoft.com/en-us/library/fzhhdwae.aspx Platform Invoke], [http://homepage.mac.com/pcbeard/JNIDirect/ JNI Direct], [http://jna.java.net/ JNA], [http://flinflon.brandonu.ca/Dueck/SystemsProgramming/JniMarshall/ JniMarshall], [http://www.jinvoke.com/ J/Invoke], [http://hawtjni.fusesource.org/ HawtJNI], [http://code.google.com/p/bridj/ BridJ], etc.), it naturally supports many features of the C++ language often considered problematic, including overloaded operators, templates, function pointers, callback functions, complex struct definitions, variable length arguments, namespaces, large data structures containing arbitrary cycles, multiple inheritance, passing/returning by value/reference, anonymous unions, bit fields, exceptions, destructors and garbage collection, etc. Obviously, neatly supporting the whole of C++ would require more work (although one could argue about the intrinsic neatness of C++), but I am releasing it here as a proof of concept. I have already used it to produce complete interfaces to OpenCV, FFmpeg, libdc1394, PGR FlyCapture, and ARToolKitPlus as part of [http://code.google.com/p/javacv/ JavaCV].
 
 
 ==Required Software==
@@ -21,6 +21,8 @@ To produce binary files for Android, you will also have to install:
 To modify the source code, note that the project files were created with:
  * NetBeans 6.9  http://www.netbeans.org/downloads/
 
+Please feel free to ask questions on [http://groups.google.com/group/javacpp-project the mailing list] if you encounter any problems with the software! I am sure it is far from perfect...
+
 
 ==Key Use Cases==
 To demonstrate its ease of use, imagine we had a C++ function that took a `vector<void*>` as argument. To get the job done with JavaCPP, we could easily define a bare-bones class such as this one (although having an IDE generate that code for us would be even better):
@@ -37,9 +39,9 @@ public class VectorTest {
     public static class PointerVector extends Pointer {
         public PointerVector()       { allocate();  }
         public PointerVector(long n) { allocate(n); }
-        public PointerVector(Pointer p) { super(p); } // i.e.: `(vector<void*>*)p`
-        private native void allocate();       // calls `new std::vector<void*>()`
-        private native void allocate(long n); // calls `new std::vector<void*>(n)`
+        public PointerVector(Pointer p) { super(p); } // this = (vector<void*>*)p
+        private native void allocate();       // this = new std::vector<void*>()
+        private native void allocate(long n); // this = new std::vector<void*>(n)
         @Name("operator=")
         public native @ByRef PointerVector copy(@ByRef PointerVector x);
 
@@ -150,11 +152,33 @@ To learn more about how to use the features of this tool, since documentation cu
 As a matter of course, this all works with the Scala language as well, but to make the process even smoother, I would imagine that it should not be too hard to add support for "native properties", such that declarations like `@native var` could generate native getter and setter methods...
 
 
+==Instructions for Android==
+Inside the directory of the Android project:
+ # Copy the `javacpp.jar` file into the `libs/` subdirectory, and
+ # Run this command to produce the `*.so` library files in `libs/armeabi/`:
+{{{
+java -jar libs/javacpp.jar -classpath bin/ -classpath bin/classes/ -d libs/armeabi/ 
+-properties android-arm -Dplatform.root=<path to android-ndk-r5b> 
+-Dcompiler.path=<path to arm-linux-androideabi-g++> <class names>
+}}}
+Without a doubt, you should definitely add this to your build files, such as `build.xml` or `.project`.
+
+*Please note that the Android NDK's libstdc++ does not seem to work with Android 2.1 or older, and JavaCPP will not work. Please let me know if you find a way around that.*
+
+
 ==Acknowledgments==
 I am currently an active member of the Okutomi & Tanaka Laboratory, Tokyo Institute of Technology, supported by a scholarship from the Ministry of Education, Culture, Sports, Science and Technology (MEXT) of the Japanese Government.
 
 
 ==Changes==
+===March 1, 2011===
+ * Fixed directory search for `jni_md.h`, which did not search deep enough in some cases
+ * Added new `path.separator` property to set the path separator of the target platform, regardless of the build platform
+ * Added hack to make sure the temporarily extracted library files get properly deleted under Windows
+ * Now loads classes more lazily
+ * Changed the paths for libstdc++ inside `android-arm.properties` to the non "v7a" versions
+ * Added new `platform.root` property to let users specify the path to their toolchains more easily
+
 ===February 18, 2011===
 Initial release
 
