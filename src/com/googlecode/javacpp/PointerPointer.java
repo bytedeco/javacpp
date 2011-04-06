@@ -25,14 +25,14 @@ package com.googlecode.javacpp;
  * @author Samuel Audet
  */
 public class PointerPointer extends Pointer {
-    public PointerPointer(Pointer[] array)  { this(array.length); put(array); position(0); }
-    public PointerPointer(byte[][] array)   { this(array.length); put(array); position(0); }
-    public PointerPointer(short[][] array)  { this(array.length); put(array); position(0); }
-    public PointerPointer(int[][] array)    { this(array.length); put(array); position(0); }
-    public PointerPointer(long[][] array)   { this(array.length); put(array); position(0); }
-    public PointerPointer(float[][] array)  { this(array.length); put(array); position(0); }
-    public PointerPointer(double[][] array) { this(array.length); put(array); position(0); }
-    public PointerPointer(char[][] array)   { this(array.length); put(array); position(0); }
+    public PointerPointer(Pointer  ... array) { this(array.length); put(array); position(0); }
+    public PointerPointer(byte[]   ... array) { this(array.length); put(array); position(0); }
+    public PointerPointer(short[]  ... array) { this(array.length); put(array); position(0); }
+    public PointerPointer(int[]    ... array) { this(array.length); put(array); position(0); }
+    public PointerPointer(long[]   ... array) { this(array.length); put(array); position(0); }
+    public PointerPointer(float[]  ... array) { this(array.length); put(array); position(0); }
+    public PointerPointer(double[] ... array) { this(array.length); put(array); position(0); }
+    public PointerPointer(char[]   ... array) { this(array.length); put(array); position(0); }
     public PointerPointer(int size) { allocateArray(size); }
     public PointerPointer(Pointer p) { super(p); }
     private native void allocateArray(int size);
@@ -44,55 +44,55 @@ public class PointerPointer extends Pointer {
         return (PointerPointer)super.position(position);
     }
 
-    public PointerPointer put(Pointer[] array) {
+    public PointerPointer put(Pointer ... array) {
         for (int i = 0; i < array.length; i++) {
             position(i).put(array[i]);
         }
         return this;
     }
-    public PointerPointer put(byte[][] array) {
+    public PointerPointer put(byte[] ... array) {
         pointerArray = new Pointer[array.length];
         for (int i = 0; i < array.length; i++) {
             pointerArray[i] = new BytePointer(array[i]);
         }
         return put(pointerArray);
     }
-    public PointerPointer put(short[][] array) {
+    public PointerPointer put(short[] ... array) {
         pointerArray = new Pointer[array.length];
         for (int i = 0; i < array.length; i++) {
             pointerArray[i] = new ShortPointer(array[i]);
         }
         return put(pointerArray);
     }
-    public PointerPointer put(int[][] array) {
+    public PointerPointer put(int[] ... array) {
         pointerArray = new Pointer[array.length];
         for (int i = 0; i < array.length; i++) {
             pointerArray[i] = new IntPointer(array[i]);
         }
         return put(pointerArray);
     }
-    public PointerPointer put(long[][] array) {
+    public PointerPointer put(long[] ... array) {
         pointerArray = new Pointer[array.length];
         for (int i = 0; i < array.length; i++) {
             pointerArray[i] = new LongPointer(array[i]);
         }
         return put(pointerArray);
     }
-    public PointerPointer put(float[][] array) {
+    public PointerPointer put(float[] ... array) {
         pointerArray = new Pointer[array.length];
         for (int i = 0; i < array.length; i++) {
             pointerArray[i] = new FloatPointer(array[i]);
         }
         return put(pointerArray);
     }
-    public PointerPointer put(double[][] array) {
+    public PointerPointer put(double[] ... array) {
         pointerArray = new Pointer[array.length];
         for (int i = 0; i < array.length; i++) {
             pointerArray[i] = new DoublePointer(array[i]);
         }
         return put(pointerArray);
     }
-    public PointerPointer put(char[][] array) {
+    public PointerPointer put(char[] ... array) {
         pointerArray = new Pointer[array.length];
         for (int i = 0; i < array.length; i++) {
             pointerArray[i] = new CharPointer(array[i]);

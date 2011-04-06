@@ -256,12 +256,12 @@ public class Generator implements Closeable {
         out.println("static noinline jclass JavaCPP_getClass(JNIEnv *e, int i) {");
         out.println("    if (JavaCPP_classes[i] == NULL) {");
         out.println("        jclass c = e->FindClass(JavaCPP_classNames[i]);");
-        out.println("        if (c == NULL) {");
+        out.println("        if (c == NULL || e->ExceptionCheck()) {");
         out.println("            fprintf(stderr, \"Error loading class %s.\", JavaCPP_classNames[i]);");
         out.println("            return NULL;");
         out.println("        }");
         out.println("        JavaCPP_classes[i] = (jclass)e->NewWeakGlobalRef(c);");
-        out.println("        if (JavaCPP_classes[i] == NULL) {");
+        out.println("        if (JavaCPP_classes[i] == NULL || e->ExceptionCheck()) {");
         out.println("            fprintf(stderr, \"Error creating global reference of class %s.\", JavaCPP_classNames[i]);");
         out.println("            return NULL;");
         out.println("        }");
@@ -356,11 +356,11 @@ public class Generator implements Closeable {
         out.println(" };");
         out.println("    jmethodID putMemberOffsetMethodID = e->GetStaticMethodID(JavaCPP_getClass(e, " +
                 jclasses.register(Loader.class) + "), \"putMemberOffset\", \"(Ljava/lang/String;Ljava/lang/String;I)V\");");
-        out.println("    if (putMemberOffsetMethodID == NULL) {");
+        out.println("    if (putMemberOffsetMethodID == NULL || e->ExceptionCheck()) {");
         out.println("        fprintf(stderr, \"Error getting putMemberOffset method ID of Loader class.\");");
         out.println("        return 0;");
         out.println("    }");
-        out.println("    for (int i = 0; i < " + jclasses.size() + "; i++) {");
+        out.println("    for (int i = 0; i < " + jclasses.size() + " && !e->ExceptionCheck(); i++) {");
         out.println("        for (int j = 0; j < memberOffsetSizes[i]; j++) {");
         out.println("            jvalue args[3];");
         out.println("            args[0].l = e->NewStringUTF(JavaCPP_classNames[i]);");
@@ -372,19 +372,19 @@ public class Generator implements Closeable {
         out.println("    }");
         out.println("    JavaCPP_initMethodID = e->GetMethodID(JavaCPP_getClass(e, " +
                 jclasses.register(Pointer.class) + "), \"init\", \"(JJ)V\");");
-        out.println("    if (JavaCPP_initMethodID == NULL) {");
+        out.println("    if (JavaCPP_initMethodID == NULL || e->ExceptionCheck()) {");
         out.println("        fprintf(stderr, \"Error getting init method ID of Pointer class.\");");
         out.println("        return 0;");
         out.println("    }");
         out.println("    JavaCPP_addressFieldID = e->GetFieldID(JavaCPP_getClass(e, " +
                 jclasses.register(Pointer.class) + "), \"address\", \"J\");");
-        out.println("    if (JavaCPP_addressFieldID == NULL) {");
+        out.println("    if (JavaCPP_addressFieldID == NULL || e->ExceptionCheck()) {");
         out.println("        fprintf(stderr, \"Error getting address field ID of Pointer class.\");");
         out.println("        return 0;");
         out.println("    }");
         out.println("    JavaCPP_positionFieldID = e->GetFieldID(JavaCPP_getClass(e, " +
                 jclasses.register(Pointer.class) + "), \"position\", \"I\");");
-        out.println("    if (JavaCPP_positionFieldID == NULL) {");
+        out.println("    if (JavaCPP_positionFieldID == NULL || e->ExceptionCheck()) {");
         out.println("        fprintf(stderr, \"Error getting position field ID of Pointer class.\");");
         out.println("        return 0;");
         out.println("    }");

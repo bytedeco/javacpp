@@ -25,14 +25,14 @@ import java.util.Arrays;
 
 /**
  *
- * @author saudet
+ * @author Samuel Audet
  */
 public class IntPointer extends Pointer {
     public IntPointer(String s) {
         this(s.length()+1);
         putString(s);
     }
-    public IntPointer(int[] array) {
+    public IntPointer(int ... array) {
         this(array.length);
         asBuffer(array.length).put(array);
     }

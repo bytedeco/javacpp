@@ -24,10 +24,10 @@ import java.nio.ShortBuffer;
 
 /**
  *
- * @author saudet
+ * @author Samuel Audet
  */
 public class ShortPointer extends Pointer {
-    public ShortPointer(short[] array) {
+    public ShortPointer(short ... array) {
         this(array.length);
         asBuffer(array.length).put(array);
     }

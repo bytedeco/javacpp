@@ -32,7 +32,7 @@ public class CharPointer extends Pointer {
         this(s.toCharArray().length+1);
         putString(s);
     }
-    public CharPointer(char[] array) {
+    public CharPointer(char ... array) {
         this(array.length);
         asBuffer(array.length).put(array);
     }

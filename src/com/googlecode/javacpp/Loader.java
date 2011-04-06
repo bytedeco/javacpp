@@ -280,7 +280,7 @@ public class Loader {
         if (topIndex > 0) {
             className = className.substring(0, topIndex);
             try {
-                cls = Class.forName(className, false, cls.getClassLoader());
+                cls = Class.forName(className);
             } catch (ClassNotFoundException ex) {
                 Error e = new NoClassDefFoundError(ex.toString());
                 e.initCause(ex);

@@ -24,10 +24,10 @@ import java.nio.FloatBuffer;
 
 /**
  *
- * @author saudet
+ * @author Samuel Audet
  */
 public class FloatPointer extends Pointer {
-    public FloatPointer(float[] array) {
+    public FloatPointer(float ... array) {
         this(array.length);
         asBuffer(array.length).put(array);
     }

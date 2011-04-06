@@ -1,7 +1,7 @@
 =JavaCPP=
 
 ==Introduction==
-JavaCPP provides efficient access to native C++ inside Java, not unlike the way some C/C++ compilers interact with assembly language. No need to invent [http://www.ecma-international.org/publications/standards/Ecma-372.htm a whole new language], whatever Microsoft may opine about it. Under the hood, it uses JNI, so it works with all Java implementations, [#Instructions_for_Android including Android]. In contrast to other approaches ([http://www.swig.org/ SWIG], [http://www.teamdev.com/jniwrapper/ JNIWrapper], [http://msdn.microsoft.com/en-us/library/fzhhdwae.aspx Platform Invoke], [http://homepage.mac.com/pcbeard/JNIDirect/ JNI Direct], [http://jna.java.net/ JNA], [http://flinflon.brandonu.ca/Dueck/SystemsProgramming/JniMarshall/ JniMarshall], [http://www.jinvoke.com/ J/Invoke], [http://hawtjni.fusesource.org/ HawtJNI], [http://code.google.com/p/bridj/ BridJ], etc.), it naturally supports many features of the C++ language often considered problematic, including overloaded operators, templates, function pointers, callback functions, complex struct definitions, variable length arguments, namespaces, large data structures containing arbitrary cycles, multiple inheritance, passing/returning by value/reference, anonymous unions, bit fields, exceptions, destructors and garbage collection, etc. Obviously, neatly supporting the whole of C++ would require more work (although one could argue about the intrinsic neatness of C++), but I am releasing it here as a proof of concept. I have already used it to produce complete interfaces to OpenCV, FFmpeg, libdc1394, PGR FlyCapture, and ARToolKitPlus as part of [http://code.google.com/p/javacv/ JavaCV].
+JavaCPP provides efficient access to native C++ inside Java, not unlike the way some C/C++ compilers interact with assembly language. No need to invent [http://www.ecma-international.org/publications/standards/Ecma-372.htm a whole new language], whatever Microsoft may opine about it. Under the hood, it uses JNI, so it works with all Java implementations, [#Instructions_for_Android including Android]. In contrast to other approaches ([http://www.swig.org/ SWIG], [http://www.teamdev.com/jniwrapper/ JNIWrapper], [http://msdn.microsoft.com/en-us/library/fzhhdwae.aspx Platform Invoke], [http://homepage.mac.com/pcbeard/JNIDirect/ JNI Direct], [http://jna.java.net/ JNA], [http://flinflon.brandonu.ca/Dueck/SystemsProgramming/JniMarshall/ JniMarshall], [http://www.jinvoke.com/ J/Invoke], [http://hawtjni.fusesource.org/ HawtJNI], [http://code.google.com/p/bridj/ BridJ], etc.), it supports naturally many features of the C++ language often considered problematic, including overloaded operators, templates, function pointers, callback functions, complex struct definitions, variable length arguments, namespaces, large data structures containing arbitrary cycles, multiple inheritance, passing/returning by value/reference, anonymous unions, bit fields, exceptions, destructors and garbage collection, etc. Obviously, neatly supporting the whole of C++ would require more work (although one could argue about the intrinsic neatness of C++), but I am releasing it here as a proof of concept. I have already used it to produce complete interfaces to OpenCV, FFmpeg, libdc1394, PGR FlyCapture, and ARToolKitPlus as part of [http://code.google.com/p/javacv/ JavaCV].
 
 
 ==Required Software==
@@ -32,10 +32,11 @@ import com.googlecode.javacpp.*;
 import com.googlecode.javacpp.annotation.*;
 
 @Platform(include="<vector>")
+@Namespace("std")
 public class VectorTest {
     static { Loader.load(); }
 
-    @Namespace("std") @Name("vector<void*>")
+    @Name("vector<void*>")
     public static class PointerVector extends Pointer {
         public PointerVector()       { allocate();  }
         public PointerVector(long n) { allocate(n); }
@@ -163,7 +164,7 @@ java -jar libs/javacpp.jar -classpath bin/ -classpath bin/classes/ -d libs/armea
 }}}
 Without a doubt, you should definitely add this to your build files, such as `build.xml` or `.project`.
 
-*Please note that the Android NDK's libstdc++ does not seem to work with Android 2.1 or older, and JavaCPP will not work. Please let me know if you find a way around that.*
+*IMPORTANT NOTE*: libstdc++ from the Android NDK does not seem to work with Android 2.1 or older, so libraries created with JavaCPP will crash. Please let me know if you find a way around this issue.
 
 
 ==Acknowledgments==
@@ -171,6 +172,10 @@ I am currently an active member of the Okutomi & Tanaka Laboratory, Tokyo Instit
 
 
 ==Changes==
+===April 7, 2011===
+ * Replaced arrays from constructors with variable-length argument lists for convenience
+ * Fixed a few small potential pitfalls previously overlooked
+
 ===March 1, 2011===
  * Fixed directory search for `jni_md.h`, which did not search deep enough in some cases
  * Added new `path.separator` property to set the path separator of the target platform, regardless of the build platform

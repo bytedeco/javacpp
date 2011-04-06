@@ -27,7 +27,7 @@ import java.nio.LongBuffer;
  * @author Samuel Audet
  */
 public class LongPointer extends Pointer {
-    public LongPointer(long[] array) {
+    public LongPointer(long ... array) {
         this(array.length);
         asBuffer(array.length).put(array);
     }

@@ -24,10 +24,10 @@ import java.nio.DoubleBuffer;
 
 /**
  *
- * @author saudet
+ * @author Samuel Audet
  */
 public class DoublePointer extends Pointer {
-    public DoublePointer(double[] array) {
+    public DoublePointer(double ... array) {
         this(array.length);
         asBuffer(array.length).put(array);
     }

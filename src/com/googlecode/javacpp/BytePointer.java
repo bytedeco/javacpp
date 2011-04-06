@@ -38,7 +38,7 @@ public class BytePointer extends Pointer {
         this(s.getBytes().length+1);
         putString(s);
     }
-    public BytePointer(byte[] array) {
+    public BytePointer(byte ... array) {
         this(array.length);
         asBuffer(array.length).put(array);
     }
