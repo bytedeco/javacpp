@@ -279,13 +279,15 @@ public class Loader {
         int topIndex = className.indexOf('$');
         if (topIndex > 0) {
             className = className.substring(0, topIndex);
-            try {
-                cls = Class.forName(className);
-            } catch (ClassNotFoundException ex) {
-                Error e = new NoClassDefFoundError(ex.toString());
-                e.initCause(ex);
-                throw e;
-            }
+        }
+
+        // Force initialization of the class in case it needs it
+        try {
+            cls = Class.forName(className);
+        } catch (ClassNotFoundException ex) {
+            Error e = new NoClassDefFoundError(ex.toString());
+            e.initCause(ex);
+            throw e;
         }
 
         String filename = loadedLibraries.get(cls);

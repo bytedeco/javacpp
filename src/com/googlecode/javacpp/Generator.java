@@ -361,13 +361,16 @@ public class Generator implements Closeable {
         out.println("        return 0;");
         out.println("    }");
         out.println("    for (int i = 0; i < " + jclasses.size() + " && !e->ExceptionCheck(); i++) {");
-        out.println("        for (int j = 0; j < memberOffsetSizes[i]; j++) {");
-        out.println("            jvalue args[3];");
-        out.println("            args[0].l = e->NewStringUTF(JavaCPP_classNames[i]);");
-        out.println("            args[1].l = e->NewStringUTF(members[i][j]);");
-        out.println("            args[2].i = offsets[i][j];");
-        out.println("            e->CallStaticVoidMethodA(JavaCPP_getClass(e, " +
+        out.println("        for (int j = 0; j < memberOffsetSizes[i] && !e->ExceptionCheck(); j++) {");
+        out.println("            if (e->PushLocalFrame(2) == 0) {");
+        out.println("                jvalue args[3];");
+        out.println("                args[0].l = e->NewStringUTF(JavaCPP_classNames[i]);");
+        out.println("                args[1].l = e->NewStringUTF(members[i][j]);");
+        out.println("                args[2].i = offsets[i][j];");
+        out.println("                e->CallStaticVoidMethodA(JavaCPP_getClass(e, " +
                 jclasses.register(Loader.class) + "), putMemberOffsetMethodID, args);");
+        out.println("                e->PopLocalFrame(NULL);");
+        out.println("            }");
         out.println("        }");
         out.println("    }");
         out.println("    JavaCPP_initMethodID = e->GetMethodID(JavaCPP_getClass(e, " +
