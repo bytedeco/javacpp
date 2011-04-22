@@ -172,6 +172,9 @@ I am currently an active member of the Okutomi & Tanaka Laboratory, Tokyo Instit
 
 
 ==Changes==
+===April 22, 2011===
+ * `Generator` now outputs `#include <stdio.h>`, the lack of which prevents Android NDK under Windows from compiling
+
 ===April 7, 2011===
  * Replaced arrays from constructors with variable-length argument lists for convenience
  * Fixed a few small potential pitfalls previously overlooked

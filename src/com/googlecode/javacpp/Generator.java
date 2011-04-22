@@ -184,11 +184,12 @@ public class Generator implements Closeable {
         out.println("    typedef signed char jbyte;");
         out.println("#endif");
         out.println("#include <jni.h>");
+        out.println("#include <stddef.h>");
         out.println("#ifndef _WIN32");
         out.println("    #include <stdint.h>");
         out.println("#endif");
+        out.println("#include <stdio.h>");
         out.println("#include <stdlib.h>");
-        out.println("#include <stddef.h>");
         out.println("#include <string.h>");
         out.println("#include <exception>");
         out.println();
