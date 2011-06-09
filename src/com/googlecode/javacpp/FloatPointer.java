@@ -29,7 +29,7 @@ import java.nio.FloatBuffer;
 public class FloatPointer extends Pointer {
     public FloatPointer(float ... array) {
         this(array.length);
-        asBuffer(array.length).put(array);
+        asBuffer().put(array);
     }
     public FloatPointer(int size) { allocateArray(size); }
     public FloatPointer(Pointer p) { super(p); }
@@ -38,11 +38,16 @@ public class FloatPointer extends Pointer {
     @Override public FloatPointer position(int position) {
         return (FloatPointer)super.position(position);
     }
+    @Override public FloatPointer capacity(int capacity) {
+        return (FloatPointer)super.capacity(capacity);
+    }
 
-    public native float get();
-    public native FloatPointer put(float l);
+    public float get() { return get(0); }
+    public native float get(int i);
+    public FloatPointer put(float f) { return put(0, f); }
+    public native FloatPointer put(int i, float f);
 
-    @Override public final FloatBuffer asBuffer(int capacity) {
-        return asByteBuffer(capacity).asFloatBuffer();
+    @Override public final FloatBuffer asBuffer() {
+        return asByteBuffer().asFloatBuffer();
     }
 }

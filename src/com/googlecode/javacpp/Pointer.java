@@ -47,14 +47,17 @@ import com.googlecode.javacpp.annotation.Opaque;
         if (p == null) {
             address = 0;
             position = 0;
+            capacity = 0;
         } else {
             address = p.address;
             position = p.position;
+            capacity = p.capacity;
         }
     }
 
-    void init(long allocatedAddress, long deallocatorAddress) {
+    void init(long allocatedAddress, int allocatedCapacity, long deallocatorAddress) {
         address = allocatedAddress;
+        capacity = allocatedCapacity;
         deallocator(new ReferenceDeallocator(this, allocatedAddress, deallocatorAddress));
     }
 
@@ -128,7 +131,7 @@ import com.googlecode.javacpp.annotation.Opaque;
     static final ReferenceQueue<Pointer> referenceQueue = new ReferenceQueue<Pointer>();
 
     protected long address;
-    protected int position;
+    protected int position, capacity;
     private Deallocator deallocator;
 
     public boolean isNull() {
@@ -146,10 +149,21 @@ import com.googlecode.javacpp.annotation.Opaque;
         return this;
     }
 
+    public int capacity() {
+        return capacity;
+    }
+    public Pointer capacity(int capacity) {
+        this.capacity = capacity;
+        return this;
+    }
+
     protected Deallocator deallocator() {
         return deallocator;
     }
     protected Pointer deallocator(Deallocator deallocator) {
+        if (this.deallocator() != null) {
+            this.deallocator().deallocate();
+        }
         this.deallocator = deallocator;
 
         DeallocatorReference r = null;
@@ -172,8 +186,8 @@ import com.googlecode.javacpp.annotation.Opaque;
         address = 0;
     }
 
-    private native ByteBuffer asDirectBuffer(int capacity);
-    public ByteBuffer asByteBuffer(int capacity) {
+    private native ByteBuffer asDirectBuffer();
+    public ByteBuffer asByteBuffer() {
         if (isNull()) {
             return null;
         }
@@ -186,13 +200,16 @@ import com.googlecode.javacpp.annotation.Opaque;
         } catch(NullPointerException e) { /* default to 1 byte */ }
 
         int arrayPosition = position;
+        int arrayCapacity = capacity;
         position = valueSize*arrayPosition;
-        ByteBuffer b = asDirectBuffer(valueSize*capacity).order(ByteOrder.nativeOrder());
+        capacity = valueSize*arrayCapacity;
+        ByteBuffer b = asDirectBuffer().order(ByteOrder.nativeOrder());
         position = arrayPosition;
+        capacity = arrayCapacity;
         return b;
     }
-    public Buffer asBuffer(int capacity) {
-        return asByteBuffer(capacity);
+    public Buffer asBuffer() {
+        return asByteBuffer();
     }
 
     @Override public boolean equals(Object obj) {
@@ -212,6 +229,6 @@ import com.googlecode.javacpp.annotation.Opaque;
 
     @Override public String toString() {
         return getClass().getName() + "[address=0x" + Long.toHexString(address) +
-                ",position=" + position + ",deallocator=" + deallocator + "]";
+                ",position=" + position + ",capacity=" + capacity + ",deallocator=" + deallocator + "]";
     }
 }

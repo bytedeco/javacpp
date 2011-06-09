@@ -36,6 +36,8 @@ public class CLongPointer extends Pointer {
         return (CLongPointer)super.position(position);
     }
 
-    public native long get();
-    public native CLongPointer put(long l);
+    public long get() { return get(0); }
+    public native long get(int i);
+    public CLongPointer put(long l) { return put(0, l); }
+    public native CLongPointer put(int i, long l);
 }

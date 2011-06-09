@@ -1,7 +1,7 @@
 =JavaCPP=
 
 ==Introduction==
-JavaCPP provides efficient access to native C++ inside Java, not unlike the way some C/C++ compilers interact with assembly language. No need to invent [http://www.ecma-international.org/publications/standards/Ecma-372.htm a whole new language], whatever Microsoft may opine about it. Under the hood, it uses JNI, so it works with all Java implementations, [#Instructions_for_Android including Android]. In contrast to other approaches ([http://www.swig.org/ SWIG], [http://www.teamdev.com/jniwrapper/ JNIWrapper], [http://msdn.microsoft.com/en-us/library/fzhhdwae.aspx Platform Invoke], [http://homepage.mac.com/pcbeard/JNIDirect/ JNI Direct], [http://jna.java.net/ JNA], [http://flinflon.brandonu.ca/Dueck/SystemsProgramming/JniMarshall/ JniMarshall], [http://www.jinvoke.com/ J/Invoke], [http://hawtjni.fusesource.org/ HawtJNI], [http://code.google.com/p/bridj/ BridJ], etc.), it supports naturally many features of the C++ language often considered problematic, including overloaded operators, templates, function pointers, callback functions, complex struct definitions, variable length arguments, namespaces, large data structures containing arbitrary cycles, multiple inheritance, passing/returning by value/reference, anonymous unions, bit fields, exceptions, destructors and garbage collection, etc. Obviously, neatly supporting the whole of C++ would require more work (although one could argue about the intrinsic neatness of C++), but I am releasing it here as a proof of concept. I have already used it to produce complete interfaces to OpenCV, FFmpeg, libdc1394, PGR FlyCapture, and ARToolKitPlus as part of [http://code.google.com/p/javacv/ JavaCV].
+JavaCPP provides efficient access to native C++ inside Java, not unlike the way some C/C++ compilers interact with assembly language. No need to invent [http://www.ecma-international.org/publications/standards/Ecma-372.htm a whole new language], whatever Microsoft may opine about it. Under the hood, it uses JNI, so it works with all Java implementations, [#Instructions_for_Android including Android]. In contrast to other approaches ([http://www.swig.org/ SWIG], [http://www.teamdev.com/jniwrapper/ JNIWrapper], [http://msdn.microsoft.com/en-us/library/fzhhdwae.aspx Platform Invoke], [http://homepage.mac.com/pcbeard/JNIDirect/ JNI Direct], [http://jna.java.net/ JNA], [http://flinflon.brandonu.ca/Dueck/SystemsProgramming/JniMarshall/ JniMarshall], [http://www.jinvoke.com/ J/Invoke], [http://hawtjni.fusesource.org/ HawtJNI], [http://code.google.com/p/bridj/ BridJ], etc.), it supports naturally many features of the C++ language often considered problematic, including overloaded operators, template classes and functions, member function pointers, callback functions, nested struct definitions, variable length arguments, nested namespaces, large data structures containing arbitrary cycles, multiple inheritance, passing/returning by value/reference/vector, anonymous unions, bit fields, exceptions, destructors and garbage collection. Obviously, neatly supporting the whole of C++ would require more work (although one could argue about the intrinsic neatness of C++), but I am releasing it here as a proof of concept. I have already used it to produce complete interfaces to OpenCV, FFmpeg, libdc1394, PGR FlyCapture, OpenKinect, videoInput, and ARToolKitPlus as part of [http://code.google.com/p/javacv/ JavaCV].
 
 
 ==Required Software==
@@ -16,9 +16,9 @@ To use JavaCPP, you will need to download and install the following software:
   * Microsoft C/C++ Compiler  http://msdn.microsoft.com/
 
 To produce binary files for Android, you will also have to install:
- * Android NDK r5b  http://developer.android.com/sdk/ndk/
+ * Android NDK r5c  http://developer.android.com/sdk/ndk/
 
-To modify the source code, note that the project files were created with:
+To modify the source code, please note that the project files were created for:
  * NetBeans 6.9  http://www.netbeans.org/downloads/
 
 Please feel free to ask questions on [http://groups.google.com/group/javacpp-project the mailing list] if you encounter any problems with the software! I am sure it is far from perfect...
@@ -81,7 +81,7 @@ g++ -I/usr/lib/jvm/java-1.6.0-openjdk-1.6.0.0.x86_64/include
 -shared -s -o /home/saudet/workspace/linux-x86_64/libjniVectorTest.so
 
 [saudet@nemesis workspace]$ java -cp javacpp.jar:. VectorTest
-42  com.googlecode.javacpp.Pointer[address=0xdeadbeef,position=0,deallocator=null]
+42  com.googlecode.javacpp.Pointer[address=0xdeadbeef,position=0,capacity=0,deallocator=null]
 Exception in thread "main" java.lang.RuntimeException: vector::_M_range_check
 	at VectorTest$PointerVector.at(Native Method)
 	at VectorTest.main(VectorTest.java:35)
@@ -158,13 +158,11 @@ Inside the directory of the Android project:
  # Copy the `javacpp.jar` file into the `libs/` subdirectory, and
  # Run this command to produce the `*.so` library files in `libs/armeabi/`:
 {{{
-java -jar libs/javacpp.jar -classpath bin/ -classpath bin/classes/ -d libs/armeabi/ 
--properties android-arm -Dplatform.root=<path to android-ndk-r5b> 
+java -jar libs/javacpp.jar -classpath bin/ -classpath bin/classes/ -d libs/armeabi/ \
+-properties android-arm -Dplatform.root=<path to android-ndk-r5c> \
 -Dcompiler.path=<path to arm-linux-androideabi-g++> <class names>
 }}}
 Without a doubt, you should definitely add this to your build files, such as `build.xml` or `.project`.
-
-*IMPORTANT NOTE*: libstdc++ from the Android NDK does not seem to work with Android 2.1 or older, so libraries created with JavaCPP will crash. Please let me know if you find a way around this issue.
 
 
 ==Acknowledgments==
@@ -172,6 +170,22 @@ I am currently an active member of the Okutomi & Tanaka Laboratory, Tokyo Instit
 
 
 ==Changes==
+===June 10, 2011===
+ * New `Adapter` annotation that uses C++ classes such as `VectorAdapter`, which can let us use Java arrays or `Pointer` objects in place of C++ vector objects by mapping types such as `vector<int>` to `@Adapter("VectorAdapter<int>") int[]` or `@Adapter("VectorAdapter<int>") IntPointer`
+ * Added new `Pointer.capacity` field to keep track of allocated size for arrays, needed by the `Adapter` annotation
+ * Removed the `capacity` parameter from the `Pointer.asByteBuffer()` and `Pointer.asBuffer()` methods, which now rely instead on the value of the new `capacity` field
+ * `ValueGetter` and `ValueSetter`, defaulting to the `get()` and `put()` methods, now accept indices as arguments, and `*Pointer` classes have been updated accordingly
+ * New `Index` annotation to indicate that a C++ class, such as `vector<T>` implements the `operator[]` that can be mapped to the `ValueGetter` and `ValueSetter` as well as to arbitrary function calls, taking the first n arguments as indices, where n is the value placed in the annotation
+ * The `Name` annotation now accepts as value a `String` array to indicate names before and after these indices
+ * New `Const` annotation for convenience
+ * Fixed scoping of static members inside namespaces and classes
+ * Added new `BoolPointer` class
+ * Improved support of function pointers to generate more standard C++ and to make it work with things like member function pointers
+ * Inserted hack to call `std::string.c_str()` when returned as `@ByRef java.lang.String`
+ * Multiplied checks for invalid `NULL` pointers
+ * Upgraded references of the Android NDK to version r5c, which now also works on Android 2.1 or older ([http://code.google.com/p/android/issues/detail?id=16008 android issue #16008])
+ * `Loader.load()` no longer requires a JVM that supports annotations to function properly
+
 ===April 22, 2011===
  * `Generator` now outputs `#include <stdio.h>`, the lack of which prevents Android NDK under Windows from compiling
 

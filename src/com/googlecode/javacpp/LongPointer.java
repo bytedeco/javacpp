@@ -29,7 +29,7 @@ import java.nio.LongBuffer;
 public class LongPointer extends Pointer {
     public LongPointer(long ... array) {
         this(array.length);
-        asBuffer(array.length).put(array);
+        asBuffer().put(array);
     }
     public LongPointer(int size) { allocateArray(size); }
     public LongPointer(Pointer p) { super(p); }
@@ -38,11 +38,16 @@ public class LongPointer extends Pointer {
     @Override public LongPointer position(int position) {
         return (LongPointer)super.position(position);
     }
+    @Override public LongPointer capacity(int capacity) {
+        return (LongPointer)super.capacity(capacity);
+    }
 
-    public native long get();
-    public native LongPointer put(long l);
+    public long get() { return get(0); }
+    public native long get(int i);
+    public LongPointer put(long l) { return put(0, l); }
+    public native LongPointer put(int i, long l);
 
-    @Override public final LongBuffer asBuffer(int capacity) {
-        return asByteBuffer(capacity).asLongBuffer();
+    @Override public final LongBuffer asBuffer() {
+        return asByteBuffer().asLongBuffer();
     }
 }

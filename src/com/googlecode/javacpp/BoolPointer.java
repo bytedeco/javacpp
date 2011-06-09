@@ -20,34 +20,24 @@
 
 package com.googlecode.javacpp;
 
-import java.nio.DoubleBuffer;
+import com.googlecode.javacpp.annotation.Name;
 
 /**
  *
  * @author Samuel Audet
  */
-public class DoublePointer extends Pointer {
-    public DoublePointer(double ... array) {
-        this(array.length);
-        asBuffer().put(array);
-    }
-    public DoublePointer(int size) { allocateArray(size); }
-    public DoublePointer(Pointer p) { super(p); }
+@Name("bool")
+public class BoolPointer extends Pointer {
+    public BoolPointer(int size) { allocateArray(size); }
+    public BoolPointer(Pointer p) { super(p); }
     private native void allocateArray(int size);
 
-    @Override public DoublePointer position(int position) {
-        return (DoublePointer)super.position(position);
-    }
-    @Override public DoublePointer capacity(int capacity) {
-        return (DoublePointer)super.capacity(capacity);
+    @Override public BoolPointer position(int position) {
+        return (BoolPointer)super.position(position);
     }
 
-    public double get() { return get(0); }
-    public native double get(int i);
-    public DoublePointer put(double d) { return put(0, d); }
-    public native DoublePointer put(int i, double d);
-
-    @Override public final DoubleBuffer asBuffer() {
-        return asByteBuffer().asDoubleBuffer();
-    }
+    public boolean get() { return get(0); }
+    public native boolean get(int i);
+    public BoolPointer put(boolean b) { return put(0, b); }
+    public native BoolPointer put(int i, boolean b);
 }

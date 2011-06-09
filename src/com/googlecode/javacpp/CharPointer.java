@@ -34,7 +34,7 @@ public class CharPointer extends Pointer {
     }
     public CharPointer(char ... array) {
         this(array.length);
-        asBuffer(array.length).put(array);
+        asBuffer().put(array);
     }
     public CharPointer(int size) { allocateArray(size); }
     public CharPointer(Pointer p) { super(p); }
@@ -42,6 +42,9 @@ public class CharPointer extends Pointer {
 
     @Override public CharPointer position(int position) {
         return (CharPointer)super.position(position);
+    }
+    @Override public CharPointer capacity(int capacity) {
+        return (CharPointer)super.capacity(capacity);
     }
 
     public char[] getStringChars() {
@@ -61,14 +64,17 @@ public class CharPointer extends Pointer {
     }
     public CharPointer putString(String s) {
         char[] chars = s.toCharArray();
-        asBuffer(chars.length+1).put(chars).put((char)0);
+        //capacity(chars.length+1);
+        asBuffer().put(chars).put((char)0);
         return this;
     }
 
-    public native char get();
-    public native CharPointer put(char c);
+    public char get() { return get(0); }
+    public native char get(int i);
+    public CharPointer put(char c) { return put(0, c); }
+    public native CharPointer put(int i, char c);
 
-    @Override public final CharBuffer asBuffer(int capacity) {
-        return asByteBuffer(capacity).asCharBuffer();
+    @Override public final CharBuffer asBuffer() {
+        return asByteBuffer().asCharBuffer();
     }
 }

@@ -102,11 +102,16 @@ public class Loader {
         cls.getAnnotation(com.googlecode.javacpp.annotation.Properties.class);
         Platform[] platforms;
         if (classProperties == null) {
-            Platform platform = cls.getAnnotation(Platform.class);
-            if (platform == null) {
+            try {
+                Platform platform = cls.getAnnotation(Platform.class);
+                if (platform == null) {
+                    return;
+                } else {
+                    platforms = new Platform[] { platform };
+                }
+            } catch (Throwable t) {
+                System.err.println("Could not append properties for " + cls + ": " + t);
                 return;
-            } else {
-                platforms = new Platform[] { platform };
             }
         } else {
             platforms = classProperties.value();

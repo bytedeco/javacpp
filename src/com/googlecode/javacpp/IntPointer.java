@@ -34,7 +34,7 @@ public class IntPointer extends Pointer {
     }
     public IntPointer(int ... array) {
         this(array.length);
-        asBuffer(array.length).put(array);
+        asBuffer().put(array);
     }
     public IntPointer(int size) { allocateArray(size); }
     public IntPointer(Pointer p) { super(p); }
@@ -42,6 +42,9 @@ public class IntPointer extends Pointer {
 
     @Override public IntPointer position(int position) {
         return (IntPointer)super.position(position);
+    }
+    @Override public IntPointer capacity(int capacity) {
+        return (IntPointer)super.capacity(capacity);
     }
 
     public int[] getStringCodePoints() {
@@ -65,14 +68,17 @@ public class IntPointer extends Pointer {
         for (int i = 0; i < codePoints.length; i++) {
             codePoints[i] = s.codePointAt(i);
         }
-        asBuffer(codePoints.length+1).put(codePoints).put((int)0);
+        //capacity(codePoints.length+1);
+        asBuffer().put(codePoints).put((int)0);
         return this;
     }
 
-    public native int get();
-    public native IntPointer put(int i);
+    public int get() { return get(0); }
+    public native int get(int i);
+    public IntPointer put(int j) { return put(0, j); }
+    public native IntPointer put(int i, int j);
 
-    @Override public final IntBuffer asBuffer(int capacity) {
-        return asByteBuffer(capacity).asIntBuffer();
+    @Override public final IntBuffer asBuffer() {
+        return asByteBuffer().asIntBuffer();
     }
 }

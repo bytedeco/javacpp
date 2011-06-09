@@ -10,7 +10,9 @@ import java.lang.annotation.Target;
  * @author Samuel Audet
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE, ElementType.METHOD})
-public @interface Namespace {
+@Target({ElementType.METHOD, ElementType.PARAMETER})
+public @interface Adapter {
     String value();
+    boolean out() default false;
+    int argc() default 1;
 }

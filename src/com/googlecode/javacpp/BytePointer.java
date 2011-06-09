@@ -40,7 +40,7 @@ public class BytePointer extends Pointer {
     }
     public BytePointer(byte ... array) {
         this(array.length);
-        asBuffer(array.length).put(array);
+        asBuffer().put(array);
     }
     public BytePointer(int size) { allocateArray(size); }
     public BytePointer(Pointer p) { super(p); }
@@ -48,6 +48,9 @@ public class BytePointer extends Pointer {
 
     @Override public BytePointer position(int position) {
         return (BytePointer)super.position(position);
+    }
+    @Override public BytePointer capacity(int capacity) {
+        return (BytePointer)super.capacity(capacity);
     }
 
     public byte[] getStringBytes() {
@@ -73,19 +76,23 @@ public class BytePointer extends Pointer {
     public BytePointer putString(String s, String charsetName)
             throws UnsupportedEncodingException {
         byte[] bytes = s.getBytes(charsetName);
-        asBuffer(bytes.length+1).put(bytes).put((byte)0);
+        //capacity(bytes.length+1);
+        asBuffer().put(bytes).put((byte)0);
         return this;
     }
     public BytePointer putString(String s) {
         byte[] bytes = s.getBytes();
-        asBuffer(bytes.length+1).put(bytes).put((byte)0);
+        //capacity(bytes.length+1);
+        asBuffer().put(bytes).put((byte)0);
         return this;
     }
 
-    public native byte get();
-    public native BytePointer put(byte b);
+    public byte get() { return get(0); }
+    public native byte get(int i);
+    public BytePointer put(byte b) { return put(0, b); }
+    public native BytePointer put(int i, byte b);
 
-    @Override public final ByteBuffer asBuffer(int capacity) {
-        return (ByteBuffer)super.asBuffer(capacity);
+    @Override public final ByteBuffer asBuffer() {
+        return (ByteBuffer)super.asBuffer();
     }
 }

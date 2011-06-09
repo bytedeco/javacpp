@@ -29,7 +29,7 @@ import java.nio.ShortBuffer;
 public class ShortPointer extends Pointer {
     public ShortPointer(short ... array) {
         this(array.length);
-        asBuffer(array.length).put(array);
+        asBuffer().put(array);
     }
     public ShortPointer(int size) { allocateArray(size); }
     public ShortPointer(Pointer p) { super(p); }
@@ -38,11 +38,16 @@ public class ShortPointer extends Pointer {
     @Override public ShortPointer position(int position) {
         return (ShortPointer)super.position(position);
     }
+    @Override public ShortPointer capacity(int capacity) {
+        return (ShortPointer)super.capacity(capacity);
+    }
 
-    public native short get();
-    public native ShortPointer put(short s);
+    public short get() { return get(0); }
+    public native short get(int i);
+    public ShortPointer put(short s) { return put(0, s); }
+    public native ShortPointer put(int i, short s);
 
-    @Override public final ShortBuffer asBuffer(int capacity) {
-        return asByteBuffer(capacity).asShortBuffer();
+    @Override public final ShortBuffer asBuffer() {
+        return asByteBuffer().asShortBuffer();
     }
 }

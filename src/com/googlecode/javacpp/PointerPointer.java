@@ -100,6 +100,8 @@ public class PointerPointer extends Pointer {
         return put(pointerArray);
     }
 
-    public native Pointer get();
-    public native PointerPointer put(Pointer p);
+    public Pointer get() { return get(0); }
+    public native Pointer get(int i);
+    public PointerPointer put(Pointer p) { return put(0, p); }
+    public native PointerPointer put(int i, Pointer p);
 }

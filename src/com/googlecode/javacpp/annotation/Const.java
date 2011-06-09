@@ -10,7 +10,5 @@ import java.lang.annotation.Target;
  * @author Samuel Audet
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE, ElementType.METHOD})
-public @interface Namespace {
-    String value();
-}
+@Target({ElementType.METHOD, ElementType.PARAMETER})
+public @interface Const { }
