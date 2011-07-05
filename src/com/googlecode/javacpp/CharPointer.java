@@ -21,7 +21,6 @@
 package com.googlecode.javacpp;
 
 import java.nio.CharBuffer;
-import java.util.Arrays;
 
 /**
  *
@@ -54,10 +53,14 @@ public class CharPointer extends Pointer {
         while ((buffer[i] = position(j).get()) != 0) {
             i++; j++;
             if (i >= buffer.length) {
-                buffer = Arrays.copyOf(buffer, 2*buffer.length);
+                char[] newbuffer = new char[2*buffer.length];
+                System.arraycopy(buffer, 0, newbuffer, 0, buffer.length);
+                buffer = newbuffer;
             }
         }
-        return Arrays.copyOf(buffer, i);
+        char[] newbuffer = new char[i];
+        System.arraycopy(buffer, 0, newbuffer, 0, i);
+        return newbuffer;
     }
     public String getString() {
         return new String(getStringChars());

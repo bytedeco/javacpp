@@ -33,14 +33,15 @@ import com.googlecode.javacpp.annotation.Opaque;
  */
 @Opaque public class Pointer {
     public Pointer() {
-        // Make sure out top enclosing class is initialized and the
-        // associated native loaded. This code is actually quite efficient.
+        // Make sure our top enclosing class is initialized and the
+        // associated native library loaded. This code is actually quite efficient,
+        // but it still does not cover all corner cases...
 //        Class cls = getClass();
 //        String className = cls.getName();
 //        int topIndex = className.indexOf('$');
-//        if (topIndex > 0 && Tools.loadedLibraries.
+//        if (topIndex > 0 && Loader.loadedLibraries.
 //                get(className.substring(0, topIndex)) == null) {
-//            Tools.load(cls);
+//            Loader.load(cls);
 //        }
     }
     public Pointer(Pointer p) {
@@ -65,7 +66,7 @@ import com.googlecode.javacpp.annotation.Opaque;
         void deallocate();
     }
 
-    static class ReferenceDeallocator extends DeallocatorReference implements Deallocator {
+    private static class ReferenceDeallocator extends DeallocatorReference implements Deallocator {
         ReferenceDeallocator(Pointer p, long allocatedAddress, long deallocatorAddress) {
             super(p, null);
             this.deallocator = this;
@@ -88,7 +89,7 @@ import com.googlecode.javacpp.annotation.Opaque;
         private native void deallocate(long allocatedAddress, long deallocatorAddress);
     }
 
-    static class DeallocatorReference extends PhantomReference<Pointer> {
+    private static class DeallocatorReference extends PhantomReference<Pointer> {
         DeallocatorReference(Pointer p, Deallocator deallocator) {
             super(p, referenceQueue);
             this.deallocator = deallocator;
@@ -98,28 +99,32 @@ import com.googlecode.javacpp.annotation.Opaque;
         DeallocatorReference prev = null, next = null;
         Deallocator deallocator;
 
-        synchronized final void add() {
-            if (head == null) {
-                head = this;
-            } else {
-                next = head;
-                next.prev = head = this;
+        final void add() {
+            synchronized (DeallocatorReference.class) {
+                if (head == null) {
+                    head = this;
+                } else {
+                    next = head;
+                    next.prev = head = this;
+                }
             }
         }
 
-        synchronized final void remove() {
-            if (prev == this && next == this) {
-                return;
+        final void remove() {
+            synchronized (DeallocatorReference.class) {
+                if (prev == this && next == this) {
+                    return;
+                }
+                if (prev == null) {
+                    head = next;
+                } else {
+                    prev.next = next;
+                }
+                if (next != null) {
+                    next.prev = prev;
+                }
+                prev = next = this;
             }
-            if (prev == null) {
-                head = next;
-            } else {
-                prev.next = next;
-            }
-            if (next != null) {
-                next.prev = prev;
-            }
-            prev = next = this;
         }
 
         @Override public void clear() {
@@ -128,7 +133,7 @@ import com.googlecode.javacpp.annotation.Opaque;
         }
     }
 
-    static final ReferenceQueue<Pointer> referenceQueue = new ReferenceQueue<Pointer>();
+    private static final ReferenceQueue<Pointer> referenceQueue = new ReferenceQueue<Pointer>();
 
     protected long address;
     protected int position, capacity;

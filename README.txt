@@ -162,7 +162,7 @@ java -jar libs/javacpp.jar -classpath bin/ -classpath bin/classes/ -d libs/armea
 -properties android-arm -Dplatform.root=<path to android-ndk-r5c> \
 -Dcompiler.path=<path to arm-linux-androideabi-g++> <class names>
 }}}
-Without a doubt, you should definitely add this to your build files, such as `build.xml` or `.project`.
+And to make everything automatic, we may insert that command into, for example, the Ant `build.xml` file or the Eclipse `.project` file as a [http://help.eclipse.org/helios/index.jsp?topic=/org.eclipse.platform.doc.user/gettingStarted/qs-96_non_ant_pjs.htm Non-Ant project builder].
 
 
 ==Acknowledgments==
@@ -170,6 +170,12 @@ I am currently an active member of the Okutomi & Tanaka Laboratory, Tokyo Instit
 
 
 ==Changes==
+===July 5, 2011===
+ * `Generator` now lets `get()/put()` (or the `ValueGetter/ValueSetter` annotated) methods use non-integer indices for the `Index` annotation
+ * Removed calls to `Arrays.copyOf()` inside `getString*()` methods so they may work on Android as well
+ * Fixed race condition that could occur in the deallocation code of `Pointer` due to incorrect synchronization
+ * `platform.root` now defaults to the current directory
+
 ===June 10, 2011===
  * New `Adapter` annotation that uses C++ classes such as `VectorAdapter`, which can let us use Java arrays or `Pointer` objects in place of C++ vector objects by mapping types such as `vector<int>` to `@Adapter("VectorAdapter<int>") int[]` or `@Adapter("VectorAdapter<int>") IntPointer`
  * Added new `Pointer.capacity` field to keep track of allocated size for arrays, needed by the `Adapter` annotation

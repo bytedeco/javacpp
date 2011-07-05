@@ -21,7 +21,6 @@
 package com.googlecode.javacpp;
 
 import java.nio.IntBuffer;
-import java.util.Arrays;
 
 /**
  *
@@ -54,10 +53,14 @@ public class IntPointer extends Pointer {
         while ((buffer[i] = position(j).get()) != 0) {
             i++; j++;
             if (i >= buffer.length) {
-                buffer = Arrays.copyOf(buffer, 2*buffer.length);
+                int[] newbuffer = new int[2*buffer.length];
+                System.arraycopy(buffer, 0, newbuffer, 0, buffer.length);
+                buffer = newbuffer;
             }
         }
-        return Arrays.copyOf(buffer, i);
+        int[] newbuffer = new int[i];
+        System.arraycopy(buffer, 0, newbuffer, 0, i);
+        return newbuffer;
     }
     public String getString() {
         int[] codePoints = getStringCodePoints();

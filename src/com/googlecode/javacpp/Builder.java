@@ -86,12 +86,16 @@ public class Builder {
 
         String pathSeparator = properties.getProperty("path.separator");
         String platformRoot  = properties.getProperty("platform.root");
-        if (platformRoot != null && !platformRoot.endsWith(File.separator)) {
+        if (platformRoot == null || platformRoot.length() == 0) {
+            platformRoot = ".";
+        }
+        if (!platformRoot.endsWith(File.separator)) {
             platformRoot += File.separator;
         }
 
         String compilerPath = properties.getProperty("compiler.path");
-        if (platformRoot != null && !new File(compilerPath).isAbsolute()) {
+        if (platformRoot != null && !new File(compilerPath).isAbsolute() &&
+                new File(platformRoot + compilerPath).exists()) {
             compilerPath = platformRoot + compilerPath;
         }
         command.add(compilerPath);

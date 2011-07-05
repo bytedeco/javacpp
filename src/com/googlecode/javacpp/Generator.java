@@ -846,7 +846,7 @@ public class Generator implements Closeable {
         for (int j = skipParameters; j < methodInfo.dim; j++) {
             // print array indices to access array members, or whatever
             // the C++ operator does with them when the Index annotation is present
-            out.print("[p" + j + "]");
+            out.print(methodInfo.parameterTypes[j].isPrimitive() ? "[p" + j + "]" : "[pointer" + j + "]");
         }
         if (methodInfo.memberName.length > 1) {
             out.print(methodInfo.memberName[1]);
@@ -1349,14 +1349,14 @@ public class Generator implements Closeable {
         boolean canBeGetter =  info.returnType != void.class;
         boolean canBeSetter = (info.returnType == void.class ||
                 info.returnType == info.cls) && info.parameterTypes.length > 0;
-        for (int j = 0; j < info.parameterTypes.length; j++) {
-            if (info.parameterTypes[j] != int.class && info.parameterTypes[j] != long.class) {
-                canBeGetter = false;
-                if (j < info.parameterTypes.length-1) {
-                    canBeSetter = false;
-                }
-            }
-        }
+//        for (int j = 0; j < info.parameterTypes.length; j++) {
+//            if (info.parameterTypes[j] != int.class && info.parameterTypes[j] != long.class) {
+//                canBeGetter = false;
+//                if (j < info.parameterTypes.length-1) {
+//                    canBeSetter = false;
+//                }
+//            }
+//        }
         boolean canBeAllocator = !Modifier.isStatic(info.modifiers) &&
                 info.returnType == void.class;
         boolean canBeArrayAllocator = canBeAllocator && info.parameterTypes.length == 1 &&

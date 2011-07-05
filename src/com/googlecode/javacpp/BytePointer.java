@@ -22,7 +22,6 @@ package com.googlecode.javacpp;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 
 /**
  *
@@ -60,10 +59,14 @@ public class BytePointer extends Pointer {
         while ((buffer[i] = position(j).get()) != 0) {
             i++; j++;
             if (i >= buffer.length) {
-                buffer = Arrays.copyOf(buffer, 2*buffer.length);
+                byte[] newbuffer = new byte[2*buffer.length];
+                System.arraycopy(buffer, 0, newbuffer, 0, buffer.length);
+                buffer = newbuffer;
             }
         }
-        return Arrays.copyOf(buffer, i);
+        byte[] newbuffer = new byte[i];
+        System.arraycopy(buffer, 0, newbuffer, 0, i);
+        return newbuffer;
     }
     public String getString(String charsetName)
             throws UnsupportedEncodingException {
