@@ -41,6 +41,15 @@ public class BytePointer extends Pointer {
         this(array.length);
         asBuffer().put(array);
     }
+    public BytePointer(ByteBuffer buffer) {
+        super(buffer);
+        if (buffer.hasArray()) {
+            byte[] array = buffer.array();
+            allocateArray(array.length);
+            asBuffer().put(array);
+            position(buffer.position());
+        }
+    }
     public BytePointer(int size) { allocateArray(size); }
     public BytePointer(Pointer p) { super(p); }
     private native void allocateArray(int size);

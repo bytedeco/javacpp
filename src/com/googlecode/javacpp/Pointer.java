@@ -22,6 +22,7 @@ package com.googlecode.javacpp;
 
 import java.lang.ref.PhantomReference;
 import java.lang.ref.ReferenceQueue;
+import java.lang.reflect.Field;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -53,6 +54,30 @@ import com.googlecode.javacpp.annotation.Opaque;
             address = p.address;
             position = p.position;
             capacity = p.capacity;
+        }
+    }
+
+    private static final Field bufferAddressField;
+    static {
+        Field f = null;
+        try {
+            f = Buffer.class.getDeclaredField("address");
+            f.setAccessible(true);
+        } catch (NoSuchFieldException e) { }
+        bufferAddressField = f;
+    }
+
+    public Pointer(Buffer b) {
+        if (b == null || b.hasArray()) {
+            address = 0;
+            position = 0;
+            capacity = 0;
+        } else {
+            try {
+                address = bufferAddressField.getLong(b);
+            } catch (IllegalAccessException e) { }
+            position = b.position();
+            capacity = b.capacity();
         }
     }
 

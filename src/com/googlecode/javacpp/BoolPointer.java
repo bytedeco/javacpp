@@ -20,6 +20,7 @@
 
 package com.googlecode.javacpp;
 
+import com.googlecode.javacpp.annotation.Cast;
 import com.googlecode.javacpp.annotation.Name;
 
 /**
@@ -39,5 +40,5 @@ public class BoolPointer extends Pointer {
     public boolean get() { return get(0); }
     public native boolean get(int i);
     public BoolPointer put(boolean b) { return put(0, b); }
-    public native BoolPointer put(int i, boolean b);
+    public native BoolPointer put(int i, @Cast("bool") boolean b);
 }

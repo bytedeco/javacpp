@@ -20,6 +20,7 @@
 
 package com.googlecode.javacpp;
 
+import com.googlecode.javacpp.annotation.Cast;
 import com.googlecode.javacpp.annotation.Name;
 
 /**
@@ -39,5 +40,5 @@ public class CLongPointer extends Pointer {
     public long get() { return get(0); }
     public native long get(int i);
     public CLongPointer put(long l) { return put(0, l); }
-    public native CLongPointer put(int i, long l);
+    public native CLongPointer put(int i, @Cast("long") long l);
 }

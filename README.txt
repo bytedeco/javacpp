@@ -6,17 +6,17 @@ JavaCPP provides efficient access to native C++ inside Java, not unlike the way 
 
 ==Required Software==
 To use JavaCPP, you will need to download and install the following software:
- * An implementation of Java SE 6
-  * OpenJDK 6  http://openjdk.java.net/install/  or
-  * Sun JDK 6  http://www.oracle.com/technetwork/java/javase/downloads/  or
-  * IBM JDK 6  http://www.ibm.com/developerworks/java/jdk/  or
-  * Java SE 6 for Mac OS X  http://developer.apple.com/java/  etc.
+ * An implementation of Java SE 6 or 7
+  * OpenJDK  http://openjdk.java.net/install/  or
+  * Sun JDK  http://www.oracle.com/technetwork/java/javase/downloads/  or
+  * IBM JDK  http://www.ibm.com/developerworks/java/jdk/  or
+  * Java SE for Mac OS X  http://developer.apple.com/java/  etc.
  * A C++ compiler, out of which these have been tested
   * GNU C/C++ Compiler (Linux, Mac OS X, etc.)  http://gcc.gnu.org/
   * Microsoft C/C++ Compiler  http://msdn.microsoft.com/
 
 To produce binary files for Android, you will also have to install:
- * Android NDK r5c  http://developer.android.com/sdk/ndk/
+ * Android NDK r6b  http://developer.android.com/sdk/ndk/
 
 To modify the source code, please note that the project files were created for:
  * NetBeans 6.9  http://www.netbeans.org/downloads/
@@ -25,43 +25,51 @@ Please feel free to ask questions on [http://groups.google.com/group/javacpp-pro
 
 
 ==Key Use Cases==
-To demonstrate its ease of use, imagine we had a C++ function that took a `vector<void*>` as argument. To get the job done with JavaCPP, we could easily define a bare-bones class such as this one (although having an IDE generate that code for us would be even better):
+To demonstrate its relative ease of use even in the face of complex data types, imagine we had a C++ function that took a `vector<vector<void*> >` as argument. To get the job done with JavaCPP, we could easily define a bare-bones class such as this one (although having an IDE generate that code for us would be even better):
 
 {{{
 import com.googlecode.javacpp.*;
 import com.googlecode.javacpp.annotation.*;
 
 @Platform(include="<vector>")
-@Namespace("std")
 public class VectorTest {
-    static { Loader.load(); }
 
-    @Name("vector<void*>")
-    public static class PointerVector extends Pointer {
-        public PointerVector()       { allocate();  }
-        public PointerVector(long n) { allocate(n); }
-        public PointerVector(Pointer p) { super(p); } // this = (vector<void*>*)p
-        private native void allocate();       // this = new std::vector<void*>()
-        private native void allocate(long n); // this = new std::vector<void*>(n)
+    @Name("std::vector<std::vector<void*> >") @Index
+    public static class PointerVectorVector extends Pointer {
+        static { Loader.load(); }
+        public PointerVectorVector()       { allocate();  }
+        public PointerVectorVector(long n) { allocate(n); }
+        public PointerVectorVector(Pointer p) { super(p); } // this = (vector<vector<void*> >*)p
+        private native void allocate();                  // this = new vector<vector<void*> >()
+        private native void allocate(long n);            // this = new vector<vector<void*> >(n)
         @Name("operator=")
-        public native @ByRef PointerVector copy(@ByRef PointerVector x);
+        public native @ByRef PointerVectorVector copy(@ByRef PointerVectorVector x);
+
+        @Name("operator[]")
+        public native @Adapter("VectorAdapter<void*>") PointerPointer get(long n);
+        public native @Adapter("VectorAdapter<void*>") PointerPointer at(long n);
 
         public native long size();
         public native @Cast("bool") boolean empty();
+        public native void resize(long n);
+        public native @Index(1) long size(long i);
+        public native @Index(1) @Cast("bool") boolean empty(long i);
+        public native @Index(1) void resize(long i, long n);
 
-        @Name("operator[]")
-        public native @ByRef PointerPointer get(long n);
-        public native @ByRef PointerPointer at(long n);
+        // These two depend on the class-level @Index annotation.
+        public native Pointer get(long i, long j);         // return this[i][j]
+        public native void put(long i, long j, Pointer p); // this[i][j] = p
     }
 
     public static void main(String[] args) {
-        PointerVector v = new PointerVector(42);
+        PointerVectorVector v = new PointerVectorVector(13);
+        v.resize(0, 42); // v[0].resize(42)
         Pointer p = new Pointer() { { address = 0xDEADBEEFL; } };
-        v.get(0).put(p);
+        v.put(0, 0, p);  // v[0][0] = p
 
-        PointerVector v2 = new PointerVector().copy(v);
-        Pointer p2 = v2.at(0).get();
-        System.out.println(v2.size() + "  " + p2);
+        PointerVectorVector v2 = new PointerVectorVector().copy(v);
+        Pointer p2 = v2.get(0).get(); // p2 = *(&v[0][0])
+        System.out.println(v2.size() + " " + v2.size(0) + "  " + p2);
 
         v2.at(42);
     }
@@ -81,10 +89,10 @@ g++ -I/usr/lib/jvm/java-1.6.0-openjdk-1.6.0.0.x86_64/include
 -shared -s -o /home/saudet/workspace/linux-x86_64/libjniVectorTest.so
 
 [saudet@nemesis workspace]$ java -cp javacpp.jar:. VectorTest
-42  com.googlecode.javacpp.Pointer[address=0xdeadbeef,position=0,capacity=0,deallocator=null]
+13 42  com.googlecode.javacpp.Pointer[address=0xdeadbeef,position=0,capacity=0,deallocator=null]
 Exception in thread "main" java.lang.RuntimeException: vector::_M_range_check
-	at VectorTest$PointerVector.at(Native Method)
-	at VectorTest.main(VectorTest.java:35)
+	at VectorTest$PointerVectorVector.at(Native Method)
+	at VectorTest.main(VectorTest.java:44)
 }}}
 
 Other times, we may wish to code in C++ for performance reasons. Suppose our profiler had identified that a method named `Processor.process()` took 90% of the program's execution time:
@@ -159,7 +167,7 @@ Inside the directory of the Android project:
  # Run this command to produce the `*.so` library files in `libs/armeabi/`:
 {{{
 java -jar libs/javacpp.jar -classpath bin/ -classpath bin/classes/ -d libs/armeabi/ \
--properties android-arm -Dplatform.root=<path to android-ndk-r5c> \
+-properties android-arm -Dplatform.root=<path to android-ndk-r6b> \
 -Dcompiler.path=<path to arm-linux-androideabi-g++> <class names>
 }}}
 And to make everything automatic, we may insert that command into, for example, the Ant `build.xml` file or the Eclipse `.project` file as a [http://help.eclipse.org/helios/index.jsp?topic=/org.eclipse.platform.doc.user/gettingStarted/qs-96_non_ant_pjs.htm Non-Ant project builder].
@@ -170,6 +178,13 @@ I am currently an active member of the Okutomi & Tanaka Laboratory, Tokyo Instit
 
 
 ==Changes==
+===October 1, 2011===
+ * Changed default option flag "/MT" to "/MD" (and a few others that Visual Studio uses by default) inside `windows-x86.properties` and `windows-x86_64.properties` because `std::vector`, `VectorAdapter` and C++ memory allocation in general does not work well with static runtime libraries across DLLs under Windows Vista and Windows 7 for some reason, and because Microsoft fixed the manifest file insanity starting with Visual C++ 2010
+ * `Builder` now searches for `jni.h` and `jni_md.h` inside `/System/Library/Frameworks/JavaVM.framework/Headers/` if not found inside `java.home`, as with Mac OS X Lion (issue #2)
+ * Upgraded references of the Android NDK to version r6b
+ * Fixed a few potential pitfalls inside `Generator`
+ * Added hack to let `*Pointer` classes with a corresponding `*Buffer` class have constructors for them
+
 ===July 5, 2011===
  * `Generator` now lets `get()/put()` (or the `ValueGetter/ValueSetter` annotated) methods use non-integer indices for the `Index` annotation
  * Removed calls to `Arrays.copyOf()` inside `getString*()` methods so they may work on Android as well

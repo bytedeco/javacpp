@@ -846,7 +846,8 @@ public class Generator implements Closeable {
         for (int j = skipParameters; j < methodInfo.dim; j++) {
             // print array indices to access array members, or whatever
             // the C++ operator does with them when the Index annotation is present
-            out.print(methodInfo.parameterTypes[j].isPrimitive() ? "[p" + j + "]" : "[pointer" + j + "]");
+            String cast = getParameterCast(methodInfo, j);
+            out.print("[" + cast + (methodInfo.parameterTypes[j].isPrimitive() ? "p" : "pointer") + j + "]");
         }
         if (methodInfo.memberName.length > 1) {
             out.print(methodInfo.memberName[1]);
@@ -1505,8 +1506,8 @@ public class Generator implements Closeable {
 
     public static String getParameterCast(MethodInformation methodInfo, int j) {
         String cast = getCast(methodInfo.parameterAnnotations[j], methodInfo.parameterTypes[j]);
-        if ((cast == null || cast.length() == 0) && methodInfo.pairedMethod != null &&
-                (methodInfo.valueSetter || methodInfo.memberSetter)) {
+        if ((cast == null || cast.length() == 0) && j == methodInfo.parameterTypes.length-1 &&
+                (methodInfo.valueSetter || methodInfo.memberSetter) && methodInfo.pairedMethod != null) {
             cast = getCast(methodInfo.pairedMethod.getAnnotations(), methodInfo.pairedMethod.getReturnType());
         }
         return cast;

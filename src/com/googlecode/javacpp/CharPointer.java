@@ -35,6 +35,15 @@ public class CharPointer extends Pointer {
         this(array.length);
         asBuffer().put(array);
     }
+    public CharPointer(CharBuffer buffer) {
+        super(buffer);
+        if (buffer.hasArray()) {
+            char[] array = buffer.array();
+            allocateArray(array.length);
+            asBuffer().put(array);
+            position(buffer.position());
+        }
+    }
     public CharPointer(int size) { allocateArray(size); }
     public CharPointer(Pointer p) { super(p); }
     private native void allocateArray(int size);

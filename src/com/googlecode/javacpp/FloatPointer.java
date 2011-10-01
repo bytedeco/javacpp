@@ -31,6 +31,15 @@ public class FloatPointer extends Pointer {
         this(array.length);
         asBuffer().put(array);
     }
+    public FloatPointer(FloatBuffer buffer) {
+        super(buffer);
+        if (buffer.hasArray()) {
+            float[] array = buffer.array();
+            allocateArray(array.length);
+            asBuffer().put(array);
+            position(buffer.position());
+        }
+    }
     public FloatPointer(int size) { allocateArray(size); }
     public FloatPointer(Pointer p) { super(p); }
     private native void allocateArray(int size);

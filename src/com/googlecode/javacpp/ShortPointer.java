@@ -31,6 +31,15 @@ public class ShortPointer extends Pointer {
         this(array.length);
         asBuffer().put(array);
     }
+    public ShortPointer(ShortBuffer buffer) {
+        super(buffer);
+        if (buffer.hasArray()) {
+            short[] array = buffer.array();
+            allocateArray(array.length);
+            asBuffer().put(array);
+            position(buffer.position());
+        }
+    }
     public ShortPointer(int size) { allocateArray(size); }
     public ShortPointer(Pointer p) { super(p); }
     private native void allocateArray(int size);

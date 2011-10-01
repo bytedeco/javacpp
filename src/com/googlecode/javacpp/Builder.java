@@ -68,6 +68,11 @@ public class Builder {
         }
         if (jnipath[0] != null && jnipath[0].equals(jnipath[1])) {
             jnipath[1] = null;
+        } else if (jnipath[0] == null) {
+            String macpath = "/System/Library/Frameworks/JavaVM.framework/Headers/";
+            if (new File(macpath).isDirectory()) {
+                jnipath[0] = macpath;
+            }
         }
         Loader.appendProperty(properties, "compiler.includepath", 
                 properties.getProperty("path.separator"), jnipath);

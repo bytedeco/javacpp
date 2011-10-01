@@ -20,6 +20,7 @@
 
 package com.googlecode.javacpp;
 
+import com.googlecode.javacpp.annotation.Cast;
 import com.googlecode.javacpp.annotation.Name;
 
 /**
@@ -39,5 +40,5 @@ public class SizeTPointer extends Pointer {
     public long get() { return get(0); }
     public native long get(int i);
     public SizeTPointer put(long s) { return put(0, s); }
-    public native SizeTPointer put(int i, long s);
+    public native SizeTPointer put(int i, @Cast("size_t") long s);
 }

@@ -31,6 +31,15 @@ public class LongPointer extends Pointer {
         this(array.length);
         asBuffer().put(array);
     }
+    public LongPointer(LongBuffer buffer) {
+        super(buffer);
+        if (buffer.hasArray()) {
+            long[] array = buffer.array();
+            allocateArray(array.length);
+            asBuffer().put(array);
+            position(buffer.position());
+        }
+    }
     public LongPointer(int size) { allocateArray(size); }
     public LongPointer(Pointer p) { super(p); }
     private native void allocateArray(int size);

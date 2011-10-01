@@ -35,6 +35,15 @@ public class IntPointer extends Pointer {
         this(array.length);
         asBuffer().put(array);
     }
+    public IntPointer(IntBuffer buffer) {
+        super(buffer);
+        if (buffer.hasArray()) {
+            int[] array = buffer.array();
+            allocateArray(array.length);
+            asBuffer().put(array);
+            position(buffer.position());
+        }
+    }
     public IntPointer(int size) { allocateArray(size); }
     public IntPointer(Pointer p) { super(p); }
     private native void allocateArray(int size);

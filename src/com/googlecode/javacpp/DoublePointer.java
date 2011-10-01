@@ -31,6 +31,15 @@ public class DoublePointer extends Pointer {
         this(array.length);
         asBuffer().put(array);
     }
+    public DoublePointer(DoubleBuffer buffer) {
+        super(buffer);
+        if (buffer.hasArray()) {
+            double[] array = buffer.array();
+            allocateArray(array.length);
+            asBuffer().put(array);
+            position(buffer.position());
+        }
+    }
     public DoublePointer(int size) { allocateArray(size); }
     public DoublePointer(Pointer p) { super(p); }
     private native void allocateArray(int size);
