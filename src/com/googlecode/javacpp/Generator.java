@@ -85,7 +85,7 @@ public class Generator implements Closeable {
         this.writer = writer;
     }
 
-    public static final String JNI_VERSION = "JNI_VERSION_1_4";
+    public static final String JNI_VERSION = "JNI_VERSION_1_6";
 
     private static final Logger logger = Logger.getLogger(Generator.class.getName());
 
@@ -180,7 +180,7 @@ public class Generator implements Closeable {
         out.println("    #define JNICALL __stdcall");
         out.println();
         out.println("    typedef int jint;");
-        out.println("    typedef __int64 jlong;");
+        out.println("    typedef long long jlong;");
         out.println("    typedef signed char jbyte;");
         out.println("#endif");
         out.println("#include <jni.h>");
@@ -289,10 +289,10 @@ public class Generator implements Closeable {
         out.println();
         out.println("template<class P, class T = P> class VectorAdapter {");
         out.println("public:");
-        out.println("    VectorAdapter(P* pointer, int capacity) : pointer(pointer), capacity(capacity),");
+        out.println("    VectorAdapter(P* pointer, typename std::vector<T>::size_type capacity) : pointer(pointer), capacity(capacity),");
         out.println("        vec2(pointer ? std::vector<T>(pointer, pointer + capacity) : std::vector<T>()), vec(vec2) { }");
         out.println("    VectorAdapter(const std::vector<T>& vec) : pointer(0), capacity(0), vec((std::vector<T>&)vec) { }");
-        out.println("    void assign(P* pointer, int capacity) {");
+        out.println("    void assign(P* pointer, typename std::vector<T>::size_type capacity) {");
         out.println("        this.pointer = pointer;");
         out.println("        this.capacity = capacity;");
         out.println("        vec.assign(pointer, pointer + capacity);");
@@ -312,7 +312,7 @@ public class Generator implements Closeable {
         out.println("    operator std::vector<T>&() { return vec; }");
         out.println("    operator std::vector<T>*() { return pointer ? &vec : 0; }");
         out.println("    P* pointer;");
-        out.println("    unsigned int capacity;");
+        out.println("    typename std::vector<T>::size_type capacity;");
         out.println("    std::vector<T> vec2;");
         out.println("    std::vector<T>& vec;");
         out.println("};");
@@ -519,6 +519,11 @@ public class Generator implements Closeable {
             }
             MethodInformation methodInfo = getMethodInformation(methods[i]);
             if (methodInfo == null) {
+                continue;
+            }
+            if (callbackAllocators[i] && functionMethod == null) {
+                logger.log(Level.WARNING, "No native call() method has been not declared in \"" +
+                        cls.getName() + "\". No code will be generated for callback allocator.");
                 continue;
             }
             String baseFunctionName = mangle(cls.getName()) + "_" + mangle(methodInfo.name);
@@ -869,6 +874,9 @@ public class Generator implements Closeable {
             } else if (FunctionPointer.class.isAssignableFrom(methodInfo.parameterTypes[j])) {
                 out.print(cast + "(pointer" + j + " == NULL ? NULL : pointer" + j + "->pointer)");
             } else if (passBy instanceof ByVal || passBy instanceof ByRef) {
+                if (cast.endsWith("&)")) {
+                    cast = cast.substring(0, cast.length()-2) + "*)";
+                }
                 out.print("*" + cast + "pointer" + j);
             } else if (passBy instanceof ByPtrPtr) {
                 out.print(cast + "&pointer" + j);
@@ -930,13 +938,13 @@ public class Generator implements Closeable {
                 boolean needInit = false;
                 if (adapter != null) {
                     out.println(indent + "rpointer = radapter;");
-                    out.println(indent + "int rcapacity = radapter.capacity;");
+                    out.println(indent + "jint rcapacity = (jint)radapter.capacity;");
                     out.println(indent + "jlong deallocator = ptr_to_jlong(&(" +
                             adapter.value() + "::deallocate));");
                     needInit = true;
                 } else if (returnBy instanceof ByVal ||
                         FunctionPointer.class.isAssignableFrom(methodInfo.returnType)) {
-                    out.println(indent + "int rcapacity = 1;");
+                    out.println(indent + "jint rcapacity = 1;");
                     out.println(indent + "jlong deallocator = ptr_to_jlong(&JavaCPP_" +
                             mangle(methodInfo.returnType.getName()) + "_deallocate);");
                     deallocators.register(methodInfo.returnType);
@@ -996,7 +1004,7 @@ public class Generator implements Closeable {
                     out.println(indent + "if (rpointer" + (j+k) + " != pointer" + (j+k) + ") {");
                     out.println(indent + "    jvalue args[3];");
                     out.println(indent + "    args[0].j = ptr_to_jlong(rpointer" + (j+k) + ");");
-                    out.println(indent + "    args[1].i = adapter" + j + ".capacity" + (k > 0 ? k + ";" : ";"));
+                    out.println(indent + "    args[1].i = (jint)adapter" + j + ".capacity" + (k > 0 ? k + ";" : ";"));
                     out.println(indent + "    args[2].j = ptr_to_jlong(&(" + adapter.value() + "::deallocate));");
                     out.println(indent + "    e->CallNonvirtualVoidMethodA(p" + j + ", JavaCPP_getClass(e, " +
                             jclasses.register(Pointer.class) + "), JavaCPP_initMethodID, args);");
@@ -1051,10 +1059,22 @@ public class Generator implements Closeable {
             returnVariable = "r";
         }
         String callbackReturnCast = getCast(callbackAnnotations, callbackReturnType);
+        Annotation returnBy = getBy(callbackAnnotations);
+        String[] returnTypeName = getCPPTypeName(callbackReturnType);
+        Adapter returnAdapter = getAdapter(callbackAnnotations);
+
         out.println("    JNIEnv* e;");
-        out.println("    if (JavaCPP_vm->AttachCurrentThread((void**)&e, NULL) != JNI_OK) {");
-        out.println("        fprintf(stderr, \"Could not attach the JavaVM to the current thread in callback for " + cls.getName() + ".\");");
-        out.println("        return" + (callbackReturnType == void.class ? ";" : " " + callbackReturnCast + "0;"));
+        out.println("    int needDetach = 0;");
+        out.println("    if (JavaCPP_vm->GetEnv((void**)&e, " + JNI_VERSION + ") != JNI_OK) {");
+        out.println("#ifdef _JavaVM");
+        out.println("        if (JavaCPP_vm->AttachCurrentThread(&e, NULL) != 0) {");
+        out.println("#else");
+        out.println("        if (JavaCPP_vm->AttachCurrentThread((void**)&e, NULL) != 0) {");
+        out.println("#endif");
+        out.println("            fprintf(stderr, \"Could not attach the JavaVM to the current thread in callback for " + cls.getName() + ".\");");
+        out.println("            return" + (callbackReturnType == void.class ? ";" : " " + callbackReturnCast + "0;"));
+        out.println("        }");
+        out.println("        needDetach = 1;");
         out.println("    }");
         if (callbackParameterTypes.length > 0) {
             out.println("    jvalue args[" + callbackParameterTypes.length + "];");
@@ -1070,7 +1090,7 @@ public class Generator implements Closeable {
 
                     if (adapter != null) {
                         out.println("    " + adapter.value() + " adapter" + j + "(p" + j + ");");
-                        out.println("    int capacity" + j + " = adapter" + j + ".capacity;");
+                        out.println("    jint capacity" + j + " = (jint)adapter" + j + ".capacity;");
                         out.println("    jlong deallocator" + j + " = ptr_to_jlong(&(" + adapter.value() + "::deallocate));");
                     }
 
@@ -1183,55 +1203,58 @@ public class Generator implements Closeable {
         }
 
         if (callbackReturnType != void.class) {
-            Annotation returnBy = getBy(callbackAnnotations);
-            String[] returnTypeName = getCPPTypeName(callbackReturnType);
-            Adapter adapter = getAdapter(callbackAnnotations);
+            if (Pointer.class.isAssignableFrom(callbackReturnType)) {
+                out.println("    " + returnTypeName[0] + " rpointer" + returnTypeName[1] + " = r == NULL ? NULL : (" +
+                        returnTypeName[0] + returnTypeName[1] + ")jlong_to_ptr(e->GetLongField(r, JavaCPP_addressFieldID));");
+                if (returnAdapter != null) {
+                    out.println("    jint rcapacity = r == NULL ? 0 : e->GetIntField(r, JavaCPP_capacityFieldID);");
+                }
+                if (!callbackReturnType.isAnnotationPresent(Opaque.class)) {
+                    out.println("    jint rposition = r == NULL ? 0 : e->GetIntField(r, JavaCPP_positionFieldID);");
+                    out.println("    rpointer += rposition;");
+                    if (returnAdapter != null) {
+                        out.println("    rcapacity -= rposition;");
+                    }
+                }
+//            } else if (callbackReturnType == String.class) {
+//                out.println("    " + returnTypeName + " rpointer = r == NULL ? NULL : e->GetStringUTFChars(r, NULL);");
+//                if (returnAdapter != null) {
+//                    out.println("    jint rcapacity = 0;");
+//                }
+            } else if (Buffer.class.isAssignableFrom(callbackReturnType)) {
+                out.println("    " + returnTypeName[0] + " rpointer" + returnTypeName[1] + " = r == NULL ? NULL : e->GetDirectBufferAddress(r);");
+                if (returnAdapter != null) {
+                    out.println("    jint rcapacity = r == NULL ? 0 : e->GetDirectBufferCapacity(r);");
+                }
+            } else if (!callbackReturnType.isPrimitive()) {
+                logger.log(Level.WARNING, "Callback \"" + callbackMethod + "\" has unsupported return type \"" +
+                        callbackReturnType.getCanonicalName() + "\". Compilation will most likely fail.");
+            }
+        }
 
+        out.println("    if (needDetach) {");
+        out.println("        if (JavaCPP_vm->DetachCurrentThread() != 0) {");
+        out.println("            fprintf(stderr, \"Could not deattach the JavaVM from the current thread in callback for " + cls.getName() + ".\");");
+        out.println("            return" + (callbackReturnType == void.class ? ";" : " " + callbackReturnCast + "0;"));
+        out.println("        }");
+        out.println("    }");
+
+        if (callbackReturnType != void.class) {
             if (callbackReturnType.isPrimitive()) {
                 out.println("    return " + callbackReturnCast + "r;");
-            } else {
-                if (Pointer.class.isAssignableFrom(callbackReturnType)) {
-                    out.println("    " + returnTypeName[0] + " rpointer" + returnTypeName[1] + " = r == NULL ? NULL : (" +
-                            returnTypeName[0] + returnTypeName[1] + ")jlong_to_ptr(e->GetLongField(r, JavaCPP_addressFieldID));");
-                    if (adapter != null) {
-                        out.println("    jint rcapacity = r == NULL ? 0 : e->GetIntField(r, JavaCPP_capacityFieldID);");
-                    }
-                    if (!callbackReturnType.isAnnotationPresent(Opaque.class)) {
-                        out.println("    jint rposition = r == NULL ? 0 : e->GetIntField(r, JavaCPP_positionFieldID);");
-                        out.println("    rpointer += rposition;");
-                        if (adapter != null) {
-                            out.println("    rcapacity -= rposition;");
-                        }
-                    }
-//                } else if (callbackReturnType == String.class) {
-//                    out.println("    " + returnTypeName + " rpointer = r == NULL ? NULL : e->GetStringUTFChars(r, NULL);");
-//                    if (adapter != null) {
-//                        out.println("    jint rcapacity = 0;");
-//                    }
-                } else if (Buffer.class.isAssignableFrom(callbackReturnType)) {
-                    out.println("    " + returnTypeName[0] + " rpointer" + returnTypeName[1] + " = r == NULL ? NULL : e->GetDirectBufferAddress(r);");
-                    if (adapter != null) {
-                        out.println("    jint rcapacity = r == NULL ? 0 : e->GetDirectBufferCapacity(r);");
-                    }
-                } else {
-                    logger.log(Level.WARNING, "Callback \"" + callbackMethod + "\" has unsupported return type \"" +
-                            callbackReturnType.getCanonicalName() + "\". Compilation will most likely fail.");
-                }
-
-                if (adapter != null) {
-                    out.println("    return " + adapter.value() + "(" + callbackReturnCast + "rpointer, rcapacity);");
-                } else if (FunctionPointer.class.isAssignableFrom(callbackReturnType)) {
-                    out.println("    return " + callbackReturnCast + "(rpointer == NULL ? NULL : rpointer->pointer);");
-                } else if (returnBy instanceof ByVal || returnBy instanceof ByRef) {
-                    out.println("    if (rpointer == NULL) {");
-                    out.println("        throw std::exception(\"Return pointer address is NULL.\");");
-                    out.println("    }");
-                    out.println("    return *" + callbackReturnCast + "rpointer;");
-                } else if (returnBy instanceof ByPtrPtr) {
-                    out.println("    return " + callbackReturnCast + "&rpointer;");
-                } else { // ByPtr || ByPtrRef
-                    out.println("    return " + callbackReturnCast + "rpointer;");
-                }
+            } else if (returnAdapter != null) {
+                out.println("    return " + returnAdapter.value() + "(" + callbackReturnCast + "rpointer, rcapacity);");
+            } else if (FunctionPointer.class.isAssignableFrom(callbackReturnType)) {
+                out.println("    return " + callbackReturnCast + "(rpointer == NULL ? NULL : rpointer->pointer);");
+            } else if (returnBy instanceof ByVal || returnBy instanceof ByRef) {
+                out.println("    if (rpointer == NULL) {");
+                out.println("        throw std::exception(\"Return pointer address is NULL.\");");
+                out.println("    }");
+                out.println("    return *" + callbackReturnCast + "rpointer;");
+            } else if (returnBy instanceof ByPtrPtr) {
+                out.println("    return " + callbackReturnCast + "&rpointer;");
+            } else { // ByPtr || ByPtrRef
+                out.println("    return " + callbackReturnCast + "rpointer;");
             }
         }
         out.println("}");
