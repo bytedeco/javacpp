@@ -334,22 +334,24 @@ public class Loader {
             if (tempFile != null) {
                 // ... and load it already!
                 String tempFilename = tempFile.getAbsolutePath();
-                System.load(tempFilename);
                 loadedLibraries.put(cls, tempFilename);
+                System.load(tempFilename);
                 return tempFilename;
             } else {
                 // throw new UnsatisfiedLinkError("Could not find library resource: " + resourceName);
                 // Try to load it via the system instead
-                System.loadLibrary(libname);
                 loadedLibraries.put(cls, libname);
+                System.loadLibrary(libname);
                 return libname;
             }
         } catch (UnsatisfiedLinkError e) {
+            loadedLibraries.remove(cls);
             if (tempFile != null) {
                 tempFile.delete();
             }
             throw e;
         } catch (IOException ex) {
+            loadedLibraries.remove(cls);
             if (tempFile != null) {
                 tempFile.delete();
             }

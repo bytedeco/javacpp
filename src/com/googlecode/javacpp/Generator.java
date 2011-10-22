@@ -93,7 +93,7 @@ public class Generator implements Closeable {
     private File file;
     private PrintWriter writer, out;
     private LinkedListRegister<String> functionDefinitions, functionPointers;
-    private LinkedListRegister<Class> deallocators, arrayDeallocators, jclasses;
+    private LinkedListRegister<Class> deallocators, arrayDeallocators, jclasses, jclassesInit;
     private HashMap<Class,LinkedList<String>> members;
 
     public static class LinkedListRegister<E> extends LinkedList<E> {
@@ -119,6 +119,7 @@ public class Generator implements Closeable {
         deallocators        = new LinkedListRegister<Class>();
         arrayDeallocators   = new LinkedListRegister<Class>();
         jclasses            = new LinkedListRegister<Class>();
+        jclassesInit        = new LinkedListRegister<Class>();
         members             = new HashMap<Class,LinkedList<String>>();
         if (doClasses(classes)) {
             // second pass with the real writer
@@ -251,7 +252,7 @@ public class Generator implements Closeable {
         out.println("static jfieldID JavaCPP_capacityFieldID = NULL;");
         out.println();
         out.println("static noinline jclass JavaCPP_getClass(JNIEnv* e, int i) {");
-        out.println("    if (JavaCPP_classes[i] == NULL) {");
+        out.println("    if (JavaCPP_classes[i] == NULL && e->PushLocalFrame(1) == 0) {");
         out.println("        jclass c = e->FindClass(JavaCPP_classNames[i]);");
         out.println("        if (c == NULL || e->ExceptionCheck()) {");
         out.println("            fprintf(stderr, \"Error loading class %s.\", JavaCPP_classNames[i]);");
@@ -262,6 +263,7 @@ public class Generator implements Closeable {
         out.println("            fprintf(stderr, \"Error creating global reference of class %s.\", JavaCPP_classNames[i]);");
         out.println("            return NULL;");
         out.println("        }");
+        out.println("        e->PopLocalFrame(NULL);");
         out.println("    }");
         out.println("    return JavaCPP_classes[i];");
         out.println("}");
@@ -320,12 +322,15 @@ public class Generator implements Closeable {
         out.println("extern \"C\" {");
         out.println();
         out.println("JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved) {");
-        out.println("    JavaCPP_vm = vm;");
         out.println("    JNIEnv* e;");
         out.println("    if (vm->GetEnv((void**)&e, " + JNI_VERSION + ") != JNI_OK) {");
         out.println("        fprintf(stderr, \"Could not get JNIEnv for " + JNI_VERSION + " inside JNI_OnLoad().\");");
         out.println("        return 0;");
         out.println("    }");
+        out.println("    if (JavaCPP_vm == vm) {");
+        out.println("        return e->GetVersion();");
+        out.println("    }");
+        out.println("    JavaCPP_vm = vm;");
         out.println("    const char* members[" + jclasses.size() + "][" + maxMemberSize + "] = {");
         classIterator = jclasses.iterator();
         while (classIterator.hasNext()) {
@@ -426,6 +431,18 @@ public class Generator implements Closeable {
         out.println("        fprintf(stderr, \"Error getting capacity field ID of Pointer class.\");");
         out.println("        return 0;");
         out.println("    }");
+        out.println("#ifdef ANDROID");
+        classIterator = jclassesInit.iterator();
+        while (classIterator.hasNext()) {
+            Class c = classIterator.next();
+            if (c == Pointer.class) {
+                continue;
+            }
+            out.println("    if (JavaCPP_getClass(e, " + jclasses.indexOf(c) + ") == NULL) {");
+            out.println("        return 0;");
+            out.println("    }");
+        }
+        out.println("#endif");
         out.println("    return e->GetVersion();");
         out.println("}");
         out.println();
@@ -437,9 +454,11 @@ public class Generator implements Closeable {
         out.println("    }");
         for (String s : functionPointers) {
             out.println("    e->DeleteGlobalRef(" + s + ");");
+            out.println("    " + s + " = NULL;");
         }
         out.println("    for (int i = 0; i < " + jclasses.size() + "; i++) {");
         out.println("        e->DeleteWeakGlobalRef(JavaCPP_classes[i]);");
+        out.println("        JavaCPP_classes[i] = NULL;");
         out.println("    }");
         out.println("}");
         out.println();
@@ -1063,7 +1082,7 @@ public class Generator implements Closeable {
         out.println("    JNIEnv* e;");
         out.println("    int needDetach = 0;");
         out.println("    if (JavaCPP_vm->GetEnv((void**)&e, " + JNI_VERSION + ") != JNI_OK) {");
-        out.println("#ifdef _JavaVM");
+        out.println("#ifdef _JavaVM"); // Android
         out.println("        if (JavaCPP_vm->AttachCurrentThread(&e, NULL) != 0) {");
         out.println("#else");
         out.println("        if (JavaCPP_vm->AttachCurrentThread((void**)&e, NULL) != 0) {");
@@ -1117,6 +1136,7 @@ public class Generator implements Closeable {
                         }
                         String s = "    o" + j + " = e->AllocObject(JavaCPP_getClass(e, " +
                                 jclasses.register(callbackParameterTypes[j]) + "));";
+                        jclassesInit.register(callbackParameterTypes[j]); // Android
                         if ((adapter != null && adapter.out()) || passBy instanceof ByPtrPtr || passBy instanceof ByPtrRef) {
                             out.println(s);
                         } else {
