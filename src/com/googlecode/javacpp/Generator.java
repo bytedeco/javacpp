@@ -874,9 +874,6 @@ public class Generator implements Closeable {
             } else if (FunctionPointer.class.isAssignableFrom(methodInfo.parameterTypes[j])) {
                 out.print(cast + "(pointer" + j + " == NULL ? NULL : pointer" + j + "->pointer)");
             } else if (passBy instanceof ByVal || passBy instanceof ByRef) {
-                if (cast.endsWith("&)")) {
-                    cast = cast.substring(0, cast.length()-2) + "*)";
-                }
                 out.print("*" + cast + "pointer" + j);
             } else if (passBy instanceof ByPtrPtr) {
                 out.print(cast + "&pointer" + j);
@@ -1538,8 +1535,9 @@ public class Generator implements Closeable {
 
     public static String getCast(Annotation[] annotations, Class<?> type) {
         String[] typeName = null;
+        Annotation by = getBy(annotations);
         for (Annotation a: annotations) {
-            if (a instanceof Cast) {
+            if (a instanceof Cast || (a instanceof Const && by instanceof ByVal || by instanceof ByRef)) {
                 typeName = getCastedCPPTypeName(annotations, type);
             } else if (a instanceof Const) {
                 typeName = getAnnotatedCPPTypeName(annotations, type);
