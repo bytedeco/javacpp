@@ -1557,7 +1557,7 @@ public class Generator implements Closeable {
         String[] typeName = null;
         Annotation by = getBy(annotations);
         for (Annotation a: annotations) {
-            if (a instanceof Cast || (a instanceof Const && by instanceof ByVal || by instanceof ByRef)) {
+            if (a instanceof Cast || (a instanceof Const && (by instanceof ByVal || by instanceof ByRef))) {
                 typeName = getCastedCPPTypeName(annotations, type);
             } else if (a instanceof Const) {
                 typeName = getAnnotatedCPPTypeName(annotations, type);
