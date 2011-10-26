@@ -1082,16 +1082,19 @@ public class Generator implements Closeable {
         out.println("    JNIEnv* e;");
         out.println("    int needDetach = 0;");
         out.println("    if (JavaCPP_vm->GetEnv((void**)&e, " + JNI_VERSION + ") != JNI_OK) {");
-        out.println("#ifdef _JavaVM"); // Android
-        out.println("        if (JavaCPP_vm->AttachCurrentThread(&e, NULL) != 0) {");
-        out.println("#else");
-        out.println("        if (JavaCPP_vm->AttachCurrentThread((void**)&e, NULL) != 0) {");
-        out.println("#endif");
+        out.println("        struct {");
+        out.println("            JNIEnv *e;");
+        out.println("            operator JNIEnv**() { return &e; }"); // Android JNI
+        out.println("            operator void**() { return (void**)&e; }"); // standard JNI
+        out.println("        } e2 = { e };");
+        out.println("        if (JavaCPP_vm->AttachCurrentThread(e2, NULL) != 0) {");
         out.println("            fprintf(stderr, \"Could not attach the JavaVM to the current thread in callback for " + cls.getName() + ".\");");
-        out.println("            return" + (callbackReturnType == void.class ? ";" : " " + callbackReturnCast + "0;"));
+        out.println("            goto end;");
         out.println("        }");
         out.println("        needDetach = 1;");
         out.println("    }");
+
+        out.println("{");
         if (callbackParameterTypes.length > 0) {
             out.println("    jvalue args[" + callbackParameterTypes.length + "];");
             for (int j = 0; j < callbackParameterTypes.length; j++) {
@@ -1218,6 +1221,8 @@ public class Generator implements Closeable {
                 out.println("    e->DeleteLocalRef(o" + j + ");");
             }
         }
+        out.println("}");
+        out.println("end:");
 
         if (callbackReturnType != void.class) {
             if (Pointer.class.isAssignableFrom(callbackReturnType)) {
@@ -1252,7 +1257,6 @@ public class Generator implements Closeable {
         out.println("    if (needDetach) {");
         out.println("        if (JavaCPP_vm->DetachCurrentThread() != 0) {");
         out.println("            fprintf(stderr, \"Could not deattach the JavaVM from the current thread in callback for " + cls.getName() + ".\");");
-        out.println("            return" + (callbackReturnType == void.class ? ";" : " " + callbackReturnCast + "0;"));
         out.println("        }");
         out.println("    }");
 
