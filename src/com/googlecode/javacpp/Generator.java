@@ -1083,10 +1083,10 @@ public class Generator implements Closeable {
         out.println("    int needDetach = 0;");
         out.println("    if (JavaCPP_vm->GetEnv((void**)&e, " + JNI_VERSION + ") != JNI_OK) {");
         out.println("        struct {");
-        out.println("            JNIEnv *e;");
-        out.println("            operator JNIEnv**() { return &e; }"); // Android JNI
-        out.println("            operator void**() { return (void**)&e; }"); // standard JNI
-        out.println("        } e2 = { e };");
+        out.println("            JNIEnv **e;");
+        out.println("            operator JNIEnv**() { return e; }"); // Android JNI
+        out.println("            operator void**() { return (void**)e; }"); // standard JNI
+        out.println("        } e2 = { &e };");
         out.println("        if (JavaCPP_vm->AttachCurrentThread(e2, NULL) != 0) {");
         out.println("            fprintf(stderr, \"Could not attach the JavaVM to the current thread in callback for " + cls.getName() + ".\");");
         out.println("            goto end;");
