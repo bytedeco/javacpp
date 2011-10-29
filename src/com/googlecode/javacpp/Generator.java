@@ -198,6 +198,7 @@ public class Generator implements Closeable {
         out.println("#define jlong_to_ptr(a) ((void*)(uintptr_t)(a))");
         out.println("#define ptr_to_jlong(a) ((jlong)(uintptr_t)(a))");
         out.println("#ifdef ANDROID");
+        out.println("    #include <android/log.h>");
         out.println("    #define NewWeakGlobalRef(o) NewGlobalRef(o)");
         out.println("    #define DeleteWeakGlobalRef(o) DeleteGlobalRef(o)");
         out.println("#endif");
@@ -251,16 +252,27 @@ public class Generator implements Closeable {
         out.println("static jfieldID JavaCPP_positionFieldID = NULL;");
         out.println("static jfieldID JavaCPP_capacityFieldID = NULL;");
         out.println();
+        out.println("static inline void JavaCPP_log(const char* format, ...) {");
+        out.println("   va_list ap;");
+        out.println("   va_start(ap, format);");
+        out.println("#ifdef ANDROID");
+        out.println("    __android_log_print(ANDROID_LOG_ERROR, \"javacpp\", format, ap);");
+        out.println("#else");
+        out.println("    fprintf(stderr, format, ap);");
+        out.println("#endif");
+        out.println("    va_end(ap);");
+        out.println("}");
+        out.println();
         out.println("static noinline jclass JavaCPP_getClass(JNIEnv* e, int i) {");
         out.println("    if (JavaCPP_classes[i] == NULL && e->PushLocalFrame(1) == 0) {");
         out.println("        jclass c = e->FindClass(JavaCPP_classNames[i]);");
         out.println("        if (c == NULL || e->ExceptionCheck()) {");
-        out.println("            fprintf(stderr, \"Error loading class %s.\", JavaCPP_classNames[i]);");
+        out.println("            JavaCPP_log(\"Error loading class %s.\", JavaCPP_classNames[i]);");
         out.println("            return NULL;");
         out.println("        }");
         out.println("        JavaCPP_classes[i] = (jclass)e->NewWeakGlobalRef(c);");
         out.println("        if (JavaCPP_classes[i] == NULL || e->ExceptionCheck()) {");
-        out.println("            fprintf(stderr, \"Error creating global reference of class %s.\", JavaCPP_classNames[i]);");
+        out.println("            JavaCPP_log(\"Error creating global reference of class %s.\", JavaCPP_classNames[i]);");
         out.println("            return NULL;");
         out.println("        }");
         out.println("        e->PopLocalFrame(NULL);");
@@ -324,7 +336,7 @@ public class Generator implements Closeable {
         out.println("JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved) {");
         out.println("    JNIEnv* e;");
         out.println("    if (vm->GetEnv((void**)&e, " + JNI_VERSION + ") != JNI_OK) {");
-        out.println("        fprintf(stderr, \"Could not get JNIEnv for " + JNI_VERSION + " inside JNI_OnLoad().\");");
+        out.println("        JavaCPP_log(\"Could not get JNIEnv for " + JNI_VERSION + " inside JNI_OnLoad().\");");
         out.println("        return 0;");
         out.println("    }");
         out.println("    if (JavaCPP_vm == vm) {");
@@ -391,7 +403,7 @@ public class Generator implements Closeable {
         out.println("    jmethodID putMemberOffsetMethodID = e->GetStaticMethodID(JavaCPP_getClass(e, " +
                 jclasses.register(Loader.class) + "), \"putMemberOffset\", \"(Ljava/lang/String;Ljava/lang/String;I)V\");");
         out.println("    if (putMemberOffsetMethodID == NULL || e->ExceptionCheck()) {");
-        out.println("        fprintf(stderr, \"Error getting putMemberOffset method ID of Loader class.\");");
+        out.println("        JavaCPP_log(\"Error getting putMemberOffset method ID of Loader class.\");");
         out.println("        return 0;");
         out.println("    }");
         out.println("    for (int i = 0; i < " + jclasses.size() + " && !e->ExceptionCheck(); i++) {");
@@ -410,25 +422,25 @@ public class Generator implements Closeable {
         out.println("    JavaCPP_initMethodID = e->GetMethodID(JavaCPP_getClass(e, " +
                 jclasses.register(Pointer.class) + "), \"init\", \"(JIJ)V\");");
         out.println("    if (JavaCPP_initMethodID == NULL || e->ExceptionCheck()) {");
-        out.println("        fprintf(stderr, \"Error getting init method ID of Pointer class.\");");
+        out.println("        JavaCPP_log(\"Error getting init method ID of Pointer class.\");");
         out.println("        return 0;");
         out.println("    }");
         out.println("    JavaCPP_addressFieldID = e->GetFieldID(JavaCPP_getClass(e, " +
                 jclasses.register(Pointer.class) + "), \"address\", \"J\");");
         out.println("    if (JavaCPP_addressFieldID == NULL || e->ExceptionCheck()) {");
-        out.println("        fprintf(stderr, \"Error getting address field ID of Pointer class.\");");
+        out.println("        JavaCPP_log(\"Error getting address field ID of Pointer class.\");");
         out.println("        return 0;");
         out.println("    }");
         out.println("    JavaCPP_positionFieldID = e->GetFieldID(JavaCPP_getClass(e, " +
                 jclasses.register(Pointer.class) + "), \"position\", \"I\");");
         out.println("    if (JavaCPP_positionFieldID == NULL || e->ExceptionCheck()) {");
-        out.println("        fprintf(stderr, \"Error getting position field ID of Pointer class.\");");
+        out.println("        JavaCPP_log(\"Error getting position field ID of Pointer class.\");");
         out.println("        return 0;");
         out.println("    }");
         out.println("    JavaCPP_capacityFieldID = e->GetFieldID(JavaCPP_getClass(e, " +
                 jclasses.register(Pointer.class) + "), \"capacity\", \"I\");");
         out.println("    if (JavaCPP_capacityFieldID == NULL || e->ExceptionCheck()) {");
-        out.println("        fprintf(stderr, \"Error getting capacity field ID of Pointer class.\");");
+        out.println("        JavaCPP_log(\"Error getting capacity field ID of Pointer class.\");");
         out.println("        return 0;");
         out.println("    }");
         out.println("#ifdef ANDROID");
@@ -449,7 +461,7 @@ public class Generator implements Closeable {
         out.println("JNIEXPORT void JNICALL JNI_OnUnload(JavaVM* vm, void* reserved) {");
         out.println("    JNIEnv* e;");
         out.println("    if (vm->GetEnv((void**)&e, " + JNI_VERSION + ") != JNI_OK) {");
-        out.println("        fprintf(stderr, \"Could not get JNIEnv for " + JNI_VERSION + " inside JNI_OnUnLoad().\");");
+        out.println("        JavaCPP_log(\"Could not get JNIEnv for " + JNI_VERSION + " inside JNI_OnUnLoad().\");");
         out.println("        return;");
         out.println("    }");
         for (String s : functionPointers) {
@@ -460,6 +472,7 @@ public class Generator implements Closeable {
         out.println("        e->DeleteWeakGlobalRef(JavaCPP_classes[i]);");
         out.println("        JavaCPP_classes[i] = NULL;");
         out.println("    }");
+        out.println("    JavaCPP_vm = NULL;");
         out.println("}");
         out.println();
 
@@ -1088,7 +1101,7 @@ public class Generator implements Closeable {
         out.println("            operator void**() { return (void**)e; }"); // standard JNI
         out.println("        } e2 = { &e };");
         out.println("        if (JavaCPP_vm->AttachCurrentThread(e2, NULL) != 0) {");
-        out.println("            fprintf(stderr, \"Could not attach the JavaVM to the current thread in callback for " + cls.getName() + ".\");");
+        out.println("            JavaCPP_log(\"Could not attach the JavaVM to the current thread in callback for " + cls.getName() + ".\");");
         out.println("            goto end;");
         out.println("        }");
         out.println("        needDetach = 1;");
@@ -1256,7 +1269,7 @@ public class Generator implements Closeable {
 
         out.println("    if (needDetach) {");
         out.println("        if (JavaCPP_vm->DetachCurrentThread() != 0) {");
-        out.println("            fprintf(stderr, \"Could not deattach the JavaVM from the current thread in callback for " + cls.getName() + ".\");");
+        out.println("            JavaCPP_log(\"Could not deattach the JavaVM from the current thread in callback for " + cls.getName() + ".\");");
         out.println("        }");
         out.println("    }");
 
@@ -1288,14 +1301,14 @@ public class Generator implements Closeable {
         out.println("    e->DeleteGlobalRef(JavaCPP_" + callbackName + "_instance);");
         out.println("    JavaCPP_" + callbackName + "_instance = e->NewGlobalRef(o);");
         out.println("    if (JavaCPP_" + callbackName + "_instance == NULL) {");
-        out.println("        fprintf(stderr, \"Error creating global reference of " + cls.getName() + " instance for callback.\");");
+        out.println("        JavaCPP_log(\"Error creating global reference of " + cls.getName() + " instance for callback.\");");
         out.println("        return;");
         out.println("    }");
         out.println("    JavaCPP_" + callbackName + "_callMethodID = e->GetMethodID(e->GetObjectClass(o), \"" +
                 callbackMethod.getName() + "\", \"(" + getSignature(callbackMethod.getParameterTypes()) + ")" +
                 getSignature(callbackMethod.getReturnType()) + "\");");
         out.println("    if (JavaCPP_" + callbackName + "_callMethodID == NULL) {");
-        out.println("        fprintf(stderr, \"Error getting method ID of function caller \\\"" + callbackMethod + "\\\" for callback.\");");
+        out.println("        JavaCPP_log(\"Error getting method ID of function caller \\\"" + callbackMethod + "\\\" for callback.\");");
         out.println("        return;");
         out.println("    }");
         out.println("    " + valueTypeName + "* rpointer = new " + valueTypeName + ";");
