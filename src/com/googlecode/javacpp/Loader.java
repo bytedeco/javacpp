@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Samuel Audet
+ * Copyright (C) 2011,2012 Samuel Audet
  *
  * This file is part of JavaCPP.
  *
@@ -199,8 +199,22 @@ public class Loader {
                 return super.getClassContext();
             }
         }.getClassContext();
-        if (i < classContext.length) {
-            return classContext[i];
+        if (classContext != null) {
+            for (int j = 0; j < classContext.length; j++) {
+                if (classContext[j] == Loader.class) {
+                    return classContext[i+j];
+                }
+            }
+        } else {
+            // SecurityManager.getClassContext() returns null on Android 4.0
+            try {
+                StackTraceElement[] classNames = Thread.currentThread().getStackTrace();
+                for (int j = 0; j < classNames.length; j++) {
+                    if (Class.forName(classNames[j].getClassName()) == Loader.class) {
+                        return Class.forName(classNames[i+j].getClassName());
+                    }
+                }
+            } catch (ClassNotFoundException e) { }
         }
         return null;
     }
@@ -267,7 +281,7 @@ public class Loader {
     static Map<Class,String> loadedLibraries = Collections.synchronizedMap(new HashMap<Class,String>());
 
     public static String load() {
-        Class<?> cls = getCallerClass(3);
+        Class<?> cls = getCallerClass(2);
         return load(cls);
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Samuel Audet
+ * Copyright (C) 2011,2012 Samuel Audet
  *
  * This file is part of JavaCPP.
  *
@@ -144,6 +144,9 @@ public class Builder {
                 }
                 if (new File(s).isDirectory()) {
                     command.add(properties.getProperty("compiler.linkpath.prefix", "") + s);
+                    if (properties.containsKey("compiler.linkpath.prefix2")) {
+                        command.add(properties.getProperty("compiler.linkpath.prefix2") + s);
+                    }
                 }
             }
         }
