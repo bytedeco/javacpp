@@ -105,6 +105,18 @@ public class Builder {
         }
         command.add(compilerPath);
 
+        String sysroot = properties.getProperty("compiler.sysroot");
+        if (sysroot != null && sysroot.length() > 0) {
+            for (String s : sysroot.split(pathSeparator)) {
+                if (platformRoot != null && !new File(s).isAbsolute()) {
+                    s = platformRoot + s;
+                }
+                if (new File(s).isDirectory()) {
+                    command.add(properties.getProperty("compiler.sysroot.prefix", "") + s);
+                }
+            }
+        }
+
         String includepath = properties.getProperty("compiler.includepath");
         if (includepath != null && includepath.length() > 0) {
             for (String s : includepath.split(pathSeparator)) {
@@ -180,7 +192,7 @@ public class Builder {
 
 
     public static LinkedList<File> generateAndBuild(Class[] classes, Properties properties, File outputDirectory,
-            String outputName, boolean build) throws IOException, InterruptedException, URISyntaxException {
+            String outputName, boolean build) throws IOException, InterruptedException {
         LinkedList<File> outputFiles = new LinkedList<File>();
         properties = (Properties)properties.clone();
         for (Class c : classes) {
@@ -189,10 +201,14 @@ public class Builder {
         File sourceFile;
         if (outputDirectory == null) {
             if (classes.length == 1) {
-                URL resourceURL = classes[0].getResource(classes[0].getSimpleName() + ".class");
-                File packageDir = new File(resourceURL.toURI()).getParentFile();
-                outputDirectory = new File(packageDir, properties.getProperty("platform.name"));
-                sourceFile      = new File(packageDir, outputName + ".cpp");
+                try {
+                    URL resourceURL = classes[0].getResource(classes[0].getSimpleName() + ".class");
+                    File packageDir = new File(resourceURL.toURI()).getParentFile();
+                    outputDirectory = new File(packageDir, properties.getProperty("platform.name"));
+                    sourceFile      = new File(packageDir, outputName + ".cpp");
+                } catch (URISyntaxException e) {
+                    throw new RuntimeException(e);
+                }
             } else {
                 outputDirectory = new File(properties.getProperty("platform.name"));
                 sourceFile      = new File(outputName + ".cpp");

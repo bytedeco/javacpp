@@ -63,7 +63,9 @@ import com.googlecode.javacpp.annotation.Opaque;
         try {
             f = Buffer.class.getDeclaredField("address");
             f.setAccessible(true);
-        } catch (NoSuchFieldException e) { }
+        } catch (NoSuchFieldException e) {
+            throw new RuntimeException(e);
+        }
         bufferAddressField = f;
     }
 
@@ -75,7 +77,9 @@ import com.googlecode.javacpp.annotation.Opaque;
         } else {
             try {
                 address = bufferAddressField.getLong(b);
-            } catch (IllegalAccessException e) { }
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
             position = b.position();
             capacity = b.capacity();
         }
@@ -159,6 +163,14 @@ import com.googlecode.javacpp.annotation.Opaque;
     }
 
     private static final ReferenceQueue<Pointer> referenceQueue = new ReferenceQueue<Pointer>();
+
+    public static void deallocateReferences() {
+        DeallocatorReference r = null;
+        while ((r = (DeallocatorReference)referenceQueue.poll()) != null) {
+            r.clear();
+            r.remove();
+        }
+    }
 
     protected long address;
     protected int position, capacity;

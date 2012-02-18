@@ -17,7 +17,7 @@ To use JavaCPP, you will need to download and install the following software:
     * [http://msdn.microsoft.com/en-us/library/ms235639.aspx  Walkthrough: Compiling a Native C++ Program on the Command Line]
 
 To produce binary files for Android, you will also have to install:
- * Android NDK r7  http://developer.android.com/sdk/ndk/
+ * Android NDK r7b  http://developer.android.com/sdk/ndk/
 
 To modify the source code, please note that the project files were created for:
  * NetBeans 6.9  http://www.netbeans.org/downloads/
@@ -227,7 +227,7 @@ Inside the directory of the Android project:
  # Run this command to produce the `*.so` library files in `libs/armeabi/`:
 {{{
 java -jar libs/javacpp.jar -classpath bin/ -classpath bin/classes/ -d libs/armeabi/ \
--properties android-arm -Dplatform.root=<path to android-ndk-r7> \
+-properties android-arm -Dplatform.root=<path to android-ndk-r7b> \
 -Dcompiler.path=<path to arm-linux-androideabi-g++> <class names>
 }}}
 And to make everything automatic, we may insert that command into, for example, the Ant `build.xml` file or the Eclipse `.project` file as a [http://help.eclipse.org/helios/index.jsp?topic=/org.eclipse.platform.doc.user/gettingStarted/qs-96_non_ant_pjs.htm Non-Ant project builder].
@@ -238,6 +238,14 @@ I am currently an active member of the Okutomi & Tanaka Laboratory, Tokyo Instit
 
 
 ==Changes==
+===February 18, 2012===
+ * Cleaned up a few minor `Exception` blocks
+ * New `Pointer.deallocateReferences()` static method to force immediate deallocation of all native memory allocated by `Pointer` objects that since have been garbage collected
+ * Updated `android-arm.properties` to reflect the fact that, starting from Android NDK r7, `libstdc++.a` has been surreptitiously renamed to `libgnustl_static.a`, such that JavaCPP was instead linking to a new bogus `libstdc++.so` library, causing runtime linking errors
+ * Included new `android-x86.properties` to compile binaries for that platform as well
+ * Added new `compiler.sysroot.prefix` and `compiler.sysroot` platform properties to pass options such as `--sysroot` to satisfy new rituals of the Android NDK starting from r7b
+ * Upgraded references of the Android NDK to version r7b
+
 ===January 8, 2012===
  * Added new `compiler.linkpath.prefix2` platform property to pass options such as `-Wl,-rpath,` to linkers that support them
  * Fixed `Loader.load()` on Android 4.0, where `SecurityManager.getClassContext()` returns `null`
