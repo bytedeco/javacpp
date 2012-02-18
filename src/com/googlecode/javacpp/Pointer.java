@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Samuel Audet
+ * Copyright (C) 2011,2012 Samuel Audet
  *
  * This file is part of JavaCPP.
  *
@@ -64,7 +64,12 @@ import com.googlecode.javacpp.annotation.Opaque;
             f = Buffer.class.getDeclaredField("address");
             f.setAccessible(true);
         } catch (NoSuchFieldException e) {
-            throw new RuntimeException(e);
+            try {
+                f = Buffer.class.getDeclaredField("effectiveDirectAddress");
+                f.setAccessible(true);
+            } catch (NoSuchFieldException e2) {
+                throw new RuntimeException(e2);
+            }
         }
         bufferAddressField = f;
     }
@@ -76,7 +81,8 @@ import com.googlecode.javacpp.annotation.Opaque;
             capacity = 0;
         } else {
             try {
-                address = bufferAddressField.getLong(b);
+                address = bufferAddressField.getType() == long.class ? 
+                          bufferAddressField.getLong(b) : bufferAddressField.getInt(b);
             } catch (IllegalAccessException e) {
                 throw new RuntimeException(e);
             }
