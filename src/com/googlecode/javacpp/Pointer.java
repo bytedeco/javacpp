@@ -57,23 +57,7 @@ import com.googlecode.javacpp.annotation.Opaque;
         }
     }
 
-    private static final Field bufferAddressField;
-    static {
-        Field f = null;
-        try {
-            f = Buffer.class.getDeclaredField("address");
-            f.setAccessible(true);
-        } catch (NoSuchFieldException e) {
-            try {
-                f = Buffer.class.getDeclaredField("effectiveDirectAddress");
-                f.setAccessible(true);
-            } catch (NoSuchFieldException e2) {
-                throw new RuntimeException(e2);
-            }
-        }
-        bufferAddressField = f;
-    }
-
+    private static Field bufferAddressField = null;
     public Pointer(Buffer b) {
         if (b == null || b.hasArray()) {
             address = 0;
@@ -81,8 +65,18 @@ import com.googlecode.javacpp.annotation.Opaque;
             capacity = 0;
         } else {
             try {
+                if (bufferAddressField == null) {
+                    try {
+                        bufferAddressField = Buffer.class.getDeclaredField("address");
+                    } catch (NoSuchFieldException e) {
+                        bufferAddressField = Buffer.class.getDeclaredField("effectiveDirectAddress");
+                    }
+                    bufferAddressField.setAccessible(true);
+                }
                 address = bufferAddressField.getType() == long.class ? 
                           bufferAddressField.getLong(b) : bufferAddressField.getInt(b);
+            } catch (NoSuchFieldException e) {
+                throw new RuntimeException(e);
             } catch (IllegalAccessException e) {
                 throw new RuntimeException(e);
             }

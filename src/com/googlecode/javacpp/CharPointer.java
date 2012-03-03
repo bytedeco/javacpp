@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Samuel Audet
+ * Copyright (C) 2011,2012 Samuel Audet
  *
  * This file is part of JavaCPP.
  *
@@ -85,6 +85,11 @@ public class CharPointer extends Pointer {
     public native char get(int i);
     public CharPointer put(char c) { return put(0, c); }
     public native CharPointer put(int i, char c);
+
+    public CharPointer get(char[] array) { return get(array, 0, array.length); }
+    public CharPointer put(char[] array) { return put(array, 0, array.length); }
+    public native CharPointer get(char[] array, int offset, int length);
+    public native CharPointer put(char[] array, int offset, int length);
 
     @Override public final CharBuffer asBuffer() {
         return asByteBuffer().asCharBuffer();

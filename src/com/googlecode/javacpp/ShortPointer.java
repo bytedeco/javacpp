@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Samuel Audet
+ * Copyright (C) 2011,2012 Samuel Audet
  *
  * This file is part of JavaCPP.
  *
@@ -55,6 +55,11 @@ public class ShortPointer extends Pointer {
     public native short get(int i);
     public ShortPointer put(short s) { return put(0, s); }
     public native ShortPointer put(int i, short s);
+
+    public ShortPointer get(short[] array) { return get(array, 0, array.length); }
+    public ShortPointer put(short[] array) { return put(array, 0, array.length); }
+    public native ShortPointer get(short[] array, int offset, int length);
+    public native ShortPointer put(short[] array, int offset, int length);
 
     @Override public final ShortBuffer asBuffer() {
         return asByteBuffer().asShortBuffer();

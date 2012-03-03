@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Samuel Audet
+ * Copyright (C) 2011,2012 Samuel Audet
  *
  * This file is part of JavaCPP.
  *
@@ -89,6 +89,11 @@ public class IntPointer extends Pointer {
     public native int get(int i);
     public IntPointer put(int j) { return put(0, j); }
     public native IntPointer put(int i, int j);
+
+    public IntPointer get(int[] array) { return get(array, 0, array.length); }
+    public IntPointer put(int[] array) { return put(array, 0, array.length); }
+    public native IntPointer get(int[] array, int offset, int length);
+    public native IntPointer put(int[] array, int offset, int length);
 
     @Override public final IntBuffer asBuffer() {
         return asByteBuffer().asIntBuffer();

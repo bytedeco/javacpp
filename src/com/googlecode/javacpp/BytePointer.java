@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Samuel Audet
+ * Copyright (C) 2011,2012 Samuel Audet
  *
  * This file is part of JavaCPP.
  *
@@ -103,6 +103,11 @@ public class BytePointer extends Pointer {
     public native byte get(int i);
     public BytePointer put(byte b) { return put(0, b); }
     public native BytePointer put(int i, byte b);
+
+    public BytePointer get(byte[] array) { return get(array, 0, array.length); }
+    public BytePointer put(byte[] array) { return put(array, 0, array.length); }
+    public native BytePointer get(byte[] array, int offset, int length);
+    public native BytePointer put(byte[] array, int offset, int length);
 
     @Override public final ByteBuffer asBuffer() {
         return (ByteBuffer)super.asBuffer();

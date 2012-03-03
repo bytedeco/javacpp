@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Samuel Audet
+ * Copyright (C) 2011,2012 Samuel Audet
  *
  * This file is part of JavaCPP.
  *
@@ -55,6 +55,11 @@ public class LongPointer extends Pointer {
     public native long get(int i);
     public LongPointer put(long l) { return put(0, l); }
     public native LongPointer put(int i, long l);
+
+    public LongPointer get(long[] array) { return get(array, 0, array.length); }
+    public LongPointer put(long[] array) { return put(array, 0, array.length); }
+    public native LongPointer get(long[] array, int offset, int length);
+    public native LongPointer put(long[] array, int offset, int length);
 
     @Override public final LongBuffer asBuffer() {
         return asByteBuffer().asLongBuffer();

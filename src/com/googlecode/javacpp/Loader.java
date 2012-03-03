@@ -110,7 +110,7 @@ public class Loader {
                     platforms = new Platform[] { platform };
                 }
             } catch (Throwable t) {
-                System.err.println("Could not append properties for " + cls + ": " + t);
+                System.err.println("Could not append properties for " + cls.getCanonicalName() + ": " + t);
                 return;
             }
         } else {
@@ -172,21 +172,28 @@ public class Loader {
         if (values == null || values.length == 0) {
             return;
         }
+        String oldValue = properties.getProperty(name, "");
+        String[] oldValues = oldValue.split(separator);
         String value = "";
+    next:
         for (String v : values) {
             if (v == null || v.length() == 0) {
                 continue;
+            }
+            for (String ov : oldValues) {
+                if (v.equals(ov)) {
+                    continue next;
+                }
             }
             if (value.length() > 0 && !value.endsWith(separator)) {
                 value += separator;
             }
             value += v;
         }
-        String value2 = properties.getProperty(name, "");
-        if (value2.length() > 0) {
+        if (value.length() > 0 && oldValue.length() > 0) {
             value += separator;
         }
-        properties.setProperty(name, value + value2);
+        properties.setProperty(name, value + oldValue);
     }
 
     public static String getLibraryName(Class cls) {

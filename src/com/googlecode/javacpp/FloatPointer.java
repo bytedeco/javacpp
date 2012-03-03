@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Samuel Audet
+ * Copyright (C) 2011,2012 Samuel Audet
  *
  * This file is part of JavaCPP.
  *
@@ -55,6 +55,11 @@ public class FloatPointer extends Pointer {
     public native float get(int i);
     public FloatPointer put(float f) { return put(0, f); }
     public native FloatPointer put(int i, float f);
+
+    public FloatPointer get(float[] array) { return get(array, 0, array.length); }
+    public FloatPointer put(float[] array) { return put(array, 0, array.length); }
+    public native FloatPointer get(float[] array, int offset, int length);
+    public native FloatPointer put(float[] array, int offset, int length);
 
     @Override public final FloatBuffer asBuffer() {
         return asByteBuffer().asFloatBuffer();

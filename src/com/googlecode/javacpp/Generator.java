@@ -59,6 +59,7 @@ import com.googlecode.javacpp.annotation.MemberGetter;
 import com.googlecode.javacpp.annotation.MemberSetter;
 import com.googlecode.javacpp.annotation.Name;
 import com.googlecode.javacpp.annotation.Namespace;
+import com.googlecode.javacpp.annotation.NoDeallocator;
 import com.googlecode.javacpp.annotation.NoOffset;
 import com.googlecode.javacpp.annotation.Opaque;
 import com.googlecode.javacpp.annotation.Platform;
@@ -491,7 +492,11 @@ public class Generator implements Closeable {
 //        doMethods(FunctionPointer.class);
         boolean didSomethingUseful = false;
         for (Class<?> cls : classes) {
-            didSomethingUseful |= doMethods(cls);
+            try {
+                didSomethingUseful |= doMethods(cls);
+            } catch (NoClassDefFoundError e) {
+                logger.log(Level.WARNING, "Could not generate code for class " + cls.getCanonicalName() + ": " + e);
+            }
         }
 
         out.println("}");
@@ -529,11 +534,12 @@ public class Generator implements Closeable {
             }
         }
 
+        boolean didSomething = false;
         Class[] classes = cls.getDeclaredClasses();
         for (int i = 0; i < classes.length; i++) {
             if (Pointer.class.isAssignableFrom(classes[i]) ||
                     Pointer.Deallocator.class.isAssignableFrom(classes[i])) {
-                doMethods(classes[i]);
+                didSomething |= doMethods(classes[i]);
             }
         }
 
@@ -567,6 +573,7 @@ public class Generator implements Closeable {
                 }
             }
 
+            didSomething = true;
             if (callbackAllocators[i]) {
                 doCallback(cls, functionMethod, baseFunctionName);
             }
@@ -633,7 +640,7 @@ public class Generator implements Closeable {
             out.println("}");
         }
         out.println();
-        return true;
+        return didSomething;
     }
 
     private void doParametersBefore(MethodInformation methodInfo) {
@@ -684,10 +691,17 @@ public class Generator implements Closeable {
                     if (adapter != null || prevAdapter != null) {
                         out.println("    jint capacity" + j + " = 0;");
                     }
-                } else if (methodInfo.parameterTypes[j].isArray()) {
+                } else if (methodInfo.parameterTypes[j].isArray() &&
+                        methodInfo.parameterTypes[j].getComponentType().isPrimitive()) {
+                    out.print("p" + j + " == NULL ? NULL : ");
                     String s = methodInfo.parameterTypes[j].getComponentType().getName();
-                    s = Character.toUpperCase(s.charAt(0)) + s.substring(1);
-                    out.println("p" + j + " == NULL ? NULL : e->Get" + s + "ArrayElements(p" + j + ", NULL);");
+                    if (methodInfo.valueGetter || methodInfo.valueSetter ||
+                            methodInfo.memberGetter || methodInfo.memberSetter) {
+                        out.println("(j" + s + "*)e->GetPrimitiveArrayCritical(p" + j + ", NULL);");
+                    } else {
+                        s = Character.toUpperCase(s.charAt(0)) + s.substring(1);
+                        out.println("e->Get" + s + "ArrayElements(p" + j + ", NULL);");
+                    }
                     if (adapter != null || prevAdapter != null) {
                         out.println("    jint capacity" + j +
                                 " = p" + j + " == NULL ? 0 : e->GetArrayLength(p" + j + ");");
@@ -741,7 +755,7 @@ public class Generator implements Closeable {
             }
         } else {
             String[] typeName = getCastedCPPTypeName(methodInfo.annotations, methodInfo.returnType);
-            if (methodInfo.valueSetter || methodInfo.memberSetter) {
+            if (methodInfo.valueSetter || methodInfo.memberSetter || methodInfo.noReturnGetter) {
                 out.println("    jobject r = o;");
             } else if (methodInfo.returnType.isPrimitive()) {
                 out.println("    " + getJNITypeName(methodInfo.returnType) + " r = 0;");
@@ -806,35 +820,51 @@ public class Generator implements Closeable {
             return; // nothing else should be appended here for deallocator
         } else if (methodInfo.valueGetter || methodInfo.valueSetter ||
                 methodInfo.memberGetter || methodInfo.memberSetter) {
-            out.print(indent + returnVariable);
+            boolean wantsPointer = false;
             int k = methodInfo.parameterTypes.length-1;
             if ((methodInfo.valueSetter || methodInfo.memberSetter) &&
                     !(getParameterBy(methodInfo, k) instanceof ByRef) &&
                     methodInfo.parameterTypes[k] == String.class) {
-                // special considerations for char arrays
-                out.print("strcpy(");
+                // special considerations for char arrays as strings
+                out.print(indent + "strcpy(");
+                wantsPointer = true;
                 prefix = ", ";
+            } else if (k >= 1 && methodInfo.parameterTypes[0].isArray() &&
+                    methodInfo.parameterTypes[0].getComponentType().isPrimitive() &&
+                    (methodInfo.parameterTypes[1] == int.class ||
+                     methodInfo.parameterTypes[1] == long.class)) {
+                // special considerations for primitive arrays
+                out.print(indent + "memcpy(");
+                wantsPointer = true;
+                prefix = ", ";
+                if (methodInfo.memberGetter || methodInfo.valueGetter) {
+                    out.print("pointer0 + p1, ");
+                } else { // methodInfo.memberSetter || methodInfo.valueSetter
+                    prefix += "pointer0 + p1, ";
+                }
+                skipParameters = 2;
+                suffix = " * sizeof(*pointer0)" + suffix;
             } else {
+                out.print(indent + returnVariable);
                 prefix = methodInfo.valueGetter || methodInfo.memberGetter ? "" : " = ";
                 suffix = "";
             }
             if (Modifier.isStatic(methodInfo.modifiers)) {
                 String[] namespace = getCPPTypeName(methodInfo.cls);
                 if (namespace[0] != null && namespace[0].length() > 0) {
-                    out.print(namespace[0].substring(0, namespace[0].length()-1));
-                    out.print("::");
+                    out.print(namespace[0].substring(0, namespace[0].length()-1) + "::");
                 }
                 if (methodInfo.method.isAnnotationPresent(Namespace.class)) {
-                    Namespace ns = methodInfo.method.getAnnotation(Namespace.class);
-                    out.print(ns.value());
-                    out.print("::");
+                    out.print(methodInfo.method.getAnnotation(Namespace.class).value() + "::");
                 }
                 out.print(methodInfo.memberName[0]);
             } else if (methodInfo.memberGetter || methodInfo.memberSetter) {
                 out.print("pointer->" + methodInfo.memberName[0]);
             } else { // methodInfo.valueGetter || methodInfo.valueSetter
-                Index index = methodInfo.cls.getAnnotation(Index.class);
-                out.print(index != null ? "(*pointer)" : methodInfo.dim > 0 ? "pointer" : "*pointer");
+                boolean index = methodInfo.method.isAnnotationPresent(Index.class) ||
+                         (methodInfo.pairedMethod != null &&
+                          methodInfo.pairedMethod.isAnnotationPresent(Index.class));
+                out.print(index ? "(*pointer)" : methodInfo.dim > 0 || wantsPointer ? "pointer" : "*pointer");
             }
         } else if (methodInfo.bufferGetter) {
             out.print(indent + returnVariable + "pointer");
@@ -870,8 +900,10 @@ public class Generator implements Closeable {
                 }
                 out.print(methodInfo.memberName[0]);
             } else {
-                Index index = methodInfo.cls.getAnnotation(Index.class);
-                if (index != null) {
+                boolean index = methodInfo.method.isAnnotationPresent(Index.class) ||
+                         (methodInfo.pairedMethod != null &&
+                          methodInfo.pairedMethod.isAnnotationPresent(Index.class));
+                if (index) {
                     out.print("(*pointer)");
                     prefix = "." + methodInfo.memberName[0] + prefix;
                 } else {
@@ -905,11 +937,12 @@ public class Generator implements Closeable {
                 j += adapter.argc() - 1;
             } else if (FunctionPointer.class.isAssignableFrom(methodInfo.parameterTypes[j])) {
                 out.print(cast + "(pointer" + j + " == NULL ? NULL : pointer" + j + "->pointer)");
-            } else if (passBy instanceof ByVal || passBy instanceof ByRef) {
+            } else if (passBy instanceof ByVal || (passBy instanceof ByRef &&
+                    !(methodInfo.parameterTypes[j] == String.class))) {
                 out.print("*" + cast + "pointer" + j);
             } else if (passBy instanceof ByPtrPtr) {
                 out.print(cast + "&pointer" + j);
-            } else { // ByPtr || ByPtrRef
+            } else { // ByPtr || ByPtrRef || (ByRef && std::string)
                 out.print(cast + "pointer" + j);
             }
 
@@ -944,22 +977,35 @@ public class Generator implements Closeable {
         String indent = methodInfo.mayThrowException ? "        " : "    ";
         if (methodInfo.returnType == void.class) {
             if (methodInfo.allocator || methodInfo.arrayAllocator) {
+                out.println(indent + "jint rcapacity = " + (methodInfo.arrayAllocator ? "p0;" : "1;"));
+                boolean noDeallocator = false;
+                for (Annotation a : methodInfo.annotations) {
+                    if (a instanceof NoDeallocator) {
+                        noDeallocator = true;
+                        break;
+                    }
+                }
+                if (noDeallocator) {
+                    out.println(indent + "e->SetLongField(o, JavaCPP_addressFieldID, ptr_to_jlong(rpointer));");
+                    out.println(indent + "e->SetIntField(o, JavaCPP_capacityFieldID, rcapacity);");
+                } else {
                     out.println(indent + "jvalue args[3];");
                     out.println(indent + "args[0].j = ptr_to_jlong(rpointer);");
-                    out.println(indent + "args[1].i = " + (methodInfo.arrayAllocator ? "p0;" : "1;"));
+                    out.println(indent + "args[1].i = rcapacity;");
                     out.print  (indent + "args[2].j = ptr_to_jlong(&JavaCPP_" + mangle(methodInfo.cls.getName()));
-                if (methodInfo.arrayAllocator) {
-                    out.println("_deallocateArray);");
-                    arrayDeallocators.register(methodInfo.cls);
-                } else {
-                    out.println("_deallocate);");
-                    deallocators.register(methodInfo.cls);
+                    if (methodInfo.arrayAllocator) {
+                        out.println("_deallocateArray);");
+                        arrayDeallocators.register(methodInfo.cls);
+                    } else {
+                        out.println("_deallocate);");
+                        deallocators.register(methodInfo.cls);
+                    }
+                    out.println(indent + "e->CallNonvirtualVoidMethodA(o, JavaCPP_getClass(e, " +
+                            jclasses.register(Pointer.class) + "), JavaCPP_initMethodID, args);");
                 }
-                out.println(indent + "e->CallNonvirtualVoidMethodA(o, JavaCPP_getClass(e, " +
-                        jclasses.register(Pointer.class) + "), JavaCPP_initMethodID, args);");
             }
         } else {
-            if (methodInfo.valueSetter || methodInfo.memberSetter) {
+            if (methodInfo.valueSetter || methodInfo.memberSetter || methodInfo.noReturnGetter) {
                 // nothing
             } else if (methodInfo.returnType.isPrimitive()) {
                 out.println(indent + "r = (" + getJNITypeName(methodInfo.returnType) + ")rvalue;");
@@ -1048,10 +1094,17 @@ public class Generator implements Closeable {
 
             if (methodInfo.parameterTypes[j] == String.class) {
                 out.println(indent + "if (p" + j + " != NULL) e->ReleaseStringUTFChars(p" + j + ", pointer" + j + ");");
-            } else if (methodInfo.parameterTypes[j].isArray()) {
+            } else if (methodInfo.parameterTypes[j].isArray() &&
+                    methodInfo.parameterTypes[j].getComponentType().isPrimitive()) {
+                out.print(indent + "if (p" + j + " != NULL) ");
                 String s = methodInfo.parameterTypes[j].getComponentType().getName();
-                s = Character.toUpperCase(s.charAt(0)) + s.substring(1);
-                out.println(indent + "if (p" + j + " != NULL) e->Release" + s + "ArrayElements(p" + j + ", pointer" + j + ", 0);");
+                if (methodInfo.valueGetter || methodInfo.valueSetter ||
+                        methodInfo.memberGetter || methodInfo.memberSetter) {
+                    out.println("e->ReleasePrimitiveArrayCritical(p" + j + ", pointer" + j + ", 0);");
+                } else {
+                    s = Character.toUpperCase(s.charAt(0)) + s.substring(1);
+                    out.println("e->Release" + s + "ArrayElements(p" + j + ", pointer" + j + ", 0);");
+                }
             }
         }
 
@@ -1381,7 +1434,7 @@ public class Generator implements Closeable {
         public Class<?>[] parameterTypes;
         public Annotation[][] parameterAnnotations;
         public boolean overloaded, noOffset, deallocator, allocator, arrayAllocator,
-                bufferGetter, valueGetter, valueSetter, memberGetter, memberSetter;
+                bufferGetter, valueGetter, valueSetter, memberGetter, memberSetter, noReturnGetter;
         public Method pairedMethod;
         public boolean mayThrowException;
     }
@@ -1402,9 +1455,9 @@ public class Generator implements Closeable {
         info.dim    = index != null ? index.value() : 0;
         info.parameterTypes       = method.getParameterTypes();
         info.parameterAnnotations = method.getParameterAnnotations();
-        Annotation behavior = getBehavior(method);
 
-        boolean canBeGetter =  info.returnType != void.class;
+        boolean canBeGetter =  info.returnType != void.class || (info.parameterTypes.length > 0 &&
+                info.parameterTypes[0].isArray() && info.parameterTypes[0].getComponentType().isPrimitive());
         boolean canBeSetter = (info.returnType == void.class ||
                 info.returnType == info.cls) && info.parameterTypes.length > 0;
 //        for (int j = 0; j < info.parameterTypes.length; j++) {
@@ -1424,6 +1477,7 @@ public class Generator implements Closeable {
         boolean valueSetter = false;
         boolean memberGetter = false;
         boolean memberSetter = false;
+        boolean noReturnGetter = false;
         Method pairedMethod = null;
         Method[] methods = info.cls.getDeclaredMethods();
         for (int i = 0; i < methods.length; i++) {
@@ -1459,26 +1513,36 @@ public class Generator implements Closeable {
                 continue;
             }
 
-            if (canBeGetter && parameterTypes2.length-1 == info.parameterTypes.length &&
-                    info.returnType == parameterTypes2[parameterTypes2.length-1] &&
-                    (returnType2 == void.class || returnType2 == info.cls)) {
+            boolean parameterAsReturn = canBeValueGetter && info.parameterTypes.length > 0 &&
+                    info.parameterTypes[0].isArray() && info.parameterTypes[0].getComponentType().isPrimitive();
+            boolean parameterAsReturn2 = canBeValueSetter && parameterTypes2.length > 0 &&
+                    parameterTypes2[0].isArray() && parameterTypes2[0].getComponentType().isPrimitive();
+
+            if (canBeGetter && parameterTypes2.length - (parameterAsReturn ? 0 : 1) == info.parameterTypes.length &&
+                    (parameterAsReturn ? info.parameterTypes[info.parameterTypes.length-1] : info.returnType) ==
+                    parameterTypes2[parameterTypes2.length-1] && (returnType2 == void.class || returnType2 == info.cls)) {
                 pairedMethod = method2;
                 valueGetter  =  canBeValueGetter;
                 memberGetter = !canBeValueGetter;
-            } else if (canBeSetter && info.parameterTypes.length-1 == parameterTypes2.length &&
-                    returnType2 == info.parameterTypes[info.parameterTypes.length-1]) {
+                noReturnGetter = parameterAsReturn;
+            } else if (canBeSetter && info.parameterTypes.length - (parameterAsReturn2 ? 0 : 1) == parameterTypes2.length &&
+                    (parameterAsReturn2 ? parameterTypes2[parameterTypes2.length-1] : returnType2) ==
+                    info.parameterTypes[info.parameterTypes.length-1]) {
                 pairedMethod = method2;
                 valueSetter  =  canBeValueSetter;
                 memberSetter = !canBeValueSetter;
             }
         }
 
+        Annotation behavior = getBehavior(info.annotations);
         if (canBeGetter && behavior instanceof ValueGetter) {
             info.valueGetter = true;
+            info.noReturnGetter = noReturnGetter;
         } else if (canBeSetter && behavior instanceof ValueSetter) {
             info.valueSetter = true;
         } else if (canBeGetter && behavior instanceof MemberGetter) {
             info.memberGetter = true;
+            info.noReturnGetter = noReturnGetter;
         } else if (canBeSetter && behavior instanceof MemberSetter) {
             info.memberSetter = true;
         } else if (canBeAllocator && behavior instanceof Allocator) {
@@ -1500,12 +1564,14 @@ public class Generator implements Closeable {
                 info.bufferGetter = true;
             } else if (valueGetter) {
                 info.valueGetter = true;
+                info.noReturnGetter = noReturnGetter;
                 info.pairedMethod = pairedMethod;
             } else if (valueSetter) {
                 info.valueSetter = true;
                 info.pairedMethod = pairedMethod;
             } else if (memberGetter) {
                 info.memberGetter = true;
+                info.noReturnGetter = noReturnGetter;
                 info.pairedMethod = pairedMethod;
             } else if (memberSetter) {
                 info.memberSetter = true;
@@ -1529,10 +1595,12 @@ public class Generator implements Closeable {
             info.noOffset = info.pairedMethod.isAnnotationPresent(NoOffset.class);
         }
 
-        if (info.valueGetter || info.memberGetter) {
-            info.dim = info.parameterTypes.length;
-        } else if (info.memberSetter || info.valueSetter) {
-            info.dim = info.parameterTypes.length-1;
+        if (info.parameterTypes.length == 0 || !info.parameterTypes[0].isArray()) {
+            if (info.valueGetter || info.memberGetter) {
+                info.dim = info.parameterTypes.length;
+            } else if (info.memberSetter || info.valueSetter) {
+                info.dim = info.parameterTypes.length-1;
+            }
         }
 
         if ((!info.deallocator && !info.valueGetter && !info.valueSetter &&
@@ -1608,8 +1676,7 @@ public class Generator implements Closeable {
         return byAnnotation;
     }
 
-    public static Annotation getBehavior(Method method) {
-        Annotation[] annotations = method.getAnnotations();
+    public static Annotation getBehavior(Annotation ... annotations) {
         Annotation behaviorAnnotation = null;
         for (Annotation a: annotations) {
             if (a instanceof Function || a instanceof Allocator || a instanceof ArrayAllocator ||

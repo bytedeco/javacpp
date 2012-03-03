@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Samuel Audet
+ * Copyright (C) 2011,2012 Samuel Audet
  *
  * This file is part of JavaCPP.
  *
@@ -55,6 +55,11 @@ public class DoublePointer extends Pointer {
     public native double get(int i);
     public DoublePointer put(double d) { return put(0, d); }
     public native DoublePointer put(int i, double d);
+
+    public DoublePointer get(double[] array) { return get(array, 0, array.length); }
+    public DoublePointer put(double[] array) { return put(array, 0, array.length); }
+    public native DoublePointer get(double[] array, int offset, int length);
+    public native DoublePointer put(double[] array, int offset, int length);
 
     @Override public final DoubleBuffer asBuffer() {
         return asByteBuffer().asDoubleBuffer();

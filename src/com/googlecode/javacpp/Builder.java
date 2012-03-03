@@ -31,8 +31,10 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Arrays;
+import java.util.Enumeration;
 import java.util.LinkedList;
 import java.util.Properties;
+import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
 
@@ -289,21 +291,116 @@ public class Builder {
         private LinkedList<String> paths = new LinkedList<String>();
         public UserClassLoader() throws MalformedURLException {
             super(new URL[0]);
-            addPaths(System.getProperty("user.dir"));
         }
-        public void addPaths(String ... paths) throws MalformedURLException {
+        public void addPaths(String ... paths) {
             for (String path : paths) {
                 this.paths.add(path);
-                addURL(new File(path).toURI().toURL());
+                try {
+                    addURL(new File(path).toURI().toURL());
+                } catch (MalformedURLException e) {
+                    throw new RuntimeException(e);
+                }
             }
         }
         public String[] getPaths() {
+            if (paths.isEmpty()) {
+                addPaths(System.getProperty("user.dir"));
+            }
             return paths.toArray(new String[paths.size()]);
+        }
+        @Override protected Class<?> findClass(String name)
+                throws ClassNotFoundException {
+            if (paths.isEmpty()) {
+                addPaths(System.getProperty("user.dir"));
+            }
+            return super.findClass(name);
+        }
+    }
+
+    public static class ClassList extends LinkedList<Class> {
+        public void addClass(String className, ClassLoader loader) {
+            if (className.indexOf('$') > 0) {
+                // skip nested classes
+                return;
+            } else if (className.endsWith(".class")) {
+                className = className.substring(0, className.length()-6);
+            }
+            try {
+                Class c = Class.forName(className, true, loader);
+                if (!contains(c)) {
+                    add(c);
+                }
+            } catch (ClassNotFoundException e) {
+                System.err.println("Error: Could not find class " + className + ": " + e);
+                System.exit(1);
+            } catch (NoClassDefFoundError e) {
+                System.err.println("Warning: Could not load class " + className + ": " + e);
+            }
+        }
+
+        public void addMatchingFile(String filename, String packagePath, boolean recursive, ClassLoader loader) {
+            if (filename.endsWith(".class") && (packagePath == null || (recursive && filename.startsWith(packagePath)) ||
+                    filename.regionMatches(0, packagePath, 0, Math.max(filename.lastIndexOf('/'), packagePath.lastIndexOf('/'))))) {
+                addClass(filename.replace('/', '.'), loader);
+            }
+        }
+
+        public void addMatchingDir(String parentName, File dir, String packagePath, boolean recursive, ClassLoader loader) {
+            for (File f : dir.listFiles()) {
+                String pathName = parentName == null ? f.getName() : parentName + f.getName();
+                if (f.isDirectory()) {
+                    addMatchingDir(pathName + "/", f, packagePath, recursive, loader);
+                } else {
+                    addMatchingFile(pathName, packagePath, recursive, loader);
+                }
+            }
+        }
+
+        public void addPackage(String packageName, boolean recursive, final UserClassLoader loader)
+                throws IOException {
+            String[] paths = loader.getPaths();
+            final String packagePath = packageName == null ? null : (packageName.replace('.', '/') + "/");
+            int prevSize = size();
+            for (String p : paths) {
+                File file = new File(p);
+                if (file.isDirectory()) {
+                    addMatchingDir(null, file, packagePath, recursive, loader);
+                } else {
+                    JarInputStream jis = new JarInputStream(new FileInputStream(file));
+                    ZipEntry e = jis.getNextEntry();
+                    while (e != null) {
+                        addMatchingFile(e.getName(), packagePath, recursive, loader);
+                        jis.closeEntry();
+                        e = jis.getNextEntry();
+                    }
+                    jis.close();
+                }
+            }
+            if (prevSize == size()) {
+                if (packageName == null) {
+                    System.err.println("Error: No classes found in the unnamed package");
+                    printHelp();
+                } else {
+                    System.err.println("Error: No classes found in package " + packageName);
+                }
+                System.exit(1);
+            }
+        }
+
+        public void addClassOrPackage(String name, UserClassLoader loader) throws IOException {
+            name = name.replace('/', '.');
+            if (name.endsWith(".**")) {
+                addPackage(name.substring(0, name.length()-3), true, loader);
+            } else if (name.endsWith(".*")) {
+                addPackage(name.substring(0, name.length()-2), false, loader);
+            } else {
+                addClass(name, loader);
+            }
         }
     }
 
     public static void printHelp() {
-        System.err.println("Usage: java -jar javacpp.jar [options] <classes>");
+        System.err.println("Usage: java -jar javacpp.jar [options] [class or package names]");
         System.err.println();
         System.err.println("where options include:");
         System.err.println();
@@ -319,17 +416,13 @@ public class Builder {
     }
 
     public static void main(String[] args) throws Exception {
-        if (args.length == 0) {
-            printHelp();
-            System.exit(1);
-        }
-
+        Loader.loadLibraries = false;
         UserClassLoader classLoader = new UserClassLoader();
         File outputDirectory = null;
         String outputName = null, jarPrefix = null;
         boolean build = true;
         Properties properties = Loader.getProperties();
-        LinkedList<Class> classes = new LinkedList<Class>();
+        ClassList classes = new ClassList();
 
         for (int i = 0; i < args.length; i++) {
             if ("-help".equals(args[i]) || "--help".equals(args[i])) {
@@ -367,23 +460,16 @@ public class Builder {
                     properties.put(key, value);
                 }
             } else if (args[i].startsWith("-")) {
-                System.err.println("Invalid option: " + args[i]);
+                System.err.println("Error: Invalid option \"" + args[i] + "\"");
                 printHelp();
                 System.exit(1);
             } else {
-                Loader.loadLibraries = false;
-                String className = args[i].replace('/', '.');
-                if (className.endsWith(".class")) {
-                    className = className.substring(0, className.length()-6);
-                }
-                try {
-                    Class c = Class.forName(className, true, classLoader);
-                    classes.add(c);
-                } catch (ClassNotFoundException e) {
-                    System.err.println("Class not found: " + className);
-                    System.exit(1);
-                }
+                classes.addClassOrPackage(args[i], classLoader);
             }
+        }
+
+        if (classes.isEmpty()) {
+            classes.addPackage(null, true, classLoader);
         }
 
         LinkedList<File> outputFiles;

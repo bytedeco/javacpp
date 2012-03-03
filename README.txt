@@ -1,7 +1,7 @@
 =JavaCPP=
 
 ==Introduction==
-JavaCPP provides efficient access to native C++ inside Java, not unlike the way some C/C++ compilers interact with assembly language. No need to invent [http://www.ecma-international.org/publications/standards/Ecma-372.htm a whole new language], whatever Microsoft may opine about it. Under the hood, it uses JNI, so it works with all Java implementations, [#Instructions_for_Android including Android]. In contrast to other approaches ([http://www.swig.org/ SWIG], [http://www.teamdev.com/jniwrapper/ JNIWrapper], [http://msdn.microsoft.com/en-us/library/0h9e9t7d.aspx Platform Invoke], [http://jogamp.org/gluegen/www/ GlueGen], [http://homepage.mac.com/pcbeard/JNIDirect/ JNIDirect], [https://github.com/twall/jna JNA], [http://flinflon.brandonu.ca/Dueck/SystemsProgramming/JniMarshall/ JniMarshall], [http://jnative.free.fr/ JNative], [http://www.jinvoke.com/ J/Invoke], [http://hawtjni.fusesource.org/ HawtJNI], [http://code.google.com/p/bridj/ BridJ], etc.), it supports naturally and efficiently many features of the C++ language often considered problematic, including overloaded operators, template classes and functions, member function pointers, callback functions, nested struct definitions, variable length arguments, nested namespaces, large data structures containing arbitrary cycles, multiple inheritance, passing/returning by value/reference/vector, anonymous unions, bit fields, exceptions, destructors and garbage collection. Obviously, neatly supporting the whole of C++ would require more work (although one could argue about the intrinsic neatness of C++), but I am releasing it here as a proof of concept. I have already used it to produce complete interfaces to OpenCV, FFmpeg, libdc1394, PGR FlyCapture, OpenKinect, videoInput, and ARToolKitPlus as part of [http://code.google.com/p/javacv/ JavaCV].
+JavaCPP provides efficient access to native C++ inside Java, not unlike the way some C/C++ compilers interact with assembly language. No need to invent [http://www.ecma-international.org/publications/standards/Ecma-372.htm a whole new language], whatever Microsoft may opine about it. Under the hood, it uses JNI, so it works with all Java implementations, [#Instructions_for_Android including Android]. In contrast to other approaches ([http://www.swig.org/ SWIG], [http://www.eclipse.org/swt/jnigen.php JNIGeneratorApp], [http://www.teamdev.com/jniwrapper/ JNIWrapper], [http://msdn.microsoft.com/en-us/library/0h9e9t7d.aspx Platform Invoke], [http://jogamp.org/gluegen/www/ GlueGen], [http://homepage.mac.com/pcbeard/JNIDirect/ JNIDirect], [https://github.com/twall/jna JNA], [http://flinflon.brandonu.ca/Dueck/SystemsProgramming/JniMarshall/ JniMarshall], [http://jnative.free.fr/ JNative], [http://www.jinvoke.com/ J/Invoke], [http://hawtjni.fusesource.org/ HawtJNI], [http://code.google.com/p/bridj/ BridJ], etc.), it supports naturally and efficiently many features of the C++ language often considered problematic, including overloaded operators, template classes and functions, member function pointers, callback functions, nested struct definitions, variable length arguments, nested namespaces, large data structures containing arbitrary cycles, multiple inheritance, passing/returning by value/reference/vector, anonymous unions, bit fields, exceptions, destructors and garbage collection. Obviously, neatly supporting the whole of C++ would require more work (although one could argue about the intrinsic neatness of C++), but I am releasing it here as a proof of concept. I have already used it to produce complete interfaces to OpenCV, FFmpeg, libdc1394, PGR FlyCapture, OpenKinect, videoInput, and ARToolKitPlus as part of [http://code.google.com/p/javacv/ JavaCV].
 
 
 ==Required Software==
@@ -33,9 +33,8 @@ The most common use case involves accessing some legacy library written for C++,
 namespace LegacyLibrary {
     class LegacyClass {
         public:
-            const std::string& getProperty() { return property; }
-            void setProperty(const std::string& property) { this->property = property; }
-        private:
+            const std::string& get_property() { return property; }
+            void set_property(const std::string& property) { this->property = property; }
             std::string property;
     };
 }
@@ -54,14 +53,17 @@ public class LegacyLibrary {
         public LegacyClass() { allocate(); }
         private native void allocate();
 
-        public native @ByRef String getProperty();
-        public native void setProperty(String property);
+        // to call the getter and setter functions 
+        public native @ByRef String get_property(); public native void set_property(String property);
+
+        // to access the member variable directly
+        public native @ByRef String property();     public native void property(String property);
     }
 
     public static void main(String[] args) {
         LegacyClass l = new LegacyClass();
-        l.setProperty("Hello World!");
-        System.out.println(l.getProperty());
+        l.set_property("Hello World!");
+        System.out.println(l.property());
     }
 }
 }}}
@@ -92,7 +94,7 @@ import com.googlecode.javacpp.annotation.*;
 @Platform(include="<vector>")
 public class VectorTest {
 
-    @Name("std::vector<std::vector<void*> >") @Index
+    @Name("std::vector<std::vector<void*> >")
     public static class PointerVectorVector extends Pointer {
         static { Loader.load(); }
         public PointerVectorVector()       { allocate();  }
@@ -110,13 +112,12 @@ public class VectorTest {
         public native long size();
         public native @Cast("bool") boolean empty();
         public native void resize(long n);
-        public native @Index(1) long size(long i);
-        public native @Index(1) @Cast("bool") boolean empty(long i);
-        public native @Index(1) void resize(long i, long n);
+        public native @Index(1) long size(long i);                   // return (*this)[i].size()
+        public native @Index(1) @Cast("bool") boolean empty(long i); // return (*this)[i].empty()
+        public native @Index(1) void resize(long i, long n);         // (*this)[i].resize(n)
 
-        // These two depend on the class-level @Index annotation.
-        public native Pointer get(long i, long j);         // return this[i][j]
-        public native void put(long i, long j, Pointer p); // this[i][j] = p
+        public native @Index Pointer get(long i, long j);  // return (*this)[i][j]
+        public native void put(long i, long j, Pointer p); // (*this)[i][j] = p
     }
 
     public static void main(String[] args) {
@@ -226,9 +227,9 @@ Inside the directory of the Android project:
  # Copy the `javacpp.jar` file into the `libs/` subdirectory, and
  # Run this command to produce the `*.so` library files in `libs/armeabi/`:
 {{{
-java -jar libs/javacpp.jar -classpath bin/ -classpath bin/classes/ -d libs/armeabi/ \
+java -jar libs/javacpp.jar -classpath bin/ -classpath bin/classes/ \
 -properties android-arm -Dplatform.root=<path to android-ndk-r7b> \
--Dcompiler.path=<path to arm-linux-androideabi-g++> <class names>
+-Dcompiler.path=<path to arm-linux-androideabi-g++> -d libs/armeabi/
 }}}
 And to make everything automatic, we may insert that command into, for example, the Ant `build.xml` file or the Eclipse `.project` file as a [http://help.eclipse.org/helios/index.jsp?topic=/org.eclipse.platform.doc.user/gettingStarted/qs-96_non_ant_pjs.htm Non-Ant project builder].
 
@@ -238,6 +239,14 @@ I am currently an active member of the Okutomi & Tanaka Laboratory, Tokyo Instit
 
 
 ==Changes==
+===March 03, 2012===
+ * Added new `@Deallocator` annotation to prevent `allocate()` and `allocateArray()` methods from registering a native deallocator to `Pointer` objects (issue #1)
+ * `Generator` now properly skips as unsupported array parameters that do not have a primitive component type, and logs a warning (issue #7)
+ * `Generator` and `Builder` would append the same include files, libraries, or options multiple times when not required: Fixed in `Loader.appendProperty()` (issue #8)
+ * Moved the placement of the class-level @Index annotation to the getter and setter methods themselves
+ * To process all classes in a package, we may now specify as argument to the `Builder` its name followed by ".*", in a similar fashion to the `import` statement of the Java language, or by ".**" to process recursively all packages, while omitting to specify any class or package results in JavaCPP processing all classes found under the directories or JAR files specified with the "-classpath" option (issue #12)
+ * Equipped the `*Pointer` classes with new bulk `get()` and `put()` methods taking an array as argument, to compensate for direct NIO buffers lacking in performance on Android (issue #11)
+
 ===February 18, 2012===
  * Cleaned up a few minor `Exception` blocks
  * New `Pointer.deallocateReferences()` static method to force immediate deallocation of all native memory allocated by `Pointer` objects that since have been garbage collected
