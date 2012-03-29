@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Samuel Audet
+ * Copyright (C) 2011,2012 Samuel Audet
  *
  * This file is part of JavaCPP.
  *
@@ -20,28 +20,6 @@
 
 package com.googlecode.javacpp;
 
-import java.io.Closeable;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.PrintWriter;
-import java.io.Writer;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.nio.Buffer;
-import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
-import java.nio.DoubleBuffer;
-import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
-import java.nio.LongBuffer;
-import java.nio.ShortBuffer;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.Properties;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import com.googlecode.javacpp.annotation.Adapter;
 import com.googlecode.javacpp.annotation.Allocator;
 import com.googlecode.javacpp.annotation.ArrayAllocator;
@@ -65,6 +43,28 @@ import com.googlecode.javacpp.annotation.Opaque;
 import com.googlecode.javacpp.annotation.Platform;
 import com.googlecode.javacpp.annotation.ValueGetter;
 import com.googlecode.javacpp.annotation.ValueSetter;
+import java.io.Closeable;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.io.Writer;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.nio.Buffer;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.DoubleBuffer;
+import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
+import java.nio.LongBuffer;
+import java.nio.ShortBuffer;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -978,7 +978,7 @@ public class Generator implements Closeable {
         if (methodInfo.returnType == void.class) {
             if (methodInfo.allocator || methodInfo.arrayAllocator) {
                 out.println(indent + "jint rcapacity = " + (methodInfo.arrayAllocator ? "p0;" : "1;"));
-                boolean noDeallocator = false;
+                boolean noDeallocator = methodInfo.cls.isAnnotationPresent(NoDeallocator.class);
                 for (Annotation a : methodInfo.annotations) {
                     if (a instanceof NoDeallocator) {
                         noDeallocator = true;

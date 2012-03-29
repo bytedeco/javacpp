@@ -20,13 +20,13 @@
 
 package com.googlecode.javacpp;
 
+import com.googlecode.javacpp.annotation.Opaque;
 import java.lang.ref.PhantomReference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.reflect.Field;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import com.googlecode.javacpp.annotation.Opaque;
 
 /**
  *
@@ -207,18 +207,11 @@ import com.googlecode.javacpp.annotation.Opaque;
             this.deallocator().deallocate();
         }
         this.deallocator = deallocator;
+        deallocateReferences();
 
-        DeallocatorReference r = null;
-        while ((r = (DeallocatorReference)referenceQueue.poll()) != null) {
-            r.clear();
-            r.remove();
-        }
-
-        if (deallocator instanceof DeallocatorReference) {
-            r = (DeallocatorReference)deallocator;
-        } else {
-            r = new DeallocatorReference(this, deallocator);
-        }
+        DeallocatorReference r = deallocator instanceof DeallocatorReference ?
+                (DeallocatorReference)deallocator :
+                new DeallocatorReference(this, deallocator);
         r.add();
         return this;
     }
@@ -257,7 +250,7 @@ import com.googlecode.javacpp.annotation.Opaque;
     @Override public boolean equals(Object obj) {
         if (obj == null && isNull()) {
             return true;
-        } else if (!(obj instanceof Pointer)) {
+        } else if (obj.getClass() != getClass()) {
             return false;
         } else {
             Pointer other = (Pointer)obj;

@@ -20,6 +20,7 @@
 
 package com.googlecode.javacpp;
 
+import com.googlecode.javacpp.annotation.Platform;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -32,7 +33,6 @@ import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.Properties;
 import java.util.WeakHashMap;
-import com.googlecode.javacpp.annotation.Platform;
 
 /**
  *
@@ -118,7 +118,7 @@ public class Loader {
         }
 
         String[] define = {}, include = {}, cinclude = {}, includepath = {}, options = {},
-                 linkpath = {}, link = {}, preloadpath = {}, preload = {};
+                 linkpath = {}, link = {}, framework = {}, preloadpath = {}, preload = {};
         for (Platform p : platforms) {
             String[][] names = { p.value(), p.not() };
             boolean[] matches = { false, false };
@@ -138,6 +138,7 @@ public class Loader {
                 if (p.options()    .length > 0) { options     = p.options();     }
                 if (p.linkpath()   .length > 0) { linkpath    = p.linkpath();    }
                 if (p.link()       .length > 0) { link        = p.link();        }
+                if (p.framework()  .length > 0) { framework   = p.framework();   }
                 if (p.preloadpath().length > 0) { preloadpath = p.preloadpath(); }
                 if (p.preload()    .length > 0) { preload     = p.preload();     }
             }
@@ -161,6 +162,7 @@ public class Loader {
         }
         appendProperty(properties, "compiler.linkpath",         s, linkpath);
         appendProperty(properties, "compiler.link",             s, link);
+        appendProperty(properties, "compiler.framework",        s, framework);
         appendProperty(properties, "loader.preloadpath",        s, linkpath);
         appendProperty(properties, "loader.preloadpath",        s, preloadpath);
         appendProperty(properties, "loader.preload",            s, link);
@@ -293,7 +295,7 @@ public class Loader {
     }
 
     public static String load(Class cls) {
-        if (!loadLibraries) {
+        if (!loadLibraries || cls == null) {
             return null;
         }
 
@@ -309,7 +311,7 @@ public class Loader {
 
         // Force initialization of the class in case it needs it
         try {
-            cls = Class.forName(className);
+            cls = Class.forName(className, true, cls.getClassLoader());
         } catch (ClassNotFoundException ex) {
             Error e = new NoClassDefFoundError(ex.toString());
             e.initCause(ex);

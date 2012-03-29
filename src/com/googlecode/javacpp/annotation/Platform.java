@@ -21,6 +21,7 @@ public @interface Platform {
     String[] options()     default {};
     String[] linkpath()    default {};
     String[] link()        default {};
+    String[] framework()   default {};
     String[] preloadpath() default {};
     String[] preload()     default {};
 }

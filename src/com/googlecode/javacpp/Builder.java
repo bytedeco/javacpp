@@ -31,7 +31,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Arrays;
-import java.util.Enumeration;
 import java.util.LinkedList;
 import java.util.Properties;
 import java.util.jar.JarInputStream;
@@ -173,6 +172,14 @@ public class Builder {
             }
         }
 
+        String framework = properties.getProperty("compiler.framework");
+        if (framework != null && framework.length() > 0) {
+            for (String s : framework.split(pathSeparator)) {
+                command.add(properties.getProperty("compiler.framework.prefix", "") + s +
+                            properties.getProperty("compiler.framework.suffix", ""));
+            }
+        }
+
         for (String s : command) {
             boolean hasSpaces = s.indexOf(" ") > 0;
             if (hasSpaces) {
@@ -191,7 +198,6 @@ public class Builder {
         new Piper(p.getInputStream(), System.out).start();
         return p.waitFor();
     }
-
 
     public static LinkedList<File> generateAndBuild(Class[] classes, Properties properties, File outputDirectory,
             String outputName, boolean build) throws IOException, InterruptedException {
@@ -331,8 +337,7 @@ public class Builder {
                     add(c);
                 }
             } catch (ClassNotFoundException e) {
-                System.err.println("Error: Could not find class " + className + ": " + e);
-                System.exit(1);
+                System.err.println("Warning: Could not find class " + className + ": " + e);
             } catch (NoClassDefFoundError e) {
                 System.err.println("Warning: Could not load class " + className + ": " + e);
             }
@@ -378,12 +383,11 @@ public class Builder {
             }
             if (prevSize == size()) {
                 if (packageName == null) {
-                    System.err.println("Error: No classes found in the unnamed package");
+                    System.err.println("Warning: No classes found in the unnamed package");
                     printHelp();
                 } else {
-                    System.err.println("Error: No classes found in package " + packageName);
+                    System.err.println("Warning: No classes found in package " + packageName);
                 }
-                System.exit(1);
             }
         }
 
