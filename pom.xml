@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.googlecode.javacpp</groupId>
+  <artifactId>javacpp</artifactId>
+  <version>SNAPSHOT</version>
+  <packaging>maven-plugin</packaging>
+  <name>JavaCPP</name>
+  <description>The missing bridge between Java and native C++</description>
+  <url>http://code.google.com/p/javacpp/</url>
+
+  <licenses>
+    <license>
+      <name>GPLv2 with Classpath exception</name>
+      <url>http://www.gnu.org/software/classpath/license.html</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
+  <developers>
+    <developer>
+      <name>Samuel Audet</name>
+      <email>samuel.audet@gmail.com</email>
+    </developer>
+  </developers>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <maven.build.timestamp.format>yyyyMMddhhmm</maven.build.timestamp.format>
+  </properties>
+
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>2.3</version>
+        <configuration>
+          <source>1.5</source>
+          <target>1.5</target>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>2.4</version>
+        <configuration>
+          <archive>
+            <manifest>
+              <mainClass>com.googlecode.javacpp.Builder</mainClass>
+            </manifest>
+            <manifestEntries>
+              <Name>com/googlecode/javacpp/</Name>
+              <Implementation-Title>${project.name}</Implementation-Title>
+              <Implementation-Vendor>Samuel Audet</Implementation-Vendor>
+              <Implementation-Version>${maven.build.timestamp}</Implementation-Version>
+              <Specification-Title>${project.name}</Specification-Title>
+              <Specification-Vendor>Samuel Audet</Specification-Vendor>
+              <Specification-Version>${maven.build.timestamp}</Specification-Version>
+            </manifestEntries>
+          </archive>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <version>2.3</version>
+        <configuration>
+          <descriptorRefs>
+            <descriptorRef>bin</descriptorRef>
+            <descriptorRef>src</descriptorRef>
+          </descriptorRefs>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>
