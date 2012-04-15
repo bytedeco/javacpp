@@ -241,7 +241,7 @@ This project was conceived at the Okutomi & Tanaka Laboratory, Tokyo Institute o
 
 ==Changes==
 ===April xx, 2012===
- * Added `pom.xml` file for Maven support and changed the directory structure of the source code to match Maven's standard directory layout (issue #10)
+ * Added `pom.xml` file for Maven support and changed the directory structure of the source code to match Maven's standard directory layout (issue #10) Many thanks to Adam Waldenberg and Arnaud Nauwynck for their ongoing support with that!
  * Moved the source code repository to Git
  * Created a new `@Raw` annotation to use Java object as raw `jobject` in C++, also passing `JNIEnv` and the enclosing `jclass` or the `jobject` corresponding to `this`, as the first two arguments of the function, when the `Generator` encounters any `@Raw(withEnv=true)` (issue #13)
  * The `Builder` now handles more cases when some prefix or suffix property starts or ends with a space (issue #14)

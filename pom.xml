@@ -5,7 +5,8 @@
   <groupId>com.googlecode.javacpp</groupId>
   <artifactId>javacpp</artifactId>
   <version>SNAPSHOT</version>
-  <packaging>maven-plugin</packaging>
+  <packaging>jar</packaging>
+
   <name>JavaCPP</name>
   <description>The missing bridge between Java and native C++</description>
   <url>http://code.google.com/p/javacpp/</url>

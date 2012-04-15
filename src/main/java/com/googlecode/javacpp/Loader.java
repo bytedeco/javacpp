@@ -95,22 +95,22 @@ public class Loader {
         return p;
     }
 
-    public static void appendProperties(Properties properties, Class<?> cls) {
+    public static void appendProperties(Properties properties, Class cls) {
         String platformName = properties.getProperty("platform.name");
-
+        Class<?> c = cls;
         com.googlecode.javacpp.annotation.Properties classProperties =
-        cls.getAnnotation(com.googlecode.javacpp.annotation.Properties.class);
+                c.getAnnotation(com.googlecode.javacpp.annotation.Properties.class);
         Platform[] platforms;
         if (classProperties == null) {
             try {
-                Platform platform = cls.getAnnotation(Platform.class);
+                Platform platform = c.getAnnotation(Platform.class);
                 if (platform == null) {
                     return;
                 } else {
                     platforms = new Platform[] { platform };
                 }
             } catch (Throwable t) {
-                System.err.println("Could not append properties for " + cls.getCanonicalName() + ": " + t);
+                System.err.println("Could not append properties for " + c.getCanonicalName() + ": " + t);
                 return;
             }
         } else {
@@ -290,7 +290,7 @@ public class Loader {
     static Map<Class,String> loadedLibraries = Collections.synchronizedMap(new HashMap<Class,String>());
 
     public static String load() {
-        Class<?> cls = getCallerClass(2);
+        Class cls = getCallerClass(2);
         return load(cls);
     }
 
@@ -382,7 +382,7 @@ public class Loader {
             e.initCause(ex);
             throw e;
         } finally {
-            if (tempFile != null) {
+            if (tempFile != null && tempFile.exists()) {
                 tempFile.deleteOnExit();
             }
             // But under Windows, it won't get deleted!
