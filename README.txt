@@ -20,7 +20,7 @@ To produce binary files for Android, you will also have to install:
  * Android NDK r7b  http://developer.android.com/sdk/ndk/
 
 To modify the source code, please note that the project files were created for:
- * NetBeans 6.9  http://www.netbeans.org/downloads/  or
+ * NetBeans 6.9  http://netbeans.org/downloads/  or
  * Maven 2 or 3  http://maven.apache.org/download.html
 
 Please feel free to ask questions on [http://groups.google.com/group/javacpp-project the mailing list] if you encounter any problems with the software! I am sure it is far from perfect...
@@ -236,7 +236,7 @@ To make everything automatic, we may also insert that command into, for example,
 
 
 ==Acknowledgments==
-This project was conceived at the Okutomi & Tanaka Laboratory, Tokyo Institute of Technology, where I was supported by a generous scholarship from the Ministry of Education, Culture, Sports, Science and Technology (MEXT) of the Japanese Government. I extend my gratitude further to all who have reported bugs, donated code, or made suggestions for improvements!
+This project was conceived at the Okutomi & Tanaka Laboratory, Tokyo Institute of Technology, where I was supported for my doctoral research project by a generous scholarship from the Ministry of Education, Culture, Sports, Science and Technology (MEXT) of the Japanese Government. I extend my gratitude further to all who have reported bugs, donated code, or made suggestions for improvements!
 
 
 ==Changes==

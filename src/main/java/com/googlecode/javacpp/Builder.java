@@ -237,100 +237,6 @@ public class Builder {
         return p.waitFor();
     }
 
-    public static LinkedList<File> generateAndBuild(Class[] classes, Properties properties, File outputDirectory,
-            String outputName, boolean build) throws IOException, InterruptedException {
-        LinkedList<File> outputFiles = new LinkedList<File>();
-        properties = (Properties)properties.clone();
-        for (Class c : classes) {
-            Loader.appendProperties(properties, c);
-        }
-        File sourceFile;
-        if (outputDirectory == null) {
-            if (classes.length == 1) {
-                try {
-                    URL resourceURL = classes[0].getResource(classes[0].getSimpleName() + ".class");
-                    File packageDir = new File(resourceURL.toURI()).getParentFile();
-                    outputDirectory = new File(packageDir, properties.getProperty("platform.name"));
-                    sourceFile      = new File(packageDir, outputName + ".cpp");
-                } catch (URISyntaxException e) {
-                    throw new RuntimeException(e);
-                }
-            } else {
-                outputDirectory = new File(properties.getProperty("platform.name"));
-                sourceFile      = new File(outputName + ".cpp");
-            }
-        } else {
-            sourceFile = new File(outputDirectory, outputName + ".cpp");
-        }
-        if (!outputDirectory.exists()) {
-            outputDirectory.mkdirs();
-        }
-        System.out.println("Generating source file: " + sourceFile);
-        Generator generator = new Generator(properties, sourceFile);
-        boolean generatedSomething = generator.generate(classes);
-        generator.close();
-
-        if (generatedSomething) {
-            if (build) {
-                Builder builder = new Builder(properties);
-                File libraryFile = new File(outputDirectory, builder.mapLibraryName(outputName));
-                System.out.println("Building library file: " + libraryFile);
-                int exitValue = builder.build(sourceFile.getPath(), libraryFile.getPath());
-                if (exitValue == 0) {
-                    sourceFile.delete();
-                    outputFiles.add(libraryFile);
-                } else {
-                    System.exit(exitValue);
-                }
-            } else {
-                outputFiles.add(sourceFile);
-            }
-        } else {
-            System.out.println("No need to generate source file: " + sourceFile);
-        }
-        return outputFiles;
-    }
-
-    public static void createJar(File jarFile, String[] classpath, LinkedList<File> files) throws IOException {
-        System.out.println("Creating jar file: " + jarFile);
-        JarOutputStream jos = new JarOutputStream(new FileOutputStream(jarFile));
-        for (File f : files) {
-            String name = f.getPath();
-            if (classpath != null) {
-                // Store only the path relative to the classpath so that
-                // our Loader may use the package name of the associated
-                // class to get the file as a resource from the ClassLoader.
-                String[] names = new String[classpath.length];
-                for (int i = 0; i < classpath.length; i++) {
-                    String path = new File(classpath[i]).getCanonicalPath();
-                    if (name.startsWith(path)) {
-                        names[i] = name.substring(path.length() + 1);
-                    }
-                }
-                // Retain only the shortest relative name.
-                for (int i = 0; i < names.length; i++) {
-                    if (names[i] != null && names[i].length() < name.length()) {
-                        name = names[i];
-                    }
-                }
-            }
-            ZipEntry e = new ZipEntry(name.replace(File.separatorChar, '/'));
-            e.setTime(f.lastModified());
-            jos.putNextEntry(e);
-            FileInputStream fis = new FileInputStream(f);
-            byte[] data = new byte[fis.available()];
-            int n;
-            while ((n = fis.read(data)) > 0) {
-                jos.write(data, 0, n);
-            }
-            fis.close();
-            jos.closeEntry();
-//            f.delete();
-//            f.getParentFile().delete();
-        }
-        jos.close();
-    }
-
     public static class UserClassLoader extends URLClassLoader {
         private LinkedList<String> paths = new LinkedList<String>();
         public UserClassLoader() {
@@ -340,6 +246,9 @@ public class Builder {
             super(new URL[0], parent);
         }
         public void addPaths(String ... paths) {
+            if (paths == null) {
+                return;
+            }
             for (String path : paths) {
                 this.paths.add(path);
                 try {
@@ -374,7 +283,7 @@ public class Builder {
         private UserClassLoader loader;
 
         public void addClass(String className) {
-            if (className.indexOf('$') > 0) {
+            if (className == null || className.indexOf('$') > 0) {
                 // skip nested classes
                 return;
             } else if (className.endsWith(".class")) {
@@ -393,7 +302,7 @@ public class Builder {
         }
 
         public void addMatchingFile(String filename, String packagePath, boolean recursive) {
-            if (filename.endsWith(".class") && filename.indexOf('$') < 0 &&
+            if (filename != null && filename.endsWith(".class") && filename.indexOf('$') < 0 &&
                     (packagePath == null || (recursive && filename.startsWith(packagePath)) ||
                     filename.regionMatches(0, packagePath, 0, Math.max(filename.lastIndexOf('/'), packagePath.lastIndexOf('/'))))) {
                 addClass(filename.replace('/', '.'));
@@ -441,6 +350,9 @@ public class Builder {
         }
 
         public void addClassOrPackage(String name) throws IOException {
+            if (name == null) {
+                return;
+            }
             name = name.replace('/', '.');
             if (name.endsWith(".**")) {
                 addPackage(name.substring(0, name.length()-3), true);
@@ -448,6 +360,209 @@ public class Builder {
                 addPackage(name.substring(0, name.length()-2), false);
             } else {
                 addClass(name);
+            }
+        }
+    }
+
+    public static class Main {
+        public Main() {
+            Loader.loadLibraries = false;
+            this.classLoader = new UserClassLoader(Thread.currentThread().getContextClassLoader());
+            this.properties = Loader.getProperties();
+            this.classes = new LinkedList<Class>();
+            this.classScanner = new ClassScanner(classes, classLoader);
+        }
+
+        UserClassLoader classLoader = null;
+        File outputDirectory = null;
+        String outputName = null, jarPrefix = null;
+        boolean compile = true;
+        Properties properties = null;
+        LinkedList<Class> classes = null;
+        ClassScanner classScanner = null;
+
+        public void setClassPaths(String classPaths) {
+            setClassPaths(classPaths == null ? null : classPaths.split(File.pathSeparator));
+        }
+        public void setClassPaths(String ... classPaths) {
+            classLoader.addPaths(classPaths);
+        }
+        public void setOutputDirectory(String outputDirectory) {
+            setOutputDirectory(outputDirectory == null ? null : new File(outputDirectory));
+        }
+        public void setOutputDirectory(File outputDirectory) {
+            this.outputDirectory = outputDirectory;
+        }
+        public void setCompile(boolean compile) {
+            this.compile = compile;
+        }
+        public void setOutputName(String outputName) {
+            this.outputName = outputName;
+        }
+        public void setJarPrefix(String jarPrefix) {
+            this.jarPrefix = jarPrefix;
+        }
+        public void setProperties(String properties) {
+            setProperties(properties == null ? null : Loader.getProperties(properties));
+        }
+        public void setProperties(Properties properties) {
+            if (properties != null) {
+                this.properties.putAll(properties);
+            }
+        }
+        public void setPropertyFile(String propertyFile) throws IOException {
+            setPropertyFile(propertyFile == null ? null : new File(propertyFile));
+        }
+        public void setPropertyFile(File propertyFile) throws IOException {
+            if (propertyFile == null) {
+                return;
+            }
+            FileInputStream fis = new FileInputStream(propertyFile);
+            properties = new Properties(properties);
+            try {
+                properties.load(new InputStreamReader(fis));
+            } catch (NoSuchMethodError e) {
+                properties.load(fis);
+            }
+            fis.close();
+        }
+        public void setProperty(String keyValue) {
+            int equalIndex = keyValue.indexOf('=');
+            if (equalIndex < 0) {
+                equalIndex = keyValue.indexOf(':');
+            }
+            setProperty(keyValue.substring(2, equalIndex),
+                        keyValue.substring(equalIndex+1));
+        }
+        public void setProperty(String key, String value) {
+            if (key.length() > 0 && value.length() > 0) {
+                properties.put(key, value);
+            }
+        }
+        public void setClassesOrPackages(String ... classesOrPackages) throws IOException {
+            for (String s : classesOrPackages) {
+                classScanner.addClassOrPackage(s);
+            }
+        }
+
+        public static LinkedList<File> generateAndBuild(Class[] classes, Properties properties, File outputDirectory,
+                String outputName, boolean build) throws IOException, InterruptedException {
+            LinkedList<File> outputFiles = new LinkedList<File>();
+            properties = (Properties)properties.clone();
+            for (Class c : classes) {
+                Loader.appendProperties(properties, c);
+            }
+            File sourceFile;
+            if (outputDirectory == null) {
+                if (classes.length == 1) {
+                    try {
+                        URL resourceURL = classes[0].getResource(classes[0].getSimpleName() + ".class");
+                        File packageDir = new File(resourceURL.toURI()).getParentFile();
+                        outputDirectory = new File(packageDir, properties.getProperty("platform.name"));
+                        sourceFile      = new File(packageDir, outputName + ".cpp");
+                    } catch (URISyntaxException e) {
+                        throw new RuntimeException(e);
+                    }
+                } else {
+                    outputDirectory = new File(properties.getProperty("platform.name"));
+                    sourceFile      = new File(outputName + ".cpp");
+                }
+            } else {
+                sourceFile = new File(outputDirectory, outputName + ".cpp");
+            }
+            if (!outputDirectory.exists()) {
+                outputDirectory.mkdirs();
+            }
+            System.out.println("Generating source file: " + sourceFile);
+            Generator generator = new Generator(properties, sourceFile);
+            boolean generatedSomething = generator.generate(classes);
+            generator.close();
+
+            if (generatedSomething) {
+                if (build) {
+                    Builder builder = new Builder(properties);
+                    File libraryFile = new File(outputDirectory, builder.mapLibraryName(outputName));
+                    System.out.println("Building library file: " + libraryFile);
+                    int exitValue = builder.build(sourceFile.getPath(), libraryFile.getPath());
+                    if (exitValue == 0) {
+                        sourceFile.delete();
+                        outputFiles.add(libraryFile);
+                    } else {
+                        System.exit(exitValue);
+                    }
+                } else {
+                    outputFiles.add(sourceFile);
+                }
+            } else {
+                System.out.println("No need to generate source file: " + sourceFile);
+            }
+            return outputFiles;
+        }
+
+        public static void createJar(File jarFile, String[] classpath, LinkedList<File> files) throws IOException {
+            System.out.println("Creating JAR file: " + jarFile);
+            JarOutputStream jos = new JarOutputStream(new FileOutputStream(jarFile));
+            for (File f : files) {
+                String name = f.getPath();
+                if (classpath != null) {
+                    // Store only the path relative to the classpath so that
+                    // our Loader may use the package name of the associated
+                    // class to get the file as a resource from the ClassLoader.
+                    String[] names = new String[classpath.length];
+                    for (int i = 0; i < classpath.length; i++) {
+                        String path = new File(classpath[i]).getCanonicalPath();
+                        if (name.startsWith(path)) {
+                            names[i] = name.substring(path.length() + 1);
+                        }
+                    }
+                    // Retain only the shortest relative name.
+                    for (int i = 0; i < names.length; i++) {
+                        if (names[i] != null && names[i].length() < name.length()) {
+                            name = names[i];
+                        }
+                    }
+                }
+                ZipEntry e = new ZipEntry(name.replace(File.separatorChar, '/'));
+                e.setTime(f.lastModified());
+                jos.putNextEntry(e);
+                FileInputStream fis = new FileInputStream(f);
+                byte[] data = new byte[fis.available()];
+                int n;
+                while ((n = fis.read(data)) > 0) {
+                    jos.write(data, 0, n);
+                }
+                fis.close();
+                jos.closeEntry();
+    //            f.delete();
+    //            f.getParentFile().delete();
+            }
+            jos.close();
+        }
+
+        public void build() throws IOException, InterruptedException {
+            if (classes.isEmpty()) {
+                classScanner.addPackage(null, true);
+            }
+
+            LinkedList<File> outputFiles;
+            if (outputName == null) {
+                outputFiles = new LinkedList<File>();
+                for (Class c : classes) {
+                    outputFiles.addAll(generateAndBuild(new Class[] { c }, properties,
+                            outputDirectory, Loader.getLibraryName(c), compile));
+                }
+            } else {
+                outputFiles = generateAndBuild(classes.toArray(new Class[classes.size()]),
+                        properties, outputDirectory, outputName, compile);
+            }
+
+            if (jarPrefix != null && !outputFiles.isEmpty()) {
+                File jarFile = new File(jarPrefix + "-" + properties.get("platform.name") + ".jar");
+                File d = jarFile.getParentFile();
+                if (d != null && !d.exists()) {
+                    d.mkdir();
+                }
+                createJar(jarFile, outputDirectory == null ? classLoader.getPaths() : null, outputFiles);
             }
         }
     }
@@ -470,9 +585,9 @@ public class Builder {
         System.out.println("where options include:");
         System.out.println();
         System.out.println("    -classpath <path>      Load user classes from path");
-        System.out.println("    -d <directory>         Dump all output files in directory");
-        System.out.println("    -cpp                   Do not build or delete the generated .cpp files");
+        System.out.println("    -d <directory>         Output all generated files to directory");
         System.out.println("    -o <name>              Output everything in a file named after given name");
+        System.out.println("    -cpp                   Do not compile or delete the generated .cpp files");
         System.out.println("    -jarprefix <prefix>    Also create a JAR file named \"<prefix>-<platform.name>.jar\"");
         System.out.println("    -properties <resource> Load all properties from resource");
         System.out.println("    -propertyfile <file>   Load all properties from file");
@@ -481,82 +596,35 @@ public class Builder {
     }
 
     public static void main(String[] args) throws Exception {
-        Loader.loadLibraries = false;
-        UserClassLoader classLoader = new UserClassLoader();
-        File outputDirectory = null;
-        String outputName = null, jarPrefix = null;
-        boolean build = true;
-        Properties properties = Loader.getProperties();
-        LinkedList<Class> classes = new LinkedList<Class>();
-        ClassScanner classScanner = new ClassScanner(classes, classLoader);
-
+        Main main = new Main();
         for (int i = 0; i < args.length; i++) {
             if ("-help".equals(args[i]) || "--help".equals(args[i])) {
                 printHelp();
                 System.exit(0);
             } else if ("-classpath".equals(args[i]) || "-cp".equals(args[i]) || "-lib".equals(args[i])) {
-                classLoader.addPaths(args[++i].split(File.pathSeparator));
+                main.setClassPaths(args[++i]);
             } else if ("-d".equals(args[i])) {
-                outputDirectory = new File(args[++i]);
-            } else if ("-cpp".equals(args[i])) {
-                build = false;
+                main.setOutputDirectory(args[++i]);
             } else if ("-o".equals(args[i])) {
-                outputName = args[++i];
+                main.setOutputName(args[++i]);
+            } else if ("-cpp".equals(args[i])) {
+                main.setCompile(false);
             } else if ("-jarprefix".equals(args[i])) {
-                jarPrefix = args[++i];
+                main.setJarPrefix(args[++i]);
             } else if ("-properties".equals(args[i])) {
-                properties = Loader.getProperties(args[++i]);
+                main.setProperties(args[++i]);
             } else if ("-propertyfile".equals(args[i])) {
-                FileInputStream fis = new FileInputStream(args[++i]);
-                properties = new Properties(properties);
-                try {
-                    properties.load(new InputStreamReader(fis));
-                } catch (NoSuchMethodError e) {
-                    properties.load(fis);
-                }
-                fis.close();
+                main.setPropertyFile(args[++i]);
             } else if (args[i].startsWith("-D")) {
-                int equalIndex = args[i].indexOf('=');
-                if (equalIndex < 0) {
-                    equalIndex = args[i].indexOf(':');
-                }
-                String key = args[i].substring(2, equalIndex);
-                String value = args[i].substring(equalIndex+1);
-                if (key.length() > 0 && value.length() > 0) {
-                    properties.put(key, value);
-                }
+                main.setProperty(args[i]);
             } else if (args[i].startsWith("-")) {
                 System.err.println("Error: Invalid option \"" + args[i] + "\"");
                 printHelp();
                 System.exit(1);
             } else {
-                classScanner.addClassOrPackage(args[i]);
+                main.setClassesOrPackages(args[i]);
             }
         }
-
-        if (classes.isEmpty()) {
-            classScanner.addPackage(null, true);
-        }
-
-        LinkedList<File> outputFiles;
-        if (outputName == null) {
-            outputFiles = new LinkedList<File>();
-            for (Class c : classes) {
-                outputFiles.addAll(generateAndBuild(new Class[] { c }, properties,
-                        outputDirectory, Loader.getLibraryName(c), build));
-            }
-        } else {
-            outputFiles = generateAndBuild(classes.toArray(new Class[classes.size()]),
-                    properties, outputDirectory, outputName, build);
-        }
-
-        if (jarPrefix != null && !outputFiles.isEmpty()) {
-            File jarFile = new File(jarPrefix + "-" + properties.get("platform.name") + ".jar");
-            File d = jarFile.getParentFile();
-            if (!d.exists()) {
-                d.mkdir();
-            }
-            createJar(jarFile, outputDirectory == null ? classLoader.getPaths() : null, outputFiles);
-        }
+        main.build();
     }
 }

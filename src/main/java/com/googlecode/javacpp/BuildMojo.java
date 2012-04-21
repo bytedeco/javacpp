@@ -101,7 +101,7 @@ public class BuildMojo extends AbstractMojo {
      */
     protected String[] classOrPackageNames = null;
 
-    public void execute() throws MojoExecutionException {
+    @Override public void execute() throws MojoExecutionException {
         try {
             getLog().info("Executing JavaCPP Builder");
             if (getLog().isDebugEnabled()) {
