@@ -310,8 +310,8 @@ public class Generator implements Closeable {
         out.println("        vec2(pointer ? std::vector<T>(pointer, pointer + capacity) : std::vector<T>()), vec(vec2) { }");
         out.println("    VectorAdapter(const std::vector<T>& vec) : pointer(0), capacity(0), vec((std::vector<T>&)vec) { }");
         out.println("    void assign(P* pointer, typename std::vector<T>::size_type capacity) {");
-        out.println("        this.pointer = pointer;");
-        out.println("        this.capacity = capacity;");
+        out.println("        this->pointer = pointer;");
+        out.println("        this->capacity = capacity;");
         out.println("        vec.assign(pointer, pointer + capacity);");
         out.println("    }");
         out.println("    static void deallocate(P* pointer) { delete[] pointer; }");

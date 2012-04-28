@@ -245,6 +245,8 @@ This project was conceived at the Okutomi & Tanaka Laboratory, Tokyo Institute o
  * Moved the source code repository to Git
  * Created a new `@Raw` annotation to use Java object as raw `jobject` in C++, also passing `JNIEnv` and the enclosing `jclass` or the `jobject` corresponding to `this`, as the first two arguments of the function, when the `Generator` encounters any `@Raw(withEnv=true)` (issue #13)
  * The `Builder` now handles more cases when some prefix or suffix property starts or ends with a space (issue #14)
+ * Fixed syntax error in `VectorAdapter`, which GCC and Visual C++ would still happily compile
+ * Added new `source.suffix` property to have the names of generated source files end with something else than `.cpp` and support frameworks like CUDA that require filenames with a `.cu` extension to compile properly, and also changed the `-cpp` command line option to `-nocompile`
 
 ===March 29, 2012===
  * Added new `compiler.framework` property and corresponding `@Platform.framework()` value to allow easier binding with Mac OS X frameworks

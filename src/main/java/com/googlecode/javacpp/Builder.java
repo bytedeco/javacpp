@@ -459,16 +459,16 @@ public class Builder {
                         URL resourceURL = classes[0].getResource(classes[0].getSimpleName() + ".class");
                         File packageDir = new File(resourceURL.toURI()).getParentFile();
                         outputDirectory = new File(packageDir, properties.getProperty("platform.name"));
-                        sourceFile      = new File(packageDir, outputName + ".cpp");
+                        sourceFile      = new File(packageDir, outputName + properties.getProperty("source.suffix", ".cpp"));
                     } catch (URISyntaxException e) {
                         throw new RuntimeException(e);
                     }
                 } else {
                     outputDirectory = new File(properties.getProperty("platform.name"));
-                    sourceFile      = new File(outputName + ".cpp");
+                    sourceFile      = new File(outputName + properties.getProperty("source.suffix", ".cpp"));
                 }
             } else {
-                sourceFile = new File(outputDirectory, outputName + ".cpp");
+                sourceFile = new File(outputDirectory, outputName + properties.getProperty("source.suffix", ".cpp"));
             }
             if (!outputDirectory.exists()) {
                 outputDirectory.mkdirs();
@@ -587,7 +587,7 @@ public class Builder {
         System.out.println("    -classpath <path>      Load user classes from path");
         System.out.println("    -d <directory>         Output all generated files to directory");
         System.out.println("    -o <name>              Output everything in a file named after given name");
-        System.out.println("    -cpp                   Do not compile or delete the generated .cpp files");
+        System.out.println("    -nocompile             Do not compile or delete the generated source files");
         System.out.println("    -jarprefix <prefix>    Also create a JAR file named \"<prefix>-<platform.name>.jar\"");
         System.out.println("    -properties <resource> Load all properties from resource");
         System.out.println("    -propertyfile <file>   Load all properties from file");
@@ -607,7 +607,7 @@ public class Builder {
                 main.setOutputDirectory(args[++i]);
             } else if ("-o".equals(args[i])) {
                 main.setOutputName(args[++i]);
-            } else if ("-cpp".equals(args[i])) {
+            } else if ("-cpp".equals(args[i]) || "-nocompile".equals(args[i])) {
                 main.setCompile(false);
             } else if ("-jarprefix".equals(args[i])) {
                 main.setJarPrefix(args[++i]);
