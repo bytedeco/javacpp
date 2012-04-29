@@ -33,6 +33,7 @@ import java.net.URLClassLoader;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Properties;
 import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
@@ -44,7 +45,11 @@ import java.util.zip.ZipEntry;
  */
 public class Builder {
     public Builder(Properties properties) {
+        this(properties, null);
+    }
+    public Builder(Properties properties, Map<String,String> environmentVariables) {
         this.properties = properties;
+        this.environmentVariables = environmentVariables;
 
         // try to find include paths for jni.h and jni_md.h automatically
         final String[] jnipath = new String[2];
@@ -81,6 +86,7 @@ public class Builder {
     }
 
     private Properties properties;
+    private Map<String,String> environmentVariables;
 
     public String mapLibraryName(String libname) {
         return properties.getProperty("library.prefix", "") + libname +
@@ -231,7 +237,11 @@ public class Builder {
         }
         System.out.println();
 
-        Process p = new ProcessBuilder(command).start();
+        ProcessBuilder pb = new ProcessBuilder(command);
+        if (environmentVariables != null) {
+            pb.environment().putAll(environmentVariables);
+        }
+        Process p = pb.start();
         new Piper(p.getErrorStream(), System.err).start();
         new Piper(p.getInputStream(), System.out).start();
         return p.waitFor();
@@ -380,42 +390,53 @@ public class Builder {
         Properties properties = null;
         LinkedList<Class> classes = null;
         ClassScanner classScanner = null;
+        Map<String,String> environmentVariables = null;
 
-        public void setClassPaths(String classPaths) {
-            setClassPaths(classPaths == null ? null : classPaths.split(File.pathSeparator));
+        public Main classPaths(String classPaths) {
+            classPaths(classPaths == null ? null : classPaths.split(File.pathSeparator));
+            return this;
         }
-        public void setClassPaths(String ... classPaths) {
+        public Main classPaths(String ... classPaths) {
             classLoader.addPaths(classPaths);
+            return this;
         }
-        public void setOutputDirectory(String outputDirectory) {
-            setOutputDirectory(outputDirectory == null ? null : new File(outputDirectory));
+        public Main outputDirectory(String outputDirectory) {
+            outputDirectory(outputDirectory == null ? null : new File(outputDirectory));
+            return this;
         }
-        public void setOutputDirectory(File outputDirectory) {
+        public Main outputDirectory(File outputDirectory) {
             this.outputDirectory = outputDirectory;
+            return this;
         }
-        public void setCompile(boolean compile) {
+        public Main compile(boolean compile) {
             this.compile = compile;
+            return this;
         }
-        public void setOutputName(String outputName) {
+        public Main outputName(String outputName) {
             this.outputName = outputName;
+            return this;
         }
-        public void setJarPrefix(String jarPrefix) {
+        public Main jarPrefix(String jarPrefix) {
             this.jarPrefix = jarPrefix;
+            return this;
         }
-        public void setProperties(String properties) {
-            setProperties(properties == null ? null : Loader.getProperties(properties));
+        public Main properties(String properties) {
+            properties(properties == null ? null : Loader.getProperties(properties));
+            return this;
         }
-        public void setProperties(Properties properties) {
+        public Main properties(Properties properties) {
             if (properties != null) {
                 this.properties.putAll(properties);
             }
+            return this;
         }
-        public void setPropertyFile(String propertyFile) throws IOException {
-            setPropertyFile(propertyFile == null ? null : new File(propertyFile));
+        public Main propertyFile(String propertyFile) throws IOException {
+            propertyFile(propertyFile == null ? null : new File(propertyFile));
+            return this;
         }
-        public void setPropertyFile(File propertyFile) throws IOException {
+        public Main propertyFile(File propertyFile) throws IOException {
             if (propertyFile == null) {
-                return;
+                return this;
             }
             FileInputStream fis = new FileInputStream(propertyFile);
             properties = new Properties(properties);
@@ -425,62 +446,71 @@ public class Builder {
                 properties.load(fis);
             }
             fis.close();
+            return this;
         }
-        public void setProperty(String keyValue) {
+        public Main property(String keyValue) {
             int equalIndex = keyValue.indexOf('=');
             if (equalIndex < 0) {
                 equalIndex = keyValue.indexOf(':');
             }
-            setProperty(keyValue.substring(2, equalIndex),
-                        keyValue.substring(equalIndex+1));
+            property(keyValue.substring(2, equalIndex),
+                     keyValue.substring(equalIndex+1));
+            return this;
         }
-        public void setProperty(String key, String value) {
+        public Main property(String key, String value) {
             if (key.length() > 0 && value.length() > 0) {
                 properties.put(key, value);
             }
+            return this;
         }
-        public void setClassesOrPackages(String ... classesOrPackages) throws IOException {
+        public Main classesOrPackages(String ... classesOrPackages) throws IOException {
             for (String s : classesOrPackages) {
                 classScanner.addClassOrPackage(s);
             }
+            return this;
+        }
+        public Main environmentVariables(Map<String,String> environmentVariables) {
+            this.environmentVariables = environmentVariables;
+            return this;
         }
 
-        public static LinkedList<File> generateAndBuild(Class[] classes, Properties properties, File outputDirectory,
-                String outputName, boolean build) throws IOException, InterruptedException {
+        public LinkedList<File> generateAndCompile(Class[] classes, String outputName) throws IOException, InterruptedException {
             LinkedList<File> outputFiles = new LinkedList<File>();
-            properties = (Properties)properties.clone();
+            Properties p = (Properties)properties.clone();
             for (Class c : classes) {
-                Loader.appendProperties(properties, c);
+                Loader.appendProperties(p, c);
             }
-            File sourceFile;
+            String platformName = p.getProperty("platform.name");
+            String sourceSuffix = p.getProperty("source.suffix", ".cpp");
+            File outputDirectory = this.outputDirectory, sourceFile;
             if (outputDirectory == null) {
                 if (classes.length == 1) {
                     try {
                         URL resourceURL = classes[0].getResource(classes[0].getSimpleName() + ".class");
                         File packageDir = new File(resourceURL.toURI()).getParentFile();
-                        outputDirectory = new File(packageDir, properties.getProperty("platform.name"));
-                        sourceFile      = new File(packageDir, outputName + properties.getProperty("source.suffix", ".cpp"));
+                        outputDirectory = new File(packageDir, platformName);
+                        sourceFile      = new File(packageDir, outputName + sourceSuffix);
                     } catch (URISyntaxException e) {
                         throw new RuntimeException(e);
                     }
                 } else {
-                    outputDirectory = new File(properties.getProperty("platform.name"));
-                    sourceFile      = new File(outputName + properties.getProperty("source.suffix", ".cpp"));
+                    outputDirectory = new File(platformName);
+                    sourceFile      = new File(outputName + sourceSuffix);
                 }
             } else {
-                sourceFile = new File(outputDirectory, outputName + properties.getProperty("source.suffix", ".cpp"));
+                sourceFile = new File(outputDirectory, outputName + sourceSuffix);
             }
             if (!outputDirectory.exists()) {
                 outputDirectory.mkdirs();
             }
             System.out.println("Generating source file: " + sourceFile);
-            Generator generator = new Generator(properties, sourceFile);
+            Generator generator = new Generator(p, sourceFile);
             boolean generatedSomething = generator.generate(classes);
             generator.close();
 
             if (generatedSomething) {
-                if (build) {
-                    Builder builder = new Builder(properties);
+                if (compile) {
+                    Builder builder = new Builder(p, environmentVariables);
                     File libraryFile = new File(outputDirectory, builder.mapLibraryName(outputName));
                     System.out.println("Building library file: " + libraryFile);
                     int exitValue = builder.build(sourceFile.getPath(), libraryFile.getPath());
@@ -494,7 +524,7 @@ public class Builder {
                     outputFiles.add(sourceFile);
                 }
             } else {
-                System.out.println("No need to generate source file: " + sourceFile);
+                System.out.println("Source file not generated: " + sourceFile);
             }
             return outputFiles;
         }
@@ -539,7 +569,7 @@ public class Builder {
             jos.close();
         }
 
-        public void build() throws IOException, InterruptedException {
+        public Collection<File> build() throws IOException, InterruptedException {
             if (classes.isEmpty()) {
                 classScanner.addPackage(null, true);
             }
@@ -548,12 +578,10 @@ public class Builder {
             if (outputName == null) {
                 outputFiles = new LinkedList<File>();
                 for (Class c : classes) {
-                    outputFiles.addAll(generateAndBuild(new Class[] { c }, properties,
-                            outputDirectory, Loader.getLibraryName(c), compile));
+                    outputFiles.addAll(generateAndCompile(new Class[] { c }, Loader.getLibraryName(c)));
                 }
             } else {
-                outputFiles = generateAndBuild(classes.toArray(new Class[classes.size()]),
-                        properties, outputDirectory, outputName, compile);
+                outputFiles = generateAndCompile(classes.toArray(new Class[classes.size()]), outputName);
             }
 
             if (jarPrefix != null && !outputFiles.isEmpty()) {
@@ -564,6 +592,7 @@ public class Builder {
                 }
                 createJar(jarFile, outputDirectory == null ? classLoader.getPaths() : null, outputFiles);
             }
+            return outputFiles;
         }
     }
 
@@ -602,27 +631,27 @@ public class Builder {
                 printHelp();
                 System.exit(0);
             } else if ("-classpath".equals(args[i]) || "-cp".equals(args[i]) || "-lib".equals(args[i])) {
-                main.setClassPaths(args[++i]);
+                main.classPaths(args[++i]);
             } else if ("-d".equals(args[i])) {
-                main.setOutputDirectory(args[++i]);
+                main.outputDirectory(args[++i]);
             } else if ("-o".equals(args[i])) {
-                main.setOutputName(args[++i]);
+                main.outputName(args[++i]);
             } else if ("-cpp".equals(args[i]) || "-nocompile".equals(args[i])) {
-                main.setCompile(false);
+                main.compile(false);
             } else if ("-jarprefix".equals(args[i])) {
-                main.setJarPrefix(args[++i]);
+                main.jarPrefix(args[++i]);
             } else if ("-properties".equals(args[i])) {
-                main.setProperties(args[++i]);
+                main.properties(args[++i]);
             } else if ("-propertyfile".equals(args[i])) {
-                main.setPropertyFile(args[++i]);
+                main.propertyFile(args[++i]);
             } else if (args[i].startsWith("-D")) {
-                main.setProperty(args[i]);
+                main.property(args[i]);
             } else if (args[i].startsWith("-")) {
                 System.err.println("Error: Invalid option \"" + args[i] + "\"");
                 printHelp();
                 System.exit(1);
             } else {
-                main.setClassesOrPackages(args[i]);
+                main.classesOrPackages(args[i]);
             }
         }
         main.build();

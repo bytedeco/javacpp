@@ -22,6 +22,8 @@ package com.googlecode.javacpp;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Map;
 import java.util.Properties;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -101,6 +103,12 @@ public class BuildMojo extends AbstractMojo {
      */
     protected String[] classOrPackageNames = null;
 
+    /**
+     * Environment variables added to the compiler subprocess
+     * @parameter expression="${environmentVariables}"
+     */
+    protected Map<String,String> environmentVariables = null;
+
     @Override public void execute() throws MojoExecutionException {
         try {
             getLog().info("Executing JavaCPP Builder");
@@ -116,21 +124,25 @@ public class BuildMojo extends AbstractMojo {
                 getLog().debug("propertyKeysAndValues: " + propertyKeysAndValues);
                 getLog().debug("classOrPackageName: " + classOrPackageName);
                 getLog().debug("classOrPackageNames: " + Arrays.deepToString(classOrPackageNames));
+                getLog().debug("environmentVariables: " + environmentVariables);
             }
-            Builder.Main builderMain = new Builder.Main();
-            builderMain.setClassPaths(classPath);
-            builderMain.setClassPaths(classPaths);
-            builderMain.setOutputDirectory(outputDirectory);
-            builderMain.setOutputName(outputName);
-            builderMain.setCompile(compile);
-            builderMain.setJarPrefix(jarPrefix);
-            builderMain.setProperties(properties);
-            builderMain.setPropertyFile(propertyFile);
-            builderMain.setProperties(propertyKeysAndValues);
-            builderMain.setClassesOrPackages(classOrPackageName);
-            builderMain.setClassesOrPackages(classOrPackageNames);
-            builderMain.build();
+            Collection<File> outputFiles = new Builder.Main()
+                    .classPaths(classPath)
+                    .classPaths(classPaths)
+                    .outputDirectory(outputDirectory)
+                    .outputName(outputName)
+                    .compile(compile)
+                    .jarPrefix(jarPrefix)
+                    .properties(properties)
+                    .propertyFile(propertyFile)
+                    .properties(propertyKeysAndValues)
+                    .classesOrPackages(classOrPackageName)
+                    .classesOrPackages(classOrPackageNames)
+                    .environmentVariables(environmentVariables).build();
             getLog().info("Successfully executed JavaCPP Builder");
+            if (getLog().isDebugEnabled()) {
+                getLog().debug("outputFiles: " + outputFiles);
+            }
 	} catch (Exception e) {
             getLog().error("Failed to execute JavaCPP Builder: " + e.getMessage());
             throw new MojoExecutionException("Failed to execute JavaCPP Builder", e);
