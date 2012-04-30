@@ -126,7 +126,7 @@ public class BuildMojo extends AbstractMojo {
                 getLog().debug("classOrPackageNames: " + Arrays.deepToString(classOrPackageNames));
                 getLog().debug("environmentVariables: " + environmentVariables);
             }
-            Collection<File> outputFiles = new Builder.Main()
+            Collection<File> outputFiles = new Builder()
                     .classPaths(classPath)
                     .classPaths(classPaths)
                     .outputDirectory(outputDirectory)
