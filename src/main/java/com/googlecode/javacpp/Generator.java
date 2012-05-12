@@ -563,7 +563,7 @@ public class Generator implements Closeable {
             }
             if (callbackAllocators[i] && functionMethod == null) {
                 logger.log(Level.WARNING, "No native call() method has been not declared in \"" +
-                        cls.getName() + "\". No code will be generated for callback allocator.");
+                        cls.getCanonicalName() + "\". No code will be generated for callback allocator.");
                 continue;
             }
             String baseFunctionName = mangle(cls.getName()) + "_" + mangle(methodInfo.name);
@@ -979,7 +979,11 @@ public class Generator implements Closeable {
             } else if (methodInfo.parameterTypes[j].isPrimitive()) {
                 out.print(cast + "p" + j);
             } else if (adapter != null) {
-                out.print("adapter" + j);
+                cast = adapter.cast().trim();
+                if (!cast.isEmpty() && !cast.startsWith("(") && !cast.endsWith(")")) {
+                    cast = "(" + cast + ")";
+                }
+                out.print(cast + "adapter" + j);
                 j += adapter.argc() - 1;
             } else if (FunctionPointer.class.isAssignableFrom(methodInfo.parameterTypes[j])) {
                 out.print(cast + "(pointer" + j + " == NULL ? NULL : pointer" + j + "->pointer)");
@@ -1853,6 +1857,10 @@ public class Generator implements Closeable {
                 String[] returnTypeName = getAnnotatedCPPTypeName(annotations, returnType);
                 prefix = returnTypeName[0] + returnTypeName[1] + " (" + callingConvention + spaceName + "*";
                 suffix = ")(";
+                if (namespace != null && !Pointer.class.isAssignableFrom(parameterTypes[0])) {
+                    logger.log(Level.WARNING, "First parameter of call() method for member function pointer " +
+                            type.getCanonicalName() + " is not a Pointer. Compilation will most likely fail.");
+                }
                 for (int j = namespace == null ? 0 : 1; j < parameterTypes.length; j++) {
                     String[] paramTypeName = getAnnotatedCPPTypeName(parameterAnnotations[j], parameterTypes[j]);
                     suffix += paramTypeName[0] + " p" + j + paramTypeName[1];
@@ -1861,6 +1869,9 @@ public class Generator implements Closeable {
                     }
                 }
                 suffix += ")";
+                if (type.isAnnotationPresent(Const.class)) {
+                    suffix += " const";
+                }
             }
         } else {
             String spacedType = "";

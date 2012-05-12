@@ -33,18 +33,24 @@ public class CharPointer extends Pointer {
     }
     public CharPointer(char ... array) {
         this(array.length);
-        asBuffer().put(array);
+        put(array);
     }
     public CharPointer(CharBuffer buffer) {
         super(buffer);
-        if (buffer.hasArray()) {
+        if (buffer != null && buffer.hasArray()) {
             char[] array = buffer.array();
             allocateArray(array.length);
-            asBuffer().put(array);
+            put(array);
             position(buffer.position());
         }
     }
-    public CharPointer(int size) { allocateArray(size); }
+    public CharPointer(int size) {
+        try {
+            allocateArray(size);
+        } catch (UnsatisfiedLinkError e) {
+            throw new RuntimeException("No native JavaCPP library in memory. (Has Loader.load() been called?)", e);
+        }
+    }
     public CharPointer(Pointer p) { super(p); }
     private native void allocateArray(int size);
 
@@ -76,9 +82,7 @@ public class CharPointer extends Pointer {
     }
     public CharPointer putString(String s) {
         char[] chars = s.toCharArray();
-        //capacity(chars.length+1);
-        asBuffer().put(chars).put((char)0);
-        return this;
+        return put(chars).put(chars.length, (char)0);
     }
 
     public char get() { return get(0); }

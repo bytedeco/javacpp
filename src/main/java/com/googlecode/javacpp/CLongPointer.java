@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Samuel Audet
+ * Copyright (C) 2011,2012 Samuel Audet
  *
  * This file is part of JavaCPP.
  *
@@ -29,7 +29,13 @@ import com.googlecode.javacpp.annotation.Name;
  */
 @Name("long")
 public class CLongPointer extends Pointer {
-    public CLongPointer(int size) { allocateArray(size); }
+    public CLongPointer(int size) {
+        try {
+            allocateArray(size);
+        } catch (UnsatisfiedLinkError e) {
+            throw new RuntimeException("No native JavaCPP library in memory. (Has Loader.load() been called?)", e);
+        }
+    }
     public CLongPointer(Pointer p) { super(p); }
     private native void allocateArray(int size);
 
@@ -38,7 +44,7 @@ public class CLongPointer extends Pointer {
     }
 
     public long get() { return get(0); }
-    public native long get(int i);
+    @Cast("long") public native long get(int i);
     public CLongPointer put(long l) { return put(0, l); }
-    public native CLongPointer put(int i, @Cast("long") long l);
+    public native CLongPointer put(int i, long l);
 }

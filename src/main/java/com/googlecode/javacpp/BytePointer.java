@@ -39,18 +39,24 @@ public class BytePointer extends Pointer {
     }
     public BytePointer(byte ... array) {
         this(array.length);
-        asBuffer().put(array);
+        put(array);
     }
     public BytePointer(ByteBuffer buffer) {
         super(buffer);
-        if (buffer.hasArray()) {
+        if (buffer != null && buffer.hasArray()) {
             byte[] array = buffer.array();
             allocateArray(array.length);
-            asBuffer().put(array);
+            put(array);
             position(buffer.position());
         }
     }
-    public BytePointer(int size) { allocateArray(size); }
+    public BytePointer(int size) {
+        try {
+            allocateArray(size);
+        } catch (UnsatisfiedLinkError e) {
+            throw new RuntimeException("No native JavaCPP library in memory. (Has Loader.load() been called?)", e);
+        }
+    }
     public BytePointer(Pointer p) { super(p); }
     private native void allocateArray(int size);
 
@@ -89,14 +95,12 @@ public class BytePointer extends Pointer {
             throws UnsupportedEncodingException {
         byte[] bytes = s.getBytes(charsetName);
         //capacity(bytes.length+1);
-        asBuffer().put(bytes).put((byte)0);
+        put(bytes).put(bytes.length, (byte)0);
         return this;
     }
     public BytePointer putString(String s) {
         byte[] bytes = s.getBytes();
-        //capacity(bytes.length+1);
-        asBuffer().put(bytes).put((byte)0);
-        return this;
+        return put(bytes).put(bytes.length, (byte)0);
     }
 
     public byte get() { return get(0); }

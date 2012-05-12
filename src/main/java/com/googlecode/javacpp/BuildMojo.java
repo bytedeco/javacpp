@@ -109,6 +109,12 @@ public class BuildMojo extends AbstractMojo {
      */
     protected Map<String,String> environmentVariables = null;
 
+    /**
+     * Pass compilerOptions directly to compiler
+     * @parameter expression="${compilerOptions}"
+     */
+    protected String[] compilerOptions = null;
+
     @Override public void execute() throws MojoExecutionException {
         try {
             getLog().info("Executing JavaCPP Builder");
@@ -125,6 +131,7 @@ public class BuildMojo extends AbstractMojo {
                 getLog().debug("classOrPackageName: " + classOrPackageName);
                 getLog().debug("classOrPackageNames: " + Arrays.deepToString(classOrPackageNames));
                 getLog().debug("environmentVariables: " + environmentVariables);
+                getLog().debug("compilerOptions: " + compilerOptions);
             }
             Collection<File> outputFiles = new Builder()
                     .classPaths(classPath)
@@ -138,7 +145,8 @@ public class BuildMojo extends AbstractMojo {
                     .properties(propertyKeysAndValues)
                     .classesOrPackages(classOrPackageName)
                     .classesOrPackages(classOrPackageNames)
-                    .environmentVariables(environmentVariables).build();
+                    .environmentVariables(environmentVariables)
+                    .compilerOptions(compilerOptions).build();
             getLog().info("Successfully executed JavaCPP Builder");
             if (getLog().isDebugEnabled()) {
                 getLog().debug("outputFiles: " + outputFiles);

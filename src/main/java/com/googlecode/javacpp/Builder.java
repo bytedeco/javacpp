@@ -143,6 +143,8 @@ public class Builder {
             command.addAll(Arrays.asList(options.split(" ")));
         }
 
+        command.addAll(compilerOptions);
+
         String outputPrefix = properties.getProperty("compiler.output.prefix");
         if (outputPrefix != null && outputPrefix.length() > 0) {
             command.addAll(Arrays.asList(outputPrefix.split(" ")));
@@ -247,18 +249,13 @@ public class Builder {
         String libraryName  = p.getProperty("library.prefix", "") + outputName + p.getProperty("library.suffix", "");
         File outputDirectory = this.outputDirectory, sourceFile;
         if (outputDirectory == null) {
-            if (classes.length == 1) {
-                try {
-                    URL resourceURL = classes[0].getResource(classes[0].getSimpleName() + ".class");
-                    File packageDir = new File(resourceURL.toURI()).getParentFile();
-                    outputDirectory = new File(packageDir, platformName);
-                    sourceFile      = new File(packageDir, outputName + sourceSuffix);
-                } catch (URISyntaxException e) {
-                    throw new RuntimeException(e);
-                }
-            } else {
-                outputDirectory = new File(platformName);
-                sourceFile      = new File(outputName + sourceSuffix);
+            try {
+                URL resourceURL = classes[0].getResource(classes[0].getSimpleName() + ".class");
+                File packageDir = new File(resourceURL.toURI()).getParentFile();
+                outputDirectory = new File(packageDir, platformName);
+                sourceFile      = new File(packageDir, outputName + sourceSuffix);
+            } catch (URISyntaxException e) {
+                throw new RuntimeException(e);
             }
         } else {
             sourceFile = new File(outputDirectory, outputName + sourceSuffix);
@@ -404,7 +401,9 @@ public class Builder {
         }
 
         public void addMatchingDir(String parentName, File dir, String packagePath, boolean recursive) {
-            for (File f : dir.listFiles()) {
+            File[] files = dir.listFiles();
+            Arrays.sort(files);
+            for (File f : files) {
                 String pathName = parentName == null ? f.getName() : parentName + f.getName();
                 if (f.isDirectory()) {
                     addMatchingDir(pathName + "/", f, packagePath, recursive);
@@ -464,6 +463,7 @@ public class Builder {
         this.properties = Loader.getProperties();
         this.classes = new LinkedList<Class>();
         this.classScanner = new ClassScanner(classes, classLoader);
+        this.compilerOptions = new LinkedList<String>();
     }
 
     UserClassLoader classLoader = null;
@@ -474,6 +474,7 @@ public class Builder {
     LinkedList<Class> classes = null;
     ClassScanner classScanner = null;
     Map<String,String> environmentVariables = null;
+    LinkedList<String> compilerOptions = null;
 
     public Builder classPaths(String classPaths) {
         classPaths(classPaths == null ? null : classPaths.split(File.pathSeparator));
@@ -503,8 +504,8 @@ public class Builder {
         this.jarPrefix = jarPrefix;
         return this;
     }
-    public Builder properties(String properties) {
-        properties(properties == null ? null : Loader.getProperties(properties));
+    public Builder properties(String platformName) {
+        properties(platformName == null ? null : Loader.getProperties(platformName));
         return this;
     }
     public Builder properties(Properties properties) {
@@ -513,8 +514,8 @@ public class Builder {
         }
         return this;
     }
-    public Builder propertyFile(String propertyFile) throws IOException {
-        propertyFile(propertyFile == null ? null : new File(propertyFile));
+    public Builder propertyFile(String filename) throws IOException {
+        propertyFile(filename == null ? null : new File(filename));
         return this;
     }
     public Builder propertyFile(File propertyFile) throws IOException {
@@ -554,6 +555,12 @@ public class Builder {
     }
     public Builder environmentVariables(Map<String,String> environmentVariables) {
         this.environmentVariables = environmentVariables;
+        return this;
+    }
+    public Builder compilerOptions(String ... options) {
+        if (options != null) {
+            compilerOptions.addAll(Arrays.asList(options));
+        }
         return this;
     }
 
@@ -608,6 +615,7 @@ public class Builder {
         System.out.println("    -properties <resource> Load all properties from resource");
         System.out.println("    -propertyfile <file>   Load all properties from file");
         System.out.println("    -D<property>=<value>   Set property to value");
+        System.out.println("    -Xcompiler <option>    Pass option directly to compiler");
         System.out.println();
     }
 
@@ -633,6 +641,8 @@ public class Builder {
                 builder.propertyFile(args[++i]);
             } else if (args[i].startsWith("-D")) {
                 builder.property(args[i]);
+            } else if ("-Xcompiler".equals(args[i])) {
+                builder.compilerOptions(args[++i]);
             } else if (args[i].startsWith("-")) {
                 System.err.println("Error: Invalid option \"" + args[i] + "\"");
                 printHelp();

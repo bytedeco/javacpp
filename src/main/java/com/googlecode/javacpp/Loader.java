@@ -26,6 +26,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -40,7 +42,13 @@ import java.util.WeakHashMap;
  */
 public class Loader {
 
+    private static String platformName = null;
+    private static Properties platformProperties = null;
+
     public static String getPlatformName() {
+        if (platformName != null) {
+            return platformName;
+        }
         String jvmName = System.getProperty("java.vm.name").toLowerCase();
         String osName  = System.getProperty("os.name").toLowerCase();
         String osArch  = System.getProperty("os.arch").toLowerCase();
@@ -61,11 +69,18 @@ public class Loader {
         } else if (osArch.startsWith("arm")) {
             osArch = "arm";
         }
-        return osName + "-" + osArch;
+        return platformName = osName + "-" + osArch;
+    }
+    public static void setPlatformName(String platformName) {
+        Loader.platformName = platformName;
+        Loader.platformProperties = null;
     }
 
     public static Properties getProperties() {
-        return getProperties(getPlatformName());
+        if (platformProperties != null) {
+            return platformProperties;
+        }
+        return platformProperties = getProperties(getPlatformName());
     }
     public static Properties getProperties(String name) {
         Properties p = new Properties();
@@ -173,6 +188,8 @@ public class Loader {
             String separator, String ... values) {
         if (values == null || values.length == 0) {
             return;
+        } else if (values.length == 1) {
+            values = values[0].split(separator);
         }
         String oldValue = properties.getProperty(name, "");
         String[] oldValues = oldValue.split(separator);
@@ -228,13 +245,18 @@ public class Loader {
         return null;
     }
 
-    public static File extractResource(Class cls, String name,
-            File directory) throws IOException {
-        return extractResource(cls, name, directory, null, null);
+    public static File extractResource(String name, File directory,
+            String prefix, String suffix) throws IOException {
+        Class cls = getCallerClass(2);
+        return extractResource(cls, name, directory, prefix, suffix);
     }
-    public static File extractResource(Class cls, String name, 
-            File directory, String prefix, String suffix) throws IOException {
-        InputStream is = cls.getResourceAsStream(name);
+    public static File extractResource(Class cls, String name, File directory,
+            String prefix, String suffix) throws IOException {
+        return extractResource(cls.getResource(name), directory, prefix, suffix);
+    }
+    public static File extractResource(URL resourceURL, File directory,
+            String prefix, String suffix) throws IOException {
+        InputStream is = resourceURL != null ? resourceURL.openStream() : null;
         if (is == null) {
             return null;
         }
@@ -242,7 +264,7 @@ public class Loader {
         boolean fileExisted = false;
         try {
             if (prefix == null && suffix == null) {
-                file = new File(directory, new File(name).getName());
+                file = new File(directory, new File(resourceURL.getPath()).getName());
                 fileExisted = file.exists();
             } else {
                 file = File.createTempFile(prefix, suffix, directory);
@@ -287,13 +309,12 @@ public class Loader {
 
 
     static boolean loadLibraries = true;
-    static Map<Class,String> loadedLibraries = Collections.synchronizedMap(new HashMap<Class,String>());
+    static Map<URL,String> loadedLibraries = Collections.synchronizedMap(new HashMap<URL,String>());
 
     public static String load() {
         Class cls = getCallerClass(2);
         return load(cls);
     }
-
     public static String load(Class cls) {
         if (!loadLibraries || cls == null) {
             return null;
@@ -318,14 +339,40 @@ public class Loader {
             throw e;
         }
 
-        String filename = loadedLibraries.get(cls);
+        return loadLibrary(cls, getLibraryName(cls));
+    }
+
+    public static String loadLibrary(String libname) {
+        Class cls = getCallerClass(2);
+        return loadLibrary(cls, libname);
+    }
+    public static String loadLibrary(Class cls, String libname) {
+        if (!loadLibraries || cls == null) {
+            return null;
+        }
+
+        Properties p = (Properties)getProperties().clone();
+        appendProperties(p, cls);
+        String prefix = p.getProperty("library.prefix") + libname;
+        String suffix = p.getProperty("library.suffix");
+        String resourceName = p.getProperty("platform.name") + '/' + prefix + suffix;
+        URL resourceURL = cls.getResource(resourceName);
+        URL libraryURL = resourceURL;
+        if (libraryURL == null) {
+            try {
+                libraryURL = new URL("file://" + libname);
+            } catch (MalformedURLException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        // If we do not already have the native library file ...
+        String filename = loadedLibraries.get(libraryURL);
         if (filename != null) {
             return filename;
         }
 
-        // Preload native libraries desired by our class
-        Properties p = (Properties)getProperties().clone();
-        appendProperties(p, cls);
+        // ... first preload native libraries desired by our class ...
         String pathSeparator = p.getProperty("path.separator");
         String platformRoot  = p.getProperty("platform.root");
         if (platformRoot != null && !platformRoot.endsWith(File.separator)) {
@@ -347,34 +394,29 @@ public class Loader {
 
         File tempFile = null;
         try {
-            // If we do not already have the native library file,
-            // extract it from our resources...
-            String libname = getLibraryName(cls);
-            String prefix = p.getProperty("library.prefix") + libname;
-            String suffix = p.getProperty("library.suffix");
-            String resourceName = p.getProperty("platform.name") + '/' + prefix + suffix;
-            tempFile = extractResource(cls, resourceName, null, prefix, suffix);
-            if (tempFile != null) {
+            if (resourceURL != null) {
+                // ... then extract the native library file from our resources ...
+                tempFile = extractResource(resourceURL, null, prefix, suffix);
                 // ... and load it already!
                 String tempFilename = tempFile.getAbsolutePath();
-                loadedLibraries.put(cls, tempFilename);
+                loadedLibraries.put(libraryURL, tempFilename);
                 System.load(tempFilename);
                 return tempFilename;
             } else {
                 // throw new UnsatisfiedLinkError("Could not find library resource: " + resourceName);
-                // Try to load it via the system instead
-                loadedLibraries.put(cls, libname);
+                // or try to load it via the system instead.
+                loadedLibraries.put(libraryURL, libname);
                 System.loadLibrary(libname);
                 return libname;
             }
         } catch (UnsatisfiedLinkError e) {
-            loadedLibraries.remove(cls);
+            loadedLibraries.remove(libraryURL);
             if (tempFile != null) {
                 tempFile.delete();
             }
             throw e;
         } catch (IOException ex) {
-            loadedLibraries.remove(cls);
+            loadedLibraries.remove(libraryURL);
             if (tempFile != null) {
                 tempFile.delete();
             }

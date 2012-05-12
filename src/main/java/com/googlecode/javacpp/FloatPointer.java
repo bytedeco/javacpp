@@ -29,18 +29,24 @@ import java.nio.FloatBuffer;
 public class FloatPointer extends Pointer {
     public FloatPointer(float ... array) {
         this(array.length);
-        asBuffer().put(array);
+        put(array);
     }
     public FloatPointer(FloatBuffer buffer) {
         super(buffer);
-        if (buffer.hasArray()) {
+        if (buffer != null && buffer.hasArray()) {
             float[] array = buffer.array();
             allocateArray(array.length);
-            asBuffer().put(array);
+            put(array);
             position(buffer.position());
         }
     }
-    public FloatPointer(int size) { allocateArray(size); }
+    public FloatPointer(int size) {
+        try {
+            allocateArray(size);
+        } catch (UnsatisfiedLinkError e) {
+            throw new RuntimeException("No native JavaCPP library in memory. (Has Loader.load() been called?)", e);
+        }
+    }
     public FloatPointer(Pointer p) { super(p); }
     private native void allocateArray(int size);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Samuel Audet
+ * Copyright (C) 2011,2012 Samuel Audet
  *
  * This file is part of JavaCPP.
  *
@@ -25,15 +25,21 @@ package com.googlecode.javacpp;
  * @author Samuel Audet
  */
 public class PointerPointer extends Pointer {
-    public PointerPointer(Pointer  ... array) { this(array.length); put(array); position(0); }
-    public PointerPointer(byte[]   ... array) { this(array.length); put(array); position(0); }
-    public PointerPointer(short[]  ... array) { this(array.length); put(array); position(0); }
-    public PointerPointer(int[]    ... array) { this(array.length); put(array); position(0); }
-    public PointerPointer(long[]   ... array) { this(array.length); put(array); position(0); }
-    public PointerPointer(float[]  ... array) { this(array.length); put(array); position(0); }
-    public PointerPointer(double[] ... array) { this(array.length); put(array); position(0); }
-    public PointerPointer(char[]   ... array) { this(array.length); put(array); position(0); }
-    public PointerPointer(int size) { allocateArray(size); }
+    public PointerPointer(Pointer  ... array) { this(array.length); put(array); }
+    public PointerPointer(byte[]   ... array) { this(array.length); put(array); }
+    public PointerPointer(short[]  ... array) { this(array.length); put(array); }
+    public PointerPointer(int[]    ... array) { this(array.length); put(array); }
+    public PointerPointer(long[]   ... array) { this(array.length); put(array); }
+    public PointerPointer(float[]  ... array) { this(array.length); put(array); }
+    public PointerPointer(double[] ... array) { this(array.length); put(array); }
+    public PointerPointer(char[]   ... array) { this(array.length); put(array); }
+    public PointerPointer(int size) {
+        try {
+            allocateArray(size);
+        } catch (UnsatisfiedLinkError e) {
+            throw new RuntimeException("No native JavaCPP library in memory. (Has Loader.load() been called?)", e);
+        }
+    }
     public PointerPointer(Pointer p) { super(p); }
     private native void allocateArray(int size);
 
@@ -46,7 +52,7 @@ public class PointerPointer extends Pointer {
 
     public PointerPointer put(Pointer ... array) {
         for (int i = 0; i < array.length; i++) {
-            position(i).put(array[i]);
+            put(i, array[i]);
         }
         return this;
     }

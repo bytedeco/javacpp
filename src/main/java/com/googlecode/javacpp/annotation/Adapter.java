@@ -15,4 +15,5 @@ public @interface Adapter {
     String value();
     boolean out() default false;
     int argc() default 1;
+    String cast() default "";
 }

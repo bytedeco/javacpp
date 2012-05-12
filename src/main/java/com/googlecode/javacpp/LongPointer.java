@@ -29,18 +29,24 @@ import java.nio.LongBuffer;
 public class LongPointer extends Pointer {
     public LongPointer(long ... array) {
         this(array.length);
-        asBuffer().put(array);
+        put(array);
     }
     public LongPointer(LongBuffer buffer) {
         super(buffer);
-        if (buffer.hasArray()) {
+        if (buffer != null && buffer.hasArray()) {
             long[] array = buffer.array();
             allocateArray(array.length);
-            asBuffer().put(array);
+            put(array);
             position(buffer.position());
         }
     }
-    public LongPointer(int size) { allocateArray(size); }
+    public LongPointer(int size) {
+        try {
+            allocateArray(size);
+        } catch (UnsatisfiedLinkError e) {
+            throw new RuntimeException("No native JavaCPP library in memory. (Has Loader.load() been called?)", e);
+        }
+    }
     public LongPointer(Pointer p) { super(p); }
     private native void allocateArray(int size);
 

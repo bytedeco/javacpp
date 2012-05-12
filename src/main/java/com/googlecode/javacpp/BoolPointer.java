@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Samuel Audet
+ * Copyright (C) 2011,2012 Samuel Audet
  *
  * This file is part of JavaCPP.
  *
@@ -29,7 +29,13 @@ import com.googlecode.javacpp.annotation.Name;
  */
 @Name("bool")
 public class BoolPointer extends Pointer {
-    public BoolPointer(int size) { allocateArray(size); }
+    public BoolPointer(int size) {
+        try {
+            allocateArray(size);
+        } catch (UnsatisfiedLinkError e) {
+            throw new RuntimeException("No native JavaCPP library in memory. (Has Loader.load() been called?)", e);
+        }
+    }
     public BoolPointer(Pointer p) { super(p); }
     private native void allocateArray(int size);
 
@@ -38,7 +44,7 @@ public class BoolPointer extends Pointer {
     }
 
     public boolean get() { return get(0); }
-    public native boolean get(int i);
+    @Cast("bool") public native boolean get(int i);
     public BoolPointer put(boolean b) { return put(0, b); }
-    public native BoolPointer put(int i, @Cast("bool") boolean b);
+    public native BoolPointer put(int i, boolean b);
 }

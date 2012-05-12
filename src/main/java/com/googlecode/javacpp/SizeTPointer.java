@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Samuel Audet
+ * Copyright (C) 2011,2012 Samuel Audet
  *
  * This file is part of JavaCPP.
  *
@@ -29,7 +29,13 @@ import com.googlecode.javacpp.annotation.Name;
  */
 @Name("size_t")
 public class SizeTPointer extends Pointer {
-    public SizeTPointer(int size) { allocateArray(size); }
+    public SizeTPointer(int size) {
+        try {
+            allocateArray(size);
+        } catch (UnsatisfiedLinkError e) {
+            throw new RuntimeException("No native JavaCPP library in memory. (Has Loader.load() been called?)", e);
+        }
+    }
     public SizeTPointer(Pointer p) { super(p); }
     private native void allocateArray(int size);
 
@@ -38,7 +44,7 @@ public class SizeTPointer extends Pointer {
     }
 
     public long get() { return get(0); }
-    public native long get(int i);
+    @Cast("size_t") public native long get(int i);
     public SizeTPointer put(long s) { return put(0, s); }
-    public native SizeTPointer put(int i, @Cast("size_t") long s);
+    public native SizeTPointer put(int i, long s);
 }

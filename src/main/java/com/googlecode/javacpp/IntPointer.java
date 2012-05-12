@@ -33,18 +33,24 @@ public class IntPointer extends Pointer {
     }
     public IntPointer(int ... array) {
         this(array.length);
-        asBuffer().put(array);
+        put(array);
     }
     public IntPointer(IntBuffer buffer) {
         super(buffer);
-        if (buffer.hasArray()) {
+        if (buffer != null && buffer.hasArray()) {
             int[] array = buffer.array();
             allocateArray(array.length);
-            asBuffer().put(array);
+            put(array);
             position(buffer.position());
         }
     }
-    public IntPointer(int size) { allocateArray(size); }
+    public IntPointer(int size) {
+        try {
+            allocateArray(size);
+        } catch (UnsatisfiedLinkError e) {
+            throw new RuntimeException("No native JavaCPP library in memory. (Has Loader.load() been called?)", e);
+        }
+    }
     public IntPointer(Pointer p) { super(p); }
     private native void allocateArray(int size);
 
@@ -80,9 +86,7 @@ public class IntPointer extends Pointer {
         for (int i = 0; i < codePoints.length; i++) {
             codePoints[i] = s.codePointAt(i);
         }
-        //capacity(codePoints.length+1);
-        asBuffer().put(codePoints).put((int)0);
-        return this;
+        return put(codePoints).put(codePoints.length, (int)0);
     }
 
     public int get() { return get(0); }

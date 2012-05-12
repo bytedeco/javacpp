@@ -46,11 +46,7 @@ import java.nio.ByteOrder;
 //        }
     }
     public Pointer(Pointer p) {
-        if (p == null) {
-            address = 0;
-            position = 0;
-            capacity = 0;
-        } else {
+        if (p != null) {
             address = p.address;
             position = p.position;
             capacity = p.capacity;
@@ -59,11 +55,7 @@ import java.nio.ByteOrder;
 
     private static Field bufferAddressField = null;
     public Pointer(Buffer b) {
-        if (b == null || b.hasArray()) {
-            address = 0;
-            position = 0;
-            capacity = 0;
-        } else {
+        if (b != null && b.isDirect()) {
             try {
                 if (bufferAddressField == null) {
                     try {
@@ -172,9 +164,9 @@ import java.nio.ByteOrder;
         }
     }
 
-    protected long address;
-    protected int position, capacity;
-    private Deallocator deallocator;
+    protected long address = 0;
+    protected int position = 0, capacity = 0;
+    private Deallocator deallocator = null;
 
     public boolean isNull() {
         return address == 0;

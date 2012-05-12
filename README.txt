@@ -17,7 +17,7 @@ To use JavaCPP, you will need to download and install the following software:
     * [http://msdn.microsoft.com/en-us/library/ms235639.aspx  Walkthrough: Compiling a Native C++ Program on the Command Line]
 
 To produce binary files for Android, you will also have to install:
- * Android NDK r7b  http://developer.android.com/sdk/ndk/
+ * Android NDK r8  http://developer.android.com/sdk/ndk/
 
 To modify the source code, please note that the project files were created for:
  * NetBeans 6.9  http://netbeans.org/downloads/  or
@@ -218,7 +218,7 @@ Processing in C++...
 
 To implement `native` methods, JavaCPP generates appropriate code for JNI, and passes it to the C++ compiler to build a native library. At no point do we need to get our hands dirty with JNI, makefiles, or other native tools. The important thing to realize here is that, while we do all customization inside the Java language using annotations, JavaCPP produces code that has *zero overhead* compared to manually coded JNI functions (verify the generated .cpp files to convince yourself). Moreover, at runtime, the `Loader.load()` method automatically loads the native libraries from Java resources, which were placed in the right directory by the building process. They can even be archived in a JAR file, it changes nothing. Users simply do not need to figure out how to make the system load the files. 
 
-To learn more about how to use the features of this tool, since documentation currently lacks, please refer to [http://code.google.com/p/javacv/source/browse/trunk/javacv/src/com/googlecode/javacv/cpp/ the source code of JavaCV].
+To learn more about how to use the features of this tool, since documentation currently lacks, please refer to [http://code.google.com/p/javacv/source/browse/javacv/src/main/java/com/googlecode/javacv/cpp/ the source code of JavaCV].
 
 As a matter of course, this all works with the Scala language as well, but to make the process even smoother, I would imagine that it should not be too hard to add support for "native properties", such that declarations like `@native var` could generate native getter and setter methods...
 
@@ -229,7 +229,7 @@ Inside the directory of the Android project:
  # Run this command to produce the `*.so` library files in `libs/armeabi/`:
 {{{
 java -jar libs/javacpp.jar -classpath bin/ -classpath bin/classes/ \
--properties android-arm -Dplatform.root=<path to android-ndk-r7b> \
+-properties android-arm -Dplatform.root=<path to android-ndk-r8> \
 -Dcompiler.path=<path to arm-linux-androideabi-g++> -d libs/armeabi/
 }}}
 To make everything automatic, we may also insert that command into, for example, the Ant `build.xml` file or the Eclipse `.project` file as a [http://help.eclipse.org/helios/index.jsp?topic=/org.eclipse.platform.doc.user/gettingStarted/qs-96_non_ant_pjs.htm Non-Ant project builder].
@@ -240,13 +240,19 @@ This project was conceived at the Okutomi & Tanaka Laboratory, Tokyo Institute o
 
 
 ==Changes==
-===April xx, 2012===
+===May 12, 2012===
  * Added `pom.xml` file for Maven support and changed the directory structure of the source code to match Maven's standard directory layout (issue #10) Many thanks to Adam Waldenberg and Arnaud Nauwynck for their ongoing support with that!
  * Moved the source code repository to Git
  * Created a new `@Raw` annotation to use Java object as raw `jobject` in C++, also passing `JNIEnv` and the enclosing `jclass` or the `jobject` corresponding to `this`, as the first two arguments of the function, when the `Generator` encounters any `@Raw(withEnv=true)` (issue #13)
  * The `Builder` now handles more cases when some prefix or suffix property starts or ends with a space (issue #14)
  * Fixed syntax error in `VectorAdapter`, which GCC and Visual C++ would still happily compile
- * Added new `source.suffix` property to have the names of generated source files end with something else than `.cpp` and support frameworks like CUDA that require filenames with a `.cu` extension to compile properly, such as used by the new `*-cuda.properties`, and also changed the `-cpp` command line option to `-nocompile`
+ * Added new `source.suffix` property to have the names of generated source files end with something else than `.cpp` and support frameworks like CUDA that require filenames with a `.cu` extension to compile properly, such as used by the new `*-cuda.properties`, and also changed the "-cpp" command line option to "-nocompile"
+ * New `Loader.loadLibrary()` method similar to `System.loadLibrary()`, but before searching the library path, it tries to extract and load the library from Java resources
+ * `Generator` now accepts `@Const` on `FunctionPointer` class declarations
+ * Added new `@Adapter.cast()` value to cast explicitly the output of a C++ adapter object
+ * Upgraded references of the Android NDK to version r8
+ * Included new command line option "-Xcompiler" to pass options such as "-Wl,-static" directly to the compiler
+ * Made other various minor changes and enhancements
 
 ===March 29, 2012===
  * Added new `compiler.framework` property and corresponding `@Platform.framework()` value to allow easier binding with Mac OS X frameworks

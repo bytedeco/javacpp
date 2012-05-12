@@ -29,18 +29,24 @@ import java.nio.DoubleBuffer;
 public class DoublePointer extends Pointer {
     public DoublePointer(double ... array) {
         this(array.length);
-        asBuffer().put(array);
+        put(array);
     }
     public DoublePointer(DoubleBuffer buffer) {
         super(buffer);
-        if (buffer.hasArray()) {
+        if (buffer != null && buffer.hasArray()) {
             double[] array = buffer.array();
             allocateArray(array.length);
-            asBuffer().put(array);
+            put(array);
             position(buffer.position());
         }
     }
-    public DoublePointer(int size) { allocateArray(size); }
+    public DoublePointer(int size) {
+        try {
+            allocateArray(size);
+        } catch (UnsatisfiedLinkError e) {
+            throw new RuntimeException("No native JavaCPP library in memory. (Has Loader.load() been called?)", e);
+        }
+    }
     public DoublePointer(Pointer p) { super(p); }
     private native void allocateArray(int size);
 
