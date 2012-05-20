@@ -45,6 +45,8 @@ import java.util.zip.ZipEntry;
  */
 public class Builder {
 
+    public static final boolean windows = Loader.getPlatformName().startsWith("windows");
+
     public static void includeJavaPaths(Properties properties) {
         // try to find include paths for jni.h and jni_md.h automatically
         final String[] jnipath = new String[2];
@@ -186,6 +188,13 @@ public class Builder {
             String p = properties.getProperty("compiler.link.prefix", "");
             String x = properties.getProperty("compiler.link.suffix", "");
             for (String s : link.split(pathSeparator)) {
+                String[] libnameversion = s.split("@");
+                if (libnameversion.length == 3 && libnameversion[1].length() == 0) {
+                    // Only use the version number when the user gave us a double @
+                    s = libnameversion[0] + libnameversion[2];
+                } else {
+                    s = libnameversion[0];
+                }
                 if (p.endsWith(" ") && x.startsWith(" ")) {
                     command.add(p.trim()); command.add(s); command.add(x.trim());
                 } else if (p.endsWith(" ")) {
@@ -218,11 +227,11 @@ public class Builder {
         for (String s : command) {
             boolean hasSpaces = s.indexOf(" ") > 0;
             if (hasSpaces) {
-                System.out.print("\"");
+                System.out.print(windows ? "\"" : "'");
             }
             System.out.print(s);
             if (hasSpaces) {
-                System.out.print("\"");
+                System.out.print(windows ? "\"" : "'");
             }
             System.out.print(" ");
         }

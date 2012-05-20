@@ -264,6 +264,9 @@ public class Loader {
         boolean fileExisted = false;
         try {
             if (prefix == null && suffix == null) {
+                if (directory == null) {
+                    directory = new File(System.getProperty("java.io.tmpdir"));
+                }
                 file = new File(directory, new File(resourceURL.getPath()).getName());
                 fileExisted = file.exists();
             } else {
@@ -286,30 +289,26 @@ public class Loader {
         return file;
     }
 
-    public static void preload(String[] paths, String[] libnames) {
-        for (int i = 0; i < libnames.length; i++) {
-            boolean loaded = false;
-            for (int j = 0; j < paths.length; j++) {
-                String filename = paths[j] + File.separator + System.mapLibraryName(libnames[i]);
-                if (!new File(filename).exists()) {
-                    continue;
-                } else try {
-                    System.load(filename);
-                    loaded = true;
+
+    static File tempDir = null;
+    static boolean loadLibraries = true;
+    static Map<String,String> loadedLibraries = Collections.synchronizedMap(new HashMap<String,String>());
+
+    static File getTempDir() {
+        if (tempDir == null) {
+            File tmpdir = new File(System.getProperty("java.io.tmpdir"));
+            File f = null;
+            for (int i = 0; i < 1000; i++) {
+                f = new File(tmpdir, "javacpp" + System.nanoTime());
+                if (f.mkdir()) {
+                    tempDir = f;
+                    tempDir.deleteOnExit();
                     break;
-                } catch (UnsatisfiedLinkError e) { }
-            }
-            if (!loaded) {
-                try {
-                    System.loadLibrary(libnames[i]);
-                } catch (UnsatisfiedLinkError e) { }
+                }
             }
         }
+        return tempDir;
     }
-
-
-    static boolean loadLibraries = true;
-    static Map<URL,String> loadedLibraries = Collections.synchronizedMap(new HashMap<URL,String>());
 
     public static String load() {
         Class cls = getCallerClass(2);
@@ -339,40 +338,9 @@ public class Loader {
             throw e;
         }
 
-        return loadLibrary(cls, getLibraryName(cls));
-    }
-
-    public static String loadLibrary(String libname) {
-        Class cls = getCallerClass(2);
-        return loadLibrary(cls, libname);
-    }
-    public static String loadLibrary(Class cls, String libname) {
-        if (!loadLibraries || cls == null) {
-            return null;
-        }
-
+        // Preload native libraries desired by our class
         Properties p = (Properties)getProperties().clone();
         appendProperties(p, cls);
-        String prefix = p.getProperty("library.prefix") + libname;
-        String suffix = p.getProperty("library.suffix");
-        String resourceName = p.getProperty("platform.name") + '/' + prefix + suffix;
-        URL resourceURL = cls.getResource(resourceName);
-        URL libraryURL = resourceURL;
-        if (libraryURL == null) {
-            try {
-                libraryURL = new URL("file://" + libname);
-            } catch (MalformedURLException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        // If we do not already have the native library file ...
-        String filename = loadedLibraries.get(libraryURL);
-        if (filename != null) {
-            return filename;
-        }
-
-        // ... first preload native libraries desired by our class ...
         String pathSeparator = p.getProperty("path.separator");
         String platformRoot  = p.getProperty("platform.root");
         if (platformRoot != null && !platformRoot.endsWith(File.separator)) {
@@ -380,43 +348,110 @@ public class Loader {
         }
         String preloadPath      = p.getProperty("loader.preloadpath");
         String preloadLibraries = p.getProperty("loader.preload");
-        if (preloadPath != null && preloadLibraries != null) {
-            String[] preloadPaths = preloadPath.split(pathSeparator);
-            if (platformRoot != null) {
+        if (preloadLibraries != null) {
+            String[] preloadPaths = preloadPath == null ? null : preloadPath.split(pathSeparator);
+            if (preloadPaths != null && platformRoot != null) {
                 for (int i = 0; i < preloadPaths.length; i++) {
                     if (!new File(preloadPaths[i]).isAbsolute()) {
                         preloadPaths[i] = platformRoot + preloadPaths[i];
                     }
                 }
             }
-            preload(preloadPaths, preloadLibraries.split(pathSeparator));
+            String[] libnames = preloadLibraries.split(pathSeparator);
+            for (int i = 0; i < libnames.length; i++) {
+                try {
+                    loadLibrary(cls, preloadPaths, libnames[i]);
+                } catch (UnsatisfiedLinkError e) { }
+            }
+        }
+
+        return loadLibrary(cls, null, getLibraryName(cls));
+    }
+
+    public static String loadLibrary(String libnameversion) {
+        Class cls = getCallerClass(2);
+        return loadLibrary(cls, null, libnameversion);
+    }
+    public static String loadLibrary(String[] paths, String libnameversion) {
+        Class cls = getCallerClass(2);
+        return loadLibrary(cls, paths, libnameversion);
+    }
+    public static String loadLibrary(Class cls, String[] paths, String libnameversion) {
+        if (!loadLibraries || cls == null) {
+            return null;
+        }
+        String className = cls.getName();
+        int packageIndex = className.lastIndexOf('.');
+        String packageName = packageIndex != -1 ? className.substring(0, packageIndex + 1) : "";
+        String hashkey = packageName + libnameversion;
+
+        // If we do not already have the native library file ...
+        String filename = loadedLibraries.get(hashkey);
+        if (filename != null) {
+            return filename;
+        }
+
+        String[] s = libnameversion.split("@");
+        String libname = s[0];
+        String version = s.length > 1 ? s[s.length-1] : "";
+
+        Properties p = getProperties();
+        String subdir = p.getProperty("platform.name") + '/';
+        String prefix = p.getProperty("library.prefix") + libname;
+        String suffix = p.getProperty("library.suffix");
+        URL resourceURL = cls.getResource(subdir + prefix + suffix + version); // Linux style
+        if (resourceURL == null) {
+            resourceURL = cls.getResource(subdir + prefix + version + suffix); // Mac OS X style
+        }
+        if (resourceURL == null) {
+            resourceURL = cls.getResource(subdir + prefix + suffix); // without version
         }
 
         File tempFile = null;
         try {
             if (resourceURL != null) {
-                // ... then extract the native library file from our resources ...
-                tempFile = extractResource(resourceURL, null, prefix, suffix);
-                // ... and load it already!
+                // ... then extract it from our resources ...
+                tempFile = extractResource(resourceURL, getTempDir(), null, null);
+                // ... and load it!
                 String tempFilename = tempFile.getAbsolutePath();
-                loadedLibraries.put(libraryURL, tempFilename);
+                loadedLibraries.put(hashkey, tempFilename);
                 System.load(tempFilename);
                 return tempFilename;
             } else {
                 // throw new UnsatisfiedLinkError("Could not find library resource: " + resourceName);
-                // or try to load it via the system instead.
-                loadedLibraries.put(libraryURL, libname);
+                // If not found in resources, search the paths instead ...
+                for (int j = 0; paths != null && j < paths.length; j++) {
+                    File file = new File(paths[j], prefix + suffix + version); // Linux style
+                    if (!file.exists()) {
+                         file = new File(paths[j], prefix + version + suffix); // Mac OS X style
+                    }
+                    if (!file.exists()) {
+                         file = new File(paths[j], prefix + suffix); // without version
+                    }
+                    if (file.exists()) {
+                        filename = file.getPath();
+                        try {
+                            loadedLibraries.put(hashkey, filename);
+                            System.load(filename);
+                            return filename;
+                        } catch (UnsatisfiedLinkError e) {
+                            loadedLibraries.remove(hashkey);
+                        }
+                    }
+                }
+                // ... or as last resort, try to load it via the system.
+                loadedLibraries.put(hashkey, libname);
                 System.loadLibrary(libname);
                 return libname;
             }
         } catch (UnsatisfiedLinkError e) {
-            loadedLibraries.remove(libraryURL);
+            loadedLibraries.remove(hashkey);
             if (tempFile != null) {
                 tempFile.delete();
             }
             throw e;
         } catch (IOException ex) {
-            loadedLibraries.remove(libraryURL);
+            loadedLibraries.remove(hashkey);
             if (tempFile != null) {
                 tempFile.delete();
             }
@@ -436,7 +471,7 @@ public class Loader {
         if (getPlatformName().startsWith("windows")) {
             Runtime.getRuntime().addShutdownHook(new Thread() {
                 @Override public void run() {
-                    if (loadedLibraries.isEmpty()) {
+                    if (tempDir == null) {
                         return;
                     }
                     try {
@@ -446,10 +481,10 @@ public class Loader {
                         command.add("-classpath");
                         command.add(System.getProperty("java.class.path"));
                         command.add(Loader.class.getName());
-                        command.addAll(loadedLibraries.values());
+                        command.add(tempDir.getAbsolutePath());
                         new ProcessBuilder(command).start();
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        throw new RuntimeException(e);
                     }
                 }
             });
@@ -458,14 +493,21 @@ public class Loader {
 
     // ... that makes sure to delete all our files.
     public static void main(String[] args) {
-        for (String filename : args) {
-            File file = new File(filename);
+        File tmpdir = new File(System.getProperty("java.io.tmpdir"));
+        File tempDir = new File(args[0]);
+        if (!tmpdir.equals(tempDir.getParentFile()) ||
+                !tempDir.getName().startsWith("javacpp")) {
+            // Someone is trying to break us ... ?
+            return;
+        }
+        for (File file : tempDir.listFiles()) {
             while (file.exists() && !file.delete()) {
                 try {
                     Thread.sleep(100);
                 } catch (InterruptedException e) { }
             }
         }
+        tempDir.delete();
     }
 
 
