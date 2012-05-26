@@ -113,9 +113,9 @@ public class VectorTest {
         public native long size();
         public native @Cast("bool") boolean empty();
         public native void resize(long n);
-        public native @Index(1) long size(long i);                   // return (*this)[i].size()
-        public native @Index(1) @Cast("bool") boolean empty(long i); // return (*this)[i].empty()
-        public native @Index(1) void resize(long i, long n);         // (*this)[i].resize(n)
+        public native @Index long size(long i);                   // return (*this)[i].size()
+        public native @Index @Cast("bool") boolean empty(long i); // return (*this)[i].empty()
+        public native @Index void resize(long i, long n);         // (*this)[i].resize(n)
 
         public native @Index Pointer get(long i, long j);  // return (*this)[i][j]
         public native void put(long i, long j, Pointer p); // (*this)[i][j] = p
@@ -240,10 +240,16 @@ This project was conceived at the Okutomi & Tanaka Laboratory, Tokyo Institute o
 
 
 ==Changes==
-===June xx, 2012===
- * Before loading the JNI library, the `Loader` now also tries to extract and load libraries listed in the `@Platform(link={...}, preload={...})` annotation values, and to support library names with version numbers, each value has to follow the format "libname@version" (or "libname@@version" to have `Builder` use it for the compiler as well), where "version" is the version number found in the filename as required by the native dynamic linker, usually a short sequence of digits and dots, but it can be anything (e.g.: "mylib@.4.2" would map to "libmylib.so.4.2", "libmylib.4.2.dylib", and "mylib.4.2.dll" under Linux, Mac OS X, and Windows respectively)
+===May 27, 2012 version 0.1===
+ * Started using version numbers, friendly to tools like Maven, and placing packages in a sort of [Maven repository http://maven2.javacpp.googlecode.com/git/] (issue #10)
+ * Before loading a JNI library, the `Loader` now also tries to extract and load libraries listed in the `@Platform(link={...}, preload={...})` annotation values, and to support library names with version numbers, each value has to follow the format "libname@version" (or "libname@@version" to have `Builder` use it for the compiler as well), where "version" is the version number found in the filename as required by the native dynamic linker, usually a short sequence of digits and dots, but it can be anything (e.g.: "mylib@.4.2" would map to "libmylib.so.4.2", "libmylib.4.2.dylib", and "mylib.4.2.dll" under Linux, Mac OS X, and Windows respectively)
+ * All files now get extracted into a temporary subdirectory, and with the appropriate platform-dependent linker options, or with libraries patched up after the fact with tools such as `install_name_tool` of Mac OS X, most native dynamic linkers can load dependent libraries from there
  * Stopped using `java.net.URL` as hash key in `Loader` (very bad idea)
- * 
+ * Changed the default value of the `@Index` annotation from 0 to 1, and fixed the `Generator` when it is used with member getters and setters
+ * Renamed `mingw-*.properties` to `windows-*-mingw.properties` for consistency
+ * Made the `Generator` allocate native heap memory for callback arguments passed `@ByVal` (in addition to `FunctionPointer`), rendering their behavior consistent with return `@ByVal` in the case of function calls (issue #16)
+ * `Generator` now uses `std::runtime_error(std::string&)` instead of assuming that some nonstandard `std::exception(std::string&)` constructor exists (issue #17)
+ * Fixed `Generator` producing incorrect code when applying invalid annotations such as `@ByVal` on a method that returns something else than a `Pointer` object (issue #18)
 
 ===May 12, 2012===
  * Added `pom.xml` file and `BuildMojo` plugin class for Maven support and changed the directory structure of the source code to match Maven's standard directory layout (issue #10) Many thanks to Adam Waldenberg and Arnaud Nauwynck for their ongoing support with that!

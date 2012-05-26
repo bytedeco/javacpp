@@ -851,6 +851,9 @@ public class Generator implements Closeable {
         String prefix = "(";
         String suffix = ")";
         int skipParameters = 0;
+        boolean index = methodInfo.method.isAnnotationPresent(Index.class) ||
+                 (methodInfo.pairedMethod != null &&
+                  methodInfo.pairedMethod.isAnnotationPresent(Index.class));
         if (methodInfo.deallocator) {
             out.println(indent + "void* allocatedAddress = jlong_to_ptr(p0);");
             out.println(indent + "void (*deallocatorAddress)(void*) = (void(*)(void*))jlong_to_ptr(p1);");
@@ -899,11 +902,13 @@ public class Generator implements Closeable {
                 }
                 out.print(methodInfo.memberName[0]);
             } else if (methodInfo.memberGetter || methodInfo.memberSetter) {
-                out.print("pointer->" + methodInfo.memberName[0]);
+                if (index) {
+                    out.print("(*pointer)");
+                    prefix = "." + methodInfo.memberName[0] + prefix;
+                } else {
+                    out.print("pointer->" + methodInfo.memberName[0]);
+                }
             } else { // methodInfo.valueGetter || methodInfo.valueSetter
-                boolean index = methodInfo.method.isAnnotationPresent(Index.class) ||
-                         (methodInfo.pairedMethod != null &&
-                          methodInfo.pairedMethod.isAnnotationPresent(Index.class));
                 out.print(index ? "(*pointer)" : methodInfo.dim > 0 || wantsPointer ? "pointer" : "*pointer");
             }
         } else if (methodInfo.bufferGetter) {
@@ -940,9 +945,6 @@ public class Generator implements Closeable {
                 }
                 out.print(methodInfo.memberName[0]);
             } else {
-                boolean index = methodInfo.method.isAnnotationPresent(Index.class) ||
-                         (methodInfo.pairedMethod != null &&
-                          methodInfo.pairedMethod.isAnnotationPresent(Index.class));
                 if (index) {
                     out.print("(*pointer)");
                     prefix = "." + methodInfo.memberName[0] + prefix;
@@ -1014,11 +1016,13 @@ public class Generator implements Closeable {
     private void doReturnAfter(MethodInformation methodInfo) {
         Annotation returnBy = getBy(methodInfo.annotations);
         Adapter adapter = getAdapter(methodInfo.annotations);
-        if (adapter != null) {
-            out.print(")");
-        }
-        if (returnBy instanceof ByVal || returnBy instanceof ByPtrPtr) {
-            out.print(")");
+        if (Pointer.class.isAssignableFrom(methodInfo.returnType)) {
+            if (adapter != null) {
+                out.print(")");
+            }
+            if (returnBy instanceof ByVal || returnBy instanceof ByPtrPtr) {
+                out.print(")");
+            }
         }
         if (!methodInfo.deallocator) {
             out.println(";");
@@ -1228,10 +1232,19 @@ public class Generator implements Closeable {
                     String[] typeName = adapter != null ? getCPPTypeName(callbackParameterTypes[j]) :
                             getCastedCPPTypeName(callbackParameterAnnotations[j], callbackParameterTypes[j]);
 
+                    boolean needInit = false;
                     if (adapter != null) {
                         out.println("    " + adapter.value() + " adapter" + j + "(p" + j + ");");
                         out.println("    jint capacity" + j + " = (jint)adapter" + j + ".capacity;");
                         out.println("    jlong deallocator" + j + " = ptr_to_jlong(&(" + adapter.value() + "::deallocate));");
+                        needInit = true;
+                    } else if ((passBy instanceof ByVal && callbackParameterTypes[j] != Pointer.class) ||
+                            FunctionPointer.class.isAssignableFrom(callbackParameterTypes[j])) {
+                        out.println("    jint capacity" + j + " = 1;");
+                        out.println("    jlong deallocator" + j + " = ptr_to_jlong(&JavaCPP_" +
+                                mangle(callbackParameterTypes[j].getName()) + "_deallocate);");
+                        deallocators.register(callbackParameterTypes[j]);
+                        needInit = true;
                     }
 
                     if (Pointer.class.isAssignableFrom(callbackParameterTypes[j])) {
@@ -1243,16 +1256,18 @@ public class Generator implements Closeable {
                         out.println("    jobject o" + j + " = NULL;");
                         out.println("    " + typeName[0] + " pointer" + j + typeName[1] + ";");
                         if (FunctionPointer.class.isAssignableFrom(callbackParameterTypes[j])) {
-                            out.println("    " + valueTypeName + " function" + j + ";");
-                            out.println("    function" + j + ".pointer = p" + j + ";");
-                            out.println("    pointer" + j + " = &function" + j + ";");
+                            out.println("    pointer" + j + " = new " + valueTypeName + ";");
+                            out.println("    pointer" + j + "->pointer = p" + j + ";");
                         } else if (adapter != null) {
                             out.println("    pointer" + j + " = adapter" + j + ";");
+                        } else if (passBy instanceof ByVal && callbackParameterTypes[j] != Pointer.class) {
+                            out.println("    pointer" + j + " = new " + valueTypeName + typeName[1] +
+                                    "(*(" + typeName[0] + typeName[1] + ")&p" + j + ");");
                         } else if (passBy instanceof ByVal || passBy instanceof ByRef) {
                             out.println("    pointer" + j + " = (" + typeName[0] + typeName[1] + ")&p" + j + ";");
                         } else if (passBy instanceof ByPtrPtr) {
                             out.println("    if (p" + j + " == NULL) {");
-                            out.println("        throw std::exception(\"Pointer address of parameter " + j + " is NULL.\")");
+                            out.println("        throw std::runtime_error(\"Pointer address of parameter " + j + " is NULL.\")");
                             out.println("    }");
                             out.println("    pointer" + j + " = *p" + j + ";");
                         } else { // ByPtr || ByPtrRef
@@ -1269,7 +1284,7 @@ public class Generator implements Closeable {
                             out.println("    }");
                         }
                         out.println("    if (o" + j + " != NULL) { ");
-                        if (adapter != null) {
+                        if (needInit) {
                             out.println("        if (deallocator" + j + " != 0) {");
                             out.println("            jvalue args[3];");
                             out.println("            args[0].j = ptr_to_jlong(pointer" + j + ");");
@@ -1390,7 +1405,7 @@ public class Generator implements Closeable {
                 out.println("    return " + callbackReturnCast + "(rpointer == NULL ? NULL : rpointer->pointer);");
             } else if (returnBy instanceof ByVal || returnBy instanceof ByRef) {
                 out.println("    if (rpointer == NULL) {");
-                out.println("        throw std::exception(\"Return pointer address is NULL.\");");
+                out.println("        throw std::runtime_error(\"Return pointer address is NULL.\");");
                 out.println("    }");
                 out.println("    return *" + callbackReturnCast + "rpointer;");
             } else if (returnBy instanceof ByPtrPtr) {
@@ -1657,9 +1672,11 @@ public class Generator implements Closeable {
             }
         }
 
-        info.noOffset = method.isAnnotationPresent(NoOffset.class);
+        info.noOffset = method.isAnnotationPresent(NoOffset.class) ||
+                        method.isAnnotationPresent(Index.class);
         if (!info.noOffset && info.pairedMethod != null) {
-            info.noOffset = info.pairedMethod.isAnnotationPresent(NoOffset.class);
+            info.noOffset = info.pairedMethod.isAnnotationPresent(NoOffset.class) ||
+                            info.pairedMethod.isAnnotationPresent(Index.class);
         }
 
         if (info.parameterTypes.length == 0 || !info.parameterTypes[0].isArray()) {

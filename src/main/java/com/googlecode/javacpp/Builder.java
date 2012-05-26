@@ -600,12 +600,12 @@ public class Builder {
     }
 
     public static void printHelp() {
-        String timestamp = Builder.class.getPackage().getImplementationVersion();
-        if (timestamp == null) {
-            timestamp = "unknown";
+        String version = Builder.class.getPackage().getImplementationVersion();
+        if (version == null) {
+            version = "unknown";
         }
         System.out.println(
-            "JavaCPP build timestamp " + timestamp + "\n" +
+            "JavaCPP version " + version + "\n" +
             "Copyright (C) 2011-2012 Samuel Audet <samuel.audet@gmail.com>\n" +
             "Project site: http://code.google.com/p/javacpp/\n\n" +
 
