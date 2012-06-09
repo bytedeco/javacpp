@@ -240,6 +240,7 @@ This project was conceived at the Okutomi & Tanaka Laboratory, Tokyo Institute o
 
 
 ==Changes==
+ * New `@NoException` annotation to reduce the size of generated code and optimize runtime performance of functions that are guaranteed not to throw exceptions, or for cases when we do not mind that the JVM may crash and burn
  * Trying to generate code for non-static native methods inside a class not extending `Pointer` now generates proper warning (issue #19)
  * Fixed regression where the `@Adapter` notation generates incorrect code for types other than `Pointer` (issue #20)
 

@@ -38,6 +38,7 @@ import com.googlecode.javacpp.annotation.MemberSetter;
 import com.googlecode.javacpp.annotation.Name;
 import com.googlecode.javacpp.annotation.Namespace;
 import com.googlecode.javacpp.annotation.NoDeallocator;
+import com.googlecode.javacpp.annotation.NoException;
 import com.googlecode.javacpp.annotation.NoOffset;
 import com.googlecode.javacpp.annotation.Opaque;
 import com.googlecode.javacpp.annotation.Platform;
@@ -373,7 +374,7 @@ public class Generator implements Closeable {
             Iterator<String> memberIterator = m == null ? null : m.iterator();
             while (memberIterator != null && memberIterator.hasNext()) {
                 String[] typeName = getCPPTypeName(c);
-                String valueTypeName = typeName[0].substring(0, typeName[0].length()-1);
+                String valueTypeName = getValueTypeName(typeName);
                 String memberName = memberIterator.next();
                 if ("sizeof".equals(memberName)) {
                     if ("void".equals(valueTypeName)) {
@@ -545,11 +546,11 @@ public class Generator implements Closeable {
             }
         }
 
-        String[] typeName = getCPPTypeName(cls);
         Method[] methods = cls.getDeclaredMethods();
         boolean[] callbackAllocators = new boolean[methods.length];
         Method functionMethod = getFunctionMethod(cls, callbackAllocators);
         if (functionMethod != null) {
+            String[] typeName = getCPPTypeName(cls);
             functionDefinitions.register("struct JavaCPP_" + mangle(cls.getName()) +
                     " { " + typeName[0] + "pointer" + typeName[1] + "; };");
         }
@@ -601,15 +602,15 @@ public class Generator implements Closeable {
             } else if (!Modifier.isStatic(methodInfo.modifiers) && !methodInfo.allocator &&
                     !methodInfo.arrayAllocator && !methodInfo.deallocator) {
                 // get our "this" pointer
-                String[] thisType = typeName.clone();
-                if (methodInfo.bufferGetter && "void*".equals(thisType[0])) {
-                    thisType[0] = "char*";
+                String[] typeName = getCPPTypeName(cls);
+                if (methodInfo.bufferGetter && "void*".equals(typeName[0])) {
+                    typeName[0] = "char*";
                 } else if (FunctionPointer.class.isAssignableFrom(cls)) {
-                    thisType[0] = "JavaCPP_" + mangle(cls.getName()) + "*";
-                    thisType[1] = "";
+                    typeName[0] = "JavaCPP_" + mangle(cls.getName()) + "*";
+                    typeName[1] = "";
                 }
-                out.println("    " + thisType[0] + " pointer" + thisType[1] + " = (" + thisType[0] +
-                        thisType[1] + ")jlong_to_ptr(e->GetLongField(o, JavaCPP_addressFieldID));");
+                out.println("    " + typeName[0] + " pointer" + typeName[1] + " = (" + typeName[0] +
+                        typeName[1] + ")jlong_to_ptr(e->GetLongField(o, JavaCPP_addressFieldID));");
                 out.println("    if (pointer == NULL) {");
                 out.println("        e->ThrowNew(JavaCPP_getClass(e, " +
                         jclasses.register(NullPointerException.class) + "), \"This pointer address is NULL.\");");
@@ -785,7 +786,7 @@ public class Generator implements Closeable {
                         typeName[1] = "";
                         returnVariable = "rpointer->pointer = ";
                     }
-                    String valueTypeName = typeName[0].substring(0, typeName[0].length()-1);
+                    String valueTypeName = getValueTypeName(typeName);
                     if (returnBy instanceof ByVal) {
                         returnVariable += "new " + valueTypeName + typeName[1] + "(";
                     } else if (returnBy instanceof ByRef) {
@@ -867,15 +868,7 @@ public class Generator implements Closeable {
                 suffix = "";
             }
             if (Modifier.isStatic(methodInfo.modifiers)) {
-                String[] namespace = getCPPTypeName(methodInfo.cls);
-                if (namespace[0] != null && namespace[0].length() > 0) {
-                    out.print(namespace[0].substring(0, namespace[0].length()-1));
-                    out.print("::");
-                }
-                if (methodInfo.method.isAnnotationPresent(Namespace.class)) {
-                    out.print(methodInfo.method.getAnnotation(Namespace.class).value());
-                    out.print("::");
-                }
+                out.print(getCPPScopeName(methodInfo.cls, methodInfo.method));
                 out.print(methodInfo.memberName[0]);
             } else if (methodInfo.memberGetter || methodInfo.memberSetter) {
                 if (index) {
@@ -902,22 +895,14 @@ public class Generator implements Closeable {
                 }
             } else if (methodInfo.allocator) {
                 String[] typeName = getCPPTypeName(methodInfo.cls);
-                String valueTypeName = typeName[0].substring(0, typeName[0].length()-1);
+                String valueTypeName = getValueTypeName(typeName);
                 out.print("new " + valueTypeName);
                 if (methodInfo.arrayAllocator) {
                     prefix = "[";
                     suffix = "]";
                 }
             } else if (Modifier.isStatic(methodInfo.modifiers)) {
-                String[] namespace = getCPPTypeName(methodInfo.cls);
-                if (namespace[0] != null && namespace[0].length() > 0) {
-                    out.print(namespace[0].substring(0, namespace[0].length()-1));
-                    out.print("::");
-                }
-                if (methodInfo.method.isAnnotationPresent(Namespace.class)) {
-                    out.print(methodInfo.method.getAnnotation(Namespace.class).value());
-                    out.print("::");
-                }
+                out.print(getCPPScopeName(methodInfo.cls, methodInfo.method));
                 out.print(methodInfo.memberName[0]);
             } else {
                 if (index) {
@@ -991,13 +976,12 @@ public class Generator implements Closeable {
     private void doReturnAfter(MethodInformation methodInfo) {
         Annotation returnBy = getBy(methodInfo.annotations);
         Adapter adapter = getAdapter(methodInfo.annotations);
-        if (!methodInfo.returnType.isPrimitive()) {
-            if (adapter != null) {
-                out.print(")");
-            }
-            if (returnBy instanceof ByVal || returnBy instanceof ByPtrPtr) {
-                out.print(")");
-            }
+        if (!methodInfo.returnType.isPrimitive() && adapter != null) {
+            out.print(")");
+        }
+        if (Pointer.class.isAssignableFrom(methodInfo.returnType) && 
+            (returnBy instanceof ByVal || returnBy instanceof ByPtrPtr)) {
+            out.print(")");
         }
         if (!methodInfo.deallocator) {
             out.println(";");
@@ -1227,7 +1211,7 @@ public class Generator implements Closeable {
                             typeName[0] = "JavaCPP_" + mangle(callbackParameterTypes[j].getName()) + "*";
                             typeName[1] = "";
                         }
-                        String valueTypeName = typeName[0].substring(0, typeName[0].length()-1);
+                        String valueTypeName = getValueTypeName(typeName);
                         out.println("    jobject o" + j + " = NULL;");
                         out.println("    " + typeName[0] + " pointer" + j + typeName[1] + ";");
                         if (FunctionPointer.class.isAssignableFrom(callbackParameterTypes[j])) {
@@ -1662,7 +1646,9 @@ public class Generator implements Closeable {
             }
         }
 
-        if ((!info.deallocator && !info.valueGetter && !info.valueSetter &&
+        if ((!info.cls.isAnnotationPresent(NoException.class) &&
+                !method.isAnnotationPresent(NoException.class) &&
+                !info.deallocator && !info.valueGetter && !info.valueSetter &&
                 !info.memberGetter && !info.memberSetter && !info.bufferGetter) ||
                 getBy(info.annotations) instanceof ByVal) {
             info.mayThrowException = true;
@@ -1752,6 +1738,10 @@ public class Generator implements Closeable {
         return behaviorAnnotation;
     }
 
+    public static String getValueTypeName(String[] typeName) {
+        return typeName[0].length() == 0 ? "" : typeName[0].substring(0, typeName[0].length()-1);
+    }
+
     public static String[] getAnnotatedCPPTypeName(Annotation[] annotations, Class<?> type) {
         String[] typeName = getCastedCPPTypeName(annotations, type);
         String prefix = typeName[0];
@@ -1759,9 +1749,9 @@ public class Generator implements Closeable {
 
         Annotation by = getBy(annotations);
         if (by instanceof ByVal) {
-            prefix = prefix.substring(0, prefix.length()-1);
+            prefix = getValueTypeName(typeName);
         } else if (by instanceof ByRef) {
-            prefix = prefix.substring(0, prefix.length()-1) + "&";
+            prefix = getValueTypeName(typeName) + "&";
         } else if (by instanceof ByPtrPtr) {
             prefix = prefix + "*";
         } else if (by instanceof ByPtrRef) {
@@ -1866,38 +1856,57 @@ public class Generator implements Closeable {
                 }
             }
         } else {
-            String spacedType = "";
-            while (type != null) {
-                Namespace namespace = type.getAnnotation(Namespace.class);
-                String spaceName = namespace == null ? "" : namespace.value();
-                if (Pointer.class.isAssignableFrom(type)) {
-                    Name name = type.getAnnotation(Name.class);
-                    String s;
-                    if (name == null) {
-                        s = type.getName();
-                        s = s.substring(s.lastIndexOf("$")+1);
-                    } else {
-                        s = name.value()[0];
-                    }
-                    if (spaceName.length() == 0) {
-                        spaceName = s;
-                    } else {
-                        spaceName = spaceName + "::" + s;
-                    }
-                }
-                if (spacedType.length() == 0) {
-                    spacedType = spaceName;
-                } else if (spaceName.length() > 0) {
-                    spacedType = spaceName + "::" + spacedType;
-                }
-                type = type.getDeclaringClass();
+            String scopedType = getCPPScopeName(type);
+            if (scopedType.length() > 0) {
+                prefix = scopedType + "*";
+            } else {
+                logger.log(Level.WARNING, "The class " + type.getCanonicalName() +
+                        " does not map to any C++ type. Compilation will most likely fail.");
             }
-            prefix = spacedType.length() > 0 ? spacedType + "*" : "";
-        }
-        if (type != null && prefix.length() == 0) {
-            logger.log(Level.WARNING, "The class " + type.getCanonicalName() + " does not map to any C++ type.");
         }
         return new String[] { prefix, suffix };
+    }
+
+    public static String getCPPScopeName(Class<?> type, Method method) {
+        String scopeName = getCPPScopeName(type);
+        Namespace namespace = method.getAnnotation(Namespace.class);
+        if (scopeName.length() > 0) {
+            scopeName += "::";
+        }
+        if (namespace != null) {
+            scopeName += namespace.value() + "::";
+        }
+        return scopeName;
+    }
+
+    public static String getCPPScopeName(Class<?> type) {
+        String scopeName = "";
+        while (type != null) {
+            Namespace namespace = type.getAnnotation(Namespace.class);
+            String spaceName = namespace == null ? "" : namespace.value();
+            if (Pointer.class.isAssignableFrom(type)) {
+                Name name = type.getAnnotation(Name.class);
+                String s;
+                if (name == null) {
+                    s = type.getName();
+                    s = s.substring(s.lastIndexOf("$")+1);
+                } else {
+                    s = name.value()[0];
+                }
+                if (spaceName.length() == 0) {
+                    spaceName = s;
+                } else {
+                    spaceName = spaceName + "::" + s;
+                }
+            }
+            if (scopeName.length() == 0) {
+                scopeName = spaceName;
+            } else if (scopeName.length() > 0) {
+                scopeName = spaceName + "::" + scopeName;
+            }
+            type = type.getDeclaringClass();
+        }
+        return scopeName;
     }
 
     public static String getJNITypeName(Class type) {
