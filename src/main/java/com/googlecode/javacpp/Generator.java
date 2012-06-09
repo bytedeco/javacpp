@@ -991,12 +991,13 @@ public class Generator implements Closeable {
     private void doReturnAfter(MethodInformation methodInfo) {
         Annotation returnBy = getBy(methodInfo.annotations);
         Adapter adapter = getAdapter(methodInfo.annotations);
-        if (adapter != null) {
-            out.print(")");
-        }
-        if ((returnBy instanceof ByVal || returnBy instanceof ByPtrPtr) && 
-                !methodInfo.returnType.isPrimitive()) {
-            out.print(")");
+        if (!methodInfo.returnType.isPrimitive()) {
+            if (adapter != null) {
+                out.print(")");
+            }
+            if (returnBy instanceof ByVal || returnBy instanceof ByPtrPtr) {
+                out.print(")");
+            }
         }
         if (!methodInfo.deallocator) {
             out.println(";");
