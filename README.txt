@@ -71,7 +71,7 @@ public class LegacyLibrary {
 
 After compiling the Java source code in the usual way, we also need to build using JavaCPP as follows:
 {{{
-[saudet@nemesis workspace]$ javac -cp javacpp.jar:. LegacyLibrary.java 
+[saudet@nemesis workspace]$ javac -cp javacpp.jar LegacyLibrary.java 
 
 [saudet@nemesis workspace]$ java -jar javacpp.jar LegacyLibrary
 Generating source file: /home/saudet/workspace/jniLegacyLibrary.cpp
@@ -138,7 +138,7 @@ public class VectorTest {
 
 Executing that program on my machine using these commands produces the following output:
 {{{
-[saudet@nemesis workspace]$ javac -cp javacpp.jar:. VectorTest.java
+[saudet@nemesis workspace]$ javac -cp javacpp.jar VectorTest.java
 
 [saudet@nemesis workspace]$ java -jar javacpp.jar VectorTest
 Generating source file: /home/saudet/workspace/jniVectorTest.cpp
@@ -200,7 +200,7 @@ public class Processor {
 
 It would then compile and execute like this:
 {{{
-[saudet@nemesis workspace]$ javac -cp javacpp.jar:. Processor.java
+[saudet@nemesis workspace]$ javac -cp javacpp.jar Processor.java
 
 [saudet@nemesis workspace]$ java -jar javacpp.jar Processor
 Generating source file: /home/saudet/workspace/jniProcessor.cpp
@@ -240,8 +240,11 @@ This project was conceived at the Okutomi & Tanaka Laboratory, Tokyo Institute o
 
 
 ==Changes==
+ * Trying to generate code for non-static native methods inside a class not extending `Pointer` now generates proper warning (issue #19)
+ * Fixed regression where the `@Adapter` notation generates incorrect code for types other than `Pointer` (issue #20)
+
 ===May 27, 2012 version 0.1===
- * Started using version numbers, friendly to tools like Maven, and placing packages in a sort of [Maven repository http://maven2.javacpp.googlecode.com/git/] (issue #10)
+ * Started using version numbers, friendly to tools like Maven, and placing packages in a sort of [http://maven2.javacpp.googlecode.com/git/ Maven repository] (issue #10)
  * Before loading a JNI library, the `Loader` now also tries to extract and load libraries listed in the `@Platform(link={...}, preload={...})` annotation values, and to support library names with version numbers, each value has to follow the format "libname@version" (or "libname@@version" to have `Builder` use it for the compiler as well), where "version" is the version number found in the filename as required by the native dynamic linker, usually a short sequence of digits and dots, but it can be anything (e.g.: "mylib@.4.2" would map to "libmylib.so.4.2", "libmylib.4.2.dylib", and "mylib.4.2.dll" under Linux, Mac OS X, and Windows respectively)
  * All files now get extracted into a temporary subdirectory, and with the appropriate platform-dependent linker options, or with libraries patched up after the fact with tools such as `install_name_tool` of Mac OS X, most native dynamic linkers can load dependent libraries from there
  * Stopped using `java.net.URL` as hash key in `Loader` (very bad idea)

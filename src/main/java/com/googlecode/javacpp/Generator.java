@@ -663,20 +663,7 @@ public class Generator implements Closeable {
 
                 if (typeName[0].length() == 0 || methodInfo.parameterRaw[j]) {
                     methodInfo.parameterRaw[j] = true;
-                    if (methodInfo.parameterTypes[j] == Class.class) {
-                        typeName[0] = "jclass";
-                    } else if (methodInfo.parameterTypes[j] == String.class) {
-                        typeName[0] = "jstring";
-                    } else if (methodInfo.parameterTypes[j].isArray()) {
-                        Class<?> c = methodInfo.parameterTypes[j].getComponentType();
-                        if (c.isPrimitive()) {
-                            typeName[0] = "j" + c.getName() + "Array";
-                        } else {
-                            typeName[0] = "jobjectArray";
-                        }
-                    } else {
-                        typeName[0] = "jobject";
-                    }
+                    typeName[0] = getJNITypeName(methodInfo.parameterTypes[j]);
                     out.println("    " + typeName[0] + " pointer" + j + " = p" + j + ";");
                     continue;
                 }
@@ -789,20 +776,7 @@ public class Generator implements Closeable {
                 returnVariable = "rpointer = ";
                 if (typeName[0].length() == 0 || methodInfo.returnRaw) {
                     methodInfo.returnRaw = true;
-                    if (methodInfo.returnType == Class.class) {
-                        typeName[0] = "jclass";
-                    } else if (methodInfo.returnType == String.class) {
-                        typeName[0] = "jstring";
-                    } else if (methodInfo.returnType.isArray()) {
-                        Class<?> c = methodInfo.returnType.getComponentType();
-                        if (c.isPrimitive()) {
-                            typeName[0] = "j" + c.getName() + "Array";
-                        } else {
-                            typeName[0] = "jobjectArray";
-                        }
-                    } else {
-                        typeName[0] = "jobject";
-                    }
+                    typeName[0] = getJNITypeName(methodInfo.returnType);
                     out.println("    " + typeName[0] + " r = NULL;");
                     out.println("    " + typeName[0] + " rpointer;");
                 } else if (Pointer.class.isAssignableFrom(methodInfo.returnType)) {
@@ -895,10 +869,12 @@ public class Generator implements Closeable {
             if (Modifier.isStatic(methodInfo.modifiers)) {
                 String[] namespace = getCPPTypeName(methodInfo.cls);
                 if (namespace[0] != null && namespace[0].length() > 0) {
-                    out.print(namespace[0].substring(0, namespace[0].length()-1) + "::");
+                    out.print(namespace[0].substring(0, namespace[0].length()-1));
+                    out.print("::");
                 }
                 if (methodInfo.method.isAnnotationPresent(Namespace.class)) {
-                    out.print(methodInfo.method.getAnnotation(Namespace.class).value() + "::");
+                    out.print(methodInfo.method.getAnnotation(Namespace.class).value());
+                    out.print("::");
                 }
                 out.print(methodInfo.memberName[0]);
             } else if (methodInfo.memberGetter || methodInfo.memberSetter) {
@@ -939,8 +915,7 @@ public class Generator implements Closeable {
                     out.print("::");
                 }
                 if (methodInfo.method.isAnnotationPresent(Namespace.class)) {
-                    Namespace ns = methodInfo.method.getAnnotation(Namespace.class);
-                    out.print(ns.value());
+                    out.print(methodInfo.method.getAnnotation(Namespace.class).value());
                     out.print("::");
                 }
                 out.print(methodInfo.memberName[0]);
@@ -982,7 +957,7 @@ public class Generator implements Closeable {
                 out.print(cast + "p" + j);
             } else if (adapter != null) {
                 cast = adapter.cast().trim();
-                if (!cast.isEmpty() && !cast.startsWith("(") && !cast.endsWith(")")) {
+                if (cast.length() > 0 && !cast.startsWith("(") && !cast.endsWith(")")) {
                     cast = "(" + cast + ")";
                 }
                 out.print(cast + "adapter" + j);
@@ -1016,13 +991,12 @@ public class Generator implements Closeable {
     private void doReturnAfter(MethodInformation methodInfo) {
         Annotation returnBy = getBy(methodInfo.annotations);
         Adapter adapter = getAdapter(methodInfo.annotations);
-        if (Pointer.class.isAssignableFrom(methodInfo.returnType)) {
-            if (adapter != null) {
-                out.print(")");
-            }
-            if (returnBy instanceof ByVal || returnBy instanceof ByPtrPtr) {
-                out.print(")");
-            }
+        if (adapter != null) {
+            out.print(")");
+        }
+        if ((returnBy instanceof ByVal || returnBy instanceof ByPtrPtr) && 
+                !methodInfo.returnType.isPrimitive()) {
+            out.print(")");
         }
         if (!methodInfo.deallocator) {
             out.println(";");
@@ -1918,6 +1892,9 @@ public class Generator implements Closeable {
                 type = type.getDeclaringClass();
             }
             prefix = spacedType.length() > 0 ? spacedType + "*" : "";
+        }
+        if (type != null && prefix.length() == 0) {
+            logger.log(Level.WARNING, "The class " + type.getCanonicalName() + " does not map to any C++ type.");
         }
         return new String[] { prefix, suffix };
     }
