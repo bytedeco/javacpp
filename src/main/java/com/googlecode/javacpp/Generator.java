@@ -526,7 +526,7 @@ public class Generator implements Closeable {
         }
 
         LinkedList<String> memberList = members.get(cls);
-        if ((!cls.isAnnotationPresent(Opaque.class) || cls == Pointer.class) &&
+        if (!cls.isAnnotationPresent(Opaque.class) &&
                 !FunctionPointer.class.isAssignableFrom(cls) &&
                 !cls.isAnnotationPresent(NoOffset.class)) {
             if (memberList == null) {
@@ -1042,7 +1042,12 @@ public class Generator implements Closeable {
                 }
 
                 if (Pointer.class.isAssignableFrom(methodInfo.returnType)) {
-                    if (!Modifier.isStatic(methodInfo.modifiers) && methodInfo.cls == methodInfo.returnType &&
+                    if (Modifier.isStatic(methodInfo.modifiers) && methodInfo.parameterTypes.length > 0 &&
+                            methodInfo.parameterTypes[0] == methodInfo.returnType && !(returnBy instanceof ByVal)) {
+                        out.println(indent + "if (rpointer == pointer0) {");
+                        out.println(indent + "    r = p0;");
+                        out.println(indent + "} else if (rpointer != NULL) {");
+                    } else if (!Modifier.isStatic(methodInfo.modifiers) && methodInfo.cls == methodInfo.returnType &&
                             !(returnBy instanceof ByVal)) {
                         out.println(indent + "if (rpointer == pointer) {");
                         out.println(indent + "    r = o;");
@@ -1884,12 +1889,16 @@ public class Generator implements Closeable {
         while (type != null) {
             Namespace namespace = type.getAnnotation(Namespace.class);
             String spaceName = namespace == null ? "" : namespace.value();
-            if (Pointer.class.isAssignableFrom(type)) {
+            if (Pointer.class.isAssignableFrom(type) && type != Pointer.class) {
                 Name name = type.getAnnotation(Name.class);
                 String s;
                 if (name == null) {
                     s = type.getName();
-                    s = s.substring(s.lastIndexOf("$")+1);
+                    int i = s.lastIndexOf("$");
+                    if (i < 0) {
+                        i = s.lastIndexOf(".");
+                    }
+                    s = s.substring(i+1);
                 } else {
                     s = name.value()[0];
                 }

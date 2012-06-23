@@ -213,19 +213,29 @@ import java.nio.ByteOrder;
         address = 0;
     }
 
+    public int offsetof(String member) {
+        int offset = -1;
+        try {
+            Class<? extends Pointer> c = getClass();
+            if (c != Pointer.class) {
+                offset = Loader.offsetof(c, member);
+            }
+        } catch (NullPointerException e) { }
+        return offset;
+    }
+
+    public int sizeof() {
+        int size = offsetof("sizeof");
+        // default to 1 byte
+        return size <= 0 ? 1 : size;
+    }
+
     private native ByteBuffer asDirectBuffer();
     public ByteBuffer asByteBuffer() {
         if (isNull()) {
             return null;
         }
-        int valueSize = 1;
-        try {
-            Class<? extends Pointer> c = getClass();
-            if (c != Pointer.class) {
-                valueSize = Loader.sizeof(c);
-            }
-        } catch(NullPointerException e) { /* default to 1 byte */ }
-
+        int valueSize = sizeof();
         int arrayPosition = position;
         int arrayCapacity = capacity;
         position = valueSize*arrayPosition;
@@ -237,6 +247,22 @@ import java.nio.ByteOrder;
     }
     public Buffer asBuffer() {
         return asByteBuffer();
+    }
+
+    public static native Pointer memchr(Pointer p, int ch, long size);
+    public static native int memcmp(Pointer p1, Pointer p2, long size);
+    public static native Pointer memcpy(Pointer dst, Pointer src, long size);
+    public static native Pointer memmove(Pointer dst, Pointer src, long size);
+    public static native Pointer memset(Pointer dst, int ch, long size);
+    public Pointer put(Pointer p) {
+        int valueSize = sizeof();
+        int valueSize2 = p.sizeof();
+        address += valueSize * position;
+        p.address += valueSize2 * p.position;
+        memcpy(this, p, valueSize2 * p.capacity);
+        address -= valueSize * position;
+        p.address -= valueSize2 * p.position;
+        return this;
     }
 
     @Override public boolean equals(Object obj) {
