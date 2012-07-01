@@ -49,6 +49,7 @@ import java.nio.ByteOrder;
         if (p != null) {
             address = p.address;
             position = p.position;
+            limit = p.limit;
             capacity = p.capacity;
         }
     }
@@ -73,12 +74,15 @@ import java.nio.ByteOrder;
                 throw new RuntimeException(e);
             }
             position = b.position();
+            limit = b.limit();
             capacity = b.capacity();
         }
     }
 
     void init(long allocatedAddress, int allocatedCapacity, long deallocatorAddress) {
         address = allocatedAddress;
+        position = 0;
+        limit = allocatedCapacity;
         capacity = allocatedCapacity;
         deallocator(new ReferenceDeallocator(this, allocatedAddress, deallocatorAddress));
     }
@@ -165,7 +169,9 @@ import java.nio.ByteOrder;
     }
 
     protected long address = 0;
-    protected int position = 0, capacity = 0;
+    protected int position = 0;
+    protected int limit = 0;
+    protected int capacity = 0;
     private Deallocator deallocator = null;
 
     public boolean isNull() {
@@ -183,10 +189,19 @@ import java.nio.ByteOrder;
         return this;
     }
 
+    public int limit() {
+        return limit;
+    }
+    public Pointer limit(int limit) {
+        this.limit = limit;
+        return this;
+    }
+
     public int capacity() {
         return capacity;
     }
     public Pointer capacity(int capacity) {
+        this.limit = capacity;
         this.capacity = capacity;
         return this;
     }
@@ -237,12 +252,12 @@ import java.nio.ByteOrder;
         }
         int valueSize = sizeof();
         int arrayPosition = position;
-        int arrayCapacity = capacity;
+        int arrayLimit = limit;
         position = valueSize*arrayPosition;
-        capacity = valueSize*arrayCapacity;
+        limit = valueSize*arrayLimit;
         ByteBuffer b = asDirectBuffer().order(ByteOrder.nativeOrder());
         position = arrayPosition;
-        capacity = arrayCapacity;
+        limit = arrayLimit;
         return b;
     }
     public Buffer asBuffer() {
@@ -259,7 +274,7 @@ import java.nio.ByteOrder;
         int valueSize2 = p.sizeof();
         address += valueSize * position;
         p.address += valueSize2 * p.position;
-        memcpy(this, p, valueSize2 * p.capacity);
+        memcpy(this, p, valueSize2 * (p.limit - p.position));
         address -= valueSize * position;
         p.address -= valueSize2 * p.position;
         return this;
@@ -282,6 +297,6 @@ import java.nio.ByteOrder;
 
     @Override public String toString() {
         return getClass().getName() + "[address=0x" + Long.toHexString(address) +
-                ",position=" + position + ",capacity=" + capacity + ",deallocator=" + deallocator + "]";
+                ",position=" + position + ",limit=" + limit + ",capacity=" + capacity + ",deallocator=" + deallocator + "]";
     }
 }
