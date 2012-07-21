@@ -824,6 +824,7 @@ public class Generator implements Closeable {
                 } else if (methodInfo.returnType == String.class) {
                     out.println("    jstring r = NULL;");
                     out.println("    const char* rpointer;");
+                    returnVariable += "(const char*)";
                 } else if (methodInfo.bufferGetter) {
                     out.println("    jobject r = NULL;");
                     out.println("    char* rpointer;");
@@ -866,7 +867,7 @@ public class Generator implements Closeable {
                     !(getParameterBy(methodInfo, k) instanceof ByRef) &&
                     methodInfo.parameterTypes[k] == String.class) {
                 // special considerations for char arrays as strings
-                out.print(indent + "strcpy(");
+                out.print(indent + "strcpy((char*)");
                 wantsPointer = true;
                 prefix = ", ";
             } else if (k >= 1 && methodInfo.parameterTypes[0].isArray() &&
@@ -1696,7 +1697,7 @@ public class Generator implements Closeable {
         return info;
     }
 
-    public static boolean getNoException(Class cls, Method method) {
+    public static boolean getNoException(Class<?> cls, Method method) {
         boolean noException = baseClasses.contains(cls) ||
                 method.isAnnotationPresent(NoException.class);
         while (!noException && cls != null) {
