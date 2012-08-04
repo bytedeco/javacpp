@@ -547,8 +547,7 @@ public class Generator implements Closeable {
 
         LinkedList<String> memberList = members.get(cls);
         if (!cls.isAnnotationPresent(Opaque.class) &&
-                !FunctionPointer.class.isAssignableFrom(cls) &&
-                !cls.isAnnotationPresent(NoOffset.class)) {
+                !FunctionPointer.class.isAssignableFrom(cls)) {
             if (memberList == null) {
                 members.put(cls, memberList = new LinkedList<String>());
             }
@@ -1672,8 +1671,9 @@ public class Generator implements Closeable {
             }
         }
 
-        info.noOffset = method.isAnnotationPresent(NoOffset.class) ||
-                        method.isAnnotationPresent(Index.class);
+        info.noOffset = info.cls.isAnnotationPresent(NoOffset.class) ||
+                          method.isAnnotationPresent(NoOffset.class) ||
+                          method.isAnnotationPresent(Index.class);
         if (!info.noOffset && info.pairedMethod != null) {
             info.noOffset = info.pairedMethod.isAnnotationPresent(NoOffset.class) ||
                             info.pairedMethod.isAnnotationPresent(Index.class);

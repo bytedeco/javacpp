@@ -240,9 +240,12 @@ import java.nio.ByteOrder;
     }
 
     public int sizeof() {
-        int size = offsetof("sizeof");
-        // default to 1 byte
-        return size <= 0 ? 1 : size;
+        if (getClass() == Pointer.class) {
+            // default to 1 byte
+            return 1;
+        } else {
+            return offsetof("sizeof");
+        }
     }
 
     private native ByteBuffer asDirectBuffer();
@@ -281,8 +284,8 @@ import java.nio.ByteOrder;
     }
 
     @Override public boolean equals(Object obj) {
-        if (obj == null && isNull()) {
-            return true;
+        if (obj == null) {
+            return isNull();
         } else if (obj.getClass() != getClass()) {
             return false;
         } else {
