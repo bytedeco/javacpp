@@ -1,7 +1,7 @@
 =JavaCPP=
 
 ==Introduction==
-JavaCPP provides efficient access to native C++ inside Java, not unlike the way some C/C++ compilers interact with assembly language. No need to invent [http://www.ecma-international.org/publications/standards/Ecma-372.htm a whole new language], whatever Microsoft may opine about it. Under the hood, it uses JNI, so it works with all Java implementations, [#Instructions_for_Android including Android]. In contrast to other approaches ([http://www.swig.org/ SWIG], [http://www.itk.org/ITK/resources/CableSwig.html CableSwig], [http://www.eclipse.org/swt/jnigen.php JNIGeneratorApp], [http://www.teamdev.com/jniwrapper/ JNIWrapper], [http://msdn.microsoft.com/en-us/library/0h9e9t7d.aspx Platform Invoke], [http://jogamp.org/gluegen/www/ GlueGen], [http://homepage.mac.com/pcbeard/JNIDirect/ JNIDirect], [https://github.com/twall/jna JNA], [http://www.innowhere.com/ JNIEasy], [http://flinflon.brandonu.ca/Dueck/SystemsProgramming/JniMarshall/ JniMarshall], [http://jnative.free.fr/ JNative], [http://www.jinvoke.com/ J/Invoke], [http://hawtjni.fusesource.org/ HawtJNI], [http://code.google.com/p/bridj/ BridJ], etc.), it supports naturally and efficiently many features of the C++ language often considered problematic, including overloaded operators, template classes and functions, member function pointers, callback functions, nested struct definitions, variable length arguments, nested namespaces, large data structures containing arbitrary cycles, multiple inheritance, passing/returning by value/reference/vector, anonymous unions, bit fields, exceptions, destructors and garbage collection. Obviously, neatly supporting the whole of C++ would require more work (although one could argue about the intrinsic neatness of C++), but I am releasing it here as a proof of concept. I have already used it to produce complete interfaces to OpenCV, FFmpeg, libdc1394, PGR FlyCapture, OpenKinect, videoInput, and ARToolKitPlus as part of [http://code.google.com/p/javacv/ JavaCV].
+JavaCPP provides efficient access to native C++ inside Java, not unlike the way some C/C++ compilers interact with assembly language. No need to invent new languages such as [http://www.ecma-international.org/publications/standards/Ecma-372.htm C++/CLI] or [http://www.cython.org/ Cython]. Under the hood, it uses JNI, so it works with all Java implementations, [#Instructions_for_Android including Android]. In contrast to other approaches ([http://www.swig.org/ SWIG], [http://www.itk.org/ITK/resources/CableSwig.html CableSwig], [http://www.eclipse.org/swt/jnigen.php JNIGeneratorApp], [http://www.teamdev.com/jniwrapper/ JNIWrapper], [http://msdn.microsoft.com/en-us/library/0h9e9t7d.aspx Platform Invoke], [http://jogamp.org/gluegen/www/ GlueGen], [http://homepage.mac.com/pcbeard/JNIDirect/ JNIDirect], [https://github.com/twall/jna JNA], [http://www.innowhere.com/ JNIEasy], [http://flinflon.brandonu.ca/Dueck/SystemsProgramming/JniMarshall/ JniMarshall], [http://jnative.free.fr/ JNative], [http://www.jinvoke.com/ J/Invoke], [http://hawtjni.fusesource.org/ HawtJNI], [http://code.google.com/p/bridj/ BridJ], etc.), it supports naturally and efficiently many features of the C++ language often considered problematic, including overloaded operators, template classes and functions, member function pointers, callback functions, nested struct definitions, variable length arguments, nested namespaces, large data structures containing arbitrary cycles, multiple inheritance, passing/returning by value/reference/vector, anonymous unions, bit fields, exceptions, destructors and garbage collection. Obviously, neatly supporting the whole of C++ would require more work (although one could argue about the intrinsic neatness of C++), but I am releasing it here as a proof of concept. I have already used it to produce complete interfaces to OpenCV, FFmpeg, libdc1394, PGR FlyCapture, OpenKinect, videoInput, and ARToolKitPlus as part of [http://code.google.com/p/javacv/ JavaCV].
 
 
 ==Required Software==
@@ -89,10 +89,10 @@ Generating source file: /home/saudet/workspace/jniLegacyLibrary.cpp
 Building library file: /home/saudet/workspace/linux-x86_64/libjniLegacyLibrary.so
 g++ -I/usr/lib/jvm/java-1.6.0-openjdk-1.6.0.0.x86_64/include
 -I/usr/lib/jvm/java-1.6.0-openjdk-1.6.0.0.x86_64/include/linux
-/home/saudet/workspace/jniLegacyLibrary.cpp -march=x86-64 -m64 -Wall -O3 -fPIC
--shared -s -o /home/saudet/workspace/linux-x86_64/libjniLegacyLibrary.so 
+/home/saudet/workspace/jniLegacyLibrary.cpp -Wl,-rpath,$ORIGIN/ -march=x86-64 -m64
+-Wall -O3 -fPIC -shared -s -o /home/saudet/workspace/linux-x86_64/libjniLegacyLibrary.so
 
-[saudet@nemesis workspace]$ java -cp javacpp.jar:. LegacyLibrary
+[saudet@nemesis workspace]$ java -cp javacpp.jar LegacyLibrary
 Hello World!
 }}}
 
@@ -115,7 +115,7 @@ public class VectorTest {
         private native void allocate();                  // this = new vector<vector<void*> >()
         private native void allocate(long n);            // this = new vector<vector<void*> >(n)
         @Name("operator=")
-        public native @ByRef PointerVectorVector copy(@ByRef PointerVectorVector x);
+        public native @ByRef PointerVectorVector put(@ByRef PointerVectorVector x);
 
         @Name("operator[]")
         public native @Adapter("VectorAdapter<void*>") PointerPointer get(long n);
@@ -138,7 +138,7 @@ public class VectorTest {
         Pointer p = new Pointer() { { address = 0xDEADBEEFL; } };
         v.put(0, 0, p);  // v[0][0] = p
 
-        PointerVectorVector v2 = new PointerVectorVector().copy(v);
+        PointerVectorVector v2 = new PointerVectorVector().put(v);
         Pointer p2 = v2.get(0).get(); // p2 = *(&v[0][0])
         System.out.println(v2.size() + " " + v2.size(0) + "  " + p2);
 
@@ -156,11 +156,11 @@ Generating source file: /home/saudet/workspace/jniVectorTest.cpp
 Building library file: /home/saudet/workspace/linux-x86_64/libjniVectorTest.so
 g++ -I/usr/lib/jvm/java-1.6.0-openjdk-1.6.0.0.x86_64/include
 -I/usr/lib/jvm/java-1.6.0-openjdk-1.6.0.0.x86_64/include/linux
-/home/saudet/workspace/jniVectorTest.cpp -march=x86-64 -m64 -Wall -O3 -fPIC
--shared -s -o /home/saudet/workspace/linux-x86_64/libjniVectorTest.so
+/home/saudet/workspace/jniVectorTest.cpp -Wl,-rpath,$ORIGIN/ -march=x86-64 -m64
+-Wall -O3 -fPIC -shared -s -o /home/saudet/workspace/linux-x86_64/libjniVectorTest.so
 
-[saudet@nemesis workspace]$ java -cp javacpp.jar:. VectorTest
-13 42  com.googlecode.javacpp.Pointer[address=0xdeadbeef,position=0,capacity=0,deallocator=null]
+[saudet@nemesis workspace]$ java -cp javacpp.jar VectorTest
+13 42  com.googlecode.javacpp.Pointer[address=0xdeadbeef,position=0,limit=0,capacity=0,deallocator=null]
 Exception in thread "main" java.lang.RuntimeException: vector::_M_range_check
 	at VectorTest$PointerVectorVector.at(Native Method)
 	at VectorTest.main(VectorTest.java:44)
@@ -218,10 +218,10 @@ Generating source file: /home/saudet/workspace/jniProcessor.cpp
 Building library file: /home/saudet/workspace/linux-x86_64/libjniProcessor.so
 g++ -I/usr/lib/jvm/java-1.6.0-openjdk-1.6.0.0.x86_64/include
 -I/usr/lib/jvm/java-1.6.0-openjdk-1.6.0.0.x86_64/include/linux
-/home/saudet/workspace/jniProcessor.cpp -march=x86-64 -m64 -Wall -O3 -fPIC
--shared -s -o /home/saudet/workspace/linux-x86_64/libjniProcessor.so
+/home/saudet/workspace/jniProcessor.cpp -Wl,-rpath,$ORIGIN/ -march=x86-64 -m64
+-Wall -O3 -fPIC -shared -s -o /home/saudet/workspace/linux-x86_64/libjniProcessor.so
 
-[saudet@nemesis workspace]$ java -cp javacpp.jar:. Processor
+[saudet@nemesis workspace]$ java -cp javacpp.jar Processor
 Processing in C++...
 }}}
 
@@ -243,6 +243,7 @@ This project was conceived at the Okutomi & Tanaka Laboratory, Tokyo Institute o
 
 
 ==Changes==
+ * Removed the `out` value of the `@Adapter` annotation: All adapters are now "out" by default, unless `@Const` also appears on the same element
  * Fixed `Pointer.equals(null)` throwing `NullPointerException` (issue #22)
  * `@NoOffset` would erroneously prevent `sizeof()` operations from getting generated
 

@@ -61,6 +61,7 @@
               <mainClass>com.googlecode.javacpp.Builder</mainClass>
             </manifest>
             <manifestEntries>
+              <Class-Path>./</Class-Path>
               <Name>com/googlecode/javacpp/</Name>
               <Implementation-Title>${project.name}</Implementation-Title>
               <Implementation-Vendor>Samuel Audet</Implementation-Vendor>
@@ -70,6 +71,14 @@
               <Specification-Version>${project.version}</Specification-Version>
             </manifestEntries>
           </archive>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-install-plugin</artifactId>
+        <version>2.3</version>
+        <configuration>
+          <createChecksum>true</createChecksum>
         </configuration>
       </plugin>
       <plugin>

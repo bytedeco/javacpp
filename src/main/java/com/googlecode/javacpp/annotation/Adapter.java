@@ -13,7 +13,6 @@ import java.lang.annotation.Target;
 @Target({ElementType.METHOD, ElementType.PARAMETER})
 public @interface Adapter {
     String value();
-    boolean out() default false;
     int argc() default 1;
     String cast() default "";
 }

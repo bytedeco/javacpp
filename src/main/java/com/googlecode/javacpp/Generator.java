@@ -330,8 +330,8 @@ public class Generator implements Closeable {
         out.println();
         out.println("template<class P, class T = P> class VectorAdapter {");
         out.println("public:");
-        out.println("    VectorAdapter(P* pointer, typename std::vector<T>::size_type size) : pointer(pointer), size(size),");
-        out.println("        vec2(pointer ? std::vector<T>(pointer, pointer + size) : std::vector<T>()), vec(vec2) { }");
+        out.println("    VectorAdapter(const P* pointer, typename std::vector<T>::size_type size) : pointer((P*)pointer), size(size),");
+        out.println("        vec2(pointer ? std::vector<T>((P*)pointer, (P*)pointer + size) : std::vector<T>()), vec(vec2) { }");
         out.println("    VectorAdapter(const std::vector<T>& vec) : pointer(0), size(0), vec((std::vector<T>&)vec) { }");
         out.println("    void assign(P* pointer, typename std::vector<T>::size_type size) {");
         out.println("        this->pointer = pointer;");
@@ -675,7 +675,7 @@ public class Generator implements Closeable {
                 Annotation passBy = getParameterBy(methodInfo, j);
                 String cast = getParameterCast(methodInfo, j);
                 String[] typeName = getCPPTypeName(methodInfo.parameterTypes[j]);
-                Adapter adapter = getParameterAdapter(methodInfo, j);
+                Adapter adapter = getParameterAdapter(false, methodInfo, j);
 
                 if (FunctionPointer.class.isAssignableFrom(methodInfo.parameterTypes[j])) {
                     typeName[0] = "JavaCPP_" + mangle(methodInfo.parameterTypes[j].getName()) + "*";
@@ -792,7 +792,7 @@ public class Generator implements Closeable {
                 returnVariable = typeName[0] + " rvalue" + typeName[1] + " = ";
             } else {
                 Annotation returnBy = getBy(methodInfo.annotations);
-                Adapter adapter = getAdapter(methodInfo.annotations);
+                Adapter adapter = getAdapter(false, methodInfo.annotations);
 
                 returnVariable = "rpointer = ";
                 if (typeName[0].length() == 0 || methodInfo.returnRaw) {
@@ -956,7 +956,7 @@ public class Generator implements Closeable {
         for (int j = skipParameters + methodInfo.dim; j < methodInfo.parameterTypes.length; j++) {
             Annotation passBy = getParameterBy(methodInfo, j);
             String cast = getParameterCast(methodInfo, j);
-            Adapter adapter = getParameterAdapter(methodInfo, j);
+            Adapter adapter = getParameterAdapter(false, methodInfo, j);
 
             if (("(void*)".equals(cast) || "(void *)".equals(cast)) &&
                     methodInfo.parameterTypes[j] == long.class) {
@@ -998,7 +998,7 @@ public class Generator implements Closeable {
 
     private void doReturnAfter(MethodInformation methodInfo) {
         Annotation returnBy = getBy(methodInfo.annotations);
-        Adapter adapter = getAdapter(methodInfo.annotations);
+        Adapter adapter = getAdapter(false, methodInfo.annotations);
         if (!methodInfo.returnType.isPrimitive() && adapter != null) {
             out.print(")");
         }
@@ -1120,8 +1120,8 @@ public class Generator implements Closeable {
             Annotation passBy = getParameterBy(methodInfo, j);
             String cast = getParameterCast(methodInfo, j);
             String[] typeName = getCPPTypeName(methodInfo.parameterTypes[j]);
-            Adapter adapter = getParameterAdapter(methodInfo, j);
-            if (adapter != null && adapter.out()) {
+            Adapter adapter = getParameterAdapter(true, methodInfo, j);
+            if (adapter != null) {
                 for (int k = 0; k < adapter.argc(); k++) {
                     out.println(indent + typeName[0] + " rpointer" + (j+k) + typeName[1] + " = adapter" + j + ";");
                     out.println(indent + "jint rsize" + (j+k) + " = (jint)adapter" + j + ".size" + (k > 0 ? (k+1) + ";" : ";"));
@@ -1195,7 +1195,7 @@ public class Generator implements Closeable {
         String callbackReturnCast = getCast(callbackAnnotations, callbackReturnType);
         Annotation returnBy = getBy(callbackAnnotations);
         String[] returnTypeName = getCPPTypeName(callbackReturnType);
-        Adapter returnAdapter = getAdapter(callbackAnnotations);
+        Adapter returnAdapter = getAdapter(false, callbackAnnotations);
 
         out.println("    JNIEnv* e;");
         out.println("    int needDetach = 0;");
@@ -1221,7 +1221,7 @@ public class Generator implements Closeable {
                             getSignature(callbackParameterTypes[j]).toLowerCase() + " = p" + j + ";");
                 } else {
                     Annotation passBy = getBy(callbackParameterAnnotations[j]);
-                    Adapter adapter = getAdapter(callbackParameterAnnotations[j]);
+                    Adapter adapter = getAdapter(false, callbackParameterAnnotations[j]);
                     String[] typeName = adapter != null ? getCPPTypeName(callbackParameterTypes[j]) :
                             getCastedCPPTypeName(callbackParameterAnnotations[j], callbackParameterTypes[j]);
 
@@ -1272,7 +1272,8 @@ public class Generator implements Closeable {
                         String s = "    o" + j + " = e->AllocObject(JavaCPP_getClass(e, " +
                                 jclasses.register(callbackParameterTypes[j]) + "));";
                         jclassesInit.register(callbackParameterTypes[j]); // Android
-                        if ((adapter != null && adapter.out()) || passBy instanceof ByPtrPtr || passBy instanceof ByPtrRef) {
+                        adapter = getAdapter(true, callbackParameterAnnotations[j]);
+                        if (adapter != null || passBy instanceof ByPtrPtr || passBy instanceof ByPtrRef) {
                             out.println(s);
                         } else {
                             out.println("    if (pointer" + j + " != NULL) { ");
@@ -1326,22 +1327,22 @@ public class Generator implements Closeable {
             if (Pointer.class.isAssignableFrom(callbackParameterTypes[j])) {
                 String[] typeName = getCastedCPPTypeName(callbackParameterAnnotations[j], callbackParameterTypes[j]);
                 Annotation passBy = getBy(callbackParameterAnnotations[j]);
-                Adapter adapter = getAdapter(callbackParameterAnnotations[j]);
+                Adapter adapter = getAdapter(true, callbackParameterAnnotations[j]);
 
-                if ((adapter != null && adapter.out()) || passBy instanceof ByPtrPtr || passBy instanceof ByPtrRef) {
+                if (adapter != null || passBy instanceof ByPtrPtr || passBy instanceof ByPtrRef) {
                     out.println("    " + typeName[0] + " rpointer" + j + typeName[1] + " = (" +
                             typeName[0] + typeName[1] + ")jlong_to_ptr(e->GetLongField(o" + j + ", JavaCPP_addressFieldID);");
-                    if (adapter != null && adapter.out()) {
+                    if (adapter != null) {
                         out.println("    jint rsize" + j + " = e->GetIntField(o" + j + ", JavaCPP_limitFieldID));");
                     }
                     if (!callbackParameterTypes[j].isAnnotationPresent(Opaque.class)) {
                         out.println("    jint rposition" + j + " = e->GetIntField(o" + j + ", JavaCPP_positionFieldID));");
                         out.println("    rpointer" + j + " += rposition" + j + ";");
-                        if (adapter != null && adapter.out()) {
+                        if (adapter != null) {
                             out.println("    rsize" + j + " -= rposition" + j + ";");
                         }
                     }
-                    if (adapter != null && adapter.out()) {
+                    if (adapter != null) {
                         out.println("    adapter" + j + ".assign(rpointer" + j + ", rsize" + j + ");");
                     } else if (passBy instanceof ByPtrPtr) {
                         out.println("    *p" + j + " = rpointer" + j + ";");
@@ -1709,22 +1710,26 @@ public class Generator implements Closeable {
         return noException;
     }
 
-    public static Adapter getParameterAdapter(MethodInformation methodInfo, int j) {
-        Adapter adapter = getAdapter(methodInfo.parameterAnnotations[j]);
+    public static Adapter getParameterAdapter(boolean out, MethodInformation methodInfo, int j) {
+        Adapter adapter = getAdapter(out, methodInfo.parameterAnnotations[j]);
         if (adapter == null && methodInfo.pairedMethod != null &&
                 (methodInfo.valueSetter || methodInfo.memberSetter)) {
-            adapter = getAdapter(methodInfo.pairedMethod.getAnnotations());
+            adapter = getAdapter(out, methodInfo.pairedMethod.getAnnotations());
         }
         return adapter;
     }
 
-    public static Adapter getAdapter(Annotation ... annotations) {
-        for (Annotation a: annotations) {
+    public static Adapter getAdapter(boolean out, Annotation ... annotations) {
+        Adapter adapter = null;
+        boolean constant = false;
+        for (Annotation a : annotations) {
             if (a instanceof Adapter) {
-                return (Adapter)a;
+                adapter = (Adapter)a;
+            } else if (a instanceof Const) {
+                constant = true;
             }
         }
-        return null;
+        return out && constant ? null : adapter;
     }
 
     public static String getParameterCast(MethodInformation methodInfo, int j) {
@@ -1739,7 +1744,7 @@ public class Generator implements Closeable {
     public static String getCast(Annotation[] annotations, Class<?> type) {
         String[] typeName = null;
         Annotation by = getBy(annotations);
-        for (Annotation a: annotations) {
+        for (Annotation a : annotations) {
             if (a instanceof Cast || (a instanceof Const && (by instanceof ByVal || by instanceof ByRef))) {
                 typeName = getCastedCPPTypeName(annotations, type);
             } else if (a instanceof Const) {
@@ -1760,7 +1765,7 @@ public class Generator implements Closeable {
 
     public static Annotation getBy(Annotation ... annotations) {
         Annotation byAnnotation = null;
-        for (Annotation a: annotations) {
+        for (Annotation a : annotations) {
             if (a instanceof ByPtr || a instanceof ByPtrPtr || a instanceof ByPtrRef ||
                     a instanceof ByRef || a instanceof ByVal) {
                 if (byAnnotation != null) {
@@ -1776,7 +1781,7 @@ public class Generator implements Closeable {
 
     public static Annotation getBehavior(Annotation ... annotations) {
         Annotation behaviorAnnotation = null;
-        for (Annotation a: annotations) {
+        for (Annotation a : annotations) {
             if (a instanceof Function || a instanceof Allocator || a instanceof ArrayAllocator ||
                     a instanceof ValueSetter || a instanceof ValueGetter ||
                     a instanceof MemberGetter || a instanceof MemberSetter) {
@@ -1818,8 +1823,8 @@ public class Generator implements Closeable {
 
     public static String[] getCastedCPPTypeName(Annotation[] annotations, Class<?> type) {
         String[] typeName = null;
-        boolean warning = false;
-        for (Annotation a: annotations) {
+        boolean warning = false, adapter = false;
+        for (Annotation a : annotations) {
             if (a instanceof Cast) {
                 warning = typeName != null;
                 String prefix = ((Cast)a).value(), suffix = "";
@@ -1830,13 +1835,22 @@ public class Generator implements Closeable {
                 }
                 typeName = new String[] { prefix, suffix };
             } else if (a instanceof Const) {
-                warning = typeName != null;
+                if (warning = typeName != null) {
+                    // prioritize @Cast
+                    continue;
+                }
                 typeName = getCPPTypeName(type);
-                typeName[0] = "const " + typeName[0];
+                if (((Const)a).value()) {
+                    typeName[0] = getValueTypeName(typeName) + " const *";
+                } else {
+                    typeName[0] = "const " + typeName[0];
+                }
+            } else if (a instanceof Adapter) {
+                adapter = true;
             }
         }
-        if (warning) {
-            logger.log(Level.WARNING, "\"Cast\" and \"Const\" annotations are mutually exclusive.");
+        if (warning && !adapter) {
+            logger.log(Level.WARNING, "Without \"Adapter\", \"Cast\" and \"Const\" annotations are mutually exclusive.");
         }
         if (typeName == null) {
             typeName = getCPPTypeName(type);
