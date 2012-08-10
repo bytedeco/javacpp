@@ -678,6 +678,10 @@ public class Generator implements Closeable {
                 Adapter adapter = getParameterAdapter(false, methodInfo, j);
 
                 if (FunctionPointer.class.isAssignableFrom(methodInfo.parameterTypes[j])) {
+                    if (methodInfo.parameterTypes[j] == FunctionPointer.class) {
+                        logger.log(Level.WARNING, "Method \"" + methodInfo.method + "\" has an abstract FunctionPointer parameter, " +
+                                "but a subclass is required. Compilation will most likely fail.");
+                    }
                     typeName[0] = "JavaCPP_" + mangle(methodInfo.parameterTypes[j].getName()) + "*";
                     typeName[1] = "";
                 }
@@ -744,7 +748,7 @@ public class Generator implements Closeable {
                     }
                 } else {
                     out.println("p" + j + ";");
-                    logger.log(Level.WARNING, "Method \"" + methodInfo.method + "\" has unsupported parameter type \"" +
+                    logger.log(Level.WARNING, "Method \"" + methodInfo.method + "\" has an unsupported parameter of type \"" +
                             methodInfo.parameterTypes[j].getCanonicalName() + "\". Compilation will most likely fail.");
                 }
 
@@ -1218,7 +1222,8 @@ public class Generator implements Closeable {
             for (int j = 0; j < callbackParameterTypes.length; j++) {
                 if (callbackParameterTypes[j].isPrimitive()) {
                     out.println("    args[" + j + "]." +
-                            getSignature(callbackParameterTypes[j]).toLowerCase() + " = p" + j + ";");
+                            getSignature(callbackParameterTypes[j]).toLowerCase() + " = (" +
+                            getJNITypeName(callbackParameterTypes[j]) + ")p" + j + ";");
                 } else {
                     Annotation passBy = getBy(callbackParameterAnnotations[j]);
                     Adapter adapter = getAdapter(false, callbackParameterAnnotations[j]);
@@ -1300,7 +1305,7 @@ public class Generator implements Closeable {
                         out.println("    }");
                         out.println("    args[" + j + "].l = o" + j + ";");
                     } else if (callbackParameterTypes[j] == String.class) {
-                        out.println("    jstring o" + j + " = p" + j + " == NULL ? NULL : e->NewStringUTF(" +
+                        out.println("    jstring o" + j + " = p" + j + " == NULL ? NULL : e->NewStringUTF((const char*)" +
                                 (adapter != null ? "adapter" : "p") + j + ");");
                         out.println("    args[" + j + "].l = o" + j + ";");
                     } else {
@@ -1898,7 +1903,7 @@ public class Generator implements Closeable {
                 Convention convention = type.getAnnotation(Convention.class);
                 String callingConvention = convention == null ? "" : convention.value() + " ";
                 Namespace namespace = type.getAnnotation(Namespace.class);
-                String spaceName = namespace == null ? "" : namespace.value() + "::";
+                String spaceName = namespace == null || namespace.value().length() == 0 ? "" : namespace.value() + "::";
                 Class returnType = functionMethod.getReturnType();
                 Class[] parameterTypes = functionMethod.getParameterTypes();
                 Annotation[] annotations = functionMethod.getAnnotations();
@@ -1937,6 +1942,9 @@ public class Generator implements Closeable {
     public static String getCPPScopeName(Class<?> type, Method method) {
         String scopeName = getCPPScopeName(type);
         Namespace namespace = method.getAnnotation(Namespace.class);
+        if (namespace != null && namespace.value().length() == 0) {
+            return ""; // user wants to reset namespace here
+        }
         if (scopeName.length() > 0) {
             scopeName += "::";
         }
@@ -1951,6 +1959,9 @@ public class Generator implements Closeable {
         while (type != null) {
             Namespace namespace = type.getAnnotation(Namespace.class);
             String spaceName = namespace == null ? "" : namespace.value();
+            if (namespace != null && namespace.value().length() == 0) {
+                scopeName = ""; // user wants to reset namespace here
+            }
             if (Pointer.class.isAssignableFrom(type) && type != Pointer.class) {
                 Name name = type.getAnnotation(Name.class);
                 String s;

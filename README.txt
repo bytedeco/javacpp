@@ -243,6 +243,9 @@ This project was conceived at the Okutomi & Tanaka Laboratory, Tokyo Institute o
 
 
 ==Changes==
+ * Fixed callback parameter casting of primitive and `String` types
+ * An empty `@Namespace` can now be used to let `Generator` know of entities that are not part of any scope, such as macros and operators
+ * Turned `FunctionPointer` into an `abstract class` with `protected` constructors, but if users still try to use it as function parameters, `Generator` now logs a warning indicating that a subclass should be used (issue #23)
  * Removed the `out` value of the `@Adapter` annotation: All adapters are now "out" by default, unless `@Const` also appears on the same element
  * Fixed `Pointer.equals(null)` throwing `NullPointerException` (issue #22)
  * `@NoOffset` would erroneously prevent `sizeof()` operations from getting generated

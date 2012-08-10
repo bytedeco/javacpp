@@ -24,9 +24,9 @@ package com.googlecode.javacpp;
  *
  * @author Samuel Audet
  */
-public class FunctionPointer extends Pointer {
-    public FunctionPointer() { }
-    public FunctionPointer(Pointer p) { super(p); }
+public abstract class FunctionPointer extends Pointer {
+    protected FunctionPointer() { }
+    protected FunctionPointer(Pointer p) { super(p); }
 
     @Override public FunctionPointer position(int position) {
         return (FunctionPointer)super.position(position);
