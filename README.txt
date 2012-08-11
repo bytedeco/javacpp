@@ -66,10 +66,10 @@ public class LegacyLibrary {
         private native void allocate();
 
         // to call the getter and setter functions 
-        public native @ByRef String get_property(); public native void set_property(String property);
+        public native @StdString String get_property(); public native void set_property(String property);
 
         // to access the member variable directly
-        public native @ByRef String property();     public native void property(String property);
+        public native @StdString String property();     public native void property(String property);
     }
 
     public static void main(String[] args) {
@@ -118,8 +118,8 @@ public class VectorTest {
         public native @ByRef PointerVectorVector put(@ByRef PointerVectorVector x);
 
         @Name("operator[]")
-        public native @Adapter("VectorAdapter<void*>") PointerPointer get(long n);
-        public native @Adapter("VectorAdapter<void*>") PointerPointer at(long n);
+        public native @StdVector PointerPointer get(long n);
+        public native @StdVector PointerPointer at(long n);
 
         public native long size();
         public native @Cast("bool") boolean empty();
@@ -243,6 +243,8 @@ This project was conceived at the Okutomi & Tanaka Laboratory, Tokyo Institute o
 
 
 ==Changes==
+ * Fixed `Loader.sizeof(Pointer.class)` to return the `sizeof(void*)`
+ * In addition to methods and parameters, we may now apply `@Adapter` to annotation types as well, allowing us to shorten expressions like `@Adapter("VectorAdapter<int>") int[]` to `@StdVector int[]`, to support `std::vector<int>`, and similarly for `@StdString` and `std::string`
  * Fixed callback parameter casting of primitive and `String` types
  * An empty `@Namespace` can now be used to let `Generator` know of entities that are not part of any scope, such as macros and operators
  * Turned `FunctionPointer` into an `abstract class` with `protected` constructors, but if users still try to use it as function parameters, `Generator` now logs a warning indicating that a subclass should be used (issue #23)

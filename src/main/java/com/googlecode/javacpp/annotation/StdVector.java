@@ -10,9 +10,8 @@ import java.lang.annotation.Target;
  * @author Samuel Audet
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD, ElementType.PARAMETER, ElementType.ANNOTATION_TYPE})
-public @interface Adapter {
-    String value();
-    int argc() default 1;
-    String cast() default "";
+@Target({ElementType.METHOD, ElementType.PARAMETER})
+@Adapter("VectorAdapter")
+public @interface StdVector {
+    String value() default "";
 }
