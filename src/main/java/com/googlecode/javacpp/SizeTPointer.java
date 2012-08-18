@@ -42,6 +42,12 @@ public class SizeTPointer extends Pointer {
     @Override public SizeTPointer position(int position) {
         return (SizeTPointer)super.position(position);
     }
+    @Override public SizeTPointer limit(int limit) {
+        return (SizeTPointer)super.limit(limit);
+    }
+    @Override public SizeTPointer capacity(int capacity) {
+        return (SizeTPointer)super.capacity(capacity);
+    }
 
     public long get() { return get(0); }
     @Cast("size_t") public native long get(int i);

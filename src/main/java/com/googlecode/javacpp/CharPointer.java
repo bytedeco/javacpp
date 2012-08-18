@@ -57,6 +57,9 @@ public class CharPointer extends Pointer {
     @Override public CharPointer position(int position) {
         return (CharPointer)super.position(position);
     }
+    @Override public CharPointer limit(int limit) {
+        return (CharPointer)super.limit(limit);
+    }
     @Override public CharPointer capacity(int capacity) {
         return (CharPointer)super.capacity(capacity);
     }

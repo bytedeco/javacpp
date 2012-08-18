@@ -53,6 +53,9 @@ public class LongPointer extends Pointer {
     @Override public LongPointer position(int position) {
         return (LongPointer)super.position(position);
     }
+    @Override public LongPointer limit(int limit) {
+        return (LongPointer)super.limit(limit);
+    }
     @Override public LongPointer capacity(int capacity) {
         return (LongPointer)super.capacity(capacity);
     }

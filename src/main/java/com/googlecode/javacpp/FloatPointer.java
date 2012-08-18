@@ -53,6 +53,9 @@ public class FloatPointer extends Pointer {
     @Override public FloatPointer position(int position) {
         return (FloatPointer)super.position(position);
     }
+    @Override public FloatPointer limit(int limit) {
+        return (FloatPointer)super.limit(limit);
+    }
     @Override public FloatPointer capacity(int capacity) {
         return (FloatPointer)super.capacity(capacity);
     }

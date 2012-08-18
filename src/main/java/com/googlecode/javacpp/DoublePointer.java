@@ -53,6 +53,9 @@ public class DoublePointer extends Pointer {
     @Override public DoublePointer position(int position) {
         return (DoublePointer)super.position(position);
     }
+    @Override public DoublePointer limit(int limit) {
+        return (DoublePointer)super.limit(limit);
+    }
     @Override public DoublePointer capacity(int capacity) {
         return (DoublePointer)super.capacity(capacity);
     }

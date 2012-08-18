@@ -243,6 +243,8 @@ This project was conceived at the Okutomi & Tanaka Laboratory, Tokyo Institute o
 
 
 ==Changes==
+ * `Generator` would ignore `Pointer.position()` in the case of `@ByPtrPtr` and `@ByPtrRef` parameters
+ * Replaced hack to create a `Pointer` from a `Buffer` object with something more standard
  * Fixed `Loader.sizeof(Pointer.class)` to return the `sizeof(void*)`
  * In addition to methods and parameters, we may now apply `@Adapter` to annotation types as well, allowing us to shorten expressions like `@Adapter("VectorAdapter<int>") int[]` to `@StdVector int[]`, to support `std::vector<int>`, and similarly for `@StdString` and `std::string`
  * Fixed callback parameter casting of primitive and `String` types

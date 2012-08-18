@@ -21,9 +21,9 @@
 package com.googlecode.javacpp;
 
 import com.googlecode.javacpp.annotation.Opaque;
+import com.googlecode.javacpp.annotation.NoDeallocator;
 import java.lang.ref.PhantomReference;
 import java.lang.ref.ReferenceQueue;
-import java.lang.reflect.Field;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -54,30 +54,15 @@ import java.nio.ByteOrder;
         }
     }
 
-    private static Field bufferAddressField = null;
     public Pointer(Buffer b) {
-        if (b != null && b.isDirect()) {
-            try {
-                if (bufferAddressField == null) {
-                    try {
-                        bufferAddressField = Buffer.class.getDeclaredField("address");
-                    } catch (NoSuchFieldException e) {
-                        bufferAddressField = Buffer.class.getDeclaredField("effectiveDirectAddress");
-                    }
-                    bufferAddressField.setAccessible(true);
-                }
-                address = bufferAddressField.getType() == long.class ? 
-                          bufferAddressField.getLong(b) : bufferAddressField.getInt(b);
-            } catch (NoSuchFieldException e) {
-                throw new RuntimeException(e);
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
-            }
+        if (b != null) {
+            allocate(b);
             position = b.position();
             limit = b.limit();
             capacity = b.capacity();
         }
     }
+    @NoDeallocator private native void allocate(Buffer b);
 
     void init(long allocatedAddress, int allocatedCapacity, long deallocatorAddress) {
         address = allocatedAddress;

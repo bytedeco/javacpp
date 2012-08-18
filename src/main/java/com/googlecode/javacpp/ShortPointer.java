@@ -53,6 +53,9 @@ public class ShortPointer extends Pointer {
     @Override public ShortPointer position(int position) {
         return (ShortPointer)super.position(position);
     }
+    @Override public ShortPointer limit(int limit) {
+        return (ShortPointer)super.limit(limit);
+    }
     @Override public ShortPointer capacity(int capacity) {
         return (ShortPointer)super.capacity(capacity);
     }

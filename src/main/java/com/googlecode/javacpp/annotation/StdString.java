@@ -11,5 +11,5 @@ import java.lang.annotation.Target;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.PARAMETER})
-@Adapter(value="StringAdapter", cast="const char*")
+@Adapter(value="StringAdapter", cast="std::string&")
 public @interface StdString { }

@@ -42,6 +42,12 @@ public class BoolPointer extends Pointer {
     @Override public BoolPointer position(int position) {
         return (BoolPointer)super.position(position);
     }
+    @Override public BoolPointer limit(int limit) {
+        return (BoolPointer)super.limit(limit);
+    }
+    @Override public BoolPointer capacity(int capacity) {
+        return (BoolPointer)super.capacity(capacity);
+    }
 
     public boolean get() { return get(0); }
     @Cast("bool") public native boolean get(int i);

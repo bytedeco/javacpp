@@ -63,6 +63,9 @@ public class BytePointer extends Pointer {
     @Override public BytePointer position(int position) {
         return (BytePointer)super.position(position);
     }
+    @Override public BytePointer limit(int limit) {
+        return (BytePointer)super.limit(limit);
+    }
     @Override public BytePointer capacity(int capacity) {
         return (BytePointer)super.capacity(capacity);
     }

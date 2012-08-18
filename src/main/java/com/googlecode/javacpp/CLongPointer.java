@@ -42,6 +42,12 @@ public class CLongPointer extends Pointer {
     @Override public CLongPointer position(int position) {
         return (CLongPointer)super.position(position);
     }
+    @Override public CLongPointer limit(int limit) {
+        return (CLongPointer)super.limit(limit);
+    }
+    @Override public CLongPointer capacity(int capacity) {
+        return (CLongPointer)super.capacity(capacity);
+    }
 
     public long get() { return get(0); }
     @Cast("long") public native long get(int i);

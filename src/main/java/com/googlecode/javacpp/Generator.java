@@ -742,8 +742,7 @@ public class Generator implements Closeable {
                         out.println("    jint size" + j + " = p" + j + " == NULL ? 0 : e->GetIntField(p" + j +
                                 ", JavaCPP_limitFieldID);");
                     }
-                    if (!methodInfo.parameterTypes[j].isAnnotationPresent(Opaque.class) &&
-                            !(passBy instanceof ByPtrPtr) && !(passBy instanceof ByPtrRef)) {
+                    if (!methodInfo.parameterTypes[j].isAnnotationPresent(Opaque.class)) {
                         out.println("    jint position" + j + " = p" + j + " == NULL ? 0 : e->GetIntField(p" + j +
                                 ", JavaCPP_positionFieldID);");
                         out.println("    pointer"  + j + " += position" + j + ";");
@@ -810,10 +809,12 @@ public class Generator implements Closeable {
         String returnVariable = "";
         if (methodInfo.returnType == void.class) {
             if (methodInfo.allocator || methodInfo.arrayAllocator) {
-                out.println("    if (!e->IsSameObject(e->GetObjectClass(o), JavaCPP_getClass(e, " +
-                        jclasses.register(methodInfo.cls) + "))) {");
-                out.println("        return;");
-                out.println("    }");
+                if (methodInfo.cls != Pointer.class) {
+                    out.println("    if (!e->IsSameObject(e->GetObjectClass(o), JavaCPP_getClass(e, " +
+                            jclasses.register(methodInfo.cls) + "))) {");
+                    out.println("        return;");
+                    out.println("    }");
+                }
                 String[] typeName = getCPPTypeName(methodInfo.cls);
                 returnVariable = typeName[0] + " rpointer" + typeName[1] + " = ";
             }
@@ -955,11 +956,17 @@ public class Generator implements Closeable {
             } else if (methodInfo.allocator) {
                 String[] typeName = getCPPTypeName(methodInfo.cls);
                 String valueTypeName = getValueTypeName(typeName);
-                out.print((getNoException(methodInfo.cls, methodInfo.method) ?
-                    "new (std::nothrow) " : "new ") + valueTypeName);
-                if (methodInfo.arrayAllocator) {
-                    prefix = "[";
-                    suffix = "]";
+                if (methodInfo.cls == Pointer.class) {
+                    // can't allocate a "void", so simply assign the parameter instead
+                    prefix = "";
+                    suffix = "";
+                } else {
+                    out.print((getNoException(methodInfo.cls, methodInfo.method) ?
+                        "new (std::nothrow) " : "new ") + valueTypeName);
+                    if (methodInfo.arrayAllocator) {
+                        prefix = "[";
+                        suffix = "]";
+                    }
                 }
             } else if (Modifier.isStatic(methodInfo.modifiers)) {
                 out.print(getCPPScopeName(methodInfo.cls, methodInfo.method));
@@ -1107,19 +1114,24 @@ public class Generator implements Closeable {
                 }
 
                 if (Pointer.class.isAssignableFrom(methodInfo.returnType)) {
-                    if (Modifier.isStatic(methodInfo.modifiers) && methodInfo.parameterTypes.length > 0 &&
-                            methodInfo.parameterTypes[0] == methodInfo.returnType && !(returnBy instanceof ByVal)) {
-                        out.println(indent + "if (rpointer == pointer0) {");
-                        out.println(indent + "    r = p0;");
-                        out.println(indent + "} else if (rpointer != NULL) {");
-                    } else if (!Modifier.isStatic(methodInfo.modifiers) && methodInfo.cls == methodInfo.returnType &&
-                            !(returnBy instanceof ByVal)) {
-                        out.println(indent + "if (rpointer == pointer) {");
-                        out.println(indent + "    r = o;");
-                        out.println(indent + "} else if (rpointer != NULL) {");
-                    } else {
-                        out.println(indent + "if (rpointer != NULL) {");
+                    out.print(indent);
+                    if (!(returnBy instanceof ByVal)) {
+                        // check if we can reuse one of the Pointer objects from the arguments
+                        if (Modifier.isStatic(methodInfo.modifiers) && methodInfo.parameterTypes.length > 0) {
+                            for (int i = 0; i < methodInfo.parameterTypes.length; i++) {
+                                if (methodInfo.parameterTypes[i] == methodInfo.returnType) {
+                                    out.println(         "if (rpointer == pointer" + i + ") {");
+                                    out.println(indent + "    r = p" + i + ";");
+                                    out.println(indent + "} else");
+                                }
+                            }
+                        } else if (!Modifier.isStatic(methodInfo.modifiers) && methodInfo.cls == methodInfo.returnType) {
+                            out.println(         "if (rpointer == pointer) {");
+                            out.println(indent + "    r = o;");
+                            out.println(indent + "} else");
+                        }
                     }
+                    out.println(         "if (rpointer != NULL) {");
                     out.println(indent + "    r = e->AllocObject(JavaCPP_getClass(e, " +
                             jclasses.register(methodInfo.returnType) + "));");
                     if (needInit) {
@@ -1180,6 +1192,9 @@ public class Generator implements Closeable {
             } else if (Pointer.class.isAssignableFrom(methodInfo.parameterTypes[j]) && 
                     (passBy instanceof ByPtrPtr || passBy instanceof ByPtrRef) &&
                     !methodInfo.valueSetter && !methodInfo.memberSetter) {
+                if (!methodInfo.parameterTypes[j].isAnnotationPresent(Opaque.class)) {
+                    out.println(indent + "pointer" + j + " -= position" + j + ";");
+                }
                 out.println(indent + "if (p" + j + " != NULL) e->SetLongField(p" + j +
                         ", JavaCPP_addressFieldID, ptr_to_jlong(pointer" + j + "));");
             }
