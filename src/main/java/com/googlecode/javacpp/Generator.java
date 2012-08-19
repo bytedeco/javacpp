@@ -1172,13 +1172,13 @@ public class Generator implements Closeable {
             }
             Annotation passBy = getParameterBy(methodInfo, j);
             String cast = getParameterCast(methodInfo, j);
-            String[] typeName = getCPPTypeName(methodInfo.parameterTypes[j]);
+            String[] typeName = getCastedCPPTypeName(methodInfo.parameterAnnotations[j], methodInfo.parameterTypes[j]);
             AdapterInformation adapterInfo = getParameterAdapterInformation(true, methodInfo, j);
             if (adapterInfo != null) {
                 for (int k = 0; k < adapterInfo.argc; k++) {
-                    out.println(indent + typeName[0] + " rpointer" + (j+k) + typeName[1] + " = adapter" + j + ";");
+                    out.println(indent + typeName[0] + " rpointer" + (j+k) + typeName[1] + " = " + cast + "adapter" + j + ";");
                     out.println(indent + "jint rsize" + (j+k) + " = (jint)adapter" + j + ".size" + (k > 0 ? (k+1) + ";" : ";"));
-                    out.println(indent + "if (rpointer" + (j+k) + " != pointer" + (j+k) + ") {");
+                    out.println(indent + "if (rpointer" + (j+k) + " != " + cast + "pointer" + (j+k) + ") {");
                     out.println(indent + "    jvalue args[3];");
                     out.println(indent + "    args[0].j = ptr_to_jlong(rpointer" + (j+k) + ");");
                     out.println(indent + "    args[1].i = rsize" + (j+k) + ";");
@@ -1781,7 +1781,7 @@ public class Generator implements Closeable {
         public String cast;
     }
     public static AdapterInformation getParameterAdapterInformation(boolean out, MethodInformation methodInfo, int j) {
-        if (methodInfo.parameterTypes[j] == String.class && out) {
+        if (out && (methodInfo.parameterTypes[j] == String.class || methodInfo.valueSetter || methodInfo.memberSetter)) {
             return null;
         }
         String typeName = getParameterCast(methodInfo, j);

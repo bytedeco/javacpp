@@ -243,10 +243,11 @@ This project was conceived at the Okutomi & Tanaka Laboratory, Tokyo Institute o
 
 
 ==Changes==
+ * Fixed `@Cast` not working along parameters with an `@Adapter`
  * `Generator` would ignore `Pointer.position()` in the case of `@ByPtrPtr` and `@ByPtrRef` parameters
  * Replaced hack to create a `Pointer` from a `Buffer` object with something more standard
  * Fixed `Loader.sizeof(Pointer.class)` to return the `sizeof(void*)`
- * In addition to methods and parameters, we may now apply `@Adapter` to annotation types as well, allowing us to shorten expressions like `@Adapter("VectorAdapter<int>") int[]` to `@StdVector int[]`, to support `std::vector<int>`, and similarly for `@StdString` and `std::string`
+ * In addition to methods and parameters, we may now apply `@Adapter` to annotation types as well, allowing us to shorten expressions like `@Adapter("VectorAdapter<int>") int[]` to just `@StdVector int[]`, for `std::vector<int>` support, and similarly for `@StdString` and `std::string`
  * Fixed callback parameter casting of primitive and `String` types
  * An empty `@Namespace` can now be used to let `Generator` know of entities that are not part of any scope, such as macros and operators
  * Turned `FunctionPointer` into an `abstract class` with `protected` constructors, but if users still try to use it as function parameters, `Generator` now logs a warning indicating that a subclass should be used (issue #23)
