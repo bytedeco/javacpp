@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Samuel Audet
+ * Copyright (C) 2011,2012 Samuel Audet
  *
  * This file is part of JavaCPP.
  *
@@ -23,12 +23,12 @@ package com.googlecode.javacpp;
 /**
  *
  * @author Samuel Audet
+ *
+ * To use a function pointer, subclass and add a native method named
+ * call() or apply(), along with its return type and parameters, as
+ * well as the usual allocate() native method to support callback.
  */
 public abstract class FunctionPointer extends Pointer {
     protected FunctionPointer() { }
     protected FunctionPointer(Pointer p) { super(p); }
-
-    @Override public FunctionPointer position(int position) {
-        return (FunctionPointer)super.position(position);
-    }
 }
