@@ -73,6 +73,8 @@ public class LegacyLibrary {
     }
 
     public static void main(String[] args) {
+        // Pointer objects allocated in Java get deallocated once they become unreachable,
+        // but C++ destructors can still be called in a timely fashion with Pointer.deallocate()
         LegacyClass l = new LegacyClass();
         l.set_property("Hello World!");
         System.out.println(l.property());
@@ -243,6 +245,7 @@ This project was conceived at the Okutomi & Tanaka Laboratory, Tokyo Institute o
 
 
 ==Changes==
+ * `Pointer.deallocator()` would needlessly enqueue `Deallocator` objects pointing to the native `NULL` address
  * Added support for C++ "functors" based on the `operator()`, which gets used when annotating a `FunctionPointer` method parameter with `@ByRef`
  * For convenience in Scala, added `apply()` as an acceptable method name within a `FunctionPointer`, in addition to `call()`
  * Fixed `@Cast` not working along parameters with an `@Adapter`

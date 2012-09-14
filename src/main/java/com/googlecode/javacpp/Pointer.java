@@ -195,16 +195,18 @@ import java.nio.ByteOrder;
         return deallocator;
     }
     protected Pointer deallocator(Deallocator deallocator) {
-        if (this.deallocator() != null) {
-            this.deallocator().deallocate();
+        if (this.deallocator != null) {
+            this.deallocator.deallocate();
+            this.deallocator = null;
         }
-        this.deallocator = deallocator;
         deallocateReferences();
-
-        DeallocatorReference r = deallocator instanceof DeallocatorReference ?
-                (DeallocatorReference)deallocator :
-                new DeallocatorReference(this, deallocator);
-        r.add();
+        if (deallocator != null && !deallocator.equals(null)) {
+            this.deallocator = deallocator;
+            DeallocatorReference r = deallocator instanceof DeallocatorReference ?
+                    (DeallocatorReference)deallocator :
+                    new DeallocatorReference(this, deallocator);
+            r.add();
+        }
         return this;
     }
 
@@ -225,7 +227,8 @@ import java.nio.ByteOrder;
     }
 
     public int sizeof() {
-        if (getClass() == Pointer.class) {
+        Class c = getClass();
+        if (c == Pointer.class || c == BytePointer.class) {
             // default to 1 byte
             return 1;
         } else {
