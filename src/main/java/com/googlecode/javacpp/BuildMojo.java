@@ -68,6 +68,12 @@ public class BuildMojo extends AbstractMojo {
     protected boolean compile = true;
 
     /**
+     * Generate header file with declarations of callbacks functions
+     * @parameter expression="${header}" default-value="false"
+     */
+    protected boolean header = false;
+
+    /**
      * Also create a JAR file named "<jarPrefix>-<platform.name>.jar"
      * @parameter expression="${jarPrefix}"
      */
@@ -124,6 +130,7 @@ public class BuildMojo extends AbstractMojo {
                 getLog().debug("outputDirectory: " + outputDirectory);
                 getLog().debug("outputName: " + outputName);
                 getLog().debug("compile: " + compile);
+                getLog().debug("header: " + header);
                 getLog().debug("jarPrefix: " + jarPrefix);
                 getLog().debug("properties: " + properties);
                 getLog().debug("propertyFile: " + propertyFile);
@@ -139,6 +146,7 @@ public class BuildMojo extends AbstractMojo {
                     .outputDirectory(outputDirectory)
                     .outputName(outputName)
                     .compile(compile)
+                    .header(header)
                     .jarPrefix(jarPrefix)
                     .properties(properties)
                     .propertyFile(propertyFile)

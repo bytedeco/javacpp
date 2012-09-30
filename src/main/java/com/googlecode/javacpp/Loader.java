@@ -35,12 +35,16 @@ import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.Properties;
 import java.util.WeakHashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
  * @author Samuel Audet
  */
 public class Loader {
+
+    private static final Logger logger = Logger.getLogger(Loader.class.getName());
 
     private static String platformName = null;
     private static Properties platformProperties = null;
@@ -125,7 +129,7 @@ public class Loader {
                     platforms = new Platform[] { platform };
                 }
             } catch (Throwable t) {
-                System.err.println("Could not append properties for " + c.getCanonicalName() + ": " + t);
+                logger.log(Level.WARNING, "Could not append properties for " + c.getCanonicalName() + ": " + t);
                 return;
             }
         } else {
@@ -169,10 +173,11 @@ public class Loader {
             properties.setProperty("compiler.options", "");
             for (int i = 0; i < options.length; i++) {
                 String o = defaultOptions;
-                if (options[i].length() > 0) {
-                    o = properties.getProperty("compiler.options." + options[i]);
+                if (options[i].length() > 0 && ((o = properties.getProperty("compiler.options." + options[i])) == null)) {
+                    logger.log(Level.WARNING, "Could not find a property name \"compiler.options." + options[i] + "\".");
+                } else {
+                    appendProperty(properties, "compiler.options", " ", o);
                 }
-                appendProperty(properties, "compiler.options", " ", o);
             }
         }
         appendProperty(properties, "compiler.linkpath",         s, linkpath);

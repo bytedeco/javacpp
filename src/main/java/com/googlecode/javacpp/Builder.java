@@ -82,7 +82,7 @@ public class Builder {
                 properties.getProperty("path.separator"), jnipath);
     }
 
-    public int compile(Properties properties, String sourceFilename, String outputFilename)
+    public int compile(String sourceFilename, String outputFilename, Properties properties)
             throws IOException, InterruptedException {
         LinkedList<String> command = new LinkedList<String>();
 
@@ -253,46 +253,51 @@ public class Builder {
         for (Class c : classes) {
             Loader.appendProperties(p, c);
         }
-        String platformName = p.getProperty("platform.name");
+        String platformName = p.getProperty("platform.name"), sourcePrefix;
         String sourceSuffix = p.getProperty("source.suffix", ".cpp");
         String libraryName  = p.getProperty("library.prefix", "") + outputName + p.getProperty("library.suffix", "");
-        File outputDirectory = this.outputDirectory, sourceFile;
+        File outputPath;
         if (outputDirectory == null) {
             try {
                 URL resourceURL = classes[0].getResource(classes[0].getSimpleName() + ".class");
                 File packageDir = new File(resourceURL.toURI()).getParentFile();
-                outputDirectory = new File(packageDir, platformName);
-                sourceFile      = new File(packageDir, outputName + sourceSuffix);
+                outputPath      = new File(packageDir, platformName);
+                sourcePrefix    = packageDir.getPath() + File.separator + outputName;
             } catch (URISyntaxException e) {
                 throw new RuntimeException(e);
             }
         } else {
-            sourceFile = new File(outputDirectory, outputName + sourceSuffix);
+            outputPath = outputDirectory;
+            sourcePrefix = outputPath.getPath() + File.separator + outputName;
         }
-        if (!outputDirectory.exists()) {
-            outputDirectory.mkdirs();
+        if (!outputPath.exists()) {
+            outputPath.mkdirs();
         }
-        System.out.println("Generating source file: " + sourceFile);
-        Generator generator = new Generator(p, sourceFile);
-        boolean generatedSomething = generator.generate(classes);
-        generator.close();
-
-        if (generatedSomething) {
+        Generator generator = new Generator(p);
+        String sourceFilename = sourcePrefix + sourceSuffix;
+        String headerFilename = header ? sourcePrefix + ".h" : null;
+        String classPath = System.getProperty("java.class.path");
+        for (String s : classLoader.getPaths()) {
+            classPath += File.pathSeparator + s;
+        }
+        System.out.println("Generating source file: " + sourceFilename);
+        if (generator.generate(sourceFilename, headerFilename, classPath, classes)) {
+            generator.close();
             if (compile) {
-                File libraryFile = new File(outputDirectory, libraryName);
-                System.out.println("Building library file: " + libraryFile);
-                int exitValue = compile(p, sourceFile.getPath(), libraryFile.getPath());
+                String libraryFilename = outputPath.getPath() + File.separator + libraryName;
+                System.out.println("Building library file: " + libraryFilename);
+                int exitValue = compile(sourceFilename, libraryFilename, p);
                 if (exitValue == 0) {
-                    sourceFile.delete();
-                    outputFiles.add(libraryFile);
+                    new File(sourceFilename).delete();
+                    outputFiles.add(new File(libraryFilename));
                 } else {
                     System.exit(exitValue);
                 }
             } else {
-                outputFiles.add(sourceFile);
+                outputFiles.add(new File(sourceFilename));
             }
         } else {
-            System.out.println("Source file not generated: " + sourceFile);
+            System.out.println("Source file not generated: " + sourceFilename);
         }
         return outputFiles;
     }
@@ -478,7 +483,7 @@ public class Builder {
     UserClassLoader classLoader = null;
     File outputDirectory = null;
     String outputName = null, jarPrefix = null;
-    boolean compile = true;
+    boolean compile = true, header = false;
     Properties properties = null;
     LinkedList<Class> classes = null;
     ClassScanner classScanner = null;
@@ -503,6 +508,10 @@ public class Builder {
     }
     public Builder compile(boolean compile) {
         this.compile = compile;
+        return this;
+    }
+    public Builder header(boolean header) {
+        this.header = header;
         return this;
     }
     public Builder outputName(String outputName) {
@@ -620,6 +629,7 @@ public class Builder {
         System.out.println("    -d <directory>         Output all generated files to directory");
         System.out.println("    -o <name>              Output everything in a file named after given name");
         System.out.println("    -nocompile             Do not compile or delete the generated source files");
+        System.out.println("    -header                Generate header file with declarations of callbacks functions");
         System.out.println("    -jarprefix <prefix>    Also create a JAR file named \"<prefix>-<platform.name>.jar\"");
         System.out.println("    -properties <resource> Load all properties from resource");
         System.out.println("    -propertyfile <file>   Load all properties from file");
@@ -642,6 +652,8 @@ public class Builder {
                 builder.outputName(args[++i]);
             } else if ("-cpp".equals(args[i]) || "-nocompile".equals(args[i])) {
                 builder.compile(false);
+            } else if ("-header".equals(args[i])) {
+                builder.header(true);
             } else if ("-jarprefix".equals(args[i])) {
                 builder.jarPrefix(args[++i]);
             } else if ("-properties".equals(args[i])) {

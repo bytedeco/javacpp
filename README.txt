@@ -234,8 +234,8 @@ Inside the directory of the Android project:
  # Run this command to produce the `*.so` library files in `libs/armeabi/`:
 {{{
 java -jar libs/javacpp.jar -classpath bin/ -classpath bin/classes/ \
--properties android-arm -Dplatform.root=<path to android-ndk-r8> \
--Dcompiler.path=<path to arm-linux-androideabi-g++> -d libs/armeabi/
+-properties android-arm -Dplatform.root=<path/to/android-ndk-r8> \
+-Dcompiler.path=<path/to/arm-linux-androideabi-g++> -d libs/armeabi/
 }}}
 To make everything automatic, we may also insert that command into, for example, the Ant `build.xml` file or the Eclipse `.project` file as a [http://help.eclipse.org/helios/index.jsp?topic=/org.eclipse.platform.doc.user/gettingStarted/qs-96_non_ant_pjs.htm Non-Ant project builder].
 
@@ -245,9 +245,10 @@ This project was conceived at the Okutomi & Tanaka Laboratory, Tokyo Institute o
 
 
 ==Changes==
+ * Added functionality to access `FunctionPointer` callbacks by their name from C/C++: We can annotate them with `@Name` and build with the new `-header` option to get their declarations in a header file
  * `Pointer.deallocator()` would needlessly enqueue `Deallocator` objects pointing to the native `NULL` address
- * Added support for C++ "functors" based on the `operator()`, which gets used when annotating a `FunctionPointer` method parameter with `@ByRef`
- * For convenience in Scala, added `apply()` as an acceptable method name within a `FunctionPointer`, in addition to `call()`
+ * Added support for C++ "functors" based on the `operator()`, which gets used when annotating a `FunctionPointer` method parameter with `@ByRef` or `@ByVal`
+ * For convenience in Scala, added `apply()` as an acceptable caller method name within a `FunctionPointer`, in addition to `call()`
  * Fixed `@Cast` not working along parameters with an `@Adapter`
  * `Generator` would ignore `Pointer.position()` in the case of `@ByPtrPtr` and `@ByPtrRef` parameters
  * Replaced hack to create a `Pointer` from a `Buffer` object with something more standard
