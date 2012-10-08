@@ -222,7 +222,9 @@ public class Generator implements Closeable {
                 if (i == 1) {
                     out.println("extern \"C\" {");
                     if (out2 != null) {
+                        out2.println("#ifdef __cplusplus");
                         out2.println("extern \"C\" {");
+                        out2.println("#endif");
                     }
                 }
                 for (String s : include[i].split("\u0000")) {
@@ -242,7 +244,9 @@ public class Generator implements Closeable {
                 if (i == 1) {
                     out.println("}");
                     if (out2 != null) {
+                        out2.println("#ifdef __cplusplus");
                         out2.println("}");
+                        out2.println("#endif");
                     }
                 }
                 out.println();
@@ -400,36 +404,45 @@ public class Generator implements Closeable {
             out.println();
         }
         if (!functionDefinitions.isEmpty()) {
-            out.println("static JavaCPP_noinline int JavaCPP_getEnv(JNIEnv** e, int attach = 0) {");
-            out.println("    if (JavaCPP_vm == NULL) {");
+            out.println("static JavaCPP_noinline void JavaCPP_detach(int detach) {");
+            out.println("    if (detach > 0 && JavaCPP_vm->DetachCurrentThread() != 0) {");
+            out.println("        JavaCPP_log(\"Could not detach the JavaVM from the current thread.\");");
+            out.println("    }");
+            out.println("}");
+            out.println();
+            out.println("static JavaCPP_noinline int JavaCPP_getEnv(JNIEnv** e) {");
+            out.println("    int attach = 0;");
+            out.println("    struct {");
+            out.println("        JNIEnv **e;");
+            out.println("        operator JNIEnv**() { return e; } // Android JNI");
+            out.println("        operator void**() { return (void**)e; } // standard JNI");
+            out.println("    } e2 = { e };");
+            out.println("    JavaVM *vm = JavaCPP_vm;");
+            out.println("    if (vm == NULL) {");
+            out.println("#ifndef ANDROID");
             out.println("        int size = 1;");
-            out.println("        if (JNI_GetCreatedJavaVMs(&JavaCPP_vm, 1, &size) != 0 || size == 0) {");
+            out.println("        if (JNI_GetCreatedJavaVMs(&vm, 1, &size) != 0 || size == 0) {");
+            out.println("#endif");
             out.println("            JavaCPP_log(\"Could not get any created JavaVM.\");");
             out.println("            return -1;");
+            out.println("#ifndef ANDROID");
             out.println("        }");
+            out.println("#endif");
             out.println("    }");
-            out.println("    if (JavaCPP_vm->GetEnv((void**)e, " + JNI_VERSION + ") != JNI_OK) {");
-            out.println("        if (!attach) return -1;");
-            out.println("        struct {");
-            out.println("            JNIEnv **e;");
-            out.println("            operator JNIEnv**() { return e; } // Android JNI");
-            out.println("            operator void**() { return (void**)e; } // standard JNI");
-            out.println("        } e2 = { e };");
-            out.println("        if (JavaCPP_vm->AttachCurrentThread(e2, NULL) != 0) {");
+            out.println("    if (vm->GetEnv((void**)e, " + JNI_VERSION + ") != JNI_OK) {");
+            out.println("        attach = 1;");
+            out.println("        if (vm->AttachCurrentThread(e2, NULL) != 0) {");
             out.println("            JavaCPP_log(\"Could not attach the JavaVM to the current thread.\");");
             out.println("            return -1;");
             out.println("        }");
-            out.println("        return 1;");
             out.println("    }");
-            out.println("    return 0;");
-            out.println("}");
-            out.println();
-        }
-        if (!functionPointers.isEmpty()) {
-            out.println("static JavaCPP_noinline void JavaCPP_detach() {");
-            out.println("    if (JavaCPP_vm->DetachCurrentThread() != 0) {");
-            out.println("        JavaCPP_log(\"Could not detach the JavaVM from the current thread.\");");
+            out.println("    if (JavaCPP_vm == NULL) {");
+            out.println("        if (JNI_OnLoad(vm, NULL) < 0) {");
+            out.println("            JavaCPP_detach(attach);");
+            out.println("            return -1;");
+            out.println("        }");
             out.println("    }");
+            out.println("    return attach;");
             out.println("}");
             out.println();
         }
@@ -445,7 +458,7 @@ public class Generator implements Closeable {
             String name = "JavaCPP_" + mangle(c.getName());
             out.print("static void " + name + "_deallocate(");
             if (FunctionPointer.class.isAssignableFrom(c)) {
-                out.println(name + "* address) { JNIEnv *e; if (JavaCPP_getEnv(&e) == 0) e->DeleteWeakGlobalRef(address->object); delete address; }");
+                out.println(name + "* address) { JNIEnv *e; int d = JavaCPP_getEnv(&e); if (d >= 0) e->DeleteWeakGlobalRef(address->object); delete address; JavaCPP_detach(d); }");
             } else {
                 String[] typeName = getCPPTypeName(c);
                 out.println(typeName[0] + " address" + typeName[1] + ") { delete address; }");
@@ -460,10 +473,13 @@ public class Generator implements Closeable {
         out.println("extern \"C\" {");
         if (out2 != null) {
             out2.println();
+            out2.println("#ifdef __cplusplus");
             out2.println("extern \"C\" {");
+            out2.println("#endif");
             out2.println("JNIIMPORT int JavaCPP_init(int argc, const char *argv[]);");
         }
         out.println();
+        out.println("#ifndef ANDROID");
         out.println("JNIEXPORT int JavaCPP_init(int argc, const char *argv[]) {");
         out.println("    JavaVM *vm;");
         out.println("    JNIEnv *env;");
@@ -474,13 +490,9 @@ public class Generator implements Closeable {
         out.println("        options[i].optionString = (char*)argv[i - 1];");
         out.println("    }");
         out.println("    JavaVMInitArgs vm_args = { JNI_VERSION_1_6, nOptions, options };");
-        out.println("    int res = JNI_CreateJavaVM(&vm, (void **)&env, &vm_args);");
-        out.println("    if (res != 0) {");
-        out.println("        return res;");
-        out.println("    } else {");
-        out.println("        return JNI_OnLoad(vm, NULL);");
-        out.println("    }");
+        out.println("    return JNI_CreateJavaVM(&vm, (void **)&env, &vm_args);");
         out.println("}");
+        out.println("#endif");
         out.println();
         out.println("JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved) {");
         out.println("    JNIEnv* e;");
@@ -491,7 +503,7 @@ public class Generator implements Closeable {
         out.println("    if (JavaCPP_vm == vm) {");
         out.println("        return e->GetVersion();");
         out.println("    }");
-        out.println("    JavaCPP_vm = vm;");
+        out.println("    JavaCPP_vm = vm;"); // XXX: Should use an atomic here
         out.println("    const char* members[" + jclasses.size() + "][" + maxMemberSize + "] = {");
         classIterator = jclasses.iterator();
         while (classIterator.hasNext()) {
@@ -617,11 +629,13 @@ public class Generator implements Closeable {
             out2.println("JNIIMPORT int JavaCPP_uninit();");
             out2.println();
         }
+        out.println("#ifndef ANDROID");
         out.println("JNIEXPORT int JavaCPP_uninit() {");
         out.println("    JavaVM *vm = JavaCPP_vm;");
         out.println("    JNI_OnUnload(JavaCPP_vm, NULL);");
         out.println("    return vm->DestroyJavaVM();");
         out.println("}");
+        out.println("#endif");
         out.println();
         out.println("JNIEXPORT void JNICALL JNI_OnUnload(JavaVM* vm, void* reserved) {");
         out.println("    JNIEnv* e;");
@@ -653,8 +667,9 @@ public class Generator implements Closeable {
         out.println("}");
         out.println();
         if (out2 != null) {
+            out2.println("#ifdef __cplusplus");
             out2.println("}");
-            out2.println();
+            out2.println("#endif");
         }
 
         return didSomethingUseful;
@@ -1382,8 +1397,8 @@ public class Generator implements Closeable {
 
         out.println("    jthrowable t = NULL;");
         out.println("    JNIEnv* e;");
-        out.println("    int needDetach = JavaCPP_getEnv(&e, 1);");
-        out.println("    if (needDetach < 0) {");
+        out.println("    int d = JavaCPP_getEnv(&e);");
+        out.println("    if (d < 0) {");
         out.println("        goto end;");
         out.println("    }");
         out.println("{");
@@ -1598,12 +1613,10 @@ public class Generator implements Closeable {
         out.println("        JavaCPP_exception ex(msg);");
         out.println("        e->ReleaseStringUTFChars(s, msg);");
         out.println("        e->DeleteLocalRef(s);");
-        out.println("        if (needDetach > 0) {");
-        out.println("            JavaCPP_detach();");
-        out.println("        }");
+        out.println("        JavaCPP_detach(d);");
         out.println("        throw ex;");
-        out.println("    } else if (needDetach > 0) {");
-        out.println("        JavaCPP_detach();");
+        out.println("    } else {");
+        out.println("        JavaCPP_detach(d);");
         out.println("    }");
 
         if (callbackReturnType != void.class) {
