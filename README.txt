@@ -18,7 +18,7 @@ To use JavaCPP, you will need to download and install the following software:
     * [http://msdn.microsoft.com/en-us/library/ff660764.aspx  Building Applications that Use the Windows SDK]
 
 To produce binary files for Android, you will also have to install:
- * Android NDK r8  http://developer.android.com/sdk/ndk/
+ * Android NDK r8b  http://developer.android.com/sdk/ndk/
 
 To modify the source code, please note that the project files were created for:
  * NetBeans 6.9  http://netbeans.org/downloads/  or
@@ -30,8 +30,9 @@ Please feel free to ask questions on [http://groups.google.com/group/javacpp-pro
 ==Key Use Cases==
 To implement `native` methods, JavaCPP generates appropriate code for JNI, and passes it to the C++ compiler to build a native library. At no point do we need to get our hands dirty with JNI, makefiles, or other native tools. The important thing to realize here is that, while we do all customization inside the Java language using annotations, JavaCPP produces code that has *zero overhead* compared to manually coded JNI functions (verify the generated .cpp files to convince yourself). Moreover, at runtime, the `Loader.load()` method automatically loads the native libraries from Java resources, which were placed in the right directory by the building process. They can even be archived in a JAR file, it changes nothing. Users simply do not need to figure out how to make the system load the files. These characteristics make JavaCPP suitable for either
  * [#Accessing_Native_APIs accessing native APIs],
- * [#Using_Complex_C++_Types using complex C++ types], or
- * [#Optimizing_Code_Performance optimizing code performance].
+ * [#Using_Complex_C++_Types using complex C++ types],
+ * [#Optimizing_Code_Performance optimizing code performance], or
+ * [#Creating_Callback_Functions creating callback functions].
 
 In addition to the few examples provided below, to learn more about how to use the features of this tool, since documentation currently lacks, please refer to [http://code.google.com/p/javacv/source/browse/src/main/java/com/googlecode/javacv/cpp/ the source code of JavaCV].
 
@@ -82,19 +83,11 @@ public class LegacyLibrary {
 }
 }}}
 
-After compiling the Java source code in the usual way, we also need to build using JavaCPP as follows:
+After compiling the Java source code in the usual way, we also need to build using JavaCPP before executing it as follows:
 {{{
-[saudet@nemesis workspace]$ javac -cp javacpp.jar LegacyLibrary.java 
-
-[saudet@nemesis workspace]$ java -jar javacpp.jar LegacyLibrary
-Generating source file: /home/saudet/workspace/jniLegacyLibrary.cpp
-Building library file: /home/saudet/workspace/linux-x86_64/libjniLegacyLibrary.so
-g++ -I/usr/lib/jvm/java-1.6.0-openjdk-1.6.0.0.x86_64/include
--I/usr/lib/jvm/java-1.6.0-openjdk-1.6.0.0.x86_64/include/linux
-/home/saudet/workspace/jniLegacyLibrary.cpp -Wl,-rpath,$ORIGIN/ -march=x86-64 -m64
--Wall -O3 -fPIC -shared -s -o /home/saudet/workspace/linux-x86_64/libjniLegacyLibrary.so
-
-[saudet@nemesis workspace]$ java -cp javacpp.jar LegacyLibrary
+$ javac -cp javacpp.jar LegacyLibrary.java 
+$ java -jar javacpp.jar LegacyLibrary
+$ java  -cp javacpp.jar LegacyLibrary
 Hello World!
 }}}
 
@@ -151,17 +144,9 @@ public class VectorTest {
 
 Executing that program on my machine using these commands produces the following output:
 {{{
-[saudet@nemesis workspace]$ javac -cp javacpp.jar VectorTest.java
-
-[saudet@nemesis workspace]$ java -jar javacpp.jar VectorTest
-Generating source file: /home/saudet/workspace/jniVectorTest.cpp
-Building library file: /home/saudet/workspace/linux-x86_64/libjniVectorTest.so
-g++ -I/usr/lib/jvm/java-1.6.0-openjdk-1.6.0.0.x86_64/include
--I/usr/lib/jvm/java-1.6.0-openjdk-1.6.0.0.x86_64/include/linux
-/home/saudet/workspace/jniVectorTest.cpp -Wl,-rpath,$ORIGIN/ -march=x86-64 -m64
--Wall -O3 -fPIC -shared -s -o /home/saudet/workspace/linux-x86_64/libjniVectorTest.so
-
-[saudet@nemesis workspace]$ java -cp javacpp.jar VectorTest
+$ javac -cp javacpp.jar VectorTest.java
+$ java -jar javacpp.jar VectorTest
+$ java  -cp javacpp.jar VectorTest
 13 42  com.googlecode.javacpp.Pointer[address=0xdeadbeef,position=0,limit=0,capacity=0,deallocator=null]
 Exception in thread "main" java.lang.RuntimeException: vector::_M_range_check
 	at VectorTest$PointerVectorVector.at(Native Method)
@@ -213,19 +198,59 @@ public class Processor {
 
 It would then compile and execute like this:
 {{{
-[saudet@nemesis workspace]$ javac -cp javacpp.jar Processor.java
-
-[saudet@nemesis workspace]$ java -jar javacpp.jar Processor
-Generating source file: /home/saudet/workspace/jniProcessor.cpp
-Building library file: /home/saudet/workspace/linux-x86_64/libjniProcessor.so
-g++ -I/usr/lib/jvm/java-1.6.0-openjdk-1.6.0.0.x86_64/include
--I/usr/lib/jvm/java-1.6.0-openjdk-1.6.0.0.x86_64/include/linux
-/home/saudet/workspace/jniProcessor.cpp -Wl,-rpath,$ORIGIN/ -march=x86-64 -m64
--Wall -O3 -fPIC -shared -s -o /home/saudet/workspace/linux-x86_64/libjniProcessor.so
-
-[saudet@nemesis workspace]$ java -cp javacpp.jar Processor
+$ javac -cp javacpp.jar Processor.java
+$ java -jar javacpp.jar Processor
+$ java  -cp javacpp.jar Processor
 Processing in C++...
 }}}
+
+
+==Creating Callback Functions==
+Some applications also require a means to callback into the JVM from C/C++, so JavaCPP provides a simple way to define custom callback function (pointers). Although there exist frameworks such as [http://code.google.com/p/jace/ Jace] and [JunC++ion http://codemesh.com/products/junction/] that can map complete Java APIs to C++, which are arguably harder to use than JavaCPP, since invoking a Java method from native code takes at least an order of magnitude more time than the other way around, it does not make much sense in my opinion to export as is an API that was designed to be used in Java. Nevertheless, suppose we want to perform some operations in Java, planning to wrap that into a function named `foo()` that calls some method inside class `Foo`, we can write the following code in a file named `foo.cpp`, taking care to initialize the JVM if necessary with either `JavaCPP_init()` or by any other means:
+
+{{{
+#include <iostream>
+#include "jniFoo.h"
+
+int main() {
+    JavaCPP_init(0, NULL);
+    try {
+        foo(6, 7);
+    } catch (std::exception &e) {
+        std::cout << e.what() << std::endl;
+    }
+    JavaCPP_uninit();
+}
+}}}
+
+We may then declare that function to a `call()` or `apply()` method defined in a `FunctionPointer` as follows:
+
+{{{
+import com.googlecode.javacpp.*;
+import com.googlecode.javacpp.annotation.*;
+
+public class Foo {
+    public static class Bar extends FunctionPointer {
+        public @Name("foo") void call(int a, int b) throws Exception { 
+            throw new Exception("bar " + a * b);
+        }
+    }
+}
+}}}
+
+Since functions also have pointers, we can use `FunctionPointer` instances accordingly, in ways similar to the [http://hackage.haskell.org/packages/archive/base/4.6.0.0/doc/html/Foreign-Ptr.html#g:2 `FunPtr` type of Haskell FFI]. In any case, knowing that any `java.lang.Throwable` object that gets thrown gets translated to `std::exception`, building and running this sample code with these commands under Linux x86_64 produces the expected output:
+
+{{{
+$ javac -cp javacpp.jar Foo.java
+$ java -jar javacpp.jar Foo -header
+$ g++ foo.cpp linux-x86_64/libjniFoo.so -o foo -I/usr/lib/jvm/java/include/ \
+ -I/usr/lib/jvm/java/include/linux -L/usr/lib/jvm/java/jre/lib/amd64/server/ \
+ -Wl,-rpath,/usr/lib/jvm/java/jre/lib/amd64/server/ -ljvm
+$ ./foo
+java.lang.Exception: bar 42
+}}}
+
+In this example, the `FunctionPointer` object does not get created explicitly, but for those created from a class extended in Java, and allocated with a `native void allocate()` method, please remember to hang on to references in Java, or they will get garbage collected. As a bonus, `FunctionPointer.call()/apply()` maps in fact to an overloaded `operator()` from a C++ functor, which we can pass to functions by annotating parameters with `@ByVal` or `@ByRef`.
 
 
 ==Instructions for Android==
@@ -234,7 +259,7 @@ Inside the directory of the Android project:
  # Run this command to produce the `*.so` library files in `libs/armeabi/`:
 {{{
 java -jar libs/javacpp.jar -classpath bin/ -classpath bin/classes/ \
--properties android-arm -Dplatform.root=<path/to/android-ndk-r8> \
+-properties android-arm -Dplatform.root=<path/to/android-ndk-r8b> \
 -Dcompiler.path=<path/to/arm-linux-androideabi-g++> -d libs/armeabi/
 }}}
 To make everything automatic, we may also insert that command into, for example, the Ant `build.xml` file or the Eclipse `.project` file as a [http://help.eclipse.org/helios/index.jsp?topic=/org.eclipse.platform.doc.user/gettingStarted/qs-96_non_ant_pjs.htm Non-Ant project builder].
@@ -245,7 +270,8 @@ This project was conceived at the Okutomi & Tanaka Laboratory, Tokyo Institute o
 
 
 ==Changes==
- * Added functionality to access `FunctionPointer` callbacks by their name from C/C++: We can annotate them with `@Name` and build with the new `-header` option to get their declarations in a header file
+ * Upgraded references of the Android NDK to version r8b
+ * Added functionality to access `FunctionPointer` callbacks by their names from C/C++: We can annotate them with `@Name` and build with the new `-header` option to get their declarations in a header file
  * `Pointer.deallocator()` would needlessly enqueue `Deallocator` objects pointing to the native `NULL` address
  * Added support for C++ "functors" based on the `operator()`, which gets used when annotating a `FunctionPointer` method parameter with `@ByRef` or `@ByVal`
  * For convenience in Scala, added `apply()` as an acceptable caller method name within a `FunctionPointer`, in addition to `call()`
