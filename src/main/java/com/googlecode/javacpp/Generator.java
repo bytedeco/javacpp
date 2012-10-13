@@ -493,7 +493,7 @@ public class Generator implements Closeable {
         out.println("    return JNI_CreateJavaVM(&vm, (void **)&env, &vm_args);");
         out.println("}");
         out.println("#endif");
-        out.println();
+        out.println(); // XXX: JNI_OnLoad() should ideally be protected by some mutex
         out.println("JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved) {");
         out.println("    JNIEnv* e;");
         out.println("    if (vm->GetEnv((void**)&e, " + JNI_VERSION + ") != JNI_OK) {");
@@ -503,7 +503,7 @@ public class Generator implements Closeable {
         out.println("    if (JavaCPP_vm == vm) {");
         out.println("        return e->GetVersion();");
         out.println("    }");
-        out.println("    JavaCPP_vm = vm;"); // XXX: Should use an atomic here
+        out.println("    JavaCPP_vm = vm;");
         out.println("    const char* members[" + jclasses.size() + "][" + maxMemberSize + "] = {");
         classIterator = jclasses.iterator();
         while (classIterator.hasNext()) {
@@ -1249,8 +1249,9 @@ public class Generator implements Closeable {
                         // check if we can reuse one of the Pointer objects from the arguments
                         if (Modifier.isStatic(methodInfo.modifiers) && methodInfo.parameterTypes.length > 0) {
                             for (int i = 0; i < methodInfo.parameterTypes.length; i++) {
+                                String cast = getParameterCast(methodInfo, i);
                                 if (methodInfo.parameterTypes[i] == methodInfo.returnType) {
-                                    out.println(         "if (rpointer == pointer" + i + ") {");
+                                    out.println(         "if (rpointer == " + cast + "pointer" + i + ") {");
                                     out.println(indent + "    r = p" + i + ";");
                                     out.print(indent + "} else ");
                                 }

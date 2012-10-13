@@ -250,7 +250,7 @@ $ ./foo
 java.lang.Exception: bar 42
 }}}
 
-In this example, the `FunctionPointer` object does not get created explicitly, but for those created from a class extended in Java, and allocated with a `native void allocate()` method, please remember to hang on to references in Java, or they will get garbage collected. As a bonus, `FunctionPointer.call()/apply()` maps in fact to an overloaded `operator()` from a C++ functor, which we can pass to functions by annotating parameters with `@ByVal` or `@ByRef`.
+In this example, the `FunctionPointer` object gets created implicitly, but to call a native function pointer, we could define one that instead contains a `native call()/apply()` method, and create an instance explicitly. Such a class can also be extended in Java to create callbacks, and like any other normal `Pointer` object, must be allocated with a `native void allocate()` method, so please remember to hang on to references in Java, as those will get garbage collected. As a bonus, `FunctionPointer.call()/apply()` maps in fact to an overloaded `operator()` from a C++ functor, which we can pass to functions by annotating parameters with `@ByVal` or `@ByRef`.
 
 
 ==Instructions for Android==
@@ -275,7 +275,7 @@ This project was conceived at the Okutomi & Tanaka Laboratory, Tokyo Institute o
  * `Pointer.deallocator()` would needlessly enqueue `Deallocator` objects pointing to the native `NULL` address
  * Added support for C++ "functors" based on the `operator()`, which gets used when annotating a `FunctionPointer` method parameter with `@ByRef` or `@ByVal`
  * For convenience in Scala, added `apply()` as an acceptable caller method name within a `FunctionPointer`, in addition to `call()`
- * Fixed `@Cast` not working along parameters with an `@Adapter`
+ * Fixed `@Cast` not working along parameters with an `@Adapter` or when attempting to `return` the argument
  * `Generator` would ignore `Pointer.position()` in the case of `@ByPtrPtr` and `@ByPtrRef` parameters
  * Replaced hack to create a `Pointer` from a `Buffer` object with something more standard
  * Fixed `Loader.sizeof(Pointer.class)` to return the `sizeof(void*)`
