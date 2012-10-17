@@ -51,6 +51,7 @@ import java.nio.ByteOrder;
             position = p.position;
             limit = p.limit;
             capacity = p.capacity;
+            deallocator = p.deallocator;
         }
     }
 
@@ -268,6 +269,13 @@ import java.nio.ByteOrder;
         memcpy(this, p, valueSize2 * (p.limit - p.position));
         address -= valueSize * position;
         p.address -= valueSize2 * p.position;
+        return this;
+    }
+    public Pointer zero() {
+        int valueSize = sizeof();
+        address += valueSize * position;
+        memset(this, 0, valueSize * (limit - position));
+        address -= valueSize * position;
         return this;
     }
 

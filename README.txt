@@ -18,7 +18,7 @@ To use JavaCPP, you will need to download and install the following software:
     * [http://msdn.microsoft.com/en-us/library/ff660764.aspx  Building Applications that Use the Windows SDK]
 
 To produce binary files for Android, you will also have to install:
- * Android NDK r8b  http://developer.android.com/sdk/ndk/
+ * Android NDK r8b  http://developer.android.com/tools/sdk/ndk/
 
 To modify the source code, please note that the project files were created for:
  * NetBeans 6.9  http://netbeans.org/downloads/  or
@@ -270,6 +270,9 @@ This project was conceived at the Okutomi & Tanaka Laboratory, Tokyo Institute o
 
 
 ==Changes==
+ * Fixed memory corruption when returning by value an `std::vector<>` using an adapter
+ * Added `Pointer.zero()` method that calls `memset(0)` on the range
+ * For easier memory management, more than one `Pointer` now allowed to share the `deallocator` when "casting" them
  * Upgraded references of the Android NDK to version r8b
  * Added functionality to access `FunctionPointer` callbacks by their names from C/C++: We can annotate them with `@Name` and build with the new `-header` option to get their declarations in a header file
  * `Pointer.deallocator()` would needlessly enqueue `Deallocator` objects pointing to the native `NULL` address

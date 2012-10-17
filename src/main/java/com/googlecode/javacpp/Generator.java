@@ -46,7 +46,6 @@ import com.googlecode.javacpp.annotation.Raw;
 import com.googlecode.javacpp.annotation.ValueGetter;
 import com.googlecode.javacpp.annotation.ValueSetter;
 import java.io.Closeable;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.io.Writer;
@@ -347,7 +346,8 @@ public class Generator implements Closeable {
             out.println("public:");
             out.println("    VectorAdapter(const P* pointer, typename std::vector<T>::size_type size) : pointer((P*)pointer), size(size),");
             out.println("        vec2(pointer ? std::vector<T>((P*)pointer, (P*)pointer + size) : std::vector<T>()), vec(vec2) { }");
-            out.println("    VectorAdapter(const std::vector<T>& vec) : pointer(0), size(0), vec((std::vector<T>&)vec) { }");
+            out.println("    VectorAdapter(const std::vector<T>& vec) : pointer(0), size(0), vec2(vec), vec(vec2) { }");
+            out.println("    VectorAdapter(std::vector<T>& vec) : pointer(0), size(0), vec(vec) { }");
             out.println("    void assign(P* pointer, typename std::vector<T>::size_type size) {");
             out.println("        this->pointer = pointer;");
             out.println("        this->size = size;");
@@ -378,7 +378,8 @@ public class Generator implements Closeable {
             out.println("public:");
             out.println("    StringAdapter(const char* pointer, size_t size) : pointer((char*)pointer), size(size),");
             out.println("        str2(pointer ? pointer : \"\"), str(str2) { }");
-            out.println("    StringAdapter(const std::string& str) : pointer(0), size(0), str((std::string&)str) { }");
+            out.println("    StringAdapter(const std::string& str) : pointer(0), size(0), str2(str), str(str2) { }");
+            out.println("    StringAdapter(std::string& str) : pointer(0), size(0), str(str) { }");
             out.println("    void assign(char* pointer, size_t size) {");
             out.println("        this->pointer = pointer;");
             out.println("        this->size = size;");
@@ -1305,32 +1306,31 @@ public class Generator implements Closeable {
             String cast = getParameterCast(methodInfo, j);
             String[] typeName = getCastedCPPTypeName(methodInfo.parameterAnnotations[j], methodInfo.parameterTypes[j]);
             AdapterInformation adapterInfo = getParameterAdapterInformation(true, methodInfo, j);
-            if (adapterInfo != null) {
-                for (int k = 0; k < adapterInfo.argc; k++) {
-                    out.println(indent + typeName[0] + " rpointer" + (j+k) + typeName[1] + " = " + cast + "adapter" + j + ";");
-                    out.println(indent + "jint rsize" + (j+k) + " = (jint)adapter" + j + ".size" + (k > 0 ? (k+1) + ";" : ";"));
-                    out.println(indent + "if (rpointer" + (j+k) + " != " + cast + "pointer" + (j+k) + ") {");
-                    out.println(indent + "    jvalue args[3];");
-                    out.println(indent + "    args[0].j = ptr_to_jlong(rpointer" + (j+k) + ");");
-                    out.println(indent + "    args[1].i = rsize" + (j+k) + ";");
-                    out.println(indent + "    args[2].j = ptr_to_jlong(&(" + adapterInfo.name + "::deallocate));");
-                    out.println(indent + "    e->CallNonvirtualVoidMethodA(p" + j + ", JavaCPP_getClass(e, " +
-                            jclasses.register(Pointer.class) + "), JavaCPP_initMethodID, args);");
-                    out.println(indent + "} else {");
-                    out.println(indent + "    e->SetIntField(p" + j + ", JavaCPP_limitFieldID, rsize" + (j+k) + " + position" + (j+k) + ");");
-                    out.println(indent + "}");
+            if (Pointer.class.isAssignableFrom(methodInfo.parameterTypes[j])) {
+                if (adapterInfo != null) {
+                    for (int k = 0; k < adapterInfo.argc; k++) {
+                        out.println(indent + typeName[0] + " rpointer" + (j+k) + typeName[1] + " = " + cast + "adapter" + j + ";");
+                        out.println(indent + "jint rsize" + (j+k) + " = (jint)adapter" + j + ".size" + (k > 0 ? (k+1) + ";" : ";"));
+                        out.println(indent + "if (rpointer" + (j+k) + " != " + cast + "pointer" + (j+k) + ") {");
+                        out.println(indent + "    jvalue args[3];");
+                        out.println(indent + "    args[0].j = ptr_to_jlong(rpointer" + (j+k) + ");");
+                        out.println(indent + "    args[1].i = rsize" + (j+k) + ";");
+                        out.println(indent + "    args[2].j = ptr_to_jlong(&(" + adapterInfo.name + "::deallocate));");
+                        out.println(indent + "    e->CallNonvirtualVoidMethodA(p" + j + ", JavaCPP_getClass(e, " +
+                                jclasses.register(Pointer.class) + "), JavaCPP_initMethodID, args);");
+                        out.println(indent + "} else {");
+                        out.println(indent + "    e->SetIntField(p" + j + ", JavaCPP_limitFieldID, rsize" + (j+k) + " + position" + (j+k) + ");");
+                        out.println(indent + "}");
+                    }
+                } else if ((passBy instanceof ByPtrPtr || passBy instanceof ByPtrRef) &&
+                        !methodInfo.valueSetter && !methodInfo.memberSetter) {
+                    if (!methodInfo.parameterTypes[j].isAnnotationPresent(Opaque.class)) {
+                        out.println(indent + "pointer" + j + " -= position" + j + ";");
+                    }
+                    out.println(indent + "if (p" + j + " != NULL) e->SetLongField(p" + j +
+                            ", JavaCPP_addressFieldID, ptr_to_jlong(pointer" + j + "));");
                 }
-            } else if (Pointer.class.isAssignableFrom(methodInfo.parameterTypes[j]) && 
-                    (passBy instanceof ByPtrPtr || passBy instanceof ByPtrRef) &&
-                    !methodInfo.valueSetter && !methodInfo.memberSetter) {
-                if (!methodInfo.parameterTypes[j].isAnnotationPresent(Opaque.class)) {
-                    out.println(indent + "pointer" + j + " -= position" + j + ";");
-                }
-                out.println(indent + "if (p" + j + " != NULL) e->SetLongField(p" + j +
-                        ", JavaCPP_addressFieldID, ptr_to_jlong(pointer" + j + "));");
-            }
-
-            if (methodInfo.parameterTypes[j] == String.class) {
+            } else if (methodInfo.parameterTypes[j] == String.class) {
                 out.println(indent + "if (p" + j + " != NULL) e->ReleaseStringUTFChars(p" + j + ", pointer" + j + ");");
             } else if (methodInfo.parameterTypes[j].isArray() &&
                     methodInfo.parameterTypes[j].getComponentType().isPrimitive()) {
