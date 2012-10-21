@@ -270,11 +270,13 @@ This project was conceived at the Okutomi & Tanaka Laboratory, Tokyo Institute o
 
 
 ==Changes==
- * Fixed memory corruption when returning by value an `std::vector<>` using an adapter
+ * Renamed various variables in `Generator` to make the generated code more readable
+ * Fixed memory corruption when using an adapter or `@ByRef` on a function that returns by value an `std::vector<>` or `std::string` (issue #26)
  * Added `Pointer.zero()` method that calls `memset(0)` on the range
  * For easier memory management, more than one `Pointer` now allowed to share the `deallocator` when "casting" them
  * Upgraded references of the Android NDK to version r8b
  * Added functionality to access `FunctionPointer` callbacks by their names from C/C++: We can annotate them with `@Name` and build with the new `-header` option to get their declarations in a header file
+ * `Loader` now displays an informative error message when trying to use an undefined `compiler.options` with `@Platform(options="")` (issue #24)
  * `Pointer.deallocator()` would needlessly enqueue `Deallocator` objects pointing to the native `NULL` address
  * Added support for C++ "functors" based on the `operator()`, which gets used when annotating a `FunctionPointer` method parameter with `@ByRef` or `@ByVal`
  * For convenience in Scala, added `apply()` as an acceptable caller method name within a `FunctionPointer`, in addition to `call()`

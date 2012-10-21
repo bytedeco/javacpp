@@ -186,8 +186,8 @@ public class Generator implements Closeable {
         }
         out.println("#ifdef ANDROID");
         out.println("    #include <android/log.h>");
-        out.println("    #define NewWeakGlobalRef(o) NewGlobalRef(o)");
-        out.println("    #define DeleteWeakGlobalRef(o) DeleteGlobalRef(o)");
+        out.println("    #define NewWeakGlobalRef(obj) NewGlobalRef(obj)");
+        out.println("    #define DeleteWeakGlobalRef(obj) DeleteGlobalRef(obj)");
         out.println("#endif");
         out.println();
         out.println("#include <stddef.h>");
@@ -268,57 +268,57 @@ public class Generator implements Closeable {
         }
         out.println(" };");
         out.println("static jclass JavaCPP_classes[" + jclasses.size() + "] = { NULL };");
-        out.println("static jmethodID JavaCPP_initMethodID = NULL;");
-        out.println("static jfieldID JavaCPP_addressFieldID = NULL;");
-        out.println("static jfieldID JavaCPP_positionFieldID = NULL;");
-        out.println("static jfieldID JavaCPP_limitFieldID = NULL;");
-        out.println("static jfieldID JavaCPP_capacityFieldID = NULL;");
+        out.println("static jmethodID JavaCPP_initMID = NULL;");
+        out.println("static jfieldID JavaCPP_addressFID = NULL;");
+        out.println("static jfieldID JavaCPP_positionFID = NULL;");
+        out.println("static jfieldID JavaCPP_limitFID = NULL;");
+        out.println("static jfieldID JavaCPP_capacityFID = NULL;");
         out.println();
-        out.println("static inline void JavaCPP_log(const char* format, ...) {");
+        out.println("static inline void JavaCPP_log(const char* fmt, ...) {");
         out.println("    va_list ap;");
-        out.println("    va_start(ap, format);");
+        out.println("    va_start(ap, fmt);");
         out.println("#ifdef ANDROID");
-        out.println("    __android_log_vprint(ANDROID_LOG_ERROR, \"javacpp\", format, ap);");
+        out.println("    __android_log_vprint(ANDROID_LOG_ERROR, \"javacpp\", fmt, ap);");
         out.println("#else");
-        out.println("    vfprintf(stderr, format, ap);");
+        out.println("    vfprintf(stderr, fmt, ap);");
         out.println("    fprintf(stderr, \"\\n\");");
         out.println("#endif");
         out.println("    va_end(ap);");
         out.println("}");
         out.println();
-        out.println("static JavaCPP_noinline jclass JavaCPP_getClass(JNIEnv* e, int i) {");
-        out.println("    if (JavaCPP_classes[i] == NULL && e->PushLocalFrame(1) == 0) {");
-        out.println("        jclass c = e->FindClass(JavaCPP_classNames[i]);");
-        out.println("        if (c == NULL || e->ExceptionCheck()) {");
+        out.println("static JavaCPP_noinline jclass JavaCPP_getClass(JNIEnv* env, int i) {");
+        out.println("    if (JavaCPP_classes[i] == NULL && env->PushLocalFrame(1) == 0) {");
+        out.println("        jclass cls = env->FindClass(JavaCPP_classNames[i]);");
+        out.println("        if (cls == NULL || env->ExceptionCheck()) {");
         out.println("            JavaCPP_log(\"Error loading class %s.\", JavaCPP_classNames[i]);");
         out.println("            return NULL;");
         out.println("        }");
-        out.println("        JavaCPP_classes[i] = (jclass)e->NewWeakGlobalRef(c);");
-        out.println("        if (JavaCPP_classes[i] == NULL || e->ExceptionCheck()) {");
+        out.println("        JavaCPP_classes[i] = (jclass)env->NewWeakGlobalRef(cls);");
+        out.println("        if (JavaCPP_classes[i] == NULL || env->ExceptionCheck()) {");
         out.println("            JavaCPP_log(\"Error creating global reference of class %s.\", JavaCPP_classNames[i]);");
         out.println("            return NULL;");
         out.println("        }");
-        out.println("        e->PopLocalFrame(NULL);");
+        out.println("        env->PopLocalFrame(NULL);");
         out.println("    }");
         out.println("    return JavaCPP_classes[i];");
         out.println("}");
         out.println();
-        out.println("template <class P> static inline P JavaCPP_dereference(JNIEnv* e, P* pointer) {");
-        out.println("    if (pointer == NULL) {");
-        out.println("        e->ThrowNew(JavaCPP_getClass(e, " +
+        out.println("template <class P> static inline P JavaCPP_dereference(JNIEnv* env, P* ptr) {");
+        out.println("    if (ptr == NULL) {");
+        out.println("        env->ThrowNew(JavaCPP_getClass(env, " +
                 jclasses.register(NullPointerException.class) + "), \"Return pointer address is NULL.\");");
         out.println("        return P();");
         out.println("    }");
-        out.println("    return *pointer;");
+        out.println("    return *ptr;");
         out.println("}");
         out.println();
         out.println("class JavaCPP_hidden JavaCPP_exception : public std::exception {");
         out.println("public:");
-        out.println("    JavaCPP_exception(const char* s) throw() {");
-        out.println("        if (s == NULL) {");
+        out.println("    JavaCPP_exception(const char* str) throw() {");
+        out.println("        if (str == NULL) {");
         out.println("            strcpy(msg, \"Unknown exception.\");");
         out.println("        } else {");
-        out.println("            strncpy(msg, s, sizeof(msg));");
+        out.println("            strncpy(msg, str, sizeof(msg));");
         out.println("            msg[sizeof(msg) - 1] = 0;");
         out.println("        }");
         out.println("    }");
@@ -327,14 +327,14 @@ public class Generator implements Closeable {
         out.println("};");
         out.println();
         if (handleExceptions) {
-            out.println("static JavaCPP_noinline void JavaCPP_handleException(JNIEnv* e) {");
+            out.println("static JavaCPP_noinline void JavaCPP_handleException(JNIEnv* env) {");
             out.println("    try {");
             out.println("        throw;");
-            out.println("    } catch (std::exception& ex) {");
-            out.println("        e->ThrowNew(JavaCPP_getClass(e, " +
-                    jclasses.register(RuntimeException.class) + "), ex.what());");
+            out.println("    } catch (std::exception& e) {");
+            out.println("        env->ThrowNew(JavaCPP_getClass(env, " +
+                    jclasses.register(RuntimeException.class) + "), e.what());");
             out.println("    } catch (...) {");
-            out.println("        e->ThrowNew(JavaCPP_getClass(e, " +
+            out.println("        env->ThrowNew(JavaCPP_getClass(env, " +
                     jclasses.register(RuntimeException.class) + "), \"Unknown exception.\");");
             out.println("    }");
             out.println("}");
@@ -344,30 +344,30 @@ public class Generator implements Closeable {
             out.println("#include <vector>");
             out.println("template<class P, class T = P> class VectorAdapter {");
             out.println("public:");
-            out.println("    VectorAdapter(const P* pointer, typename std::vector<T>::size_type size) : pointer((P*)pointer), size(size),");
-            out.println("        vec2(pointer ? std::vector<T>((P*)pointer, (P*)pointer + size) : std::vector<T>()), vec(vec2) { }");
-            out.println("    VectorAdapter(const std::vector<T>& vec) : pointer(0), size(0), vec2(vec), vec(vec2) { }");
-            out.println("    VectorAdapter(std::vector<T>& vec) : pointer(0), size(0), vec(vec) { }");
-            out.println("    void assign(P* pointer, typename std::vector<T>::size_type size) {");
-            out.println("        this->pointer = pointer;");
+            out.println("    VectorAdapter(const P* ptr, typename std::vector<T>::size_type size) : ptr((P*)ptr), size(size),");
+            out.println("        vec2(ptr ? std::vector<T>((P*)ptr, (P*)ptr + size) : std::vector<T>()), vec(vec2) { }");
+            out.println("    VectorAdapter(const std::vector<T>& vec) : ptr(0), size(0), vec2(vec), vec(vec2) { }");
+            out.println("    VectorAdapter(std::vector<T>& vec) : ptr(0), size(0), vec(vec) { }");
+            out.println("    void assign(P* ptr, typename std::vector<T>::size_type size) {");
+            out.println("        this->ptr = ptr;");
             out.println("        this->size = size;");
-            out.println("        vec.assign(pointer, pointer + size);");
+            out.println("        vec.assign(ptr, ptr + size);");
             out.println("    }");
-            out.println("    static void deallocate(P* pointer) { delete[] pointer; }");
+            out.println("    static void deallocate(P* ptr) { delete[] ptr; }");
             out.println("    operator P*() {");
             out.println("        if (vec.size() > size) {");
-            out.println("            pointer = new (std::nothrow) P[vec.size()];");
+            out.println("            ptr = new (std::nothrow) P[vec.size()];");
             out.println("        }");
-            out.println("        if (pointer) {");
-            out.println("            std::copy(vec.begin(), vec.end(), pointer);");
+            out.println("        if (ptr) {");
+            out.println("            std::copy(vec.begin(), vec.end(), ptr);");
             out.println("        }");
             out.println("        size = vec.size();");
-            out.println("        return pointer;");
+            out.println("        return ptr;");
             out.println("    }");
             out.println("    operator const P*()        { return &vec[0]; }");
             out.println("    operator std::vector<T>&() { return vec; }");
-            out.println("    operator std::vector<T>*() { return pointer ? &vec : 0; }");
-            out.println("    P* pointer;");
+            out.println("    operator std::vector<T>*() { return ptr ? &vec : 0; }");
+            out.println("    P* ptr;");
             out.println("    typename std::vector<T>::size_type size;");
             out.println("    std::vector<T> vec2;");
             out.println("    std::vector<T>& vec;");
@@ -376,28 +376,28 @@ public class Generator implements Closeable {
             out.println("#include <string>");
             out.println("class StringAdapter {");
             out.println("public:");
-            out.println("    StringAdapter(const char* pointer, size_t size) : pointer((char*)pointer), size(size),");
-            out.println("        str2(pointer ? pointer : \"\"), str(str2) { }");
-            out.println("    StringAdapter(const std::string& str) : pointer(0), size(0), str2(str), str(str2) { }");
-            out.println("    StringAdapter(std::string& str) : pointer(0), size(0), str(str) { }");
-            out.println("    void assign(char* pointer, size_t size) {");
-            out.println("        this->pointer = pointer;");
+            out.println("    StringAdapter(const char* ptr, size_t size) : ptr((char*)ptr), size(size),");
+            out.println("        str2(ptr ? ptr : \"\"), str(str2) { }");
+            out.println("    StringAdapter(const std::string& str) : ptr(0), size(0), str2(str), str(str2) { }");
+            out.println("    StringAdapter(std::string& str) : ptr(0), size(0), str(str) { }");
+            out.println("    void assign(char* ptr, size_t size) {");
+            out.println("        this->ptr = ptr;");
             out.println("        this->size = size;");
-            out.println("        str.assign(pointer ? pointer : \"\");");
+            out.println("        str.assign(ptr ? ptr : \"\");");
             out.println("    }");
-            out.println("    static void deallocate(char* pointer) { free(pointer); }");
+            out.println("    static void deallocate(char* ptr) { free(ptr); }");
             out.println("    operator char*() {");
             out.println("        const char *c_str = str.c_str();");
-            out.println("        if (pointer == NULL || strcmp(c_str, pointer) != 0) {");
-            out.println("            this->pointer = strdup(c_str);");
-            out.println("            this->size = strlen(c_str) + 1;");
+            out.println("        if (ptr == NULL || strcmp(c_str, ptr) != 0) {");
+            out.println("            ptr = strdup(c_str);");
             out.println("        }");
-            out.println("        return pointer;");
+            out.println("        size = strlen(c_str) + 1;");
+            out.println("        return ptr;");
             out.println("    }");
             out.println("    operator const char*()  { return str.c_str(); }");
             out.println("    operator std::string&() { return str; }");
-            out.println("    operator std::string*() { return pointer ? &str : 0; }");
-            out.println("    char* pointer;");
+            out.println("    operator std::string*() { return ptr ? &str : 0; }");
+            out.println("    char* ptr;");
             out.println("    size_t size;");
             out.println("    std::string str2;");
             out.println("    std::string& str;");
@@ -411,13 +411,13 @@ public class Generator implements Closeable {
             out.println("    }");
             out.println("}");
             out.println();
-            out.println("static JavaCPP_noinline int JavaCPP_getEnv(JNIEnv** e) {");
-            out.println("    int attach = 0;");
+            out.println("static JavaCPP_noinline int JavaCPP_getEnv(JNIEnv** env) {");
+            out.println("    int attached = 0;");
             out.println("    struct {");
-            out.println("        JNIEnv **e;");
-            out.println("        operator JNIEnv**() { return e; } // Android JNI");
-            out.println("        operator void**() { return (void**)e; } // standard JNI");
-            out.println("    } e2 = { e };");
+            out.println("        JNIEnv **env;");
+            out.println("        operator JNIEnv**() { return env; } // Android JNI");
+            out.println("        operator void**() { return (void**)env; } // standard JNI");
+            out.println("    } env2 = { env };");
             out.println("    JavaVM *vm = JavaCPP_vm;");
             out.println("    if (vm == NULL) {");
             out.println("#ifndef ANDROID");
@@ -430,20 +430,20 @@ public class Generator implements Closeable {
             out.println("        }");
             out.println("#endif");
             out.println("    }");
-            out.println("    if (vm->GetEnv((void**)e, " + JNI_VERSION + ") != JNI_OK) {");
-            out.println("        attach = 1;");
-            out.println("        if (vm->AttachCurrentThread(e2, NULL) != 0) {");
+            out.println("    if (vm->GetEnv((void**)env, " + JNI_VERSION + ") != JNI_OK) {");
+            out.println("        if (vm->AttachCurrentThread(env2, NULL) != 0) {");
             out.println("            JavaCPP_log(\"Could not attach the JavaVM to the current thread.\");");
             out.println("            return -1;");
             out.println("        }");
+            out.println("        attached = 1;");
             out.println("    }");
             out.println("    if (JavaCPP_vm == NULL) {");
             out.println("        if (JNI_OnLoad(vm, NULL) < 0) {");
-            out.println("            JavaCPP_detach(attach);");
+            out.println("            JavaCPP_detach(attached);");
             out.println("            return -1;");
             out.println("        }");
             out.println("    }");
-            out.println("    return attach;");
+            out.println("    return attached;");
             out.println("}");
             out.println();
         }
@@ -459,16 +459,16 @@ public class Generator implements Closeable {
             String name = "JavaCPP_" + mangle(c.getName());
             out.print("static void " + name + "_deallocate(");
             if (FunctionPointer.class.isAssignableFrom(c)) {
-                out.println(name + "* address) { JNIEnv *e; int d = JavaCPP_getEnv(&e); if (d >= 0) e->DeleteWeakGlobalRef(address->object); delete address; JavaCPP_detach(d); }");
+                out.println(name + "* p) { JNIEnv *e; int a = JavaCPP_getEnv(&e); if (a >= 0) e->DeleteWeakGlobalRef(p->obj); delete p; JavaCPP_detach(a); }");
             } else {
                 String[] typeName = getCPPTypeName(c);
-                out.println(typeName[0] + " address" + typeName[1] + ") { delete address; }");
+                out.println(typeName[0] + " p" + typeName[1] + ") { delete p; }");
             }
         }
         for (Class c : arrayDeallocators) {
             String name = "JavaCPP_" + mangle(c.getName());
             String[] typeName = getCPPTypeName(c);
-            out.println("static void " + name + "_deallocateArray(" + typeName[0] + " address" + typeName[1] + ") { delete[] address; }");
+            out.println("static void " + name + "_deallocateArray(" + typeName[0] + " p" + typeName[1] + ") { delete[] p; }");
         }
         out.println();
         out.println("extern \"C\" {");
@@ -496,13 +496,13 @@ public class Generator implements Closeable {
         out.println("#endif");
         out.println(); // XXX: JNI_OnLoad() should ideally be protected by some mutex
         out.println("JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved) {");
-        out.println("    JNIEnv* e;");
-        out.println("    if (vm->GetEnv((void**)&e, " + JNI_VERSION + ") != JNI_OK) {");
+        out.println("    JNIEnv* env;");
+        out.println("    if (vm->GetEnv((void**)&env, " + JNI_VERSION + ") != JNI_OK) {");
         out.println("        JavaCPP_log(\"Could not get JNIEnv for " + JNI_VERSION + " inside JNI_OnLoad().\");");
         out.println("        return JNI_ERR;");
         out.println("    }");
         out.println("    if (JavaCPP_vm == vm) {");
-        out.println("        return e->GetVersion();");
+        out.println("        return env->GetVersion();");
         out.println("    }");
         out.println("    JavaCPP_vm = vm;");
         out.println("    const char* members[" + jclasses.size() + "][" + maxMemberSize + "] = {");
@@ -562,53 +562,53 @@ public class Generator implements Closeable {
             }
         }
         out.println(" };");
-        out.println("    jmethodID putMemberOffsetMethodID = e->GetStaticMethodID(JavaCPP_getClass(e, " +
+        out.println("    jmethodID putMemberOffsetMID = env->GetStaticMethodID(JavaCPP_getClass(env, " +
                 jclasses.register(Loader.class) + "), \"putMemberOffset\", \"(Ljava/lang/String;Ljava/lang/String;I)V\");");
-        out.println("    if (putMemberOffsetMethodID == NULL || e->ExceptionCheck()) {");
-        out.println("        JavaCPP_log(\"Error getting putMemberOffset method ID of Loader class.\");");
+        out.println("    if (putMemberOffsetMID == NULL || env->ExceptionCheck()) {");
+        out.println("        JavaCPP_log(\"Error getting method ID of Loader.putMemberOffset().\");");
         out.println("        return JNI_ERR;");
         out.println("    }");
-        out.println("    for (int i = 0; i < " + jclasses.size() + " && !e->ExceptionCheck(); i++) {");
-        out.println("        for (int j = 0; j < memberOffsetSizes[i] && !e->ExceptionCheck(); j++) {");
-        out.println("            if (e->PushLocalFrame(2) == 0) {");
+        out.println("    for (int i = 0; i < " + jclasses.size() + " && !env->ExceptionCheck(); i++) {");
+        out.println("        for (int j = 0; j < memberOffsetSizes[i] && !env->ExceptionCheck(); j++) {");
+        out.println("            if (env->PushLocalFrame(2) == 0) {");
         out.println("                jvalue args[3];");
-        out.println("                args[0].l = e->NewStringUTF(JavaCPP_classNames[i]);");
-        out.println("                args[1].l = e->NewStringUTF(members[i][j]);");
+        out.println("                args[0].l = env->NewStringUTF(JavaCPP_classNames[i]);");
+        out.println("                args[1].l = env->NewStringUTF(members[i][j]);");
         out.println("                args[2].i = offsets[i][j];");
-        out.println("                e->CallStaticVoidMethodA(JavaCPP_getClass(e, " +
-                jclasses.register(Loader.class) + "), putMemberOffsetMethodID, args);");
-        out.println("                e->PopLocalFrame(NULL);");
+        out.println("                env->CallStaticVoidMethodA(JavaCPP_getClass(env, " +
+                jclasses.register(Loader.class) + "), putMemberOffsetMID, args);");
+        out.println("                env->PopLocalFrame(NULL);");
         out.println("            }");
         out.println("        }");
         out.println("    }");
-        out.println("    JavaCPP_initMethodID = e->GetMethodID(JavaCPP_getClass(e, " +
+        out.println("    JavaCPP_initMID = env->GetMethodID(JavaCPP_getClass(env, " +
                 jclasses.register(Pointer.class) + "), \"init\", \"(JIJ)V\");");
-        out.println("    if (JavaCPP_initMethodID == NULL || e->ExceptionCheck()) {");
-        out.println("        JavaCPP_log(\"Error getting init method ID of Pointer class.\");");
+        out.println("    if (JavaCPP_initMID == NULL || env->ExceptionCheck()) {");
+        out.println("        JavaCPP_log(\"Error getting method ID of Pointer.init().\");");
         out.println("        return JNI_ERR;");
         out.println("    }");
-        out.println("    JavaCPP_addressFieldID = e->GetFieldID(JavaCPP_getClass(e, " +
+        out.println("    JavaCPP_addressFID = env->GetFieldID(JavaCPP_getClass(env, " +
                 jclasses.register(Pointer.class) + "), \"address\", \"J\");");
-        out.println("    if (JavaCPP_addressFieldID == NULL || e->ExceptionCheck()) {");
-        out.println("        JavaCPP_log(\"Error getting address field ID of Pointer class.\");");
+        out.println("    if (JavaCPP_addressFID == NULL || env->ExceptionCheck()) {");
+        out.println("        JavaCPP_log(\"Error getting field ID of Pointer.address.\");");
         out.println("        return JNI_ERR;");
         out.println("    }");
-        out.println("    JavaCPP_positionFieldID = e->GetFieldID(JavaCPP_getClass(e, " +
+        out.println("    JavaCPP_positionFID = env->GetFieldID(JavaCPP_getClass(env, " +
                 jclasses.register(Pointer.class) + "), \"position\", \"I\");");
-        out.println("    if (JavaCPP_positionFieldID == NULL || e->ExceptionCheck()) {");
-        out.println("        JavaCPP_log(\"Error getting position field ID of Pointer class.\");");
+        out.println("    if (JavaCPP_positionFID == NULL || env->ExceptionCheck()) {");
+        out.println("        JavaCPP_log(\"Error getting field ID of Pointer.position.\");");
         out.println("        return JNI_ERR;");
         out.println("    }");
-        out.println("    JavaCPP_limitFieldID = e->GetFieldID(JavaCPP_getClass(e, " +
+        out.println("    JavaCPP_limitFID = env->GetFieldID(JavaCPP_getClass(env, " +
                 jclasses.register(Pointer.class) + "), \"limit\", \"I\");");
-        out.println("    if (JavaCPP_limitFieldID == NULL || e->ExceptionCheck()) {");
-        out.println("        JavaCPP_log(\"Error getting limit field ID of Pointer class.\");");
+        out.println("    if (JavaCPP_limitFID == NULL || env->ExceptionCheck()) {");
+        out.println("        JavaCPP_log(\"Error getting field ID of Pointer.limit.\");");
         out.println("        return JNI_ERR;");
         out.println("    }");
-        out.println("    JavaCPP_capacityFieldID = e->GetFieldID(JavaCPP_getClass(e, " +
+        out.println("    JavaCPP_capacityFID = env->GetFieldID(JavaCPP_getClass(env, " +
                 jclasses.register(Pointer.class) + "), \"capacity\", \"I\");");
-        out.println("    if (JavaCPP_capacityFieldID == NULL || e->ExceptionCheck()) {");
-        out.println("        JavaCPP_log(\"Error getting capacity field ID of Pointer class.\");");
+        out.println("    if (JavaCPP_capacityFID == NULL || env->ExceptionCheck()) {");
+        out.println("        JavaCPP_log(\"Error getting field ID of Pointer.capacity.\");");
         out.println("        return JNI_ERR;");
         out.println("    }");
         out.println("#ifdef ANDROID");
@@ -618,12 +618,12 @@ public class Generator implements Closeable {
             if (c == Pointer.class) {
                 continue;
             }
-            out.println("    if (JavaCPP_getClass(e, " + jclasses.indexOf(c) + ") == NULL) {");
+            out.println("    if (JavaCPP_getClass(env, " + jclasses.indexOf(c) + ") == NULL) {");
             out.println("        return JNI_ERR;");
             out.println("    }");
         }
         out.println("#endif");
-        out.println("    return e->GetVersion();");
+        out.println("    return env->GetVersion();");
         out.println("}");
         out.println();
         if (out2 != null) {
@@ -639,13 +639,13 @@ public class Generator implements Closeable {
         out.println("#endif");
         out.println();
         out.println("JNIEXPORT void JNICALL JNI_OnUnload(JavaVM* vm, void* reserved) {");
-        out.println("    JNIEnv* e;");
-        out.println("    if (vm->GetEnv((void**)&e, " + JNI_VERSION + ") != JNI_OK) {");
+        out.println("    JNIEnv* env;");
+        out.println("    if (vm->GetEnv((void**)&env, " + JNI_VERSION + ") != JNI_OK) {");
         out.println("        JavaCPP_log(\"Could not get JNIEnv for " + JNI_VERSION + " inside JNI_OnUnLoad().\");");
         out.println("        return;");
         out.println("    }");
         out.println("    for (int i = 0; i < " + jclasses.size() + "; i++) {");
-        out.println("        e->DeleteWeakGlobalRef(JavaCPP_classes[i]);");
+        out.println("        env->DeleteWeakGlobalRef(JavaCPP_classes[i]);");
         out.println("        JavaCPP_classes[i] = NULL;");
         out.println("    }");
         out.println("    JavaCPP_vm = NULL;");
@@ -722,12 +722,12 @@ public class Generator implements Closeable {
             String parameterDeclaration = typeName[1].substring(1);
             String instanceTypeName = "JavaCPP_" + mangle(cls.getName());
             functionDefinitions.register("struct JavaCPP_hidden " + instanceTypeName + " {\n" +
-                    "    " + instanceTypeName + "() : pointer(NULL), object(NULL) { }\n" +
+                    "    " + instanceTypeName + "() : ptr(NULL), obj(NULL) { }\n" +
                     "    " + returnConvention[0] + "operator()" + parameterDeclaration + ";\n" +
-                    "    " + typeName[0] + "pointer" + typeName[1] + ";\n" +
-                    "    jobject object; static jmethodID methodID;\n" +
+                    "    " + typeName[0] + "ptr" + typeName[1] + ";\n" +
+                    "    jobject obj; static jmethodID mid;\n" +
                     "};\n" +
-                    "jmethodID " + instanceTypeName + "::methodID = NULL;");
+                    "jmethodID " + instanceTypeName + "::mid = NULL;");
         }
         boolean firstCallback = true;
         for (int i = 0; i < methods.length; i++) {
@@ -769,12 +769,12 @@ public class Generator implements Closeable {
                 out.print("__" + mangle(getSignature(methodInfo.parameterTypes)));
             }
             if (Modifier.isStatic(methodInfo.modifiers)) {
-                out.print("(JNIEnv* e, jclass c");
+                out.print("(JNIEnv* env, jclass cls");
             } else {
-                out.print("(JNIEnv* e, jobject o");
+                out.print("(JNIEnv* env, jobject obj");
             }
             for (int j = 0; j < methodInfo.parameterTypes.length; j++) {
-                out.print(", " + getJNITypeName(methodInfo.parameterTypes[j]) + " p" + j);
+                out.print(", " + getJNITypeName(methodInfo.parameterTypes[j]) + " arg" + j);
             }
             out.println(") {");
 
@@ -791,37 +791,37 @@ public class Generator implements Closeable {
                     typeName[0] = "JavaCPP_" + mangle(cls.getName()) + "*";
                     typeName[1] = "";
                 }
-                out.println("    " + typeName[0] + " pointer" + typeName[1] + " = (" + typeName[0] +
-                        typeName[1] + ")jlong_to_ptr(e->GetLongField(o, JavaCPP_addressFieldID));");
-                out.println("    if (pointer == NULL) {");
-                out.println("        e->ThrowNew(JavaCPP_getClass(e, " +
+                out.println("    " + typeName[0] + " ptr" + typeName[1] + " = (" + typeName[0] +
+                        typeName[1] + ")jlong_to_ptr(env->GetLongField(obj, JavaCPP_addressFID));");
+                out.println("    if (ptr == NULL) {");
+                out.println("        env->ThrowNew(JavaCPP_getClass(env, " +
                         jclasses.register(NullPointerException.class) + "), \"This pointer address is NULL.\");");
                 out.println("        return" + (methodInfo.returnType == void.class ? ";" : " 0;"));
                 out.println("    }");
                 if (FunctionPointer.class.isAssignableFrom(cls)) {
-                    out.println("    if (!pointer->pointer) {");
-                    out.println("        e->ThrowNew(JavaCPP_getClass(e, " +
+                    out.println("    if (ptr->ptr == NULL) {");
+                    out.println("        env->ThrowNew(JavaCPP_getClass(env, " +
                             jclasses.register(NullPointerException.class) + "), \"This function pointer address is NULL.\");");
                     out.println("        return" + (methodInfo.returnType == void.class ? ";" : " 0;"));
                     out.println("    }");
                 }
                 if (!cls.isAnnotationPresent(Opaque.class) || methodInfo.bufferGetter) {
-                    out.println("    jint position = e->GetIntField(o, JavaCPP_positionFieldID);");
-                    out.println("    pointer += position;");
+                    out.println("    jint position = env->GetIntField(obj, JavaCPP_positionFID);");
+                    out.println("    ptr += position;");
                     if (methodInfo.bufferGetter) {
-                        out.println("    jint size = e->GetIntField(o, JavaCPP_limitFieldID);");
+                        out.println("    jint size = env->GetIntField(obj, JavaCPP_limitFID);");
                         out.println("    size -= position;");
                     }
                 }
             }
 
             doParametersBefore(methodInfo);
-            String returnVariable = doReturnBefore(methodInfo);
-            doCall(methodInfo, returnVariable);
+            String returnPrefix = doReturnBefore(methodInfo);
+            doCall(methodInfo, returnPrefix);
             doReturnAfter(methodInfo);
             doParametersAfter(methodInfo);
             if (methodInfo.returnType != void.class) {
-                out.println("    return r;");
+                out.println("    return rarg;");
             }
             out.println("}");
         }
@@ -842,7 +842,7 @@ public class Generator implements Closeable {
                 if (FunctionPointer.class.isAssignableFrom(methodInfo.parameterTypes[j])) {
                     if (methodInfo.parameterTypes[j] == FunctionPointer.class) {
                         logger.log(Level.WARNING, "Method \"" + methodInfo.method + "\" has an abstract FunctionPointer parameter, " +
-                                "but a subclass is required. Compilation will most likely fail.");
+                                "but a concrete subclass is required. Compilation will most likely fail.");
                     }
                     typeName[0] = "JavaCPP_" + mangle(methodInfo.parameterTypes[j].getName()) + "*";
                     typeName[1] = "";
@@ -851,64 +851,64 @@ public class Generator implements Closeable {
                 if (typeName[0].length() == 0 || methodInfo.parameterRaw[j]) {
                     methodInfo.parameterRaw[j] = true;
                     typeName[0] = getJNITypeName(methodInfo.parameterTypes[j]);
-                    out.println("    " + typeName[0] + " pointer" + j + " = p" + j + ";");
+                    out.println("    " + typeName[0] + " ptr" + j + " = arg" + j + ";");
                     continue;
                 }
 
-                out.print("    " + typeName[0] + " pointer" + j + typeName[1] + " = ");
+                out.print("    " + typeName[0] + " ptr" + j + typeName[1] + " = ");
                 if (Pointer.class.isAssignableFrom(methodInfo.parameterTypes[j])) {
-                    out.println("p" + j + " == NULL ? NULL : (" + typeName[0] + typeName[1] +
-                            ")jlong_to_ptr(e->GetLongField(p" + j + ", JavaCPP_addressFieldID));");
+                    out.println("arg" + j + " == NULL ? NULL : (" + typeName[0] + typeName[1] +
+                            ")jlong_to_ptr(env->GetLongField(arg" + j + ", JavaCPP_addressFID));");
                     if ((j == 0 && FunctionPointer.class.isAssignableFrom(methodInfo.cls) &&
                             methodInfo.cls.isAnnotationPresent(Namespace.class)) ||
                             passBy instanceof ByVal || passBy instanceof ByRef) {
-                        // in the case of member pointer, pointer0 is our object pointer, which cannot be NULL
-                        out.println("    if (pointer" + j + " == NULL) {");
-                        out.println("        e->ThrowNew(JavaCPP_getClass(e, " +
+                        // in the case of member ptr, ptr0 is our object pointer, which cannot be NULL
+                        out.println("    if (ptr" + j + " == NULL) {");
+                        out.println("        env->ThrowNew(JavaCPP_getClass(env, " +
                                 jclasses.register(NullPointerException.class) + "), \"Pointer address of argument " + j + " is NULL.\");");
                         out.println("        return" + (methodInfo.returnType == void.class ? ";" : " 0;"));
                         out.println("    }");
                     }
                     if (adapterInfo != null || prevAdapterInfo != null) {
-                        out.println("    jint size" + j + " = p" + j + " == NULL ? 0 : e->GetIntField(p" + j +
-                                ", JavaCPP_limitFieldID);");
+                        out.println("    jint size" + j + " = arg" + j + " == NULL ? 0 : env->GetIntField(arg" + j +
+                                ", JavaCPP_limitFID);");
                     }
                     if (!methodInfo.parameterTypes[j].isAnnotationPresent(Opaque.class)) {
-                        out.println("    jint position" + j + " = p" + j + " == NULL ? 0 : e->GetIntField(p" + j +
-                                ", JavaCPP_positionFieldID);");
-                        out.println("    pointer"  + j + " += position" + j + ";");
+                        out.println("    jint position" + j + " = arg" + j + " == NULL ? 0 : env->GetIntField(arg" + j +
+                                ", JavaCPP_positionFID);");
+                        out.println("    ptr"  + j + " += position" + j + ";");
                         if (adapterInfo != null || prevAdapterInfo != null) {
                             out.println("    size" + j + " -= position" + j + ";");
                         }
                     }
                 } else if (methodInfo.parameterTypes[j] == String.class) {
-                    out.println("p" + j + " == NULL ? NULL : e->GetStringUTFChars(p" + j + ", NULL);");
+                    out.println("arg" + j + " == NULL ? NULL : env->GetStringUTFChars(arg" + j + ", NULL);");
                     if (adapterInfo != null || prevAdapterInfo != null) {
                         out.println("    jint size" + j + " = 0;");
                     }
                 } else if (methodInfo.parameterTypes[j].isArray() &&
                         methodInfo.parameterTypes[j].getComponentType().isPrimitive()) {
-                    out.print("p" + j + " == NULL ? NULL : ");
+                    out.print("arg" + j + " == NULL ? NULL : ");
                     String s = methodInfo.parameterTypes[j].getComponentType().getName();
                     if (methodInfo.valueGetter || methodInfo.valueSetter ||
                             methodInfo.memberGetter || methodInfo.memberSetter) {
-                        out.println("(j" + s + "*)e->GetPrimitiveArrayCritical(p" + j + ", NULL);");
+                        out.println("(j" + s + "*)env->GetPrimitiveArrayCritical(arg" + j + ", NULL);");
                     } else {
                         s = Character.toUpperCase(s.charAt(0)) + s.substring(1);
-                        out.println("e->Get" + s + "ArrayElements(p" + j + ", NULL);");
+                        out.println("env->Get" + s + "ArrayElements(arg" + j + ", NULL);");
                     }
                     if (adapterInfo != null || prevAdapterInfo != null) {
                         out.println("    jint size" + j +
-                                " = p" + j + " == NULL ? 0 : e->GetArrayLength(p" + j + ");");
+                                " = arg" + j + " == NULL ? 0 : env->GetArrayLength(arg" + j + ");");
                     }
                 } else if (Buffer.class.isAssignableFrom(methodInfo.parameterTypes[j])) {
-                    out.println("p" + j + " == NULL ? NULL : (" + typeName[0] + typeName[1] + ")e->GetDirectBufferAddress(p" + j + ");");
+                    out.println("arg" + j + " == NULL ? NULL : (" + typeName[0] + typeName[1] + ")env->GetDirectBufferAddress(arg" + j + ");");
                     if (adapterInfo != null || prevAdapterInfo != null) {
                         out.println("    jint size" + j +
-                                " = p" + j + " == NULL ? 0 : e->GetDirectBufferCapacity(p" + j + ");");
+                                " = arg" + j + " == NULL ? 0 : env->GetDirectBufferCapacity(arg" + j + ");");
                     }
                 } else {
-                    out.println("p" + j + ";");
+                    out.println("arg" + j + ";");
                     logger.log(Level.WARNING, "Method \"" + methodInfo.method + "\" has an unsupported parameter of type \"" +
                             methodInfo.parameterTypes[j].getCanonicalName() + "\". Compilation will most likely fail.");
                 }
@@ -923,7 +923,7 @@ public class Generator implements Closeable {
                         // sometimes we need to use the Cast annotation for declaring functions only
                         adapterLine += cast;
                     }
-                    adapterLine += "pointer" + j + ", size" + j;
+                    adapterLine += "ptr" + j + ", size" + j;
                     if (--prevAdapterInfo.argc > 0) {
                         adapterLine += ", ";
                     }
@@ -937,62 +937,66 @@ public class Generator implements Closeable {
     }
 
     private String doReturnBefore(MethodInformation methodInfo) {
-        String returnVariable = "";
+        String returnPrefix = "";
         if (methodInfo.returnType == void.class) {
             if (methodInfo.allocator || methodInfo.arrayAllocator) {
                 if (methodInfo.cls != Pointer.class) {
-                    out.println("    if (!e->IsSameObject(e->GetObjectClass(o), JavaCPP_getClass(e, " +
+                    out.println("    if (!env->IsSameObject(env->GetObjectClass(obj), JavaCPP_getClass(env, " +
                             jclasses.register(methodInfo.cls) + "))) {");
                     out.println("        return;");
                     out.println("    }");
                 }
                 String[] typeName = getCPPTypeName(methodInfo.cls);
-                returnVariable = typeName[0] + " rpointer" + typeName[1] + " = ";
+                returnPrefix = typeName[0] + " rptr" + typeName[1] + " = ";
             }
         } else {
             String[] typeName = getCastedCPPTypeName(methodInfo.annotations, methodInfo.returnType);
             if (methodInfo.valueSetter || methodInfo.memberSetter || methodInfo.noReturnGetter) {
-                out.println("    jobject r = o;");
+                out.println("    jobject rarg = obj;");
             } else if (methodInfo.returnType.isPrimitive()) {
-                out.println("    " + getJNITypeName(methodInfo.returnType) + " r = 0;");
-                returnVariable = typeName[0] + " rvalue" + typeName[1] + " = ";
+                out.println("    " + getJNITypeName(methodInfo.returnType) + " rarg = 0;");
+                returnPrefix = typeName[0] + " rvalue" + typeName[1] + " = ";
             } else {
                 Annotation returnBy = getBy(methodInfo.annotations);
                 String valueTypeName = getValueTypeName(typeName);
 
-                returnVariable = "rpointer = ";
+                returnPrefix = "rptr = ";
                 if (typeName[0].length() == 0 || methodInfo.returnRaw) {
                     methodInfo.returnRaw = true;
                     typeName[0] = getJNITypeName(methodInfo.returnType);
-                    out.println("    " + typeName[0] + " r = NULL;");
-                    out.println("    " + typeName[0] + " rpointer;");
+                    out.println("    " + typeName[0] + " rarg = NULL;");
+                    out.println("    " + typeName[0] + " rptr;");
                 } else if (Pointer.class.isAssignableFrom(methodInfo.returnType)) {
                     if (FunctionPointer.class.isAssignableFrom(methodInfo.returnType)) {
                         typeName[0] = "JavaCPP_" + mangle(methodInfo.returnType.getName()) + "*";
                         typeName[1] = "";
                         valueTypeName = getValueTypeName(typeName);
-                        returnVariable = "if (rpointer != NULL) rpointer->pointer = ";
+                        returnPrefix = "if (rptr != NULL) rptr->ptr = ";
                     }
                     if (returnBy instanceof ByVal) {
-                        returnVariable += (getNoException(methodInfo.returnType, methodInfo.method) ?
+                        returnPrefix += (getNoException(methodInfo.returnType, methodInfo.method) ?
                             "new (std::nothrow) " : "new ") + valueTypeName + typeName[1] + "(";
                     } else if (returnBy instanceof ByRef) {
-                        returnVariable += "&";
+                        returnPrefix += "&";
                     } else if (returnBy instanceof ByPtrPtr) {
-                        returnVariable += "JavaCPP_dereference(e, ";
+                        returnPrefix += "JavaCPP_dereference(env, ";
                     } // else ByPtr || ByPtrRef
-                    out.println("    jobject r = NULL;");
-                    out.println("    " + typeName[0] + " rpointer" + typeName[1] + ";");
+                    out.println("    jobject rarg = NULL;");
+                    out.println("    " + typeName[0] + " rptr" + typeName[1] + ";");
                     if (FunctionPointer.class.isAssignableFrom(methodInfo.returnType)) {
-                        out.println("    rpointer = new (std::nothrow) " + valueTypeName + ";");
+                        out.println("    rptr = new (std::nothrow) " + valueTypeName + ";");
                     }
                 } else if (methodInfo.returnType == String.class) {
-                    out.println("    jstring r = NULL;");
-                    out.println("    const char* rpointer;");
-                    returnVariable += "(const char*)";
+                    out.println("    jstring rarg = NULL;");
+                    out.println("    const char* rptr;");
+                    if (returnBy instanceof ByRef) {
+                        returnPrefix = "std::string rstr(";
+                    } else {
+                        returnPrefix += "(const char*)";
+                    }
                 } else if (methodInfo.bufferGetter) {
-                    out.println("    jobject r = NULL;");
-                    out.println("    char* rpointer;");
+                    out.println("    jobject rarg = NULL;");
+                    out.println("    char* rptr;");
                 } else {
                     logger.log(Level.WARNING, "Method \"" + methodInfo.method + "\" has unsupported return type \"" +
                             methodInfo.returnType.getCanonicalName() + "\". Compilation will most likely fail.");
@@ -1001,17 +1005,17 @@ public class Generator implements Closeable {
                 AdapterInformation adapterInfo = getAdapterInformation(false, valueTypeName, methodInfo.annotations);
                 if (adapterInfo != null) {
                     usesAdapters = true;
-                    returnVariable = adapterInfo.name + " radapter(";
+                    returnPrefix = adapterInfo.name + " radapter(";
                 }
             }
         }
         if (methodInfo.mayThrowException) {
             out.println("    try {");
         }
-        return returnVariable;
+        return returnPrefix;
     }
 
-    private void doCall(MethodInformation methodInfo, String returnVariable) {
+    private void doCall(MethodInformation methodInfo, String returnPrefix) {
         String indent = methodInfo.mayThrowException ? "        " : "    ";
         String prefix = "(";
         String suffix = ")";
@@ -1020,8 +1024,8 @@ public class Generator implements Closeable {
                  (methodInfo.pairedMethod != null &&
                   methodInfo.pairedMethod.isAnnotationPresent(Index.class));
         if (methodInfo.deallocator) {
-            out.println(indent + "void* allocatedAddress = jlong_to_ptr(p0);");
-            out.println(indent + "void (*deallocatorAddress)(void*) = (void(*)(void*))jlong_to_ptr(p1);");
+            out.println(indent + "void* allocatedAddress = jlong_to_ptr(arg0);");
+            out.println(indent + "void (*deallocatorAddress)(void*) = (void(*)(void*))jlong_to_ptr(arg1);");
             out.println(indent + "if (deallocatorAddress != NULL && allocatedAddress != NULL) {");
             out.println(indent + "    (*deallocatorAddress)(allocatedAddress);");
             out.println(indent + "}");
@@ -1047,14 +1051,14 @@ public class Generator implements Closeable {
                 wantsPointer = true;
                 prefix = ", ";
                 if (methodInfo.memberGetter || methodInfo.valueGetter) {
-                    out.print("pointer0 + p1, ");
+                    out.print("ptr0 + arg1, ");
                 } else { // methodInfo.memberSetter || methodInfo.valueSetter
-                    prefix += "pointer0 + p1, ";
+                    prefix += "ptr0 + arg1, ";
                 }
                 skipParameters = 2;
-                suffix = " * sizeof(*pointer0)" + suffix;
+                suffix = " * sizeof(*ptr0)" + suffix;
             } else {
-                out.print(indent + returnVariable);
+                out.print(indent + returnPrefix);
                 prefix = methodInfo.valueGetter || methodInfo.memberGetter ? "" : " = ";
                 suffix = "";
             }
@@ -1063,26 +1067,26 @@ public class Generator implements Closeable {
                 out.print(methodInfo.memberName[0]);
             } else if (methodInfo.memberGetter || methodInfo.memberSetter) {
                 if (index) {
-                    out.print("(*pointer)");
+                    out.print("(*ptr)");
                     prefix = "." + methodInfo.memberName[0] + prefix;
                 } else {
-                    out.print("pointer->" + methodInfo.memberName[0]);
+                    out.print("ptr->" + methodInfo.memberName[0]);
                 }
             } else { // methodInfo.valueGetter || methodInfo.valueSetter
-                out.print(index ? "(*pointer)" : methodInfo.dim > 0 || wantsPointer ? "pointer" : "*pointer");
+                out.print(index ? "(*ptr)" : methodInfo.dim > 0 || wantsPointer ? "ptr" : "*ptr");
             }
         } else if (methodInfo.bufferGetter) {
-            out.print(indent + returnVariable + "pointer");
+            out.print(indent + returnPrefix + "ptr");
             prefix = "";
             suffix = "";
         } else { // function call
-            out.print(indent + returnVariable);
+            out.print(indent + returnPrefix);
             if (FunctionPointer.class.isAssignableFrom(methodInfo.cls)) {
                 if (methodInfo.cls.isAnnotationPresent(Namespace.class)) {
-                    out.print("(pointer0->*(pointer->pointer))");
+                    out.print("(ptr0->*(ptr->ptr))");
                     skipParameters = 1;
                 } else {
-                    out.print("(*pointer->pointer)");
+                    out.print("(*ptr->ptr)");
                 }
             } else if (methodInfo.allocator) {
                 String[] typeName = getCPPTypeName(methodInfo.cls);
@@ -1104,10 +1108,10 @@ public class Generator implements Closeable {
                 out.print(methodInfo.memberName[0]);
             } else {
                 if (index) {
-                    out.print("(*pointer)");
+                    out.print("(*ptr)");
                     prefix = "." + methodInfo.memberName[0] + prefix;
                 } else {
-                    out.print("pointer->" + methodInfo.memberName[0]);
+                    out.print("ptr->" + methodInfo.memberName[0]);
                 }
             }
         }
@@ -1116,14 +1120,14 @@ public class Generator implements Closeable {
             // print array indices to access array members, or whatever
             // the C++ operator does with them when the Index annotation is present
             String cast = getParameterCast(methodInfo, j);
-            out.print("[" + cast + (methodInfo.parameterTypes[j].isPrimitive() ? "p" : "pointer") + j + "]");
+            out.print("[" + cast + (methodInfo.parameterTypes[j].isPrimitive() ? "arg" : "ptr") + j + "]");
         }
         if (methodInfo.memberName.length > 1) {
             out.print(methodInfo.memberName[1]);
         }
         out.print(prefix);
         if (methodInfo.withEnv) {
-            out.print(Modifier.isStatic(methodInfo.modifiers) ? "e, c" : "e, o");
+            out.print(Modifier.isStatic(methodInfo.modifiers) ? "env, cls" : "env, obj");
             if (methodInfo.parameterTypes.length - skipParameters - methodInfo.dim > 0) {
                 out.print(", ");
             }
@@ -1135,9 +1139,9 @@ public class Generator implements Closeable {
 
             if (("(void*)".equals(cast) || "(void *)".equals(cast)) &&
                     methodInfo.parameterTypes[j] == long.class) {
-                out.print("jlong_to_ptr(p" + j + ")");
+                out.print("jlong_to_ptr(arg" + j + ")");
             } else if (methodInfo.parameterTypes[j].isPrimitive()) {
-                out.print(cast + "p" + j);
+                out.print(cast + "arg" + j);
             } else if (adapterInfo != null) {
                 cast = adapterInfo.cast.trim();
                 if (cast.length() > 0 && !cast.startsWith("(") && !cast.endsWith(")")) {
@@ -1146,14 +1150,14 @@ public class Generator implements Closeable {
                 out.print(cast + "adapter" + j);
                 j += adapterInfo.argc - 1;
             } else if (FunctionPointer.class.isAssignableFrom(methodInfo.parameterTypes[j]) && passBy == null) {
-                out.print(cast + "(pointer" + j + " == NULL ? NULL : pointer" + j + "->pointer)");
+                out.print(cast + "(ptr" + j + " == NULL ? NULL : ptr" + j + "->ptr)");
             } else if (passBy instanceof ByVal || (passBy instanceof ByRef &&
                     methodInfo.parameterTypes[j] != String.class)) {
-                out.print("*" + cast + "pointer" + j);
+                out.print("*" + cast + "ptr" + j);
             } else if (passBy instanceof ByPtrPtr) {
-                out.print(cast + "(p" + j + " == NULL ? NULL : &pointer" + j + ")");
+                out.print(cast + "(arg" + j + " == NULL ? NULL : &ptr" + j + ")");
             } else { // ByPtr || ByPtrRef || (ByRef && std::string)
-                out.print(cast + "pointer" + j);
+                out.print(cast + "ptr" + j);
             }
 
             if (j < methodInfo.parameterTypes.length - 1) {
@@ -1167,7 +1171,7 @@ public class Generator implements Closeable {
         if (getBy(methodInfo.annotations) instanceof ByRef &&
                 methodInfo.returnType == String.class) {
             // special considerations for std::string
-            out.print(".c_str()");
+            out.print(");\n" + indent + "rptr = rstr.c_str()");
         }
     }
 
@@ -1190,7 +1194,7 @@ public class Generator implements Closeable {
         String indent = methodInfo.mayThrowException ? "        " : "    ";
         if (methodInfo.returnType == void.class) {
             if (methodInfo.allocator || methodInfo.arrayAllocator) {
-                out.println(indent + "jint rcapacity = " + (methodInfo.arrayAllocator ? "p0;" : "1;"));
+                out.println(indent + "jint rcapacity = " + (methodInfo.arrayAllocator ? "arg0;" : "1;"));
                 boolean noDeallocator = methodInfo.cls.isAnnotationPresent(NoDeallocator.class);
                 for (Annotation a : methodInfo.annotations) {
                     if (a instanceof NoDeallocator) {
@@ -1200,7 +1204,7 @@ public class Generator implements Closeable {
                 }
                 if (!noDeallocator) {
                     out.println(indent + "jvalue args[3];");
-                    out.println(indent + "args[0].j = ptr_to_jlong(rpointer);");
+                    out.println(indent + "args[0].j = ptr_to_jlong(rptr);");
                     out.println(indent + "args[1].i = rcapacity;");
                     out.print  (indent + "args[2].j = ptr_to_jlong(&JavaCPP_" + mangle(methodInfo.cls.getName()));
                     if (methodInfo.arrayAllocator) {
@@ -1210,25 +1214,25 @@ public class Generator implements Closeable {
                         out.println("_deallocate);");
                         deallocators.register(methodInfo.cls);
                     }
-                    out.println(indent + "e->CallNonvirtualVoidMethodA(o, JavaCPP_getClass(e, " +
-                            jclasses.register(Pointer.class) + "), JavaCPP_initMethodID, args);");
+                    out.println(indent + "env->CallNonvirtualVoidMethodA(obj, JavaCPP_getClass(env, " +
+                            jclasses.register(Pointer.class) + "), JavaCPP_initMID, args);");
                 } else {
-                    out.println(indent + "e->SetLongField(o, JavaCPP_addressFieldID, ptr_to_jlong(rpointer));");
-                    out.println(indent + "e->SetIntField(o, JavaCPP_limitFieldID, rcapacity);");
-                    out.println(indent + "e->SetIntField(o, JavaCPP_capacityFieldID, rcapacity);");
+                    out.println(indent + "env->SetLongField(obj, JavaCPP_addressFID, ptr_to_jlong(rptr));");
+                    out.println(indent + "env->SetIntField(obj, JavaCPP_limitFID, rcapacity);");
+                    out.println(indent + "env->SetIntField(obj, JavaCPP_capacityFID, rcapacity);");
                 }
             }
         } else {
             if (methodInfo.valueSetter || methodInfo.memberSetter || methodInfo.noReturnGetter) {
                 // nothing
             } else if (methodInfo.returnType.isPrimitive()) {
-                out.println(indent + "r = (" + getJNITypeName(methodInfo.returnType) + ")rvalue;");
+                out.println(indent + "rarg = (" + getJNITypeName(methodInfo.returnType) + ")rvalue;");
             } else if (methodInfo.returnRaw) {
-                out.println(indent + "r = rpointer;");
+                out.println(indent + "rarg = rptr;");
             } else {
                 boolean needInit = false;
                 if (adapterInfo != null) {
-                    out.println(indent + "rpointer = radapter;");
+                    out.println(indent + "rptr = radapter;");
                     if (methodInfo.returnType != String.class) {
                         out.println(indent + "jint rcapacity = (jint)radapter.size;");
                         out.println(indent + "jlong deallocator = ptr_to_jlong(&(" +
@@ -1252,44 +1256,44 @@ public class Generator implements Closeable {
                             for (int i = 0; i < methodInfo.parameterTypes.length; i++) {
                                 String cast = getParameterCast(methodInfo, i);
                                 if (methodInfo.parameterTypes[i] == methodInfo.returnType) {
-                                    out.println(         "if (rpointer == " + cast + "pointer" + i + ") {");
-                                    out.println(indent + "    r = p" + i + ";");
+                                    out.println(         "if (rptr == " + cast + "ptr" + i + ") {");
+                                    out.println(indent + "    rarg = arg" + i + ";");
                                     out.print(indent + "} else ");
                                 }
                             }
                         } else if (!Modifier.isStatic(methodInfo.modifiers) && methodInfo.cls == methodInfo.returnType) {
-                            out.println(         "if (rpointer == pointer) {");
-                            out.println(indent + "    r = o;");
+                            out.println(         "if (rptr == ptr) {");
+                            out.println(indent + "    rarg = obj;");
                             out.print(indent + "} else ");
                         }
                     }
-                    out.println(         "if (rpointer != NULL) {");
-                    out.println(indent + "    r = e->AllocObject(JavaCPP_getClass(e, " +
+                    out.println(         "if (rptr != NULL) {");
+                    out.println(indent + "    rarg = env->AllocObject(JavaCPP_getClass(env, " +
                             jclasses.register(methodInfo.returnType) + "));");
                     if (needInit) {
                         out.println(indent + "    if (deallocator != 0) {");
                         out.println(indent + "        jvalue args[3];");
-                        out.println(indent + "        args[0].j = ptr_to_jlong(rpointer);");
+                        out.println(indent + "        args[0].j = ptr_to_jlong(rptr);");
                         out.println(indent + "        args[1].i = rcapacity;");
                         out.println(indent + "        args[2].j = deallocator;");
-                        out.println(indent + "        e->CallNonvirtualVoidMethodA(r, JavaCPP_getClass(e, " +
-                                jclasses.register(Pointer.class) + "), JavaCPP_initMethodID, args);");
+                        out.println(indent + "        env->CallNonvirtualVoidMethodA(rarg, JavaCPP_getClass(env, " +
+                                jclasses.register(Pointer.class) + "), JavaCPP_initMID, args);");
                         out.println(indent + "    } else {");
-                        out.println(indent + "        e->SetLongField(r, JavaCPP_addressFieldID, ptr_to_jlong(rpointer));");
-                        out.println(indent + "        e->SetIntField(r, JavaCPP_limitFieldID, rcapacity);");
-                        out.println(indent + "        e->SetIntField(r, JavaCPP_capacityFieldID, rcapacity);");
+                        out.println(indent + "        env->SetLongField(rarg, JavaCPP_addressFID, ptr_to_jlong(rptr));");
+                        out.println(indent + "        env->SetIntField(rarg, JavaCPP_limitFID, rcapacity);");
+                        out.println(indent + "        env->SetIntField(rarg, JavaCPP_capacityFID, rcapacity);");
                         out.println(indent + "    }");
                     } else {
-                        out.println(indent + "    e->SetLongField(r, JavaCPP_addressFieldID, ptr_to_jlong(rpointer));");
+                        out.println(indent + "    env->SetLongField(rarg, JavaCPP_addressFID, ptr_to_jlong(rptr));");
                     }
                     out.println(indent + "}");
                 } else if (methodInfo.returnType == String.class) {
-                    out.println(indent + "if (rpointer != NULL) {");
-                    out.println(indent + "    r = e->NewStringUTF(rpointer);");
+                    out.println(indent + "if (rptr != NULL) {");
+                    out.println(indent + "    rarg = env->NewStringUTF(rptr);");
                     out.println(indent + "}");
                 } else if (methodInfo.bufferGetter) {
-                    out.println(indent + "if (rpointer != NULL) {");
-                    out.println(indent + "    r = e->NewDirectByteBuffer(rpointer, size);");
+                    out.println(indent + "if (rptr != NULL) {");
+                    out.println(indent + "    rarg = env->NewDirectByteBuffer(rptr, size);");
                     out.println(indent + "}");
                 }
             }
@@ -1309,39 +1313,39 @@ public class Generator implements Closeable {
             if (Pointer.class.isAssignableFrom(methodInfo.parameterTypes[j])) {
                 if (adapterInfo != null) {
                     for (int k = 0; k < adapterInfo.argc; k++) {
-                        out.println(indent + typeName[0] + " rpointer" + (j+k) + typeName[1] + " = " + cast + "adapter" + j + ";");
+                        out.println(indent + typeName[0] + " rptr" + (j+k) + typeName[1] + " = " + cast + "adapter" + j + ";");
                         out.println(indent + "jint rsize" + (j+k) + " = (jint)adapter" + j + ".size" + (k > 0 ? (k+1) + ";" : ";"));
-                        out.println(indent + "if (rpointer" + (j+k) + " != " + cast + "pointer" + (j+k) + ") {");
+                        out.println(indent + "if (rptr" + (j+k) + " != " + cast + "ptr" + (j+k) + ") {");
                         out.println(indent + "    jvalue args[3];");
-                        out.println(indent + "    args[0].j = ptr_to_jlong(rpointer" + (j+k) + ");");
+                        out.println(indent + "    args[0].j = ptr_to_jlong(rptr" + (j+k) + ");");
                         out.println(indent + "    args[1].i = rsize" + (j+k) + ";");
                         out.println(indent + "    args[2].j = ptr_to_jlong(&(" + adapterInfo.name + "::deallocate));");
-                        out.println(indent + "    e->CallNonvirtualVoidMethodA(p" + j + ", JavaCPP_getClass(e, " +
-                                jclasses.register(Pointer.class) + "), JavaCPP_initMethodID, args);");
+                        out.println(indent + "    env->CallNonvirtualVoidMethodA(arg" + j + ", JavaCPP_getClass(env, " +
+                                jclasses.register(Pointer.class) + "), JavaCPP_initMID, args);");
                         out.println(indent + "} else {");
-                        out.println(indent + "    e->SetIntField(p" + j + ", JavaCPP_limitFieldID, rsize" + (j+k) + " + position" + (j+k) + ");");
+                        out.println(indent + "    env->SetIntField(arg" + j + ", JavaCPP_limitFID, rsize" + (j+k) + " + position" + (j+k) + ");");
                         out.println(indent + "}");
                     }
                 } else if ((passBy instanceof ByPtrPtr || passBy instanceof ByPtrRef) &&
                         !methodInfo.valueSetter && !methodInfo.memberSetter) {
                     if (!methodInfo.parameterTypes[j].isAnnotationPresent(Opaque.class)) {
-                        out.println(indent + "pointer" + j + " -= position" + j + ";");
+                        out.println(indent + "ptr" + j + " -= position" + j + ";");
                     }
-                    out.println(indent + "if (p" + j + " != NULL) e->SetLongField(p" + j +
-                            ", JavaCPP_addressFieldID, ptr_to_jlong(pointer" + j + "));");
+                    out.println(indent + "if (arg" + j + " != NULL) env->SetLongField(arg" + j +
+                            ", JavaCPP_addressFID, ptr_to_jlong(ptr" + j + "));");
                 }
             } else if (methodInfo.parameterTypes[j] == String.class) {
-                out.println(indent + "if (p" + j + " != NULL) e->ReleaseStringUTFChars(p" + j + ", pointer" + j + ");");
+                out.println(indent + "if (arg" + j + " != NULL) env->ReleaseStringUTFChars(arg" + j + ", ptr" + j + ");");
             } else if (methodInfo.parameterTypes[j].isArray() &&
                     methodInfo.parameterTypes[j].getComponentType().isPrimitive()) {
-                out.print(indent + "if (p" + j + " != NULL) ");
+                out.print(indent + "if (arg" + j + " != NULL) ");
                 String s = methodInfo.parameterTypes[j].getComponentType().getName();
                 if (methodInfo.valueGetter || methodInfo.valueSetter ||
                         methodInfo.memberGetter || methodInfo.memberSetter) {
-                    out.println("e->ReleasePrimitiveArrayCritical(p" + j + ", pointer" + j + ", 0);");
+                    out.println("env->ReleasePrimitiveArrayCritical(arg" + j + ", ptr" + j + ", 0);");
                 } else {
                     s = Character.toUpperCase(s.charAt(0)) + s.substring(1);
-                    out.println("e->Release" + s + "ArrayElements(p" + j + ", pointer" + j + ", 0);");
+                    out.println("env->Release" + s + "ArrayElements(arg" + j + ", ptr" + j + ", 0);");
                 }
             }
         }
@@ -1349,7 +1353,7 @@ public class Generator implements Closeable {
         if (methodInfo.mayThrowException) {
             mayThrowExceptions = true;
             out.println("    } catch (...) {");
-            out.println("        JavaCPP_handleException(e);");
+            out.println("        JavaCPP_handleException(env);");
             out.println("    }");
         }
     }
@@ -1373,7 +1377,7 @@ public class Generator implements Closeable {
                 returnConvention[1] : "") + callbackName + parameterDeclaration + " {");
         out.print((callbackReturnType != void.class ? "    return " : "    ") + callbackName + "_instance(");
         for (int j = 0; j < callbackParameterTypes.length; j++) {
-            out.print("p" + j);
+            out.print("arg" + j);
             if (j < callbackParameterTypes.length - 1) {
                 out.print(", ");
             }
@@ -1385,10 +1389,10 @@ public class Generator implements Closeable {
         }
 
         out.println(returnConvention[0] + instanceTypeName + "::operator()" + parameterDeclaration + " {");
-        String returnVariable = "";
+        String returnPrefix = "";
         if (callbackReturnType != void.class) {
-            out.println("    " + getJNITypeName(callbackReturnType) + " r = 0;");
-            returnVariable = "r = ";
+            out.println("    " + getJNITypeName(callbackReturnType) + " rarg = 0;");
+            returnPrefix = "rarg = ";
         }
         String callbackReturnCast = getCast(callbackAnnotations, callbackReturnType);
         Annotation returnBy = getBy(callbackAnnotations);
@@ -1396,10 +1400,10 @@ public class Generator implements Closeable {
         String returnValueTypeName = getValueTypeName(returnTypeName);
         AdapterInformation returnAdapterInfo = getAdapterInformation(false, returnValueTypeName, callbackAnnotations);
 
-        out.println("    jthrowable t = NULL;");
-        out.println("    JNIEnv* e;");
-        out.println("    int d = JavaCPP_getEnv(&e);");
-        out.println("    if (d < 0) {");
+        out.println("    jthrowable exc = NULL;");
+        out.println("    JNIEnv* env;");
+        out.println("    int attached = JavaCPP_getEnv(&env);");
+        out.println("    if (attached < 0) {");
         out.println("        goto end;");
         out.println("    }");
         out.println("{");
@@ -1409,7 +1413,7 @@ public class Generator implements Closeable {
                 if (callbackParameterTypes[j].isPrimitive()) {
                     out.println("    args[" + j + "]." +
                             getSignature(callbackParameterTypes[j]).toLowerCase() + " = (" +
-                            getJNITypeName(callbackParameterTypes[j]) + ")p" + j + ";");
+                            getJNITypeName(callbackParameterTypes[j]) + ")arg" + j + ";");
                 } else {
                     Annotation passBy = getBy(callbackParameterAnnotations[j]);
                     String[] typeName = getCPPTypeName(callbackParameterTypes[j]);
@@ -1423,7 +1427,7 @@ public class Generator implements Closeable {
                     boolean needInit = false;
                     if (adapterInfo != null) {
                         usesAdapters = true;
-                        out.println("    " + adapterInfo.name + " adapter" + j + "(p" + j + ");");
+                        out.println("    " + adapterInfo.name + " adapter" + j + "(arg" + j + ");");
                         out.println("    jint size" + j + " = (jint)adapter" + j + ".size;");
                         out.println("    jlong deallocator" + j + " = ptr_to_jlong(&(" + adapterInfo.name + "::deallocate));");
                         needInit = true;
@@ -1442,64 +1446,64 @@ public class Generator implements Closeable {
                             typeName[1] = "";
                             valueTypeName = getValueTypeName(typeName);
                         }
-                        out.println("    jobject o" + j + " = NULL;");
-                        out.println("    " + typeName[0] + " pointer" + j + typeName[1] + " = NULL;");
+                        out.println("    jobject obj" + j + " = NULL;");
+                        out.println("    " + typeName[0] + " ptr" + j + typeName[1] + " = NULL;");
                         if (FunctionPointer.class.isAssignableFrom(callbackParameterTypes[j])) {
-                            out.println("    pointer" + j + " = new (std::nothrow) " + valueTypeName + ";");
-                            out.println("    if (pointer" + j + " != NULL) {");
-                            out.println("        pointer" + j + "->pointer = p" + j + ";");
+                            out.println("    ptr" + j + " = new (std::nothrow) " + valueTypeName + ";");
+                            out.println("    if (ptr" + j + " != NULL) {");
+                            out.println("        ptr" + j + "->ptr = arg" + j + ";");
                             out.println("    }");
                         } else if (adapterInfo != null) {
-                            out.println("    pointer" + j + " = adapter" + j + ";");
+                            out.println("    ptr" + j + " = adapter" + j + ";");
                         } else if (passBy instanceof ByVal && callbackParameterTypes[j] != Pointer.class) {
-                            out.println("    pointer" + j + (getNoException(callbackParameterTypes[j], callbackMethod) ?
+                            out.println("    ptr" + j + (getNoException(callbackParameterTypes[j], callbackMethod) ?
                                 " = new (std::nothrow) " : " = new ") + valueTypeName + typeName[1] +
-                                "(*(" + typeName[0] + typeName[1] + ")&p" + j + ");");
+                                "(*(" + typeName[0] + typeName[1] + ")&arg" + j + ");");
                         } else if (passBy instanceof ByVal || passBy instanceof ByRef) {
-                            out.println("    pointer" + j + " = (" + typeName[0] + typeName[1] + ")&p" + j + ";");
+                            out.println("    ptr" + j + " = (" + typeName[0] + typeName[1] + ")&arg" + j + ";");
                         } else if (passBy instanceof ByPtrPtr) {
-                            out.println("    if (p" + j + " == NULL) {");
+                            out.println("    if (arg" + j + " == NULL) {");
                             out.println("        JavaCPP_log(\"Pointer address of argument " + j + " is NULL in callback for " + cls.getCanonicalName() + ".\");");
                             out.println("    } else {");
-                            out.println("        pointer" + j + " = *p" + j + ";");
+                            out.println("        ptr" + j + " = *arg" + j + ";");
                             out.println("    }");
                         } else { // ByPtr || ByPtrRef
-                            out.println("    pointer" + j + " = p" + j + ";");
+                            out.println("    ptr" + j + " = arg" + j + ";");
                         }
-                        String s = "    o" + j + " = e->AllocObject(JavaCPP_getClass(e, " +
+                        String s = "    obj" + j + " = env->AllocObject(JavaCPP_getClass(env, " +
                                 jclasses.register(callbackParameterTypes[j]) + "));";
                         jclassesInit.register(callbackParameterTypes[j]); // Android
                         adapterInfo = getAdapterInformation(true, valueTypeName, callbackParameterAnnotations[j]);
                         if (adapterInfo != null || passBy instanceof ByPtrPtr || passBy instanceof ByPtrRef) {
                             out.println(s);
                         } else {
-                            out.println("    if (pointer" + j + " != NULL) { ");
+                            out.println("    if (ptr" + j + " != NULL) { ");
                             out.println("    " + s);
                             out.println("    }");
                         }
-                        out.println("    if (o" + j + " != NULL) { ");
+                        out.println("    if (obj" + j + " != NULL) { ");
                         if (needInit) {
                             out.println("        if (deallocator" + j + " != 0) {");
                             out.println("            jvalue args[3];");
-                            out.println("            args[0].j = ptr_to_jlong(pointer" + j + ");");
+                            out.println("            args[0].j = ptr_to_jlong(ptr" + j + ");");
                             out.println("            args[1].i = size" + j + ";");
                             out.println("            args[2].j = deallocator" + j + ";");
-                            out.println("            e->CallNonvirtualVoidMethodA(o" + j + ", JavaCPP_getClass(e, " +
-                                    jclasses.register(Pointer.class) + "), JavaCPP_initMethodID, args);");
+                            out.println("            env->CallNonvirtualVoidMethodA(obj" + j + ", JavaCPP_getClass(env, " +
+                                    jclasses.register(Pointer.class) + "), JavaCPP_initMID, args);");
                             out.println("        } else {");
-                            out.println("            e->SetLongField(o" + j + ", JavaCPP_addressFieldID, ptr_to_jlong(pointer" + j + "));");
-                            out.println("            e->SetIntField(o" + j + ", JavaCPP_limitFieldID, size" + j + ");");
-                            out.println("            e->SetIntField(o" + j + ", JavaCPP_capacityFieldID, size" + j + ");");
+                            out.println("            env->SetLongField(obj" + j + ", JavaCPP_addressFID, ptr_to_jlong(ptr" + j + "));");
+                            out.println("            env->SetIntField(obj" + j + ", JavaCPP_limitFID, size" + j + ");");
+                            out.println("            env->SetIntField(obj" + j + ", JavaCPP_capacityFID, size" + j + ");");
                             out.println("        }");
                         } else {
-                            out.println("        e->SetLongField(o" + j + ", JavaCPP_addressFieldID, ptr_to_jlong(pointer" + j + "));");
+                            out.println("        env->SetLongField(obj" + j + ", JavaCPP_addressFID, ptr_to_jlong(ptr" + j + "));");
                         }
                         out.println("    }");
-                        out.println("    args[" + j + "].l = o" + j + ";");
+                        out.println("    args[" + j + "].l = obj" + j + ";");
                     } else if (callbackParameterTypes[j] == String.class) {
-                        out.println("    jstring o" + j + " = p" + j + " == NULL ? NULL : e->NewStringUTF((const char*)" +
-                                (adapterInfo != null ? "adapter" : "p") + j + ");");
-                        out.println("    args[" + j + "].l = o" + j + ";");
+                        out.println("    jstring obj" + j + " = arg" + j + " == NULL ? NULL : env->NewStringUTF((const char*)" +
+                                (adapterInfo != null ? "adapter" : "arg") + j + ");");
+                        out.println("    args[" + j + "].l = obj" + j + ";");
                     } else {
                         logger.log(Level.WARNING, "Callback \"" + callbackMethod + "\" has unsupported parameter type \"" +
                                 callbackParameterTypes[j].getCanonicalName() + "\". Compilation will most likely fail.");
@@ -1508,22 +1512,22 @@ public class Generator implements Closeable {
             }
         }
 
-        out.println("    if (object == NULL) {");
-        out.println("        object = e->NewGlobalRef(e->AllocObject(JavaCPP_getClass(e, " + jclasses.register(cls) + ")));");
-        out.println("        if (object == NULL) {");
+        out.println("    if (obj == NULL) {");
+        out.println("        obj = env->NewGlobalRef(env->AllocObject(JavaCPP_getClass(env, " + jclasses.register(cls) + ")));");
+        out.println("        if (obj == NULL) {");
         out.println("            JavaCPP_log(\"Error creating global reference of " + cls.getCanonicalName() + " instance for callback.\");");
         out.println("        } else {");
-        out.println("            e->SetLongField(object, JavaCPP_addressFieldID, ptr_to_jlong(this));");
+        out.println("            env->SetLongField(obj, JavaCPP_addressFID, ptr_to_jlong(this));");
         out.println("        }");
-        out.println("        pointer = &" + callbackName + ";");
+        out.println("        ptr = &" + callbackName + ";");
         out.println("    }");
-        out.println("    if (methodID == NULL) {");
-        out.println("        methodID = e->GetMethodID(JavaCPP_getClass(e, " + jclasses.register(cls) + "), \"" + callbackMethod.getName() + "\", \"(" +
+        out.println("    if (mid == NULL) {");
+        out.println("        mid = env->GetMethodID(JavaCPP_getClass(env, " + jclasses.register(cls) + "), \"" + callbackMethod.getName() + "\", \"(" +
                 getSignature(callbackMethod.getParameterTypes()) + ")" + getSignature(callbackMethod.getReturnType()) + "\");");
         out.println("    }");
-        out.println("    if (e->IsSameObject(object, NULL)) {");
+        out.println("    if (env->IsSameObject(obj, NULL)) {");
         out.println("        JavaCPP_log(\"Function pointer object is NULL in callback for " + cls.getCanonicalName() + ".\");");
-        out.println("    } else if (methodID == NULL) {");
+        out.println("    } else if (mid == NULL) {");
         out.println("        JavaCPP_log(\"Error getting method ID of function caller \\\"" + callbackMethod + "\\\" for callback.\");");
         out.println("    } else {");
         String s = "Object";
@@ -1531,10 +1535,9 @@ public class Generator implements Closeable {
             s = callbackReturnType.getName();
             s = Character.toUpperCase(s.charAt(0)) + s.substring(1);
         }
-        out.println("        " + returnVariable + "e->Call" + s + "MethodA(object, methodID, " +
-                (callbackParameterTypes.length == 0 ? "NULL);" : "args);"));
-        out.println("        if ((t = e->ExceptionOccurred()) != NULL) {");
-        out.println("            e->ExceptionClear();");
+        out.println("        " + returnPrefix + "env->Call" + s + "MethodA(obj, mid, " + (callbackParameterTypes.length == 0 ? "NULL);" : "args);"));
+        out.println("        if ((exc = env->ExceptionOccurred()) != NULL) {");
+        out.println("            env->ExceptionClear();");
         out.println("        }");
         out.println("    }");
 
@@ -1546,29 +1549,29 @@ public class Generator implements Closeable {
                 AdapterInformation adapterInfo = getAdapterInformation(true, valueTypeName, callbackParameterAnnotations[j]);
 
                 if (adapterInfo != null || passBy instanceof ByPtrPtr || passBy instanceof ByPtrRef) {
-                    out.println("    " + typeName[0] + " rpointer" + j + typeName[1] + " = (" +
-                            typeName[0] + typeName[1] + ")jlong_to_ptr(e->GetLongField(o" + j + ", JavaCPP_addressFieldID));");
+                    out.println("    " + typeName[0] + " rptr" + j + typeName[1] + " = (" +
+                            typeName[0] + typeName[1] + ")jlong_to_ptr(env->GetLongField(obj" + j + ", JavaCPP_addressFID));");
                     if (adapterInfo != null) {
-                        out.println("    jint rsize" + j + " = e->GetIntField(o" + j + ", JavaCPP_limitFieldID);");
+                        out.println("    jint rsize" + j + " = env->GetIntField(obj" + j + ", JavaCPP_limitFID);");
                     }
                     if (!callbackParameterTypes[j].isAnnotationPresent(Opaque.class)) {
-                        out.println("    jint rposition" + j + " = e->GetIntField(o" + j + ", JavaCPP_positionFieldID);");
-                        out.println("    rpointer" + j + " += rposition" + j + ";");
+                        out.println("    jint rposition" + j + " = env->GetIntField(obj" + j + ", JavaCPP_positionFID);");
+                        out.println("    rptr" + j + " += rposition" + j + ";");
                         if (adapterInfo != null) {
                             out.println("    rsize" + j + " -= rposition" + j + ";");
                         }
                     }
                     if (adapterInfo != null) {
-                        out.println("    adapter" + j + ".assign(rpointer" + j + ", rsize" + j + ");");
+                        out.println("    adapter" + j + ".assign(rptr" + j + ", rsize" + j + ");");
                     } else if (passBy instanceof ByPtrPtr) {
-                        out.println("    *p" + j + " = rpointer" + j + ";");
+                        out.println("    *arg" + j + " = rptr" + j + ";");
                     } else if (passBy instanceof ByPtrRef) {
-                        out.println("    p"  + j + " = rpointer" + j + ";");
+                        out.println("    arg"  + j + " = rptr" + j + ";");
                     }
                 }
             }
             if (!callbackParameterTypes[j].isPrimitive()) {
-                out.println("    e->DeleteLocalRef(o" + j + ");");
+                out.println("    env->DeleteLocalRef(obj" + j + ");");
             }
         }
         out.println("}");
@@ -1576,27 +1579,27 @@ public class Generator implements Closeable {
 
         if (callbackReturnType != void.class) {
             if (Pointer.class.isAssignableFrom(callbackReturnType)) {
-                out.println("    " + returnTypeName[0] + " rpointer" + returnTypeName[1] + " = r == NULL ? NULL : (" +
-                        returnTypeName[0] + returnTypeName[1] + ")jlong_to_ptr(e->GetLongField(r, JavaCPP_addressFieldID));");
+                out.println("    " + returnTypeName[0] + " rptr" + returnTypeName[1] + " = rarg == NULL ? NULL : (" +
+                        returnTypeName[0] + returnTypeName[1] + ")jlong_to_ptr(env->GetLongField(rarg, JavaCPP_addressFID));");
                 if (returnAdapterInfo != null) {
-                    out.println("    jint rsize = r == NULL ? 0 : e->GetIntField(r, JavaCPP_limitFieldID);");
+                    out.println("    jint rsize = rarg == NULL ? 0 : env->GetIntField(rarg, JavaCPP_limitFID);");
                 }
                 if (!callbackReturnType.isAnnotationPresent(Opaque.class)) {
-                    out.println("    jint rposition = r == NULL ? 0 : e->GetIntField(r, JavaCPP_positionFieldID);");
-                    out.println("    rpointer += rposition;");
+                    out.println("    jint rposition = rarg == NULL ? 0 : env->GetIntField(rarg, JavaCPP_positionFID);");
+                    out.println("    rptr += rposition;");
                     if (returnAdapterInfo != null) {
                         out.println("    rsize -= rposition;");
                     }
                 }
 //            } else if (callbackReturnType == String.class) {
-//                out.println("    " + returnTypeName + " rpointer = r == NULL ? NULL : e->GetStringUTFChars(r, NULL);");
+//                out.println("    " + returnTypeName + " rptr = rarg == NULL ? NULL : env->GetStringUTFChars(rarg, NULL);");
 //                if (returnAdapterInfo != null) {
 //                    out.println("    jint rsize = 0;");
 //                }
             } else if (Buffer.class.isAssignableFrom(callbackReturnType)) {
-                out.println("    " + returnTypeName[0] + " rpointer" + returnTypeName[1] + " = r == NULL ? NULL : e->GetDirectBufferAddress(r);");
+                out.println("    " + returnTypeName[0] + " rptr" + returnTypeName[1] + " = rarg == NULL ? NULL : env->GetDirectBufferAddress(rarg);");
                 if (returnAdapterInfo != null) {
-                    out.println("    jint rsize = r == NULL ? 0 : e->GetDirectBufferCapacity(r);");
+                    out.println("    jint rsize = rarg == NULL ? 0 : env->GetDirectBufferCapacity(rarg);");
                 }
             } else if (!callbackReturnType.isPrimitive()) {
                 logger.log(Level.WARNING, "Callback \"" + callbackMethod + "\" has unsupported return type \"" +
@@ -1604,42 +1607,42 @@ public class Generator implements Closeable {
             }
         }
 
-        out.println("    if (t != NULL) {");
-        out.println("        jclass c = e->GetObjectClass(t);");
-        out.println("        jmethodID i = e->GetMethodID(c, \"toString\", \"()Ljava/lang/String;\");");
-        out.println("        e->DeleteLocalRef(c);");
-        out.println("        jstring s = (jstring)e->CallObjectMethod(t, i);");
-        out.println("        e->DeleteLocalRef(t);");
-        out.println("        const char *msg = e->GetStringUTFChars(s, NULL);");
-        out.println("        JavaCPP_exception ex(msg);");
-        out.println("        e->ReleaseStringUTFChars(s, msg);");
-        out.println("        e->DeleteLocalRef(s);");
-        out.println("        JavaCPP_detach(d);");
-        out.println("        throw ex;");
+        out.println("    if (exc != NULL) {");
+        out.println("        jclass cls = env->GetObjectClass(exc);");
+        out.println("        jmethodID mid = env->GetMethodID(cls, \"toString\", \"()Ljava/lang/String;\");");
+        out.println("        env->DeleteLocalRef(cls);");
+        out.println("        jstring str = (jstring)env->CallObjectMethod(exc, mid);");
+        out.println("        env->DeleteLocalRef(exc);");
+        out.println("        const char *msg = env->GetStringUTFChars(str, NULL);");
+        out.println("        JavaCPP_exception e(msg);");
+        out.println("        env->ReleaseStringUTFChars(str, msg);");
+        out.println("        env->DeleteLocalRef(str);");
+        out.println("        JavaCPP_detach(attached);");
+        out.println("        throw e;");
         out.println("    } else {");
-        out.println("        JavaCPP_detach(d);");
+        out.println("        JavaCPP_detach(attached);");
         out.println("    }");
 
         if (callbackReturnType != void.class) {
             if (callbackReturnType.isPrimitive()) {
-                out.println("    return " + callbackReturnCast + "r;");
+                out.println("    return " + callbackReturnCast + "rarg;");
             } else if (returnAdapterInfo != null) {
                 usesAdapters = true;
-                out.println("    return " + returnAdapterInfo.name + "(" + callbackReturnCast + "rpointer, rsize);");
+                out.println("    return " + returnAdapterInfo.name + "(" + callbackReturnCast + "rptr, rsize);");
             } else if (FunctionPointer.class.isAssignableFrom(callbackReturnType)) {
-                out.println("    return " + callbackReturnCast + "(rpointer == NULL ? NULL : rpointer->pointer);");
+                out.println("    return " + callbackReturnCast + "(rptr == NULL ? NULL : rptr->ptr);");
             } else if (returnBy instanceof ByVal || returnBy instanceof ByRef) {
-                out.println("    if (rpointer == NULL) {");
+                out.println("    if (rptr == NULL) {");
                 out.println("        JavaCPP_log(\"Return pointer address is NULL in callback for " + cls.getCanonicalName() + ".\");");
                 out.println("        static " + returnValueTypeName + " empty" + returnTypeName[1] + ";");
                 out.println("        return empty;");
                 out.println("    } else {");
-                out.println("        return *" + callbackReturnCast + "rpointer;");
+                out.println("        return *" + callbackReturnCast + "rptr;");
                 out.println("    }");
             } else if (returnBy instanceof ByPtrPtr) {
-                out.println("    return " + callbackReturnCast + "&rpointer;");
+                out.println("    return " + callbackReturnCast + "&rptr;");
             } else { // ByPtr || ByPtrRef
-                out.println("    return " + callbackReturnCast + "rpointer;");
+                out.println("    return " + callbackReturnCast + "rptr;");
             }
         }
         out.println("}");
@@ -1649,23 +1652,23 @@ public class Generator implements Closeable {
         // XXX: Here, we should actually allocate new trampolines on the heap somehow...
         // For now it just bumps out from the global variable the last object that called this method
         String instanceTypeName = "JavaCPP_" + mangle(cls.getName());
-        out.println("    jobject object = e->NewWeakGlobalRef(o);");
-        out.println("    if (object == NULL) {");
+        out.println("    obj = env->NewWeakGlobalRef(obj);");
+        out.println("    if (obj == NULL) {");
         out.println("        JavaCPP_log(\"Error creating global reference of " + cls.getCanonicalName() + " instance for callback.\");");
         out.println("        return;");
         out.println("    }");
-        out.println("    " + instanceTypeName + "* rpointer = new (std::nothrow) " + instanceTypeName + ";");
-        out.println("    if (rpointer != NULL) {");
-        out.println("        rpointer->pointer = &" + callbackName + ";");
-        out.println("        rpointer->object  = object;");
+        out.println("    " + instanceTypeName + "* rptr = new (std::nothrow) " + instanceTypeName + ";");
+        out.println("    if (rptr != NULL) {");
+        out.println("        rptr->ptr = &" + callbackName + ";");
+        out.println("        rptr->obj = obj;");
         out.println("        jvalue args[3];");
-        out.println("        args[0].j = ptr_to_jlong(rpointer);");
+        out.println("        args[0].j = ptr_to_jlong(rptr);");
         out.println("        args[1].i = 1;");
         out.println("        args[2].j = ptr_to_jlong(&" + instanceTypeName + "_deallocate);");
         deallocators.register(cls);
-        out.println("        e->CallNonvirtualVoidMethodA(o, JavaCPP_getClass(e, " +
-                jclasses.register(Pointer.class) + "), JavaCPP_initMethodID, args);");
-        out.println("        " + callbackName + "_instance = *rpointer;");
+        out.println("        env->CallNonvirtualVoidMethodA(obj, JavaCPP_getClass(env, " +
+                jclasses.register(Pointer.class) + "), JavaCPP_initMID, args);");
+        out.println("        " + callbackName + "_instance = *rptr;");
         out.println("    }");
         out.println("}");
     }
@@ -2185,7 +2188,7 @@ public class Generator implements Closeable {
                 }
                 for (int j = namespace == null ? 0 : 1; j < parameterTypes.length; j++) {
                     String[] paramTypeName = getAnnotatedCPPTypeName(parameterAnnotations[j], parameterTypes[j]);
-                    suffix += paramTypeName[0] + " p" + j + paramTypeName[1];
+                    suffix += paramTypeName[0] + " arg" + j + paramTypeName[1];
                     if (j < parameterTypes.length - 1) {
                         suffix += ", ";
                     }
