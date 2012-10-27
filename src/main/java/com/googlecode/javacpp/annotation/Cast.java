@@ -10,7 +10,7 @@ import java.lang.annotation.Target;
  * @author Samuel Audet
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD, ElementType.PARAMETER})
+@Target({ElementType.METHOD, ElementType.PARAMETER, ElementType.ANNOTATION_TYPE})
 public @interface Cast {
-    String value();
+    String[] value();
 }

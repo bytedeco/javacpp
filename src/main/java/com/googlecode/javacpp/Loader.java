@@ -193,7 +193,7 @@ public class Loader {
             String separator, String ... values) {
         if (values == null || values.length == 0) {
             return;
-        } else if (values.length == 1) {
+        } else if (values.length == 1 && values[0] != null) {
             values = values[0].split(separator);
         }
         String oldValue = properties.getProperty(name, "");

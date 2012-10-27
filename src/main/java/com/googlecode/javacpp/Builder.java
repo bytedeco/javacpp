@@ -48,8 +48,14 @@ public class Builder {
     public static final boolean windows = Loader.getPlatformName().startsWith("windows");
 
     public static void includeJavaPaths(Properties properties) {
-        // try to find include paths for jni.h and jni_md.h automatically
+        // try to find automatically include paths for jni.h and jni_md.h
+        // and the link and library paths for the "jvm" library
+        final String jvmlink = properties.getProperty("compiler.link.prefix", "") +
+                       "jvm" + properties.getProperty("compiler.link.suffix", "");
+        final String jvmlib  = properties.getProperty("library.prefix", "") +
+                       "jvm" + properties.getProperty("library.suffix", "");
         final String[] jnipath = new String[2];
+        final String[] jvmpath = new String[2];
         FilenameFilter filter = new FilenameFilter() {
             public boolean accept(File dir, String name) {
                 if (new File(dir, "jni.h").exists()) {
@@ -58,17 +64,19 @@ public class Builder {
                 if (new File(dir, "jni_md.h").exists()) {
                     jnipath[1] = dir.getAbsolutePath();
                 }
+                if (new File(dir, jvmlink).exists()) {
+                    jvmpath[0] = dir.getAbsolutePath();
+                }
+                if (new File(dir, jvmlib).exists()) {
+                    jvmpath[1] = dir.getAbsolutePath();
+                }
                 return new File(dir, name).isDirectory();
             }
         };
-        File javaHome = new File(System.getProperty("java.home"));
-        for (File f : javaHome.getParentFile().listFiles(filter)) {
-            for (File f2 : f.listFiles(filter)) {
-                for (File f3 : f2.listFiles(filter)) {
-                    for (File f4 : f3.listFiles(filter)) {
-                    }
-                }
-            }
+        File javaHome = new File(System.getProperty("java.home")).getParentFile();
+        LinkedList<File> dirs = new LinkedList<File>(Arrays.asList(javaHome.listFiles(filter)));
+        while (!dirs.isEmpty()) {
+            dirs.addAll(Arrays.asList(dirs.pop().listFiles(filter)));
         }
         if (jnipath[0] != null && jnipath[0].equals(jnipath[1])) {
             jnipath[1] = null;
@@ -78,8 +86,13 @@ public class Builder {
                 jnipath[0] = macpath;
             }
         }
+        if (jvmpath[0] != null && jvmpath[0].equals(jvmpath[1])) {
+            jvmpath[1] = null;
+        }
         Loader.appendProperty(properties, "compiler.includepath", 
                 properties.getProperty("path.separator"), jnipath);
+        Loader.appendProperty(properties, "compiler.linkpath",
+                properties.getProperty("path.separator"), jvmpath);
     }
 
     public int compile(String sourceFilename, String outputFilename, Properties properties)

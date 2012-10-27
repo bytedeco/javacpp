@@ -206,7 +206,7 @@ Processing in C++...
 
 
 ==Creating Callback Functions==
-Some applications also require a means to callback into the JVM from C/C++, so JavaCPP provides a simple way to define custom callback function (pointers). Although there exist frameworks such as [http://code.google.com/p/jace/ Jace] and [JunC++ion http://codemesh.com/products/junction/] that can map complete Java APIs to C++, which are arguably harder to use than JavaCPP, since invoking a Java method from native code takes at least an order of magnitude more time than the other way around, it does not make much sense in my opinion to export as is an API that was designed to be used in Java. Nevertheless, suppose we want to perform some operations in Java, planning to wrap that into a function named `foo()` that calls some method inside class `Foo`, we can write the following code in a file named `foo.cpp`, taking care to initialize the JVM if necessary with either `JavaCPP_init()` or by any other means:
+Some applications also require a way to call back into the JVM from C/C++, so JavaCPP provides a simple way to define custom callback function (pointers). Although there exist frameworks, which are arguably harder to use, such as [http://code.google.com/p/jace/ Jace] and [JunC++ion http://codemesh.com/products/junction/] that can map complete Java APIs to C++, since invoking a Java method from native code takes at least an order of magnitude more time than the other way around, it does not make much sense in my opinion to export as is an API that was designed to be used in Java. Nevertheless, suppose we want to perform some operations in Java, planning to wrap that into a function named `foo()` that calls some method inside class `Foo`, we can write the following code in a file named `foo.cpp`, taking care to initialize the JVM if necessary with either `JavaCPP_init()` or by any other means:
 
 {{{
 #include <iostream>
@@ -238,19 +238,17 @@ public class Foo {
 }
 }}}
 
-Since functions also have pointers, we can use `FunctionPointer` instances accordingly, in ways similar to the [http://hackage.haskell.org/packages/archive/base/4.6.0.0/doc/html/Foreign-Ptr.html#g:2 `FunPtr` type of Haskell FFI]. In any case, knowing that any `java.lang.Throwable` object that gets thrown gets translated to `std::exception`, building and running this sample code with these commands under Linux x86_64 produces the expected output:
+Since functions also have pointers, we can use `FunctionPointer` instances accordingly, in ways similar to the [http://hackage.haskell.org/packages/archive/base/4.6.0.0/doc/html/Foreign-Ptr.html#g:2 `FunPtr` type of Haskell FFI], but where any `java.lang.Throwable` object thrown gets translated to `std::exception`. Building and running this sample code with these commands under Linux x86_64 produces the following output:
 
 {{{
 $ javac -cp javacpp.jar Foo.java
 $ java -jar javacpp.jar Foo -header
-$ g++ foo.cpp linux-x86_64/libjniFoo.so -o foo -I/usr/lib/jvm/java/include/ \
- -I/usr/lib/jvm/java/include/linux -L/usr/lib/jvm/java/jre/lib/amd64/server/ \
- -Wl,-rpath,/usr/lib/jvm/java/jre/lib/amd64/server/ -ljvm
+$ g++ -I/usr/lib/jvm/java/include/ -I/usr/lib/jvm/java/include/linux/ linux-x86_64/libjniFoo.so foo.cpp -o foo
 $ ./foo
 java.lang.Exception: bar 42
 }}}
 
-In this example, the `FunctionPointer` object gets created implicitly, but to call a native function pointer, we could define one that instead contains a `native call()/apply()` method, and create an instance explicitly. Such a class can also be extended in Java to create callbacks, and like any other normal `Pointer` object, must be allocated with a `native void allocate()` method, so please remember to hang on to references in Java, as those will get garbage collected. As a bonus, `FunctionPointer.call()/apply()` maps in fact to an overloaded `operator()` from a C++ functor, which we can pass to functions by annotating parameters with `@ByVal` or `@ByRef`.
+In this example, the `FunctionPointer` object gets created implicitly, but to call a native function pointer, we could define one that instead contains a `native call()/apply()` method, and create an instance explicitly. Such a class can also be extended in Java to create callbacks, and like any other normal `Pointer` object, must be allocated with a `native void allocate()` method, so please remember to hang on to references in Java, as those will get garbage collected. As a bonus, `FunctionPointer.call()/apply()` maps in fact to an overloaded `operator()` of a C++ function object that we can pass to other functions by annotating parameters with `@ByVal` or `@ByRef`.
 
 
 ==Instructions for Android==
@@ -270,12 +268,14 @@ This project was conceived at the Okutomi & Tanaka Laboratory, Tokyo Institute o
 
 
 ==Changes==
+ * Removed confusing `cast` value of `@Adapter` instead relying on new `String[]` value of `@Cast` to order multiple casts
  * Renamed various variables in `Generator` to make the generated code more readable
  * Fixed memory corruption when using an adapter or `@ByRef` on a function that returns by value an `std::vector<>` or `std::string` (issue #26)
  * Added `Pointer.zero()` method that calls `memset(0)` on the range
  * For easier memory management, more than one `Pointer` now allowed to share the `deallocator` when "casting" them
  * Upgraded references of the Android NDK to version r8b
- * Added functionality to access `FunctionPointer` callbacks by their names from C/C++: We can annotate them with `@Name` and build with the new `-header` option to get their declarations in a header file
+ * Fixed `JavaCPP_log()` not printing correctly (issue #27)
+ * Added functionality to access easily `FunctionPointer` callbacks by their names from C/C++: We can annotate them with `@Name` and build with the new `-header` option to get their declarations in a header file, while the `Builder` links with the `jvm` library by default
  * `Loader` now displays an informative error message when trying to use an undefined `compiler.options` with `@Platform(options="")` (issue #24)
  * `Pointer.deallocator()` would needlessly enqueue `Deallocator` objects pointing to the native `NULL` address
  * Added support for C++ "functors" based on the `operator()`, which gets used when annotating a `FunctionPointer` method parameter with `@ByRef` or `@ByVal`

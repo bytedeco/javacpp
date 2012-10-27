@@ -347,7 +347,7 @@ public class Generator implements Closeable {
             out.println("    VectorAdapter(const P* ptr, typename std::vector<T>::size_type size) : ptr((P*)ptr), size(size),");
             out.println("        vec2(ptr ? std::vector<T>((P*)ptr, (P*)ptr + size) : std::vector<T>()), vec(vec2) { }");
             out.println("    VectorAdapter(const std::vector<T>& vec) : ptr(0), size(0), vec2(vec), vec(vec2) { }");
-            out.println("    VectorAdapter(std::vector<T>& vec) : ptr(0), size(0), vec(vec) { }");
+            out.println("    VectorAdapter(      std::vector<T>& vec) : ptr(0), size(0), vec(vec) { }");
             out.println("    void assign(P* ptr, typename std::vector<T>::size_type size) {");
             out.println("        this->ptr = ptr;");
             out.println("        this->size = size;");
@@ -376,10 +376,14 @@ public class Generator implements Closeable {
             out.println("#include <string>");
             out.println("class StringAdapter {");
             out.println("public:");
-            out.println("    StringAdapter(const char* ptr, size_t size) : ptr((char*)ptr), size(size),");
-            out.println("        str2(ptr ? ptr : \"\"), str(str2) { }");
+            out.println("    StringAdapter(const          char* ptr, size_t size) : ptr((char*)ptr), size(size),");
+            out.println("        str2(ptr ? (char*)ptr : \"\"), str(str2) { }");
+            out.println("    StringAdapter(const signed   char* ptr, size_t size) : ptr((char*)ptr), size(size),");
+            out.println("        str2(ptr ? (char*)ptr : \"\"), str(str2) { }");
+            out.println("    StringAdapter(const unsigned char* ptr, size_t size) : ptr((char*)ptr), size(size),");
+            out.println("        str2(ptr ? (char*)ptr : \"\"), str(str2) { }");
             out.println("    StringAdapter(const std::string& str) : ptr(0), size(0), str2(str), str(str2) { }");
-            out.println("    StringAdapter(std::string& str) : ptr(0), size(0), str(str) { }");
+            out.println("    StringAdapter(      std::string& str) : ptr(0), size(0), str(str) { }");
             out.println("    void assign(char* ptr, size_t size) {");
             out.println("        this->ptr = ptr;");
             out.println("        this->size = size;");
@@ -387,16 +391,20 @@ public class Generator implements Closeable {
             out.println("    }");
             out.println("    static void deallocate(char* ptr) { free(ptr); }");
             out.println("    operator char*() {");
-            out.println("        const char *c_str = str.c_str();");
+            out.println("        const char* c_str = str.c_str();");
             out.println("        if (ptr == NULL || strcmp(c_str, ptr) != 0) {");
             out.println("            ptr = strdup(c_str);");
             out.println("        }");
             out.println("        size = strlen(c_str) + 1;");
             out.println("        return ptr;");
             out.println("    }");
-            out.println("    operator const char*()  { return str.c_str(); }");
-            out.println("    operator std::string&() { return str; }");
-            out.println("    operator std::string*() { return ptr ? &str : 0; }");
+            out.println("    operator       signed   char*() { return (signed   char*)(operator char*)(); }");
+            out.println("    operator       unsigned char*() { return (unsigned char*)(operator char*)(); }");
+            out.println("    operator const          char*() { return                 str.c_str(); }");
+            out.println("    operator const signed   char*() { return (signed   char*)str.c_str(); }");
+            out.println("    operator const unsigned char*() { return (unsigned char*)str.c_str(); }");
+            out.println("    operator         std::string&() { return str; }");
+            out.println("    operator         std::string*() { return ptr ? &str : 0; }");
             out.println("    char* ptr;");
             out.println("    size_t size;");
             out.println("    std::string str2;");
@@ -1965,21 +1973,25 @@ public class Generator implements Closeable {
     public static AdapterInformation getAdapterInformation(boolean out, String valueTypeName, Annotation ... annotations) {
         AdapterInformation adapterInfo = null;
         boolean constant = false;
+        String cast = "";
         for (Annotation a : annotations) {
             Adapter adapter = a instanceof Adapter ? (Adapter)a : a.annotationType().getAnnotation(Adapter.class);
             if (adapter != null) {
                 adapterInfo = new AdapterInformation();
                 adapterInfo.name = adapter.value();
                 adapterInfo.argc = adapter.argc();
-                adapterInfo.cast = adapter.cast();
                 if (a != adapter) {
                     try {
-                        Class c = a.annotationType();
-                        if (c.isAnnotationPresent(Const.class)) {
+                        Class cls = a.annotationType();
+                        if (cls.isAnnotationPresent(Const.class)) {
                             constant = true;
                         }
+                        Cast c = (Cast)cls.getAnnotation(Cast.class);
+                        if (c != null && cast.length() == 0) {
+                            cast = c.value()[c.value().length - 1];
+                        }
                         try {
-                            String value = c.getDeclaredMethod("value").invoke(a).toString();
+                            String value = cls.getDeclaredMethod("value").invoke(a).toString();
                             if (value != null && value.length() > 0) {
                                 valueTypeName = value;
                             }
@@ -1997,7 +2009,15 @@ public class Generator implements Closeable {
                 }
             } else if (a instanceof Const) {
                 constant = true;
+            } else if (a instanceof Cast) {
+                Cast c = ((Cast)a);
+                if (c.value().length > 1) {
+                    cast = c.value()[1];
+                }
             }
+        }
+        if (adapterInfo != null) {
+            adapterInfo.cast = cast;
         }
         return out && constant ? null : adapterInfo;
     }
@@ -2015,13 +2035,14 @@ public class Generator implements Closeable {
         String[] typeName = null;
         Annotation by = getBy(annotations);
         for (Annotation a : annotations) {
-            if (a instanceof Cast || (a instanceof Const && (by instanceof ByVal || by instanceof ByRef))) {
+            if ((a instanceof Cast && ((Cast)a).value()[0].length() > 0) ||
+                    (a instanceof Const && (by instanceof ByVal || by instanceof ByRef))) {
                 typeName = getCastedCPPTypeName(annotations, type);
             } else if (a instanceof Const) {
                 typeName = getAnnotatedCPPTypeName(annotations, type);
             }
         }
-        return typeName != null ? "(" + typeName[0] + typeName[1] + ")" : "";
+        return typeName != null && typeName.length > 0 ? "(" + typeName[0] + typeName[1] + ")" : "";
     }
 
     public static Annotation getParameterBy(MethodInformation methodInfo, int j) {
@@ -2103,13 +2124,13 @@ public class Generator implements Closeable {
         for (Annotation a : annotations) {
             if (a instanceof Cast) {
                 warning = typeName != null;
-                String prefix = ((Cast)a).value(), suffix = "";
+                String prefix = ((Cast)a).value()[0], suffix = "";
                 int parenthesis = prefix.indexOf(')');
                 if (parenthesis > 0) {
                     suffix = prefix.substring(parenthesis).trim();
                     prefix = prefix.substring(0, parenthesis).trim();
                 }
-                typeName = new String[] { prefix, suffix };
+                typeName = prefix.length() > 0 ? new String[] { prefix, suffix } : null;
             } else if (a instanceof Const) {
                 if (warning = typeName != null) {
                     // prioritize @Cast

@@ -13,5 +13,5 @@ import java.lang.annotation.Target;
 @Target({ElementType.METHOD, ElementType.PARAMETER})
 @Adapter("VectorAdapter")
 public @interface StdVector {
-    String value() default "";
+    String value() default ""; // template type
 }

@@ -14,5 +14,4 @@ import java.lang.annotation.Target;
 public @interface Adapter {
     String value();
     int argc() default 1;
-    String cast() default "";
 }
