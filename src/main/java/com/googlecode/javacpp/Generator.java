@@ -342,7 +342,7 @@ public class Generator implements Closeable {
         }
         if (defineAdapters) {
             out.println("#include <vector>");
-            out.println("template<class P, class T = P> class VectorAdapter {");
+            out.println("template<class P, class T = P> class JavaCPP_hidden VectorAdapter {");
             out.println("public:");
             out.println("    VectorAdapter(const P* ptr, typename std::vector<T>::size_type size) : ptr((P*)ptr), size(size),");
             out.println("        vec2(ptr ? std::vector<T>((P*)ptr, (P*)ptr + size) : std::vector<T>()), vec(vec2) { }");
@@ -374,7 +374,7 @@ public class Generator implements Closeable {
             out.println("};");
             out.println();
             out.println("#include <string>");
-            out.println("class StringAdapter {");
+            out.println("class JavaCPP_hidden StringAdapter {");
             out.println("public:");
             out.println("    StringAdapter(const          char* ptr, size_t size) : ptr((char*)ptr), size(size),");
             out.println("        str2(ptr ? (char*)ptr : \"\"), str(str2) { }");
@@ -428,15 +428,19 @@ public class Generator implements Closeable {
             out.println("    } env2 = { env };");
             out.println("    JavaVM *vm = JavaCPP_vm;");
             out.println("    if (vm == NULL) {");
-            out.println("#ifndef ANDROID");
-            out.println("        int size = 1;");
-            out.println("        if (JNI_GetCreatedJavaVMs(&vm, 1, &size) != 0 || size == 0) {");
-            out.println("#endif");
+            if (out2 != null) {
+                out.println("#ifndef ANDROID");
+                out.println("        int size = 1;");
+                out.println("        if (JNI_GetCreatedJavaVMs(&vm, 1, &size) != 0 || size == 0) {");
+                out.println("#endif");
+            }
             out.println("            JavaCPP_log(\"Could not get any created JavaVM.\");");
             out.println("            return -1;");
-            out.println("#ifndef ANDROID");
-            out.println("        }");
-            out.println("#endif");
+            if (out2 != null) {
+                out.println("#ifndef ANDROID");
+                out.println("        }");
+                out.println("#endif");
+            }
             out.println("    }");
             out.println("    if (vm->GetEnv((void**)env, " + JNI_VERSION + ") != JNI_OK) {");
             out.println("        if (vm->AttachCurrentThread(env2, NULL) != 0) {");
@@ -486,22 +490,22 @@ public class Generator implements Closeable {
             out2.println("extern \"C\" {");
             out2.println("#endif");
             out2.println("JNIIMPORT int JavaCPP_init(int argc, const char *argv[]);");
+            out.println();
+            out.println("#ifndef ANDROID");
+            out.println("JNIEXPORT int JavaCPP_init(int argc, const char *argv[]) {");
+            out.println("    JavaVM *vm;");
+            out.println("    JNIEnv *env;");
+            out.println("    int nOptions = 1 + (argc > 255 ? 255 : argc);");
+            out.println("    JavaVMOption options[256] = { { NULL } };");
+            out.println("    options[0].optionString = (char*)\"-Djava.class.path=" + classPath + "\";");
+            out.println("    for (int i = 1; i < nOptions && argv != NULL; i++) {");
+            out.println("        options[i].optionString = (char*)argv[i - 1];");
+            out.println("    }");
+            out.println("    JavaVMInitArgs vm_args = { JNI_VERSION_1_6, nOptions, options };");
+            out.println("    return JNI_CreateJavaVM(&vm, (void **)&env, &vm_args);");
+            out.println("}");
+            out.println("#endif");
         }
-        out.println();
-        out.println("#ifndef ANDROID");
-        out.println("JNIEXPORT int JavaCPP_init(int argc, const char *argv[]) {");
-        out.println("    JavaVM *vm;");
-        out.println("    JNIEnv *env;");
-        out.println("    int nOptions = 1 + (argc > 255 ? 255 : argc);");
-        out.println("    JavaVMOption options[256] = { { NULL } };");
-        out.println("    options[0].optionString = (char*)\"-Djava.class.path=" + classPath + "\";");
-        out.println("    for (int i = 1; i < nOptions && argv != NULL; i++) {");
-        out.println("        options[i].optionString = (char*)argv[i - 1];");
-        out.println("    }");
-        out.println("    JavaVMInitArgs vm_args = { JNI_VERSION_1_6, nOptions, options };");
-        out.println("    return JNI_CreateJavaVM(&vm, (void **)&env, &vm_args);");
-        out.println("}");
-        out.println("#endif");
         out.println(); // XXX: JNI_OnLoad() should ideally be protected by some mutex
         out.println("JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved) {");
         out.println("    JNIEnv* env;");
@@ -637,14 +641,14 @@ public class Generator implements Closeable {
         if (out2 != null) {
             out2.println("JNIIMPORT int JavaCPP_uninit();");
             out2.println();
+            out.println("#ifndef ANDROID");
+            out.println("JNIEXPORT int JavaCPP_uninit() {");
+            out.println("    JavaVM *vm = JavaCPP_vm;");
+            out.println("    JNI_OnUnload(JavaCPP_vm, NULL);");
+            out.println("    return vm->DestroyJavaVM();");
+            out.println("}");
+            out.println("#endif");
         }
-        out.println("#ifndef ANDROID");
-        out.println("JNIEXPORT int JavaCPP_uninit() {");
-        out.println("    JavaVM *vm = JavaCPP_vm;");
-        out.println("    JNI_OnUnload(JavaCPP_vm, NULL);");
-        out.println("    return vm->DestroyJavaVM();");
-        out.println("}");
-        out.println("#endif");
         out.println();
         out.println("JNIEXPORT void JNICALL JNI_OnUnload(JavaVM* vm, void* reserved) {");
         out.println("    JNIEnv* env;");

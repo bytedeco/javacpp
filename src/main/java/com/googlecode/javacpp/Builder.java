@@ -45,11 +45,11 @@ import java.util.zip.ZipEntry;
  */
 public class Builder {
 
-    public static final boolean windows = Loader.getPlatformName().startsWith("windows");
-
     public static void includeJavaPaths(Properties properties) {
         // try to find automatically include paths for jni.h and jni_md.h
         // and the link and library paths for the "jvm" library
+        String platformName  = Loader.getPlatformName();
+        String pathSeparator = properties.getProperty("path.separator");
         final String jvmlink = properties.getProperty("compiler.link.prefix", "") +
                        "jvm" + properties.getProperty("compiler.link.suffix", "");
         final String jvmlib  = properties.getProperty("library.prefix", "") +
@@ -74,9 +74,21 @@ public class Builder {
             }
         };
         File javaHome = new File(System.getProperty("java.home")).getParentFile();
+        try {
+            javaHome = javaHome.getCanonicalFile();
+        } catch (IOException e) { }
         LinkedList<File> dirs = new LinkedList<File>(Arrays.asList(javaHome.listFiles(filter)));
         while (!dirs.isEmpty()) {
-            dirs.addAll(Arrays.asList(dirs.pop().listFiles(filter)));
+            File d = dirs.pop();
+            String dpath = d.getPath();
+            for (File f : d.listFiles(filter)) {
+                try {
+                    f = f.getCanonicalFile();
+                } catch (IOException e) { }
+                if (!dpath.startsWith(f.getPath())) {
+                    dirs.add(f);
+                }
+            }
         }
         if (jnipath[0] != null && jnipath[0].equals(jnipath[1])) {
             jnipath[1] = null;
@@ -89,10 +101,14 @@ public class Builder {
         if (jvmpath[0] != null && jvmpath[0].equals(jvmpath[1])) {
             jvmpath[1] = null;
         }
-        Loader.appendProperty(properties, "compiler.includepath", 
-                properties.getProperty("path.separator"), jnipath);
-        Loader.appendProperty(properties, "compiler.linkpath",
-                properties.getProperty("path.separator"), jvmpath);
+        Loader.appendProperty(properties, "compiler.includepath", pathSeparator, jnipath);
+        if (platformName.equals(properties.getProperty("platform.name", platformName))) {
+            Loader.appendProperty(properties, "compiler.link", pathSeparator, "jvm");
+            Loader.appendProperty(properties, "compiler.linkpath", pathSeparator, jvmpath);
+            if (platformName.startsWith("macosx")) {
+                Loader.appendProperty(properties, "compiler.framework", pathSeparator, "JavaVM");
+            }
+        }
     }
 
     public int compile(String sourceFilename, String outputFilename, Properties properties)
@@ -101,6 +117,7 @@ public class Builder {
 
         includeJavaPaths(properties);
 
+        String platformName  = Loader.getPlatformName();
         String pathSeparator = properties.getProperty("path.separator");
         String platformRoot  = properties.getProperty("platform.root");
         if (platformRoot == null || platformRoot.length() == 0) {
@@ -237,6 +254,7 @@ public class Builder {
             }
         }
 
+        boolean windows = platformName.startsWith("windows");
         for (String s : command) {
             boolean hasSpaces = s.indexOf(" ") > 0;
             if (hasSpaces) {
