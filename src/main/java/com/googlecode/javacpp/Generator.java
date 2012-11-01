@@ -1075,8 +1075,7 @@ public class Generator implements Closeable {
                 suffix = "";
             }
             if (Modifier.isStatic(methodInfo.modifiers)) {
-                out.print(getCPPScopeName(methodInfo.cls, methodInfo.method));
-                out.print(methodInfo.memberName[0]);
+                out.print(getCPPScopeName(methodInfo));
             } else if (methodInfo.memberGetter || methodInfo.memberSetter) {
                 if (index) {
                     out.print("(*ptr)");
@@ -1116,8 +1115,7 @@ public class Generator implements Closeable {
                     }
                 }
             } else if (Modifier.isStatic(methodInfo.modifiers)) {
-                out.print(getCPPScopeName(methodInfo.cls, methodInfo.method));
-                out.print(methodInfo.memberName[0]);
+                out.print(getCPPScopeName(methodInfo));
             } else {
                 if (index) {
                     out.print("(*ptr)");
@@ -2235,19 +2233,20 @@ public class Generator implements Closeable {
         return new String[] { prefix, suffix };
     }
 
-    public static String getCPPScopeName(Class<?> type, Method method) {
-        String scopeName = getCPPScopeName(type);
-        Namespace namespace = method.getAnnotation(Namespace.class);
-        if (namespace != null && namespace.value().length() == 0) {
-            return ""; // user wants to reset namespace here
+    public static String getCPPScopeName(MethodInformation methodInfo) {
+        String scopeName = getCPPScopeName(methodInfo.cls);
+        Namespace namespace = methodInfo.method.getAnnotation(Namespace.class);
+        String spaceName = namespace == null ? "" : namespace.value();
+        if ((namespace != null && namespace.value().length() == 0) || spaceName.startsWith("::")) {
+            scopeName = ""; // user wants to reset namespace here
         }
         if (scopeName.length() > 0) {
             scopeName += "::";
         }
-        if (namespace != null) {
-            scopeName += namespace.value() + "::";
+        if (spaceName.length() > 0) {
+            scopeName += spaceName + "::";
         }
-        return scopeName;
+        return scopeName + methodInfo.memberName[0];
     }
 
     public static String getCPPScopeName(Class<?> type) {
@@ -2255,9 +2254,6 @@ public class Generator implements Closeable {
         while (type != null) {
             Namespace namespace = type.getAnnotation(Namespace.class);
             String spaceName = namespace == null ? "" : namespace.value();
-            if (namespace != null && namespace.value().length() == 0) {
-                scopeName = ""; // user wants to reset namespace here
-            }
             if (Pointer.class.isAssignableFrom(type) && type != Pointer.class) {
                 Name name = type.getAnnotation(Name.class);
                 String s;
@@ -2281,6 +2277,10 @@ public class Generator implements Closeable {
                 scopeName = spaceName;
             } else if (scopeName.length() > 0) {
                 scopeName = spaceName + "::" + scopeName;
+            }
+            if ((namespace != null && namespace.value().length() == 0) || spaceName.startsWith("::")) {
+                // user wants to reset namespace here
+                break;
             }
             type = type.getDeclaringClass();
         }
