@@ -51,13 +51,13 @@ public class DoublePointer extends Pointer {
     private native void allocateArray(int size);
 
     @Override public DoublePointer position(int position) {
-        return (DoublePointer)super.position(position);
+        return super.position(position);
     }
     @Override public DoublePointer limit(int limit) {
-        return (DoublePointer)super.limit(limit);
+        return super.limit(limit);
     }
     @Override public DoublePointer capacity(int capacity) {
-        return (DoublePointer)super.capacity(capacity);
+        return super.capacity(capacity);
     }
 
     public double get() { return get(0); }

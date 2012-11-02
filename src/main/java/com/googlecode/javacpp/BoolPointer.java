@@ -40,13 +40,13 @@ public class BoolPointer extends Pointer {
     private native void allocateArray(int size);
 
     @Override public BoolPointer position(int position) {
-        return (BoolPointer)super.position(position);
+        return super.position(position);
     }
     @Override public BoolPointer limit(int limit) {
-        return (BoolPointer)super.limit(limit);
+        return super.limit(limit);
     }
     @Override public BoolPointer capacity(int capacity) {
-        return (BoolPointer)super.capacity(capacity);
+        return super.capacity(capacity);
     }
 
     public boolean get() { return get(0); }

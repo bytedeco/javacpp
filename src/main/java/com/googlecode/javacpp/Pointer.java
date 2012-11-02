@@ -24,6 +24,8 @@ import com.googlecode.javacpp.annotation.Opaque;
 import com.googlecode.javacpp.annotation.NoDeallocator;
 import java.lang.ref.PhantomReference;
 import java.lang.ref.ReferenceQueue;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -70,18 +72,61 @@ import java.nio.ByteOrder;
         position = 0;
         limit = allocatedCapacity;
         capacity = allocatedCapacity;
-        deallocator(new ReferenceDeallocator(this, allocatedAddress, deallocatorAddress));
+        deallocator(new NativeDeallocator(this, deallocatorAddress));
     }
 
     protected interface Deallocator {
         void deallocate();
     }
 
-    private static class ReferenceDeallocator extends DeallocatorReference implements Deallocator {
-        ReferenceDeallocator(Pointer p, long allocatedAddress, long deallocatorAddress) {
+    protected static <P extends Pointer> P withDeallocator(P p) {
+        return p.deallocator(new CustomDeallocator(p));
+    }
+
+    private static class CustomDeallocator extends DeallocatorReference implements Deallocator {
+        public CustomDeallocator(Pointer p) {
             super(p, null);
             this.deallocator = this;
-            this.allocatedAddress = allocatedAddress;
+            Class<? extends Pointer> cls = p.getClass();
+            for (Method m : cls.getDeclaredMethods()) {
+                Class[] parameters = m.getParameterTypes();
+                if (Modifier.isStatic(m.getModifiers()) && m.getReturnType().equals(void.class) &&
+                        m.getName().equals("deallocate") && parameters.length == 1 &&
+                        Pointer.class.isAssignableFrom(parameters[0])) {
+                    m.setAccessible(true);
+                    method = m;
+                    break;
+                }
+            }
+            if (method == null) {
+                throw new RuntimeException(new NoSuchMethodException("static void " +
+                        cls.getCanonicalName() + ".deallocate(" + Pointer.class.getCanonicalName() + ")"));
+            }
+            try {
+                pointer = cls.getConstructor(Pointer.class).newInstance(p);
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
+        }
+
+        Pointer pointer = null;
+        Method method = null;
+
+        @Override public void deallocate() {
+            try {
+                method.invoke(null, pointer);
+                pointer.setNull();
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
+        }
+    }
+
+    private static class NativeDeallocator extends DeallocatorReference implements Deallocator {
+        NativeDeallocator(Pointer p, long deallocatorAddress) {
+            super(p, null);
+            this.deallocator = this;
+            this.allocatedAddress = p.address;
             this.deallocatorAddress = deallocatorAddress;
         }
 
@@ -170,32 +215,32 @@ import java.nio.ByteOrder;
     public int position() {
         return position;
     }
-    public Pointer position(int position) {
+    public <P extends Pointer> P position(int position) {
         this.position = position;
-        return this;
+        return (P)this;
     }
 
     public int limit() {
         return limit;
     }
-    public Pointer limit(int limit) {
+    public <P extends Pointer> P limit(int limit) {
         this.limit = limit;
-        return this;
+        return (P)this;
     }
 
     public int capacity() {
         return capacity;
     }
-    public Pointer capacity(int capacity) {
+    public <P extends Pointer> P capacity(int capacity) {
         this.limit = capacity;
         this.capacity = capacity;
-        return this;
+        return (P)this;
     }
 
     protected Deallocator deallocator() {
         return deallocator;
     }
-    protected Pointer deallocator(Deallocator deallocator) {
+    protected <P extends Pointer> P deallocator(Deallocator deallocator) {
         if (this.deallocator != null) {
             this.deallocator.deallocate();
             this.deallocator = null;
@@ -208,7 +253,7 @@ import java.nio.ByteOrder;
                     new DeallocatorReference(this, deallocator);
             r.add();
         }
-        return this;
+        return (P)this;
     }
 
     public void deallocate() {
@@ -261,7 +306,7 @@ import java.nio.ByteOrder;
     public static native Pointer memcpy(Pointer dst, Pointer src, long size);
     public static native Pointer memmove(Pointer dst, Pointer src, long size);
     public static native Pointer memset(Pointer dst, int ch, long size);
-    public Pointer put(Pointer p) {
+    public <P extends Pointer> P put(Pointer p) {
         int valueSize = sizeof();
         int valueSize2 = p.sizeof();
         address += valueSize * position;
@@ -269,14 +314,14 @@ import java.nio.ByteOrder;
         memcpy(this, p, valueSize2 * (p.limit - p.position));
         address -= valueSize * position;
         p.address -= valueSize2 * p.position;
-        return this;
+        return (P)this;
     }
-    public Pointer zero() {
+    public <P extends Pointer> P zero() {
         int valueSize = sizeof();
         address += valueSize * position;
         memset(this, 0, valueSize * (limit - position));
         address -= valueSize * position;
-        return this;
+        return (P)this;
     }
 
     @Override public boolean equals(Object obj) {

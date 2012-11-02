@@ -40,13 +40,13 @@ public class CLongPointer extends Pointer {
     private native void allocateArray(int size);
 
     @Override public CLongPointer position(int position) {
-        return (CLongPointer)super.position(position);
+        return super.position(position);
     }
     @Override public CLongPointer limit(int limit) {
-        return (CLongPointer)super.limit(limit);
+        return super.limit(limit);
     }
     @Override public CLongPointer capacity(int capacity) {
-        return (CLongPointer)super.capacity(capacity);
+        return super.capacity(capacity);
     }
 
     public long get() { return get(0); }

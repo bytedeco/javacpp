@@ -51,13 +51,13 @@ public class FloatPointer extends Pointer {
     private native void allocateArray(int size);
 
     @Override public FloatPointer position(int position) {
-        return (FloatPointer)super.position(position);
+        return super.position(position);
     }
     @Override public FloatPointer limit(int limit) {
-        return (FloatPointer)super.limit(limit);
+        return super.limit(limit);
     }
     @Override public FloatPointer capacity(int capacity) {
-        return (FloatPointer)super.capacity(capacity);
+        return super.capacity(capacity);
     }
 
     public float get() { return get(0); }

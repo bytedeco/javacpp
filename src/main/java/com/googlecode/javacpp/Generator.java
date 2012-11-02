@@ -2197,7 +2197,10 @@ public class Generator implements Closeable {
                 Convention convention = type.getAnnotation(Convention.class);
                 String callingConvention = convention == null ? "" : convention.value() + " ";
                 Namespace namespace = type.getAnnotation(Namespace.class);
-                String spaceName = namespace == null || namespace.value().length() == 0 ? "" : namespace.value() + "::";
+                String spaceName = namespace == null ? "" : namespace.value();
+                if (spaceName.length() > 0 && !spaceName.endsWith("::")) {
+                    spaceName += "::";
+                }
                 Class returnType = functionMethod.getReturnType();
                 Class[] parameterTypes = functionMethod.getParameterTypes();
                 Annotation[] annotations = functionMethod.getAnnotations();
@@ -2240,11 +2243,12 @@ public class Generator implements Closeable {
         if ((namespace != null && namespace.value().length() == 0) || spaceName.startsWith("::")) {
             scopeName = ""; // user wants to reset namespace here
         }
-        if (scopeName.length() > 0) {
+        if (scopeName.length() > 0 && !scopeName.endsWith("::")) {
             scopeName += "::";
         }
-        if (spaceName.length() > 0) {
-            scopeName += spaceName + "::";
+        scopeName += spaceName;
+        if (spaceName.length() > 0 && !spaceName.endsWith("::")) {
+            scopeName += "::";
         }
         return scopeName + methodInfo.memberName[0];
     }
@@ -2267,17 +2271,15 @@ public class Generator implements Closeable {
                 } else {
                     s = name.value()[0];
                 }
-                if (spaceName.length() == 0) {
-                    spaceName = s;
-                } else {
-                    spaceName = spaceName + "::" + s;
+                if (spaceName.length() > 0 && !spaceName.endsWith("::")) {
+                    spaceName += "::";
                 }
+                spaceName += s;
             }
-            if (scopeName.length() == 0) {
-                scopeName = spaceName;
-            } else if (scopeName.length() > 0) {
-                scopeName = spaceName + "::" + scopeName;
+            if (scopeName.length() > 0 && !spaceName.endsWith("::")) {
+                spaceName += "::";
             }
+            scopeName = spaceName + scopeName;
             if ((namespace != null && namespace.value().length() == 0) || spaceName.startsWith("::")) {
                 // user wants to reset namespace here
                 break;

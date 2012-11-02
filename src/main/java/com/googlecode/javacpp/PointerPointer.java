@@ -47,13 +47,13 @@ public class PointerPointer extends Pointer {
     private Pointer[] pointerArray;
 
     @Override public PointerPointer position(int position) {
-        return (PointerPointer)super.position(position);
+        return super.position(position);
     }
     @Override public PointerPointer limit(int limit) {
-        return (PointerPointer)super.limit(limit);
+        return super.limit(limit);
     }
     @Override public PointerPointer capacity(int capacity) {
-        return (PointerPointer)super.capacity(capacity);
+        return super.capacity(capacity);
     }
 
     public PointerPointer put(Pointer ... array) {

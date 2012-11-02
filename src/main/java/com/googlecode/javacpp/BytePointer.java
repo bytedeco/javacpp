@@ -61,13 +61,13 @@ public class BytePointer extends Pointer {
     private native void allocateArray(int size);
 
     @Override public BytePointer position(int position) {
-        return (BytePointer)super.position(position);
+        return super.position(position);
     }
     @Override public BytePointer limit(int limit) {
-        return (BytePointer)super.limit(limit);
+        return super.limit(limit);
     }
     @Override public BytePointer capacity(int capacity) {
-        return (BytePointer)super.capacity(capacity);
+        return super.capacity(capacity);
     }
 
     public byte[] getStringBytes() {
@@ -117,6 +117,6 @@ public class BytePointer extends Pointer {
     public native BytePointer put(byte[] array, int offset, int length);
 
     @Override public final ByteBuffer asBuffer() {
-        return (ByteBuffer)super.asBuffer();
+        return asByteBuffer();
     }
 }

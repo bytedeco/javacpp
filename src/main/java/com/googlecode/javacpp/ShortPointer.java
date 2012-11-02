@@ -51,13 +51,13 @@ public class ShortPointer extends Pointer {
     private native void allocateArray(int size);
 
     @Override public ShortPointer position(int position) {
-        return (ShortPointer)super.position(position);
+        return super.position(position);
     }
     @Override public ShortPointer limit(int limit) {
-        return (ShortPointer)super.limit(limit);
+        return super.limit(limit);
     }
     @Override public ShortPointer capacity(int capacity) {
-        return (ShortPointer)super.capacity(capacity);
+        return super.capacity(capacity);
     }
 
     public short get() { return get(0); }

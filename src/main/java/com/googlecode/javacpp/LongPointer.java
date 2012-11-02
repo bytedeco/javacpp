@@ -51,13 +51,13 @@ public class LongPointer extends Pointer {
     private native void allocateArray(int size);
 
     @Override public LongPointer position(int position) {
-        return (LongPointer)super.position(position);
+        return super.position(position);
     }
     @Override public LongPointer limit(int limit) {
-        return (LongPointer)super.limit(limit);
+        return super.limit(limit);
     }
     @Override public LongPointer capacity(int capacity) {
-        return (LongPointer)super.capacity(capacity);
+        return super.capacity(capacity);
     }
 
     public long get() { return get(0); }

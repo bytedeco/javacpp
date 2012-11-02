@@ -55,13 +55,13 @@ public class IntPointer extends Pointer {
     private native void allocateArray(int size);
 
     @Override public IntPointer position(int position) {
-        return (IntPointer)super.position(position);
+        return super.position(position);
     }
     @Override public IntPointer limit(int limit) {
-        return (IntPointer)super.limit(limit);
+        return super.limit(limit);
     }
     @Override public IntPointer capacity(int capacity) {
-        return (IntPointer)super.capacity(capacity);
+        return super.capacity(capacity);
     }
 
     public int[] getStringCodePoints() {

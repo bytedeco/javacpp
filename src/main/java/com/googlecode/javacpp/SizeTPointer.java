@@ -40,13 +40,13 @@ public class SizeTPointer extends Pointer {
     private native void allocateArray(int size);
 
     @Override public SizeTPointer position(int position) {
-        return (SizeTPointer)super.position(position);
+        return super.position(position);
     }
     @Override public SizeTPointer limit(int limit) {
-        return (SizeTPointer)super.limit(limit);
+        return super.limit(limit);
     }
     @Override public SizeTPointer capacity(int capacity) {
-        return (SizeTPointer)super.capacity(capacity);
+        return super.capacity(capacity);
     }
 
     public long get() { return get(0); }
