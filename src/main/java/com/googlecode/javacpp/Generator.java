@@ -1245,8 +1245,8 @@ public class Generator implements Closeable {
                     out.println(indent + "rptr = radapter;");
                     if (methodInfo.returnType != String.class) {
                         out.println(indent + "jint rcapacity = (jint)radapter.size;");
-                        out.println(indent + "jlong deallocator = ptr_to_jlong(&(" +
-                                adapterInfo.name + "::deallocate));");
+                        out.println(indent + "jlong deallocator = " + (adapterInfo.constant ? "0;" :
+                                "ptr_to_jlong(&(" + adapterInfo.name + "::deallocate));"));
                     }
                     needInit = true;
                 } else if (returnBy instanceof ByVal ||
@@ -1952,6 +1952,7 @@ public class Generator implements Closeable {
         public String name;
         public int argc;
         public String cast;
+        public boolean constant;
     }
     public static AdapterInformation getParameterAdapterInformation(boolean out, MethodInformation methodInfo, int j) {
         if (out && (methodInfo.parameterTypes[j] == String.class || methodInfo.valueSetter || methodInfo.memberSetter)) {
@@ -1988,10 +1989,6 @@ public class Generator implements Closeable {
                         if (cls.isAnnotationPresent(Const.class)) {
                             constant = true;
                         }
-                        Cast c = (Cast)cls.getAnnotation(Cast.class);
-                        if (c != null && cast.length() == 0) {
-                            cast = c.value()[c.value().length - 1];
-                        }
                         try {
                             String value = cls.getDeclaredMethod("value").invoke(a).toString();
                             if (value != null && value.length() > 0) {
@@ -2001,6 +1998,16 @@ public class Generator implements Closeable {
                         } catch (NoSuchMethodException e) {
                             // this adapter does not support a template type
                             valueTypeName = null;
+                        }
+                        Cast c = (Cast)cls.getAnnotation(Cast.class);
+                        if (c != null && cast.length() == 0) {
+                            cast = c.value()[0];
+                            if (valueTypeName != null) {
+                                cast += "< " + valueTypeName + " >";
+                            }
+                            if (c.value().length > 1) {
+                                cast += c.value()[1];
+                            }
                         }
                     } catch (Exception ex) { 
                         logger.log(Level.WARNING, "Could not invoke the value() method on annotation \"" + a + "\".", ex);
@@ -2020,6 +2027,7 @@ public class Generator implements Closeable {
         }
         if (adapterInfo != null) {
             adapterInfo.cast = cast;
+            adapterInfo.constant = constant;
         }
         return out && constant ? null : adapterInfo;
     }

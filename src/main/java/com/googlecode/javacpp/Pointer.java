@@ -24,6 +24,7 @@ import com.googlecode.javacpp.annotation.Opaque;
 import com.googlecode.javacpp.annotation.NoDeallocator;
 import java.lang.ref.PhantomReference;
 import java.lang.ref.ReferenceQueue;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.Buffer;
@@ -47,13 +48,15 @@ import java.nio.ByteOrder;
 //            Loader.load(cls);
 //        }
     }
-    public Pointer(Pointer p) {
+    public Pointer(final Pointer p) {
         if (p != null) {
             address = p.address;
             position = p.position;
             limit = p.limit;
             capacity = p.capacity;
-            deallocator = p.deallocator;
+            if (p.deallocator != null) {
+                deallocator = new Deallocator() { public void deallocate() { p.deallocate(); } };
+            }
         }
     }
 
@@ -103,7 +106,9 @@ import java.nio.ByteOrder;
                         cls.getCanonicalName() + ".deallocate(" + Pointer.class.getCanonicalName() + ")"));
             }
             try {
-                pointer = cls.getConstructor(Pointer.class).newInstance(p);
+                Constructor<? extends Pointer> c = cls.getConstructor(Pointer.class);
+                c.setAccessible(true);
+                pointer = c.newInstance(p);
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
             }
