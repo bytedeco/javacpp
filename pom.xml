@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.googlecode.javacpp</groupId>
   <artifactId>javacpp</artifactId>
-  <version>0.2</version>
+  <version>0.3</version>
   <packaging>maven-plugin</packaging>
 
   <name>JavaCPP</name>

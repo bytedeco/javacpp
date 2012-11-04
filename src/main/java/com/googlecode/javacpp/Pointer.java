@@ -83,7 +83,7 @@ import java.nio.ByteOrder;
     }
 
     protected static <P extends Pointer> P withDeallocator(P p) {
-        return p.deallocator(new CustomDeallocator(p));
+        return (P)p.deallocator(new CustomDeallocator(p));
     }
 
     private static class CustomDeallocator extends DeallocatorReference implements Deallocator {
