@@ -169,6 +169,17 @@ public class Generator implements Closeable {
             }
             out.println();
         }
+        out.println("#ifdef __APPLE__");
+        out.println("    #define _JAVASOFT_JNI_MD_H_");
+        out.println();
+        out.println("    #define JNIEXPORT __attribute__((visibility(\"default\")))");
+        out.println("    #define JNIIMPORT");
+        out.println("    #define JNICALL");
+        out.println();
+        out.println("    typedef int jint;");
+        out.println("    typedef long long jlong;");
+        out.println("    typedef signed char jbyte;");
+        out.println("#endif");
         out.println("#ifdef _WIN32");
         out.println("    #define _JAVASOFT_JNI_MD_H_");
         out.println();
@@ -303,7 +314,7 @@ public class Generator implements Closeable {
         out.println("    return JavaCPP_classes[i];");
         out.println("}");
         out.println();
-        out.println("template <class P> static inline P JavaCPP_dereference(JNIEnv* env, P* ptr) {");
+        out.println("template <typename P> static inline P JavaCPP_dereference(JNIEnv* env, P* ptr) {");
         out.println("    if (ptr == NULL) {");
         out.println("        env->ThrowNew(JavaCPP_getClass(env, " +
                 jclasses.register(NullPointerException.class) + "), \"Return pointer address is NULL.\");");
@@ -342,7 +353,7 @@ public class Generator implements Closeable {
         }
         if (defineAdapters) {
             out.println("#include <vector>");
-            out.println("template<class P, class T = P> class JavaCPP_hidden VectorAdapter {");
+            out.println("template<typename P, typename T = P> class JavaCPP_hidden VectorAdapter {");
             out.println("public:");
             out.println("    VectorAdapter(const P* ptr, typename std::vector<T>::size_type size) : ptr((P*)ptr), size(size),");
             out.println("        vec2(ptr ? std::vector<T>((P*)ptr, (P*)ptr + size) : std::vector<T>()), vec(vec2) { }");

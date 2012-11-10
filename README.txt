@@ -206,7 +206,7 @@ Processing in C++...
 
 
 ==Creating Callback Functions==
-Some applications also require a way to call back into the JVM from C/C++, so JavaCPP provides a simple way to define custom callback function (pointers). Although there exist frameworks, which are arguably harder to use, such as [http://code.google.com/p/jace/ Jace] and [JunC++ion http://codemesh.com/products/junction/] that can map complete Java APIs to C++, since invoking a Java method from native code takes at least an order of magnitude more time than the other way around, it does not make much sense in my opinion to export as is an API that was designed to be used in Java. Nevertheless, suppose we want to perform some operations in Java, planning to wrap that into a function named `foo()` that calls some method inside class `Foo`, we can write the following code in a file named `foo.cpp`, taking care to initialize the JVM if necessary with either `JavaCPP_init()` or by any other means:
+Some applications also require a way to call back into the JVM from C/C++, so JavaCPP provides a simple way to define custom callback function (pointers). Although there exist frameworks, which are arguably harder to use, such as [http://code.google.com/p/jace/ Jace] and [http://codemesh.com/products/junction/ JunC++ion] that can map complete Java APIs to C++, since invoking a Java method from native code takes at least an order of magnitude more time than the other way around, it does not make much sense in my opinion to export as is an API that was designed to be used in Java. Nevertheless, suppose we want to perform some operations in Java, planning to wrap that into a function named `foo()` that calls some method inside class `Foo`, we can write the following code in a file named `foo.cpp`, taking care to initialize the JVM if necessary with either `JavaCPP_init()` or by any other means:
 
 {{{
 #include <iostream>
@@ -238,7 +238,7 @@ public class Foo {
 }
 }}}
 
-Since functions also have pointers, we can use `FunctionPointer` instances accordingly, in ways similar to the [http://hackage.haskell.org/packages/archive/base/4.6.0.0/doc/html/Foreign-Ptr.html#g:2 `FunPtr` type of Haskell FFI], but where any `java.lang.Throwable` object thrown gets translated to `std::exception`. Building and running this sample code with these commands under Linux x86_64 produces the following output:
+Since functions also have pointers, we can use `FunctionPointer` instances accordingly, in ways similar to the [http://hackage.haskell.org/packages/archive/base/4.6.0.0/doc/html/Foreign-Ptr.html#g:2 `FunPtr` type of Haskell FFI], but where any `java.lang.Throwable` object thrown gets translated to `std::exception`. Building and running this sample code with these commands under Linux x86_64 produces the expected output:
 
 {{{
 $ javac -cp javacpp.jar Foo.java
@@ -268,8 +268,10 @@ This project was conceived at the Okutomi & Tanaka Laboratory, Tokyo Institute o
 
 
 ==Changes==
+ * Fixed compiler error on 32-bit Mac OS X
+
 ===November 4, 2012 version 0.3===
- * Added `Pointer.withDeallocator(Pointer)` method to attach easily a custom `Deallocator` created out of a `static void deallocate(Pointer)` method in the subclass, including native ones such as `@Namespace @Name("delete") static void deallocate(Pointer)`
+ * Added `Pointer.withDeallocator(Pointer)` method to attach easily a custom `Deallocator` created out of a `static void deallocate(Pointer)` method in the subclass, including native ones such as `@Namespace @Name("delete") static native void deallocate(Pointer)`
  * A name starting with "::", for example `@Name("::std::string")` or `@Namespace("::std")`, now drops the remaining enclosing scope
  * Removed confusing `cast` value of `@Adapter` instead relying on new `String[]` value of `@Cast` to order multiple casts
  * Renamed various variables in `Generator` to make the generated code more readable
