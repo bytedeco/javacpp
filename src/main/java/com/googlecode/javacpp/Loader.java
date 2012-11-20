@@ -298,7 +298,7 @@ public class Loader {
     static boolean loadLibraries = true;
     static Map<String,String> loadedLibraries = Collections.synchronizedMap(new HashMap<String,String>());
 
-    static File getTempDir() {
+    public static File getTempDir() {
         if (tempDir == null) {
             File tmpdir = new File(System.getProperty("java.io.tmpdir"));
             File f = null;
@@ -312,6 +312,10 @@ public class Loader {
             }
         }
         return tempDir;
+    }
+
+    public static boolean isLoadLibraries() {
+        return loadLibraries;
     }
 
     public static String load() {

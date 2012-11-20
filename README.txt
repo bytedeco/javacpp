@@ -268,6 +268,9 @@ This project was conceived at the Okutomi & Tanaka Laboratory, Tokyo Institute o
 
 
 ==Changes==
+ * Exported `Loader.isLoadLibraries()`, which always returns true, except when the `Builder` loads the classes
+ * Made it possible to specify a nested class (with a '$' character in the name) on the command line
+ * When `Pointer.limit == 0`, the methods `put()`, `zero()`, and `asBuffer()` now assume a size of 1
  * Fixed compiler error on 32-bit Mac OS X
 
 ===November 4, 2012 version 0.3===

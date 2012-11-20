@@ -292,11 +292,14 @@ import java.nio.ByteOrder;
         if (isNull()) {
             return null;
         }
+        if (limit > 0 && limit < position) {
+            throw new IllegalArgumentException("limit < position: (" + limit + " < " + position + ")");
+        }
         int valueSize = sizeof();
         int arrayPosition = position;
         int arrayLimit = limit;
-        position = valueSize*arrayPosition;
-        limit = valueSize*arrayLimit;
+        position = valueSize * arrayPosition;
+        limit = valueSize * (arrayLimit <= 0 ? arrayPosition + 1 : arrayLimit);
         ByteBuffer b = asDirectBuffer().order(ByteOrder.nativeOrder());
         position = arrayPosition;
         limit = arrayLimit;
@@ -312,19 +315,25 @@ import java.nio.ByteOrder;
     public static native Pointer memmove(Pointer dst, Pointer src, long size);
     public static native Pointer memset(Pointer dst, int ch, long size);
     public <P extends Pointer> P put(Pointer p) {
+        if (p.limit > 0 && p.limit < p.position) {
+            throw new IllegalArgumentException("limit < position: (" + p.limit + " < " + p.position + ")");
+        }
         int valueSize = sizeof();
         int valueSize2 = p.sizeof();
         address += valueSize * position;
         p.address += valueSize2 * p.position;
-        memcpy(this, p, valueSize2 * (p.limit - p.position));
+        memcpy(this, p, valueSize2 * (p.limit <= 0 ? 1 : p.limit - p.position));
         address -= valueSize * position;
         p.address -= valueSize2 * p.position;
         return (P)this;
     }
     public <P extends Pointer> P zero() {
+        if (limit > 0 && limit < position) {
+            throw new IllegalArgumentException("limit < position: (" + limit + " < " + position + ")");
+        }
         int valueSize = sizeof();
         address += valueSize * position;
-        memset(this, 0, valueSize * (limit - position));
+        memset(this, 0, valueSize * (limit <= 0 ? 1 : limit - position));
         address -= valueSize * position;
         return (P)this;
     }

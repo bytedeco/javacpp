@@ -290,7 +290,7 @@ public class Builder {
         File outputPath;
         if (outputDirectory == null) {
             try {
-                URL resourceURL = classes[0].getResource(classes[0].getSimpleName() + ".class");
+                URL resourceURL = classes[0].getResource('/' + classes[0].getName().replace('.', '/') + ".class");
                 File packageDir = new File(resourceURL.toURI()).getParentFile();
                 outputPath      = new File(packageDir, platformName);
                 sourcePrefix    = packageDir.getPath() + File.separator + outputName;
@@ -419,8 +419,10 @@ public class Builder {
         private UserClassLoader loader;
 
         public void addClass(String className) {
-            if (className == null || className.indexOf('$') > 0) {
-                // skip nested classes
+            addClass(className, true);
+        }
+        public void addClass(String className, boolean skipNestedClasses) {
+            if (className == null || (skipNestedClasses && className.indexOf('$') > 0)) {
                 return;
             } else if (className.endsWith(".class")) {
                 className = className.substring(0, className.length()-6);
@@ -497,7 +499,7 @@ public class Builder {
             } else if (name.endsWith(".*")) {
                 addPackage(name.substring(0, name.length()-2), false);
             } else {
-                addClass(name);
+                addClass(name, false);
             }
         }
     }
