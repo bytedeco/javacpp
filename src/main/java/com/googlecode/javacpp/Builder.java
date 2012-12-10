@@ -617,7 +617,7 @@ public class Builder {
 
     public Collection<File> build() throws IOException, InterruptedException {
         if (classes.isEmpty()) {
-            classScanner.addPackage(null, true);
+            return null;
         }
 
         LinkedList<File> outputFiles;
@@ -672,6 +672,7 @@ public class Builder {
     }
 
     public static void main(String[] args) throws Exception {
+        boolean addedClasses = false;
         Builder builder = new Builder();
         for (int i = 0; i < args.length; i++) {
             if ("-help".equals(args[i]) || "--help".equals(args[i])) {
@@ -703,7 +704,11 @@ public class Builder {
                 System.exit(1);
             } else {
                 builder.classesOrPackages(args[i]);
+                addedClasses = true;
             }
+        }
+        if (!addedClasses) {
+            builder.classScanner.addPackage(null, true);
         }
         builder.build();
     }

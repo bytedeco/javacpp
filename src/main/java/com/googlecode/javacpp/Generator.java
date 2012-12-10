@@ -743,7 +743,7 @@ public class Generator implements Closeable {
             String[] typeName = getCPPTypeName(cls);
             String[] returnConvention = getValueTypeName(typeName).split("\\(");
             String parameterDeclaration = typeName[1].substring(1);
-            String instanceTypeName = "JavaCPP_" + mangle(cls.getName());
+            String instanceTypeName = getFunctionClassName(cls);
             functionDefinitions.register("struct JavaCPP_hidden " + instanceTypeName + " {\n" +
                     "    " + instanceTypeName + "() : ptr(NULL), obj(NULL) { }\n" +
                     "    " + returnConvention[0] + "operator()" + parameterDeclaration + ";\n" +
@@ -811,7 +811,7 @@ public class Generator implements Closeable {
                 if (methodInfo.bufferGetter && "void*".equals(typeName[0])) {
                     typeName[0] = "char*";
                 } else if (FunctionPointer.class.isAssignableFrom(cls)) {
-                    typeName[0] = "JavaCPP_" + mangle(cls.getName()) + "*";
+                    typeName[0] = getFunctionClassName(cls) + "*";
                     typeName[1] = "";
                 }
                 out.println("    " + typeName[0] + " ptr" + typeName[1] + " = (" + typeName[0] +
@@ -867,7 +867,7 @@ public class Generator implements Closeable {
                         logger.log(Level.WARNING, "Method \"" + methodInfo.method + "\" has an abstract FunctionPointer parameter, " +
                                 "but a concrete subclass is required. Compilation will most likely fail.");
                     }
-                    typeName[0] = "JavaCPP_" + mangle(methodInfo.parameterTypes[j].getName()) + "*";
+                    typeName[0] = getFunctionClassName(methodInfo.parameterTypes[j]) + "*";
                     typeName[1] = "";
                 }
 
@@ -991,7 +991,7 @@ public class Generator implements Closeable {
                     out.println("    " + typeName[0] + " rptr;");
                 } else if (Pointer.class.isAssignableFrom(methodInfo.returnType)) {
                     if (FunctionPointer.class.isAssignableFrom(methodInfo.returnType)) {
-                        typeName[0] = "JavaCPP_" + mangle(methodInfo.returnType.getName()) + "*";
+                        typeName[0] = getFunctionClassName(methodInfo.returnType) + "*";
                         typeName[1] = "";
                         valueTypeName = getValueTypeName(typeName);
                         returnPrefix = "if (rptr != NULL) rptr->ptr = ";
@@ -1385,7 +1385,7 @@ public class Generator implements Closeable {
         Annotation[] callbackAnnotations = callbackMethod.getAnnotations();
         Annotation[][] callbackParameterAnnotations = callbackMethod.getParameterAnnotations();
 
-        String instanceTypeName = "JavaCPP_" + mangle(cls.getName());
+        String instanceTypeName = getFunctionClassName(cls);
         String[] callbackTypeName = getCPPTypeName(cls);
         String[] returnConvention = getValueTypeName(callbackTypeName).split("\\(");
         String parameterDeclaration = callbackTypeName[1].substring(1);
@@ -1463,7 +1463,7 @@ public class Generator implements Closeable {
 
                     if (Pointer.class.isAssignableFrom(callbackParameterTypes[j])) {
                         if (FunctionPointer.class.isAssignableFrom(callbackParameterTypes[j])) {
-                            typeName[0] = "JavaCPP_" + mangle(callbackParameterTypes[j].getName()) + "*";
+                            typeName[0] = getFunctionClassName(callbackParameterTypes[j]) + "*";
                             typeName[1] = "";
                             valueTypeName = getValueTypeName(typeName);
                         }
@@ -1672,7 +1672,7 @@ public class Generator implements Closeable {
     private void doCallbackAllocator(Class cls, String callbackName) {
         // XXX: Here, we should actually allocate new trampolines on the heap somehow...
         // For now it just bumps out from the global variable the last object that called this method
-        String instanceTypeName = "JavaCPP_" + mangle(cls.getName());
+        String instanceTypeName = getFunctionClassName(cls);
         out.println("    obj = env->NewWeakGlobalRef(obj);");
         out.println("    if (obj == NULL) {");
         out.println("        JavaCPP_log(\"Error creating global reference of " + cls.getCanonicalName() + " instance for callback.\");");
@@ -1713,6 +1713,11 @@ public class Generator implements Closeable {
             return true;
         }
         return false;
+    }
+
+    private String getFunctionClassName(Class<?> cls) {
+        Name name = cls.getAnnotation(Name.class);
+        return name != null ? name.value()[0] : "JavaCPP_" + mangle(cls.getName());
     }
 
     private static Method getFunctionMethod(Class<?> cls, boolean[] callbackAllocators) {

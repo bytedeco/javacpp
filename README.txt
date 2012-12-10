@@ -268,6 +268,8 @@ This project was conceived at the Okutomi & Tanaka Laboratory, Tokyo Institute o
 
 
 ==Changes==
+ * Added the ability to change the name of the class of function objects created when defining a `FunctionPointer` with the `@Name` annotation
+ * `Builder` would go on a compile spree when all classes specified on the command line could not be loaded
  * Exported `Loader.isLoadLibraries()`, which always returns true, except when the `Builder` loads the classes
  * Made it possible to specify a nested class (with a '$' character in the name) on the command line
  * When `Pointer.limit == 0`, the methods `put()`, `zero()`, and `asBuffer()` now assume a size of 1
