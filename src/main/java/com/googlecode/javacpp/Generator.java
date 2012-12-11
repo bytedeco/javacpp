@@ -482,7 +482,8 @@ public class Generator implements Closeable {
             String name = "JavaCPP_" + mangle(c.getName());
             out.print("static void " + name + "_deallocate(");
             if (FunctionPointer.class.isAssignableFrom(c)) {
-                out.println(name + "* p) { JNIEnv *e; int a = JavaCPP_getEnv(&e); if (a >= 0) e->DeleteWeakGlobalRef(p->obj); delete p; JavaCPP_detach(a); }");
+                String typeName = getFunctionClassName(c);
+                out.println(typeName + "* p) { JNIEnv *e; int a = JavaCPP_getEnv(&e); if (a >= 0) e->DeleteWeakGlobalRef(p->obj); delete p; JavaCPP_detach(a); }");
             } else {
                 String[] typeName = getCPPTypeName(c);
                 out.println(typeName[0] + " p" + typeName[1] + ") { delete p; }");
@@ -1685,7 +1686,7 @@ public class Generator implements Closeable {
         out.println("        jvalue args[3];");
         out.println("        args[0].j = ptr_to_jlong(rptr);");
         out.println("        args[1].i = 1;");
-        out.println("        args[2].j = ptr_to_jlong(&" + instanceTypeName + "_deallocate);");
+        out.println("        args[2].j = ptr_to_jlong(&JavaCPP_" + mangle(cls.getName()) + "_deallocate);");
         deallocators.register(cls);
         out.println("        env->CallNonvirtualVoidMethodA(obj, JavaCPP_getClass(env, " +
                 jclasses.register(Pointer.class) + "), JavaCPP_initMID, args);");
