@@ -140,8 +140,22 @@ public class BuildMojo extends AbstractMojo {
                 getLog().debug("environmentVariables: " + environmentVariables);
                 getLog().debug("compilerOptions: " + compilerOptions);
             }
+
+            if (classPaths != null && classPath != null) {
+                classPaths = Arrays.copyOf(classPaths, classPaths.length + 1);
+                classPaths[classPaths.length - 1] = classPath;
+            } else if (classPath != null) {
+                classPaths = new String[] { classPath };
+            }
+
+            if (classOrPackageNames != null && classOrPackageName != null) {
+                classOrPackageNames = Arrays.copyOf(classOrPackageNames, classOrPackageNames.length + 1);
+                classOrPackageNames[classOrPackageNames.length - 1] = classOrPackageName;
+            } else if (classOrPackageName != null) {
+                classOrPackageNames = new String[] { classOrPackageName };
+            }
+
             Collection<File> outputFiles = new Builder()
-                    .classPaths(classPath)
                     .classPaths(classPaths)
                     .outputDirectory(outputDirectory)
                     .outputName(outputName)
@@ -151,7 +165,6 @@ public class BuildMojo extends AbstractMojo {
                     .properties(properties)
                     .propertyFile(propertyFile)
                     .properties(propertyKeysAndValues)
-                    .classesOrPackages(classOrPackageName)
                     .classesOrPackages(classOrPackageNames)
                     .environmentVariables(environmentVariables)
                     .compilerOptions(compilerOptions).build();
