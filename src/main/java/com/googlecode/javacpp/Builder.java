@@ -479,13 +479,11 @@ public class Builder {
                     jis.close();
                 }
             }
-            if (prevSize == classes.size()) {
-                if (packageName == null) {
-                    System.err.println("Warning: No classes found in the unnamed package");
-                    printHelp();
-                } else {
-                    System.err.println("Warning: No classes found in package " + packageName);
-                }
+            if (classes.size() == 0 && packageName == null) {
+                System.err.println("Warning: No classes found in the unnamed package");
+                printHelp();
+            } else if (prevSize == classes.size() && packageName != null) {
+                System.err.println("Warning: No classes found in package " + packageName);
             }
         }
 
@@ -599,7 +597,9 @@ public class Builder {
         return this;
     }
     public Builder classesOrPackages(String ... classesOrPackages) throws IOException {
-        for (String s : classesOrPackages) {
+        if (classesOrPackages == null) {
+            classScanner.addPackage(null, true);
+        } else for (String s : classesOrPackages) {
             classScanner.addClassOrPackage(s);
         }
         return this;
@@ -708,7 +708,7 @@ public class Builder {
             }
         }
         if (!addedClasses) {
-            builder.classScanner.addPackage(null, true);
+            builder.classesOrPackages(null);
         }
         builder.build();
     }
