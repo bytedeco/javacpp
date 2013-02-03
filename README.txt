@@ -205,7 +205,7 @@ Processing in C++...
 }}}
 
 
-==Creating Callback Functions==
+===Creating Callback Functions===
 Some applications also require a way to call back into the JVM from C/C++, so JavaCPP provides a simple way to define custom callback function (pointers). Although there exist frameworks, which are arguably harder to use, such as [http://code.google.com/p/jace/ Jace] and [http://codemesh.com/products/junction/ JunC++ion] that can map complete Java APIs to C++, since invoking a Java method from native code takes at least an order of magnitude more time than the other way around, it does not make much sense in my opinion to export as is an API that was designed to be used in Java. Nevertheless, suppose we want to perform some operations in Java, planning to wrap that into a function named `foo()` that calls some method inside class `Foo`, we can write the following code in a file named `foo.cpp`, taking care to initialize the JVM if necessary with either `JavaCPP_init()` or by any other means:
 
 {{{
@@ -229,12 +229,27 @@ We may then declare that function to a `call()` or `apply()` method defined in a
 import com.googlecode.javacpp.*;
 import com.googlecode.javacpp.annotation.*;
 
+@Platform(include="<algorithm>")
+@Namespace("std")
 public class Foo {
-    public static class Bar extends FunctionPointer {
-        public @Name("foo") void call(int a, int b) throws Exception { 
+    static { Loader.load(); }
+
+    public static class Callback extends FunctionPointer {
+        // Loader.load() and allocate() are required only when explicitly creating an instance
+        static { Loader.load(); }
+        protected Callback() { allocate(); }
+        private native void allocate();
+
+        public @Name("foo") boolean call(int a, int b) throws Exception { 
             throw new Exception("bar " + a * b);
         }
     }
+
+    // We can also pass (or get) a FunctionPointer as argument to (or return value from) other functions
+    public static native void stable_sort(IntPointer first, IntPointer last, Callback compare);
+
+    // And to pass (or get) it as a C++ function object, annotate with @ByVal or @ByRef
+    public static native void sort(IntPointer first, IntPointer last, @ByVal Callback compare);
 }
 }}}
 
@@ -248,7 +263,7 @@ $ ./foo
 java.lang.Exception: bar 42
 }}}
 
-In this example, the `FunctionPointer` object gets created implicitly, but to call a native function pointer, we could define one that instead contains a `native call()/apply()` method, and create an instance explicitly. Such a class can also be extended in Java to create callbacks, and like any other normal `Pointer` object, must be allocated with a `native void allocate()` method, so please remember to hang on to references in Java, as those will get garbage collected. As a bonus, `FunctionPointer.call()/apply()` maps in fact to an overloaded `operator()` of a C++ function object that we can pass to other functions by annotating parameters with `@ByVal` or `@ByRef`.
+In this example, the `FunctionPointer` object gets created implicitly, but to call a native function pointer, we could define one that instead contains a `native call()/apply()` method, and create an instance explicitly. Such a class can also be extended in Java to create callbacks, and like any other normal `Pointer` object, must be allocated with a `native void allocate()` method, so please remember to hang on to references in Java, as those will get garbage collected. As a bonus, `FunctionPointer.call()/apply()` maps in fact to an overloaded `operator()` of a C++ function object that we can pass to other functions by annotating parameters with `@ByVal` or `@ByRef`, as with the `sort()` function in the example above.
 
 
 ==Instructions for Android==
@@ -268,6 +283,7 @@ This project was conceived at the Okutomi & Tanaka Laboratory, Tokyo Institute o
 
 
 ==Changes==
+ * Provided new `@Platform(library="...")` annotation value to let users specify the name of the native library used by both `Builder` and `Loader`, where different classes with the same name get built together, which also works on nested classes (issue #29)
  * Added the ability to change the name of the class of function objects created when defining a `FunctionPointer` with the `@Name` annotation
  * `Builder` would go on a compile spree when all classes specified on the command line could not be loaded
  * Exported `Loader.isLoadLibraries()`, which always returns true, except when the `Builder` loads the classes

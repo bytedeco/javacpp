@@ -513,7 +513,7 @@ public class Generator implements Closeable {
             out.println("    for (int i = 1; i < nOptions && argv != NULL; i++) {");
             out.println("        options[i].optionString = (char*)argv[i - 1];");
             out.println("    }");
-            out.println("    JavaVMInitArgs vm_args = { JNI_VERSION_1_6, nOptions, options };");
+            out.println("    JavaVMInitArgs vm_args = { " + JNI_VERSION + ", nOptions, options };");
             out.println("    return JNI_CreateJavaVM(&vm, (void **)&env, &vm_args);");
             out.println("}");
             out.println("#endif");

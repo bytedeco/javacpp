@@ -24,4 +24,5 @@ public @interface Platform {
     String[] framework()   default {};
     String[] preloadpath() default {};
     String[] preload()     default {};
+    String   library()     default "";
 }

@@ -32,6 +32,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Properties;
@@ -419,16 +420,13 @@ public class Builder {
         private UserClassLoader loader;
 
         public void addClass(String className) {
-            addClass(className, true);
-        }
-        public void addClass(String className, boolean skipNestedClasses) {
-            if (className == null || (skipNestedClasses && className.indexOf('$') > 0)) {
+            if (className == null) {
                 return;
             } else if (className.endsWith(".class")) {
                 className = className.substring(0, className.length()-6);
             }
             try {
-                Class c = Class.forName(className, true, loader);
+                Class c = Class.forName(className, false, loader);
                 if (!classes.contains(c)) {
                     classes.add(c);
                 }
@@ -440,7 +438,7 @@ public class Builder {
         }
 
         public void addMatchingFile(String filename, String packagePath, boolean recursive) {
-            if (filename != null && filename.endsWith(".class") && filename.indexOf('$') < 0 &&
+            if (filename != null && filename.endsWith(".class") &&
                     (packagePath == null || (recursive && filename.startsWith(packagePath)) ||
                     filename.regionMatches(0, packagePath, 0, Math.max(filename.lastIndexOf('/'), packagePath.lastIndexOf('/'))))) {
                 addClass(filename.replace('/', '.'));
@@ -497,7 +495,7 @@ public class Builder {
             } else if (name.endsWith(".*")) {
                 addPackage(name.substring(0, name.length()-2), false);
             } else {
-                addClass(name, false);
+                addClass(name);
             }
         }
     }
@@ -623,8 +621,25 @@ public class Builder {
         LinkedList<File> outputFiles;
         if (outputName == null) {
             outputFiles = new LinkedList<File>();
+            Map<String, LinkedList<Class>> map = new LinkedHashMap<String, LinkedList<Class>>();
             for (Class c : classes) {
-                outputFiles.addAll(generateAndCompile(new Class[] { c }, Loader.getLibraryName(c)));
+                Properties p = (Properties)properties.clone();
+                if (!Loader.appendProperties(p, c)) {
+                    continue;
+                }
+                String libraryName = p.getProperty("loader.library", "");
+                if (libraryName.length() == 0) {
+                    continue;
+                }
+                LinkedList<Class> classList = map.get(libraryName);
+                if (classList == null) {
+                    map.put(libraryName, classList = new LinkedList<Class>());
+                }
+                classList.add(c);
+            }
+            for (String libraryName : map.keySet()) {
+                LinkedList<Class> classList = map.get(libraryName);
+                outputFiles.addAll(generateAndCompile(classList.toArray(new Class[classList.size()]), libraryName));
             }
         } else {
             outputFiles = generateAndCompile(classes.toArray(new Class[classes.size()]), outputName);

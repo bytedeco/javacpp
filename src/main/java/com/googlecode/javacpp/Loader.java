@@ -113,7 +113,11 @@ public class Loader {
         return p;
     }
 
-    public static void appendProperties(Properties properties, Class cls) {
+    public static boolean appendProperties(Properties properties, Class cls) {
+        // provide a default library name only to top-level classes
+        if (cls.getName().indexOf('$') < 0) {
+            properties.setProperty("loader.library", "jni" + cls.getSimpleName());
+        }
         String platformName = properties.getProperty("platform.name");
         Class<?> c = cls;
         com.googlecode.javacpp.annotation.Properties classProperties =
@@ -123,13 +127,13 @@ public class Loader {
             try {
                 Platform platform = c.getAnnotation(Platform.class);
                 if (platform == null) {
-                    return;
+                    return false;
                 } else {
                     platforms = new Platform[] { platform };
                 }
             } catch (Throwable t) {
                 logger.log(Level.WARNING, "Could not append properties for " + c.getCanonicalName() + ": " + t);
-                return;
+                return false;
             }
         } else {
             platforms = classProperties.value();
@@ -137,6 +141,7 @@ public class Loader {
 
         String[] define = {}, include = {}, cinclude = {}, includepath = {}, options = {},
                  linkpath = {}, link = {}, framework = {}, preloadpath = {}, preload = {};
+        String library = properties.getProperty("loader.library", "");
         for (Platform p : platforms) {
             String[][] names = { p.value(), p.not() };
             boolean[] matches = { false, false };
@@ -159,6 +164,7 @@ public class Loader {
                 if (p.framework()  .length > 0) { framework   = p.framework();   }
                 if (p.preloadpath().length > 0) { preloadpath = p.preloadpath(); }
                 if (p.preload()    .length > 0) { preload     = p.preload();     }
+                if (p.library().length() > 0)   { library     = p.library();     }
             }
         }
 
@@ -186,6 +192,8 @@ public class Loader {
         appendProperty(properties, "loader.preloadpath",        s, preloadpath);
         appendProperty(properties, "loader.preload",            s, link);
         appendProperty(properties, "loader.preload",            s, preload);
+        properties.setProperty("loader.library", library);
+        return true;
     }
 
     public static void appendProperty(Properties properties, String name,
@@ -217,10 +225,6 @@ public class Loader {
             value += separator;
         }
         properties.setProperty(name, value + oldValue);
-    }
-
-    public static String getLibraryName(Class cls) {
-        return "jni" + cls.getSimpleName();
     }
 
     public static Class getCallerClass(int i) {
@@ -327,19 +331,19 @@ public class Loader {
             return null;
         }
 
+        Properties p = (Properties)getProperties().clone();
+        appendProperties(p, cls);
         // Find the top enclosing class, to match the library filename
-//        while (cls.getDeclaringClass() != null) {
-//            cls = cls.getDeclaringClass();
-//        }
-        String className = cls.getName();
-        int topIndex = className.indexOf('$');
-        if (topIndex > 0) {
-            className = className.substring(0, topIndex);
+        while (p.getProperty("loader.library", "").length() == 0) {
+            if ((cls = cls.getDeclaringClass()) == null) {
+                return null;
+            }
+            appendProperties(p, cls);
         }
 
         // Force initialization of the class in case it needs it
         try {
-            cls = Class.forName(className, true, cls.getClassLoader());
+            cls = Class.forName(cls.getName(), true, cls.getClassLoader());
         } catch (ClassNotFoundException ex) {
             Error e = new NoClassDefFoundError(ex.toString());
             e.initCause(ex);
@@ -347,7 +351,7 @@ public class Loader {
         }
 
         // Preload native libraries desired by our class
-        Properties p = (Properties)getProperties().clone();
+        p = (Properties)getProperties().clone();
         appendProperties(p, cls);
         String pathSeparator = p.getProperty("path.separator");
         String platformRoot  = p.getProperty("platform.root");
@@ -373,7 +377,7 @@ public class Loader {
             }
         }
 
-        return loadLibrary(cls, null, getLibraryName(cls));
+        return loadLibrary(cls, null, p.getProperty("loader.library"));
     }
 
     public static String loadLibrary(String libnameversion) {
