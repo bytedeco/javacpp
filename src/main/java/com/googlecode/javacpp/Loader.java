@@ -113,13 +113,25 @@ public class Loader {
         return p;
     }
 
-    public static boolean appendProperties(Properties properties, Class cls) {
-        // provide a default library name only to top-level classes
-        if (cls.getName().indexOf('$') < 0) {
-            properties.setProperty("loader.library", "jni" + cls.getSimpleName());
+    public static Class appendProperties(Properties properties, Class cls) {
+        Class<?> c = cls;
+        // Find first enclosing declaring class with some properties to use
+        while (c.getDeclaringClass() != null) {
+            if (c.isAnnotationPresent(com.googlecode.javacpp.annotation.Properties.class)) {
+                break;
+            }
+            if (c.isAnnotationPresent(Platform.class)) {
+                Platform p = c.getAnnotation(Platform.class);
+                if (p.define().length > 0 || p.include().length > 0 || p.cinclude().length > 0 ||
+                        p.includepath().length > 0 || p.options().length > 0 || p.linkpath().length > 0 ||
+                        p.link().length > 0 || p.framework().length > 0 ||  p.preloadpath().length > 0 ||
+                        p.preload().length > 0 || p.library().length() > 0) {
+                    break;
+                }
+            }
+            c = c.getDeclaringClass();
         }
         String platformName = properties.getProperty("platform.name");
-        Class<?> c = cls;
         com.googlecode.javacpp.annotation.Properties classProperties =
                 c.getAnnotation(com.googlecode.javacpp.annotation.Properties.class);
         Platform[] platforms;
@@ -127,13 +139,13 @@ public class Loader {
             try {
                 Platform platform = c.getAnnotation(Platform.class);
                 if (platform == null) {
-                    return false;
+                    return c;
                 } else {
                     platforms = new Platform[] { platform };
                 }
             } catch (Throwable t) {
                 logger.log(Level.WARNING, "Could not append properties for " + c.getCanonicalName() + ": " + t);
-                return false;
+                return c;
             }
         } else {
             platforms = classProperties.value();
@@ -141,7 +153,7 @@ public class Loader {
 
         String[] define = {}, include = {}, cinclude = {}, includepath = {}, options = {},
                  linkpath = {}, link = {}, framework = {}, preloadpath = {}, preload = {};
-        String library = properties.getProperty("loader.library", "");
+        String library = "jni" + c.getSimpleName();
         for (Platform p : platforms) {
             String[][] names = { p.value(), p.not() };
             boolean[] matches = { false, false };
@@ -193,7 +205,7 @@ public class Loader {
         appendProperty(properties, "loader.preload",            s, link);
         appendProperty(properties, "loader.preload",            s, preload);
         properties.setProperty("loader.library", library);
-        return true;
+        return c;
     }
 
     public static void appendProperty(Properties properties, String name,
@@ -331,15 +343,9 @@ public class Loader {
             return null;
         }
 
-        Properties p = (Properties)getProperties().clone();
-        appendProperties(p, cls);
         // Find the top enclosing class, to match the library filename
-        while (p.getProperty("loader.library", "").length() == 0) {
-            if ((cls = cls.getDeclaringClass()) == null) {
-                return null;
-            }
-            appendProperties(p, cls);
-        }
+        Properties p = (Properties)getProperties().clone();
+        cls = appendProperties(p, cls);
 
         // Force initialization of the class in case it needs it
         try {
@@ -351,8 +357,6 @@ public class Loader {
         }
 
         // Preload native libraries desired by our class
-        p = (Properties)getProperties().clone();
-        appendProperties(p, cls);
         String pathSeparator = p.getProperty("path.separator");
         String platformRoot  = p.getProperty("platform.root");
         if (platformRoot != null && !platformRoot.endsWith(File.separator)) {

@@ -624,7 +624,7 @@ public class Builder {
             Map<String, LinkedList<Class>> map = new LinkedHashMap<String, LinkedList<Class>>();
             for (Class c : classes) {
                 Properties p = (Properties)properties.clone();
-                if (!Loader.appendProperties(p, c)) {
+                if (Loader.appendProperties(p, c) != c) {
                     continue;
                 }
                 String libraryName = p.getProperty("loader.library", "");
