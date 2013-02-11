@@ -283,6 +283,7 @@ This project was conceived at the Okutomi & Tanaka Laboratory, Tokyo Institute o
 
 
 ==Changes==
+ * To help diagnose `UnsatisfiedLinkError` thrown by `Loader.load()`, they have been augmented with a potential cause originating from the "preloading" of libraries, whose premature deletion has also been fixed
  * Provided new `@Platform(library="...")` annotation value to let users specify the name of the native library used by both `Builder` and `Loader`, where different classes with the same name get built together, which also works on nested classes (issue #29)
  * Added the ability to change the name of the class of function objects created when defining a `FunctionPointer` with the `@Name` annotation
  * `Builder` would go on a compile spree when all classes specified on the command line could not be loaded
@@ -438,7 +439,7 @@ Initial release
 
 
 ----
-Copyright (C) 2011,2012 Samuel Audet <samuel.audet@gmail.com>
+Copyright (C) 2011-2013 Samuel Audet <samuel.audet@gmail.com>
 Project site: http://code.google.com/p/javacpp/
 
 Licensed under the GNU General Public License version 2 (GPLv2) with Classpath exception.

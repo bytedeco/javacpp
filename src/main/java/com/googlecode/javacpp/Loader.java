@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011,2012 Samuel Audet
+ * Copyright (C) 2011,2012,2013 Samuel Audet
  *
  * This file is part of JavaCPP.
  *
@@ -364,6 +364,7 @@ public class Loader {
         }
         String preloadPath      = p.getProperty("loader.preloadpath");
         String preloadLibraries = p.getProperty("loader.preload");
+        UnsatisfiedLinkError preloadError = null;
         if (preloadLibraries != null) {
             String[] preloadPaths = preloadPath == null ? null : preloadPath.split(pathSeparator);
             if (preloadPaths != null && platformRoot != null) {
@@ -377,11 +378,20 @@ public class Loader {
             for (int i = 0; i < libnames.length; i++) {
                 try {
                     loadLibrary(cls, preloadPaths, libnames[i]);
-                } catch (UnsatisfiedLinkError e) { }
+                } catch (UnsatisfiedLinkError e) {
+                    preloadError = e;
+                }
             }
         }
 
-        return loadLibrary(cls, null, p.getProperty("loader.library"));
+        try {
+            return loadLibrary(cls, null, p.getProperty("loader.library"));
+        } catch (UnsatisfiedLinkError e) {
+            if (preloadError != null) {
+                e.initCause(preloadError);
+            }
+            throw e;
+        }
     }
 
     public static String loadLibrary(String libnameversion) {
@@ -424,6 +434,7 @@ public class Loader {
         }
 
         File tempFile = null;
+        UnsatisfiedLinkError loadError = null;
         try {
             if (resourceURL != null) {
                 // ... then extract it from our resources ...
@@ -451,6 +462,7 @@ public class Loader {
                             System.load(filename);
                             return filename;
                         } catch (UnsatisfiedLinkError e) {
+                            loadError = e;
                             loadedLibraries.remove(hashkey);
                         }
                     }
@@ -462,15 +474,13 @@ public class Loader {
             }
         } catch (UnsatisfiedLinkError e) {
             loadedLibraries.remove(hashkey);
-            if (tempFile != null) {
-                tempFile.delete();
+            if (loadError != null) {
+                throw loadError;
+            } else {
+                throw e;
             }
-            throw e;
         } catch (IOException ex) {
             loadedLibraries.remove(hashkey);
-            if (tempFile != null) {
-                tempFile.delete();
-            }
             Error e = new UnsatisfiedLinkError(ex.toString());
             e.initCause(ex);
             throw e;

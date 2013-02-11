@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011,2012 Samuel Audet
+ * Copyright (C) 2011,2012,2013 Samuel Audet
  *
  * This file is part of JavaCPP.
  *
@@ -663,13 +663,13 @@ public class Builder {
         }
         System.out.println(
             "JavaCPP version " + version + "\n" +
-            "Copyright (C) 2011-2012 Samuel Audet <samuel.audet@gmail.com>\n" +
+            "Copyright (C) 2011-2013 Samuel Audet <samuel.audet@gmail.com>\n" +
             "Project site: http://code.google.com/p/javacpp/\n\n" +
 
             "Licensed under the GNU General Public License version 2 (GPLv2) with Classpath exception.\n" +
             "Please refer to LICENSE.txt or http://www.gnu.org/licenses/ for details.");
         System.out.println();
-        System.out.println("Usage: java -jar javacpp.jar [options] [class or package names]");
+        System.out.println("Usage: java -jar javacpp.jar [options] [class or package (suffixed with .* or .**)]");
         System.out.println();
         System.out.println("where options include:");
         System.out.println();
