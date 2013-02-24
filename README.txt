@@ -283,6 +283,8 @@ This project was conceived at the Okutomi & Tanaka Laboratory, Tokyo Institute o
 
 
 ==Changes==
+ * Fixed callbacks not working on Android anymore (issue #30)
+ * Added some Javadoc to most of the code
  * To help diagnose `UnsatisfiedLinkError` thrown by `Loader.load()`, they have been augmented with a potential cause originating from the "preloading" of libraries, whose premature deletion has also been fixed
  * Provided new `@Platform(library="...")` annotation value to let users specify the name of the native library used by both `Builder` and `Loader`, where different classes with the same name get built together, which also works on nested classes (issue #29)
  * Added the ability to change the name of the class of function objects created when defining a `FunctionPointer` with the `@Name` annotation

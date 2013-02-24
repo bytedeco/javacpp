@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011,2012 Samuel Audet
+ * Copyright (C) 2011,2012,2013 Samuel Audet
  *
  * This file is part of JavaCPP.
  *
@@ -24,11 +24,20 @@ import com.googlecode.javacpp.annotation.Cast;
 import com.googlecode.javacpp.annotation.Name;
 
 /**
+ * The peer class to native pointers and arrays of <tt>size_t</tt>.
+ * All operations take into account the position and limit, when appropriate.
+ * <p>
+ * We need this class because the size differs between 32-bit and 64-bit platforms.
  *
  * @author Samuel Audet
  */
 @Name("size_t")
 public class SizeTPointer extends Pointer {
+    /**
+     * Allocates a native <tt>size_t</tt> array of the given size.
+     *
+     * @param size the number of <tt>size_t</tt> elements to allocate
+     */
     public SizeTPointer(int size) {
         try {
             allocateArray(size);
@@ -36,21 +45,35 @@ public class SizeTPointer extends Pointer {
             throw new RuntimeException("No native JavaCPP library in memory. (Has Loader.load() been called?)", e);
         }
     }
+    /** @see Pointer#Pointer(Pointer) */
     public SizeTPointer(Pointer p) { super(p); }
     private native void allocateArray(int size);
 
+    /** @see Pointer#position(int) */
     @Override public SizeTPointer position(int position) {
         return super.position(position);
     }
+    /** @see Pointer#limit(int) */
     @Override public SizeTPointer limit(int limit) {
         return super.limit(limit);
     }
+    /** @see Pointer#capacity(int) */
     @Override public SizeTPointer capacity(int capacity) {
         return super.capacity(capacity);
     }
 
+    /** @return <tt>get(0)</tt> */
     public long get() { return get(0); }
+    /** @return the i-th <tt>size_t</tt> value of a native array */
     @Cast("size_t") public native long get(int i);
+    /** @return <tt>put(0, s)</tt> */
     public SizeTPointer put(long s) { return put(0, s); }
+    /**
+     * Copies the <tt>size_t</tt> value to the i-th element of a native array.
+     *
+     * @param i the index into the array
+     * @param s the <tt>size_t</tt> value to copy
+     * @return this
+     */
     public native SizeTPointer put(int i, long s);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011,2012 Samuel Audet
+ * Copyright (C) 2011,2012,2013 Samuel Audet
  *
  * This file is part of JavaCPP.
  *
@@ -21,18 +21,76 @@
 package com.googlecode.javacpp;
 
 /**
+ * The peer class to native pointers and arrays of <tt>void*</tt>.
+ * All operations take into account the position and limit, when appropriate.
+ * <p>
+ * To support higher levels of indirection, we can create out of the Pointer
+ * objects returned by {@link #get(int)} additional PointerPointer objects.
  *
  * @author Samuel Audet
  */
 public class PointerPointer extends Pointer {
+    /**
+     * Allocates enough memory for the array and copies it.
+     *
+     * @param array the array to copy
+     * @see #put(Pointer[])
+     */
     public PointerPointer(Pointer  ... array) { this(array.length); put(array); }
+    /**
+     * Allocates enough memory for the array of arrays and copies it.
+     *
+     * @param array the array of arrays to copy
+     * @see #put(byte[][])
+     */
     public PointerPointer(byte[]   ... array) { this(array.length); put(array); }
+    /**
+     * Allocates enough memory for the array of arrays and copies it.
+     *
+     * @param array the array of arrays to copy
+     * @see #put(short[][])
+     */
     public PointerPointer(short[]  ... array) { this(array.length); put(array); }
+    /**
+     * Allocates enough memory for the array of arrays and copies it.
+     *
+     * @param array the array of arrays to copy
+     * @see #put(int[][])
+     */
     public PointerPointer(int[]    ... array) { this(array.length); put(array); }
+    /**
+     * Allocates enough memory for the array of arrays and copies it.
+     *
+     * @param array the array of arrays to copy
+     * @see #put(long[][])
+     */
     public PointerPointer(long[]   ... array) { this(array.length); put(array); }
+    /**
+     * Allocates enough memory for the array of arrays and copies it.
+     *
+     * @param array the array of arrays to copy
+     * @see #put(float[][])
+     */
     public PointerPointer(float[]  ... array) { this(array.length); put(array); }
+    /**
+     * Allocates enough memory for the array of arrays and copies it.
+     *
+     * @param array the array of arrays to copy
+     * @see #put(double[][])
+     */
     public PointerPointer(double[] ... array) { this(array.length); put(array); }
+    /**
+     * Allocates enough memory for the array of arrays and copies it.
+     *
+     * @param array the array of arrays to copy
+     * @see #put(char[][])
+     */
     public PointerPointer(char[]   ... array) { this(array.length); put(array); }
+    /**
+     * Allocates a native array of <tt>void*</tt> of the given size.
+     *
+     * @param size the number of <tt>void*</tt> elements to allocate
+     */
     public PointerPointer(int size) {
         try {
             allocateArray(size);
@@ -40,28 +98,45 @@ public class PointerPointer extends Pointer {
             throw new RuntimeException("No native JavaCPP library in memory. (Has Loader.load() been called?)", e);
         }
     }
+    /** @see Pointer#Pointer(Pointer) */
     public PointerPointer(Pointer p) { super(p); }
     private native void allocateArray(int size);
 
-    // this is just to keep references to Pointer objects we create
+    /** This is just to keep references to Pointer objects we create. */
     private Pointer[] pointerArray;
 
+    /** @see Pointer#position(int) */
     @Override public PointerPointer position(int position) {
         return super.position(position);
     }
+    /** @see Pointer#limit(int) */
     @Override public PointerPointer limit(int limit) {
         return super.limit(limit);
     }
+    /** @see Pointer#capacity(int) */
     @Override public PointerPointer capacity(int capacity) {
         return super.capacity(capacity);
     }
 
+    /**
+     * Writes the Pointer values into the native <tt>void*</tt> array.
+     *
+     * @param array the array of Pointer values to read from
+     * @return this
+     */
     public PointerPointer put(Pointer ... array) {
         for (int i = 0; i < array.length; i++) {
             put(i, array[i]);
         }
         return this;
     }
+    /**
+     * Creates one by one a new Pointer for each <tt>byte[]</tt>,
+     * and writes them into the native <tt>void*</tt> array.
+     *
+     * @param array the array of <tt>byte[]</tt> to read from
+     * @return this
+     */
     public PointerPointer put(byte[] ... array) {
         pointerArray = new Pointer[array.length];
         for (int i = 0; i < array.length; i++) {
@@ -69,6 +144,13 @@ public class PointerPointer extends Pointer {
         }
         return put(pointerArray);
     }
+    /**
+     * Creates one by one a new Pointer for each <tt>short[]</tt>,
+     * and writes them into the native <tt>void*</tt> array.
+     *
+     * @param array the array of <tt>short[]</tt> to read from
+     * @return this
+     */
     public PointerPointer put(short[] ... array) {
         pointerArray = new Pointer[array.length];
         for (int i = 0; i < array.length; i++) {
@@ -76,6 +158,13 @@ public class PointerPointer extends Pointer {
         }
         return put(pointerArray);
     }
+    /**
+     * Creates one by one a new Pointer for each <tt>int[]</tt>,
+     * and writes them into the native <tt>void*</tt> array.
+     *
+     * @param array the array of <tt>int[]</tt> to read from
+     * @return this
+     */
     public PointerPointer put(int[] ... array) {
         pointerArray = new Pointer[array.length];
         for (int i = 0; i < array.length; i++) {
@@ -83,6 +172,13 @@ public class PointerPointer extends Pointer {
         }
         return put(pointerArray);
     }
+    /**
+     * Creates one by one a new Pointer for each <tt>long[]</tt>,
+     * and writes them into the native <tt>void*</tt> array.
+     *
+     * @param array the array of <tt>long[]</tt> to read from
+     * @return this
+     */
     public PointerPointer put(long[] ... array) {
         pointerArray = new Pointer[array.length];
         for (int i = 0; i < array.length; i++) {
@@ -90,6 +186,13 @@ public class PointerPointer extends Pointer {
         }
         return put(pointerArray);
     }
+    /**
+     * Creates one by one a new Pointer for each <tt>float[]</tt>,
+     * and writes them into the native <tt>void*</tt> array.
+     *
+     * @param array the array of <tt>float[]</tt> to read from
+     * @return this
+     */
     public PointerPointer put(float[] ... array) {
         pointerArray = new Pointer[array.length];
         for (int i = 0; i < array.length; i++) {
@@ -97,6 +200,13 @@ public class PointerPointer extends Pointer {
         }
         return put(pointerArray);
     }
+    /**
+     * Creates one by one a new Pointer for each <tt>double[]</tt>,
+     * and writes them into the native <tt>void*</tt> array.
+     *
+     * @param array the array of <tt>double[]</tt> to read from
+     * @return this
+     */
     public PointerPointer put(double[] ... array) {
         pointerArray = new Pointer[array.length];
         for (int i = 0; i < array.length; i++) {
@@ -104,6 +214,13 @@ public class PointerPointer extends Pointer {
         }
         return put(pointerArray);
     }
+    /**
+     * Creates one by one a new Pointer for each <tt>char[]</tt>,
+     * and writes them into the native <tt>void*</tt> array.
+     *
+     * @param array the array of <tt>char[]</tt> to read from
+     * @return this
+     */
     public PointerPointer put(char[] ... array) {
         pointerArray = new Pointer[array.length];
         for (int i = 0; i < array.length; i++) {
@@ -112,8 +229,18 @@ public class PointerPointer extends Pointer {
         return put(pointerArray);
     }
 
+    /** @return <tt>get(0)</tt> */
     public Pointer get() { return get(0); }
+    /** @return the i-th Pointer value of a native array */
     public native Pointer get(int i);
+    /** @return <tt>put(0, p)</tt> */
     public PointerPointer put(Pointer p) { return put(0, p); }
+    /**
+     * Copies the Pointer value to the i-th element of a native array.
+     *
+     * @param i the index into the array
+     * @param p the Pointer value to copy
+     * @return this
+     */
     public native PointerPointer put(int i, Pointer p);
 }

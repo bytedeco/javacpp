@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011,2012 Samuel Audet
+ * Copyright (C) 2011,2012,2013 Samuel Audet
  *
  * This file is part of JavaCPP.
  *
@@ -70,6 +70,44 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
+ * The Generator is where all the C++ source code that we need gets generated.
+ * It has not been designed in any meaningful way since the requirements were
+ * not well understood. It is basically a prototype and is really quite a mess.
+ * Now that we understand better what we need, it could use some refactoring.
+ * <p>
+ * When attempting to understand what the Generator does, try to run experiments
+ * and inspect the generated code: It is quite readable.
+ * <p>
+ * Moreover, although Generator is the one ultimately doing something with the
+ * various annotations it relies on, it was easier to describe the behavior its
+ * meant to have with them as part of the documentation of the annotations, so
+ * we can refer to them to understand more about how Generator should work:
+ *
+ * @see Adapter
+ * @see Allocator
+ * @see ArrayAllocator
+ * @see ByPtr
+ * @see ByPtrPtr
+ * @see ByPtrRef
+ * @see ByRef
+ * @see ByVal
+ * @see Cast
+ * @see Const
+ * @see Convention
+ * @see Function
+ * @see Index
+ * @see MemberGetter
+ * @see MemberSetter
+ * @see Name
+ * @see Namespace
+ * @see NoDeallocator
+ * @see NoException
+ * @see NoOffset
+ * @see Opaque
+ * @see Platform
+ * @see Raw
+ * @see ValueGetter
+ * @see ValueSetter
  *
  * @author Samuel Audet
  */
@@ -1391,6 +1429,7 @@ public class Generator implements Closeable {
         String[] returnConvention = getValueTypeName(callbackTypeName).split("\\(");
         String parameterDeclaration = callbackTypeName[1].substring(1);
         functionPointers.register("static " + instanceTypeName + " " + callbackName + "_instance;");
+        jclassesInit.register(cls); // Android
         if (out2 != null) {
             out2.println("JNIIMPORT " + returnConvention[0] + (returnConvention.length > 1 ?
                     returnConvention[1] : "") + callbackName + parameterDeclaration + ";");

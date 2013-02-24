@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011,2012 Samuel Audet
+ * Copyright (C) 2011,2012,2013 Samuel Audet
  *
  * This file is part of JavaCPP.
  *
@@ -24,11 +24,20 @@ import com.googlecode.javacpp.annotation.Cast;
 import com.googlecode.javacpp.annotation.Name;
 
 /**
+ * The peer class to native pointers and arrays of <tt>bool</tt>.
+ * All operations take into account the position and limit, when appropriate.
+ * <p>
+ * We need this class because C++ does not define the size of the <tt>bool</tt> type.
  *
  * @author Samuel Audet
  */
 @Name("bool")
 public class BoolPointer extends Pointer {
+    /**
+     * Allocates a native <tt>bool</tt> array of the given size.
+     *
+     * @param size the number of <tt>bool</tt> elements to allocate
+     */
     public BoolPointer(int size) {
         try {
             allocateArray(size);
@@ -36,21 +45,35 @@ public class BoolPointer extends Pointer {
             throw new RuntimeException("No native JavaCPP library in memory. (Has Loader.load() been called?)", e);
         }
     }
+    /** @see Pointer#Pointer(Pointer) */
     public BoolPointer(Pointer p) { super(p); }
     private native void allocateArray(int size);
 
+    /** @see Pointer#position(int) */
     @Override public BoolPointer position(int position) {
         return super.position(position);
     }
+    /** @see Pointer#limit(int) */
     @Override public BoolPointer limit(int limit) {
         return super.limit(limit);
     }
+    /** @see Pointer#capacity(int) */
     @Override public BoolPointer capacity(int capacity) {
         return super.capacity(capacity);
     }
 
+    /** @return <tt>get(0)</tt> */
     public boolean get() { return get(0); }
+    /** @return the i-th <tt>bool</tt> value of a native array */
     @Cast("bool") public native boolean get(int i);
+    /** @return <tt>put(0, b)</tt> */
     public BoolPointer put(boolean b) { return put(0, b); }
+    /**
+     * Copies the <tt>bool</tt> value to the i-th element of a native array.
+     *
+     * @param i the index into the array
+     * @param b the <tt>bool</tt> value to copy
+     * @return this
+     */
     public native BoolPointer put(int i, boolean b);
 }

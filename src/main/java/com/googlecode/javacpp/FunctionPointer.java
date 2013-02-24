@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011,2012 Samuel Audet
+ * Copyright (C) 2011,2012,2013 Samuel Audet
  *
  * This file is part of JavaCPP.
  *
@@ -20,13 +20,26 @@
 
 package com.googlecode.javacpp;
 
+import com.googlecode.javacpp.annotation.ByRef;
+import com.googlecode.javacpp.annotation.ByPtr;
+import com.googlecode.javacpp.annotation.ByVal;
+
 /**
+ * All peer classes to function pointers must derive from FunctionPointer.
+ * Defining a subclass lets {@link Generator} create a native function type.
+ * A C++ function object gets instantiated for each call to <tt>allocate()</tt>
+ * as well. That function object can be accessed by annotating any method
+ * parameter with {@link ByVal} or {@link ByRef}. By default, an actual
+ * function pointer gets passed {@link ByPtr}.
+ * <p>
+ * To use FunctionPointer, subclass and add a native method named <tt>call()</tt>
+ * or <tt>apply()</tt>, along with its return type and parameters, as well as the
+ * usual <tt>native void allocate()</tt> method to support explicit allocation,
+ * which is typically a requirement for callback functions.
+ *
+ * @see Generator
  *
  * @author Samuel Audet
- *
- * To use a function pointer, subclass and add a native method named
- * call() or apply(), along with its return type and parameters, as
- * well as the usual allocate() native method to support callback.
  */
 public abstract class FunctionPointer extends Pointer {
     protected FunctionPointer() { }

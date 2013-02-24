@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Arnaud Nauwynck, Samuel Audet
+ * Copyright (C) 2012,2013 Arnaud Nauwynck, Samuel Audet
  *
  * This file is part of JavaCPP.
  *
@@ -29,7 +29,9 @@ import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 
 /**
- * Goal to call JavaCPP Builder (Java class -> C++ JNI -> native library)
+ * A Maven Mojo to call the {@link Builder} (Java class -> C++ JNI -> native library).
+ * Can also be seen as an example of how to use the Builder programmatically.
+ *
  * @goal build
  * @phase process-classes
  * @author Arnaud Nauwynck
@@ -74,7 +76,7 @@ public class BuildMojo extends AbstractMojo {
     protected boolean header = false;
 
     /**
-     * Also create a JAR file named "<jarPrefix>-<platform.name>.jar"
+     * Also create a JAR file named <tt>jarPrefix-platformName.jar</tt>
      * @parameter expression="${jarPrefix}"
      */
     protected String jarPrefix = null;

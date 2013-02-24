@@ -100,6 +100,30 @@
           </execution>
         </executions>
       </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>2.9</version>
+        <executions>
+          <execution>
+            <id>attach-javadocs</id>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+            <configuration>
+              <detectLinks>true</detectLinks>
+              <show>private</show>
+              <tagletArtifacts>
+                <tagletArtifact>
+                  <groupId>org.apache.maven.plugin-tools</groupId>
+                  <artifactId>maven-plugin-tools-javadoc</artifactId>
+                  <version>2.9</version>
+                </tagletArtifact>
+              </tagletArtifacts>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 </project>

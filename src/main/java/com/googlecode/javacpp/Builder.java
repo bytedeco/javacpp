@@ -25,6 +25,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
@@ -41,14 +43,22 @@ import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
 
 /**
+ * The Builder is responsible for coordinating efforts between the Generator
+ * and the native compiler. It contains the main() method, and basically takes
+ * care of the tasks one would expect from a command line build tool, but can
+ * also be used programmatically by setting its properties and calling build().
  *
  * @author Samuel Audet
  */
 public class Builder {
 
+    /**
+     * Tries to find automatically include paths for <tt>jni.h</tt> and <tt>jni_md.h</tt>,
+     * as well as the link and library paths for the <tt>jvm</tt> library.
+     *
+     * @param properties the Properties containing the paths to update
+     */
     public static void includeJavaPaths(Properties properties) {
-        // try to find automatically include paths for jni.h and jni_md.h
-        // and the link and library paths for the "jvm" library
         String platformName  = Loader.getPlatformName();
         String pathSeparator = properties.getProperty("path.separator");
         final String jvmlink = properties.getProperty("compiler.link.prefix", "") +
@@ -112,6 +122,43 @@ public class Builder {
         }
     }
 
+    /**
+     * A simple {@link Thread} that reads data as fast as possible from an {@link InputStream} and
+     * writes to the {@link OutputStream}. Used by {@link #compile(String, String, Properties)}
+     * to flush the streams of a {@link Process}.
+     */
+    public static class Piper extends Thread {
+        public Piper(InputStream is, OutputStream os) {
+            this.is = is;
+            this.os = os;
+        }
+
+        InputStream is;
+        OutputStream os;
+
+        @Override public void run() {
+            try {
+                byte[] buffer = new byte[1024];
+                int length;
+                while ((length = is.read(buffer)) > 0) {
+                    os.write(buffer, 0, length);
+                }
+            } catch (IOException e) {
+                System.err.println("Could not pipe from the InputStream to the OutputStream: " + e.getMessage());
+            }
+        }
+    }
+
+    /**
+     * Launches and waits for the native compiler to produce a native shared library.
+     *
+     * @param sourceFilename the C++ source filename
+     * @param outputFilename the output filename of the shared library
+     * @param properties the Properties detailing the compiler options to use
+     * @return the result of {@link Process#waitFor()}
+     * @throws IOException
+     * @throws InterruptedException
+     */
     public int compile(String sourceFilename, String outputFilename, Properties properties)
             throws IOException, InterruptedException {
         LinkedList<String> command = new LinkedList<String>();
@@ -279,8 +326,18 @@ public class Builder {
         return p.waitFor();
     }
 
-    public LinkedList<File> generateAndCompile(Class[] classes, String outputName) throws IOException, InterruptedException {
-        LinkedList<File> outputFiles = new LinkedList<File>();
+    /**
+     * Generates a C++ source file for classes, and compiles everything in
+     * one shared library when <tt>compile == true</tt>.
+     *
+     * @param classes the Class objects as input to Generator
+     * @param outputName the output name of the shared library
+     * @return the actual File generated, either the compiled library or its source
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    public File generateAndCompile(Class[] classes, String outputName) throws IOException, InterruptedException {
+        File outputFile = null;
         Properties p = (Properties)properties.clone();
         for (Class c : classes) {
             Loader.appendProperties(p, c);
@@ -321,19 +378,28 @@ public class Builder {
                 int exitValue = compile(sourceFilename, libraryFilename, p);
                 if (exitValue == 0) {
                     new File(sourceFilename).delete();
-                    outputFiles.add(new File(libraryFilename));
+                    outputFile = new File(libraryFilename);
                 } else {
                     System.exit(exitValue);
                 }
             } else {
-                outputFiles.add(new File(sourceFilename));
+                outputFile = new File(sourceFilename);
             }
         } else {
             System.out.println("Source file not generated: " + sourceFilename);
         }
-        return outputFiles;
+        return outputFile;
     }
 
+    /**
+     * Stores all the files in the given JAR file. Also attempts to root the paths
+     * of the filenames to each element of a list of classpaths.
+     *
+     * @param jarFile the JAR file to create
+     * @param classpath an array of classpaths to try to use as root
+     * @param files a list of files to store in the JAR file
+     * @throws IOException
+     */
     public static void createJar(File jarFile, String[] classpath, LinkedList<File> files) throws IOException {
         System.out.println("Creating JAR file: " + jarFile);
         JarOutputStream jos = new JarOutputStream(new FileOutputStream(jarFile));
@@ -374,6 +440,10 @@ public class Builder {
         jos.close();
     }
 
+    /**
+     * An extension of {@link URLClassLoader} that keeps a list of paths in memory.
+     * Adds <tt>System.getProperty("user.dir")</tt> as default path if none are added.
+     */
     public static class UserClassLoader extends URLClassLoader {
         private LinkedList<String> paths = new LinkedList<String>();
         public UserClassLoader() {
@@ -410,6 +480,10 @@ public class Builder {
         }
     }
 
+    /**
+     * Given a {@link UserClassLoader}, attempts to match and fill in a {@link Collection}
+     * of {@link Class}, in various ways in which users may wish to do so.
+     */
     public static class ClassScanner {
         public ClassScanner(Collection<Class> classes, UserClassLoader loader) {
             this.classes = classes;
@@ -500,6 +574,9 @@ public class Builder {
         }
     }
 
+    /**
+     * Default constructor that simply initializes everything.
+     */
     public Builder() {
         Loader.loadLibraries = false;
         this.classLoader = new UserClassLoader(Thread.currentThread().getContextClassLoader());
@@ -509,62 +586,89 @@ public class Builder {
         this.compilerOptions = new LinkedList<String>();
     }
 
+    /** The {@link ClassLoader} used by the {@link ClassScanner}. */
     UserClassLoader classLoader = null;
+    /** The directory where the generated files and compiled shared libraries get written to.
+     *  By default they are placed in the same directory as the <tt>.class</tt> file. */
     File outputDirectory = null;
-    String outputName = null, jarPrefix = null;
-    boolean compile = true, header = false;
+    /** The name of the output generated source file or shared library. This enables single-
+     *  file output mode. By default, the top-level enclosing classes get one file each. */
+    String outputName = null;
+    /** The name of the JAR file to create, if not <tt>null</tt>. */
+    String jarPrefix = null;
+    /** If true, compiles the generated source file to a shared library and deletes source. */
+    boolean compile = true;
+    /** If true, also generates C++ header files containing declarations of callback functions. */
+    boolean header = false;
+    /** Accumulates the various properties loaded from resources, files, command line options, etc. */
     Properties properties = null;
+    /** The {@link LinkedList} that the {@link ClassScanner} fills up with {@link Class} objects to process. */
     LinkedList<Class> classes = null;
+    /** The instance of the {@link ClassScanner}. */
     ClassScanner classScanner = null;
+    /** User specified environment variables to pass to the native compiler. */
     Map<String,String> environmentVariables = null;
+    /** Contains additional command line options from the user for the native compiler. */
     LinkedList<String> compilerOptions = null;
 
+    /** Splits argument with {@link File#pathSeparator} and appends result to paths of the {@link #classLoader}. */
     public Builder classPaths(String classPaths) {
         classPaths(classPaths == null ? null : classPaths.split(File.pathSeparator));
         return this;
     }
+    /** Appends argument to the paths of the {@link #classLoader}. */
     public Builder classPaths(String ... classPaths) {
         classLoader.addPaths(classPaths);
         return this;
     }
+    /** Sets the {@link #outputDirectory} field to the argument. */
     public Builder outputDirectory(String outputDirectory) {
         outputDirectory(outputDirectory == null ? null : new File(outputDirectory));
         return this;
     }
+    /** Sets the {@link #outputDirectory} field to the argument. */
     public Builder outputDirectory(File outputDirectory) {
         this.outputDirectory = outputDirectory;
         return this;
     }
+    /** Sets the {@link #compile} field to the argument. */
     public Builder compile(boolean compile) {
         this.compile = compile;
         return this;
     }
+    /** Sets the {@link #header} field to the argument. */
     public Builder header(boolean header) {
         this.header = header;
         return this;
     }
+    /** Sets the {@link #outputName} field to the argument. */
     public Builder outputName(String outputName) {
         this.outputName = outputName;
         return this;
     }
+    /** Sets the {@link #jarPrefix} field to the argument. */
     public Builder jarPrefix(String jarPrefix) {
         this.jarPrefix = jarPrefix;
         return this;
     }
+    /** Adds to the {@link #properties} field the ones loaded from resources for the specified platform. */
     public Builder properties(String platformName) {
         properties(platformName == null ? null : Loader.getProperties(platformName));
         return this;
     }
+    /** Adds all the properties of the argument to the {@link #properties} field. */
     public Builder properties(Properties properties) {
         if (properties != null) {
             this.properties.putAll(properties);
         }
         return this;
     }
+    /** Adds to the {@link #properties} field the ones loaded from the specified file. */
     public Builder propertyFile(String filename) throws IOException {
         propertyFile(filename == null ? null : new File(filename));
         return this;
     }
+    /** Adds to the {@link #properties} field the ones loaded from the specified file. */
     public Builder propertyFile(File propertyFile) throws IOException {
         if (propertyFile == null) {
             return this;
@@ -579,6 +683,7 @@ public class Builder {
         fis.close();
         return this;
     }
+    /** Sets a property of the {@link #properties} field, in either "key=value" or "key:value" format. */
     public Builder property(String keyValue) {
         int equalIndex = keyValue.indexOf('=');
         if (equalIndex < 0) {
@@ -588,12 +693,15 @@ public class Builder {
                  keyValue.substring(equalIndex+1));
         return this;
     }
+    /** Sets a key/value pair property of the {@link #properties} field. */
     public Builder property(String key, String value) {
         if (key.length() > 0 && value.length() > 0) {
             properties.put(key, value);
         }
         return this;
     }
+    /** Requests the {@link #classScanner} to add a class or all classes from a package.
+     *  A <tt>null</tt> argument indicates the unnamed package. */
     public Builder classesOrPackages(String ... classesOrPackages) throws IOException {
         if (classesOrPackages == null) {
             classScanner.addPackage(null, true);
@@ -602,10 +710,12 @@ public class Builder {
         }
         return this;
     }
+    /** Sets the {@link #environmentVariables} field to the argument. */
     public Builder environmentVariables(Map<String,String> environmentVariables) {
         this.environmentVariables = environmentVariables;
         return this;
     }
+    /** Appends arguments to the {@link #compilerOptions} field. */
     public Builder compilerOptions(String ... options) {
         if (options != null) {
             compilerOptions.addAll(Arrays.asList(options));
@@ -613,6 +723,13 @@ public class Builder {
         return this;
     }
 
+    /**
+     * Starts the build process and returns a {@link Collection} of {@link File} produced.
+     *
+     * @return the Collection of File produced
+     * @throws IOException
+     * @throws InterruptedException
+     */
     public Collection<File> build() throws IOException, InterruptedException {
         if (classes.isEmpty()) {
             return null;
@@ -639,10 +756,17 @@ public class Builder {
             }
             for (String libraryName : map.keySet()) {
                 LinkedList<Class> classList = map.get(libraryName);
-                outputFiles.addAll(generateAndCompile(classList.toArray(new Class[classList.size()]), libraryName));
+                File f = generateAndCompile(classList.toArray(new Class[classList.size()]), libraryName);
+                if (f != null) {
+                    outputFiles.add(f);
+                }
             }
         } else {
-            outputFiles = generateAndCompile(classes.toArray(new Class[classes.size()]), outputName);
+            outputFiles = new LinkedList<File>();
+            File f = generateAndCompile(classes.toArray(new Class[classes.size()]), outputName);
+            if (f != null) {
+                outputFiles.add(f);
+            }
         }
 
         if (jarPrefix != null && !outputFiles.isEmpty()) {
@@ -656,6 +780,9 @@ public class Builder {
         return outputFiles;
     }
 
+    /**
+     * Simply prints out to the display the command line usage.
+     */
     public static void printHelp() {
         String version = Builder.class.getPackage().getImplementationVersion();
         if (version == null) {
@@ -686,6 +813,12 @@ public class Builder {
         System.out.println();
     }
 
+    /**
+     * The terminal shell interface to the Builder.
+     *
+     * @param args an array of arguments as described by {@link #printHelp()}
+     * @throws Exception
+     */
     public static void main(String[] args) throws Exception {
         boolean addedClasses = false;
         Builder builder = new Builder();

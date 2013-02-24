@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011,2012 Samuel Audet
+ * Copyright (C) 2011,2012,2013 Samuel Audet
  *
  * This file is part of JavaCPP.
  *
@@ -23,18 +23,39 @@ package com.googlecode.javacpp;
 import java.nio.IntBuffer;
 
 /**
+ * The peer class to native pointers and arrays of <tt>int</tt>, also used for UTF-32.
+ * All operations take into account the position and limit, when appropriate.
  *
  * @author Samuel Audet
  */
 public class IntPointer extends Pointer {
+    /**
+     * Allocates enough memory for encoding the String in UTF-32 and copies it.
+     *
+     * @param s the String to copy
+     * @see #putString(String)
+     */
     public IntPointer(String s) {
         this(s.length()+1);
         putString(s);
     }
+    /**
+     * Allocates enough memory for the array and copies it.
+     *
+     * @param array the array to copy
+     * @see #put(int[])
+     */
     public IntPointer(int ... array) {
         this(array.length);
         put(array);
     }
+    /**
+     * For direct buffers, calls {@link Pointer#Pointer(Buffer)}, while for buffers
+     * backed with an array, allocates enough memory for the array and copies it.
+     *
+     * @param buffer the Buffer to reference or copy
+     * @see #put(int[])
+     */
     public IntPointer(IntBuffer buffer) {
         super(buffer);
         if (buffer != null && buffer.hasArray()) {
@@ -42,8 +63,14 @@ public class IntPointer extends Pointer {
             allocateArray(array.length);
             put(array);
             position(buffer.position());
+            limit(buffer.limit());
         }
     }
+    /**
+     * Allocates a native <tt>int</tt> array of the given size.
+     *
+     * @param size the number of <tt>int</tt> elements to allocate
+     */
     public IntPointer(int size) {
         try {
             allocateArray(size);
@@ -51,19 +78,24 @@ public class IntPointer extends Pointer {
             throw new RuntimeException("No native JavaCPP library in memory. (Has Loader.load() been called?)", e);
         }
     }
+    /** @see Pointer#Pointer(Pointer) */
     public IntPointer(Pointer p) { super(p); }
     private native void allocateArray(int size);
 
+    /** @see Pointer#position(int) */
     @Override public IntPointer position(int position) {
         return super.position(position);
     }
+    /** @see Pointer#limit(int) */
     @Override public IntPointer limit(int limit) {
         return super.limit(limit);
     }
+    /** @see Pointer#capacity(int) */
     @Override public IntPointer capacity(int capacity) {
         return super.capacity(capacity);
     }
 
+    /** @return the code points from the null-terminated string */
     public int[] getStringCodePoints() {
         // This may be kind of slow, and should be moved to a JNI function.
         int[] buffer = new int[16];
@@ -80,10 +112,19 @@ public class IntPointer extends Pointer {
         System.arraycopy(buffer, 0, newbuffer, 0, i);
         return newbuffer;
     }
+    /** @return the String from the null-terminated string */
     public String getString() {
         int[] codePoints = getStringCodePoints();
         return new String(codePoints, 0, codePoints.length);
     }
+    /**
+     * Copies the String code points into native memory, including a terminating null int.
+     *
+     * @param s the String to copy
+     * @return this
+     * @see String#codePointAt(int)
+     * @see #put(int[])
+     */
     public IntPointer putString(String s) {
         int[] codePoints = new int[s.length()];
         for (int i = 0; i < codePoints.length; i++) {
@@ -92,16 +133,45 @@ public class IntPointer extends Pointer {
         return put(codePoints).put(codePoints.length, (int)0);
     }
 
+    /** @return <tt>get(0)</tt> */
     public int get() { return get(0); }
+    /** @return the i-th <tt>int</tt> value of a native array */
     public native int get(int i);
+    /** @return <tt>put(0, j)</tt> */
     public IntPointer put(int j) { return put(0, j); }
+    /**
+     * Copies the <tt>int</tt> value to the i-th element of a native array.
+     *
+     * @param i the index into the array
+     * @param j the <tt>int</tt> value to copy
+     * @return this
+     */
     public native IntPointer put(int i, int j);
 
+    /** @return <tt>get(array, 0, array.length)</tt> */
     public IntPointer get(int[] array) { return get(array, 0, array.length); }
+    /** @return <tt>put(array, 0, array.length)</tt> */
     public IntPointer put(int[] array) { return put(array, 0, array.length); }
+    /**
+     * Reads a portion of the native array into a Java array.
+     *
+     * @param array the array to write to
+     * @param offset the offset into the array where to start writing
+     * @param length the length of data to read and write
+     * @return this
+     */
     public native IntPointer get(int[] array, int offset, int length);
+    /**
+     * Writes a portion of a Java array into the native array.
+     *
+     * @param array the array to read from
+     * @param offset the offset into the array where to start reading
+     * @param length the length of data to read and write
+     * @return this
+     */
     public native IntPointer put(int[] array, int offset, int length);
 
+    /** @return <tt>asByteBuffer().asIntBuffer()</tt> */
     @Override public final IntBuffer asBuffer() {
         return asByteBuffer().asIntBuffer();
     }

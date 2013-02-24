@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011,2012 Samuel Audet
+ * Copyright (C) 2011,2012,2013 Samuel Audet
  *
  * This file is part of JavaCPP.
  *
@@ -32,10 +32,31 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 /**
+ * All peer classes to native types must be descended from Pointer, the topmost class.
+ * It can be thought as mapping the native C++ <tt>void*</tt>, which can point to any
+ * <tt>struct</tt>, <tt>class</tt>, or <tt>union</tt>. All Pointer classes get parsed
+ * by {@link Generator} to produce proper wrapping JNI code, but this parent class also
+ * provides functionality to access native array elements as well as utility methods
+ * and classes to let users benefit from garbage collection.
+ * <p>
+ * For examples of subclasses, please refer to the following:
+ *
+ * @see BytePointer
+ * @see ShortPointer
+ * @see IntPointer
+ * @see LongPointer
+ * @see FloatPointer
+ * @see DoublePointer
+ * @see CharPointer
+ * @see PointerPointer
+ * @see BoolPointer
+ * @see CLongPointer
+ * @see SizeTPointer
  *
  * @author Samuel Audet
  */
 @Opaque public class Pointer {
+    /** Default constructor that does nothing. */
     public Pointer() {
         // Make sure our top enclosing class is initialized and the
         // associated native library loaded. This code is actually quite efficient,
@@ -48,6 +69,15 @@ import java.nio.ByteOrder;
 //            Loader.load(cls);
 //        }
     }
+    /**
+     * Copies the address, position, limit, and capacity of another Pointer.
+     * Also keeps a reference to it to prevent its memory from getting deallocated.
+     * <p>
+     * This copy constructor basically acts as a static cast, as least on
+     * plain old data (POD) <tt>struct</tt>.
+     *
+     * @param p the other Pointer to reference
+     */
     public Pointer(final Pointer p) {
         if (p != null) {
             address = p.address;
@@ -60,16 +90,33 @@ import java.nio.ByteOrder;
         }
     }
 
-    public Pointer(Buffer b) {
+    /**
+     * Copies the address, position, limit, and capacity of a direct NIO {@link Buffer}.
+     * Also keeps a reference to it to prevent its memory from getting deallocated.
+     *
+     * @param b the Buffer object to reference
+     */
+    public Pointer(final Buffer b) {
         if (b != null) {
             allocate(b);
+        }
+        if (!isNull()) {
             position = b.position();
             limit = b.limit();
             capacity = b.capacity();
+            deallocator = new Deallocator() { Buffer bb = b; public void deallocate() { bb = null; } };
         }
     }
     @NoDeallocator private native void allocate(Buffer b);
 
+    /**
+     * Called by native libraries to initialize the object fields.
+     *
+     * @param allocatedAddress the new address value of allocated native memory
+     * @param allocatedCapacity the amount of elements allocated (initial limit and capacity)
+     * @param deallocatorAddress the pointer to the native deallocation function
+     * @see NativeDeallocator
+     */
     void init(long allocatedAddress, int allocatedCapacity, long deallocatorAddress) {
         address = allocatedAddress;
         position = 0;
@@ -78,15 +125,29 @@ import java.nio.ByteOrder;
         deallocator(new NativeDeallocator(this, deallocatorAddress));
     }
 
+    /** The interface to implement to produce a Deallocator usable by Pointer. */
     protected interface Deallocator {
         void deallocate();
     }
 
+    /**
+     * A utility method to register easily a {@link CustomDeallocator} with a Pointer.
+     *
+     * @param p the Pointer with which to register the deallocator
+     * @return the Pointer
+     */
     protected static <P extends Pointer> P withDeallocator(P p) {
         return (P)p.deallocator(new CustomDeallocator(p));
     }
 
-    private static class CustomDeallocator extends DeallocatorReference implements Deallocator {
+    /**
+     * A {@link Deallocator} that calls, during garbage collection, a method with signature
+     * <tt>static void deallocate()</tt> from the Pointer object passed to the constructor
+     * and that accepts it as argument. Uses reflection to locate and call the method.
+     *
+     * @see #withDeallocator(Pointer)
+     */
+    protected static class CustomDeallocator extends DeallocatorReference implements Deallocator {
         public CustomDeallocator(Pointer p) {
             super(p, null);
             this.deallocator = this;
@@ -127,7 +188,11 @@ import java.nio.ByteOrder;
         }
     }
 
-    private static class NativeDeallocator extends DeallocatorReference implements Deallocator {
+    /**
+     * A {@link Deallocator} that calls, during garbage collection, a native function.
+     * Passes as argument the {@link #address} of the Pointer passed to the constructor.
+     */
+    protected static class NativeDeallocator extends DeallocatorReference implements Deallocator {
         NativeDeallocator(Pointer p, long deallocatorAddress) {
             super(p, null);
             this.deallocator = this;
@@ -150,6 +215,10 @@ import java.nio.ByteOrder;
         private native void deallocate(long allocatedAddress, long deallocatorAddress);
     }
 
+    /**
+     * A subclass of {@link PhantomReference} that also acts as a linked
+     * list to keep their references alive until they get garbage collected.
+     */
     private static class DeallocatorReference extends PhantomReference<Pointer> {
         DeallocatorReference(Pointer p, Deallocator deallocator) {
             super(p, referenceQueue);
@@ -194,8 +263,10 @@ import java.nio.ByteOrder;
         }
     }
 
+    /** The {@link ReferenceQueue} used by {@link DeallocatorReference}. */
     private static final ReferenceQueue<Pointer> referenceQueue = new ReferenceQueue<Pointer>();
 
+    /** Clears, deallocates, and removes all garbage collected objects from the {@link #referenceQueue}. */
     public static void deallocateReferences() {
         DeallocatorReference r = null;
         while ((r = (DeallocatorReference)referenceQueue.poll()) != null) {
@@ -204,47 +275,87 @@ import java.nio.ByteOrder;
         }
     }
 
+    /** The native address of this Pointer, which can be an array. */
     protected long address = 0;
+    /** The index of the element of a native array that should be accessed. */
     protected int position = 0;
+    /** The index of the first element that should not be accessed, or 0 if unknown. */
     protected int limit = 0;
+    /** The number of elements contained in this native array, or 0 if unknown. */
     protected int capacity = 0;
+    /** The deallocator associated with this Pointer that should be called on garbage collection. */
     private Deallocator deallocator = null;
 
+    /** @return <tt>address == 0</tt> */
     public boolean isNull() {
         return address == 0;
     }
+    /** Sets {@link #address} to 0. */
     public void setNull() {
         address = 0;
     }
 
+    /** @return {@link #position} */
     public int position() {
         return position;
     }
+    /**
+     * Sets the position and returns this. That makes the <tt>array.position(i)</tt>
+     * statement sort of equivalent to the <tt>array[i]</tt> statement in C++.
+     *
+     * @param position the new position
+     * @return this
+     */
     public <P extends Pointer> P position(int position) {
         this.position = position;
         return (P)this;
     }
 
+    /** @return {@link #limit} */
     public int limit() {
         return limit;
     }
+    /**
+     * Sets the limit and returns this.
+     * Used to limit the size of an operation on this object.
+     *
+     * @param limit the new limit
+     * @return this
+     */
     public <P extends Pointer> P limit(int limit) {
         this.limit = limit;
         return (P)this;
     }
 
+    /** @return {@link #capacity} */
     public int capacity() {
         return capacity;
     }
+    /**
+     * Sets the capacity and returns this.
+     * Should not be called more than once after allocation.
+     *
+     * @param capacity the new capacity
+     * @return this
+     */
     public <P extends Pointer> P capacity(int capacity) {
         this.limit = capacity;
         this.capacity = capacity;
         return (P)this;
     }
 
+    /** @return {@link #deallocator} */
     protected Deallocator deallocator() {
         return deallocator;
     }
+    /**
+     * Sets the deallocator and returns this. Also clears current deallocator
+     * if not <tt>null</tt>. That is, it deallocates previously allocated memory.
+     * Should not be called more than once after allocation.
+     *
+     * @param deallocator the new deallocator
+     * @return this
+     */
     protected <P extends Pointer> P deallocator(Deallocator deallocator) {
         if (this.deallocator != null) {
             this.deallocator.deallocate();
@@ -261,11 +372,13 @@ import java.nio.ByteOrder;
         return (P)this;
     }
 
+    /** Explicitly deallocates native memory without waiting after the garbage collector. */
     public void deallocate() {
         deallocator.deallocate();
         address = 0;
     }
 
+    /** @return <tt>Loader.offsetof(getClass(), member)</tt> or -1 on error */
     public int offsetof(String member) {
         int offset = -1;
         try {
@@ -277,6 +390,7 @@ import java.nio.ByteOrder;
         return offset;
     }
 
+    /** @return 1 for Pointer or BytePointer else <tt>Loader.sizeof(getClass())</tt> or -1 on error */
     public int sizeof() {
         Class c = getClass();
         if (c == Pointer.class || c == BytePointer.class) {
@@ -288,6 +402,13 @@ import java.nio.ByteOrder;
     }
 
     private native ByteBuffer asDirectBuffer();
+    /**
+     * Returns a ByteBuffer covering the memory space from this.position to this.limit.
+     * If limit == 0, it uses position + 1 instead. The way the methods were designed
+     * allows constructs such as <tt>this.position(13).limit(42).asByteBuffer()</tt>.
+     *
+     * @return the direct NIO {@link ByteBuffer} created
+     */
     public ByteBuffer asByteBuffer() {
         if (isNull()) {
             return null;
@@ -305,6 +426,18 @@ import java.nio.ByteOrder;
         limit = arrayLimit;
         return b;
     }
+    /**
+     * Same as {@link #asByteBuffer()}, but can be overridden to return subclasses of Buffer.
+     *
+     * @return <tt>asByteBuffer()</tt>
+     * @see BytePointer#asBuffer()
+     * @see ShortPointer#asBuffer()
+     * @see IntPointer#asBuffer()
+     * @see LongPointer#asBuffer()
+     * @see FloatPointer#asBuffer()
+     * @see DoublePointer#asBuffer()
+     * @see CharPointer#asBuffer()
+     */
     public Buffer asBuffer() {
         return asByteBuffer();
     }
@@ -314,6 +447,15 @@ import java.nio.ByteOrder;
     public static native Pointer memcpy(Pointer dst, Pointer src, long size);
     public static native Pointer memmove(Pointer dst, Pointer src, long size);
     public static native Pointer memset(Pointer dst, int ch, long size);
+    /**
+     * Calls in effect <tt>memcpy(this.address + this.position, p.address + p.position, size)</tt>,
+     * where <tt>size = sizeof(p) * (p.limit - p.position)</tt>.
+     * If limit == 0, it uses position + 1 instead. The way the methods were designed
+     * allows constructs such as <tt>this.position(0).put(p.position(13).limit(42))</tt>.
+     *
+     * @param p the Pointer from which to copy memory
+     * @return this
+     */
     public <P extends Pointer> P put(Pointer p) {
         if (p.limit > 0 && p.limit < p.position) {
             throw new IllegalArgumentException("limit < position: (" + p.limit + " < " + p.position + ")");
@@ -327,17 +469,36 @@ import java.nio.ByteOrder;
         p.address -= valueSize2 * p.position;
         return (P)this;
     }
-    public <P extends Pointer> P zero() {
+    /**
+     * Calls in effect <tt>memset(address + position, b, size)</tt>,
+     * where <tt>size = sizeof() * (limit - position)</tt>.
+     * If limit == 0, it uses position + 1 instead. The way the methods were designed
+     * allows constructs such as <tt>this.position(0).limit(13).fill(42)</tt>;
+     *
+     * @param b the byte value to fill the memory with
+     * @return this
+     */
+    public <P extends Pointer> P fill(int b) {
         if (limit > 0 && limit < position) {
             throw new IllegalArgumentException("limit < position: (" + limit + " < " + position + ")");
         }
         int valueSize = sizeof();
         address += valueSize * position;
-        memset(this, 0, valueSize * (limit <= 0 ? 1 : limit - position));
+        memset(this, b, valueSize * (limit <= 0 ? 1 : limit - position));
         address -= valueSize * position;
         return (P)this;
     }
+    /** @return <tt>fill(0)</tt> */
+    public <P extends Pointer> P zero() { return fill(0); }
 
+    /**
+     * Checks for equality with argument. Defines obj to be equal if <tt>
+     *     (obj == null && this.address == 0) ||
+     *     (obj.address == this.address && obj.position == this.position)</tt>.
+     *
+     * @param obj the object to compare this Pointer to
+     * @return true if obj is equal
+     */
     @Override public boolean equals(Object obj) {
         if (obj == null) {
             return isNull();
@@ -349,10 +510,13 @@ import java.nio.ByteOrder;
         }
     }
 
+    /** @return <tt>(int)address</tt> */
     @Override public int hashCode() {
         return (int)address;
     }
 
+    /** @return a {@link String} representation of {@link #address},
+     * {@link #position}, {@link #limit}, {@link #capacity}, and {@link #deallocator} */
     @Override public String toString() {
         return getClass().getName() + "[address=0x" + Long.toHexString(address) +
                 ",position=" + position + ",limit=" + limit + ",capacity=" + capacity + ",deallocator=" + deallocator + "]";
