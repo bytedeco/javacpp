@@ -780,7 +780,8 @@ public class Generator implements Closeable {
         Method functionMethod = getFunctionMethod(cls, callbackAllocators);
         if (functionMethod != null) {
             String[] typeName = getCPPTypeName(cls);
-            String[] returnConvention = getValueTypeName(typeName).split("\\(");
+            String[] returnConvention = typeName[0].split("\\(");
+            returnConvention[1] = getValueTypeName(returnConvention[1]);
             String parameterDeclaration = typeName[1].substring(1);
             String instanceTypeName = getFunctionClassName(cls);
             functionDefinitions.register("struct JavaCPP_hidden " + instanceTypeName + " {\n" +
@@ -1426,7 +1427,8 @@ public class Generator implements Closeable {
 
         String instanceTypeName = getFunctionClassName(cls);
         String[] callbackTypeName = getCPPTypeName(cls);
-        String[] returnConvention = getValueTypeName(callbackTypeName).split("\\(");
+        String[] returnConvention = callbackTypeName[0].split("\\(");
+        returnConvention[1] = getValueTypeName(returnConvention[1]);
         String parameterDeclaration = callbackTypeName[1].substring(1);
         functionPointers.register("static " + instanceTypeName + " " + callbackName + "_instance;");
         jclassesInit.register(cls); // Android

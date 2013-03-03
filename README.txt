@@ -18,7 +18,7 @@ To use JavaCPP, you will need to download and install the following software:
     * [http://msdn.microsoft.com/en-us/library/ff660764.aspx  Building Applications that Use the Windows SDK]
 
 To produce binary files for Android, you will also have to install:
- * Android NDK r8b  http://developer.android.com/tools/sdk/ndk/
+ * Android NDK r8d  http://developer.android.com/tools/sdk/ndk/
 
 To modify the source code, please note that the project files were created for:
  * NetBeans 6.9  http://netbeans.org/downloads/  or
@@ -272,7 +272,7 @@ Inside the directory of the Android project:
  # Run this command to produce the `*.so` library files in `libs/armeabi/`:
 {{{
 java -jar libs/javacpp.jar -classpath bin/ -classpath bin/classes/ \
--properties android-arm -Dplatform.root=<path/to/android-ndk-r8b> \
+-properties android-arm -Dplatform.root=<path/to/android-ndk-r8d> \
 -Dcompiler.path=<path/to/arm-linux-androideabi-g++> -d libs/armeabi/
 }}}
 To make everything automatic, we may also insert that command into, for example, the Ant `build.xml` file or the Eclipse `.project` file as a [http://help.eclipse.org/helios/index.jsp?topic=/org.eclipse.platform.doc.user/gettingStarted/qs-96_non_ant_pjs.htm Non-Ant project builder].
@@ -283,6 +283,9 @@ This project was conceived at the Okutomi & Tanaka Laboratory, Tokyo Institute o
 
 
 ==Changes==
+===March 3, 2013 version 0.4===
+ * Fixed potential problem with methods of `FunctionPointer` annotated with `@Cast("const...")`
+ * Upgraded references of the Android NDK to version r8d
  * Fixed callbacks not working on Android anymore (issue #30)
  * Added some Javadoc to most of the code
  * To help diagnose `UnsatisfiedLinkError` thrown by `Loader.load()`, they have been augmented with a potential cause originating from the "preloading" of libraries, whose premature deletion has also been fixed
