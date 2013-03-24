@@ -24,7 +24,7 @@ import com.googlecode.javacpp.annotation.Cast;
 import com.googlecode.javacpp.annotation.Name;
 
 /**
- * The peer class to native pointers and arrays of <tt>size_t</tt>.
+ * The peer class to native pointers and arrays of {@code size_t}.
  * All operations take into account the position and limit, when appropriate.
  * <p>
  * We need this class because the size differs between 32-bit and 64-bit platforms.
@@ -34,9 +34,9 @@ import com.googlecode.javacpp.annotation.Name;
 @Name("size_t")
 public class SizeTPointer extends Pointer {
     /**
-     * Allocates a native <tt>size_t</tt> array of the given size.
+     * Allocates a native {@code size_t} array of the given size.
      *
-     * @param size the number of <tt>size_t</tt> elements to allocate
+     * @param size the number of {@code size_t} elements to allocate
      */
     public SizeTPointer(int size) {
         try {
@@ -62,17 +62,17 @@ public class SizeTPointer extends Pointer {
         return super.capacity(capacity);
     }
 
-    /** @return <tt>get(0)</tt> */
+    /** @return {@code get(0)} */
     public long get() { return get(0); }
-    /** @return the i-th <tt>size_t</tt> value of a native array */
+    /** @return the i-th {@code size_t} value of a native array */
     @Cast("size_t") public native long get(int i);
-    /** @return <tt>put(0, s)</tt> */
+    /** @return {@code put(0, s)} */
     public SizeTPointer put(long s) { return put(0, s); }
     /**
-     * Copies the <tt>size_t</tt> value to the i-th element of a native array.
+     * Copies the {@code size_t} value to the i-th element of a native array.
      *
      * @param i the index into the array
-     * @param s the <tt>size_t</tt> value to copy
+     * @param s the {@code size_t} value to copy
      * @return this
      */
     public native SizeTPointer put(int i, long s);

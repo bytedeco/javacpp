@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
  * possible to apply a cast to both the argument and the adapter, in this order.
  * <p>
  * At the moment, {@link Generator} makes use of the simple C-style cast. If one
- * requires a different kind of type conversion, such as the <tt>dynamic_cast</tt>
+ * requires a different kind of type conversion, such as the {@code dynamic_cast}
  * operator, those can be accessed as if they were functions (with the {@link Name}
  * annotation to specify the type) because they have the same syntax.
  *

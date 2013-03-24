@@ -37,7 +37,7 @@ public @interface Platform {
     /** The properties, class, or method do NOT apply to the named platforms.
      *  The strings are matched with {@link String#startsWith(String)} */
     String[] not()         default {};
-    /** A list of macros to <tt>#define</tt> at the top of the generated code,
+    /** A list of macros to {@code #define} at the top of the generated code,
      *  before {@link #include()} and {@link #cinclude()} header files. */
     String[] define()      default {};
     /** A list of C++ header files to include at the top of the generated code. */

@@ -9,16 +9,16 @@ import java.lang.annotation.Target;
 
 /**
  * An annotation indicating that a method should behave like an allocator.
- * However, methods with signature <tt>native void allocate(...)</tt> are recognized
+ * However, methods with signature {@code native void allocate(...)} are recognized
  * as allocators even without annotation. This behavior can be changed by annotating
  * the method with the {@link Function} annotation. An allocator must have no
  * return values, but can have parameters corresponding to the ones found on the
  * native C++ constructors.
  * <p>
- * In a nutshell, an allocator uses the C++ <tt>new</tt> operator along with all
+ * In a nutshell, an allocator uses the C++ {@code new} operator along with all
  * the given arguments, and initializes the {@link Pointer#address} as well as
- * the {@link Pointer#deallocator} with <tt>NativeDeallocator</tt>, based on the
- * <tt>delete</tt> operator, if not additionally annotated with {@link NoDeallocator}.
+ * the {@link Pointer#deallocator} with {@code NativeDeallocator}, based on the
+ * {@code delete} operator, if not additionally annotated with {@link NoDeallocator}.
  *
  * @see Pointer#init(long, int, long)
  * @see Generator

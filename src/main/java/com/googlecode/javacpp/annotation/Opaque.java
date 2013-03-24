@@ -9,7 +9,7 @@ import java.lang.annotation.Target;
 
 /**
  * This annotation must be used for native types that get declared but not defined.
- * Such types do not work with the <tt>sizeof()</tt> operator and their pointers
+ * Such types do not work with the {@code sizeof()} operator and their pointers
  * do not support arithmetic, so for peer classes thus annotated, {@link Generator}
  * then also ignores the {@link Pointer#position} value.
  *

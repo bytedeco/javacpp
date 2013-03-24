@@ -8,7 +8,7 @@ import java.lang.annotation.Target;
 
 /**
  * Indicates that an argument gets passed or returned by a reference to a pointer.
- * In C++, such a beast looks like <tt>*&</tt>, usually to output pointers via parameters.
+ * In C++, such a beast looks like {@code *&}, usually to output pointers via parameters.
  *
  * @see Generator
  *

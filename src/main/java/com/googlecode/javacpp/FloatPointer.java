@@ -23,7 +23,7 @@ package com.googlecode.javacpp;
 import java.nio.FloatBuffer;
 
 /**
- * The peer class to native pointers and arrays of <tt>float</tt>.
+ * The peer class to native pointers and arrays of {@code float}.
  * All operations take into account the position and limit, when appropriate.
  *
  * @author Samuel Audet
@@ -57,9 +57,9 @@ public class FloatPointer extends Pointer {
         }
     }
     /**
-     * Allocates a native <tt>float</tt> array of the given size.
+     * Allocates a native {@code float} array of the given size.
      *
-     * @param size the number of <tt>float</tt> elements to allocate
+     * @param size the number of {@code float} elements to allocate
      */
     public FloatPointer(int size) {
         try {
@@ -85,24 +85,24 @@ public class FloatPointer extends Pointer {
         return super.capacity(capacity);
     }
 
-    /** @return <tt>get(0)</tt> */
+    /** @return {@code get(0)} */
     public float get() { return get(0); }
-    /** @return the i-th <tt>float</tt> value of a native array */
+    /** @return the i-th {@code float} value of a native array */
     public native float get(int i);
-    /** @return <tt>put(0, f)</tt> */
+    /** @return {@code put(0, f)} */
     public FloatPointer put(float f) { return put(0, f); }
     /**
-     * Copies the <tt>float</tt> value to the i-th element of a native array.
+     * Copies the {@code float} value to the i-th element of a native array.
      *
      * @param i the index into the array
-     * @param f the <tt>float</tt> value to copy
+     * @param f the {@code float} value to copy
      * @return this
      */
     public native FloatPointer put(int i, float f);
 
-    /** @return <tt>get(array, 0, array.length)</tt> */
+    /** @return {@code get(array, 0, array.length)} */
     public FloatPointer get(float[] array) { return get(array, 0, array.length); }
-    /** @return <tt>put(array, 0, array.length)</tt> */
+    /** @return {@code put(array, 0, array.length)} */
     public FloatPointer put(float[] array) { return put(array, 0, array.length); }
     /**
      * Reads a portion of the native array into a Java array.
@@ -123,7 +123,7 @@ public class FloatPointer extends Pointer {
      */
     public native FloatPointer put(float[] array, int offset, int length);
 
-    /** @return <tt>asByteBuffer().asFloatBuffer()</tt> */
+    /** @return {@code asByteBuffer().asFloatBuffer()} */
     @Override public final FloatBuffer asBuffer() {
         return asByteBuffer().asFloatBuffer();
     }

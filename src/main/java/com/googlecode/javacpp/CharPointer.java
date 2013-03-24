@@ -23,7 +23,7 @@ package com.googlecode.javacpp;
 import java.nio.CharBuffer;
 
 /**
- * The peer class to native pointers and arrays of <tt>short</tt> for UTF-16.
+ * The peer class to native pointers and arrays of {@code short} for UTF-16.
  * All operations take into account the position and limit, when appropriate.
  *
  * @author Samuel Audet
@@ -67,9 +67,9 @@ public class CharPointer extends Pointer {
         }
     }
     /**
-     * Allocates a native <tt>short</tt> array of the given size.
+     * Allocates a native {@code short} array of the given size.
      *
-     * @param size the number of <tt>short</tt> elements to allocate
+     * @param size the number of {@code short} elements to allocate
      */
     public CharPointer(int size) {
         try {
@@ -129,24 +129,24 @@ public class CharPointer extends Pointer {
         return put(chars).put(chars.length, (char)0);
     }
 
-    /** @return <tt>get(0)</tt> */
+    /** @return {@code get(0)} */
     public char get() { return get(0); }
-    /** @return the i-th <tt>char</tt> value of a native array */
+    /** @return the i-th {@code char} value of a native array */
     public native char get(int i);
-    /** @return <tt>put(0, c)</tt> */
+    /** @return {@code put(0, c)} */
     public CharPointer put(char c) { return put(0, c); }
     /**
-     * Copies the <tt>char</tt> value to the i-th element of a native array.
+     * Copies the {@code char} value to the i-th element of a native array.
      *
      * @param i the index into the array
-     * @param c the <tt>char</tt> value to copy
+     * @param c the {@code char} value to copy
      * @return this
      */
     public native CharPointer put(int i, char c);
 
-    /** @return <tt>get(array, 0, array.length)</tt> */
+    /** @return {@code get(array, 0, array.length)} */
     public CharPointer get(char[] array) { return get(array, 0, array.length); }
-    /** @return <tt>put(array, 0, array.length)</tt> */
+    /** @return {@code put(array, 0, array.length)} */
     public CharPointer put(char[] array) { return put(array, 0, array.length); }
     /**
      * Reads a portion of the native array into a Java array.
@@ -167,7 +167,7 @@ public class CharPointer extends Pointer {
      */
     public native CharPointer put(char[] array, int offset, int length);
 
-    /** @return <tt>asByteBuffer().asCharBuffer()</tt> */
+    /** @return {@code asByteBuffer().asCharBuffer()} */
     @Override public final CharBuffer asBuffer() {
         return asByteBuffer().asCharBuffer();
     }

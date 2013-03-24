@@ -23,7 +23,7 @@ package com.googlecode.javacpp;
 import java.nio.DoubleBuffer;
 
 /**
- * The peer class to native pointers and arrays of <tt>double</tt>.
+ * The peer class to native pointers and arrays of {@code double}.
  * All operations take into account the position and limit, when appropriate.
  *
  * @author Samuel Audet
@@ -57,9 +57,9 @@ public class DoublePointer extends Pointer {
         }
     }
     /**
-     * Allocates a native <tt>double</tt> array of the given size.
+     * Allocates a native {@code double} array of the given size.
      *
-     * @param size the number of <tt>double</tt> elements to allocate
+     * @param size the number of {@code double} elements to allocate
      */
     public DoublePointer(int size) {
         try {
@@ -85,24 +85,24 @@ public class DoublePointer extends Pointer {
         return super.capacity(capacity);
     }
 
-    /** @return <tt>get(0)</tt> */
+    /** @return {@code get(0)} */
     public double get() { return get(0); }
-    /** @return the i-th <tt>double</tt> value of a native array */
+    /** @return the i-th {@code double} value of a native array */
     public native double get(int i);
-    /** @return <tt>put(0, d)</tt> */
+    /** @return {@code put(0, d)} */
     public DoublePointer put(double d) { return put(0, d); }
     /**
-     * Copies the <tt>double</tt> value to the i-th element of a native array.
+     * Copies the {@code double} value to the i-th element of a native array.
      *
      * @param i the index into the array
-     * @param d the <tt>double</tt> value to copy
+     * @param d the {@code double} value to copy
      * @return this
      */
     public native DoublePointer put(int i, double d);
 
-    /** @return <tt>get(array, 0, array.length)</tt> */
+    /** @return {@code get(array, 0, array.length)} */
     public DoublePointer get(double[] array) { return get(array, 0, array.length); }
-    /** @return <tt>put(array, 0, array.length)</tt> */
+    /** @return {@code put(array, 0, array.length)} */
     public DoublePointer put(double[] array) { return put(array, 0, array.length); }
     /**
      * Reads a portion of the native array into a Java array.
@@ -123,7 +123,7 @@ public class DoublePointer extends Pointer {
      */
     public native DoublePointer put(double[] array, int offset, int length);
 
-    /** @return <tt>asByteBuffer().asDoubleBuffer()</tt> */
+    /** @return {@code asByteBuffer().asDoubleBuffer()} */
     @Override public final DoubleBuffer asBuffer() {
         return asByteBuffer().asDoubleBuffer();
     }

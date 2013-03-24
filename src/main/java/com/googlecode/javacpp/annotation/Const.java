@@ -8,8 +8,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * A shortcut annotation that adds <tt>const</tt> to the parameter type or a {@link Cast}.
- * Can also be declared on a {@link FunctionPointer} in the case of <tt>const</tt> functions.
+ * A shortcut annotation that adds {@code const} to the parameter type or a {@link Cast}.
+ * Can also be declared on a {@link FunctionPointer} in the case of {@code const} functions.
  *
  * @see Generator
  *
@@ -18,6 +18,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE, ElementType.METHOD, ElementType.PARAMETER})
 public @interface Const {
-    /** If true, applies <tt>const</tt> to the pointer instead of the value. */
+    /** If true, applies {@code const} to the pointer instead of the value. */
     boolean value() default false;
 }

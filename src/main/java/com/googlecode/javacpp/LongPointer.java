@@ -23,7 +23,7 @@ package com.googlecode.javacpp;
 import java.nio.LongBuffer;
 
 /**
- * The peer class to native pointers and arrays of <tt>long long</tt>.
+ * The peer class to native pointers and arrays of {@code long long}.
  * All operations take into account the position and limit, when appropriate.
  *
  * @author Samuel Audet
@@ -57,9 +57,9 @@ public class LongPointer extends Pointer {
         }
     }
     /**
-     * Allocates a native <tt>long long</tt> array of the given size.
+     * Allocates a native {@code long long} array of the given size.
      *
-     * @param size the number of <tt>long long</tt> elements to allocate
+     * @param size the number of {@code long long} elements to allocate
      */
     public LongPointer(int size) {
         try {
@@ -85,24 +85,24 @@ public class LongPointer extends Pointer {
         return super.capacity(capacity);
     }
 
-    /** @return <tt>get(0)</tt> */
+    /** @return {@code get(0)} */
     public long get() { return get(0); }
-    /** @return the i-th <tt>long long</tt> of a native array */
+    /** @return the i-th {@code long long} of a native array */
     public native long get(int i);
-    /** @return <tt>put(0, l)</tt> */
+    /** @return {@code put(0, l)} */
     public LongPointer put(long l) { return put(0, l); }
     /**
-     * Copies the <tt>long long</tt> value to the i-th element of a native array.
+     * Copies the {@code long long} value to the i-th element of a native array.
      *
      * @param i the index into the array
-     * @param l the <tt>long long</tt> value to copy
+     * @param l the {@code long long} value to copy
      * @return this
      */
     public native LongPointer put(int i, long l);
 
-    /** @return <tt>get(array, 0, array.length)</tt> */
+    /** @return {@code get(array, 0, array.length)} */
     public LongPointer get(long[] array) { return get(array, 0, array.length); }
-    /** @return <tt>put(array, 0, array.length)</tt> */
+    /** @return {@code put(array, 0, array.length)} */
     public LongPointer put(long[] array) { return put(array, 0, array.length); }
     /**
      * Reads a portion of the native array into a Java array.
@@ -123,7 +123,7 @@ public class LongPointer extends Pointer {
      */
     public native LongPointer put(long[] array, int offset, int length);
 
-    /** @return <tt>asByteBuffer().asLongBuffer()</tt> */
+    /** @return {@code asByteBuffer().asLongBuffer()} */
     @Override public final LongBuffer asBuffer() {
         return asByteBuffer().asLongBuffer();
     }

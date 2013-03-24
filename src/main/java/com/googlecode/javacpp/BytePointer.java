@@ -24,7 +24,7 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
 /**
- * The peer class to native pointers and arrays of <tt>signed char</tt>, including strings.
+ * The peer class to native pointers and arrays of {@code signed char}, including strings.
  * All operations take into account the position and limit, when appropriate.
  *
  * @author Samuel Audet
@@ -83,9 +83,9 @@ public class BytePointer extends Pointer {
         }
     }
     /**
-     * Allocates a native <tt>signed char</tt> array of the given size.
+     * Allocates a native {@code signed char} array of the given size.
      *
-     * @param size the number of <tt>signed char</tt> elements to allocate
+     * @param size the number of {@code signed char} elements to allocate
      */
     public BytePointer(int size) {
         try {
@@ -178,24 +178,24 @@ public class BytePointer extends Pointer {
         return put(bytes).put(bytes.length, (byte)0);
     }
 
-    /** @return <tt>get(0)</tt> */
+    /** @return {@code get(0)} */
     public byte get() { return get(0); }
-    /** @return the i-th <tt>byte</tt> value of a native array */
+    /** @return the i-th {@code byte} value of a native array */
     public native byte get(int i);
-    /** @return <tt>put(0, b)</tt> */
+    /** @return {@code put(0, b)} */
     public BytePointer put(byte b) { return put(0, b); }
     /**
-     * Copies the <tt>byte</tt> value to the i-th element of a native array.
+     * Copies the {@code byte} value to the i-th element of a native array.
      *
      * @param i the index into the array
-     * @param b the <tt>byte</tt> value to copy
+     * @param b the {@code byte} value to copy
      * @return this
      */
     public native BytePointer put(int i, byte b);
 
-    /** @return <tt>get(array, 0, array.length)</tt> */
+    /** @return {@code get(array, 0, array.length)} */
     public BytePointer get(byte[] array) { return get(array, 0, array.length); }
-    /** @return <tt>put(array, 0, array.length)</tt> */
+    /** @return {@code put(array, 0, array.length)} */
     public BytePointer put(byte[] array) { return put(array, 0, array.length); }
     /**
      * Reads a portion of the native array into a Java array.
@@ -216,7 +216,7 @@ public class BytePointer extends Pointer {
      */
     public native BytePointer put(byte[] array, int offset, int length);
 
-    /** @return <tt>asByteBuffer()</tt> */
+    /** @return {@code asByteBuffer()} */
     @Override public final ByteBuffer asBuffer() {
         return asByteBuffer();
     }

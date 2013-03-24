@@ -21,7 +21,7 @@
 package com.googlecode.javacpp;
 
 /**
- * The peer class to native pointers and arrays of <tt>void*</tt>.
+ * The peer class to native pointers and arrays of {@code void*}.
  * All operations take into account the position and limit, when appropriate.
  * <p>
  * To support higher levels of indirection, we can create out of the Pointer
@@ -87,9 +87,9 @@ public class PointerPointer extends Pointer {
      */
     public PointerPointer(char[]   ... array) { this(array.length); put(array); }
     /**
-     * Allocates a native array of <tt>void*</tt> of the given size.
+     * Allocates a native array of {@code void*} of the given size.
      *
-     * @param size the number of <tt>void*</tt> elements to allocate
+     * @param size the number of {@code void*} elements to allocate
      */
     public PointerPointer(int size) {
         try {
@@ -119,7 +119,7 @@ public class PointerPointer extends Pointer {
     }
 
     /**
-     * Writes the Pointer values into the native <tt>void*</tt> array.
+     * Writes the Pointer values into the native {@code void*} array.
      *
      * @param array the array of Pointer values to read from
      * @return this
@@ -131,10 +131,10 @@ public class PointerPointer extends Pointer {
         return this;
     }
     /**
-     * Creates one by one a new Pointer for each <tt>byte[]</tt>,
-     * and writes them into the native <tt>void*</tt> array.
+     * Creates one by one a new Pointer for each {@code byte[]},
+     * and writes them into the native {@code void*} array.
      *
-     * @param array the array of <tt>byte[]</tt> to read from
+     * @param array the array of {@code byte[]} to read from
      * @return this
      */
     public PointerPointer put(byte[] ... array) {
@@ -145,10 +145,10 @@ public class PointerPointer extends Pointer {
         return put(pointerArray);
     }
     /**
-     * Creates one by one a new Pointer for each <tt>short[]</tt>,
-     * and writes them into the native <tt>void*</tt> array.
+     * Creates one by one a new Pointer for each {@code short[]},
+     * and writes them into the native {@code void*} array.
      *
-     * @param array the array of <tt>short[]</tt> to read from
+     * @param array the array of {@code short[]} to read from
      * @return this
      */
     public PointerPointer put(short[] ... array) {
@@ -159,10 +159,10 @@ public class PointerPointer extends Pointer {
         return put(pointerArray);
     }
     /**
-     * Creates one by one a new Pointer for each <tt>int[]</tt>,
-     * and writes them into the native <tt>void*</tt> array.
+     * Creates one by one a new Pointer for each {@code int[]},
+     * and writes them into the native {@code void*} array.
      *
-     * @param array the array of <tt>int[]</tt> to read from
+     * @param array the array of {@code int[]} to read from
      * @return this
      */
     public PointerPointer put(int[] ... array) {
@@ -173,10 +173,10 @@ public class PointerPointer extends Pointer {
         return put(pointerArray);
     }
     /**
-     * Creates one by one a new Pointer for each <tt>long[]</tt>,
-     * and writes them into the native <tt>void*</tt> array.
+     * Creates one by one a new Pointer for each {@code long[]},
+     * and writes them into the native {@code void*} array.
      *
-     * @param array the array of <tt>long[]</tt> to read from
+     * @param array the array of {@code long[]} to read from
      * @return this
      */
     public PointerPointer put(long[] ... array) {
@@ -187,10 +187,10 @@ public class PointerPointer extends Pointer {
         return put(pointerArray);
     }
     /**
-     * Creates one by one a new Pointer for each <tt>float[]</tt>,
-     * and writes them into the native <tt>void*</tt> array.
+     * Creates one by one a new Pointer for each {@code float[]},
+     * and writes them into the native {@code void*} array.
      *
-     * @param array the array of <tt>float[]</tt> to read from
+     * @param array the array of {@code float[]} to read from
      * @return this
      */
     public PointerPointer put(float[] ... array) {
@@ -201,10 +201,10 @@ public class PointerPointer extends Pointer {
         return put(pointerArray);
     }
     /**
-     * Creates one by one a new Pointer for each <tt>double[]</tt>,
-     * and writes them into the native <tt>void*</tt> array.
+     * Creates one by one a new Pointer for each {@code double[]},
+     * and writes them into the native {@code void*} array.
      *
-     * @param array the array of <tt>double[]</tt> to read from
+     * @param array the array of {@code double[]} to read from
      * @return this
      */
     public PointerPointer put(double[] ... array) {
@@ -215,10 +215,10 @@ public class PointerPointer extends Pointer {
         return put(pointerArray);
     }
     /**
-     * Creates one by one a new Pointer for each <tt>char[]</tt>,
-     * and writes them into the native <tt>void*</tt> array.
+     * Creates one by one a new Pointer for each {@code char[]},
+     * and writes them into the native {@code void*} array.
      *
-     * @param array the array of <tt>char[]</tt> to read from
+     * @param array the array of {@code char[]} to read from
      * @return this
      */
     public PointerPointer put(char[] ... array) {
@@ -229,11 +229,11 @@ public class PointerPointer extends Pointer {
         return put(pointerArray);
     }
 
-    /** @return <tt>get(0)</tt> */
+    /** @return {@code get(0)} */
     public Pointer get() { return get(0); }
     /** @return the i-th Pointer value of a native array */
     public native Pointer get(int i);
-    /** @return <tt>put(0, p)</tt> */
+    /** @return {@code put(0, p)} */
     public PointerPointer put(Pointer p) { return put(0, p); }
     /**
      * Copies the Pointer value to the i-th element of a native array.

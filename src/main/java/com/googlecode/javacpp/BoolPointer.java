@@ -24,19 +24,19 @@ import com.googlecode.javacpp.annotation.Cast;
 import com.googlecode.javacpp.annotation.Name;
 
 /**
- * The peer class to native pointers and arrays of <tt>bool</tt>.
+ * The peer class to native pointers and arrays of {@code bool}.
  * All operations take into account the position and limit, when appropriate.
  * <p>
- * We need this class because C++ does not define the size of the <tt>bool</tt> type.
+ * We need this class because C++ does not define the size of the {@code bool} type.
  *
  * @author Samuel Audet
  */
 @Name("bool")
 public class BoolPointer extends Pointer {
     /**
-     * Allocates a native <tt>bool</tt> array of the given size.
+     * Allocates a native {@code bool} array of the given size.
      *
-     * @param size the number of <tt>bool</tt> elements to allocate
+     * @param size the number of {@code bool} elements to allocate
      */
     public BoolPointer(int size) {
         try {
@@ -62,17 +62,17 @@ public class BoolPointer extends Pointer {
         return super.capacity(capacity);
     }
 
-    /** @return <tt>get(0)</tt> */
+    /** @return {@code get(0)} */
     public boolean get() { return get(0); }
-    /** @return the i-th <tt>bool</tt> value of a native array */
+    /** @return the i-th {@code bool} value of a native array */
     @Cast("bool") public native boolean get(int i);
-    /** @return <tt>put(0, b)</tt> */
+    /** @return {@code put(0, b)} */
     public BoolPointer put(boolean b) { return put(0, b); }
     /**
-     * Copies the <tt>bool</tt> value to the i-th element of a native array.
+     * Copies the {@code bool} value to the i-th element of a native array.
      *
      * @param i the index into the array
-     * @param b the <tt>bool</tt> value to copy
+     * @param b the {@code bool} value to copy
      * @return this
      */
     public native BoolPointer put(int i, boolean b);

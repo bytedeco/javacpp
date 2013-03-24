@@ -76,7 +76,7 @@ public class BuildMojo extends AbstractMojo {
     protected boolean header = false;
 
     /**
-     * Also create a JAR file named <tt>jarPrefix-platformName.jar</tt>
+     * Also create a JAR file named {@code <jarPrefix>-<platform.name>.jar}
      * @parameter expression="${jarPrefix}"
      */
     protected String jarPrefix = null;

@@ -8,7 +8,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * A shorthand for <tt>@Adapter("VectorAdapter<type>")</tt>.
+ * A shorthand for {@code @Adapter("VectorAdapter<type>")}.
  *
  * @see Adapter
  * @see Generator
@@ -19,7 +19,7 @@ import java.lang.annotation.Target;
 @Target({ElementType.METHOD, ElementType.PARAMETER})
 @Adapter("VectorAdapter")
 public @interface StdVector {
-    /** The template type of <tt>VectorAdapter</tt>. If not specified, it is
+    /** The template type of {@code VectorAdapter}. If not specified, it is
      *  inferred from the value type of the {@link Pointer} or Java array. */
     String value() default "";
 }

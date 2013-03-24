@@ -20,8 +20,6 @@
 
 package com.googlecode.javacpp;
 
-import com.googlecode.javacpp.annotation.Opaque;
-import com.googlecode.javacpp.annotation.NoDeallocator;
 import java.lang.ref.PhantomReference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.reflect.Constructor;
@@ -33,8 +31,8 @@ import java.nio.ByteOrder;
 
 /**
  * All peer classes to native types must be descended from Pointer, the topmost class.
- * It can be thought as mapping the native C++ <tt>void*</tt>, which can point to any
- * <tt>struct</tt>, <tt>class</tt>, or <tt>union</tt>. All Pointer classes get parsed
+ * It can be thought as mapping the native C++ {@code void*}, which can point to any
+ * {@code struct}, {@code class}, or {@code union}. All Pointer classes get parsed
  * by {@link Generator} to produce proper wrapping JNI code, but this parent class also
  * provides functionality to access native array elements as well as utility methods
  * and classes to let users benefit from garbage collection.
@@ -55,7 +53,7 @@ import java.nio.ByteOrder;
  *
  * @author Samuel Audet
  */
-@Opaque public class Pointer {
+public class Pointer {
     /** Default constructor that does nothing. */
     public Pointer() {
         // Make sure our top enclosing class is initialized and the
@@ -74,7 +72,7 @@ import java.nio.ByteOrder;
      * Also keeps a reference to it to prevent its memory from getting deallocated.
      * <p>
      * This copy constructor basically acts as a static cast, as least on
-     * plain old data (POD) <tt>struct</tt>.
+     * plain old data (POD) {@code struct}.
      *
      * @param p the other Pointer to reference
      */
@@ -107,7 +105,7 @@ import java.nio.ByteOrder;
             deallocator = new Deallocator() { Buffer bb = b; public void deallocate() { bb = null; } };
         }
     }
-    @NoDeallocator private native void allocate(Buffer b);
+    private native void allocate(Buffer b);
 
     /**
      * Called by native libraries to initialize the object fields.
@@ -142,7 +140,7 @@ import java.nio.ByteOrder;
 
     /**
      * A {@link Deallocator} that calls, during garbage collection, a method with signature
-     * <tt>static void deallocate()</tt> from the Pointer object passed to the constructor
+     * {@code static void deallocate()} from the Pointer object passed to the constructor
      * and that accepts it as argument. Uses reflection to locate and call the method.
      *
      * @see #withDeallocator(Pointer)
@@ -286,7 +284,7 @@ import java.nio.ByteOrder;
     /** The deallocator associated with this Pointer that should be called on garbage collection. */
     private Deallocator deallocator = null;
 
-    /** @return <tt>address == 0</tt> */
+    /** @return {@code address == 0} */
     public boolean isNull() {
         return address == 0;
     }
@@ -300,8 +298,8 @@ import java.nio.ByteOrder;
         return position;
     }
     /**
-     * Sets the position and returns this. That makes the <tt>array.position(i)</tt>
-     * statement sort of equivalent to the <tt>array[i]</tt> statement in C++.
+     * Sets the position and returns this. That makes the {@code array.position(i)}
+     * statement sort of equivalent to the {@code array[i]} statement in C++.
      *
      * @param position the new position
      * @return this
@@ -350,7 +348,7 @@ import java.nio.ByteOrder;
     }
     /**
      * Sets the deallocator and returns this. Also clears current deallocator
-     * if not <tt>null</tt>. That is, it deallocates previously allocated memory.
+     * if not {@code null}. That is, it deallocates previously allocated memory.
      * Should not be called more than once after allocation.
      *
      * @param deallocator the new deallocator
@@ -378,7 +376,7 @@ import java.nio.ByteOrder;
         address = 0;
     }
 
-    /** @return <tt>Loader.offsetof(getClass(), member)</tt> or -1 on error */
+    /** @return {@code Loader.offsetof(getClass(), member)} or -1 on error */
     public int offsetof(String member) {
         int offset = -1;
         try {
@@ -390,7 +388,7 @@ import java.nio.ByteOrder;
         return offset;
     }
 
-    /** @return 1 for Pointer or BytePointer else <tt>Loader.sizeof(getClass())</tt> or -1 on error */
+    /** @return 1 for Pointer or BytePointer else {@code Loader.sizeof(getClass())} or -1 on error */
     public int sizeof() {
         Class c = getClass();
         if (c == Pointer.class || c == BytePointer.class) {
@@ -405,7 +403,7 @@ import java.nio.ByteOrder;
     /**
      * Returns a ByteBuffer covering the memory space from this.position to this.limit.
      * If limit == 0, it uses position + 1 instead. The way the methods were designed
-     * allows constructs such as <tt>this.position(13).limit(42).asByteBuffer()</tt>.
+     * allows constructs such as {@code this.position(13).limit(42).asByteBuffer()}.
      *
      * @return the direct NIO {@link ByteBuffer} created
      */
@@ -429,7 +427,7 @@ import java.nio.ByteOrder;
     /**
      * Same as {@link #asByteBuffer()}, but can be overridden to return subclasses of Buffer.
      *
-     * @return <tt>asByteBuffer()</tt>
+     * @return {@code asByteBuffer()}
      * @see BytePointer#asBuffer()
      * @see ShortPointer#asBuffer()
      * @see IntPointer#asBuffer()
@@ -448,10 +446,10 @@ import java.nio.ByteOrder;
     public static native Pointer memmove(Pointer dst, Pointer src, long size);
     public static native Pointer memset(Pointer dst, int ch, long size);
     /**
-     * Calls in effect <tt>memcpy(this.address + this.position, p.address + p.position, size)</tt>,
-     * where <tt>size = sizeof(p) * (p.limit - p.position)</tt>.
+     * Calls in effect {@code memcpy(this.address + this.position, p.address + p.position, length)},
+     * where {@code length = sizeof(p) * (p.limit - p.position)}.
      * If limit == 0, it uses position + 1 instead. The way the methods were designed
-     * allows constructs such as <tt>this.position(0).put(p.position(13).limit(42))</tt>.
+     * allows constructs such as {@code this.position(0).put(p.position(13).limit(42))}.
      *
      * @param p the Pointer from which to copy memory
      * @return this
@@ -460,20 +458,21 @@ import java.nio.ByteOrder;
         if (p.limit > 0 && p.limit < p.position) {
             throw new IllegalArgumentException("limit < position: (" + p.limit + " < " + p.position + ")");
         }
-        int valueSize = sizeof();
-        int valueSize2 = p.sizeof();
-        address += valueSize * position;
-        p.address += valueSize2 * p.position;
-        memcpy(this, p, valueSize2 * (p.limit <= 0 ? 1 : p.limit - p.position));
-        address -= valueSize * position;
-        p.address -= valueSize2 * p.position;
+        int size = sizeof();
+        int psize = p.sizeof();
+        int length = psize * (p.limit <= 0 ? 1 : p.limit - p.position);
+        position *= size;
+        p.position *= psize;
+        memcpy(this, p, length);
+        position /= size;
+        p.position /= psize;
         return (P)this;
     }
     /**
-     * Calls in effect <tt>memset(address + position, b, size)</tt>,
-     * where <tt>size = sizeof() * (limit - position)</tt>.
+     * Calls in effect {@code memset(address + position, b, length)},
+     * where {@code length = sizeof() * (limit - position)}.
      * If limit == 0, it uses position + 1 instead. The way the methods were designed
-     * allows constructs such as <tt>this.position(0).limit(13).fill(42)</tt>;
+     * allows constructs such as {@code this.position(0).limit(13).fill(42)};
      *
      * @param b the byte value to fill the memory with
      * @return this
@@ -482,19 +481,20 @@ import java.nio.ByteOrder;
         if (limit > 0 && limit < position) {
             throw new IllegalArgumentException("limit < position: (" + limit + " < " + position + ")");
         }
-        int valueSize = sizeof();
-        address += valueSize * position;
-        memset(this, b, valueSize * (limit <= 0 ? 1 : limit - position));
-        address -= valueSize * position;
+        int size = sizeof();
+        int length = size * (limit <= 0 ? 1 : limit - position);
+        position *= size;
+        memset(this, b, length);
+        position /= size;
         return (P)this;
     }
-    /** @return <tt>fill(0)</tt> */
+    /** @return {@code fill(0)} */
     public <P extends Pointer> P zero() { return fill(0); }
 
     /**
-     * Checks for equality with argument. Defines obj to be equal if <tt>
+     * Checks for equality with argument. Defines obj to be equal if {@code
      *     (obj == null && this.address == 0) ||
-     *     (obj.address == this.address && obj.position == this.position)</tt>.
+     *     (obj.address == this.address && obj.position == this.position)}.
      *
      * @param obj the object to compare this Pointer to
      * @return true if obj is equal
@@ -510,7 +510,7 @@ import java.nio.ByteOrder;
         }
     }
 
-    /** @return <tt>(int)address</tt> */
+    /** @return {@code (int)address} */
     @Override public int hashCode() {
         return (int)address;
     }

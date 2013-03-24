@@ -23,7 +23,7 @@ package com.googlecode.javacpp;
 import java.nio.ShortBuffer;
 
 /**
- * The peer class to native pointers and arrays of <tt>short</tt>.
+ * The peer class to native pointers and arrays of {@code short}.
  * All operations take into account the position and limit, when appropriate.
  *
  * @author Samuel Audet
@@ -57,9 +57,9 @@ public class ShortPointer extends Pointer {
         }
     }
     /**
-     * Allocates a native <tt>short</tt> array of the given size.
+     * Allocates a native {@code short} array of the given size.
      *
-     * @param size the number of <tt>short</tt> elements to allocate
+     * @param size the number of {@code short} elements to allocate
      */
     public ShortPointer(int size) {
         try {
@@ -85,24 +85,24 @@ public class ShortPointer extends Pointer {
         return super.capacity(capacity);
     }
 
-    /** @return <tt>get(0)</tt> */
+    /** @return {@code get(0)} */
     public short get() { return get(0); }
-    /** @return the i-th <tt>short</tt> value of a native array */
+    /** @return the i-th {@code short} value of a native array */
     public native short get(int i);
-    /** @return <tt>put(0, s)</tt> */
+    /** @return {@code put(0, s)} */
     public ShortPointer put(short s) { return put(0, s); }
     /**
-     * Copies the <tt>short</tt> value to the i-th element of a native array.
+     * Copies the {@code short} value to the i-th element of a native array.
      *
      * @param i the index into the array
-     * @param s the <tt>short</tt> value to copy
+     * @param s the {@code short} value to copy
      * @return this
      */
     public native ShortPointer put(int i, short s);
 
-    /** @return <tt>get(array, 0, array.length)</tt> */
+    /** @return {@code get(array, 0, array.length)} */
     public ShortPointer get(short[] array) { return get(array, 0, array.length); }
-    /** @return <tt>put(array, 0, array.length)</tt> */
+    /** @return {@code put(array, 0, array.length)} */
     public ShortPointer put(short[] array) { return put(array, 0, array.length); }
     /**
      * Reads a portion of the native array into a Java array.
@@ -123,7 +123,7 @@ public class ShortPointer extends Pointer {
      */
     public native ShortPointer put(short[] array, int offset, int length);
 
-    /** @return <tt>asByteBuffer().asShortBuffer()</tt> */
+    /** @return {@code asByteBuffer().asShortBuffer()} */
     @Override public final ShortBuffer asBuffer() {
         return asByteBuffer().asShortBuffer();
     }

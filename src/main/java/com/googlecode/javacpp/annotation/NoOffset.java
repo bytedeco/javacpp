@@ -8,11 +8,11 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * By default, {@link Generator} applies <tt>offsetof()</tt> to all member variables.
+ * By default, {@link Generator} applies {@code offsetof()} to all member variables.
  * For each value returned {@link Loader#putMemberOffset(String, String, int)}
  * gets called, allowing to query efficiently those values from Java at a later
  * point by calling {@link Loader#offsetof(Class, String)}. However, this is
- * only guaranteed to work on plain old data (POD) <tt>struct</tt>. To prevent
+ * only guaranteed to work on plain old data (POD) {@code struct}. To prevent
  * the C++ compiler from complaining in other cases, we can add this annotation
  * to the peer class declaration.
  *

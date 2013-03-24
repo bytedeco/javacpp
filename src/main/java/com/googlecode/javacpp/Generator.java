@@ -756,8 +756,8 @@ public class Generator implements Closeable {
         }
 
         LinkedList<String> memberList = members.get(cls);
-        if (cls == Pointer.class || (!cls.isAnnotationPresent(Opaque.class) &&
-                !FunctionPointer.class.isAssignableFrom(cls))) {
+        if (!cls.isAnnotationPresent(Opaque.class) &&
+                !FunctionPointer.class.isAssignableFrom(cls)) {
             if (memberList == null) {
                 members.put(cls, memberList = new LinkedList<String>());
             }
@@ -848,7 +848,7 @@ public class Generator implements Closeable {
                     !methodInfo.arrayAllocator && !methodInfo.deallocator) {
                 // get our "this" pointer
                 String[] typeName = getCPPTypeName(cls);
-                if (methodInfo.bufferGetter && "void*".equals(typeName[0])) {
+                if ("void*".equals(typeName[0])) {
                     typeName[0] = "char*";
                 } else if (FunctionPointer.class.isAssignableFrom(cls)) {
                     typeName[0] = getFunctionClassName(cls) + "*";
@@ -868,7 +868,7 @@ public class Generator implements Closeable {
                     out.println("        return" + (methodInfo.returnType == void.class ? ";" : " 0;"));
                     out.println("    }");
                 }
-                if (!cls.isAnnotationPresent(Opaque.class) || methodInfo.bufferGetter) {
+                if (!cls.isAnnotationPresent(Opaque.class)) {
                     out.println("    jint position = env->GetIntField(obj, JavaCPP_positionFID);");
                     out.println("    ptr += position;");
                     if (methodInfo.bufferGetter) {
@@ -918,6 +918,9 @@ public class Generator implements Closeable {
                     continue;
                 }
 
+                if ("void*".equals(typeName[0])) {
+                    typeName[0] = "char*";
+                }
                 out.print("    " + typeName[0] + " ptr" + j + typeName[1] + " = ");
                 if (Pointer.class.isAssignableFrom(methodInfo.parameterTypes[j])) {
                     out.println("arg" + j + " == NULL ? NULL : (" + typeName[0] + typeName[1] +
@@ -1256,7 +1259,8 @@ public class Generator implements Closeable {
         if (methodInfo.returnType == void.class) {
             if (methodInfo.allocator || methodInfo.arrayAllocator) {
                 out.println(indent + "jint rcapacity = " + (methodInfo.arrayAllocator ? "arg0;" : "1;"));
-                boolean noDeallocator = methodInfo.cls.isAnnotationPresent(NoDeallocator.class);
+                boolean noDeallocator = methodInfo.cls == Pointer.class ||
+                        methodInfo.cls.isAnnotationPresent(NoDeallocator.class);
                 for (Annotation a : methodInfo.annotations) {
                     if (a instanceof NoDeallocator) {
                         noDeallocator = true;
@@ -1371,6 +1375,9 @@ public class Generator implements Closeable {
             String cast = getParameterCast(methodInfo, j);
             String[] typeName = getCastedCPPTypeName(methodInfo.parameterAnnotations[j], methodInfo.parameterTypes[j]);
             AdapterInformation adapterInfo = getParameterAdapterInformation(true, methodInfo, j);
+            if ("void*".equals(typeName[0])) {
+                typeName[0] = "char*";
+            }
             if (Pointer.class.isAssignableFrom(methodInfo.parameterTypes[j])) {
                 if (adapterInfo != null) {
                     for (int k = 0; k < adapterInfo.argc; k++) {
@@ -1611,6 +1618,9 @@ public class Generator implements Closeable {
                 String valueTypeName = getValueTypeName(typeName);
                 AdapterInformation adapterInfo = getAdapterInformation(true, valueTypeName, callbackParameterAnnotations[j]);
 
+                if ("void*".equals(typeName[0])) {
+                    typeName[0] = "char*";
+                }
                 if (adapterInfo != null || passBy instanceof ByPtrPtr || passBy instanceof ByPtrRef) {
                     out.println("    " + typeName[0] + " rptr" + j + typeName[1] + " = (" +
                             typeName[0] + typeName[1] + ")jlong_to_ptr(env->GetLongField(obj" + j + ", JavaCPP_addressFID));");
@@ -1641,6 +1651,9 @@ public class Generator implements Closeable {
         out.println("end:");
 
         if (callbackReturnType != void.class) {
+            if ("void*".equals(returnTypeName[0])) {
+                returnTypeName[0] = "char*";
+            }
             if (Pointer.class.isAssignableFrom(callbackReturnType)) {
                 out.println("    " + returnTypeName[0] + " rptr" + returnTypeName[1] + " = rarg == NULL ? NULL : (" +
                         returnTypeName[0] + returnTypeName[1] + ")jlong_to_ptr(env->GetLongField(rarg, JavaCPP_addressFID));");

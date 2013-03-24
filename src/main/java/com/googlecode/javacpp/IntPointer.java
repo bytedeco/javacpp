@@ -23,7 +23,7 @@ package com.googlecode.javacpp;
 import java.nio.IntBuffer;
 
 /**
- * The peer class to native pointers and arrays of <tt>int</tt>, also used for UTF-32.
+ * The peer class to native pointers and arrays of {@code int}, also used for UTF-32.
  * All operations take into account the position and limit, when appropriate.
  *
  * @author Samuel Audet
@@ -67,9 +67,9 @@ public class IntPointer extends Pointer {
         }
     }
     /**
-     * Allocates a native <tt>int</tt> array of the given size.
+     * Allocates a native {@code int} array of the given size.
      *
-     * @param size the number of <tt>int</tt> elements to allocate
+     * @param size the number of {@code int} elements to allocate
      */
     public IntPointer(int size) {
         try {
@@ -133,24 +133,24 @@ public class IntPointer extends Pointer {
         return put(codePoints).put(codePoints.length, (int)0);
     }
 
-    /** @return <tt>get(0)</tt> */
+    /** @return {@code get(0)} */
     public int get() { return get(0); }
-    /** @return the i-th <tt>int</tt> value of a native array */
+    /** @return the i-th {@code int} value of a native array */
     public native int get(int i);
-    /** @return <tt>put(0, j)</tt> */
+    /** @return {@code put(0, j)} */
     public IntPointer put(int j) { return put(0, j); }
     /**
-     * Copies the <tt>int</tt> value to the i-th element of a native array.
+     * Copies the {@code int} value to the i-th element of a native array.
      *
      * @param i the index into the array
-     * @param j the <tt>int</tt> value to copy
+     * @param j the {@code int} value to copy
      * @return this
      */
     public native IntPointer put(int i, int j);
 
-    /** @return <tt>get(array, 0, array.length)</tt> */
+    /** @return {@code get(array, 0, array.length)} */
     public IntPointer get(int[] array) { return get(array, 0, array.length); }
-    /** @return <tt>put(array, 0, array.length)</tt> */
+    /** @return {@code put(array, 0, array.length)} */
     public IntPointer put(int[] array) { return put(array, 0, array.length); }
     /**
      * Reads a portion of the native array into a Java array.
@@ -171,7 +171,7 @@ public class IntPointer extends Pointer {
      */
     public native IntPointer put(int[] array, int offset, int length);
 
-    /** @return <tt>asByteBuffer().asIntBuffer()</tt> */
+    /** @return {@code asByteBuffer().asIntBuffer()} */
     @Override public final IntBuffer asBuffer() {
         return asByteBuffer().asIntBuffer();
     }

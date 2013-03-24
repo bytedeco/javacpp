@@ -42,8 +42,8 @@ import java.util.logging.Logger;
  * of everything that does not fit anywhere else. In addition to its loading features,
  * it also has utility methods to get the platform name and its properties from Java
  * resources, to append to them properties from Class annotations, to extract file
- * resources to the temporary directory, and to get the <tt>offsetof()</tt> or
- * <tt>sizeof()</tt> a native <tt>struct</tt>, <tt>class</tt>, or <tt>union</tt> with
+ * resources to the temporary directory, and to get the {@code offsetof()} or
+ * {@code sizeof()} a native {@code struct}, {@code class}, or {@code union} with
  * its {@link Pointer} peer class and a {@link HashMap} initialized by the native libraries.
  *
  * @author Samuel Audet
@@ -58,7 +58,7 @@ public class Loader {
     private static Properties platformProperties = null;
 
     /**
-     * Creates a {@link #platformName} out of {@link System#getProperty(String)} if <tt>null</tt>.
+     * Creates a {@link #platformName} out of {@link System#getProperty(String)} if {@code null}.
      *
      * @return {@link #platformName}
      */
@@ -290,7 +290,7 @@ public class Loader {
      * Returns the {@link Class} object that contains a caller's method.
      *
      * @param i the offset on the call stack of the method of interest
-     * @return the Class found from the calling context, or <tt>null</tt> if not found
+     * @return the Class found from the calling context, or {@code null} if not found
      */
     public static Class getCallerClass(int i) {
         Class[] classContext = new SecurityManager() {
@@ -342,11 +342,11 @@ public class Loader {
     }
     /**
      * Extracts a resource into the specified directory and with the specified
-     * prefix and suffix for the filename. If both prefix and suffix are <tt>null</tt>,
-     * the original filename is used, so the directory must not be <tt>null</tt>.
+     * prefix and suffix for the filename. If both prefix and suffix are {@code null},
+     * the original filename is used, so the directory must not be {@code null}.
      *
      * @param resourceURL the URL of the resource to extract
-     * @param directory the output directory (<tt>null == System.getProperty("java.io.tmpdir")</tt>)
+     * @param directory the output directory ({@code null == System.getProperty("java.io.tmpdir")})
      * @param prefix the prefix of the temporary filename to use
      * @param suffix the suffix of the temporary filename to use
      * @return the File object representing the extracted file
@@ -371,8 +371,8 @@ public class Loader {
                 file = File.createTempFile(prefix, suffix, directory);
             }
             FileOutputStream os = new FileOutputStream(file);
-            byte[] data = new byte[is.available()];
-            int n;
+            int n = is.available();
+            byte[] data = new byte[n == 0 ? 1024 : n];
             while ((n = is.read(data)) > 0) {
                 os.write(data, 0, n);
             }
@@ -397,7 +397,7 @@ public class Loader {
 
     /**
      * Creates a unique name for {@link #tempDir} out of
-     * <tt>System.getProperty("java.io.tmpdir")</tt> and <tt>System.nanoTime()</tt>.
+     * {@code System.getProperty("java.io.tmpdir")} and {@code System.nanoTime()}.
      *
      * @return {@link #tempDir}
      */
@@ -435,7 +435,7 @@ public class Loader {
      *
      * @param cls the Class to get native library information from
      * @return the full path of the file, or the library name,  loaded
-     *         (but <tt>if (!loadLibraries || cls == null) { return null; }</tt>)
+     *         (but {@code if (!loadLibraries || cls == null) { return null; }})
      * @throws NoClassDefFoundError on Class initialization failure
      * @throws UnsatisfiedLinkError on native library loading failure
      */
@@ -513,14 +513,14 @@ public class Loader {
     }
     /**
      * First tries to extract and load the library from the {@link Class} resources,
-     * but if fails, continues to try loading from the paths (if not <tt>null</tt>),
+     * but if fails, continues to try loading from the paths (if not {@code null}),
      * and finally {@link System#loadLibrary(String)}.
      *
      * @param cls the Class whose package name and {@link ClassLoader} are used to extract from resources
      * @param paths the directories to scan for if we fail to extract the library from resources
      * @param libnameversion the name of the library + "@" + optional version tag
      * @return the full path of the file, or the library name,  loaded
-     *         (but <tt>if (!loadLibraries || cls == null) { return null; }</tt>)
+     *         (but {@code if (!loadLibraries || cls == null) { return null; }})
      * @throws UnsatisfiedLinkError on failure
      */
     public static String loadLibrary(Class cls, String[] paths, String libnameversion) {
@@ -659,21 +659,21 @@ public class Loader {
 
 
     /**
-     * Contains <tt>offsetof()</tt> and <tt>sizeof()</tt> values of native types
-     * of <tt>struct</tt>, <tt>class</tt>, and <tt>union</tt>. A WeakHashMap is
-     * used to prevent the Loader from hanging onto Class objects the user may
+     * Contains {@code offsetof()} and {@code sizeof()} values of native types
+     * of {@code struct}, {@code class}, and {@code union}. A {@link WeakHashMap}
+     * is used to prevent the Loader from hanging onto Class objects the user may
      * be trying to unload.
      */
     static WeakHashMap<Class<? extends Pointer>,HashMap<String,Integer>> memberOffsets =
             new WeakHashMap<Class<? extends Pointer>,HashMap<String,Integer>>();
 
     /**
-     * Called by native libraries to put <tt>offsetof()</tt> and <tt>sizeof()</tt> values in {@link #memberOffsets}.
+     * Called by native libraries to put {@code offsetof()} and {@code sizeof()} values in {@link #memberOffsets}.
      * Tries to load the Class object for typeName using the {@link ClassLoader} of the Loader.
      *
      * @param typeName the name of the peer Class acting as interface to the native type
      * @param member the name of the native member variable
-     * @param offset the value of <tt>offsetof()</tt> (or <tt>sizeof()</tt> when <tt>member.equals("sizeof")</tt>)
+     * @param offset the value of {@code offsetof()} (or {@code sizeof()} when {@code member.equals("sizeof")})
      * @throws ClassNotFoundException on Class initialization failure
      */
     static void putMemberOffset(String typeName, String member, int offset) throws ClassNotFoundException {
@@ -681,11 +681,11 @@ public class Loader {
         putMemberOffset(c.asSubclass(Pointer.class), member, offset);
     }
     /**
-     * Called by native libraries to put <tt>offsetof()</tt> and <tt>sizeof()</tt> values in {@link #memberOffsets}.
+     * Called by native libraries to put {@code offsetof()} and {@code sizeof()} values in {@link #memberOffsets}.
      *
      * @param type the peer Class acting as interface to the native type
      * @param member the name of the native member variable
-     * @param offset the value of <tt>offsetof()</tt> (or <tt>sizeof()</tt> when <tt>member.equals("sizeof")</tt>)
+     * @param offset the value of {@code offsetof()} (or {@code sizeof()} when {@code member.equals("sizeof")})
      */
     static synchronized void putMemberOffset(Class<? extends Pointer> type, String member, int offset) {
         HashMap<String,Integer> offsets = memberOffsets.get(type);
@@ -696,11 +696,11 @@ public class Loader {
     }
 
     /**
-     * Gets <tt>offsetof()</tt> values from {@link #memberOffsets} filled by native libraries.
+     * Gets {@code offsetof()} values from {@link #memberOffsets} filled by native libraries.
      *
      * @param type the peer Class acting as interface to the native type
      * @param member the name of the native member variable
-     * @return <tt>memberOffsets.get(type).get(member)</tt>
+     * @return {@code memberOffsets.get(type).get(member)}
      */
     public static int offsetof(Class<? extends Pointer> type, String member) {
         // Should we synchronize that?
@@ -708,10 +708,10 @@ public class Loader {
     }
 
     /**
-     * Gets <tt>sizeof()</tt> values from {@link #memberOffsets} filled by native libraries.
+     * Gets {@code sizeof()} values from {@link #memberOffsets} filled by native libraries.
      *
      * @param type the peer Class acting as interface to the native type
-     * @return <tt>memberOffsets.get(type).get("sizeof")</tt>
+     * @return {@code memberOffsets.get(type).get("sizeof")}
      */
     public static int sizeof(Class<? extends Pointer> type) {
         // Should we synchronize that?

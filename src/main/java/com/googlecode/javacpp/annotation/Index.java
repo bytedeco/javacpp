@@ -7,9 +7,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Allows using method arguments to call <tt>operator[]</tt> in some circumstances.
- * For example, a call like <tt>*this[i].foo(str)</tt> could be accomplished with
- * <tt>@Index native void foo(int i, String str)</tt>.
+ * Allows using method arguments to call {@code operator[]} in some circumstances.
+ * For example, a call like {@code *this[i].foo(str)} could be accomplished with
+ * {@code @Index native void foo(int i, String str)}.
  *
  * @see Generator
  *

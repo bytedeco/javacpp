@@ -24,20 +24,20 @@ import com.googlecode.javacpp.annotation.Cast;
 import com.googlecode.javacpp.annotation.Name;
 
 /**
- * The peer class to native pointers and arrays of <tt>long</tt>.
+ * The peer class to native pointers and arrays of {@code long}.
  * All operations take into account the position and limit, when appropriate.
  * <p>
  * We need this class because platforms supported by Java do not all agree on the
- * size of the native C++ <tt>long</tt> type, unlike <tt>int</tt> and <tt>short</tt>.
+ * size of the native C++ {@code long} type, unlike {@code int} and {@code short}.
  *
  * @author Samuel Audet
  */
 @Name("long")
 public class CLongPointer extends Pointer {
     /**
-     * Allocates a native <tt>long</tt> array of the given size.
+     * Allocates a native {@code long} array of the given size.
      *
-     * @param size the number of <tt>long</tt> elements to allocate
+     * @param size the number of {@code long} elements to allocate
      */
     public CLongPointer(int size) {
         try {
@@ -63,17 +63,17 @@ public class CLongPointer extends Pointer {
         return super.capacity(capacity);
     }
 
-    /** @return <tt>get(0)</tt> */
+    /** @return {@code get(0)} */
     public long get() { return get(0); }
-    /** @return the i-th <tt>long</tt> value of a native array */
+    /** @return the i-th {@code long} value of a native array */
     @Cast("long") public native long get(int i);
-    /** @return <tt>put(0, l)</tt> */
+    /** @return {@code put(0, l)} */
     public CLongPointer put(long l) { return put(0, l); }
     /**
-     * Copies the <tt>long</tt> value to the i-th element of a native array.
+     * Copies the {@code long} value to the i-th element of a native array.
      *
      * @param i the index into the array
-     * @param l the <tt>long</tt> value to copy
+     * @param l the {@code long} value to copy
      * @return this
      */
     public native CLongPointer put(int i, long l);

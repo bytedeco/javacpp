@@ -53,8 +53,8 @@ import java.util.zip.ZipEntry;
 public class Builder {
 
     /**
-     * Tries to find automatically include paths for <tt>jni.h</tt> and <tt>jni_md.h</tt>,
-     * as well as the link and library paths for the <tt>jvm</tt> library.
+     * Tries to find automatically include paths for {@code jni.h} and {@code jni_md.h},
+     * as well as the link and library paths for the {@code jvm} library.
      *
      * @param properties the Properties containing the paths to update
      */
@@ -328,7 +328,7 @@ public class Builder {
 
     /**
      * Generates a C++ source file for classes, and compiles everything in
-     * one shared library when <tt>compile == true</tt>.
+     * one shared library when {@code compile == true}.
      *
      * @param classes the Class objects as input to Generator
      * @param outputName the output name of the shared library
@@ -427,8 +427,8 @@ public class Builder {
             e.setTime(f.lastModified());
             jos.putNextEntry(e);
             FileInputStream fis = new FileInputStream(f);
-            byte[] data = new byte[fis.available()];
-            int n;
+            int n = fis.available();
+            byte[] data = new byte[n == 0 ? 1024 : n];
             while ((n = fis.read(data)) > 0) {
                 jos.write(data, 0, n);
             }
@@ -442,7 +442,7 @@ public class Builder {
 
     /**
      * An extension of {@link URLClassLoader} that keeps a list of paths in memory.
-     * Adds <tt>System.getProperty("user.dir")</tt> as default path if none are added.
+     * Adds {@code System.getProperty("user.dir")} as default path if none are added.
      */
     public static class UserClassLoader extends URLClassLoader {
         private LinkedList<String> paths = new LinkedList<String>();
@@ -589,12 +589,12 @@ public class Builder {
     /** The {@link ClassLoader} used by the {@link ClassScanner}. */
     UserClassLoader classLoader = null;
     /** The directory where the generated files and compiled shared libraries get written to.
-     *  By default they are placed in the same directory as the <tt>.class</tt> file. */
+     *  By default they are placed in the same directory as the {@code .class} file. */
     File outputDirectory = null;
     /** The name of the output generated source file or shared library. This enables single-
      *  file output mode. By default, the top-level enclosing classes get one file each. */
     String outputName = null;
-    /** The name of the JAR file to create, if not <tt>null</tt>. */
+    /** The name of the JAR file to create, if not {@code null}. */
     String jarPrefix = null;
     /** If true, compiles the generated source file to a shared library and deletes source. */
     boolean compile = true;
@@ -701,7 +701,7 @@ public class Builder {
         return this;
     }
     /** Requests the {@link #classScanner} to add a class or all classes from a package.
-     *  A <tt>null</tt> argument indicates the unnamed package. */
+     *  A {@code null} argument indicates the unnamed package. */
     public Builder classesOrPackages(String ... classesOrPackages) throws IOException {
         if (classesOrPackages == null) {
             classScanner.addPackage(null, true);

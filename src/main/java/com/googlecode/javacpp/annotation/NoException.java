@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
  * into a {@link RuntimeException}. However, this adds some overhead and requires
  * additional support from the compiler. Annotating a class or a method with this
  * annotation indicates that none of the enclosed functions can throw exceptions,
- * and need not be included in a <tt>try{ ... }</tt> block.
+ * and need not be included in a {@code try{ ... }} block.
  *
  * @see Generator
  *
