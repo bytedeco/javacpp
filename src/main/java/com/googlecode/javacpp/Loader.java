@@ -371,10 +371,10 @@ public class Loader {
                 file = File.createTempFile(prefix, suffix, directory);
             }
             FileOutputStream os = new FileOutputStream(file);
-            int n = is.available();
-            byte[] data = new byte[n == 0 ? 1024 : n];
-            while ((n = is.read(data)) > 0) {
-                os.write(data, 0, n);
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = is.read(buffer)) != -1) {
+                os.write(buffer, 0, length);
             }
             is.close();
             os.close();

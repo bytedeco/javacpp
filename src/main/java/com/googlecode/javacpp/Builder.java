@@ -140,7 +140,7 @@ public class Builder {
             try {
                 byte[] buffer = new byte[1024];
                 int length;
-                while ((length = is.read(buffer)) > 0) {
+                while ((length = is.read(buffer)) != -1) {
                     os.write(buffer, 0, length);
                 }
             } catch (IOException e) {
@@ -427,10 +427,10 @@ public class Builder {
             e.setTime(f.lastModified());
             jos.putNextEntry(e);
             FileInputStream fis = new FileInputStream(f);
-            int n = fis.available();
-            byte[] data = new byte[n == 0 ? 1024 : n];
-            while ((n = fis.read(data)) > 0) {
-                jos.write(data, 0, n);
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = fis.read(buffer)) != -1) {
+                jos.write(buffer, 0, length);
             }
             fis.close();
             jos.closeEntry();

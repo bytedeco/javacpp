@@ -489,7 +489,7 @@ public class Pointer {
         return (P)this;
     }
     /** @return {@code fill(0)} */
-    public <P extends Pointer> P zero() { return fill(0); }
+    public <P extends Pointer> P zero() { return (P)fill(0); }
 
     /**
      * Checks for equality with argument. Defines obj to be equal if {@code
