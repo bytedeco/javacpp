@@ -283,6 +283,8 @@ This project was conceived at the Okutomi & Tanaka Laboratory, Tokyo Institute o
 
 
 ==Changes==
+ * Let arrays of primitive values be valid return arguments, mostly useful when used along with the `@StdVector` annotation, or some other custom adapter
+
 ===April 7, 2013 version 0.5===
  * Upgraded references of the Android NDK to version r8e
  * Arguments of `Pointer` type now get handled as `char*` in cases when the `position` can be used for arithmetic
