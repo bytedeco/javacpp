@@ -735,35 +735,26 @@ public class Builder {
             return null;
         }
 
-        LinkedList<File> outputFiles;
-        if (outputName == null) {
-            outputFiles = new LinkedList<File>();
-            Map<String, LinkedList<Class>> map = new LinkedHashMap<String, LinkedList<Class>>();
-            for (Class c : classes) {
-                Properties p = (Properties)properties.clone();
-                if (Loader.appendProperties(p, c) != c) {
-                    continue;
-                }
-                String libraryName = p.getProperty("loader.library", "");
-                if (libraryName.length() == 0) {
-                    continue;
-                }
-                LinkedList<Class> classList = map.get(libraryName);
-                if (classList == null) {
-                    map.put(libraryName, classList = new LinkedList<Class>());
-                }
-                classList.add(c);
+        LinkedList<File> outputFiles = new LinkedList<File>();
+        Map<String, LinkedList<Class>> map = new LinkedHashMap<String, LinkedList<Class>>();
+        for (Class c : classes) {
+            Properties p = (Properties)properties.clone();
+            if (Loader.appendProperties(p, c) != c) {
+                continue;
             }
-            for (String libraryName : map.keySet()) {
-                LinkedList<Class> classList = map.get(libraryName);
-                File f = generateAndCompile(classList.toArray(new Class[classList.size()]), libraryName);
-                if (f != null) {
-                    outputFiles.add(f);
-                }
+            String libraryName = outputName != null ? outputName : p.getProperty("loader.library", "");
+            if (libraryName.length() == 0) {
+                continue;
             }
-        } else {
-            outputFiles = new LinkedList<File>();
-            File f = generateAndCompile(classes.toArray(new Class[classes.size()]), outputName);
+            LinkedList<Class> classList = map.get(libraryName);
+            if (classList == null) {
+                map.put(libraryName, classList = new LinkedList<Class>());
+            }
+            classList.add(c);
+        }
+        for (String libraryName : map.keySet()) {
+            LinkedList<Class> classList = map.get(libraryName);
+            File f = generateAndCompile(classList.toArray(new Class[classList.size()]), libraryName);
             if (f != null) {
                 outputFiles.add(f);
             }

@@ -500,7 +500,9 @@ public class Pointer {
      * @return true if obj is equal
      */
     @Override public boolean equals(Object obj) {
-        if (obj == null) {
+        if (obj == this) {
+            return true;
+        } else if (obj == null) {
             return isNull();
         } else if (obj.getClass() != getClass()) {
             return false;
