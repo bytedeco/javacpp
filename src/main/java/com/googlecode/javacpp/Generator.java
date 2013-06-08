@@ -1016,17 +1016,18 @@ public class Generator implements Closeable {
                 returnPrefix = typeName[0] + " rptr" + typeName[1] + " = ";
             }
         } else {
+            String cast = getCast(methodInfo.annotations, methodInfo.returnType);
             String[] typeName = getCastedCPPTypeName(methodInfo.annotations, methodInfo.returnType);
             if (methodInfo.valueSetter || methodInfo.memberSetter || methodInfo.noReturnGetter) {
                 out.println("    jobject rarg = obj;");
             } else if (methodInfo.returnType.isPrimitive()) {
                 out.println("    " + getJNITypeName(methodInfo.returnType) + " rarg = 0;");
-                returnPrefix = typeName[0] + " rvalue" + typeName[1] + " = ";
+                returnPrefix = typeName[0] + " rvalue" + typeName[1] + " = " + cast;
             } else {
                 Annotation returnBy = getBy(methodInfo.annotations);
                 String valueTypeName = getValueTypeName(typeName);
 
-                returnPrefix = "rptr = ";
+                returnPrefix = "rptr = " + cast;
                 if (typeName[0].length() == 0 || methodInfo.returnRaw) {
                     methodInfo.returnRaw = true;
                     typeName[0] = getJNITypeName(methodInfo.returnType);

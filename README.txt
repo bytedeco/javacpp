@@ -283,6 +283,7 @@ This project was conceived at the Okutomi & Tanaka Laboratory, Tokyo Institute o
 
 
 ==Changes==
+ * Incorporated missing explicit cast on return values when using the `@Cast` annotation
  * Fixed duplicate code getting generated when both specifying the output filename with "-o <name>" and using wildcards on packages containing nested classes 
  * Let arrays of primitive values be valid return arguments, mostly useful when used along with the `@StdVector` annotation, or some other custom adapter
 
