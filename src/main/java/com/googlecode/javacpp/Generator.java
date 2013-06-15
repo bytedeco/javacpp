@@ -541,8 +541,10 @@ public class Generator implements Closeable {
             out2.println("#endif");
             out2.println("JNIIMPORT int JavaCPP_init(int argc, const char *argv[]);");
             out.println();
-            out.println("#ifndef ANDROID");
             out.println("JNIEXPORT int JavaCPP_init(int argc, const char *argv[]) {");
+            out.println("#ifdef ANDROID");
+            out.println("    return JNI_OK;");
+            out.println("#else");
             out.println("    JavaVM *vm;");
             out.println("    JNIEnv *env;");
             out.println("    int nOptions = 1 + (argc > 255 ? 255 : argc);");
@@ -553,8 +555,8 @@ public class Generator implements Closeable {
             out.println("    }");
             out.println("    JavaVMInitArgs vm_args = { " + JNI_VERSION + ", nOptions, options };");
             out.println("    return JNI_CreateJavaVM(&vm, (void **)&env, &vm_args);");
-            out.println("}");
             out.println("#endif");
+            out.println("}");
         }
         out.println(); // XXX: JNI_OnLoad() should ideally be protected by some mutex
         out.println("JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved) {");
@@ -691,13 +693,15 @@ public class Generator implements Closeable {
         if (out2 != null) {
             out2.println("JNIIMPORT int JavaCPP_uninit();");
             out2.println();
-            out.println("#ifndef ANDROID");
             out.println("JNIEXPORT int JavaCPP_uninit() {");
+            out.println("#ifdef ANDROID");
+            out.println("    return JNI_OK;");
+            out.println("#else");
             out.println("    JavaVM *vm = JavaCPP_vm;");
             out.println("    JNI_OnUnload(JavaCPP_vm, NULL);");
             out.println("    return vm->DestroyJavaVM();");
-            out.println("}");
             out.println("#endif");
+            out.println("}");
         }
         out.println();
         out.println("JNIEXPORT void JNICALL JNI_OnUnload(JavaVM* vm, void* reserved) {");

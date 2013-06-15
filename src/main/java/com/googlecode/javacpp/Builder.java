@@ -57,8 +57,9 @@ public class Builder {
      * as well as the link and library paths for the {@code jvm} library.
      *
      * @param properties the Properties containing the paths to update
+     * @param header to request support for exporting callbacks via generated header file
      */
-    public static void includeJavaPaths(Properties properties) {
+    public static void includeJavaPaths(Properties properties, boolean header) {
         String platformName  = Loader.getPlatformName();
         String pathSeparator = properties.getProperty("path.separator");
         final String jvmlink = properties.getProperty("compiler.link.prefix", "") +
@@ -114,8 +115,11 @@ public class Builder {
         }
         Loader.appendProperty(properties, "compiler.includepath", pathSeparator, jnipath);
         if (platformName.equals(properties.getProperty("platform.name", platformName))) {
-            Loader.appendProperty(properties, "compiler.link", pathSeparator, "jvm");
-            Loader.appendProperty(properties, "compiler.linkpath", pathSeparator, jvmpath);
+            if (header) {
+                // We only need libjvm for callbacks exported with the header file
+                Loader.appendProperty(properties, "compiler.link", pathSeparator, "jvm");
+                Loader.appendProperty(properties, "compiler.linkpath", pathSeparator, jvmpath);
+            }
             if (platformName.startsWith("macosx")) {
                 Loader.appendProperty(properties, "compiler.framework", pathSeparator, "JavaVM");
             }
@@ -163,7 +167,7 @@ public class Builder {
             throws IOException, InterruptedException {
         LinkedList<String> command = new LinkedList<String>();
 
-        includeJavaPaths(properties);
+        includeJavaPaths(properties, header);
 
         String platformName  = Loader.getPlatformName();
         String pathSeparator = properties.getProperty("path.separator");
