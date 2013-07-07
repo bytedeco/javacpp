@@ -549,7 +549,7 @@ public class Generator implements Closeable {
             out.println("    JNIEnv *env;");
             out.println("    int nOptions = 1 + (argc > 255 ? 255 : argc);");
             out.println("    JavaVMOption options[256] = { { NULL } };");
-            out.println("    options[0].optionString = (char*)\"-Djava.class.path=" + classPath + "\";");
+            out.println("    options[0].optionString = (char*)\"-Djava.class.path=" + classPath.replace('\\', '/') + "\";");
             out.println("    for (int i = 1; i < nOptions && argv != NULL; i++) {");
             out.println("        options[i].optionString = (char*)argv[i - 1];");
             out.println("    }");
@@ -1486,6 +1486,9 @@ public class Generator implements Closeable {
         if (callbackReturnType != void.class) {
             out.println("    " + getJNITypeName(callbackReturnType) + " rarg = 0;");
             returnPrefix = "rarg = ";
+            if (callbackReturnType == String.class) {
+                returnPrefix += "(jstring)";
+            }
         }
         String callbackReturnCast = getCast(callbackAnnotations, callbackReturnType);
         Annotation returnBy = getBy(callbackAnnotations);
@@ -1521,8 +1524,10 @@ public class Generator implements Closeable {
                     if (adapterInfo != null) {
                         usesAdapters = true;
                         out.println("    " + adapterInfo.name + " adapter" + j + "(arg" + j + ");");
-                        out.println("    jint size" + j + " = (jint)adapter" + j + ".size;");
-                        out.println("    jlong deallocator" + j + " = ptr_to_jlong(&(" + adapterInfo.name + "::deallocate));");
+                        if (callbackParameterTypes[j] != String.class) {
+                            out.println("    jint size" + j + " = (jint)adapter" + j + ".size;");
+                            out.println("    jlong deallocator" + j + " = ptr_to_jlong(&(" + adapterInfo.name + "::deallocate));");
+                        }
                         needInit = true;
                     } else if ((passBy instanceof ByVal && callbackParameterTypes[j] != Pointer.class) ||
                             FunctionPointer.class.isAssignableFrom(callbackParameterTypes[j])) {
@@ -1594,8 +1599,8 @@ public class Generator implements Closeable {
                         out.println("    }");
                         out.println("    args[" + j + "].l = obj" + j + ";");
                     } else if (callbackParameterTypes[j] == String.class) {
-                        out.println("    jstring obj" + j + " = arg" + j + " == NULL ? NULL : env->NewStringUTF((const char*)" +
-                                (adapterInfo != null ? "adapter" : "arg") + j + ");");
+                        out.println("    jstring obj" + j + " = (const char*)" + (adapterInfo != null ? "adapter" : "arg") + j +
+                                " == NULL ? NULL : env->NewStringUTF((const char*)" + (adapterInfo != null ? "adapter" : "arg") + j + ");");
                         out.println("    args[" + j + "].l = obj" + j + ";");
                     } else {
                         logger.log(Level.WARNING, "Callback \"" + callbackMethod + "\" has unsupported parameter type \"" +
@@ -1690,11 +1695,11 @@ public class Generator implements Closeable {
                         out.println("    rsize -= rposition;");
                     }
                 }
-//            } else if (callbackReturnType == String.class) {
-//                out.println("    " + returnTypeName + " rptr = rarg == NULL ? NULL : env->GetStringUTFChars(rarg, NULL);");
-//                if (returnAdapterInfo != null) {
-//                    out.println("    jint rsize = 0;");
-//                }
+            } else if (callbackReturnType == String.class) {
+                out.println("    " + returnTypeName[0] + " rptr" + returnTypeName[1] + " = rarg == NULL ? NULL : env->GetStringUTFChars(rarg, NULL);");
+                if (returnAdapterInfo != null) {
+                    out.println("    jint rsize = 0;");
+                }
             } else if (Buffer.class.isAssignableFrom(callbackReturnType)) {
                 out.println("    " + returnTypeName[0] + " rptr" + returnTypeName[1] + " = rarg == NULL ? NULL : env->GetDirectBufferAddress(rarg);");
                 if (returnAdapterInfo != null) {
@@ -2308,7 +2313,13 @@ public class Generator implements Closeable {
                 Annotation[] annotations = functionMethod.getAnnotations();
                 Annotation[][] parameterAnnotations = functionMethod.getParameterAnnotations();
                 String[] returnTypeName = getAnnotatedCPPTypeName(annotations, returnType);
-                prefix = returnTypeName[0] + returnTypeName[1] + " (" + callingConvention + spaceName + "*";
+                AdapterInformation returnAdapterInfo = getAdapterInformation(false, getValueTypeName(returnTypeName), annotations);
+                if (returnAdapterInfo != null && returnAdapterInfo.cast.length() > 0) {
+                    prefix = returnAdapterInfo.cast;
+                } else {
+                    prefix = returnTypeName[0] + returnTypeName[1];
+                }
+                prefix += " (" + callingConvention + spaceName + "*";
                 suffix = ")(";
                 if (namespace != null && !Pointer.class.isAssignableFrom(parameterTypes[0])) {
                     logger.log(Level.WARNING, "First parameter of caller method call() or apply() for member function pointer " +
@@ -2316,7 +2327,12 @@ public class Generator implements Closeable {
                 }
                 for (int j = namespace == null ? 0 : 1; j < parameterTypes.length; j++) {
                     String[] paramTypeName = getAnnotatedCPPTypeName(parameterAnnotations[j], parameterTypes[j]);
-                    suffix += paramTypeName[0] + " arg" + j + paramTypeName[1];
+                    AdapterInformation paramAdapterInfo = getAdapterInformation(false, getValueTypeName(paramTypeName), parameterAnnotations[j]);
+                    if (paramAdapterInfo != null && paramAdapterInfo.cast.length() > 0) {
+                        suffix += paramAdapterInfo.cast + " arg" + j;
+                    } else {
+                        suffix += paramTypeName[0] + " arg" + j + paramTypeName[1];
+                    }
                     if (j < parameterTypes.length - 1) {
                         suffix += ", ";
                     }

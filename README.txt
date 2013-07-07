@@ -283,6 +283,7 @@ This project was conceived at the Okutomi & Tanaka Laboratory, Tokyo Institute o
 
 
 ==Changes==
+ * Fixed using `@StdString` (or other `@Adapter` with `@Cast` annotations) on callbacks (issue #34), incidentally allowing them to return a `String`
  * By default, `Builder` now links to the `jvm` library only when required, when using the `-header` command line option (issue #33)
  * Incorporated missing explicit cast on return values when using the `@Cast` annotation
  * Fixed duplicate code getting generated when both specifying the output filename with "-o <name>" and using wildcards on packages containing nested classes 
