@@ -675,7 +675,6 @@ public class Generator implements Closeable {
         out.println("        JavaCPP_log(\"Error getting field ID of Pointer.capacity.\");");
         out.println("        return JNI_ERR;");
         out.println("    }");
-        out.println("#ifdef ANDROID");
         classIterator = jclassesInit.iterator();
         while (classIterator.hasNext()) {
             Class c = classIterator.next();
@@ -686,7 +685,6 @@ public class Generator implements Closeable {
             out.println("        return JNI_ERR;");
             out.println("    }");
         }
-        out.println("#endif");
         out.println("    return env->GetVersion();");
         out.println("}");
         out.println();
@@ -1461,7 +1459,7 @@ public class Generator implements Closeable {
         returnConvention[1] = getValueTypeName(returnConvention[1]);
         String parameterDeclaration = callbackTypeName[1].substring(1);
         functionPointers.register("static " + instanceTypeName + " " + callbackName + "_instance;");
-        jclassesInit.register(cls); // Android
+        jclassesInit.register(cls); // for custom class loaders
         if (out2 != null) {
             out2.println("JNIIMPORT " + returnConvention[0] + (returnConvention.length > 1 ?
                     returnConvention[1] : "") + callbackName + parameterDeclaration + ";");
@@ -1570,7 +1568,7 @@ public class Generator implements Closeable {
                         }
                         String s = "    obj" + j + " = env->AllocObject(JavaCPP_getClass(env, " +
                                 jclasses.register(callbackParameterTypes[j]) + "));";
-                        jclassesInit.register(callbackParameterTypes[j]); // Android
+                        jclassesInit.register(callbackParameterTypes[j]); // for custom class loaders
                         adapterInfo = getAdapterInformation(true, valueTypeName, callbackParameterAnnotations[j]);
                         if (adapterInfo != null || passBy instanceof ByPtrPtr || passBy instanceof ByPtrRef) {
                             out.println(s);
