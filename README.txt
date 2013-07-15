@@ -288,7 +288,7 @@ This project was conceived at the Okutomi & Tanaka Laboratory, Tokyo Institute o
  * By default, `Builder` now links to the `jvm` library only when required, when using the `-header` command line option (issue #33)
  * Incorporated missing explicit cast on return values when using the `@Cast` annotation
  * Fixed duplicate code getting generated when both specifying the output filename with "-o <name>" and using wildcards on packages containing nested classes 
- * Let arrays of primitive values be valid return arguments, mostly useful when used along with the `@StdVector` annotation, or some other custom adapter
+ * Let `Buffer` or arrays of primitive values be valid return arguments, mostly useful when used along with the `@StdVector` annotation, or some other custom adapter
 
 ===April 7, 2013 version 0.5===
  * Upgraded references of the Android NDK to version r8e

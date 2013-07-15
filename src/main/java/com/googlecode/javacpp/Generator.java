@@ -1036,6 +1036,7 @@ public class Generator implements Closeable {
                     out.println("    " + typeName[0] + " rarg = NULL;");
                     out.println("    " + typeName[0] + " rptr;");
                 } else if (Pointer.class.isAssignableFrom(methodInfo.returnType) ||
+                        Buffer.class.isAssignableFrom(methodInfo.returnType) ||
                         (methodInfo.returnType.isArray() &&
                          methodInfo.returnType.getComponentType().isPrimitive())) {
                     if (FunctionPointer.class.isAssignableFrom(methodInfo.returnType)) {
@@ -1052,8 +1053,13 @@ public class Generator implements Closeable {
                     } else if (returnBy instanceof ByPtrPtr) {
                         returnPrefix += "JavaCPP_dereference(env, ";
                     } // else ByPtr || ByPtrRef
-                    out.println("    " + getJNITypeName(methodInfo.returnType) + " rarg = NULL;");
-                    out.println("    " + typeName[0] + " rptr" + typeName[1] + ";");
+                    if (methodInfo.bufferGetter) {
+                        out.println("    jobject rarg = NULL;");
+                        out.println("    char* rptr;");
+                    } else {
+                        out.println("    " + getJNITypeName(methodInfo.returnType) + " rarg = NULL;");
+                        out.println("    " + typeName[0] + " rptr" + typeName[1] + ";");
+                    }
                     if (FunctionPointer.class.isAssignableFrom(methodInfo.returnType)) {
                         out.println("    rptr = new (std::nothrow) " + valueTypeName + ";");
                     }
@@ -1065,9 +1071,6 @@ public class Generator implements Closeable {
                     } else {
                         returnPrefix += "(const char*)";
                     }
-                } else if (methodInfo.bufferGetter) {
-                    out.println("    jobject rarg = NULL;");
-                    out.println("    char* rptr;");
                 } else {
                     logger.log(Level.WARNING, "Method \"" + methodInfo.method + "\" has unsupported return type \"" +
                             methodInfo.returnType.getCanonicalName() + "\". Compilation will most likely fail.");
@@ -1369,17 +1372,24 @@ public class Generator implements Closeable {
                         out.println(indent + "jint rcapacity = rptr != NULL ? 1 : 0;");
                     }
                     String s = methodInfo.returnType.getComponentType().getName();
-                    s = Character.toUpperCase(s.charAt(0)) + s.substring(1);
-                    out.println(indent + "rarg = env->New" + s + "Array(rcapacity);");
-                    out.println(indent + "env->Set" + s + "ArrayRegion(rarg, 0, rcapacity, rptr);");
+                    String S = Character.toUpperCase(s.charAt(0)) + s.substring(1);
+                    out.println(indent + "if (rptr != NULL) {");
+                    out.println(indent + "    rarg = env->New" + S + "Array(rcapacity);");
+                    out.println(indent + "    env->Set" + S + "ArrayRegion(rarg, 0, rcapacity, (j" + s + "*)rptr);");
+                    out.println(indent + "}");
                     if (adapterInfo != null) {
                         out.println(indent + "if (deallocator != 0 && rptr != NULL) {");
                         out.println(indent + "    (*(void(*)(void*))jlong_to_ptr(deallocator))((void*)rptr);");
                         out.println(indent + "}");
                     }
-                } else if (methodInfo.bufferGetter) {
+                } else if (Buffer.class.isAssignableFrom(methodInfo.returnType)) {
+                    if (methodInfo.bufferGetter) {
+                        out.println(indent + "jint rcapacity = size;");
+                    } else if (adapterInfo == null) {
+                        out.println(indent + "jint rcapacity = rptr != NULL ? 1 : 0;");
+                    }
                     out.println(indent + "if (rptr != NULL) {");
-                    out.println(indent + "    rarg = env->NewDirectByteBuffer(rptr, size);");
+                    out.println(indent + "    rarg = env->NewDirectByteBuffer(rptr, rcapacity);");
                     out.println(indent + "}");
                 }
             }
@@ -1428,13 +1438,13 @@ public class Generator implements Closeable {
             } else if (methodInfo.parameterTypes[j].isArray() &&
                     methodInfo.parameterTypes[j].getComponentType().isPrimitive()) {
                 out.print(indent + "if (arg" + j + " != NULL) ");
-                String s = methodInfo.parameterTypes[j].getComponentType().getName();
                 if (methodInfo.valueGetter || methodInfo.valueSetter ||
                         methodInfo.memberGetter || methodInfo.memberSetter) {
                     out.println("env->ReleasePrimitiveArrayCritical(arg" + j + ", ptr" + j + ", 0);");
                 } else {
-                    s = Character.toUpperCase(s.charAt(0)) + s.substring(1);
-                    out.println("env->Release" + s + "ArrayElements(arg" + j + ", ptr" + j + ", 0);");
+                    String s = methodInfo.parameterTypes[j].getComponentType().getName();
+                    String S = Character.toUpperCase(s.charAt(0)) + s.substring(1);
+                    out.println("env->Release" + S + "ArrayElements(arg" + j + ", (j" + s + "*)ptr" + j + ", 0);");
                 }
             }
         }
