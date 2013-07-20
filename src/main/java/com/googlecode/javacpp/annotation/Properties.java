@@ -17,6 +17,9 @@ import java.lang.annotation.Target;
  * <p>
  * A class with this annotation gets recognized as top-level enclosing class,
  * with the same implications as with the {@link Platform} annotation.
+ * <p>
+ * Additionally, it is possible to inherit properties from another class also
+ * annotated with this annotation, and specialize further for the current class.
  *
  * @see Builder
  * @see Generator
@@ -27,5 +30,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE})
 public @interface Properties {
-    Platform[] value();
+    Class[] inherit() default {};
+    Platform[] value() default {};
 }

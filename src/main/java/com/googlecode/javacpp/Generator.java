@@ -741,19 +741,7 @@ public class Generator implements Closeable {
     }
 
     private boolean doMethods(Class<?> cls) {
-        com.googlecode.javacpp.annotation.Properties classProperties =
-            cls.getAnnotation(com.googlecode.javacpp.annotation.Properties.class);
-        boolean platformMatches = false;
-        if (classProperties != null) {
-            for (Platform p : classProperties.value()) {
-                if (checkPlatform(p)) {
-                    platformMatches = true;
-                }
-            }
-        } else if (checkPlatform(cls.getAnnotation(Platform.class))) {
-            platformMatches = true;
-        }
-        if (!platformMatches) {
+        if (!checkPlatform(cls)) {
             return false;
         }
 
@@ -1783,6 +1771,32 @@ public class Generator implements Closeable {
         out.println("        " + callbackName + "_instance = *rptr;");
         out.println("    }");
         out.println("}");
+    }
+
+    public boolean checkPlatform(Class<?> cls) {
+        com.googlecode.javacpp.annotation.Properties classProperties =
+            cls.getAnnotation(com.googlecode.javacpp.annotation.Properties.class);
+        if (classProperties != null) {
+            Class[] classes = classProperties.inherit();
+            if (classes != null) {
+                for (Class c : classes) {
+                    if (checkPlatform(c)) {
+                        return true;
+                    }
+                }
+            }
+            Platform[] platforms = classProperties.value();
+            if (platforms != null) {
+                for (Platform p : platforms) {
+                    if (checkPlatform(p)) {
+                        return true;
+                    }
+                }
+            }
+        } else if (checkPlatform(cls.getAnnotation(Platform.class))) {
+            return true;
+        }
+        return false;
     }
 
     public boolean checkPlatform(Platform platform) {

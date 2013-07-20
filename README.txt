@@ -283,6 +283,8 @@ This project was conceived at the Okutomi & Tanaka Laboratory, Tokyo Institute o
 
 
 ==Changes==
+ * Included often used directories such as `/usr/local/include/` and `/usr/local/lib/` to `compiler.includepath` and `compiler.linkpath` default properties
+ * New `@Properties(inherit={Class})` value lets users specify properties in common on a similarly annotated shared config class of sorts
  * Fixed callbacks when used with custom class loaders such as with Web containers
  * Fixed using `@StdString` (or other `@Adapter` with `@Cast` annotations) on callbacks (issue #34), incidentally allowing them to return a `String`
  * By default, `Builder` now links to the `jvm` library only when required, when using the `-header` command line option (issue #33)

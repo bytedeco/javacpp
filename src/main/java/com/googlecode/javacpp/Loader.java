@@ -187,7 +187,16 @@ public class Loader {
                 return c;
             }
         } else {
+            Class[] classes = classProperties.inherit();
+            if (classes != null) {
+                for (Class c2 : classes) {
+                    appendProperties(properties, c2);
+                }
+            }
             platforms = classProperties.value();
+            if (platforms == null) {
+                return cls;
+            }
         }
 
         String[] define = {}, include = {}, cinclude = {}, includepath = {}, options = {},
@@ -239,9 +248,7 @@ public class Loader {
         appendProperty(properties, "compiler.linkpath",         s, linkpath);
         appendProperty(properties, "compiler.link",             s, link);
         appendProperty(properties, "compiler.framework",        s, framework);
-        appendProperty(properties, "loader.preloadpath",        s, linkpath);
         appendProperty(properties, "loader.preloadpath",        s, preloadpath);
-        appendProperty(properties, "loader.preload",            s, link);
         appendProperty(properties, "loader.preload",            s, preload);
         properties.setProperty("loader.library", library);
         return c;
@@ -446,7 +453,14 @@ public class Loader {
 
         // Find the top enclosing class, to match the library filename
         Properties p = (Properties)getProperties().clone();
+        String pathSeparator = p.getProperty("path.separator");
+        String platformRoot  = p.getProperty("platform.root");
+        if (platformRoot != null && !platformRoot.endsWith(File.separator)) {
+            platformRoot += File.separator;
+        }
         cls = appendProperties(p, cls);
+        appendProperty(p, "loader.preloadpath", pathSeparator, p.getProperty("compiler.linkpath"));
+        appendProperty(p, "loader.preload",     pathSeparator, p.getProperty("compiler.link"));
 
         // Force initialization of the class in case it needs it
         try {
@@ -458,30 +472,21 @@ public class Loader {
         }
 
         // Preload native libraries desired by our class
-        String pathSeparator = p.getProperty("path.separator");
-        String platformRoot  = p.getProperty("platform.root");
-        if (platformRoot != null && !platformRoot.endsWith(File.separator)) {
-            platformRoot += File.separator;
-        }
-        String preloadPath      = p.getProperty("loader.preloadpath");
-        String preloadLibraries = p.getProperty("loader.preload");
+        String preloadPath = p.getProperty("loader.preloadpath");
+        String preload     = p.getProperty("loader.preload");
+        String[] preloadPaths = preloadPath == null ? null : preloadPath.split(pathSeparator);
+        String[] preloads     = preload     == null ? null : preload    .split(pathSeparator);
         UnsatisfiedLinkError preloadError = null;
-        if (preloadLibraries != null) {
-            String[] preloadPaths = preloadPath == null ? null : preloadPath.split(pathSeparator);
-            if (preloadPaths != null && platformRoot != null) {
-                for (int i = 0; i < preloadPaths.length; i++) {
-                    if (!new File(preloadPaths[i]).isAbsolute()) {
-                        preloadPaths[i] = platformRoot + preloadPaths[i];
-                    }
-                }
+        for (int i = 0; preloadPaths != null && platformRoot != null && i < preloadPaths.length; i++) {
+            if (!new File(preloadPaths[i]).isAbsolute()) {
+                preloadPaths[i] = platformRoot + preloadPaths[i];
             }
-            String[] libnames = preloadLibraries.split(pathSeparator);
-            for (int i = 0; i < libnames.length; i++) {
-                try {
-                    loadLibrary(cls, preloadPaths, libnames[i]);
-                } catch (UnsatisfiedLinkError e) {
-                    preloadError = e;
-                }
+        }
+        for (int i = 0; preloads != null && i < preloads.length; i++) {
+            try {
+                loadLibrary(cls, preloadPaths, preloads[i]);
+            } catch (UnsatisfiedLinkError e) {
+                preloadError = e;
             }
         }
 
