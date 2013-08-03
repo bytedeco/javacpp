@@ -18,7 +18,7 @@ To use JavaCPP, you will need to download and install the following software:
     * [http://msdn.microsoft.com/en-us/library/ff660764.aspx  Building Applications that Use the Windows SDK]
 
 To produce binary files for Android, you will also have to install:
- * Android NDK r8e  http://developer.android.com/tools/sdk/ndk/
+ * Android NDK r9  http://developer.android.com/tools/sdk/ndk/
 
 To modify the source code, please note that the project files were created for:
  * NetBeans 6.9  http://netbeans.org/downloads/  or
@@ -272,7 +272,7 @@ Inside the directory of the Android project:
  # Run this command to produce the `*.so` library files in `libs/armeabi/`:
 {{{
 java -jar libs/javacpp.jar -classpath bin/ -classpath bin/classes/ \
--properties android-arm -Dplatform.root=<path/to/android-ndk-r8e> \
+-properties android-arm -Dplatform.root=<path/to/android-ndk-r9> \
 -Dcompiler.path=<path/to/arm-linux-androideabi-g++> -d libs/armeabi/
 }}}
 To make everything automatic, we may also insert that command into, for example, the Ant `build.xml` file or the Eclipse `.project` file as a [http://help.eclipse.org/helios/index.jsp?topic=/org.eclipse.platform.doc.user/gettingStarted/qs-96_non_ant_pjs.htm Non-Ant project builder].
@@ -283,6 +283,10 @@ This project was conceived at the Okutomi & Tanaka Laboratory, Tokyo Institute o
 
 
 ==Changes==
+ * Upgraded references of the Android NDK to version r9
+ * Added new `Builder` option "-copylibs" that copies into the build directory any dependent shared libraries listed in the `@Platform(link={...}, preload={...})` annotation
+ * `Loader.getPlatformName()` can now be overridden by setting the `com.googlecode.javacpp.platform.name` system property
+ * Refactored the loading code for `@Properties()` into a neat `Loader.ClassProperties` class, among a few other small changes in `Loader`, `Builder`, `Generator`, and the properties
  * Included often used directories such as `/usr/local/include/` and `/usr/local/lib/` to `compiler.includepath` and `compiler.linkpath` default properties
  * New `@Properties(inherit={Class})` value lets users specify properties in common on a similarly annotated shared config class of sorts
  * Fixed callbacks when used with custom class loaders such as with Web containers

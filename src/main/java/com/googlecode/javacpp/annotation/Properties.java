@@ -15,8 +15,9 @@ import java.lang.annotation.Target;
  * it possible to define a default set of properties as the first value of the array,
  * and specializing a smaller set of properties for each platform, subsequently.
  * <p>
- * A class with this annotation gets recognized as top-level enclosing class,
- * with the same implications as with the {@link Platform} annotation.
+ * A class with this annotation gets recognized as top-level enclosing class by
+ * {@link Loader#getEnclosingClass(Class)}, with the same implications as with
+ * the {@link Platform} annotation.
  * <p>
  * Additionally, it is possible to inherit properties from another class also
  * annotated with this annotation, and specialize further for the current class.
@@ -30,6 +31,8 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE})
 public @interface Properties {
+    /** A list of classes from which to inherit properties. */
     Class[] inherit() default {};
+    /** A list of properties for different platforms. */
     Platform[] value() default {};
 }

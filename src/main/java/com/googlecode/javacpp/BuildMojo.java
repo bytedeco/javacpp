@@ -22,7 +22,6 @@ package com.googlecode.javacpp;
 
 import java.io.File;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Map;
 import java.util.Properties;
 import org.apache.maven.plugin.AbstractMojo;
@@ -74,6 +73,12 @@ public class BuildMojo extends AbstractMojo {
      * @parameter expression="${header}" default-value="false"
      */
     protected boolean header = false;
+
+    /**
+     * Copy to output directory dependent libraries (link and preload)
+     * @parameter expression="${copylibs}" default-value="false"
+     */
+    protected boolean copylibs = false;
 
     /**
      * Also create a JAR file named {@code <jarPrefix>-<platform.name>.jar}
@@ -157,12 +162,13 @@ public class BuildMojo extends AbstractMojo {
                 classOrPackageNames = new String[] { classOrPackageName };
             }
 
-            Collection<File> outputFiles = new Builder()
+            File[] outputFiles = new Builder()
                     .classPaths(classPaths)
                     .outputDirectory(outputDirectory)
                     .outputName(outputName)
                     .compile(compile)
                     .header(header)
+                    .copylibs(copylibs)
                     .jarPrefix(jarPrefix)
                     .properties(properties)
                     .propertyFile(propertyFile)
@@ -172,7 +178,7 @@ public class BuildMojo extends AbstractMojo {
                     .compilerOptions(compilerOptions).build();
             getLog().info("Successfully executed JavaCPP Builder");
             if (getLog().isDebugEnabled()) {
-                getLog().debug("outputFiles: " + outputFiles);
+                getLog().debug("outputFiles: " + Arrays.deepToString(outputFiles));
             }
 	} catch (Exception e) {
             getLog().error("Failed to execute JavaCPP Builder: " + e.getMessage());

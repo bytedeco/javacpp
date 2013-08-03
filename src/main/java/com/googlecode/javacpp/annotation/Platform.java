@@ -17,10 +17,13 @@ import java.lang.annotation.Target;
  * (or not). The strings are matched with {@link String#startsWith(String)}.
  * <p>
  * Classes annotated with at least one of the other values define a top-enclosing
- * class. By default, one native library gets created for each such class, but
- * {@link Builder} recognizes more than one class with the same {@link #library()}
- * name and produces only one library in that case. Different properties can be
- * defined for each platform with the {@link Properties} annotation.
+ * class as returned by {@link Loader#getEnclosingClass(Class)}. By default, one
+ * native library gets created for each such class, but {@link Builder} recognizes
+ * more than one class with the same {@link #library()} name and produces only one
+ * library in that case.
+ * <p>
+ * Further, with the {@link Properties} annotation, properties can be inherited
+ * from other classes, and different properties can be defined for each platform.
  *
  * @see Builder
  * @see Generator
@@ -48,13 +51,14 @@ public @interface Platform {
     String[] includepath() default {};
     /** A list of options applied for the native compiler. The options here refer to
      *  property names. The actual command line options of the native compiler are the
-     *  values of these properties, which need to be defined elsewhere. */
+     *  values of these properties, which need to be defined elsewhere. On an empty
+     *  array, the {@link Builder} uses the "compiler.options.default" property. */
     String[] options()     default {};
     /** A list of library paths passed to the native compiler for use at link time. */
     String[] linkpath()    default {};
     /** A list of libraries the native compiler should link with. */
     String[] link()        default {};
-    /** A list of frameworks the native compiler should link with. */
+    /** A list of frameworks the native compiler should build against. */
     String[] framework()   default {};
     /** A list of paths from which to attempt preloading libraries from the
      *  {@link #link()} and {@link #preload()} lists. */

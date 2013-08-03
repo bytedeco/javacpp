@@ -27,6 +27,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -34,38 +36,27 @@ import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.Properties;
 import java.util.WeakHashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * The Loader contains functionality to load native libraries, but also has a bit
- * of everything that does not fit anywhere else. In addition to its loading features,
- * it also has utility methods to get the platform name and its properties from Java
- * resources, to append to them properties from Class annotations, to extract file
- * resources to the temporary directory, and to get the {@code offsetof()} or
- * {@code sizeof()} a native {@code struct}, {@code class}, or {@code union} with
- * its {@link Pointer} peer class and a {@link HashMap} initialized by the native libraries.
+ * of everything that does not fit anywhere else. In addition to its library loading
+ * features, it also has utility methods to get the platform name, to load properties
+ * from Java resources and from Class annotations, to extract file resources to the
+ * temporary directory, and to get the {@code offsetof()} or {@code sizeof()} a native
+ * {@code struct}, {@code class}, or {@code union} with its {@link Pointer} peer class
+ * and a {@link HashMap} initialized by the native libraries inside {@code JNI_OnLoad()}.
  *
  * @author Samuel Audet
  */
 public class Loader {
 
-    private static final Logger logger = Logger.getLogger(Loader.class.getName());
-
-    /** Platform name set and returned by {@link #getPlatformName()} and {@link #setPlatformName(String)}. */
-    private static String platformName = null;
-    /** Default platform properties loaded and returned by {@link #getProperties()}. */
+    /** Value created out of "java.vm.name", "os.name", and "os.arch" system properties.
+     *  Returned by {@link #getPlatformName()} as default. */
+    private static final String platformName;
+    /** Default platform properties loaded and returned by {@link #loadProperties()}. */
     private static Properties platformProperties = null;
 
-    /**
-     * Creates a {@link #platformName} out of {@link System#getProperty(String)} if {@code null}.
-     *
-     * @return {@link #platformName}
-     */
-    public static String getPlatformName() {
-        if (platformName != null) {
-            return platformName;
-        }
+    static {
         String jvmName = System.getProperty("java.vm.name").toLowerCase();
         String osName  = System.getProperty("os.name").toLowerCase();
         String osArch  = System.getProperty("os.arch").toLowerCase();
@@ -81,41 +72,44 @@ public class Loader {
         }
         if (osArch.equals("i386") || osArch.equals("i486") || osArch.equals("i586") || osArch.equals("i686")) {
             osArch = "x86";
-        } else if (osArch.equals("amd64") || osArch.equals("x86-64")) {
+        } else if (osArch.equals("amd64") || osArch.equals("x86-64") || osArch.equals("x64")) {
             osArch = "x86_64";
         } else if (osArch.startsWith("arm")) {
             osArch = "arm";
         }
-        return platformName = osName + "-" + osArch;
-    }
-    /**
-     * Lets the user set {@link #platformName} in case {@link #getPlatformName()} gets it wrong.
-     *
-     * @param platformName value of the platformName
-     */
-    public static void setPlatformName(String platformName) {
-        Loader.platformName = platformName;
-        Loader.platformProperties = null;
+        platformName = osName + "-" + osArch;
     }
 
     /**
-     * Get the {@link Properties} associated with the default {@link #platformName}.
+     * Returns either the value of the "com.googlecode.javacpp.platform.name"
+     * system property, or {@link #platformName} when the former is not set.
      *
-     * @see #getProperties(String)
+     * @return {@code System.getProperty("com.googlecode.javacpp.platform.name", platformName)}
+     * @see #platformName
      */
-    public static Properties getProperties() {
-        if (platformProperties != null) {
+    public static String getPlatformName() {
+        return System.getProperty("com.googlecode.javacpp.platform.name", platformName);
+    }
+
+    /**
+     * Loads the {@link Properties} associated with the default {@link #getPlatformName()}.
+     *
+     * @see #loadProperties(String)
+     */
+    public static Properties loadProperties() {
+        String name = getPlatformName();
+        if (platformProperties != null && name.equals(platformProperties.getProperty("platform.name"))) {
             return platformProperties;
         }
-        return platformProperties = getProperties(getPlatformName());
+        return platformProperties = loadProperties(name);
     }
     /**
-     * Get from resources the default {@link Properties} of the specified platform name.
+     * Loads from resources the default {@link Properties} of the specified platform name.
      *
      * @param name the platform name
      * @return the Properties from resources
      */
-    public static Properties getProperties(String name) {
+    public static Properties loadProperties(String name) {
         Properties p = new Properties();
         p.put("platform.name", name);
         name = "properties/" + name + ".properties";
@@ -144,15 +138,16 @@ public class Loader {
     }
 
     /**
-     * Appends to properties the ones from Class annotations. If no properties are
-     * found on the class, makes a search for the first enclosing class with properties
-     * that we can use, appends those properties, and returns the enclosing Class used.
+     * If annotated with properties, returns the argument as "enclosing Class".
+     * If no properties are found on the Class, makes a search for the first Class
+     * with properties that we can use, and returns it as the enclosing Class found.
      *
-     * @param properties the Properties to update
-     * @param cls the Class from which to take new Properties
-     * @return the actual enclosing Class on which we found the Properties
+     * @param cls the Class to start the search from
+     * @return the enclosing Class
+     * @see com.googlecode.javacpp.annotation.Platform
+     * @see com.googlecode.javacpp.annotation.Properties
      */
-    public static Class appendProperties(Properties properties, Class cls) {
+    public static Class getEnclosingClass(Class cls) {
         Class<?> c = cls;
         // Find first enclosing declaring class with some properties to use
         while (c.getDeclaringClass() != null) {
@@ -170,127 +165,189 @@ public class Loader {
             }
             c = c.getDeclaringClass();
         }
-        String platformName = properties.getProperty("platform.name");
-        com.googlecode.javacpp.annotation.Properties classProperties =
-                c.getAnnotation(com.googlecode.javacpp.annotation.Properties.class);
-        Platform[] platforms;
-        if (classProperties == null) {
-            try {
-                Platform platform = c.getAnnotation(Platform.class);
-                if (platform == null) {
-                    return c;
-                } else {
-                    platforms = new Platform[] { platform };
-                }
-            } catch (Throwable t) {
-                logger.log(Level.WARNING, "Could not append properties for " + c.getCanonicalName() + ": " + t);
-                return c;
-            }
-        } else {
-            Class[] classes = classProperties.inherit();
-            if (classes != null) {
-                for (Class c2 : classes) {
-                    appendProperties(properties, c2);
-                }
-            }
-            platforms = classProperties.value();
-            if (platforms == null) {
-                return cls;
-            }
-        }
-
-        String[] define = {}, include = {}, cinclude = {}, includepath = {}, options = {},
-                 linkpath = {}, link = {}, framework = {}, preloadpath = {}, preload = {};
-        String library = "jni" + c.getSimpleName();
-        for (Platform p : platforms) {
-            String[][] names = { p.value(), p.not() };
-            boolean[] matches = { false, false };
-            for (int i = 0; i < names.length; i++) {
-                for (String s : names[i]) {
-                    if (platformName.startsWith(s)) {
-                        matches[i] = true;
-                        break;
-                    }
-                }
-            }
-            if ((names[0].length == 0 || matches[0]) && (names[1].length == 0 || !matches[1])) {
-                if (p.define()     .length > 0) { define      = p.define();      }
-                if (p.include()    .length > 0) { include     = p.include();     }
-                if (p.cinclude()   .length > 0) { cinclude    = p.cinclude();    }
-                if (p.includepath().length > 0) { includepath = p.includepath(); }
-                if (p.options()    .length > 0) { options     = p.options();     }
-                if (p.linkpath()   .length > 0) { linkpath    = p.linkpath();    }
-                if (p.link()       .length > 0) { link        = p.link();        }
-                if (p.framework()  .length > 0) { framework   = p.framework();   }
-                if (p.preloadpath().length > 0) { preloadpath = p.preloadpath(); }
-                if (p.preload()    .length > 0) { preload     = p.preload();     }
-                if (p.library().length() > 0)   { library     = p.library();     }
-            }
-        }
-
-        String s = properties.getProperty("path.separator");
-        appendProperty(properties, "generator.define",   "\u0000", define);
-        appendProperty(properties, "generator.include",  "\u0000", include);
-        appendProperty(properties, "generator.cinclude", "\u0000", cinclude);
-        appendProperty(properties, "compiler.includepath",      s, includepath);
-        if (options.length > 0) {
-            String defaultOptions = properties.getProperty("compiler.options");
-            properties.setProperty("compiler.options", "");
-            for (int i = 0; i < options.length; i++) {
-                String o = defaultOptions;
-                if (options[i].length() > 0 && ((o = properties.getProperty("compiler.options." + options[i])) == null)) {
-                    logger.log(Level.WARNING, "Could not find a property name \"compiler.options." + options[i] + "\".");
-                } else {
-                    appendProperty(properties, "compiler.options", " ", o);
-                }
-            }
-        }
-        appendProperty(properties, "compiler.linkpath",         s, linkpath);
-        appendProperty(properties, "compiler.link",             s, link);
-        appendProperty(properties, "compiler.framework",        s, framework);
-        appendProperty(properties, "loader.preloadpath",        s, preloadpath);
-        appendProperty(properties, "loader.preload",            s, preload);
-        properties.setProperty("loader.library", library);
         return c;
     }
 
     /**
-     * Appends new property values to a given key name of the properties.
+     * Does the heavy lifting of collecting values off Properties annotations found
+     * on enclosing classes. Operates for the desired "platform.name" value specified
+     * in {@link java.util.Properties}. As a {@link HashMap}, it makes the result
+     * easily accessible, and mutable.
      *
-     * @param properties the Properties to update
-     * @param name the key name of the property to update
-     * @param separator the separator character to use for splitting and merging values
-     * @param values the property values to append, either an array or merged with separators
+     * @see #loadProperties(Class, java.util.Properties, boolean)
      */
-    public static void appendProperty(Properties properties, String name,
-            String separator, String ... values) {
-        if (values == null || values.length == 0) {
-            return;
-        } else if (values.length == 1 && values[0] != null) {
-            values = values[0].split(separator);
-        }
-        String oldValue = properties.getProperty(name, "");
-        String[] oldValues = oldValue.split(separator);
-        String value = "";
-    next:
-        for (String v : values) {
-            if (v == null || v.length() == 0) {
-                continue;
+    public static class ClassProperties extends HashMap<String,LinkedList<String>> {
+        public ClassProperties() { }
+        public ClassProperties(Properties properties) {
+            platformName  = properties.getProperty("platform.name");
+            platformRoot  = properties.getProperty("platform.root");
+            pathSeparator = properties.getProperty("path.separator");
+            if (platformRoot == null || platformRoot.length() == 0) {
+                platformRoot = ".";
             }
-            for (String ov : oldValues) {
-                if (v.equals(ov)) {
-                    continue next;
+            if (!platformRoot.endsWith(File.separator)) {
+                platformRoot += File.separator;
+            }
+            for (Map.Entry e : properties.entrySet()) {
+                String k = (String)e.getKey(), v = (String)e.getValue();
+                if (v == null || v.length() == 0) {
+                    continue;
+                }
+                if (k.equals("compiler.includepath") || k.equals("compiler.include") ||
+                        k.equals("compiler.linkpath") || k.equals("compiler.link") ||
+                        k.equals("compiler.framework")) {
+                    addAll(k, v.split(pathSeparator));
+                } else {
+                    setProperty(k, v);
                 }
             }
-            if (value.length() > 0 && !value.endsWith(separator)) {
-                value += separator;
+        }
+
+        String platformName, platformRoot, pathSeparator;
+
+        public LinkedList<String> get(String key) {
+            LinkedList<String> list = super.get(key);
+            if (list == null) {
+                put((String)key, list = new LinkedList<String>());
             }
-            value += v;
+            return list;
         }
-        if (value.length() > 0 && oldValue.length() > 0) {
-            value += separator;
+
+        public void addAll(String key, String ... values) {
+            if (values != null) {
+                addAll(key, Arrays.asList(values));
+            }
         }
-        properties.setProperty(name, value + oldValue);
+        public void addAll(String key, Collection<String> values) {
+            if (values != null) {
+                String root = null;
+                if (key.equals("compiler.path") || key.equals("compiler.sysroot") ||
+                        key.equals("compiler.includepath") || key.equals("compiler.linkpath")) {
+                    root = platformRoot;
+                }
+
+                LinkedList<String> values2 = get(key);
+                for (String value : values) {
+                    if (value != null && !values2.contains(value)) {
+                        if (root != null && !new File(value).isAbsolute() &&
+                                new File(root + value).exists()) {
+                            value = root + value;
+                        }
+                        values2.add(value);
+                    }
+                }
+            }
+        }
+
+        public String getProperty(String key) {
+            return getProperty(key, null);
+        }
+        public String getProperty(String key, String defaultValue) {
+            LinkedList<String> values = get(key);
+            return values.isEmpty() ? defaultValue : values.get(0);
+        }
+        public String setProperty(String key, String value) {
+            LinkedList<String> values = get(key);
+            String oldValue = values.isEmpty() ? null : values.get(0);
+            values.clear();
+            addAll(key, value);
+            return oldValue;
+        }
+
+        public void load(Class cls, boolean inherit) {
+            Class<?> c = getEnclosingClass(cls);
+            com.googlecode.javacpp.annotation.Properties classProperties =
+                    c.getAnnotation(com.googlecode.javacpp.annotation.Properties.class);
+            Platform[] platforms;
+            if (classProperties == null) {
+                Platform platform = c.getAnnotation(Platform.class);
+                if (platform == null) {
+                    return;
+                } else {
+                    platforms = new Platform[] { platform };
+                }
+            } else {
+                Class[] classes = classProperties.inherit();
+                if (inherit && classes != null) {
+                    for (Class c2 : classes) {
+                        load(c2, inherit);
+                    }
+                }
+                platforms = classProperties.value();
+                if (platforms == null) {
+                    return;
+                }
+            }
+
+            String[] define = {}, include = {}, cinclude = {}, includepath = {}, options = {},
+                     linkpath = {}, link = {}, framework = {}, preloadpath = {}, preload = {};
+            String library = "jni" + c.getSimpleName();
+            for (Platform p : platforms) {
+                String[][] names = { p.value(), p.not() };
+                boolean[] matches = { false, false };
+                for (int i = 0; i < names.length; i++) {
+                    for (String s : names[i]) {
+                        if (platformName.startsWith(s)) {
+                            matches[i] = true;
+                            break;
+                        }
+                    }
+                }
+                if ((names[0].length == 0 || matches[0]) && (names[1].length == 0 || !matches[1])) {
+                    if (p.define()     .length > 0) { define      = p.define();      }
+                    if (p.include()    .length > 0) { include     = p.include();     }
+                    if (p.cinclude()   .length > 0) { cinclude    = p.cinclude();    }
+                    if (p.includepath().length > 0) { includepath = p.includepath(); }
+                    if (p.options()    .length > 0) { options     = p.options();     }
+                    if (p.linkpath()   .length > 0) { linkpath    = p.linkpath();    }
+                    if (p.link()       .length > 0) { link        = p.link();        }
+                    if (p.framework()  .length > 0) { framework   = p.framework();   }
+                    if (p.preloadpath().length > 0) { preloadpath = p.preloadpath(); }
+                    if (p.preload()    .length > 0) { preload     = p.preload();     }
+                    if (p.library().length() > 0)   { library     = p.library();     }
+                }
+            }
+            addAll("generator.define", define);
+            addAll("generator.include", include);
+            addAll("generator.cinclude", cinclude);
+            addAll("compiler.includepath", includepath);
+            addAll("compiler.options", options);
+            addAll("compiler.linkpath", linkpath);
+            addAll("compiler.link", link);
+            addAll("compiler.framework", framework);
+            addAll("loader.preloadpath", preloadpath);
+            addAll("loader.preload", preload);
+            setProperty("loader.library", library);
+        }
+    }
+
+    /**
+     * For all the classes, loads all properties from each Class annotations for the given platform.
+     * @see #loadProperties(Class, java.util.Properties, boolean)
+     */
+    public static ClassProperties loadProperties(Class[] cls, Properties properties, boolean inherit) {
+        ClassProperties cp = new ClassProperties(properties);
+        for (Class c : cls) {
+            cp.load(c, inherit);
+        }
+        return cp;
+    }
+    /**
+     * Loads all properties from Class annotations for the given platform. The platform
+     * of interest needs to be specified as the value of the "platform.name" key in the
+     * properties argument. It is also possible to indicate whether to load all the classes
+     * specified in the {@link com.googlecode.javacpp.annotation.Properties#inherit()}
+     * annotation recursively via the inherit argument.
+     *
+     * @param cls the Class of which to return Properties
+     * @param properties the platform Properties to inherit
+     * @param inherit indicates whether or not to inherit properties from other classes
+     * @return all the properties associated with the Class for the given platform
+     */
+    public static ClassProperties loadProperties(Class cls, Properties properties, boolean inherit) {
+        ClassProperties cp = new ClassProperties(properties);
+        cp.load(cls, inherit);
+        return cp;
     }
 
     /**
@@ -431,6 +488,8 @@ public class Loader {
 
     /**
      * Loads native libraries associated with the {@link Class} of the caller.
+     * @return {@code load(getCallerClass(2)) }
+     * @see #getCallerClass(int)
      * @see #load(Class)
      */
     public static String load() {
@@ -441,7 +500,7 @@ public class Loader {
      * Loads native libraries associated with the given {@link Class}.
      *
      * @param cls the Class to get native library information from
-     * @return the full path of the file, or the library name,  loaded
+     * @return the full path to the main file loaded, or the library name if unknown
      *         (but {@code if (!loadLibraries || cls == null) { return null; }})
      * @throws NoClassDefFoundError on Class initialization failure
      * @throws UnsatisfiedLinkError on native library loading failure
@@ -452,15 +511,7 @@ public class Loader {
         }
 
         // Find the top enclosing class, to match the library filename
-        Properties p = (Properties)getProperties().clone();
-        String pathSeparator = p.getProperty("path.separator");
-        String platformRoot  = p.getProperty("platform.root");
-        if (platformRoot != null && !platformRoot.endsWith(File.separator)) {
-            platformRoot += File.separator;
-        }
-        cls = appendProperties(p, cls);
-        appendProperty(p, "loader.preloadpath", pathSeparator, p.getProperty("compiler.linkpath"));
-        appendProperty(p, "loader.preload",     pathSeparator, p.getProperty("compiler.link"));
+        cls = getEnclosingClass(cls);
 
         // Force initialization of the class in case it needs it
         try {
@@ -472,26 +523,24 @@ public class Loader {
         }
 
         // Preload native libraries desired by our class
-        String preloadPath = p.getProperty("loader.preloadpath");
-        String preload     = p.getProperty("loader.preload");
-        String[] preloadPaths = preloadPath == null ? null : preloadPath.split(pathSeparator);
-        String[] preloads     = preload     == null ? null : preload    .split(pathSeparator);
+        ClassProperties p = loadProperties(cls, loadProperties(), true);
+        LinkedList<String> preloads = new LinkedList<String>();
+        preloads.addAll(p.get("loader.preload"));
+        preloads.addAll(p.get("compiler.link"));
         UnsatisfiedLinkError preloadError = null;
-        for (int i = 0; preloadPaths != null && platformRoot != null && i < preloadPaths.length; i++) {
-            if (!new File(preloadPaths[i]).isAbsolute()) {
-                preloadPaths[i] = platformRoot + preloadPaths[i];
-            }
-        }
-        for (int i = 0; preloads != null && i < preloads.length; i++) {
+        for (String preload : preloads) {
             try {
-                loadLibrary(cls, preloadPaths, preloads[i]);
+                URL[] urls = findLibrary(cls, p, preload);
+                loadLibrary(urls, preload);
             } catch (UnsatisfiedLinkError e) {
                 preloadError = e;
             }
         }
 
         try {
-            return loadLibrary(cls, null, p.getProperty("loader.library"));
+            String library = p.getProperty("loader.library");
+            URL[] urls = findLibrary(cls, p, library);
+            return loadLibrary(urls, library);
         } catch (UnsatisfiedLinkError e) {
             if (preloadError != null) {
                 e.initCause(preloadError);
@@ -501,112 +550,132 @@ public class Loader {
     }
 
     /**
-     * Tries to load library from the caller's {@link Class} resources or {@link System#loadLibrary(String)}.
-     * @see #loadLibrary(Class, String[], String)
-     */
-    public static String loadLibrary(String libnameversion) {
-        Class cls = getCallerClass(2);
-        return loadLibrary(cls, null, libnameversion);
-    }
-    /**
-     * Tries to load library from the caller's {@link Class} resources, the paths, or {@link System#loadLibrary(String)}.
-     * @see #loadLibrary(Class, String[], String)
-     */
-    public static String loadLibrary(String[] paths, String libnameversion) {
-        Class cls = getCallerClass(2);
-        return loadLibrary(cls, paths, libnameversion);
-    }
-    /**
-     * First tries to extract and load the library from the {@link Class} resources,
-     * but if fails, continues to try loading from the paths (if not {@code null}),
-     * and finally {@link System#loadLibrary(String)}.
+     * Finds where the library may be extracted and loaded among the {@link Class}
+     * resources. But in case that fails, also searches the paths found in the
+     * "loader.preloadpath" and "compiler.linkpath" properties.
      *
      * @param cls the Class whose package name and {@link ClassLoader} are used to extract from resources
-     * @param paths the directories to scan for if we fail to extract the library from resources
+     * @param properties contains the directories to scan for if we fail to extract the library from resources
      * @param libnameversion the name of the library + "@" + optional version tag
-     * @return the full path of the file, or the library name,  loaded
-     *         (but {@code if (!loadLibraries || cls == null) { return null; }})
-     * @throws UnsatisfiedLinkError on failure
+     * @return URLs that point to potential locations of the library
      */
-    public static String loadLibrary(Class cls, String[] paths, String libnameversion) {
-        if (!loadLibraries || cls == null) {
-            return null;
-        }
-        String className = cls.getName();
-        int packageIndex = className.lastIndexOf('.');
-        String packageName = packageIndex != -1 ? className.substring(0, packageIndex + 1) : "";
-        String hashkey = packageName + libnameversion;
-
-        // If we do not already have the native library file ...
-        String filename = loadedLibraries.get(hashkey);
-        if (filename != null) {
-            return filename;
-        }
-
+    public static URL[] findLibrary(Class cls, ClassProperties properties, String libnameversion) {
         String[] s = libnameversion.split("@");
         String libname = s[0];
         String version = s.length > 1 ? s[s.length-1] : "";
 
-        Properties p = getProperties();
-        String subdir = p.getProperty("platform.name") + '/';
-        String prefix = p.getProperty("library.prefix") + libname;
-        String suffix = p.getProperty("library.suffix");
-        URL resourceURL = cls.getResource(subdir + prefix + suffix + version); // Linux style
-        if (resourceURL == null) {
-            resourceURL = cls.getResource(subdir + prefix + version + suffix); // Mac OS X style
+        // If we do not already have the native library file ...
+        String filename = loadedLibraries.get(libnameversion);
+        if (filename != null) {
+            try {
+                return new URL[] { new File(filename).toURI().toURL() };
+            } catch (IOException ex) {
+                return new URL[] { };
+            }
         }
-        if (resourceURL == null) {
-            resourceURL = cls.getResource(subdir + prefix + suffix); // without version
+
+        String subdir = properties.getProperty("platform.name") + '/';
+        String prefix = properties.getProperty("library.prefix", "") + libname;
+        String suffix = properties.getProperty("library.suffix", "");
+        String[] styles = {
+            prefix + suffix + version, // Linux style
+            prefix + version + suffix, // Mac OS X style
+            prefix + suffix            // without version
+        };
+
+        int k = 0;
+        LinkedList<String> paths = new LinkedList<String>();
+        paths.addAll(properties.get("loader.preloadpath"));
+        paths.addAll(properties.get("compiler.linkpath"));
+        URL[] urls = new URL[styles.length * (1 + paths.size())];
+        for (int i = 0; cls != null && i < styles.length; i++) {
+            // ... then find it from in our resources ...
+            URL u = cls.getResource(subdir + styles[i]);
+            if (u != null) {
+                urls[k++] = u;
+            }
+        }
+        // ... and in case of bad resources, search the paths as well.
+        for (int i = 0; paths.size() > 0 && i < styles.length; i++) {
+            for (String path : paths) {
+                File file = new File(path, styles[i]);
+                if (file.exists()) {
+                    try {
+                        urls[k++] = file.toURI().toURL();
+                    } catch (IOException ex) {
+                        throw new RuntimeException(ex);
+                    }
+                }
+            }
+        }
+        return Arrays.copyOf(urls, k);
+    }
+
+    /**
+     * Tries to load the library from the URLs in order, extracting resources as necessary.
+     * Finally, if all fails, falls back on {@link System#loadLibrary(String)}.
+     *
+     * @param urls the URLs to try loading the library from
+     * @param libnameversion the name of the library + "@" + optional version tag
+     * @return the full path of the file loaded, or the library name if unknown
+     *         (but {@code if (!loadLibraries) { return null; }})
+     * @throws UnsatisfiedLinkError on failure
+     */
+    public static String loadLibrary(URL[] urls, String libnameversion) {
+        if (!loadLibraries) {
+            return null;
+        }
+
+        // If we do not already have the native library file ...
+        String filename = loadedLibraries.get(libnameversion);
+        if (filename != null) {
+            return filename;
         }
 
         File tempFile = null;
         UnsatisfiedLinkError loadError = null;
         try {
-            if (resourceURL != null) {
-                // ... then extract it from our resources ...
-                tempFile = extractResource(resourceURL, getTempDir(), null, null);
-                // ... and load it!
-                String tempFilename = tempFile.getAbsolutePath();
-                loadedLibraries.put(hashkey, tempFilename);
-                System.load(tempFilename);
-                return tempFilename;
-            } else {
-                // throw new UnsatisfiedLinkError("Could not find library resource: " + resourceName);
-                // If not found in resources, search the paths instead ...
-                for (int j = 0; paths != null && j < paths.length; j++) {
-                    File file = new File(paths[j], prefix + suffix + version); // Linux style
-                    if (!file.exists()) {
-                         file = new File(paths[j], prefix + version + suffix); // Mac OS X style
+            for (URL url : urls) {
+                File file;
+                try {
+                    // ... if the URL is not already a file ...
+                    file = new File(url.toURI());
+                } catch (Exception e) {
+                    if (tempFile != null && tempFile.exists()) {
+                        tempFile.deleteOnExit();
                     }
-                    if (!file.exists()) {
-                         file = new File(paths[j], prefix + suffix); // without version
-                    }
-                    if (file.exists()) {
-                        filename = file.getPath();
-                        try {
-                            loadedLibraries.put(hashkey, filename);
-                            System.load(filename);
-                            return filename;
-                        } catch (UnsatisfiedLinkError e) {
-                            loadError = e;
-                            loadedLibraries.remove(hashkey);
-                        }
+                    // ... then extract it from our resources ...
+                    file = tempFile = extractResource(url, getTempDir(), null, null);
+                }
+                if (file != null && file.exists()) {
+                    filename = file.getAbsolutePath();
+                    try {
+                        // ... and load it!
+                        loadedLibraries.put(libnameversion, filename);
+                        System.load(filename);
+                        return filename;
+                    } catch (UnsatisfiedLinkError e) {
+                        loadError = e;
+                        loadedLibraries.remove(libnameversion);
                     }
                 }
-                // ... or as last resort, try to load it via the system.
-                loadedLibraries.put(hashkey, libname);
-                System.loadLibrary(libname);
-                return libname;
             }
+            // ... or as last resort, try to load it via the system.
+            String libname = libnameversion.split("@")[0];
+            loadedLibraries.put(libnameversion, libname);
+            System.loadLibrary(libname);
+            return libname;
         } catch (UnsatisfiedLinkError e) {
-            loadedLibraries.remove(hashkey);
+            loadedLibraries.remove(libnameversion);
             if (loadError != null) {
-                throw loadError;
-            } else {
-                throw e;
+                e.initCause(loadError);
             }
+            throw e;
         } catch (IOException ex) {
-            loadedLibraries.remove(hashkey);
+            loadedLibraries.remove(libnameversion);
+            if (loadError != null) {
+                ex.initCause(loadError);
+            }
             Error e = new UnsatisfiedLinkError(ex.toString());
             e.initCause(ex);
             throw e;
