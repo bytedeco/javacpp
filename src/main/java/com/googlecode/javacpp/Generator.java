@@ -1507,10 +1507,6 @@ public class Generator implements Closeable {
                     String[] typeName = getCPPTypeName(callbackParameterTypes[j]);
                     String valueTypeName = getValueTypeName(typeName);
                     AdapterInformation adapterInfo = getAdapterInformation(false, valueTypeName, callbackParameterAnnotations[j]);
-                    if (adapterInfo == null) {
-                        typeName = getCastedCPPTypeName(callbackParameterAnnotations[j], callbackParameterTypes[j]);
-                        valueTypeName = getValueTypeName(typeName);
-                    }
 
                     boolean needInit = false;
                     if (adapterInfo != null) {
@@ -1530,13 +1526,16 @@ public class Generator implements Closeable {
                         needInit = true;
                     }
 
-                    if (Pointer.class.isAssignableFrom(callbackParameterTypes[j])) {
+                    if (Pointer.class.isAssignableFrom(callbackParameterTypes[j]) ||
+                            Buffer.class.isAssignableFrom(callbackParameterTypes[j]) ||
+                            (callbackParameterTypes[j].isArray() &&
+                             callbackParameterTypes[j].getComponentType().isPrimitive())) {
                         if (FunctionPointer.class.isAssignableFrom(callbackParameterTypes[j])) {
                             typeName[0] = getFunctionClassName(callbackParameterTypes[j]) + "*";
                             typeName[1] = "";
                             valueTypeName = getValueTypeName(typeName);
                         }
-                        out.println("    jobject obj" + j + " = NULL;");
+                        out.println("    " + getJNITypeName(callbackParameterTypes[j]) + " obj" + j + " = NULL;");
                         out.println("    " + typeName[0] + " ptr" + j + typeName[1] + " = NULL;");
                         if (FunctionPointer.class.isAssignableFrom(callbackParameterTypes[j])) {
                             out.println("    ptr" + j + " = new (std::nothrow) " + valueTypeName + ";");
@@ -1555,11 +1554,14 @@ public class Generator implements Closeable {
                             out.println("    if (arg" + j + " == NULL) {");
                             out.println("        JavaCPP_log(\"Pointer address of argument " + j + " is NULL in callback for " + cls.getCanonicalName() + ".\");");
                             out.println("    } else {");
-                            out.println("        ptr" + j + " = *arg" + j + ";");
+                            out.println("        ptr" + j + " = (" + typeName[0] + typeName[1] + ")*arg" + j + ";");
                             out.println("    }");
                         } else { // ByPtr || ByPtrRef
-                            out.println("    ptr" + j + " = arg" + j + ";");
+                            out.println("    ptr" + j + " = (" + typeName[0] + typeName[1] + ")arg" + j + ";");
                         }
+                    }
+
+                    if (Pointer.class.isAssignableFrom(callbackParameterTypes[j])) {
                         String s = "    obj" + j + " = env->AllocObject(JavaCPP_getClass(env, " +
                                 jclasses.register(callbackParameterTypes[j]) + "));";
                         jclassesInit.register(callbackParameterTypes[j]); // for custom class loaders
@@ -1594,6 +1596,29 @@ public class Generator implements Closeable {
                         out.println("    jstring obj" + j + " = (const char*)" + (adapterInfo != null ? "adapter" : "arg") + j +
                                 " == NULL ? NULL : env->NewStringUTF((const char*)" + (adapterInfo != null ? "adapter" : "arg") + j + ");");
                         out.println("    args[" + j + "].l = obj" + j + ";");
+                    } else if (callbackParameterTypes[j].isArray() &&
+                            callbackParameterTypes[j].getComponentType().isPrimitive()) {
+                        if (adapterInfo == null) {
+                            out.println("    jint size" + j + " = ptr" + j + " != NULL ? 1 : 0;");
+                        }
+                        String s = callbackParameterTypes[j].getComponentType().getName();
+                        String S = Character.toUpperCase(s.charAt(0)) + s.substring(1);
+                        out.println("    if (ptr" + j + " != NULL) {");
+                        out.println("        obj" + j + " = env->New" + S + "Array(size"+ j + ");");
+                        out.println("        env->Set" + S + "ArrayRegion(obj" + j + ", 0, size" + j + ", (j" + s + "*)ptr" + j + ");");
+                        out.println("    }");
+                        if (adapterInfo != null) {
+                            out.println("    if (deallocator" + j + " != 0 && ptr" + j + " != NULL) {");
+                            out.println("        (*(void(*)(void*))jlong_to_ptr(deallocator" + j + "))((void*)ptr" + j + ");");
+                            out.println("    }");
+                        }
+                    } else if (Buffer.class.isAssignableFrom(callbackParameterTypes[j])) {
+                        if (adapterInfo == null) {
+                            out.println("    jint size" + j + " = ptr" + j + " != NULL ? 1 : 0;");
+                        }
+                        out.println("    if (ptr" + j + " != NULL) {");
+                        out.println("        obj" + j + " = env->NewDirectByteBuffer(ptr" + j + ", size" + j + ");");
+                        out.println("    }");
                     } else {
                         logger.log(Level.WARNING, "Callback \"" + callbackMethod + "\" has unsupported parameter type \"" +
                                 callbackParameterTypes[j].getCanonicalName() + "\". Compilation will most likely fail.");
@@ -1633,8 +1658,9 @@ public class Generator implements Closeable {
 
         for (int j = 0; j < callbackParameterTypes.length; j++) {
             if (Pointer.class.isAssignableFrom(callbackParameterTypes[j])) {
-                String[] typeName = getCastedCPPTypeName(callbackParameterAnnotations[j], callbackParameterTypes[j]);
+                String[] typeName = getCPPTypeName(callbackParameterTypes[j]);
                 Annotation passBy = getBy(callbackParameterAnnotations[j]);
+                String cast = getCast(callbackParameterAnnotations[j], callbackParameterTypes[j]);
                 String valueTypeName = getValueTypeName(typeName);
                 AdapterInformation adapterInfo = getAdapterInformation(true, valueTypeName, callbackParameterAnnotations[j]);
 
@@ -1657,9 +1683,11 @@ public class Generator implements Closeable {
                     if (adapterInfo != null) {
                         out.println("    adapter" + j + ".assign(rptr" + j + ", rsize" + j + ");");
                     } else if (passBy instanceof ByPtrPtr) {
-                        out.println("    *arg" + j + " = rptr" + j + ";");
+                        out.println("    if (arg" + j + " != NULL) {");
+                        out.println("        *arg" + j + " = *" + cast + "&rptr" + j + ";");
+                        out.println("    }");
                     } else if (passBy instanceof ByPtrRef) {
-                        out.println("    arg"  + j + " = rptr" + j + ";");
+                        out.println("    arg"  + j + " = " + cast + "rptr" + j + ";");
                     }
                 }
             }
@@ -2160,13 +2188,10 @@ public class Generator implements Closeable {
 
     public static String getCast(Annotation[] annotations, Class<?> type) {
         String[] typeName = null;
-        Annotation by = getBy(annotations);
         for (Annotation a : annotations) {
-            if ((a instanceof Cast && ((Cast)a).value()[0].length() > 0) ||
-                    (a instanceof Const && (by instanceof ByVal || by instanceof ByRef))) {
+            if ((a instanceof Cast && ((Cast)a).value()[0].length() > 0) || a instanceof Const) {
                 typeName = getCastedCPPTypeName(annotations, type);
-            } else if (a instanceof Const) {
-                typeName = getAnnotatedCPPTypeName(annotations, type);
+                break;
             }
         }
         return typeName != null && typeName.length > 0 ? "(" + typeName[0] + typeName[1] + ")" : "";
@@ -2229,12 +2254,20 @@ public class Generator implements Closeable {
         String prefix = typeName[0];
         String suffix = typeName[1];
 
+        boolean casted = false;
+        for (Annotation a : annotations) {
+            if ((a instanceof Cast && ((Cast)a).value()[0].length() > 0) || a instanceof Const) {
+                casted = true;
+                break;
+            }
+        }
+
         Annotation by = getBy(annotations);
         if (by instanceof ByVal) {
             prefix = getValueTypeName(typeName);
         } else if (by instanceof ByRef) {
             prefix = getValueTypeName(typeName) + "&";
-        } else if (by instanceof ByPtrPtr) {
+        } else if (by instanceof ByPtrPtr && !casted) {
             prefix = prefix + "*";
         } else if (by instanceof ByPtrRef) {
             prefix = prefix + "&";
@@ -2268,6 +2301,10 @@ public class Generator implements Closeable {
                     typeName[0] = getValueTypeName(typeName) + " const *";
                 } else {
                     typeName[0] = "const " + typeName[0];
+                }
+                Annotation by = getBy(annotations);
+                if (by instanceof ByPtrPtr) {
+                    typeName[0] += "*";
                 }
             } else if (a instanceof Adapter || a.annotationType().isAnnotationPresent(Adapter.class)) {
                 adapter = true;
