@@ -360,7 +360,7 @@ public class Builder {
             generator.close();
             if (compile) {
                 String libraryFilename = outputPath.getPath() + File.separator + libraryName;
-                System.out.println("Building library file: " + libraryFilename);
+                System.out.println("Compiling library file: " + libraryFilename);
                 int exitValue = compile(sourceFilename, libraryFilename, p);
                 if (exitValue == 0) {
                     new File(sourceFilename).delete();
@@ -443,9 +443,13 @@ public class Builder {
                 return;
             }
             for (String path : paths) {
+                File f = new File(path);
+                if (!f.exists()) {
+                    continue;
+                }
                 this.paths.add(path);
                 try {
-                    addURL(new File(path).toURI().toURL());
+                    addURL(f.toURI().toURL());
                 } catch (MalformedURLException e) {
                     throw new RuntimeException(e);
                 }
@@ -591,7 +595,7 @@ public class Builder {
     /** If true, also generates C++ header files containing declarations of callback functions. */
     boolean header = false;
     /** If true, also copies to the output directory dependent shared libraries (link and preload). */
-    boolean copylibs = false;
+    boolean copyLibs = false;
     /** Accumulates the various properties loaded from resources, files, command line options, etc. */
     Properties properties = null;
     /** The instance of the {@link ClassScanner} that fills up a {@link Collection} of {@link Class} objects to process. */
@@ -631,9 +635,9 @@ public class Builder {
         this.header = header;
         return this;
     }
-    /** Sets the {@link #copylibs} field to the argument. */
-    public Builder copylibs(boolean copylibs) {
-        this.copylibs = copylibs;
+    /** Sets the {@link #copyLibs} field to the argument. */
+    public Builder copyLibs(boolean copyLibs) {
+        this.copyLibs = copyLibs;
         return this;
     }
     /** Sets the {@link #outputName} field to the argument. */
@@ -753,7 +757,7 @@ public class Builder {
             File f = generateAndCompile(classArray, libraryName);
             if (f != null) {
                 outputFiles.add(f);
-                if (copylibs) {
+                if (copyLibs) {
                     // Do not copy library files from inherit properties ...
                     Loader.ClassProperties p = Loader.loadProperties(classArray, properties, false);
                     LinkedList<String> preloads = new LinkedList<String>();
@@ -860,7 +864,7 @@ public class Builder {
             } else if ("-header".equals(args[i])) {
                 builder.header(true);
             } else if ("-copylibs".equals(args[i])) {
-                builder.copylibs(true);
+                builder.copyLibs(true);
             } else if ("-jarprefix".equals(args[i])) {
                 builder.jarPrefix(args[++i]);
             } else if ("-properties".equals(args[i])) {

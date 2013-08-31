@@ -157,9 +157,9 @@ public class Generator implements Closeable {
             String classPath, Class<?> ... classes) throws FileNotFoundException {
         // first pass using a null writer to fill up the LinkedListRegister objects
         out = new PrintWriter(new Writer() {
-            @Override public void close() { }
-            @Override public void flush() { }
             @Override public void write(char[] cbuf, int off, int len) { }
+            @Override public void flush() { }
+            @Override public void close() { }
         });
         out2 = null;
         functionDefinitions = new LinkedListRegister<String>();
@@ -348,15 +348,6 @@ public class Generator implements Closeable {
         out.println("    return JavaCPP_classes[i];");
         out.println("}");
         out.println();
-        out.println("template <typename P> static inline P JavaCPP_dereference(JNIEnv* env, P* ptr) {");
-        out.println("    if (ptr == NULL) {");
-        out.println("        env->ThrowNew(JavaCPP_getClass(env, " +
-                jclasses.register(NullPointerException.class) + "), \"Return pointer address is NULL.\");");
-        out.println("        return P();");
-        out.println("    }");
-        out.println("    return *ptr;");
-        out.println("}");
-        out.println();
         out.println("class JavaCPP_hidden JavaCPP_exception : public std::exception {");
         out.println("public:");
         out.println("    JavaCPP_exception(const char* str) throw() {");
@@ -372,15 +363,22 @@ public class Generator implements Closeable {
         out.println("};");
         out.println();
         if (handleExceptions) {
-            out.println("static JavaCPP_noinline void JavaCPP_handleException(JNIEnv* env) {");
+            out.println("static JavaCPP_noinline jthrowable JavaCPP_handleException(JNIEnv* env, int i) {");
+            out.println("    jstring str = NULL;");
             out.println("    try {");
             out.println("        throw;");
             out.println("    } catch (std::exception& e) {");
-            out.println("        env->ThrowNew(JavaCPP_getClass(env, " +
-                    jclasses.register(RuntimeException.class) + "), e.what());");
+            out.println("        str = env->NewStringUTF(e.what());");
             out.println("    } catch (...) {");
-            out.println("        env->ThrowNew(JavaCPP_getClass(env, " +
-                    jclasses.register(RuntimeException.class) + "), \"Unknown exception.\");");
+            out.println("        str = env->NewStringUTF(\"Unknown exception.\");");
+            out.println("    }");
+            out.println("    jclass cls = JavaCPP_getClass(env, i);");
+            out.println("    jmethodID mid = env->GetMethodID(cls, \"<init>\", \"(Ljava/lang/String;)V\");");
+            out.println("    if (mid == NULL || env->ExceptionCheck()) {");
+            out.println("        JavaCPP_log(\"Error getting constructor ID of %s.\", JavaCPP_classNames[i]);");
+            out.println("        return NULL;");
+            out.println("    } else {");
+            out.println("        return (jthrowable)env->NewObject(cls, mid, str);");
             out.println("    }");
             out.println("}");
             out.println();
@@ -869,6 +867,11 @@ public class Generator implements Closeable {
             doCall(methodInfo, returnPrefix);
             doReturnAfter(methodInfo);
             doParametersAfter(methodInfo);
+            if (methodInfo.throwsException != null) {
+                out.println("    if (exc != NULL) {");
+                out.println("        env->Throw(exc);");
+                out.println("    }");
+            }
             if (methodInfo.returnType != void.class) {
                 out.println("    return rarg;");
             }
@@ -1035,7 +1038,10 @@ public class Generator implements Closeable {
                     } else if (returnBy instanceof ByRef) {
                         returnPrefix += "&";
                     } else if (returnBy instanceof ByPtrPtr) {
-                        returnPrefix += "JavaCPP_dereference(env, ";
+                        if (cast.length() > 0) {
+                            typeName[0] = typeName[0].substring(0, typeName[0].length()-1);
+                        }
+                        returnPrefix = "rptr = NULL; " + typeName[0] + "* rptrptr" + typeName[1] + " = " + cast;
                     } // else ByPtr || ByPtrRef
                     if (methodInfo.bufferGetter) {
                         out.println("    jobject rarg = NULL;");
@@ -1067,14 +1073,15 @@ public class Generator implements Closeable {
                 }
             }
         }
-        if (methodInfo.mayThrowException) {
+        if (methodInfo.throwsException != null) {
+            out.println("    jthrowable exc = NULL;");
             out.println("    try {");
         }
         return returnPrefix;
     }
 
     private void doCall(MethodInformation methodInfo, String returnPrefix) {
-        String indent = methodInfo.mayThrowException ? "        " : "    ";
+        String indent = methodInfo.throwsException != null ? "        " : "    ";
         String prefix = "(";
         String suffix = ")";
         int skipParameters = 0;
@@ -1232,24 +1239,33 @@ public class Generator implements Closeable {
     }
 
     private void doReturnAfter(MethodInformation methodInfo) {
+        String indent = methodInfo.throwsException != null ? "        " : "    ";
         String[] typeName = getCastedCPPTypeName(methodInfo.annotations, methodInfo.returnType);
         Annotation returnBy = getBy(methodInfo.annotations);
         String valueTypeName = getValueTypeName(typeName);
         AdapterInformation adapterInfo = getAdapterInformation(false, valueTypeName, methodInfo.annotations);
+        String suffix = methodInfo.deallocator ? "" : ";";
         if (!methodInfo.returnType.isPrimitive() && adapterInfo != null) {
-            out.print(")");
+            suffix = ")" + suffix;
         }
         if ((Pointer.class.isAssignableFrom(methodInfo.returnType) ||
                 (methodInfo.returnType.isArray() &&
-                 methodInfo.returnType.getComponentType().isPrimitive())) &&
-            (returnBy instanceof ByVal || returnBy instanceof ByPtrPtr)) {
-            out.print(")");
+                 methodInfo.returnType.getComponentType().isPrimitive()))) {
+            if (returnBy instanceof ByVal) {
+                suffix = ")" + suffix;
+            } else if (returnBy instanceof ByPtrPtr) {
+                out.println(suffix);
+                suffix = "";
+                out.println(indent + "if (rptrptr == NULL) {");
+                out.println(indent + "    env->ThrowNew(JavaCPP_getClass(env, " +
+                        jclasses.register(NullPointerException.class) + "), \"Return pointer address is NULL.\");");
+                out.println(indent + "} else {");
+                out.println(indent + "    rptr = *rptrptr;");
+                out.println(indent + "}");
+            }
         }
-        if (!methodInfo.deallocator) {
-            out.println(";");
-        }
+        out.println(suffix);
 
-        String indent = methodInfo.mayThrowException ? "        " : "    ";
         if (methodInfo.returnType == void.class) {
             if (methodInfo.allocator || methodInfo.arrayAllocator) {
                 out.println(indent + "jint rcapacity = " + (methodInfo.arrayAllocator ? "arg0;" : "1;"));
@@ -1381,7 +1397,13 @@ public class Generator implements Closeable {
     }
 
     private void doParametersAfter(MethodInformation methodInfo) {
-        String indent = methodInfo.mayThrowException ? "        " : "    ";
+        if (methodInfo.throwsException != null) {
+            mayThrowExceptions = true;
+            out.println("    } catch (...) {");
+            out.println("        exc = JavaCPP_handleException(env, " + jclasses.register(methodInfo.throwsException) + ");");
+            out.println("    }");
+            out.println();
+        }
         for (int j = 0; j < methodInfo.parameterTypes.length; j++) {
             if (methodInfo.parameterRaw[j]) {
                 continue;
@@ -1396,32 +1418,32 @@ public class Generator implements Closeable {
             if (Pointer.class.isAssignableFrom(methodInfo.parameterTypes[j])) {
                 if (adapterInfo != null) {
                     for (int k = 0; k < adapterInfo.argc; k++) {
-                        out.println(indent + typeName[0] + " rptr" + (j+k) + typeName[1] + " = " + cast + "adapter" + j + ";");
-                        out.println(indent + "jint rsize" + (j+k) + " = (jint)adapter" + j + ".size" + (k > 0 ? (k+1) + ";" : ";"));
-                        out.println(indent + "if (rptr" + (j+k) + " != " + cast + "ptr" + (j+k) + ") {");
-                        out.println(indent + "    jvalue args[3];");
-                        out.println(indent + "    args[0].j = ptr_to_jlong(rptr" + (j+k) + ");");
-                        out.println(indent + "    args[1].i = rsize" + (j+k) + ";");
-                        out.println(indent + "    args[2].j = ptr_to_jlong(&(" + adapterInfo.name + "::deallocate));");
-                        out.println(indent + "    env->CallNonvirtualVoidMethodA(arg" + j + ", JavaCPP_getClass(env, " +
+                        out.println("    " + typeName[0] + " rptr" + (j+k) + typeName[1] + " = " + cast + "adapter" + j + ";");
+                        out.println("    jint rsize" + (j+k) + " = (jint)adapter" + j + ".size" + (k > 0 ? (k+1) + ";" : ";"));
+                        out.println("    if (rptr" + (j+k) + " != " + cast + "ptr" + (j+k) + ") {");
+                        out.println("        jvalue args[3];");
+                        out.println("        args[0].j = ptr_to_jlong(rptr" + (j+k) + ");");
+                        out.println("        args[1].i = rsize" + (j+k) + ";");
+                        out.println("        args[2].j = ptr_to_jlong(&(" + adapterInfo.name + "::deallocate));");
+                        out.println("        env->CallNonvirtualVoidMethodA(arg" + j + ", JavaCPP_getClass(env, " +
                                 jclasses.register(Pointer.class) + "), JavaCPP_initMID, args);");
-                        out.println(indent + "} else {");
-                        out.println(indent + "    env->SetIntField(arg" + j + ", JavaCPP_limitFID, rsize" + (j+k) + " + position" + (j+k) + ");");
-                        out.println(indent + "}");
+                        out.println("    } else {");
+                        out.println("        env->SetIntField(arg" + j + ", JavaCPP_limitFID, rsize" + (j+k) + " + position" + (j+k) + ");");
+                        out.println("    }");
                     }
                 } else if ((passBy instanceof ByPtrPtr || passBy instanceof ByPtrRef) &&
                         !methodInfo.valueSetter && !methodInfo.memberSetter) {
                     if (!methodInfo.parameterTypes[j].isAnnotationPresent(Opaque.class)) {
-                        out.println(indent + "ptr" + j + " -= position" + j + ";");
+                        out.println("    ptr" + j + " -= position" + j + ";");
                     }
-                    out.println(indent + "if (arg" + j + " != NULL) env->SetLongField(arg" + j +
+                    out.println("    if (arg" + j + " != NULL) env->SetLongField(arg" + j +
                             ", JavaCPP_addressFID, ptr_to_jlong(ptr" + j + "));");
                 }
             } else if (methodInfo.parameterTypes[j] == String.class) {
-                out.println(indent + "if (arg" + j + " != NULL) env->ReleaseStringUTFChars(arg" + j + ", ptr" + j + ");");
+                out.println("    if (arg" + j + " != NULL) env->ReleaseStringUTFChars(arg" + j + ", ptr" + j + ");");
             } else if (methodInfo.parameterTypes[j].isArray() &&
                     methodInfo.parameterTypes[j].getComponentType().isPrimitive()) {
-                out.print(indent + "if (arg" + j + " != NULL) ");
+                out.print("    if (arg" + j + " != NULL) ");
                 if (methodInfo.valueGetter || methodInfo.valueSetter ||
                         methodInfo.memberGetter || methodInfo.memberSetter) {
                     out.println("env->ReleasePrimitiveArrayCritical(arg" + j + ", ptr" + j + ", 0);");
@@ -1431,13 +1453,6 @@ public class Generator implements Closeable {
                     out.println("env->Release" + S + "ArrayElements(arg" + j + ", (j" + s + "*)ptr" + j + ", 0);");
                 }
             }
-        }
-
-        if (methodInfo.mayThrowException) {
-            mayThrowExceptions = true;
-            out.println("    } catch (...) {");
-            out.println("        JavaCPP_handleException(env);");
-            out.println("    }");
         }
     }
 
@@ -1890,7 +1905,7 @@ public class Generator implements Closeable {
         public boolean returnRaw, withEnv, overloaded, noOffset, deallocator, allocator, arrayAllocator,
                 bufferGetter, valueGetter, valueSetter, memberGetter, memberSetter, noReturnGetter;
         public Method pairedMethod;
-        public boolean mayThrowException;
+        public Class<?> throwsException;
     }
     public static MethodInformation getMethodInformation(Method method) {
         if (!Modifier.isNative(method.getModifiers())) {
@@ -2071,11 +2086,13 @@ public class Generator implements Closeable {
             }
         }
 
+        info.throwsException = null;
         if (!getNoException(info.cls, method)) {
             if ((getBy(info.annotations) instanceof ByVal && !getNoException(info.returnType, method)) ||
                     !info.deallocator && !info.valueGetter && !info.valueSetter &&
                     !info.memberGetter && !info.memberSetter && !info.bufferGetter) {
-                info.mayThrowException = true;
+                Class<?>[] exceptions = method.getExceptionTypes();
+                info.throwsException = exceptions.length > 0 ? exceptions[0] : RuntimeException.class;
             }
         }
         return info;

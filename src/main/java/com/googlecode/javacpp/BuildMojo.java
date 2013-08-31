@@ -60,73 +60,73 @@ public class BuildMojo extends AbstractMojo {
      * Output everything in a file named after given outputName
      * @parameter expression="${outputName}"
      */
-    protected String outputName = null;
+    private String outputName = null;
 
     /**
      * Compile and delete the generated .cpp files
      * @parameter expression="${compile}" default-value="true"
      */
-    protected boolean compile = true;
+    private boolean compile = true;
 
     /**
      * Generate header file with declarations of callbacks functions
      * @parameter expression="${header}" default-value="false"
      */
-    protected boolean header = false;
+    private boolean header = false;
 
     /**
      * Copy to output directory dependent libraries (link and preload)
      * @parameter expression="${copylibs}" default-value="false"
      */
-    protected boolean copylibs = false;
+    private boolean copyLibs = false;
 
     /**
      * Also create a JAR file named {@code <jarPrefix>-<platform.name>.jar}
      * @parameter expression="${jarPrefix}"
      */
-    protected String jarPrefix = null;
+    private String jarPrefix = null;
 
     /**
      * Load all properties from resource
      * @parameter expression="${properties}"
      */
-    protected String properties = null;
+    private String properties = null;
 
     /**
      * Load all properties from file
      * @parameter expression="${propertyFile}"
      */
-    protected File propertyFile = null;
+    private File propertyFile = null;
 
     /**
      * Set property keys to values
      * @parameter expression="${propertyKeysAndValues}"
      */
-    protected Properties propertyKeysAndValues = null;
+    private Properties propertyKeysAndValues = null;
 
     /**
      * Process only this class or package (suffixed with .* or .**)
      * @parameter expression="${classOrPackageName}"
      */
-    protected String classOrPackageName = null;
+    private String classOrPackageName = null;
 
     /**
      * Process only these classes or packages (suffixed with .* or .**)
      * @parameter expression="${classOrPackageNames}"
      */
-    protected String[] classOrPackageNames = null;
+    private String[] classOrPackageNames = null;
 
     /**
      * Environment variables added to the compiler subprocess
      * @parameter expression="${environmentVariables}"
      */
-    protected Map<String,String> environmentVariables = null;
+    private Map<String,String> environmentVariables = null;
 
     /**
      * Pass compilerOptions directly to compiler
      * @parameter expression="${compilerOptions}"
      */
-    protected String[] compilerOptions = null;
+    private String[] compilerOptions = null;
 
     @Override public void execute() throws MojoExecutionException {
         try {
@@ -138,6 +138,7 @@ public class BuildMojo extends AbstractMojo {
                 getLog().debug("outputName: " + outputName);
                 getLog().debug("compile: " + compile);
                 getLog().debug("header: " + header);
+                getLog().debug("copyLibs: " + copyLibs);
                 getLog().debug("jarPrefix: " + jarPrefix);
                 getLog().debug("properties: " + properties);
                 getLog().debug("propertyFile: " + propertyFile);
@@ -145,7 +146,7 @@ public class BuildMojo extends AbstractMojo {
                 getLog().debug("classOrPackageName: " + classOrPackageName);
                 getLog().debug("classOrPackageNames: " + Arrays.deepToString(classOrPackageNames));
                 getLog().debug("environmentVariables: " + environmentVariables);
-                getLog().debug("compilerOptions: " + compilerOptions);
+                getLog().debug("compilerOptions: " + Arrays.deepToString(compilerOptions));
             }
 
             if (classPaths != null && classPath != null) {
@@ -168,7 +169,7 @@ public class BuildMojo extends AbstractMojo {
                     .outputName(outputName)
                     .compile(compile)
                     .header(header)
-                    .copylibs(copylibs)
+                    .copyLibs(copyLibs)
                     .jarPrefix(jarPrefix)
                     .properties(properties)
                     .propertyFile(propertyFile)
