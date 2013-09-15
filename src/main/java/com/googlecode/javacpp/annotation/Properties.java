@@ -1,8 +1,9 @@
 package com.googlecode.javacpp.annotation;
 
 import com.googlecode.javacpp.Builder;
-import com.googlecode.javacpp.Loader;
 import com.googlecode.javacpp.Generator;
+import com.googlecode.javacpp.Loader;
+import com.googlecode.javacpp.Parser;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -25,12 +26,15 @@ import java.lang.annotation.Target;
  * @see Builder
  * @see Generator
  * @see Loader
+ * @see Parser
  *
  * @author Samuel Audet
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE})
 public @interface Properties {
+    /** The target Java source code file of the {@link Parser}. */
+    String target() default "";
     /** A list of classes from which to inherit properties. */
     Class[] inherit() default {};
     /** A list of properties for different platforms. */

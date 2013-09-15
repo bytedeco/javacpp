@@ -53,6 +53,30 @@ import java.util.zip.ZipEntry;
 public class Builder {
 
     /**
+     * Calls {@link Parser#parse(File, Class)} after creating an instance of the
+     * Class and running {@link Parser.InfoMapper#map(Parser.InfoMap)}.
+     *
+     * @param cls The class annotated with {@link com.googlecode.javacpp.annotation.Properties}
+     *            and implementing {@link Parser.InfoMapper}
+     * @return the target File produced
+     * @throws IOException on Java target file writing error
+     * @throws Parser.Exception on C/C++ header file parsing error
+     */
+    public File parse(Class cls) throws IOException, Parser.Exception {
+        Parser.InfoMap infoMap = new Parser.InfoMap();
+        try {
+            Object obj = cls.newInstance();
+            if (obj instanceof Parser.InfoMapper) {
+                ((Parser.InfoMapper)obj).map(infoMap);
+            }
+        } catch (InstantiationException e) {
+        } catch (IllegalAccessException e) {
+            // fail silently as if the interface wasn't implemented
+        }
+        return new Parser(properties, infoMap).parse(outputDirectory, cls);
+    }
+
+    /**
      * Tries to find automatically include paths for {@code jni.h} and {@code jni_md.h},
      * as well as the link and library paths for the {@code jvm} library.
      *
@@ -201,7 +225,7 @@ public class Builder {
         command.add(sourceFilename);
 
         Collection<String> allOptions = properties.get("compiler.options");
-        if (allOptions.isEmpty() && properties.getProperty("compiler.options.default") != null) {
+        if (allOptions.isEmpty()) {
             allOptions.add("default");
         }
         for (String s : allOptions) {
@@ -210,10 +234,10 @@ public class Builder {
             }
             String p = "compiler.options." + s;
             String options = properties.getProperty(p);
-            if (options == null || options.length() == 0) {
-                System.err.println("Warning: Could not get the property named \"" + p + "\"");
-            } else {
+            if (options != null && options.length() > 0) {
                 command.addAll(Arrays.asList(options.split(" ")));
+            } else if (!"default".equals(s)) {
+                System.err.println("Warning: Could not get the property named \"" + p + "\"");
             }
         }
 
@@ -729,7 +753,7 @@ public class Builder {
      * @throws IOException
      * @throws InterruptedException
      */
-    public File[] build() throws IOException, InterruptedException {
+    public File[] build() throws IOException, InterruptedException, Parser.Exception {
         if (classScanner.getClasses().isEmpty()) {
             return null;
         }
@@ -741,6 +765,14 @@ public class Builder {
                 continue;
             }
             Loader.ClassProperties p = Loader.loadProperties(c, properties, false);
+            String target = p.getProperty("parser.target");
+            if (target != null && !c.getName().equals(target)) {
+                File f = parse(c);
+                if (f != null) {
+                    outputFiles.add(f);
+                }
+                continue;
+            }
             String libraryName = outputName != null ? outputName : p.getProperty("loader.library", "");
             if (libraryName.length() == 0) {
                 continue;

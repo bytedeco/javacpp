@@ -28,7 +28,7 @@ import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 
 /**
- * A Maven Mojo to call the {@link Builder} (Java class -> C++ JNI -> native library).
+ * A Maven Mojo to call the {@link Builder} (C++ header file -> Java class -> C++ JNI -> native library).
  * Can also be seen as an example of how to use the Builder programmatically.
  *
  * @goal build
@@ -128,6 +128,12 @@ public class BuildMojo extends AbstractMojo {
      */
     private String[] compilerOptions = null;
 
+     /**
+      * Skip the execution.
+      * @parameter expression="${skip}" default-value="false"
+      */
+    private boolean skip = false;
+
     @Override public void execute() throws MojoExecutionException {
         try {
             getLog().info("Executing JavaCPP Builder");
@@ -147,6 +153,12 @@ public class BuildMojo extends AbstractMojo {
                 getLog().debug("classOrPackageNames: " + Arrays.deepToString(classOrPackageNames));
                 getLog().debug("environmentVariables: " + environmentVariables);
                 getLog().debug("compilerOptions: " + Arrays.deepToString(compilerOptions));
+                getLog().debug("skip: " + skip);
+            }
+
+            if (skip) {
+                getLog().info("Skipped execution of JavaCPP Builder");
+                return;
             }
 
             if (classPaths != null && classPath != null) {

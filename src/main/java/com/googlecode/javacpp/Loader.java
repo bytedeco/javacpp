@@ -256,6 +256,10 @@ public class Loader {
 
         public void load(Class cls, boolean inherit) {
             Class<?> c = getEnclosingClass(cls);
+            while (!c.isAnnotationPresent(com.googlecode.javacpp.annotation.Properties.class)
+                    && !c.isAnnotationPresent(Platform.class) && c.getSuperclass() != null) {
+                c = c.getSuperclass();
+            }
             com.googlecode.javacpp.annotation.Properties classProperties =
                     c.getAnnotation(com.googlecode.javacpp.annotation.Properties.class);
             Platform[] platforms;
@@ -272,6 +276,10 @@ public class Loader {
                     for (Class c2 : classes) {
                         load(c2, inherit);
                     }
+                }
+                String target = classProperties.target();
+                if (target.length() > 0) {
+                    addAll("parser.target", target);
                 }
                 platforms = classProperties.value();
                 if (platforms == null) {
@@ -318,6 +326,33 @@ public class Loader {
             addAll("loader.preloadpath", preloadpath);
             addAll("loader.preload", preload);
             setProperty("loader.library", library);
+        }
+
+        LinkedList<File> getHeaderFiles() {
+            LinkedList<String> paths = get("compiler.includepath");
+            LinkedList<String> includes = new LinkedList<String>();
+            includes.addAll(get("generator.include"));
+            includes.addAll(get("generator.cinclude"));
+            LinkedList<File> files = new LinkedList<File>();
+            for (String include : includes) {
+                if (include.startsWith("<") && include.endsWith(">")) {
+                    include = include.substring(1, include.length() - 1);
+                } else {
+                    File f = new File(include);
+                    if (f.exists()) {
+                        files.add(f);
+                        continue;
+                    }
+                }
+                for (String path : paths) {
+                    File f = new File(path, include);
+                    if (f.exists()) {
+                        files.add(f);
+                        break;
+                    }
+                }
+            }
+            return files;
         }
     }
 
