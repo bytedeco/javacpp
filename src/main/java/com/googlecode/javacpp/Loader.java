@@ -577,7 +577,7 @@ public class Loader {
             URL[] urls = findLibrary(cls, p, library);
             return loadLibrary(urls, library);
         } catch (UnsatisfiedLinkError e) {
-            if (preloadError != null) {
+            if (preloadError != null && e.getCause() == null) {
                 e.initCause(preloadError);
             }
             throw e;
@@ -702,13 +702,13 @@ public class Loader {
             return libname;
         } catch (UnsatisfiedLinkError e) {
             loadedLibraries.remove(libnameversion);
-            if (loadError != null) {
+            if (loadError != null && e.getCause() == null) {
                 e.initCause(loadError);
             }
             throw e;
         } catch (IOException ex) {
             loadedLibraries.remove(libnameversion);
-            if (loadError != null) {
+            if (loadError != null && ex.getCause() == null) {
                 ex.initCause(loadError);
             }
             Error e = new UnsatisfiedLinkError(ex.toString());

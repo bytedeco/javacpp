@@ -3,7 +3,7 @@
 ==Introduction==
 JavaCPP provides efficient access to native C++ inside Java, not unlike the way some C/C++ compilers interact with assembly language. No need to invent new languages such as [http://www.ecma-international.org/publications/standards/Ecma-372.htm C++/CLI] or [http://www.cython.org/ Cython]. Under the hood, it uses JNI, so it works with all Java implementations, [#Instructions_for_Android including Android]. In contrast to other approaches ([http://www.swig.org/ SWIG], [http://www.itk.org/ITK/resources/CableSwig.html CableSwig], [http://www.eclipse.org/swt/jnigen.php JNIGeneratorApp], [http://www.teamdev.com/jniwrapper/ JNIWrapper], [http://msdn.microsoft.com/en-us/library/0h9e9t7d.aspx Platform Invoke], [http://jogamp.org/gluegen/www/ GlueGen], [http://homepage.mac.com/pcbeard/JNIDirect/ JNIDirect], [https://github.com/twall/jna JNA], [http://www.innowhere.com/ JNIEasy], [http://flinflon.brandonu.ca/Dueck/SystemsProgramming/JniMarshall/ JniMarshall], [http://jnative.free.fr/ JNative], [http://www.jinvoke.com/ J/Invoke], [http://hawtjni.fusesource.org/ HawtJNI], [http://code.google.com/p/bridj/ BridJ], etc.), it supports naturally and efficiently many features of the C++ language often considered problematic, including overloaded operators, template classes and functions, member function pointers, callback functions, functors, nested struct definitions, variable length arguments, nested namespaces, large data structures containing arbitrary cycles, multiple inheritance, passing/returning by value/reference/vector, anonymous unions, bit fields, exceptions, destructors and garbage collection. Obviously, neatly supporting the whole of C++ would require more work (although one could argue about the intrinsic neatness of C++), but I am releasing it here as a proof of concept. I have already used it to produce complete interfaces to OpenCV, FFmpeg, libdc1394, PGR FlyCapture, OpenKinect, videoInput, and ARToolKitPlus as part of [http://code.google.com/p/javacv/ JavaCV].
 
-The new [http://code.google.com/p/javacpp/source/browse/?repo=presets JavaCPP Presets] subproject also demonstrates early parsing capabilities of C/C++ header files that already show promising and useful results with at least FFmpeg and libdc1394.
+The new [https://code.google.com/p/javacpp/wiki/Presets JavaCPP Presets] subproject also demonstrates early parsing capabilities of C/C++ header files that already show promising and useful results with at least FFmpeg, libdc1394, and OpenKinect.
 
 
 ==Required Software==
@@ -55,7 +55,7 @@ namespace LegacyLibrary {
 }
 }}}
 
-To get the job done with JavaCPP, we can easily define a Java class such as this one--although one could use the `Parser` to produce it from the header file as demonstrated by the [http://code.google.com/p/javacpp/source/browse/?repo=presets JavaCPP Presets] subproject:
+To get the job done with JavaCPP, we can easily define a Java class such as this one--although one could use the `Parser` to produce it from the header file as demonstrated by the [https://code.google.com/p/javacpp/wiki/Presets JavaCPP Presets] subproject:
 {{{
 import com.googlecode.javacpp.*;
 import com.googlecode.javacpp.annotation.*;
@@ -265,7 +265,7 @@ $ ./foo
 java.lang.Exception: bar 42
 }}}
 
-In this example, the `FunctionPointer` object gets created implicitly, but to call a native function pointer, we could define one that instead contains a `native call()/apply()` method, and create an instance explicitly. Such a class can also be extended in Java to create callbacks, and like any other normal `Pointer` object, must be allocated with a `native void allocate()` method, so please remember to hang on to references in Java, as those will get garbage collected. As a bonus, `FunctionPointer.call()/apply()` maps in fact to an overloaded `operator()` of a C++ function object that we can pass to other functions by annotating parameters with `@ByVal` or `@ByRef`, as with the `sort()` function in the example above.
+In this example, the `FunctionPointer` object gets created implicitly, but to call a native function pointer, we could define one that instead contains a `native call()/apply()` method, and create an instance explicitly. Such a class can also be extended in Java to create callbacks, and like any other normal `Pointer` object, must be allocated with a `native void allocate()` method, *so please remember to hang on to references in Java*, as those will get garbage collected. As a bonus, `FunctionPointer.call()/apply()` maps in fact to an overloaded `operator()` of a C++ function object that we can pass to other functions by annotating parameters with `@ByVal` or `@ByRef`, as with the `sort()` function in the example above.
 
 
 ==Instructions for Android==
@@ -286,6 +286,9 @@ This project was conceived at the Okutomi & Tanaka Laboratory, Tokyo Institute o
 
 ==Changes==
 
+ * Fixed `typedef` of function pointers and a few code formatting issues with `Parser`
+ * Supplied checks to prevent `Loader.load()` from throwing `java.lang.IllegalStateException: Can't overwrite cause`
+
 ===September 15, 2013 version 0.6===
  * Added new very preliminary `Parser` to produce Java interface files almost automatically from C/C++ header files; please refer to the new JavaCPP Presets subproject for details
  * When catching a C++ exception, the first class declared after `throws` now gets thrown (issue #36) instead of `RuntimeException`, which is still used by default
@@ -300,7 +303,7 @@ This project was conceived at the Okutomi & Tanaka Laboratory, Tokyo Institute o
  * Fixed using `@StdString` (or other `@Adapter` with `@Cast` annotations) on callbacks (issue #34), incidentally allowing them to return a `String`
  * By default, `Builder` now links to the `jvm` library only when required, when using the `-header` command line option (issue #33)
  * Incorporated missing explicit cast on return values when using the `@Cast` annotation
- * Fixed duplicate code getting generated when both specifying the output filename with "-o <name>" and using wildcards on packages containing nested classes 
+ * Fixed duplicate code getting generated when both specifying the output filename with `-o <name>` and using wildcards on packages containing nested classes 
  * Let `Buffer` or arrays of primitive values be valid return and callback arguments, mostly useful when used along with the `@StdVector` annotation, or some other custom adapter
 
 ===April 7, 2013 version 0.5===
