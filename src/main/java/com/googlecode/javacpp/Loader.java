@@ -22,6 +22,7 @@ package com.googlecode.javacpp;
 
 import com.googlecode.javacpp.annotation.Platform;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -328,18 +329,20 @@ public class Loader {
             setProperty("loader.library", library);
         }
 
-        LinkedList<File> getHeaderFiles() {
+        LinkedList<File> getHeaderFiles() throws FileNotFoundException {
             LinkedList<String> paths = get("compiler.includepath");
             LinkedList<String> includes = new LinkedList<String>();
             includes.addAll(get("generator.include"));
             includes.addAll(get("generator.cinclude"));
             LinkedList<File> files = new LinkedList<File>();
             for (String include : includes) {
+                boolean found = false;
                 if (include.startsWith("<") && include.endsWith(">")) {
                     include = include.substring(1, include.length() - 1);
                 } else {
                     File f = new File(include);
                     if (f.exists()) {
+                        found = true;
                         files.add(f);
                         continue;
                     }
@@ -347,9 +350,13 @@ public class Loader {
                 for (String path : paths) {
                     File f = new File(path, include);
                     if (f.exists()) {
+                        found = true;
                         files.add(f);
                         break;
                     }
+                }
+                if (!found) {
+                    throw new FileNotFoundException("Could not find header file: " + include);
                 }
             }
             return files;

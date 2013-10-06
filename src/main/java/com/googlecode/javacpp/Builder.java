@@ -682,7 +682,9 @@ public class Builder {
     /** Adds all the properties of the argument to the {@link #properties} field. */
     public Builder properties(Properties properties) {
         if (properties != null) {
-            this.properties.putAll(properties);
+            for (Map.Entry e : properties.entrySet()) {
+                property((String)e.getKey(), (String)e.getValue());
+            }
         }
         return this;
     }
