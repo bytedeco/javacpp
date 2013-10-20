@@ -286,6 +286,9 @@ This project was conceived at the Okutomi & Tanaka Laboratory, Tokyo Institute o
 
 ==Changes==
 
+ * Fixed `NullPointerException` in `Loader.load()` when no `@Platform` annotation is provided (issue #38)
+ * Parsing for anonymous `struct` or `union` and for `typedef void` (mapped to `@Opaque Pointer`) now outputs something
+ * The `Parser` now expands preprocessor macros and outputs all unprocessed directives as comments
  * Added support for parsing namespaces, derived classes, access specifiers, custom constructors, vector types, and updated a bunch of other stuff in `Parser`
  * Fixed `typedef` of function pointers and a few code formatting issues with `Parser`
  * Supplied checks to prevent `Loader.load()` from throwing `java.lang.IllegalStateException: Can't overwrite cause`

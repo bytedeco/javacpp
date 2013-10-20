@@ -258,17 +258,15 @@ public class Loader {
         public void load(Class cls, boolean inherit) {
             Class<?> c = getEnclosingClass(cls);
             while (!c.isAnnotationPresent(com.googlecode.javacpp.annotation.Properties.class)
-                    && !c.isAnnotationPresent(Platform.class) && c.getSuperclass() != null) {
+                    && !c.isAnnotationPresent(Platform.class) && c.getSuperclass() != Object.class) {
                 c = c.getSuperclass();
             }
             com.googlecode.javacpp.annotation.Properties classProperties =
                     c.getAnnotation(com.googlecode.javacpp.annotation.Properties.class);
-            Platform[] platforms;
+            Platform[] platforms = null;
             if (classProperties == null) {
                 Platform platform = c.getAnnotation(Platform.class);
-                if (platform == null) {
-                    return;
-                } else {
+                if (platform != null) {
                     platforms = new Platform[] { platform };
                 }
             } else {
@@ -283,15 +281,12 @@ public class Loader {
                     addAll("parser.target", target);
                 }
                 platforms = classProperties.value();
-                if (platforms == null) {
-                    return;
-                }
             }
 
             String[] define = {}, include = {}, cinclude = {}, includepath = {}, options = {},
                      linkpath = {}, link = {}, framework = {}, preloadpath = {}, preload = {};
             String library = "jni" + c.getSimpleName();
-            for (Platform p : platforms) {
+            for (Platform p : platforms != null ? platforms : new Platform[0]) {
                 String[][] names = { p.value(), p.not() };
                 boolean[] matches = { false, false };
                 for (int i = 0; i < names.length; i++) {
