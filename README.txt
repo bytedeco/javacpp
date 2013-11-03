@@ -286,6 +286,7 @@ This project was conceived at the Okutomi & Tanaka Laboratory, Tokyo Institute o
 
 ==Changes==
 
+ * Fixed invalid code generated for `FunctionPointer` parameters annotated with `@Const @ByRef`
  * Fixed `NullPointerException` in `Loader.load()` when no `@Platform` annotation is provided (issue #38)
  * Parsing for anonymous `struct` or `union` and for `typedef void` (mapped to `@Opaque Pointer`) now outputs something
  * The `Parser` now expands preprocessor macros and outputs all unprocessed directives as comments

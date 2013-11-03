@@ -765,7 +765,7 @@ public class Generator implements Closeable {
         if (functionMethod != null) {
             String[] typeName = getCPPTypeName(cls);
             String[] returnConvention = typeName[0].split("\\(");
-            returnConvention[1] = getValueTypeName(returnConvention[1]);
+            returnConvention[1] = getConstValueTypeName(returnConvention[1]);
             String parameterDeclaration = typeName[1].substring(1);
             String instanceTypeName = getFunctionClassName(cls);
             functionDefinitions.register("struct JavaCPP_hidden " + instanceTypeName + " {\n" +
@@ -1465,7 +1465,7 @@ public class Generator implements Closeable {
         String instanceTypeName = getFunctionClassName(cls);
         String[] callbackTypeName = getCPPTypeName(cls);
         String[] returnConvention = callbackTypeName[0].split("\\(");
-        returnConvention[1] = getValueTypeName(returnConvention[1]);
+        returnConvention[1] = getConstValueTypeName(returnConvention[1]);
         String parameterDeclaration = callbackTypeName[1].substring(1);
         functionPointers.register("static " + instanceTypeName + " " + callbackName + "_instance;");
         jclassesInit.register(cls); // for custom class loaders
@@ -2256,11 +2256,19 @@ public class Generator implements Closeable {
         return behaviorAnnotation;
     }
 
+    public static String getConstValueTypeName(String ... typeName) {
+        String type = typeName[0];
+        if (type.endsWith("*") || type.endsWith("&")) {
+            type = type.substring(0, type.length()-1);
+        }
+        return type;
+    }
+
     public static String getValueTypeName(String ... typeName) {
         String type = typeName[0];
         if (type.startsWith("const ")) {
             type = type.substring(6, type.length()-1);
-        } else if (type.length() != 0) {
+        } else if (type.endsWith("*") || type.endsWith("&")) {
             type = type.substring(0, type.length()-1);
         }
         return type;
@@ -2281,9 +2289,9 @@ public class Generator implements Closeable {
 
         Annotation by = getBy(annotations);
         if (by instanceof ByVal) {
-            prefix = getValueTypeName(typeName);
+            prefix = getConstValueTypeName(typeName);
         } else if (by instanceof ByRef) {
-            prefix = getValueTypeName(typeName) + "&";
+            prefix = getConstValueTypeName(typeName) + "&";
         } else if (by instanceof ByPtrPtr && !casted) {
             prefix = prefix + "*";
         } else if (by instanceof ByPtrRef) {
