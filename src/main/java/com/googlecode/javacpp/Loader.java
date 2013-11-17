@@ -645,7 +645,9 @@ public class Loader {
                 }
             }
         }
-        return Arrays.copyOf(urls, k);
+        URL[] newurls = new URL[k];
+        System.arraycopy(urls, 0, newurls, 0, k);
+        return newurls;
     }
 
     /**
