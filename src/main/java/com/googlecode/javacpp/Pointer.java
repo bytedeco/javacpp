@@ -257,7 +257,10 @@ public class Pointer {
 
         @Override public void clear() {
             super.clear();
-            deallocator.deallocate();
+            if (deallocator != null) {
+                deallocator.deallocate();
+                deallocator = null;
+            }
         }
     }
 
@@ -370,10 +373,30 @@ public class Pointer {
         return (P)this;
     }
 
-    /** Explicitly deallocates native memory without waiting after the garbage collector. */
+    /** @see #deallocate(boolean) */
     public void deallocate() {
-        deallocator.deallocate();
-        address = 0;
+        deallocate(true);
+    }
+    /**
+     * Explicitly deallocates native memory without waiting after the garbage collector.
+     * @param deallocate if false, does not deallocate, rather disabling garbage collection
+     */
+    public void deallocate(boolean deallocate) {
+        if (deallocate && deallocator != null) {
+            deallocator.deallocate();
+            address = 0;
+        } else synchronized(DeallocatorReference.class) {
+            DeallocatorReference r = DeallocatorReference.head;
+            while (r != null) {
+                if (r.deallocator == deallocator) {
+                    r.deallocator = null;
+                    r.clear();
+                    r.remove();
+                    break;
+                }
+                r = r.next;
+            }
+        }
     }
 
     /** @return {@code Loader.offsetof(getClass(), member)} or -1 on error */

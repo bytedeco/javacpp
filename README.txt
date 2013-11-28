@@ -286,6 +286,8 @@ This project was conceived at the Okutomi & Tanaka Laboratory, Tokyo Institute o
 
 ==Changes==
 
+ * Added new `Pointer.deallocate(false)` call to disable garbage collection on a per object basis, allowing users to deal with memory leaks in other ways
+ * Changed the default compiler option `-mfpu=vfpv` for ARM to `-mfpu=vfpv3-d16`, because the former is not supported by Tegra 2
  * Removed call to `Arrays.copyOf()` in `Loader.findLibrary()`, which would prevent it from working on Android 2.2 (issue #39)
  * Fixed invalid code generated for `FunctionPointer` parameters annotated with `@Const @ByRef`
  * Fixed `NullPointerException` in `Loader.load()` when no `@Platform` annotation is provided (issue #38)
