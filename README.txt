@@ -286,14 +286,16 @@ This project was conceived at the Okutomi & Tanaka Laboratory, Tokyo Institute o
 
 ==Changes==
 
+ * Made `Loader.load()` work, within reason, even when all annotations and resources have been removed, for example, by ProGuard
+ * Fixed compile error when using a `FunctionPointer` as parameter from outside its top-level enclosing class
  * Added new `Pointer.deallocate(false)` call to disable garbage collection on a per object basis, allowing users to deal with memory leaks in other ways
  * Changed the default compiler option `-mfpu=vfpv` for ARM to `-mfpu=vfpv3-d16`, because the former is not supported by Tegra 2
  * Removed call to `Arrays.copyOf()` in `Loader.findLibrary()`, which would prevent it from working on Android 2.2 (issue #39)
  * Fixed invalid code generated for `FunctionPointer` parameters annotated with `@Const @ByRef`
  * Fixed `NullPointerException` in `Loader.load()` when no `@Platform` annotation is provided (issue #38)
  * Parsing for anonymous `struct` or `union` and for `typedef void` (mapped to `@Opaque Pointer`) now outputs something
- * The `Parser` now expands preprocessor macros and outputs all unprocessed directives as comments
- * Added support for parsing namespaces, derived classes, access specifiers, custom constructors, vector types, and updated a bunch of other stuff in `Parser`
+ * The `Parser` now expands preprocessor macros, filters tokens appropriately, and outputs all unprocessed directives as comments
+ * Improved the C++ support of the `Parser` for namespaces, derived classes, access specifiers, custom constructors, vector types, macros, templates, etc
  * Fixed `typedef` of function pointers and a few code formatting issues with `Parser`
  * Supplied checks to prevent `Loader.load()` from throwing `java.lang.IllegalStateException: Can't overwrite cause`
 

@@ -34,7 +34,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
-import java.util.MissingResourceException;
 import java.util.Properties;
 import java.util.WeakHashMap;
 
@@ -113,6 +112,11 @@ public class Loader {
     public static Properties loadProperties(String name) {
         Properties p = new Properties();
         p.put("platform.name", name);
+        p.put("path.separator", File.pathSeparator);
+        String s = System.mapLibraryName(File.separator);
+        String[] ss = s.split(File.separator, -1);
+        p.put("library.prefix", ss[0]);
+        p.put("library.suffix", ss[1]);
         name = "properties/" + name + ".properties";
         InputStream is = Loader.class.getResourceAsStream(name);
         try {
@@ -131,8 +135,7 @@ public class Loader {
                     p.load(is);
                 }
             } catch (Exception e2) {
-                throw new MissingResourceException("Could not even get generic properties: " +
-                        e2.getMessage(), Loader.class.getName(), name);
+                // give up and return defaults
             }
         }
         return p;

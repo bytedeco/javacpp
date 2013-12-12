@@ -15,6 +15,9 @@ import java.lang.annotation.Target;
  * A class or method annotated with only {@link #value()} or {@link #not()}
  * lets {@link Generator} know for which platforms it should generate code
  * (or not). The strings are matched with {@link String#startsWith(String)}.
+ * In particular, {@code @Platform(value="")} matches all platforms, while
+ * {@code @Platform(not="")} matches no platforms, providing a way to specify
+ * methods to skip or classes to ignore, as if they did not exist.
  * <p>
  * Classes annotated with at least one of the other values define a top-enclosing
  * class as returned by {@link Loader#getEnclosingClass(Class)}. By default, one

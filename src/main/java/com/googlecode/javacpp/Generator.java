@@ -148,8 +148,8 @@ public class Generator implements Closeable {
 
     private Loader.ClassProperties properties;
     private PrintWriter out, out2;
-    private LinkedListRegister<String> functionDefinitions, functionPointers;
-    private LinkedListRegister<Class> deallocators, arrayDeallocators, jclasses, jclassesInit;
+    private LinkedListRegister<String> callbacks;
+    private LinkedListRegister<Class> functions, deallocators, arrayDeallocators, jclasses, jclassesInit;
     private HashMap<Class,LinkedList<String>> members;
     private boolean mayThrowExceptions, usesAdapters;
 
@@ -162,8 +162,8 @@ public class Generator implements Closeable {
             @Override public void close() { }
         });
         out2 = null;
-        functionDefinitions = new LinkedListRegister<String>();
-        functionPointers    = new LinkedListRegister<String>();
+        callbacks           = new LinkedListRegister<String>();
+        functions           = new LinkedListRegister<Class>();
         deallocators        = new LinkedListRegister<Class>();
         arrayDeallocators   = new LinkedListRegister<Class>();
         jclasses            = new LinkedListRegister<Class>();
@@ -455,7 +455,7 @@ public class Generator implements Closeable {
             out.println("};");
             out.println();
         }
-        if (!functionDefinitions.isEmpty()) {
+        if (!functions.isEmpty()) {
             out.println("static JavaCPP_noinline void JavaCPP_detach(int detach) {");
             out.println("    if (detach > 0 && JavaCPP_vm->DetachCurrentThread() != 0) {");
             out.println("        JavaCPP_log(\"Could not detach the JavaVM from the current thread.\");");
@@ -502,11 +502,22 @@ public class Generator implements Closeable {
             out.println("}");
             out.println();
         }
-        for (String s : functionDefinitions) {
-            out.println(s);
+        for (Class c : functions) {
+            String[] typeName = getCPPTypeName(c);
+            String[] returnConvention = typeName[0].split("\\(");
+            returnConvention[1] = getConstValueTypeName(returnConvention[1]);
+            String parameterDeclaration = typeName[1].substring(1);
+            String instanceTypeName = getFunctionClassName(c);
+            out.println("struct JavaCPP_hidden " + instanceTypeName + " {\n" +
+                    "    " + instanceTypeName + "() : ptr(NULL), obj(NULL) { }\n" +
+                    "    " + returnConvention[0] + "operator()" + parameterDeclaration + ";\n" +
+                    "    " + typeName[0] + "ptr" + typeName[1] + ";\n" +
+                    "    jobject obj; static jmethodID mid;\n" +
+                    "};\n" +
+                    "jmethodID " + instanceTypeName + "::mid = NULL;");
         }
         out.println();
-        for (String s : functionPointers) {
+        for (String s : callbacks) {
             out.println(s);
         }
         out.println();
@@ -762,20 +773,6 @@ public class Generator implements Closeable {
         Method[] methods = cls.getDeclaredMethods();
         boolean[] callbackAllocators = new boolean[methods.length];
         Method functionMethod = getFunctionMethod(cls, callbackAllocators);
-        if (functionMethod != null) {
-            String[] typeName = getCPPTypeName(cls);
-            String[] returnConvention = typeName[0].split("\\(");
-            returnConvention[1] = getConstValueTypeName(returnConvention[1]);
-            String parameterDeclaration = typeName[1].substring(1);
-            String instanceTypeName = getFunctionClassName(cls);
-            functionDefinitions.register("struct JavaCPP_hidden " + instanceTypeName + " {\n" +
-                    "    " + instanceTypeName + "() : ptr(NULL), obj(NULL) { }\n" +
-                    "    " + returnConvention[0] + "operator()" + parameterDeclaration + ";\n" +
-                    "    " + typeName[0] + "ptr" + typeName[1] + ";\n" +
-                    "    jobject obj; static jmethodID mid;\n" +
-                    "};\n" +
-                    "jmethodID " + instanceTypeName + "::mid = NULL;");
-        }
         boolean firstCallback = true;
         for (int i = 0; i < methods.length; i++) {
             String nativeName = mangle(cls.getName()) + "_" + mangle(methods[i].getName());
@@ -835,6 +832,7 @@ public class Generator implements Closeable {
                 if ("void*".equals(typeName[0])) {
                     typeName[0] = "char*";
                 } else if (FunctionPointer.class.isAssignableFrom(cls)) {
+                    functions.register(cls);
                     typeName[0] = getFunctionClassName(cls) + "*";
                     typeName[1] = "";
                 }
@@ -892,6 +890,7 @@ public class Generator implements Closeable {
                 AdapterInformation adapterInfo = getParameterAdapterInformation(false, methodInfo, j);
 
                 if (FunctionPointer.class.isAssignableFrom(methodInfo.parameterTypes[j])) {
+                    functions.register(methodInfo.parameterTypes[j]);
                     if (methodInfo.parameterTypes[j] == FunctionPointer.class) {
                         logger.log(Level.WARNING, "Method \"" + methodInfo.method + "\" has an abstract FunctionPointer parameter, " +
                                 "but a concrete subclass is required. Compilation will most likely fail.");
@@ -1027,6 +1026,7 @@ public class Generator implements Closeable {
                         (methodInfo.returnType.isArray() &&
                          methodInfo.returnType.getComponentType().isPrimitive())) {
                     if (FunctionPointer.class.isAssignableFrom(methodInfo.returnType)) {
+                        functions.register(methodInfo.returnType);
                         typeName[0] = getFunctionClassName(methodInfo.returnType) + "*";
                         typeName[1] = "";
                         valueTypeName = getValueTypeName(typeName);
@@ -1467,7 +1467,7 @@ public class Generator implements Closeable {
         String[] returnConvention = callbackTypeName[0].split("\\(");
         returnConvention[1] = getConstValueTypeName(returnConvention[1]);
         String parameterDeclaration = callbackTypeName[1].substring(1);
-        functionPointers.register("static " + instanceTypeName + " " + callbackName + "_instance;");
+        callbacks.register("static " + instanceTypeName + " " + callbackName + "_instance;");
         jclassesInit.register(cls); // for custom class loaders
         if (out2 != null) {
             out2.println("JNIIMPORT " + returnConvention[0] + (returnConvention.length > 1 ?
@@ -1546,6 +1546,7 @@ public class Generator implements Closeable {
                             (callbackParameterTypes[j].isArray() &&
                              callbackParameterTypes[j].getComponentType().isPrimitive())) {
                         if (FunctionPointer.class.isAssignableFrom(callbackParameterTypes[j])) {
+                            functions.register(callbackParameterTypes[j]);
                             typeName[0] = getFunctionClassName(callbackParameterTypes[j]) + "*";
                             typeName[1] = "";
                             valueTypeName = getValueTypeName(typeName);
@@ -1769,6 +1770,7 @@ public class Generator implements Closeable {
                 usesAdapters = true;
                 out.println("    return " + returnAdapterInfo.name + "(" + callbackReturnCast + "rptr, rsize);");
             } else if (FunctionPointer.class.isAssignableFrom(callbackReturnType)) {
+                functions.register(callbackReturnType);
                 out.println("    return " + callbackReturnCast + "(rptr == NULL ? NULL : rptr->ptr);");
             } else if (returnBy instanceof ByVal || returnBy instanceof ByRef) {
                 out.println("    if (rptr == NULL) {");
