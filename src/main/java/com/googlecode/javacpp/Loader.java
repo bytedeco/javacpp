@@ -113,10 +113,10 @@ public class Loader {
         Properties p = new Properties();
         p.put("platform.name", name);
         p.put("path.separator", File.pathSeparator);
-        String s = System.mapLibraryName(File.separator);
-        String[] ss = s.split(File.separator, -1);
-        p.put("library.prefix", ss[0]);
-        p.put("library.suffix", ss[1]);
+        String s = System.mapLibraryName("/");
+        int i = s.indexOf('/');
+        p.put("library.prefix", s.substring(0, i));
+        p.put("library.suffix", s.substring(i + 1));
         name = "properties/" + name + ".properties";
         InputStream is = Loader.class.getResourceAsStream(name);
         try {

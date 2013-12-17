@@ -3,7 +3,9 @@
 ==Introduction==
 JavaCPP provides efficient access to native C++ inside Java, not unlike the way some C/C++ compilers interact with assembly language. No need to invent new languages such as [http://www.ecma-international.org/publications/standards/Ecma-372.htm C++/CLI] or [http://www.cython.org/ Cython]. Under the hood, it uses JNI, so it works with all Java implementations, [#Instructions_for_Android including Android]. In contrast to other approaches ([http://www.swig.org/ SWIG], [http://www.itk.org/ITK/resources/CableSwig.html CableSwig], [http://www.eclipse.org/swt/jnigen.php JNIGeneratorApp], [http://cxxwrap.sourceforge.net/ cxxwrap], [http://www.teamdev.com/jniwrapper/ JNIWrapper], [http://msdn.microsoft.com/en-us/library/0h9e9t7d.aspx Platform Invoke], [http://jogamp.org/gluegen/www/ GlueGen], [http://homepage.mac.com/pcbeard/JNIDirect/ JNIDirect], [https://github.com/twall/jna JNA], [http://www.innowhere.com/ JNIEasy], [http://flinflon.brandonu.ca/Dueck/SystemsProgramming/JniMarshall/ JniMarshall], [http://jnative.free.fr/ JNative], [http://www.jinvoke.com/ J/Invoke], [http://hawtjni.fusesource.org/ HawtJNI], [http://code.google.com/p/bridj/ BridJ], etc.), it supports naturally and efficiently many features of the C++ language often considered problematic, including overloaded operators, template classes and functions, member function pointers, callback functions, functors, nested struct definitions, variable length arguments, nested namespaces, large data structures containing arbitrary cycles, multiple inheritance, passing/returning by value/reference/vector, anonymous unions, bit fields, exceptions, destructors and garbage collection. Obviously, neatly supporting the whole of C++ would require more work (although one could argue about the intrinsic neatness of C++), but I am releasing it here as a proof of concept. I have already used it to produce complete interfaces to OpenCV, FFmpeg, libdc1394, PGR FlyCapture, OpenKinect, videoInput, and ARToolKitPlus as part of [http://code.google.com/p/javacv/ JavaCV].
 
-The new [https://code.google.com/p/javacpp/wiki/Presets JavaCPP Presets] subproject also demonstrates early parsing capabilities of C/C++ header files that already show promising and useful results with at least FFmpeg, libdc1394, OpenKinect, videoInput, and ARToolKitPlus.
+The new [https://code.google.com/p/javacpp/wiki/Presets JavaCPP Presets] subproject also demonstrates early parsing capabilities of C/C++ header files that already show promising and useful results with at least the C API of OpenCV, FFmpeg, libdc1394, OpenKinect, videoInput, and ARToolKitPlus.
+
+Please feel free to ask questions on [http://groups.google.com/group/javacpp-project the mailing list] if you encounter any problems with the software! I am sure it is far from perfect...
 
 
 ==Required Software==
@@ -26,7 +28,8 @@ To modify the source code, please note that the project files were created for:
  * NetBeans 6.9  http://netbeans.org/downloads/  or
  * Maven 2 or 3  http://maven.apache.org/download.html
 
-Please feel free to ask questions on [http://groups.google.com/group/javacpp-project the mailing list] if you encounter any problems with the software! I am sure it is far from perfect...
+Finally, because we are dealing with native code, bugs can easily crash the virtual machine. Luckily, Java provides some tools to help us debug under those circumstances:
+ * Troubleshooting Guide for HotSpot VM  http://docs.oracle.com/javase/7/docs/webnotes/tsg/TSG-VM/html/
 
 
 ==Key Use Cases==
