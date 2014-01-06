@@ -674,9 +674,11 @@ public class Builder {
         this.jarPrefix = jarPrefix;
         return this;
     }
-    /** Adds to the {@link #properties} field the ones loaded from resources for the specified platform. */
+    /** Sets the {@link #properties} field to the ones loaded from resources for the specified platform. */
     public Builder properties(String platformName) {
-        properties(platformName == null ? null : Loader.loadProperties(platformName));
+        if (platformName != null) {
+            properties = Loader.loadProperties(platformName);
+        }
         return this;
     }
     /** Adds all the properties of the argument to the {@link #properties} field. */
@@ -688,18 +690,18 @@ public class Builder {
         }
         return this;
     }
-    /** Adds to the {@link #properties} field the ones loaded from the specified file. */
+    /** Sets the {@link #properties} field to the ones loaded from the specified file. */
     public Builder propertyFile(String filename) throws IOException {
         propertyFile(filename == null ? null : new File(filename));
         return this;
     }
-    /** Adds to the {@link #properties} field the ones loaded from the specified file. */
+    /** Sets the {@link #properties} field to the ones loaded from the specified file. */
     public Builder propertyFile(File propertyFile) throws IOException {
         if (propertyFile == null) {
             return this;
         }
         FileInputStream fis = new FileInputStream(propertyFile);
-        properties = new Properties(properties);
+        properties = new Properties();
         try {
             properties.load(new InputStreamReader(fis));
         } catch (NoSuchMethodError e) {

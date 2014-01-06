@@ -1,7 +1,9 @@
 =JavaCPP=
 
 ==Introduction==
-JavaCPP provides efficient access to native C++ inside Java, not unlike the way some C/C++ compilers interact with assembly language. No need to invent new languages such as [http://www.ecma-international.org/publications/standards/Ecma-372.htm C++/CLI] or [http://www.cython.org/ Cython]. Under the hood, it uses JNI, so it works with all Java implementations, [#Instructions_for_Android including Android]. In contrast to other approaches ([http://www.swig.org/ SWIG], [http://www.itk.org/ITK/resources/CableSwig.html CableSwig], [http://www.eclipse.org/swt/jnigen.php JNIGeneratorApp], [http://cxxwrap.sourceforge.net/ cxxwrap], [http://www.teamdev.com/jniwrapper/ JNIWrapper], [http://msdn.microsoft.com/en-us/library/0h9e9t7d.aspx Platform Invoke], [http://jogamp.org/gluegen/www/ GlueGen], [http://homepage.mac.com/pcbeard/JNIDirect/ JNIDirect], [https://github.com/twall/jna JNA], [http://www.innowhere.com/ JNIEasy], [http://flinflon.brandonu.ca/Dueck/SystemsProgramming/JniMarshall/ JniMarshall], [http://jnative.free.fr/ JNative], [http://www.jinvoke.com/ J/Invoke], [http://hawtjni.fusesource.org/ HawtJNI], [http://code.google.com/p/bridj/ BridJ], etc.), it supports naturally and efficiently many features of the C++ language often considered problematic, including overloaded operators, template classes and functions, member function pointers, callback functions, functors, nested struct definitions, variable length arguments, nested namespaces, large data structures containing arbitrary cycles, multiple inheritance, passing/returning by value/reference/vector, anonymous unions, bit fields, exceptions, destructors and garbage collection. Obviously, neatly supporting the whole of C++ would require more work (although one could argue about the intrinsic neatness of C++), but I am releasing it here as a proof of concept. I have already used it to produce complete interfaces to OpenCV, FFmpeg, libdc1394, PGR FlyCapture, OpenKinect, videoInput, and ARToolKitPlus as part of [http://code.google.com/p/javacv/ JavaCV].
+JavaCPP provides efficient access to native C++ inside Java, not unlike the way some C/C++ compilers interact with assembly language. No need to invent new languages such as [http://www.ecma-international.org/publications/standards/Ecma-372.htm C++/CLI], [http://www.cython.org/ Cython], or [http://doc.pypy.org/en/latest/coding-guide.html#id1 RPython] as required by [http://doc.pypy.org/en/latest/cppyy.html cppyy]. Instead, it exploits the syntactic and semantic similarities between Java and C++. Under the hood, it uses JNI, so it works with all implementations of Java SE, in addition to [http://www.android.com/ Android] and [http://www.robovm.org/ RoboVM] ([#Instructions_for_Android_and_RoboVM instructions]).
+
+In contrast to other approaches ([http://www.swig.org/ SWIG], [http://www.itk.org/ITK/resources/CableSwig.html CableSwig], [http://www.eclipse.org/swt/jnigen.php JNIGeneratorApp], [http://cxxwrap.sourceforge.net/ cxxwrap], [http://www.teamdev.com/jniwrapper/ JNIWrapper], [http://msdn.microsoft.com/en-us/library/0h9e9t7d.aspx Platform Invoke], [http://jogamp.org/gluegen/www/ GlueGen], [http://homepage.mac.com/pcbeard/JNIDirect/ JNIDirect], [http://docs.python.org/library/ctypes.html ctypes], [https://github.com/twall/jna JNA], [http://www.innowhere.com/ JNIEasy], [http://flinflon.brandonu.ca/Dueck/SystemsProgramming/JniMarshall/ JniMarshall], [http://jnative.free.fr/ JNative], [http://www.jinvoke.com/ J/Invoke], [http://hawtjni.fusesource.org/ HawtJNI], [http://code.google.com/p/bridj/ BridJ], etc.), it maps naturally and efficiently many common features afforded by the C++ language and often considered problematic, including overloaded operators, template classes and functions, member function pointers, callback functions, function objects (aka functors), nested struct definitions, variable length arguments, nested namespaces, large data structures containing arbitrary cycles, virtual and multiple inheritance, passing/returning by value/reference/vector, anonymous unions, bit fields, exceptions, destructors with garbage collection, and documentation comments. Obviously, neatly supporting the whole of C++ would require more work (although one could argue about the intrinsic neatness of C++), but I am releasing it here as a proof of concept. I have already used it to produce complete interfaces to OpenCV, FFmpeg, libdc1394, PGR FlyCapture, OpenKinect, videoInput, and ARToolKitPlus as part of [http://code.google.com/p/javacv/ JavaCV].
 
 The new [https://code.google.com/p/javacpp/wiki/Presets JavaCPP Presets] subproject also demonstrates early parsing capabilities of C/C++ header files that already show promising and useful results with at least the C API of OpenCV, FFmpeg, libdc1394, OpenKinect, videoInput, and ARToolKitPlus.
 
@@ -22,10 +24,12 @@ To use JavaCPP, you will need to download and install the following software:
     * [http://msdn.microsoft.com/en-us/library/ff660764.aspx  Building Applications that Use the Windows SDK]
 
 To produce binary files for Android, you will also have to install:
- * Android NDK r9  http://developer.android.com/tools/sdk/ndk/
+ * Android NDK r9c  http://developer.android.com/tools/sdk/ndk/
+
+And similarly to target iOS, you will need to install:
+ * RoboVM 0.0.7  http://download.robovm.org/
 
 To modify the source code, please note that the project files were created for:
- * NetBeans 6.9  http://netbeans.org/downloads/  or
  * Maven 2 or 3  http://maven.apache.org/download.html
 
 Finally, because we are dealing with native code, bugs can easily crash the virtual machine. Luckily, Java provides some tools to help us debug under those circumstances:
@@ -271,16 +275,25 @@ java.lang.Exception: bar 42
 In this example, the `FunctionPointer` object gets created implicitly, but to call a native function pointer, we could define one that instead contains a `native call()/apply()` method, and create an instance explicitly. Such a class can also be extended in Java to create callbacks, and like any other normal `Pointer` object, must be allocated with a `native void allocate()` method, *so please remember to hang on to references in Java*, as those will get garbage collected. As a bonus, `FunctionPointer.call()/apply()` maps in fact to an overloaded `operator()` of a C++ function object that we can pass to other functions by annotating parameters with `@ByVal` or `@ByRef`, as with the `sort()` function in the example above.
 
 
-==Instructions for Android==
+==Instructions for Android and RoboVM==
 Inside the directory of the Android project:
  # Copy the `javacpp.jar` file into the `libs/` subdirectory, and
  # Run this command to produce the `*.so` library files in `libs/armeabi/`:
 {{{
-java -jar libs/javacpp.jar -classpath bin/ -classpath bin/classes/ \
--properties android-arm -Dplatform.root=<path/to/android-ndk-r9> \
--Dcompiler.path=<path/to/arm-linux-androideabi-g++> -d libs/armeabi/
+$ java -jar libs/javacpp.jar -classpath bin/ -classpath bin/classes/ \
+> -properties android-arm -Dplatform.root=<path/to/android-ndk-r9c> \
+> -Dcompiler.path=<path/to/arm-linux-androideabi-g++> -d libs/armeabi/
 }}}
 To make everything automatic, we may also insert that command into, for example, the Ant `build.xml` file or the Eclipse `.project` file as a [http://help.eclipse.org/helios/index.jsp?topic=/org.eclipse.platform.doc.user/gettingStarted/qs-96_non_ant_pjs.htm Non-Ant project builder].
+
+Similarly for RoboVM, assuming that the compiled classes are in the `classes` subdirectory:
+ # Copy the `javacpp.jar` file into the project directory, and
+ # Run the following commands to produce the native binary file:
+{{{
+$ java -jar javacpp.jar -cp classes/ -properties ios-arm -Dcompiler.sysroot=SDKs/iPhoneOS7.0.sdk/ -o lib
+$ robovm -arch thumbv7 -os ios -cp javacpp.jar:classes/ -libs ios-arm/lib.o
+}}}
+And instead of `Loader.load()`, the library should be loaded with `System.load("lib.o")`, in this case.
 
 
 ==Acknowledgments==
@@ -289,6 +302,9 @@ This project was conceived at the Okutomi & Tanaka Laboratory, Tokyo Institute o
 
 ==Changes==
 
+===January 6, 2014 version 0.7===
+ * Tweaked a few things to support RoboVM and target iOS, but `JNI_OnLoad()` does not appear to get called...
+ * Upgraded references of the Android NDK to version r9c
  * Made `Loader.load()` work, within reason, even when all annotations and resources have been removed, for example, by ProGuard
  * Fixed compile error when using a `FunctionPointer` as parameter from outside its top-level enclosing class
  * Added new `Pointer.deallocate(false)` call to disable garbage collection on a per object basis, allowing users to deal with memory leaks in other ways
@@ -298,7 +314,7 @@ This project was conceived at the Okutomi & Tanaka Laboratory, Tokyo Institute o
  * Fixed `NullPointerException` in `Loader.load()` when no `@Platform` annotation is provided (issue #38)
  * Parsing for anonymous `struct` or `union` and for `typedef void` (mapped to `@Opaque Pointer`) now outputs something
  * The `Parser` now expands preprocessor macros, filters tokens appropriately, and outputs all unprocessed directives as comments
- * Improved the C++ support of the `Parser` for namespaces, derived classes, access specifiers, custom constructors, vector types, macros, templates, etc
+ * Improved the C++ support of the `Parser` for namespaces, derived classes, access specifiers, custom constructors, vector types, macros, templates, overloaded operators, etc
  * Fixed `typedef` of function pointers and a few code formatting issues with `Parser`
  * Supplied checks to prevent `Loader.load()` from throwing `java.lang.IllegalStateException: Can't overwrite cause`
 
@@ -485,7 +501,7 @@ Initial release
 
 
 ----
-Copyright (C) 2011-2013 Samuel Audet <samuel.audet@gmail.com>
+Copyright (C) 2011-2014 Samuel Audet <samuel.audet@gmail.com>
 Project site: http://code.google.com/p/javacpp/
 
 Licensed under the GNU General Public License version 2 (GPLv2) with Classpath exception.

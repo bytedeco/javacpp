@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Samuel Audet
+ * Copyright (C) 2013,2014 Samuel Audet
  *
  * This file is part of JavaCPP.
  *
@@ -35,16 +35,11 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Scanner;
-import java.util.TreeSet;
 
 /**
- * To do:
- * - Name overloaded operators
- * - Enhance support for templates
- * - Handle anonymous struct and union
- * - etc.
  *
  * @author Samuel Audet
  */
@@ -59,9 +54,9 @@ public class Parser {
         public Info() { }
         public Info(String ... cppNames) { this.cppNames = cppNames; }
 
-        String[] cppNames = null, javaNames = null, annotations = null,
-                 valueTypes = null, pointerTypes = null, genericArgs = null;
-        boolean cast = false, define = false, complex = false, opaque = false, parse = false;
+        String[] cppNames = null, javaNames = null, annotations = null, valueTypes = null, pointerTypes = null,
+                 genericArgs = null, macroParams = null, templateParams = null;
+        boolean cast = false, define = false, translate = false, complete = false, parse = false, skip = false;
         String parent = null, text = null;
 
         public Info cppNames(String ... cppNames) { this.cppNames = cppNames; return this; }
@@ -70,11 +65,14 @@ public class Parser {
         public Info valueTypes(String ... valueTypes) { this.valueTypes = valueTypes; return this; }
         public Info pointerTypes(String ... pointerTypes) { this.pointerTypes = pointerTypes; return this; }
         public Info genericArgs(String ... genericArgs) { this.genericArgs = genericArgs; return this; }
+        public Info macroParams(String ... macroParams) { this.macroParams = macroParams; return this; }
+        public Info templateParams(String ... templateParams) { this.templateParams = templateParams; return this; }
         public Info cast(boolean cast) { this.cast = cast; return this;  }
         public Info define(boolean define) { this.define = define; return this; }
-        public Info complex(boolean complex) { this.complex = complex; return this; }
-        public Info opaque(boolean opaque) { this.opaque = opaque; return this; }
+        public Info translate(boolean translate) { this.translate = translate; return this; }
+        public Info complete(boolean complete) { this.complete = complete; return this; }
         public Info parse(boolean parse) { this.parse = parse; return this; }
+        public Info skip(boolean skip) { this.skip = skip; return this; }
         public Info parent(String parent) { this.parent = parent; return this; }
         public Info text(String text) { this.text = text; return this; }
 
@@ -86,11 +84,14 @@ public class Parser {
             i.valueTypes = valueTypes != null ? valueTypes.clone() : null;
             i.pointerTypes = pointerTypes != null ? pointerTypes.clone() : null;
             i.genericArgs = genericArgs != null ? genericArgs.clone() : null;
+            i.macroParams = macroParams != null ? macroParams.clone() : null;
+            i.templateParams = templateParams != null ? templateParams.clone() : null;
             i.cast = cast;
             i.define = define;
-            i.complex = complex;
-            i.opaque = opaque;
+            i.translate = translate;
+            i.complete = complete;
             i.parse = parse;
+            i.skip = skip;
             i.parent = parent;
             i.text = text;
             return i;
@@ -102,10 +103,11 @@ public class Parser {
         public InfoMap(InfoMap parent) { this.parent = parent; }
 
         InfoMap parent = null;
+        static final String[] simpleTypes = { "signed", "unsigned", "char", "short", "int", "long", "bool", "float", "double" };
+        static { Arrays.sort(simpleTypes); }
         static final InfoMap defaults = new InfoMap(null)
             .put(new Info("void").valueTypes("void").pointerTypes("Pointer"))
-            .put(new Info("FILE").pointerTypes("Pointer").cast(true))
-            .put(new Info("va_list").pointerTypes("Pointer").cast(true))
+            .put(new Info("FILE", "std::exception", "va_list").pointerTypes("Pointer").cast(true))
 
             .put(new Info("int8_t", "jbyte", "signed char")
                 .valueTypes("byte").pointerTypes("BytePointer", "ByteBuffer", "byte[]"))
@@ -135,11 +137,52 @@ public class Parser {
             .put(new Info("size_t").valueTypes("long").pointerTypes("SizeTPointer").cast(true))
             .put(new Info("float", "jfloat").valueTypes("float").pointerTypes("FloatPointer", "FloatBuffer", "float[]"))
             .put(new Info("double", "jdouble").valueTypes("double").pointerTypes("DoublePointer", "DoubleBuffer", "double[]"))
+            .put(new Info("std::complex<float>").pointerTypes("FloatPointer", "FloatBuffer", "float[]").cast(true))
+            .put(new Info("std::complex<double>").pointerTypes("DoublePointer", "DoubleBuffer", "double[]").cast(true))
             .put(new Info("bool", "jboolean").valueTypes("boolean").pointerTypes("BoolPointer").cast(true))
             .put(new Info("const char").valueTypes("byte").pointerTypes("@Cast(\"const char*\") BytePointer", "String"))
             .put(new Info("std::string").valueTypes("@StdString BytePointer", "@StdString String"))
             .put(new Info("wchar_t", "WCHAR").valueTypes("char").pointerTypes("CharPointer").cast(true))
 
+            .put(new Info("operator->").javaNames("access"))
+            .put(new Info("operator()").javaNames("apply"))
+            .put(new Info("operator[]").javaNames("get"))
+            .put(new Info("operator=").javaNames("put"))
+            .put(new Info("operator+").javaNames("add"))
+            .put(new Info("operator-").javaNames("subtract"))
+            .put(new Info("operator*").javaNames("multiply"))
+            .put(new Info("operator/").javaNames("divide"))
+            .put(new Info("operator%").javaNames("mod"))
+            .put(new Info("operator++").javaNames("increment"))
+            .put(new Info("operator--").javaNames("decrement"))
+            .put(new Info("operator==").javaNames("equals"))
+            .put(new Info("operator!=").javaNames("notEquals"))
+            .put(new Info("operator<").javaNames("lessThan"))
+            .put(new Info("operator>").javaNames("greaterThan"))
+            .put(new Info("operator<=").javaNames("lessThanEquals"))
+            .put(new Info("operator>=").javaNames("greaterThanEquals"))
+            .put(new Info("operator!").javaNames("not"))
+            .put(new Info("operator&&").javaNames("and"))
+            .put(new Info("operator||").javaNames("or"))
+            .put(new Info("operator&").javaNames("and"))
+            .put(new Info("operator|").javaNames("or"))
+            .put(new Info("operator^").javaNames("xor"))
+            .put(new Info("operator~").javaNames("not"))
+            .put(new Info("operator<<").javaNames("shiftLeft"))
+            .put(new Info("operator>>").javaNames("shiftRight"))
+            .put(new Info("operator+=").javaNames("addPut"))
+            .put(new Info("operator-=").javaNames("subtractPut"))
+            .put(new Info("operator*=").javaNames("multiplyPut"))
+            .put(new Info("operator/=").javaNames("dividePut"))
+            .put(new Info("operator%=").javaNames("modPut"))
+            .put(new Info("operator&=").javaNames("andPut"))
+            .put(new Info("operator|=").javaNames("orPut"))
+            .put(new Info("operator^=").javaNames("xorPut"))
+            .put(new Info("operator<<=").javaNames("shiftLeftPut"))
+            .put(new Info("operator>>=").javaNames("shiftRightPut"))
+
+            .put(new Info("allocate").javaNames("_allocate"))
+            .put(new Info("deallocate").javaNames("_deallocate"))
             .put(new Info("position").javaNames("_position"))
             .put(new Info("limit").javaNames("_limit"))
             .put(new Info("capacity").javaNames("_capacity"));
@@ -147,34 +190,42 @@ public class Parser {
         static String sort(String name) {
             return sort(name, false);
         }
-        static String sort(String name, boolean unconst) {
-            if (name == null) {
-                return null;
+        static String sort(String name, boolean normalize) {
+            if (name == null || name.length() == 0) {
+                return name;
             }
-            TreeSet<String> set = new TreeSet<String>();
-            try {
-                Tokenizer tokenizer = new Tokenizer(name);
-                Token token;
-                while (!(token = tokenizer.nextToken()).isEmpty()) {
-                    set.add(token.value);
-                }
-            } catch (IOException ex) {
-                throw new RuntimeException(ex);
-            }
-            boolean foundConst = false;
-            name = "";
-            for (String s : set) {
-                if ("const".equals(s)) {
+            boolean foundConst = false, simpleType = true;
+            Token[] tokens = new Tokenizer(name).tokenize();
+            int n = tokens.length;
+            for (int i = 0; i < n; i++) {
+                if (tokens[i].match(Token.CONST)) {
                     foundConst = true;
-                } else {
-                    name += s + " ";
+                    for (int j = i + 1; j < n; j++) {
+                        tokens[j - 1] = tokens[j];
+                    }
+                    i--; n--;
+                } else if (Arrays.binarySearch(simpleTypes, tokens[i].value) < 0) {
+                    simpleType = false;
+                    break;
                 }
             }
-            if (!unconst && foundConst) {
-                return "const " + name.trim();
-            } else {
-                return name.trim();
+            if (simpleType) {
+                Arrays.sort(tokens, 0, n);
+                name = (foundConst ? "const " : "") + tokens[0].value;
+                for (int i = 1; i < n; i++) {
+                    name += " " + tokens[i].value;
+                }
             }
+            if (normalize) {
+                if (foundConst) {
+                    name = name.substring(name.indexOf("const") + 5);
+                }
+                int template = name.indexOf('<');
+                if (template >= 0) {
+                    name = name.substring(0, template);
+                }
+            }
+            return name.trim();
         }
 
         public LinkedList<Info> get(String cppName) {
@@ -193,19 +244,40 @@ public class Parser {
             return infoList;
         }
 
-        public InfoMap put(Info info) {
+        public Info get(int index, String cppName) {
+            LinkedList<Info> infoList = get(cppName);
+            return infoList.size() > 0 ? infoList.get(index) : null;
+        }
+
+        public Info getFirst(String cppName) {
+            LinkedList<Info> infoList = get(cppName);
+            return infoList.size() > 0 ? infoList.getFirst() : null;
+        }
+
+        public InfoMap put(int index, Info info) {
             for (String cppName : info.cppNames != null ? info.cppNames : new String[] { null }) {
                 String key = sort(cppName, false);
                 LinkedList<Info> infoList = super.get(key);
                 if (infoList == null) {
-                    infoList = new LinkedList<Info>();
+                    super.put(key, infoList = new LinkedList<Info>());
                 }
                 if (!infoList.contains(info)) {
-                    infoList.add(info);
+                    switch (index) {
+                        case -1: infoList.add(info); break;
+                        case  0: infoList.addFirst(info); break;
+                        default: infoList.add(index, info); break;
+                    }
                 }
-                super.put(key, infoList);
             }
             return this;
+        }
+
+        public InfoMap put(Info info) {
+            return put(-1, info);
+        }
+
+        public InfoMap putFirst(Info info) {
+            return put(0, info);
         }
     }
 
@@ -213,7 +285,7 @@ public class Parser {
         void map(InfoMap infoMap);
     }
 
-    static class Token implements Cloneable {
+    static class Token implements Cloneable, Comparable<Token> {
         Token() { }
         Token(int type, String value) { this.type = type; this.value = value; }
 
@@ -236,6 +308,7 @@ public class Parser {
                 ELSE      = new Token(IDENTIFIER, "else"),
                 ENDIF     = new Token(IDENTIFIER, "endif"),
                 ENUM      = new Token(IDENTIFIER, "enum"),
+                EXPLICIT  = new Token(IDENTIFIER, "explicit"),
                 EXTERN    = new Token(IDENTIFIER, "extern"),
                 FRIEND    = new Token(IDENTIFIER, "friend"),
                 INLINE    = new Token(IDENTIFIER, "inline"),
@@ -313,6 +386,10 @@ public class Parser {
 
         @Override public String toString() {
             return value != null && value.length() > 0 ? value : String.valueOf((char)type);
+        }
+
+        public int compareTo(Token t) {
+            return toString().compareTo(t.toString());
         }
     }
 
@@ -486,99 +563,93 @@ public class Parser {
         }
     }
 
-
-    public Parser(Properties properties, InfoMap infoMap) {
-        this.properties = properties;
-        this.infoMap = infoMap;
-    }
-
-    Properties properties = null;
-    InfoMap infoMap = null;
-    Token[] tokenArray = null, subTokenArray = null;
-    int tokenIndex = 0, subTokenIndex = 0;
-    boolean preprocess = true;
-
-    void filterToken(int index) {
-        if (index + 1 < tokenArray.length && tokenArray[index].match('#') &&
-                tokenArray[index + 1].match(Token.IF, Token.IFDEF, Token.IFNDEF)) {
-            ArrayList<Token> tokens = new ArrayList<Token>();
-            for (int i = 0; i < index; i++) {
-                tokens.add(tokenArray[i]);
-            }
-            int count = 0;
-            Info info = null;
-            boolean define = true, defined = false;
-            while (index < tokenArray.length) {
-                Token keyword = null;
-                if (tokenArray[index].match('#')) {
-                    if (count == 0 && tokenArray[index + 1].match(Token.IF, Token.IFDEF, Token.IFNDEF)) {
-                        count++;
-                        keyword = tokenArray[index + 1];
-                    } else if (count == 1 && tokenArray[index + 1].match(Token.ELIF, Token.ELSE, Token.ENDIF)) {
-                        keyword = tokenArray[index + 1];
-                    }
-                }
-                if (keyword != null) {
-                    tokens.add(tokenArray[index++]);
-                    tokens.add(tokenArray[index++]);
-                    if (keyword.match(Token.IF, Token.IFDEF, Token.IFNDEF, Token.ELIF)) {
-                        String value = "";
-                        while (index < tokenArray.length) {
-                            if (tokenArray[index].spacing.indexOf('\n') >= 0) {
-                                break;
-                            }
-                            value += tokenArray[index].spacing + tokenArray[index];
-                            tokens.add(tokenArray[index++]);
-                        }
-                        define = info == null || !defined;
-                        info = null;
-                        LinkedList<Info> infoList = infoMap.get(value);
-                        if (infoList.size() > 0) {
-                            info = infoList.getFirst();
-                            define = keyword.match(Token.IFNDEF) ? !info.define : info.define;
-                        }
-                    } else if (keyword.match(Token.ELSE)) {
-                        define = info == null || !define;
-                    } else if (keyword.match(Token.ENDIF)) {
-                        count--;
-                        if (count == 0) {
-                            break;
-                        }
-                    }
-                } else if (define) {
-                    tokens.add(tokenArray[index++]);
-                } else {
-                    index++;
-                }
-                defined = define || defined;
-            }
-            while (index < tokenArray.length) {
-                tokens.add(tokenArray[index++]);
-            }
-            tokenArray = tokens.toArray(new Token[tokens.size()]);
+    static class TokenIndexer {
+        TokenIndexer(InfoMap infoMap, Token[] array) {
+            this.infoMap = infoMap;
+            this.array = array;
         }
-    }
 
-    void expandToken(int index) {
-        if (index < tokenArray.length && infoMap.containsKey(tokenArray[index].value)) {
-            int startIndex = index;
-            LinkedList<Info> infoList = infoMap.get(tokenArray[index].value);
-            if (infoList.size() > 0 && infoList.getFirst().text != null) {
-                Info info = infoList.getFirst();
-                if (info.genericArgs != null && (index + 1 >= tokenArray.length
-                        || !tokenArray[index + 1].match('('))) {
-                    return;
-                }
+        boolean preprocess = true;
+        InfoMap infoMap = null;
+        Token[] array = null;
+        int index = 0;
+
+        void filter(int index) {
+            if (index + 1 < array.length && array[index].match('#') &&
+                    array[index + 1].match(Token.IF, Token.IFDEF, Token.IFNDEF)) {
                 ArrayList<Token> tokens = new ArrayList<Token>();
                 for (int i = 0; i < index; i++) {
-                    tokens.add(tokenArray[i]);
+                    tokens.add(array[i]);
                 }
-                ArrayList<Token>[] args = null;
-                if (info.genericArgs != null) {
-                    args = new ArrayList[info.genericArgs.length];
+                int count = 0;
+                Info info = null;
+                boolean define = true, defined = false;
+                while (index < array.length) {
+                    Token keyword = null;
+                    if (array[index].match('#')) {
+                        if (count == 0 && array[index + 1].match(Token.IF, Token.IFDEF, Token.IFNDEF)) {
+                            count++;
+                            keyword = array[index + 1];
+                        } else if (count == 1 && array[index + 1].match(Token.ELIF, Token.ELSE, Token.ENDIF)) {
+                            keyword = array[index + 1];
+                        }
+                    }
+                    if (keyword != null) {
+                        tokens.add(array[index++]);
+                        tokens.add(array[index++]);
+                        if (keyword.match(Token.IF, Token.IFDEF, Token.IFNDEF, Token.ELIF)) {
+                            String value = "";
+                            while (index < array.length) {
+                                if (array[index].spacing.indexOf('\n') >= 0) {
+                                    break;
+                                }
+                                value += array[index].spacing + array[index];
+                                tokens.add(array[index++]);
+                            }
+                            define = info == null || !defined;
+                            info = infoMap.getFirst(value);
+                            if (info != null) {
+                                define = keyword.match(Token.IFNDEF) ? !info.define : info.define;
+                            }
+                        } else if (keyword.match(Token.ELSE)) {
+                            define = info == null || !define;
+                        } else if (keyword.match(Token.ENDIF)) {
+                            count--;
+                            if (count == 0) {
+                                break;
+                            }
+                        }
+                    } else if (define) {
+                        tokens.add(array[index++]);
+                    } else {
+                        index++;
+                    }
+                    defined = define || defined;
+                }
+                while (index < array.length) {
+                    tokens.add(array[index++]);
+                }
+                array = tokens.toArray(new Token[tokens.size()]);
+            }
+        }
+
+        void expand(int index) {
+            if (index < array.length && infoMap.containsKey(array[index].value)) {
+                int startIndex = index;
+                Info info = infoMap.getFirst(array[index].value);
+                if (info != null && info.macroParams != null && info.text != null) {
+                    if (info.macroParams.length > 0 && (index + 1 >= array.length
+                            || !array[index + 1].match('('))) {
+                        return;
+                    }
+                    ArrayList<Token> tokens = new ArrayList<Token>();
+                    for (int i = 0; i < index; i++) {
+                        tokens.add(array[i]);
+                    }
+                    ArrayList<Token>[] args = new ArrayList[info.macroParams.length];
                     int count = 0, count2 = 0;
-                    for (index += 2; index < tokenArray.length; index++) {
-                        Token token = tokenArray[index];
+                    for (index += 2; index < array.length; index++) {
+                        Token token = array[index];
                         if (count2 == 0 && token.match(')')) {
                             break;
                         } else if (count2 == 0 && token.match(',')) {
@@ -594,77 +665,69 @@ public class Parser {
                         }
                         args[count].add(token);
                     }
-                }
-                try {
-                    Tokenizer tokenizer = new Tokenizer(info.text);
-                    Token token;
-                    while (!(token = tokenizer.nextToken()).isEmpty()) {
-                        boolean foundArg = false;
-                        for (int i = 0; info.genericArgs != null && i < info.genericArgs.length; i++) {
-                            if (info.genericArgs[i].equals(token.value)) {
-                                if (tokens.size() == startIndex) {
-                                    args[i].get(0).spacing = tokenArray[startIndex].spacing;
+                    try {
+                        Tokenizer tokenizer = new Tokenizer(info.text);
+                        Token token;
+                        while (!(token = tokenizer.nextToken()).isEmpty()) {
+                            boolean foundArg = false;
+                            for (int i = 0; i < info.macroParams.length; i++) {
+                                if (info.macroParams[i].equals(token.value)) {
+                                    if (tokens.size() == startIndex) {
+                                        args[i].get(0).spacing = array[startIndex].spacing;
+                                    }
+                                    tokens.addAll(args[i]);
+                                    foundArg = true;
+                                    break;
                                 }
-                                tokens.addAll(args[i]);
-                                foundArg = true;
-                                break;
+                            }
+                            if (!foundArg) {
+                                if (tokens.size() == startIndex) {
+                                    token.spacing = array[startIndex].spacing;
+                                }
+                                tokens.add(token);
                             }
                         }
-                        if (!foundArg) {
-                            if (tokens.size() == startIndex) {
-                                token.spacing = tokenArray[startIndex].spacing;
-                            }
-                            tokens.add(token);
-                        }
+                    } catch (IOException ex) {
+                        throw new RuntimeException(ex);
                     }
-                } catch (IOException ex) {
-                    throw new RuntimeException(ex);
+                    for (index += 1; index < array.length; index++) {
+                        tokens.add(array[index]);
+                    }
+                    array = tokens.toArray(new Token[tokens.size()]);
                 }
-                for (index += 1; index < tokenArray.length; index++) {
-                    tokens.add(tokenArray[index]);
-                }
-                tokenArray = tokens.toArray(new Token[tokens.size()]);
             }
         }
-    }
 
-    int preprocessToken(int index, int count) {
-        while (index < tokenArray.length) {
-            filterToken(index);
-            expandToken(index);
-            if (!tokenArray[index].match(Token.COMMENT) && --count < 0) {
-                break;
+        int preprocess(int index, int count) {
+            while (index < array.length) {
+                filter(index);
+                expand(index);
+                if (!array[index].match(Token.COMMENT) && --count < 0) {
+                    break;
+                }
+                index++;
             }
-            index++;
+            filter(index);
+            expand(index);
+            return index;
         }
-        filterToken(index);
-        expandToken(index);
-        return index;
-    }
 
-    Token getToken() {
-        return getToken(0);
-    }
-    Token getToken(int i) {
-        if (subTokenArray != null) {
-            return subTokenIndex + i < subTokenArray.length ? subTokenArray[subTokenIndex + i] : Token.EOF;
-        } else {
-            int k = preprocess ? preprocessToken(tokenIndex, i) : tokenIndex + i;
-            return k < tokenArray.length ? tokenArray[k] : Token.EOF;
+        Token get() {
+            return get(0);
+        }
+        Token get(int i) {
+            int k = preprocess ? preprocess(index, i) : index + i;
+            return k < array.length ? array[k] : Token.EOF;
+        }
+        Token next() {
+            index = preprocess ? preprocess(index, 1) : index + 1;
+            return index < array.length ? array[index] : Token.EOF;
         }
     }
-    Token nextToken() {
-        if (subTokenArray != null) {
-            return ++subTokenIndex < subTokenArray.length ? subTokenArray[subTokenIndex] : Token.EOF;
-        } else {
-            tokenIndex = preprocess ? preprocessToken(tokenIndex, 1) : tokenIndex + 1;
-            return tokenIndex < tokenArray.length ? tokenArray[tokenIndex] : Token.EOF;
-        }
-    }
-
 
     static class Context implements Cloneable {
-        String namespace = null, group = null;
+        String namespace = null;
+        Type group = null;
         Declarator[] variables = null;
         TemplateMap templateMap = null;
 
@@ -678,15 +741,23 @@ public class Parser {
         }
     }
 
+
+    public Parser(Properties properties, InfoMap infoMap) {
+        this.properties = properties;
+        this.infoMap = infoMap;
+    }
+
+    Properties properties = null;
+    InfoMap infoMap = null;
+    TokenIndexer tokens = null;
+
     static String rescan(String lines, String spacing) {
         String text = "";
         Scanner scanner = new Scanner(lines);
         while (scanner.hasNextLine()) {
             text += spacing + scanner.nextLine();
             int newline = spacing.lastIndexOf('\n');
-            if (newline >= 0) {
-                spacing = spacing.substring(newline);
-            }
+            spacing = newline >= 0 ? spacing.substring(newline) : "\n";
         }
         return text;
     }
@@ -705,9 +776,8 @@ public class Parser {
             String javaVectorType = info.pointerTypes[0];
             String annotations = "@ByRef ";
             String javaType = cppType;
-            LinkedList<Info> infoList2 = infoMap.get(cppType);
-            if (infoList2.size() > 0) {
-                Info info2 = infoList2.getFirst();
+            Info info2 = infoMap.getFirst(cppType);
+            if (info2 != null) {
                 if (info2.pointerTypes != null && info2.pointerTypes.length > 0) {
                     javaType = info2.pointerTypes[0];
                 } else if (info2.valueTypes != null && info2.valueTypes.length > 0) {
@@ -766,19 +836,32 @@ public class Parser {
     }
 
     TemplateMap template(Context context) throws Exception {
-        if (!getToken().match(Token.TEMPLATE)) {
+        if (!tokens.get().match(Token.TEMPLATE)) {
             return context.templateMap;
         }
         TemplateMap map = new TemplateMap(context.templateMap);
 
-        nextToken().expect('<');
-        for (Token token = nextToken(); !token.match(Token.EOF); token = nextToken()) {
+        tokens.next().expect('<');
+        for (Token token = tokens.next(); !token.match(Token.EOF); token = tokens.next()) {
             if (token.match(Token.IDENTIFIER)) {
-                map.put(nextToken().expect(Token.IDENTIFIER).value, null);
-                token = nextToken();
+                map.put(tokens.next().expect(Token.IDENTIFIER).value, null);
+                token = tokens.next();
+            }
+            if (!token.match(',', '>')) {
+                // ignore default argument
+                int count = 0;
+                for (token = tokens.next(); !token.match(Token.EOF); token = tokens.next()) {
+                    if (count == 0 && token.match(',', '>')) {
+                        break;
+                    } else if (token.match('<')) {
+                        count++;
+                    } else if (token.match('>')) {
+                        count--;
+                    }
+                }
             }
             if (token.expect(',', '>').match('>')) {
-                nextToken();
+                tokens.next();
                 break;
             }
         }
@@ -787,75 +870,128 @@ public class Parser {
 
 
     static class Type {
-        boolean anonymous = false, constValue = false, destructor = false, staticMember = false;
+        Type() { }
+        Type(String name) { cppName = javaName = name; }
+
+        boolean anonymous = false, constValue = false, destructor = false,
+                operator = false, simpleType = false, staticMember = false;
         String annotations = "", cppName = "", javaName = "";
+
+        @Override public boolean equals(Object obj) {
+            if (obj == this) {
+                return true;
+            } else if (obj == null) {
+                return false;
+            } else if (obj.getClass() == getClass()) {
+                Type other = (Type)obj;
+                return cppName.equals(other.cppName) && javaName.equals(other.javaName);
+            } else {
+                return false;
+            }
+        }
     }
 
-    Type type(Context context) {
+    Type type(Context context) throws Exception {
         Type type = new Type();
-        int count = 0;
-        boolean simpleType = false;
-        for (Token token = getToken(); !token.match(Token.EOF); token = nextToken()) {
+        if (tokens.get().match(Token.OPERATOR)) {
+            type.operator = true;
+            tokens.next();
+        }
+        for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.next()) {
             if (token.match("::")) {
                 type.cppName += token;
             } else if (token.match('<')) {
                 type.cppName += token;
-                count++;
-            } else if (token.match('>')) {
-                type.cppName += token;
-                count--;
+                for (token = tokens.next(); !token.match(Token.EOF); token = tokens.next()) {
+                    Type type2 = type(context);
+                    type.cppName += type2.cppName;
+                    for (token = tokens.get(); !token.match(Token.EOF, ',', '>'); token = tokens.next()) {
+                        type.cppName += token;
+                    }
+                    type.cppName += token;
+                    if (token.expect(',', '>').match('>')) {
+                        break;
+                    }
+                }
             } else if (token.match(Token.CONST)) {
                 type.constValue = true;
             } else if (token.match('~')) {
                 type.destructor = true;
             } else if (token.match(Token.STATIC)) {
                 type.staticMember = true;
-            } else if (token.match(Token.TYPEDEF, Token.USING, Token.ENUM, Token.EXTERN,
+            } else if (token.match(Token.OPERATOR)) {
+                break;
+            } else if (token.match(Token.TYPEDEF, Token.USING, Token.ENUM, Token.EXPLICIT, Token.EXTERN,
                     Token.CLASS, Token.STRUCT, Token.UNION, Token.INLINE, Token.VIRTUAL)) {
                 continue;
-            } else if (token.match("signed", "unsigned", "char", "short", "int", "long", "bool", "float", "double")) {
-                if (!simpleType && count == 0) {
-                    type.cppName = token.value + " ";
-                } else {
-                    type.cppName += token.value + " ";
-                }
-                simpleType = true;
+            } else if (token.match((Object[])InfoMap.simpleTypes)) {
+                type.cppName += token.value + " ";
+                type.simpleType = true;
             } else if (token.match(Token.IDENTIFIER)) {
-                LinkedList<Info> infoList = infoMap.get(token.value);
-                if (infoList.size() > 0 && infoList.getFirst().annotations != null) {
-                    for (String s : infoList.getFirst().annotations) {
+                Info info = infoMap.getFirst(token.value);
+                if (info != null && info.annotations != null) {
+                    for (String s : info.annotations) {
                         type.annotations += s + " ";
                     }
-                } else if (type.cppName.length() > 0 && !type.cppName.endsWith("::") && count == 0) {
-                    infoList = infoMap.get(getToken(1).value);
-                    if ((infoList.size() > 0 && infoList.getFirst().annotations != null) ||
-                            !getToken(1).match('*', '&', Token.IDENTIFIER, Token.CONST)) {
+                } else if (type.cppName.length() == 0 || type.cppName.endsWith("::")) {
+                    type.cppName += token.value;
+                } else {
+                    info = infoMap.getFirst(tokens.get(1).value);
+                    if ((info != null && info.annotations != null) ||
+                            !tokens.get(1).match('*', '&', Token.IDENTIFIER, Token.CONST)) {
                         // we probably reached a variable or function name identifier
                         break;
                     }
-                } else {
-                    if (type.cppName.endsWith("::") || count > 0) {
-                        type.cppName += token.value;
-                    } else {
-                        type.cppName = token.value;
-                    }
                 }
-            } else if (count == 0) {
+            } else {
                 if (token.match('}')) {
                     type.anonymous = true;
-                    nextToken();
+                    tokens.next();
                 }
                 break;
             }
         }
         type.cppName = type.cppName.trim();
+        boolean pointer = false;
+        boolean reference = false;
+        if ("...".equals(tokens.get().value)) {
+            tokens.next();
+            return null;
+        } else if (type.operator) {
+            for (Token token = tokens.get(); !token.match(Token.EOF, '('); token = tokens.next()) {
+                type.cppName += token;
+            }
+            pointer = type.cppName.endsWith("*");
+            reference = type.cppName.endsWith("&");
+
+            type.annotations += "@Name(\"operator " + type.cppName + "\") ";
+            if (type.constValue) {
+                type.annotations += "@Const ";
+            }
+            if (pointer || reference) {
+                type.cppName = type.cppName.substring(0, type.cppName.length() - 1);
+            }
+        }
         if (context.templateMap != null && context.templateMap.get(type.cppName) != null) {
             type.cppName = context.templateMap.get(type.cppName);
         }
         type.javaName = type.cppName;
-        if ("...".equals(getToken().value)) {
-            nextToken();
-            return null;
+        Info info = infoMap.getFirst(type.cppName);
+        boolean valueType = false;
+        if (info != null) {
+            if (!pointer && !reference && info.valueTypes != null && info.valueTypes.length > 0) {
+                type.javaName = info.valueTypes[0];
+                valueType = true;
+            } else if (info.pointerTypes != null && info.pointerTypes.length > 0) {
+                type.javaName = info.pointerTypes[0];
+            }
+        }
+        if (type.operator && !valueType) {
+            if (!pointer && !reference) {
+                type.annotations += "@ByVal ";
+            } else if (!pointer && reference) {
+                type.annotations += "@ByRef ";
+            }
         }
         return type;
     }
@@ -864,21 +1000,21 @@ public class Parser {
         Type type;
         int infoNumber = 0, indices = 0;
         boolean constPointer = false;
-        String name = "", convention = "", definitions = "", parameters = "";
+        String cppName = "", javaName = "", convention = "", definitions = "", parameters = "";
     }
 
     Declarator declarator(Context context, String defaultName, int infoNumber,
             int varNumber, boolean arrayAsPointer, boolean pointerAsArray) throws Exception {
-        boolean isTypedef = getToken().match(Token.TYPEDEF);
-        boolean isUsing = getToken().match(Token.USING);
-        Declarator decl = new Declarator();
-        Type type = decl.type = type(context);
+        boolean isTypedef = tokens.get().match(Token.TYPEDEF);
+        boolean isUsing = tokens.get().match(Token.USING);
+        Declarator dcl = new Declarator();
+        Type type = dcl.type = type(context);
         if (type == null) {
             return null;
         }
 
         int count = 0;
-        for (Token token = getToken(); varNumber > 0 && !token.match(Token.EOF); token = nextToken()) {
+        for (Token token = tokens.get(); varNumber > 0 && !token.match(Token.EOF); token = tokens.next()) {
             if (token.match('(','[','{')) {
                 count++;
             } else if (token.match(')',']','}')) {
@@ -888,7 +1024,7 @@ public class Parser {
             } else if (token.match(',')) {
                 varNumber--;
             } else if (token.match(';')) {
-                nextToken();
+                tokens.next();
                 return null;
             }
         }
@@ -896,7 +1032,7 @@ public class Parser {
         String cast = type.cppName;
         int indirections = 0;
         boolean reference = false;
-        for (Token token = getToken(); !token.match(Token.EOF); token = nextToken()) {
+        for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.next()) {
             if (token.match('*')) {
                 indirections++;
                 cast += "*";
@@ -904,7 +1040,7 @@ public class Parser {
                 reference = true;
                 cast += "*";
             } else if (token.match(Token.CONST)) {
-                decl.constPointer = true;
+                dcl.constPointer = true;
                 cast += "const";
             } else {
                 break;
@@ -913,98 +1049,127 @@ public class Parser {
 
         int dims[] = new int[256];
         int indirections2 = 0;
-        decl.name = defaultName;
-        if (getToken().match('(')) {
-            while (getToken().match('(')) { 
-                nextToken();
+        dcl.cppName = defaultName;
+        if (tokens.get().match('(')) {
+            // probably a function pointer declaration
+            while (tokens.get().match('(')) {
+                tokens.next();
             }
-            for (Token token = getToken(); !token.match(Token.EOF); token = nextToken()) {
+            for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.next()) {
                 if (token.match(Token.IDENTIFIER)) {
-                    decl.name = token.value;
+                    dcl.cppName = token.value;
                 } else if (token.match('*')) {
                     indirections2++;
-                    decl.convention = decl.name;
-                    decl.name = defaultName;
+                    dcl.convention = dcl.cppName;
+                    dcl.cppName = defaultName;
                 } else if (token.match('[')) {
-                    Token n = getToken(1);
-                    dims[decl.indices++] = n.match(Token.INTEGER) ? Integer.parseInt(n.value) : -1;
+                    Token n = tokens.get(1);
+                    dims[dcl.indices++] = n.match(Token.INTEGER) ? Integer.parseInt(n.value) : -1;
                 } else if (token.match(')')) {
-                    nextToken();
+                    tokens.next();
                     break;
                 }
             }
-            while (getToken().match(')')) {
-                nextToken();
+            while (tokens.get().match(')')) {
+                tokens.next();
             }
-        } else if (getToken().match(Token.IDENTIFIER)) {
-            decl.name = getToken().value;
-            nextToken();
+        } else if (tokens.get().match(Token.IDENTIFIER)) {
+            dcl.cppName = "";
+            for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.next()) {
+                if (token.match("::")) {
+                    dcl.cppName += token;
+                } else if (token.match(Token.OPERATOR)) {
+                    dcl.cppName += "operator" + tokens.next();
+                    for (token = tokens.next(); !token.match(Token.EOF, '('); token = tokens.next()) {
+                        dcl.cppName += token;
+                    }
+                    break;
+                } else if (token.match('<')) {
+                    // template argument
+                    dcl.cppName += token;
+                    int count2 = 0;
+                    for (token = tokens.next(); !token.match(Token.EOF); token = tokens.next()) {
+                        dcl.cppName += token;
+                        if (count2 == 0 && token.match(',', '>')) {
+                            break;
+                        } else if (token.match('<')) {
+                            count2++;
+                        } else if (token.match('>')) {
+                            count2--;
+                        }
+                    }
+                } else if (token.match(Token.IDENTIFIER) &&
+                        (dcl.cppName.length() == 0 || dcl.cppName.endsWith("::"))) {
+                    dcl.cppName += token;
+                } else {
+                    break;
+                }
+            }
         }
 
         boolean bracket = false;
-        for (Token token = getToken(); !token.match(Token.EOF); token = nextToken()) {
+        for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.next()) {
             if (!bracket && token.match('[')) {
                 bracket = true;
-                Token n = getToken(1);
-                dims[decl.indices++] = n.match(Token.INTEGER) ? Integer.parseInt(n.value) : -1;
+                Token n = tokens.get(1);
+                dims[dcl.indices++] = n.match(Token.INTEGER) ? Integer.parseInt(n.value) : -1;
             } else if (!bracket) {
                 break;
             } else if (bracket && token.match(']')) {
                 bracket = false;
             }
         }
-        while (decl.indices > 0 && indirections2 > 0) {
+        while (dcl.indices > 0 && indirections2 > 0) {
             // treat complex combinations of arrays and pointers as multidimensional arrays
-            dims[decl.indices++] = -1;
+            dims[dcl.indices++] = -1;
             indirections2--;
         }
-        if (arrayAsPointer && decl.indices > 0) {
+        if (arrayAsPointer && dcl.indices > 0) {
             // treat array as an additional indirection
             indirections++;
             String dimCast = "";
-            for (int i = 1; i < decl.indices; i++) {
+            for (int i = 1; i < dcl.indices; i++) {
                 if (dims[i] > 0) {
                     dimCast += "[" + dims[i] + "]";
                 }
             }
-            //decl.indices = 0;
+            //dcl.indices = 0;
             cast += dimCast.length() > 0 ? "(*)" + dimCast : "*";
         }
         if (pointerAsArray && indirections > (type.anonymous ? 0 : 1)) {
             // treat second indirection as an array, unless anonymous
-            dims[decl.indices++] = -1;
+            dims[dcl.indices++] = -1;
             indirections--;
             cast = cast.substring(0, cast.length() - 1);
         }
 
-        if (getToken().match(':')) {
+        if (tokens.get().match(':')) {
             // ignore bitfields
             type.annotations += "@NoOffset ";
-            nextToken().expect(Token.INTEGER);
-            nextToken().expect(',', ';');
+            tokens.next().expect(Token.INTEGER);
+            tokens.next().expect(',', ';');
         }
 
         int infoLength = 1;
-        boolean valueType = false, needCast = arrayAsPointer && decl.indices > 1, implicitConst = false;
+        boolean valueType = false, needCast = arrayAsPointer && dcl.indices > 1, implicitConst = false;
         String prefix = type.constValue && indirections < 2 && !reference ? "const " : "";
-        LinkedList<Info> infoList = infoMap.get(prefix + type.cppName);
+        Info info = infoMap.getFirst(prefix + type.cppName);
         String ns = "";
-        while (context.namespace != null && infoList.size() == 0 && !ns.equals(context.namespace)) {
+        while (context.namespace != null && info == null && !ns.equals(context.namespace)) {
             int i = context.namespace.indexOf("::", ns.length() + 2);
             ns = i < 0 ? context.namespace : context.namespace.substring(0, i);
-            infoList = infoMap.get(prefix + ns + "::" + type.cppName);
+            info = infoMap.getFirst(prefix + ns + "::" + type.cppName);
         }
-        if (infoList.size() > 0) {
-            Info info = infoList.getFirst();
-            valueType = info.valueTypes != null &&
-                    ((indirections == 0 && !reference) || info.pointerTypes == null);
+        if (info != null) {
+            valueType = info.valueTypes != null && ((type.constValue && reference) ||
+                    (indirections == 0 && !reference) || info.pointerTypes == null);
             needCast |= info.cast;
             implicitConst = info.cppNames[0].startsWith("const ");
             infoLength = valueType ? info.valueTypes.length :
                     info.pointerTypes != null ? info.pointerTypes.length : 1;
-            decl.infoNumber = infoNumber < 0 ? 0 : infoNumber % infoLength;
-            type.javaName = valueType ? info.valueTypes[decl.infoNumber] :
-                    info.pointerTypes != null ? info.pointerTypes[decl.infoNumber] : type.cppName;
+            dcl.infoNumber = infoNumber < 0 ? 0 : infoNumber % infoLength;
+            type.javaName = valueType ? info.valueTypes[dcl.infoNumber] :
+                    info.pointerTypes != null ? info.pointerTypes[dcl.infoNumber] : type.javaName;
             if (ns.length() > 0) {
                 cast = ns + "::" + cast;
             }
@@ -1023,7 +1188,7 @@ public class Parser {
                     needCast = true;
                 }
             } else if (indirections >= 2) {
-                decl.infoNumber += infoLength;
+                dcl.infoNumber += infoLength;
                 needCast = true;
                 type.javaName = "PointerPointer";
                 if (reference) {
@@ -1046,19 +1211,26 @@ public class Parser {
             }
         }
 
+        dcl.javaName = dcl.cppName;
+        info = infoMap.getFirst(dcl.cppName);
+        if (defaultName == null && info != null && info.javaNames != null && info.javaNames.length > 0) {
+            type.annotations += "@Name(\"" + dcl.cppName + "\") ";
+            dcl.javaName = info.javaNames[0];
+        }
+
         Parameters params = parameters(context, infoNumber);
         if (params != null) {
-            decl.infoNumber = Math.max(decl.infoNumber, params.infoNumber);
+            dcl.infoNumber = Math.max(dcl.infoNumber, params.infoNumber);
             if (params.definitions.length() > 0) {
-                decl.definitions += params.definitions + "\n";
+                dcl.definitions += params.definitions + "\n";
             }
             if (indirections2 == 0) {
-                decl.parameters = params.list;
+                dcl.parameters = params.list;
             } else {
-                String functionType = isTypedef ? decl.name :
-                        Character.toUpperCase(decl.name.charAt(0)) + decl.name.substring(1) + params.signature;
+                String functionType = isTypedef ? dcl.javaName :
+                        Character.toUpperCase(dcl.javaName.charAt(0)) + dcl.javaName.substring(1) + params.signature;
                 if (infoNumber <= params.infoNumber) {
-                    decl.definitions +=
+                    dcl.definitions +=
                             "public static class " + functionType + " extends FunctionPointer {\n" +
                             "    static { Loader.load(); }\n" +
                             "    public    " + functionType + "(Pointer p) { super(p); }\n" +
@@ -1069,43 +1241,34 @@ public class Parser {
                 }
                 type.annotations = "";
                 type.javaName = functionType;
-                decl.parameters = "";
+                dcl.parameters = "";
             }
         }
-
-        infoList = infoMap.get(decl.name);
-        if (infoList.size() > 0) {
-            Info info = infoList.getFirst();
-            if (info.javaNames != null && info.javaNames.length > 0) {
-                type.annotations += "@Name(\"" + decl.name + "\") ";
-                decl.name = info.javaNames[0];
-            }
-        }
-        return decl;
+        return dcl;
     }
 
     String commentBefore() throws Exception {
         String comment = "";
-        preprocess = false;
-        while (tokenIndex > 0 && getToken(-1).match(Token.COMMENT)) {
-            tokenIndex--;
+        tokens.preprocess = false;
+        while (tokens.index > 0 && tokens.get(-1).match(Token.COMMENT)) {
+            tokens.index--;
         }
-        for (Token token = getToken(); token.match(Token.COMMENT); token = nextToken()) {
+        for (Token token = tokens.get(); token.match(Token.COMMENT); token = tokens.next()) {
             if (token.value.length() <= 3 || token.value.charAt(3) != '<') {
                 comment += token.spacing + token.value;
             }
         }
-        preprocess = true;
+        tokens.preprocess = true;
         return comment;
     }
 
     String commentAfter() throws Exception {
         String comment = "";
-        preprocess = false;
-        while (tokenIndex > 0 && getToken(-1).match(Token.COMMENT)) {
-            tokenIndex--;
+        tokens.preprocess = false;
+        while (tokens.index > 0 && tokens.get(-1).match(Token.COMMENT)) {
+            tokens.index--;
         }
-        for (Token token = getToken(); token.match(Token.COMMENT); token = nextToken()) {
+        for (Token token = tokens.get(); token.match(Token.COMMENT); token = tokens.next()) {
             if (token.value.length() > 3 && token.value.charAt(3) == '<') {
                 comment += (comment.length() > 0 ? " * " : "/**") + token.value.substring(4);
             }
@@ -1116,47 +1279,49 @@ public class Parser {
             }
             comment += "\n";
         }
-        preprocess = true;
+        tokens.preprocess = true;
         return comment;
     }
 
-    boolean attribute() throws Exception {
-        if (!getToken().match(Token.IDENTIFIER)) {
-            return false;
+    Declaration attribute() throws Exception {
+        if (!tokens.get().match(Token.IDENTIFIER)) {
+            return null;
         }
-        if (!nextToken().match('(')) {
-            return true;
+        Declaration decl = new Declaration();
+        decl.text = tokens.get().spacing;
+        if (!tokens.next().match('(')) {
+            return decl;
         }
 
         int count = 1;
-        preprocess = false;
-        for (Token token = nextToken(); !token.match(Token.EOF) && count > 0; token = nextToken()) {
+        tokens.preprocess = false;
+        for (Token token = tokens.next(); !token.match(Token.EOF) && count > 0; token = tokens.next()) {
             if (token.match('(')) {
                 count++;
             } else if (token.match(')')) {
                 count--;
             }
         }
-        preprocess = true;
-        return true;
+        tokens.preprocess = true;
+        return decl;
     }
 
-    boolean body() throws Exception {
-        if (!getToken().match('{')) {
-            return false;
+    String body() throws Exception {
+        if (!tokens.get().match('{')) {
+            return null;
         }
 
         int count = 1;
-        preprocess = false;
-        for (Token token = nextToken(); !token.match(Token.EOF) && count > 0; token = nextToken()) {
+        tokens.preprocess = false;
+        for (Token token = tokens.next(); !token.match(Token.EOF) && count > 0; token = tokens.next()) {
             if (token.match('{')) {
                 count++;
             } else if (token.match('}')) {
                 count--;
             }
         }
-        preprocess = true;
-        return true;
+        tokens.preprocess = true;
+        return "";
     }
 
 
@@ -1166,7 +1331,7 @@ public class Parser {
     }
 
     Parameters parameters(Context context, int infoNumber) throws Exception {
-        if (!getToken().match('(')) {
+        if (!tokens.get().match('(')) {
             return null;
         }
 
@@ -1174,37 +1339,37 @@ public class Parser {
         Parameters params = new Parameters();
         params.list = "(";
         params.names = "(";
-        for (Token token = nextToken(); !token.match(Token.EOF); token = getToken()) {
+        for (Token token = tokens.next(); !token.match(Token.EOF); token = tokens.get()) {
             String spacing = token.spacing;
             if (token.match(')')) {
                 params.list += spacing + ")";
                 params.names += ")";
-                nextToken();
+                tokens.next();
                 break;
             }
-            Declarator decl = declarator(context, "arg" + count++, infoNumber, 0, true, false);
-            if (decl != null && !decl.type.javaName.equals("void")) {
-                params.infoNumber = Math.max(params.infoNumber, decl.infoNumber);
-                params.list += (count > 1 ? "," : "") + spacing + decl.type.annotations + decl.type.javaName + " " + decl.name;
-                params.definitions += decl.definitions;
+            Declarator dcl = declarator(context, "arg" + count++, infoNumber, 0, true, false);
+            if (dcl != null && !dcl.type.javaName.equals("void")) {
+                params.infoNumber = Math.max(params.infoNumber, dcl.infoNumber);
+                params.list += (count > 1 ? "," : "") + spacing + dcl.type.annotations + dcl.type.javaName + " " + dcl.javaName;
+                params.definitions += dcl.definitions;
                 params.signature += '_';
-                for (char c : decl.type.javaName.substring(decl.type.javaName.lastIndexOf(' ') + 1).toCharArray()) {
+                for (char c : dcl.type.javaName.substring(dcl.type.javaName.lastIndexOf(' ') + 1).toCharArray()) {
                     if (Character.isDigit(c) || Character.isLetter(c) || c == '_') {
                         params.signature += c;
                     }
                 }
-                params.names += (count > 1 ? ", " : "") + decl.name;
-                if (decl.name.startsWith("arg")) {
+                params.names += (count > 1 ? ", " : "") + dcl.javaName;
+                if (dcl.javaName.startsWith("arg")) {
                     try {
-                        count = Integer.parseInt(decl.name.substring(3)) + 1;
+                        count = Integer.parseInt(dcl.javaName.substring(3)) + 1;
                     } catch (NumberFormatException e) { /* don't care if not int */ }
                 }
             }
-            if (!getToken().match(',', ')')) {
+            if (!tokens.get().match(',', ')')) {
                 // output default argument as a comment
-                params.list += "/*" + getToken();
+                params.list += "/*" + tokens.get();
                 int count2 = 0;
-                for (token = nextToken(), token.spacing = ""; !token.match(Token.EOF); token = nextToken()) {
+                for (token = tokens.next(), token.spacing = ""; !token.match(Token.EOF); token = tokens.next()) {
                     if (count2 == 0 && token.match(',', ')')) {
                         break;
                     } else if (token.match('(')) {
@@ -1216,226 +1381,231 @@ public class Parser {
                 }
                 params.list += "*/";
             }
-            if (getToken().expect(',', ')').match(',')) {
-                nextToken();
+            if (tokens.get().expect(',', ')').match(',')) {
+                tokens.next();
             }
         }
         return params;
     }
 
-    String function(Context context) throws Exception {
-        return function(context, false);
-    }
-    String function(Context context, boolean constructor) throws Exception {
-        int backIndex = tokenIndex;
-        String spacing = getToken().spacing;
+    Declaration function(Context context) throws Exception {
+        int backIndex = tokens.index;
+        String spacing = tokens.get().spacing;
         String modifiers = "public native ";
-        Declarator decl = new Declarator();
         Type type = type(context);
-        String name = type.cppName;
         Parameters params = parameters(context, 0);
-        if (name.length() == 0) {
+        Declarator dcl = new Declarator();
+        Declaration decl = new Declaration();
+        if (type.javaName.length() == 0) {
             // not a function, probably an attribute
-            tokenIndex = backIndex;
+            tokens.index = backIndex;
             return null;
         } else if (context.group == null && params != null) {
             // this is a constructor definition, skip over
             body();
-            return spacing;
-        } else if (name.equals(context.group) && params != null) {
-            // this is a constructor or destructor
-            constructor = !type.destructor;
-            decl.parameters = params.list;
-            decl.definitions = params.definitions;
-        } else if (!constructor) {
-            tokenIndex = backIndex;
-            decl = declarator(context, null, 0, 0, false, false);
-            type = decl.type;
-            name = decl.name;
+            decl.text = spacing;
+            return decl;
+        } else if ((type.equals(context.group) || type.operator) && params != null) {
+            // this is a constructor, destructor, or cast operator
+            decl.constructor = !type.destructor && !type.operator;
+            dcl.cppName = type.cppName;
+            dcl.javaName = type.operator ? "as" + type.javaName : type.javaName;
+            dcl.parameters = params.list;
+            dcl.definitions = params.definitions;
+        } else {
+            tokens.index = backIndex;
+            dcl = declarator(context, null, 0, 0, false, false);
+            type = dcl.type;
         }
 
-        if (name == null || decl.parameters.length() == 0) {
-            tokenIndex = backIndex;
+        if (type.javaName.length() == 0 || dcl.parameters.length() == 0) {
+            tokens.index = backIndex;
             return null;
-        } else if (type.staticMember || context.group == null || context.group.length() == 0) {
+        } else if (type.staticMember || context.group == null) {
             modifiers = "public static native ";
         }
 
-        String text  = "";
         String definitions = "";
-        LinkedList<Info> infoList = infoMap.get(name);
+        LinkedList<Info> infoList = infoMap.get(dcl.cppName);
         if (infoList.size() == 0) {
             infoList.add(null);
         }
         for (Info info : infoList) {
-            if (info != null) {
-                if (info.genericArgs != null && context.templateMap != null) {
-                    int count = 0;
-                    for (String key : context.templateMap.keySet()) {
-                        if (count < info.genericArgs.length) {
-                            context.templateMap.put(key, info.genericArgs[count++]);
-                        }
+            boolean template = false;
+            if (info != null && info.genericArgs != null && context.templateMap != null) {
+                int count = 0;
+                for (Map.Entry<String,String> e : context.templateMap.entrySet()) {
+                    if (count < info.genericArgs.length && e.getValue() == null) {
+                        context.templateMap.put(e.getKey(), info.genericArgs[count++]);
+                        template = true;
                     }
-                }
-                name = info.javaNames == null ? info.cppNames[0] : info.javaNames.length == 0 ? "" : info.javaNames[0];
-                if (!name.equals(info.cppNames[0]) && name.length() > 0) {
-                    name = "@Name(\"" + info.cppNames[0] + "\") " + name;
                 }
             }
 
-            LinkedList<Declarator> prevDecl = new LinkedList<Declarator>();
+            LinkedList<Declarator> prevDcl = new LinkedList<Declarator>();
             for (int n = -1; n < Integer.MAX_VALUE; n++) {
-                tokenIndex = backIndex;
-                if (constructor || type.destructor) {
+                tokens.index = backIndex;
+                if (decl.constructor || type.destructor || type.operator) {
                     type = type(context);
-                    name = type.cppName;
                     params = parameters(context, n);
-                    decl.parameters = params.list;
-                    decl.definitions = params.definitions;
-                    if (getToken().match(':')) {
-                        for (Token token = nextToken(); !token.match(Token.EOF); token = nextToken()) {
-                            if (token.match('}', ';')) {
+                    dcl.cppName = type.cppName;
+                    dcl.javaName = type.operator ? "as" + type.javaName : type.javaName;
+                    dcl.parameters = params.list;
+                    dcl.definitions = params.definitions;
+                    if (tokens.get().match(':')) {
+                        for (Token token = tokens.next(); !token.match(Token.EOF); token = tokens.next()) {
+                            if (token.match('{', ';')) {
                                 break;
                             }
                         }
                     }
                 } else {
-                    decl = declarator(context, null, n, 0, false, false);
-                    type = decl.type;
+                    dcl = declarator(context, null, n, 0, false, false);
+                    type = dcl.type;
                 }
                 boolean found = false;
-                for (Declarator d : prevDecl) {
-                    found |= /* decl.javaType.equals(d.javaType) && */ decl.parameters.equals(d.parameters);
+                for (Declarator d : prevDcl) {
+                    found |= /* dcl.javaType.equals(d.javaType) && */ dcl.parameters.equals(d.parameters);
                 }
                 if (found && n > 0) {
                     break;
-                } else if (name.length() > 0 && !found && !type.destructor) {
+                } else if (dcl.javaName.length() > 0 && !found && !type.destructor) {
                     if (context.namespace != null && context.group == null) {
-                        text += "@Namespace(\"" + context.namespace + "\") ";
+                        decl.text += "@Namespace(\"" + context.namespace + "\") ";
                     }
-                    if (constructor) {
-                        text += "public " + name + decl.parameters + " { allocate" + params.names + "; }\n" +
-                                "private native void allocate" + decl.parameters + ";\n";
+                    if (decl.constructor) {
+                        decl.text += "public " + dcl.javaName + dcl.parameters + " { allocate" + params.names + "; }\n" +
+                                     "private native void allocate" + dcl.parameters + ";\n";
                     } else {
-                        text += modifiers + type.annotations + type.javaName + " " + name + decl.parameters + ";\n";
+                        decl.text += modifiers + type.annotations + type.javaName + " " + dcl.javaName + dcl.parameters + ";\n";
                     }
-                    definitions += decl.definitions;
+                    definitions += dcl.definitions;
                 }
-                prevDecl.add(decl);
+                prevDcl.add(dcl);
             }
-            while (attribute()) { }
-            if (getToken().match('{')) {
+            while (attribute() != null) { }
+            if (tokens.get().match('{')) {
                 body();
             } else {
-                nextToken();
+                if (tokens.get().match('=')) {
+                    tokens.next().expect("0");
+                    tokens.next().expect(';');
+                }
+                tokens.next();
+            }
+
+            if (!template) {
+                break;
             }
         }
         String comment = commentAfter();
-        return rescan(definitions + comment + text, spacing);
+        decl.text = rescan(definitions + comment + decl.text, spacing);
+        return decl;
     }
 
-    String variable(Context context) throws Exception {
-        int backIndex = tokenIndex;
-        String spacing = getToken().spacing;
-        String modifiers = "public native ";
-        String setterType = context.group + " ";
-        Declarator decl = declarator(context, null, 0, 0, false, true);
-        String name = decl.name;
-        if (name == null || !getToken().match('[', '=', ',', ':', ';')) {
-            tokenIndex = backIndex;
+    Declaration variable(Context context) throws Exception {
+        int backIndex = tokens.index;
+        String spacing = tokens.get().spacing;
+        String modifiers = "public static native ";
+        String setterType = "void ";
+        Declarator dcl = declarator(context, null, 0, 0, false, true);
+        String name = dcl.javaName;
+        if (name == null || !tokens.get().match('[', '=', ',', ':', ';')) {
+            tokens.index = backIndex;
             return null;
-        } else if (decl.type.staticMember || context.group == null || context.group.length() == 0) {
-            modifiers = "public static native ";
-            setterType = "void ";
+        } else if (!dcl.type.staticMember && context.group != null) {
+            modifiers = "public native ";
+            setterType = context.group.javaName + " ";
         }
 
-        String text  = "";
+        Declaration decl = new Declaration();
         String definitions = "";
-        for (Declarator metadecl : context.variables != null ? context.variables : new Declarator[] { null }) {
+        for (Declarator metadcl : context.variables != null ? context.variables : new Declarator[] { null }) {
             for (int n = 0; n < Integer.MAX_VALUE; n++) {
-                tokenIndex = backIndex;
-                decl = declarator(context, null, -1, n, false, true);
-                if (decl == null) {
+                tokens.index = backIndex;
+                dcl = declarator(context, null, -1, n, false, true);
+                if (dcl == null) {
                     break;
                 }
-                name = decl.name;
-                if (metadecl == null || metadecl.indices == 0 || decl.indices == 0) {
-                    // arrays are currently not supported for both metadecl and decl at the same time
+                name = dcl.javaName;
+                if (metadcl == null || metadcl.indices == 0 || dcl.indices == 0) {
+                    // arrays are currently not supported for both metadcl and dcl at the same time
                     String indices = "";
-                    for (int i = 0; i < (metadecl == null || metadecl.indices == 0 ? decl.indices : metadecl.indices); i++) {
+                    for (int i = 0; i < (metadcl == null || metadcl.indices == 0 ? dcl.indices : metadcl.indices); i++) {
                         if (i > 0) {
                             indices += ", ";
                         }
                         indices += "int " + (char)('i' + i);
                     }
                     if (context.namespace != null && context.group == null) {
-                        text += "@Namespace(\"" + context.namespace + "\") ";
+                        decl.text += "@Namespace(\"" + context.namespace + "\") ";
                     }
-                    if (metadecl != null && metadecl.name.length() > 0) {
-                        text += "@Name({\"" + metadecl.name + "\", \"." + decl.name + "\"}) ";
-                        name = metadecl.name + "_" + decl.name;
+                    if (metadcl != null && metadcl.cppName.length() > 0) {
+                        decl.text += "@Name({\"" + metadcl.cppName + "\", \"." + dcl.cppName + "\"}) ";
+                        name = metadcl.javaName + "_" + dcl.javaName;
                     }
-                    if (decl.type.constValue) {
-                        text += "@MemberGetter ";
+                    if (dcl.type.constValue) {
+                        decl.text += "@MemberGetter ";
                     }
-                    text += modifiers + decl.type.annotations + decl.type.javaName + " " + name + "(" + indices + ");";
-                    if (!decl.type.constValue) {
+                    decl.text += modifiers + dcl.type.annotations + dcl.type.javaName + " " + name + "(" + indices + ");";
+                    if (!dcl.type.constValue) {
                         if (indices.length() > 0) {
                             indices += ", ";
                         }
-                        text += " " + modifiers + setterType + name + "(" + indices + decl.type.javaName + " " + name + ");";
+                        decl.text += " " + modifiers + setterType + name + "(" + indices + dcl.type.javaName + " " + name + ");";
                     }
-                    text += "\n";
-                    definitions += decl.definitions;
+                    decl.text += "\n";
+                    definitions += dcl.definitions;
                 }
-                if (decl.indices > 0) {
+                if (dcl.indices > 0) {
                     // in the case of arrays, also add a pointer accessor
-                    tokenIndex = backIndex;
-                    decl = declarator(context, null, -1, n, true, false);
+                    tokens.index = backIndex;
+                    dcl = declarator(context, null, -1, n, true, false);
                     String indices = "";
-                    for (int i = 0; i < (metadecl == null ? 0 : metadecl.indices); i++) {
+                    for (int i = 0; i < (metadcl == null ? 0 : metadcl.indices); i++) {
                         if (i > 0) {
                             indices += ", ";
                         }
                         indices += "int " + (char)('i' + i);
                     }
                     if (context.namespace != null && context.group == null) {
-                        text += "@Namespace(\"" + context.namespace + "\") ";
+                        decl.text += "@Namespace(\"" + context.namespace + "\") ";
                     }
-                    if (metadecl != null && metadecl.name.length() > 0) {
-                        text += "@Name({\"" + metadecl.name + "\", \"." + decl.name + "\"}) ";
-                        name = metadecl.name + "_" + decl.name;
+                    if (metadcl != null && metadcl.cppName.length() > 0) {
+                        decl.text += "@Name({\"" + metadcl.cppName + "\", \"." + dcl.cppName + "\"}) ";
+                        name = metadcl.javaName + "_" + dcl.javaName;
                     }
-                    text += "@MemberGetter " + modifiers + decl.type.annotations + decl.type.javaName + " " + name + "(" + indices + ");\n";
+                    decl.text += "@MemberGetter " + modifiers + dcl.type.annotations + dcl.type.javaName + " " + name + "(" + indices + ");\n";
                 }
             }
         }
         String comment = commentAfter();
-        return rescan(definitions + comment + text, spacing);
+        decl.text = rescan(definitions + comment + decl.text, spacing);
+        return decl;
     }
 
-    String macro(Context context) throws Exception {
-        if (!getToken().match('#')) {
+    Declaration macro(Context context) throws Exception {
+        if (!tokens.get().match('#')) {
             return null;
         }
-        preprocess = false;
-        String spacing = getToken().spacing;
-        Token keyword = nextToken();
+        tokens.preprocess = false;
+        String spacing = tokens.get().spacing;
+        Token keyword = tokens.next();
 
-        nextToken();
-        int beginIndex = tokenIndex;
-        for (Token token = getToken(); !token.match(Token.EOF); token = nextToken()) {
+        tokens.next();
+        int beginIndex = tokens.index;
+        for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.next()) {
             if (token.spacing.indexOf('\n') >= 0) {
                 break;
             }
         }
-        int endIndex = tokenIndex;
+        int endIndex = tokens.index;
 
-        String text = "";
+        Declaration decl = new Declaration();
         if (keyword.match(Token.DEFINE) && beginIndex + 1 < endIndex) {
-            tokenIndex = beginIndex;
-            String macroName = getToken().value;
-            Token first = nextToken();
+            tokens.index = beginIndex;
+            String macroName = tokens.get().value;
+            Token first = tokens.next();
             boolean hasArgs = first.spacing.length() == 0 && first.match('(');
             LinkedList<Info> infoList = infoMap.get(macroName);
             if (infoList.size() == 0) {
@@ -1444,30 +1614,30 @@ public class Parser {
             for (Info info : infoList) {
                 if (hasArgs && info == null) {
                     // save declaration for expansion
-                    info = new Info(macroName).genericArgs(new String[endIndex - tokenIndex]).text("");
+                    info = new Info(macroName).macroParams(new String[endIndex - tokens.index]).text("");
                     int count = 0;
-                    for (Token token = getToken(); tokenIndex < endIndex; token = nextToken()) {
+                    for (Token token = tokens.get(); tokens.index < endIndex; token = tokens.next()) {
                         if (token.match(Token.IDENTIFIER)) {
-                            info.genericArgs[count++] = token.value;
+                            info.macroParams[count++] = token.value;
                         } else if (token.match(')')) {
                             break;
                         }
                     }
-                    info.genericArgs = Arrays.copyOf(info.genericArgs, count);
-                    for (Token token = nextToken(); tokenIndex < endIndex; token = nextToken()) {
+                    info.macroParams = Arrays.copyOf(info.macroParams, count);
+                    for (Token token = tokens.next(); tokens.index < endIndex; token = tokens.next()) {
                         info.text += token.spacing + token;
                     }
                     infoMap.put(info);
                 } else if (info != null && info.text == null &&
                         info.genericArgs != null && info.genericArgs.length > (hasArgs ? 0 : 1)) {
                     // declare as a static native method
-                    LinkedList<Declarator> prevDecl = new LinkedList<Declarator>();
+                    LinkedList<Declarator> prevDcl = new LinkedList<Declarator>();
                     for (int n = -1; n < Integer.MAX_VALUE; n++) {
                         int count = 1;
-                        tokenIndex = beginIndex + 2;
+                        tokens.index = beginIndex + 2;
                         String params = "(";
-                        for (Token token = getToken(); hasArgs && tokenIndex < endIndex
-                                && count < info.genericArgs.length; token = nextToken()) {
+                        for (Token token = tokens.get(); hasArgs && tokens.index < endIndex
+                                && count < info.genericArgs.length; token = tokens.next()) {
                             if (token.match(Token.IDENTIFIER)) {
                                 String type = info.genericArgs[count];
                                 String name = token.value;
@@ -1492,10 +1662,10 @@ public class Parser {
                         }
                         params += ")";
 
-                        subTokenArray = new Tokenizer(info.genericArgs[0] + " " + macroName + params).tokenize();
-                        subTokenIndex = 0;
-                        Declarator decl = declarator(context, null, n, 0, false, false);
-                        subTokenArray = null;
+                        TokenIndexer t = tokens;
+                        tokens = new TokenIndexer(infoMap, new Tokenizer(info.genericArgs[0] + " " + macroName + params).tokenize());
+                        Declarator dcl = declarator(context, null, n, 0, false, false);
+                        tokens = t;
 
                         for (int i = 0; i < info.cppNames.length; i++) {
                             if (macroName.equals(info.cppNames[i]) && info.javaNames != null) {
@@ -1505,15 +1675,15 @@ public class Parser {
                         }
 
                         boolean found = false;
-                        for (Declarator d : prevDecl) {
-                            found |= /* decl.javaType.equals(d.javaType) && */ decl.parameters.equals(d.parameters);
+                        for (Declarator d : prevDcl) {
+                            found |= /* dcl.javaType.equals(d.javaType) && */ dcl.parameters.equals(d.parameters);
                         }
                         if (found && n > 0) {
                             break;
                         } else if (!found) {
-                            text += "public static native " + decl.type.annotations + decl.type.javaName + " " + macroName + decl.parameters + ";\n";
+                            decl.text += "public static native " + dcl.type.annotations + dcl.type.javaName + " " + macroName + dcl.parameters + ";\n";
                         }
-                        prevDecl.add(decl);
+                        prevDcl.add(dcl);
                     }
                 } else if (info == null || (info.text == null &&
                         (info.genericArgs == null || info.genericArgs.length == 1))) {
@@ -1521,10 +1691,10 @@ public class Parser {
                     String value = "";
                     String type = "int";
                     String cat = "";
-                    tokenIndex = beginIndex + 1;
+                    tokens.index = beginIndex + 1;
                     Token prevToken = new Token();
-                    boolean complex = false;
-                    for (Token token = getToken(); tokenIndex < endIndex; token = nextToken()) {
+                    boolean translate = true;
+                    for (Token token = tokens.get(); tokens.index < endIndex; token = tokens.next()) {
                         if (token.match(Token.STRING)) {
                             type = "String"; cat = " + "; break;
                         } else if (token.match(Token.FLOAT)) {
@@ -1532,17 +1702,17 @@ public class Parser {
                         } else if (token.match(Token.INTEGER) && token.value.endsWith("L")) {
                             type = "long"; cat = ""; break;
                         } else if ((prevToken.match(Token.IDENTIFIER) && token.match('(')) || token.match('{', '}')) {
-                            complex = true;
+                            translate = false;
                         }
                         prevToken = token;
                     }
                     if (info != null) {
                         if (info.genericArgs != null) {
-                            subTokenArray = new Tokenizer(info.genericArgs[0]).tokenize();
-                            subTokenIndex = 0;
-                            Declarator decl = declarator(context, null, -1, 0, false, true);
-                            subTokenArray = null;
-                            type = decl.type.annotations + decl.type.javaName;
+                            TokenIndexer t = tokens;
+                            tokens = new TokenIndexer(infoMap, new Tokenizer(info.genericArgs[0]).tokenize());
+                            Declarator dcl = declarator(context, null, -1, 0, false, true);
+                            tokens = t;
+                            type = dcl.type.annotations + dcl.type.javaName;
                         }
                         for (int i = 0; i < info.cppNames.length; i++) {
                             if (macroName.equals(info.cppNames[i]) && info.javaNames != null) {
@@ -1550,18 +1720,18 @@ public class Parser {
                                 break;
                             }
                         }
-                        complex = info.complex;
+                        translate = info.translate;
                     }
-                    tokenIndex = beginIndex + 1;
-                    if (complex) {
-                        text += "public static native @MemberGetter " + type + " " + macroName + "();\n";
+                    tokens.index = beginIndex + 1;
+                    if (!translate) {
+                        decl.text += "public static native @MemberGetter " + type + " " + macroName + "();\n";
                         value = " " + macroName + "()";
                     } else {
-                        while (getToken(endIndex - tokenIndex - 1).match(Token.COMMENT)) {
+                        while (tokens.get(endIndex - tokens.index - 1).match(Token.COMMENT)) {
                             endIndex--;
                         }
-                        for (Token token = getToken(); tokenIndex < endIndex; token = nextToken()) {
-                            value += token.spacing + token + (tokenIndex + 1 < endIndex ? cat : "");
+                        for (Token token = tokens.get(); tokens.index < endIndex; token = tokens.next()) {
+                            value += token.spacing + token + (tokens.index + 1 < endIndex ? cat : "");
                         }
                     }
                     int i = type.lastIndexOf(' ');
@@ -1569,101 +1739,137 @@ public class Parser {
                         type = type.substring(i + 1);
                     }
                     if (value.length() > 0) {
-                        text += "public static final " + type + " " + macroName + " =" + value + ";\n";
+                        decl.text += "public static final " + type + " " + macroName + " =" + value + ";\n";
                     }
                 }
             }
 
-            if (text.length() > 0) {
-                tokenIndex = endIndex;
+            if (decl.text.length() > 0) {
+                tokens.index = endIndex;
                 String comment = commentAfter();
-                text = rescan(comment + text, spacing);
+                decl.text = rescan(comment + decl.text, spacing);
             }
         }
 
-        if (text.length() == 0) {
+        if (decl.text.length() == 0) {
             // output whatever we did not process as comment
-            tokenIndex = beginIndex;
-            while (getToken(endIndex - tokenIndex - 1).match(Token.COMMENT)) {
+            tokens.index = beginIndex;
+            while (tokens.get(endIndex - tokens.index - 1).match(Token.COMMENT)) {
                 endIndex--;
             }
             int n = spacing.lastIndexOf('\n') + 1;
-            text += "// " + spacing.substring(n) + "#" + keyword.spacing + keyword;
-            for (Token token = getToken(); tokenIndex < endIndex; token = nextToken()) {
-                text += token.match("\n") ? "\n// " : token.spacing + token;
+            decl.text += "// " + spacing.substring(n) + "#" + keyword.spacing + keyword;
+            for (Token token = tokens.get(); tokens.index < endIndex; token = tokens.next()) {
+                decl.text += token.match("\n") ? "\n// " : token.spacing + token;
             }
             String comment = commentAfter();
-            text = spacing.substring(0, n) + comment + text;
+            decl.text = spacing.substring(0, n) + comment + decl.text;
         }
-        preprocess = true;
-        return text;
+        tokens.preprocess = true;
+        return decl;
     }
 
-    String typedef(Context context) throws Exception {
-        if (!getToken().match(Token.TYPEDEF)) {
+    Declaration typedef(Context context) throws Exception {
+        if (!tokens.get().match(Token.TYPEDEF)) {
             return null;
         }
-        String spacing = getToken().spacing;
-        Declarator decl = declarator(context, null, 0, 0, true, false);
-        nextToken();
+        int backIndex = tokens.index;
+        String spacing = tokens.get().spacing;
+        Declarator dcl = declarator(context, null, 0, 0, true, false);
+        tokens.next();
 
-        String name = decl.name;
+        Declaration decl = new Declaration();
+        int endIndex = tokens.index;
+        String name = dcl.cppName, typeName = dcl.type.cppName;
         if (context.namespace != null) {
             name = context.namespace + "::" + name;
         }
-        if (decl.definitions.length() > 0) {
-            infoMap.put(new Info(name).valueTypes(decl.name));
-        } else if (decl.type.cppName.equals("void")) {
-            decl.definitions =
-                    "@Opaque public static class " + name + " extends Pointer {\n" +
-                    "    public " + name + "() { }\n" +
-                    "    public " + name + "(Pointer p) { super(p); }\n" +
-                    "}";
+        if (dcl.definitions.length() > 0) {
+            // a function pointer or something
+            decl.text = dcl.definitions;
+            infoMap.put(new Info(name).valueTypes(dcl.javaName));
+        } else if (typeName.equals("void")) {
+            Info info = infoMap.getFirst(name);
+            if (info == null || !info.skip) {
+                decl.text = "@Opaque public static class " + dcl.javaName + " extends Pointer {\n" +
+                            "    public " + dcl.javaName + "() { }\n" +
+                            "    public " + dcl.javaName + "(Pointer p) { super(p); }\n" +
+                            "}";
+            }
         } else {
-            LinkedList<Info> infoList = infoMap.get(decl.type.cppName);
-            Info info = infoList.size() > 0 ? infoList.getFirst().clone() : new Info(name);
+            Info info = infoMap.getFirst(typeName);
+            info = info != null ? info.clone().cppNames(name) : new Info(name);
             if (info.valueTypes == null) {
-                info.valueTypes(info.cppNames);
+                info.valueTypes(typeName);
             }
             if (info.pointerTypes == null) {
-                info.pointerTypes(info.cppNames);
+                info.pointerTypes(typeName);
             }
-            infoMap.put(info.cppNames(name).cast(true));
+            infoMap.put(info.cast(true));
+
+            tokens.index = backIndex;
+            info = infoMap.getFirst(tokens.next().value);
+            if (info != null && info.templateParams != null && tokens.next().match('<')) {
+                info.genericArgs = new String[info.templateParams.length];
+                TemplateMap map = new TemplateMap(context.templateMap);
+                context = context.clone();
+                context.templateMap = map;
+                int count = 0;
+                for (Token token = tokens.next(); !token.match(Token.EOF); token = tokens.next()) {
+                    Type type = type(context);
+                    info.genericArgs[count] = type.cppName;
+                    map.put(info.templateParams[count], type.cppName);
+                    count++;
+                    if (tokens.get().expect(',', '>').match('>')) {
+                        tokens.next();
+                        break;
+                    }
+                }
+                info.pointerTypes(dcl.javaName);
+                TokenIndexer t = tokens;
+                tokens = new TokenIndexer(infoMap, new Tokenizer(info.text).tokenize());
+                decl = group(context);
+                tokens = t;
+            }
+            tokens.index = endIndex;
         }
 
         String comment = commentAfter();
-        return rescan(comment + decl.definitions, spacing);
+        decl.text = rescan(comment + decl.text, spacing);
+        return decl;
     }
 
-    String using(Context context) throws Exception {
-        if (!getToken().match(Token.USING)) {
+    Declaration using(Context context) throws Exception {
+        if (!tokens.get().match(Token.USING)) {
             return null;
         }
-        String spacing = getToken().spacing;
-        Declarator decl = declarator(context, null, 0, 0, true, false);
-        nextToken();
+        String spacing = tokens.get().spacing;
+        Declarator dcl = declarator(context, null, 0, 0, true, false);
+        tokens.next();
 
-        String name = decl.type.cppName.substring(decl.type.cppName.lastIndexOf("::") + 2);
-        LinkedList<Info> infoList = infoMap.get(decl.type.cppName);
-        Info info = infoList.size() > 0 ? infoList.getFirst().clone() : new Info(name);
+        Declaration decl = new Declaration();
+        String name = dcl.type.cppName.substring(dcl.type.cppName.lastIndexOf("::") + 2);
+        Info info = infoMap.getFirst(dcl.type.cppName);
+        info = info != null ? info.clone() : new Info(name);
         if (info.valueTypes == null) {
             info.valueTypes(info.cppNames);
         }
         if (info.pointerTypes == null) {
             info.pointerTypes(info.cppNames);
         }
-        infoMap.put(info.cppNames(name).cast(true));
+        infoMap.put(info.cppNames(name));
 
         String comment = commentAfter();
-        return rescan(comment + decl.definitions, spacing);
+        decl.text = rescan(comment + dcl.definitions, spacing);
+        return decl;
     }
 
-    String group(Context context) throws Exception {
-        int backIndex = tokenIndex;
-        String spacing = getToken().spacing;
-        boolean isTypedef = getToken().match(Token.TYPEDEF);
+    Declaration group(Context context) throws Exception {
+        int backIndex = tokens.index;
+        String spacing = tokens.get().spacing;
+        boolean isTypedef = tokens.get().match(Token.TYPEDEF);
         boolean foundGroup = false, accessible = true;
-        for (Token token = getToken(); !token.match(Token.EOF); token = nextToken()) {
+        for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.next()) {
             if (token.match(Token.CLASS, Token.STRUCT, Token.UNION)) {
                 foundGroup = true;
                 accessible = !token.match(Token.CLASS);
@@ -1673,173 +1879,221 @@ public class Parser {
             }
         }
         if (!foundGroup) {
-            tokenIndex = backIndex;
+            tokens.index = backIndex;
             return null;
         }
 
-        nextToken().expect(Token.IDENTIFIER, '{');
-        if (isTypedef && getToken(1).match('*')) {
-            nextToken();
+        tokens.next().expect(Token.IDENTIFIER, '{');
+        if (isTypedef && tokens.get(1).match('*')) {
+            tokens.next();
         }
-        if (!getToken().match('{') && getToken(1).match(Token.IDENTIFIER)
-                && (isTypedef || !getToken(2).match(';'))) {
-            nextToken();
+        if (!tokens.get().match('{') && tokens.get(1).match(Token.IDENTIFIER)
+                && (isTypedef || !tokens.get(2).match(';'))) {
+            tokens.next();
         }
         Type type = type(context);
-        String text = type.annotations;
+        Type parent = new Type("Pointer");
+        Declaration decl = new Declaration(type.annotations);
         String name = type.cppName;
-        String parent = "Pointer";
-        if (name.length() > 0 && getToken().match(':')) {
-            for (Token token = nextToken(); !token.match(Token.EOF); token = nextToken()) {
-                if (token.match('{')) {
+        boolean anonymous = !isTypedef && name.length() == 0;
+        if (name.length() > 0 && tokens.get().match(':')) {
+            for (Token token = tokens.next(); !token.match(Token.EOF); token = tokens.next()) {
+                boolean exposed = false;
+                if (token.match(Token.VIRTUAL)) {
+                    continue;
+                } else if (token.match(Token.PRIVATE, Token.PROTECTED, Token.PUBLIC)) {
+                    exposed = token.match(Token.PUBLIC);
+                    tokens.next();
+                }
+                Type t = type(context);
+                if (exposed) {
+                    parent = t;
+                }
+                if (tokens.get().expect(',', '{').match('{')) {
                     break;
-                } else if (token.match(Token.PUBLIC)) {
-                    parent = nextToken().expect(Token.IDENTIFIER).value;
                 }
             }
         }
-        if (!getToken().match('{', ';')) {
-            tokenIndex = backIndex;
+        if (!tokens.get().match('{', ';')) {
+            tokens.index = backIndex;
             return null;
         }
-        LinkedList<Info> infoList = infoMap.get(name);
-        if (name.length() > 0 && getToken().match(';')) {
-            nextToken();
-            if (infoList.size() == 0 || infoList.getFirst().opaque) {
-                if (infoList.size() > 0 && infoList.getFirst().parent != null) {
-                    parent = infoList.getFirst().parent;
-                }
-                infoMap.put(new Info(name).opaque(false));
-                if (context.namespace != null) {
-                    text += "@Namespace(\"" + context.namespace + "\") ";
-                }
-                text += "@Opaque public static class " + name + " extends " + parent + " {\n" +
-                        "    public " + name + "() { }\n" +
-                        "    public " + name + "(Pointer p) { super(p); }\n" +
-                        "}";
-            }
-            String comment = commentAfter();
-            return rescan(comment + text, spacing);
-        }
-        int startIndex = tokenIndex;
-        boolean anonymous = !isTypedef && name.length() == 0;
+        int startIndex = tokens.index;
         ArrayList<Declarator> variables = new ArrayList<Declarator>();
-        if (body() && !getToken().match(';')) {
+        if (body() != null && !tokens.get().match(';')) {
             if (isTypedef) {
-                for (Token token = getToken(); !token.match(Token.EOF); token = nextToken()) {
+                for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.next()) {
                     if (token.match(';')) {
-                        text += token.spacing;
+                        decl.text += token.spacing;
                         break;
                     } else {
-                        name = token.value;
+                        name = type.cppName = type.javaName = token.value;
                     }
                 }
             } else {
-                int index = tokenIndex - 1;
+                int index = tokens.index - 1;
                 for (int n = 0; n < Integer.MAX_VALUE; n++) {
-                    tokenIndex = index;
-                    Declarator d = declarator(context, null, -1, n, false, true);
-                    if (d == null) {
+                    tokens.index = index;
+                    Declarator dcl = declarator(context, null, -1, n, false, true);
+                    if (dcl == null) {
                         break;
                     } else {
-                        variables.add(d);
+                        variables.add(dcl);
                     }
                 }
                 int n = spacing.lastIndexOf('\n');
                 if (n >= 0) {
-                    text += spacing.substring(0, n);
+                    decl.text += spacing.substring(0, n);
                 }
             }
-            infoList = infoMap.get(name);
         }
-        if (infoList.size() == 0) {
+        Info info = infoMap.getFirst(name);
+        if (info != null && info.skip) {
+            decl.text = "";
+            return decl;
+        } else if (info != null && info.pointerTypes != null && info.pointerTypes.length > 0) {
+            name = info.pointerTypes[0];
+        }
+        tokens.index = startIndex;
+        if (name.length() > 0 && tokens.get().match(';')) {
+            // incomplete type (forward declaration)
+            tokens.next();
+            if (info == null || !info.complete) {
+                if (info != null && info.parent != null) {
+                    parent.javaName = info.parent;
+                }
+                infoMap.put(new Info(type.cppName).complete(true));
+                if (context.namespace != null) {
+                    decl.text += "@Namespace(\"" + context.namespace + "\") ";
+                }
+                decl.text += "@Opaque public static class " + name + " extends " + parent.javaName + " {\n" +
+                             "    public " + name + "() { }\n" +
+                             "    public " + name + "(Pointer p) { super(p); }\n" +
+                             "}";
+            }
+            String comment = commentAfter();
+            decl.text = rescan(comment + decl.text, spacing);
+            return decl;
+        } else if (info == null) {
             infoMap.put(new Info(context.namespace == null ? name : context.namespace + "::" + name));
         }
-        tokenIndex = startIndex;
 
         Context context2 = context.clone();
         context2.namespace = context.namespace == null ? name : context.namespace + "::" + name;
         if (!anonymous) {
-            context2.group = name;
+            context2.group = type;
         }
         if (variables.size() > 0) {
             context2.variables = variables.toArray(new Declarator[variables.size()]);
         }
         String declarations = "";
         boolean implicitConstructor = true, defaultConstructor = false;
-        if (getToken().match('{')) {
-            nextToken();
+        if (tokens.get().match('{')) {
+            tokens.next();
         }
-        for (Token token = getToken(); !token.match(Token.EOF, '}'); token = getToken()) {
-            if (token.match(Token.PRIVATE, Token.PROTECTED, Token.PUBLIC) && nextToken().match(':')) {
+        for (Token token = tokens.get(); !token.match(Token.EOF, '}'); token = tokens.get()) {
+            if (token.match(Token.PRIVATE, Token.PROTECTED, Token.PUBLIC) && tokens.next().match(':')) {
                 accessible = token.match(Token.PUBLIC);
-                nextToken();
+                tokens.next();
             }
-            String t = function(context2, true);
-            if (t == null) {
-                t = declaration(context2);
-            } else if (accessible) {
+            Declaration decl2 = declaration(context2);
+            if (decl2.constructor) {
                 implicitConstructor = false;
-                if (t.contains("allocate()")) {
-                    defaultConstructor = true;
-                }
+                defaultConstructor |= decl2.text.contains("allocate()");
             }
             if (accessible) {
-                declarations += t;
+                declarations += decl2.text;
             }
         }
 
         if (!anonymous) {
-            text += spacing;
+            decl.text += spacing;
             if (context.namespace != null) {
-                text += "@Namespace(\"" + context.namespace + "\") ";
+                decl.text += "@Namespace(\"" + context.namespace + "\") ";
+            }
+            String templateArgs = "";
+            if (info != null && info.genericArgs != null && context.templateMap != null) {
+                int count = 0;
+                templateArgs += '<';
+                for (Map.Entry<String,String> e : context.templateMap.entrySet()) {
+                    if (count < info.genericArgs.length && e.getValue() == null) {
+                        context.templateMap.put(e.getKey(), info.genericArgs[count]);
+                    }
+                    if (count++ > 0) {
+                        templateArgs += ',';
+                    }
+                    templateArgs += context.templateMap.get(e.getKey());
+                }
+                templateArgs += '>';
+            }
+            if (!name.equals(type.cppName) || templateArgs.length() > 0) {
+                decl.text += "@Name(\"" + type.cppName + templateArgs + "\") ";
             }
             if (!implicitConstructor) {
-                text += "@NoOffset ";
+                decl.text += "@NoOffset ";
             }
-            if (infoList.size() > 0 && infoList.getFirst().parent != null) {
-                parent = infoList.getFirst().parent;
+            if (info != null && info.parent != null) {
+                parent.javaName = info.parent;
             }
-            text += "public static class " + name + " extends " + parent + " {\n" +
-                    "    static { Loader.load(); }\n";
+            decl.text += "public static class " + name + " extends " + parent.javaName + " {\n" +
+                         "    static { Loader.load(); }\n";
 
             if (implicitConstructor) {
-                text += "    public " + name + "() { allocate(); }\n" +
-                        "    public " + name + "(int size) { allocateArray(size); }\n" +
-                        "    public " + name + "(Pointer p) { super(p); }\n" +
-                        "    private native void allocate();\n" +
-                        "    private native void allocateArray(int size);\n" +
-                        "    @Override public " + name + " position(int position) {\n" +
-                        "        return (" + name + ")super.position(position);\n" +
-                        "    }\n";
+                decl.text += "    public " + name + "() { allocate(); }\n" +
+                             "    public " + name + "(int size) { allocateArray(size); }\n" +
+                             "    public " + name + "(Pointer p) { super(p); }\n" +
+                             "    private native void allocate();\n" +
+                             "    private native void allocateArray(int size);\n" +
+                             "    @Override public " + name + " position(int position) {\n" +
+                             "        return (" + name + ")super.position(position);\n" +
+                             "    }\n";
             } else {
                 if (!defaultConstructor) {
-                    text += "    public " + name + "() { }\n";
+                    decl.text += "    public " + name + "() { }\n";
                 }
-                text += "    public " + name + "(Pointer p) { super(p); }\n";
+                decl.text += "    public " + name + "(Pointer p) { super(p); }\n";
             }
         }
         String comment = commentBefore();
-        text += declarations + comment;
+        decl.text += declarations + comment;
         if (!anonymous) {
-            text += getToken().spacing + '}';
+            decl.text += tokens.get().spacing + '}';
         }
-        for (Token token = nextToken(); !token.match(Token.EOF); token = nextToken()) {
+        for (Token token = tokens.next(); !token.match(Token.EOF); token = tokens.next()) {
             if (token.match(';')) {
-                text += token.spacing;
+                decl.text += token.spacing;
                 break;
             }
         }
-        nextToken();
-        return text;
+        tokens.next();
+        if ((info == null || info.genericArgs == null) && context.templateMap != null) {
+            // save text for specialization in typedef or parameters
+            info = new Info(type.cppName).templateParams(new String[context.templateMap.size()]).text("");
+            int count = 0;
+            for (String key : context.templateMap.keySet()) {
+                if (count < info.templateParams.length) {
+                    info.templateParams[count++] = key;
+                }
+            }
+            int endIndex = tokens.index;
+            tokens.index = backIndex;
+            tokens.preprocess = false;
+            for (Token token = tokens.get(); tokens.index < endIndex; token = tokens.next()) {
+                info.text += token.spacing + token;
+            }
+            tokens.preprocess = true;
+            infoMap.putFirst(info);
+            decl.text = "";
+        }
+        return decl;
     }
 
-    String enumeration(Context context) throws Exception {
-        int backIndex = tokenIndex;
-        String enumSpacing = getToken().spacing;
-        boolean isTypedef = getToken().match(Token.TYPEDEF);
+    Declaration enumeration(Context context) throws Exception {
+        int backIndex = tokens.index;
+        String enumSpacing = tokens.get().spacing;
+        boolean isTypedef = tokens.get().match(Token.TYPEDEF);
         boolean foundEnum = false;
-        for (Token token = getToken(); !token.match(Token.EOF); token = nextToken()) {
+        for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.next()) {
             if (token.match(Token.ENUM)) {
                 foundEnum = true;
                 break;
@@ -1848,40 +2102,45 @@ public class Parser {
             }
         }
         if (!foundEnum) {
-            tokenIndex = backIndex;
+            tokens.index = backIndex;
             return null;
         }
 
-        if (isTypedef && !getToken(1).match('{') && getToken(2).match(Token.IDENTIFIER)) {
-            nextToken();
+        if (isTypedef && !tokens.get(1).match('{') && tokens.get(2).match(Token.IDENTIFIER)) {
+            tokens.next();
         }
         boolean first = true;
         int count = 0;
         String countPrefix = " ";
         String enumerators = "";
         String macroText = "";
-        String name = nextToken().expect(Token.IDENTIFIER, '{').value;
-        if (!getToken().match('{') && !nextToken().match('{')) {
-            tokenIndex = backIndex;
+        String name = tokens.next().expect(Token.IDENTIFIER, '{').value;
+        if (!tokens.get().match('{') && !tokens.next().match('{')) {
+            tokens.index = backIndex;
             return null;
         }
-        for (Token token = nextToken(); !token.match(Token.EOF, '}'); token = getToken()) {
-            String s = macro(context);
-            if (s != null) {
-                macroText += s;
+        for (Token token = tokens.next(); !token.match(Token.EOF, '}'); token = tokens.get()) {
+            Declaration macroDecl = macro(context);
+            if (macroDecl != null) {
+                macroText += macroDecl.text;
+                if (!first && !macroDecl.text.trim().startsWith("//")) {
+                    enumerators += ";\n";
+                    macroText += "\npublic static final int";
+                    first = true;
+                }
                 continue;
             }
             String comment = commentBefore();
-            Token enumerator = getToken();
+            Token enumerator = tokens.get();
             String spacing2 = " ";
             String separator = first ? "" : ",";
-            if (nextToken().match('=')) {
-                spacing2 = getToken().spacing;
+            if (tokens.next().match('=')) {
+                spacing2 = tokens.get().spacing;
                 countPrefix = " ";
                 int count2 = 0;
                 Token prevToken = new Token();
-                boolean complex = false;
-                for (token = nextToken(); !token.match(Token.EOF, ',', '}') || count2 > 0; token = nextToken()) {
+                boolean translate = true;
+                for (token = tokens.next(); !token.match(Token.EOF, ',', '}') || count2 > 0; token = tokens.next()) {
                     countPrefix += token.spacing + token;
                     if (token.match('(')) {
                         count2++;
@@ -1889,7 +2148,7 @@ public class Parser {
                         count2--;
                     }
                     if (prevToken.match(Token.IDENTIFIER) && token.match('(')) {
-                        complex = true;
+                        translate = false;
                     }
                     prevToken = token;
                 }
@@ -1898,7 +2157,7 @@ public class Parser {
                     countPrefix = " ";
                 } catch (NumberFormatException e) {
                     count = 0;
-                    if (complex) {
+                    if (!translate) {
                         if (!first) {
                             separator = ";\n";
                             first = true;
@@ -1912,8 +2171,8 @@ public class Parser {
             enumerators += separator + macroText + comment;
             macroText = "";
             comment = commentAfter();
-            if (comment.length() == 0 && getToken().match(',')) {
-                nextToken();
+            if (comment.length() == 0 && tokens.get().match(',')) {
+                tokens.next();
                 comment = commentAfter();
             }
             String spacing = enumerator.spacing;
@@ -1935,17 +2194,17 @@ public class Parser {
             count++;
         }
         String comment = commentBefore();
-        String text = "";
-        Token token = nextToken();
+        Declaration decl = new Declaration();
+        Token token = tokens.next();
         if (token.match(Token.IDENTIFIER)) {
             // XXX: If !isTypedef, this is a variable declaration with anonymous type
             name = token.value;
-            token = nextToken();
+            token = tokens.next();
         }
         if (context.namespace != null) {
             name = context.namespace + "::" + name;
         }
-        text += enumSpacing + "/** enum " + name + " */\n";
+        decl.text += enumSpacing + "/** enum " + name + " */\n";
         int newline = enumSpacing.lastIndexOf('\n');
         if (newline >= 0) {
             enumSpacing = enumSpacing.substring(newline + 1);
@@ -1953,76 +2212,95 @@ public class Parser {
         if (!Character.isWhitespace(enumerators.charAt(0))) {
             enumerators = " " + enumerators;
         }
-        text += enumSpacing + "public static final int" + enumerators + token.expect(';').spacing + ";";
+        decl.text += enumSpacing + "public static final int" + enumerators + token.expect(';').spacing + ";";
         infoMap.put(new Info(name).valueTypes("int").pointerTypes("IntPointer", "IntBuffer", "int[]").cast(true));
-        nextToken();
-        return text + macroText + comment;
+        tokens.next();
+        decl.text += macroText + comment;
+        return decl;
     }
 
-    String namespace(Context context) throws Exception {
-        if (!getToken().match(Token.NAMESPACE)) {
+    Declaration namespace(Context context) throws Exception {
+        if (!tokens.get().match(Token.NAMESPACE)) {
             return null;
         }
-        String name = nextToken().expect(Token.IDENTIFIER).value;
-        nextToken().expect('{');
-        nextToken();
+        Declaration decl = new Declaration();
+        String name = tokens.next().expect(Token.IDENTIFIER).value;
+        tokens.next().expect('{');
+        tokens.next();
 
-        String text = "";
         context = context.clone();
         context.namespace = context.namespace == null ? name : context.namespace + "::" + name;
-        while (!getToken().match(Token.EOF, '}')) {
-            text += declaration(context);
+        while (!tokens.get().match(Token.EOF, '}')) {
+            decl.text += declaration(context).text;
         }
-        text += getToken().spacing;
-        nextToken();
-        return text;
+        decl.text += tokens.get().spacing;
+        tokens.next();
+        return decl;
     }
 
-    String extern(Context context) throws Exception {
-        if (!getToken(0).match(Token.EXTERN) || !getToken(1).match(Token.STRING)) {
+    Declaration extern(Context context) throws Exception {
+        if (!tokens.get().match(Token.EXTERN) || !tokens.get(1).match(Token.STRING)) {
             return null;
         }
-        nextToken().expect("\"C\"");
-        if (!nextToken().match('{')) {
-            return "";
+        Declaration decl = new Declaration();
+        tokens.next().expect("\"C\"");
+        if (!tokens.next().match('{')) {
+            return decl;
         }
-        nextToken();
+        tokens.next();
 
-        String text = "";
-        while (!getToken().match(Token.EOF, '}')) {
-            text += declaration(context);
+        while (!tokens.get().match(Token.EOF, '}')) {
+            decl.text += declaration(context).text;
         }
-        nextToken();
-        return text;
+        tokens.next();
+        return decl;
     }
 
-    String declaration(Context context) throws Exception {
-        while (getToken().match(';') && !getToken().match(Token.EOF)) {
-            nextToken();
+
+    class Declaration {
+        Declaration() { }
+        Declaration(String text) { this.text = text; }
+
+        boolean constructor = false;
+        String text = "";
+    }
+
+    Declaration declaration(Context context) throws Exception {
+        while (tokens.get().match(';') && !tokens.get().match(Token.EOF)) {
+            tokens.next();
         }
         if (context == null) {
             context = new Context();
         }
-        String comment = commentBefore(), text;
-        Token token = getToken();
+        String comment = commentBefore();
+        Token token = tokens.get();
         String spacing = token.spacing;
         TemplateMap map = template(context);
         if (map != context.templateMap) {
+            token = tokens.get();
+            if (token.spacing.length() > 0) {
+                token.spacing = token.spacing.substring(1);
+            }
             context = context.clone();
             context.templateMap = map;
-            comment += spacing.substring(0, spacing.lastIndexOf('\n'));
+            comment += spacing;
         }
-        if ((text = macro(context))       != null) { return comment + text; }
-        if ((text = extern(context))      != null) { return comment + text; }
-        if ((text = namespace(context))   != null) { return comment + text; }
-        if ((text = enumeration(context)) != null) { return comment + text; }
-        if ((text = group(context))       != null) { return comment + text; }
-        if ((text = typedef(context))     != null) { return comment + text; }
-        if ((text = using(context))       != null) { return comment + text; }
-        if ((text = function(context))    != null) { return comment + text; }
-        if ((text = variable(context))    != null) { return comment + text; }
-        if (attribute()                          ) { return comment + spacing; }
-        throw new Exception(token.file + ":" + token.lineNumber + ": Could not parse declaration at '" + token + "'");
+        Declaration decl = null;
+        if ((decl = macro(context))       == null &&
+            (decl = extern(context))      == null &&
+            (decl = namespace(context))   == null &&
+            (decl = enumeration(context)) == null &&
+            (decl = group(context))       == null &&
+            (decl = typedef(context))     == null &&
+            (decl = using(context))       == null &&
+            (decl = function(context))    == null &&
+            (decl = variable(context))    == null &&
+            (decl = attribute())          == null) {
+            throw new Exception(token.file + ":" + token.lineNumber + ": Could not parse declaration at '" + token + "'");
+        } else {
+            decl.text = comment + decl.text;
+            return decl;
+        }
     }
 
     public void parse(String outputFilename, String ... inputFilenames) throws IOException, Exception {
@@ -2033,24 +2311,24 @@ public class Parser {
         parse(new File(outputFilename), files);
     }
     public void parse(File outputFile, File ... inputFiles) throws IOException, Exception {
-        ArrayList<Token> tokens = new ArrayList<Token>();
+        ArrayList<Token> tokenList = new ArrayList<Token>();
         String lineSeparator = "\n";
         for (File file : inputFiles) {
-            LinkedList<Info> infoList = infoMap.get(file.getName());
-            if (infoList.size() > 0 && !infoList.getFirst().parse) {
+            Info info = infoMap.getFirst(file.getName());
+            if (info != null && !info.parse) {
                 continue;
             }
             System.out.println("Parsing header file: " + file);
             Token token = new Token();
             token.type = Token.COMMENT;
             token.value = "\n/* Wrapper for header file " + file + " */\n\n";
-            tokens.add(token);
+            tokenList.add(token);
             Tokenizer tokenizer = new Tokenizer(file);
             while (!(token = tokenizer.nextToken()).isEmpty()) {
                 if (token.type == -1) {
                     token.type = Token.COMMENT;
                 }
-                tokens.add(token);
+                tokenList.add(token);
             }
             if (lineSeparator == null) {
                 lineSeparator = tokenizer.lineSeparator;
@@ -2059,10 +2337,9 @@ public class Parser {
             token = new Token();
             token.type = Token.COMMENT;
             token.spacing = "\n";
-            tokens.add(token);
+            tokenList.add(token);
         }
-        tokenArray = tokens.toArray(new Token[tokens.size()]);
-        tokenIndex = 0;
+        tokens = new TokenIndexer(infoMap, tokenList.toArray(new Token[tokenList.size()]));
 
         Writer out = outputFile != null ? new FileWriter(outputFile) : new Writer() {
             @Override public void write(char[] cbuf, int off, int len) { }
@@ -2078,8 +2355,8 @@ public class Parser {
         out.append("{" + lineSeparator);
         out.append("    static { Loader.load(); }" + lineSeparator);
         out.append(vectors());
-        while (!getToken().match(Token.EOF)) {
-            out.append(declaration(null).replaceAll("\n", lineSeparator));
+        while (!tokens.get().match(Token.EOF)) {
+            out.append(declaration(null).text.replaceAll("\n", lineSeparator));
         }
         String comment = commentBefore();
         if (comment != null) {

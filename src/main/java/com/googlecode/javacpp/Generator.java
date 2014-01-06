@@ -127,7 +127,7 @@ public class Generator implements Closeable {
         }
     }
 
-    public static final String JNI_VERSION = "JNI_VERSION_1_6";
+    public static final String JNI_VERSION = "JNI_VERSION_1_4";
 
     private static final Logger logger = Logger.getLogger(Generator.class.getName());
 
@@ -231,6 +231,11 @@ public class Generator implements Closeable {
         }
         out.println("#ifdef ANDROID");
         out.println("    #include <android/log.h>");
+        out.println("#elif defined(__APPLE__) && defined(__OBJC__)");
+        out.println("    #include <TargetConditionals.h>");
+        out.println("    #include <Foundation/Foundation.h>");
+        out.println("#endif");
+        out.println("#if defined(ANDROID) || TARGET_OS_IPHONE");
         out.println("    #define NewWeakGlobalRef(obj) NewGlobalRef(obj)");
         out.println("    #define DeleteWeakGlobalRef(obj) DeleteGlobalRef(obj)");
         out.println("#endif");
@@ -324,6 +329,8 @@ public class Generator implements Closeable {
         out.println("    va_start(ap, fmt);");
         out.println("#ifdef ANDROID");
         out.println("    __android_log_vprint(ANDROID_LOG_ERROR, \"javacpp\", fmt, ap);");
+        out.println("#elif defined(__APPLE__) && defined(__OBJC__)");
+        out.println("    NSLogv([NSString stringWithUTF8String:fmt], ap);");
         out.println("#else");
         out.println("    vfprintf(stderr, fmt, ap);");
         out.println("    fprintf(stderr, \"\\n\");");
@@ -472,7 +479,7 @@ public class Generator implements Closeable {
             out.println("    JavaVM *vm = JavaCPP_vm;");
             out.println("    if (vm == NULL) {");
             if (out2 != null) {
-                out.println("#ifndef ANDROID");
+                out.println("#if !defined(ANDROID) && !TARGET_OS_IPHONE");
                 out.println("        int size = 1;");
                 out.println("        if (JNI_GetCreatedJavaVMs(&vm, 1, &size) != 0 || size == 0) {");
                 out.println("#endif");
@@ -480,7 +487,7 @@ public class Generator implements Closeable {
             out.println("            JavaCPP_log(\"Could not get any created JavaVM.\");");
             out.println("            return -1;");
             if (out2 != null) {
-                out.println("#ifndef ANDROID");
+                out.println("#if !defined(ANDROID) && !TARGET_OS_IPHONE");
                 out.println("        }");
                 out.println("#endif");
             }
@@ -547,7 +554,7 @@ public class Generator implements Closeable {
             out2.println("JNIIMPORT int JavaCPP_init(int argc, const char *argv[]);");
             out.println();
             out.println("JNIEXPORT int JavaCPP_init(int argc, const char *argv[]) {");
-            out.println("#ifdef ANDROID");
+            out.println("#if defined(ANDROID) || TARGET_OS_IPHONE");
             out.println("    return JNI_OK;");
             out.println("#else");
             out.println("    JavaVM *vm;");
@@ -697,7 +704,7 @@ public class Generator implements Closeable {
             out2.println("JNIIMPORT int JavaCPP_uninit();");
             out2.println();
             out.println("JNIEXPORT int JavaCPP_uninit() {");
-            out.println("#ifdef ANDROID");
+            out.println("#if defined(ANDROID) || TARGET_OS_IPHONE");
             out.println("    return JNI_OK;");
             out.println("#else");
             out.println("    JavaVM *vm = JavaCPP_vm;");

@@ -62,6 +62,9 @@ public class Loader {
         String osArch  = System.getProperty("os.arch").toLowerCase();
         if (jvmName.startsWith("dalvik") && osName.startsWith("linux")) {
             osName = "android";
+        } else if (jvmName.startsWith("robovm") && osName.startsWith("darwin")) {
+            osName = "ios";
+            osArch = "arm";
         } else if (osName.startsWith("mac os x")) {
             osName = "macosx";
         } else {
