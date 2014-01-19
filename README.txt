@@ -3,7 +3,7 @@
 ==Introduction==
 JavaCPP provides efficient access to native C++ inside Java, not unlike the way some C/C++ compilers interact with assembly language. No need to invent new languages such as [http://www.ecma-international.org/publications/standards/Ecma-372.htm C++/CLI], [http://www.cython.org/ Cython], or [http://doc.pypy.org/en/latest/coding-guide.html#id1 RPython] as required by [http://doc.pypy.org/en/latest/cppyy.html cppyy]. Instead, it exploits the syntactic and semantic similarities between Java and C++. Under the hood, it uses JNI, so it works with all implementations of Java SE, in addition to [http://www.android.com/ Android] and [http://www.robovm.org/ RoboVM] ([#Instructions_for_Android_and_RoboVM instructions]).
 
-In contrast to other approaches ([http://www.swig.org/ SWIG], [http://www.itk.org/ITK/resources/CableSwig.html CableSwig], [http://www.eclipse.org/swt/jnigen.php JNIGeneratorApp], [http://cxxwrap.sourceforge.net/ cxxwrap], [http://www.teamdev.com/jniwrapper/ JNIWrapper], [http://msdn.microsoft.com/en-us/library/0h9e9t7d.aspx Platform Invoke], [http://jogamp.org/gluegen/www/ GlueGen], [http://homepage.mac.com/pcbeard/JNIDirect/ JNIDirect], [http://docs.python.org/library/ctypes.html ctypes], [https://github.com/twall/jna JNA], [http://www.innowhere.com/ JNIEasy], [http://flinflon.brandonu.ca/Dueck/SystemsProgramming/JniMarshall/ JniMarshall], [http://jnative.free.fr/ JNative], [http://www.jinvoke.com/ J/Invoke], [http://hawtjni.fusesource.org/ HawtJNI], [http://code.google.com/p/bridj/ BridJ], etc.), it maps naturally and efficiently many common features afforded by the C++ language and often considered problematic, including overloaded operators, template classes and functions, member function pointers, callback functions, function objects (aka functors), nested struct definitions, variable length arguments, nested namespaces, large data structures containing arbitrary cycles, virtual and multiple inheritance, passing/returning by value/reference/vector, anonymous unions, bit fields, exceptions, destructors with garbage collection, and documentation comments. Obviously, neatly supporting the whole of C++ would require more work (although one could argue about the intrinsic neatness of C++), but I am releasing it here as a proof of concept. I have already used it to produce complete interfaces to OpenCV, FFmpeg, libdc1394, PGR FlyCapture, OpenKinect, videoInput, and ARToolKitPlus as part of [http://code.google.com/p/javacv/ JavaCV].
+In contrast to other approaches ([http://www.swig.org/ SWIG], [http://www.itk.org/ITK/resources/CableSwig.html CableSwig], [http://www.eclipse.org/swt/jnigen.php JNIGeneratorApp], [http://cxxwrap.sourceforge.net/ cxxwrap], [http://www.teamdev.com/jniwrapper/ JNIWrapper], [http://msdn.microsoft.com/en-us/library/0h9e9t7d.aspx Platform Invoke], [http://jogamp.org/gluegen/www/ GlueGen], [http://homepage.mac.com/pcbeard/JNIDirect/ JNIDirect], [http://docs.python.org/library/ctypes.html ctypes], [https://github.com/twall/jna JNA], [http://www.innowhere.com/ JNIEasy], [http://flinflon.brandonu.ca/Dueck/SystemsProgramming/JniMarshall/ JniMarshall], [http://jnative.free.fr/ JNative], [http://www.jinvoke.com/ J/Invoke], [http://hawtjni.fusesource.org/ HawtJNI], [http://code.google.com/p/bridj/ BridJ], [http://ianwookim.org/fficxx/ fficxx], etc.), it maps naturally and efficiently many common features afforded by the C++ language and often considered problematic, including overloaded operators, template classes and functions, member function pointers, callback functions, function objects (aka functors), nested struct definitions, variable length arguments, nested namespaces, large data structures containing arbitrary cycles, virtual and multiple inheritance, passing/returning by value/reference/vector, anonymous unions, bit fields, exceptions, destructors with garbage collection, and documentation comments. Obviously, neatly supporting the whole of C++ would require more work (although one could argue about the intrinsic neatness of C++), but I am releasing it here as a proof of concept. I have already used it to produce complete interfaces to OpenCV, FFmpeg, libdc1394, PGR FlyCapture, OpenKinect, videoInput, and ARToolKitPlus as part of [http://code.google.com/p/javacv/ JavaCV].
 
 The new [https://code.google.com/p/javacpp/wiki/Presets JavaCPP Presets] subproject also demonstrates early parsing capabilities of C/C++ header files that already show promising and useful results with at least the C API of OpenCV, FFmpeg, libdc1394, OpenKinect, videoInput, and ARToolKitPlus.
 
@@ -19,6 +19,7 @@ To use JavaCPP, you will need to download and install the following software:
   * Java SE for Mac OS X  http://developer.apple.com/java/  etc.
  * A C++ compiler, out of which these have been tested
   * GNU C/C++ Compiler (Linux, Mac OS X, etc.)  http://gcc.gnu.org/
+    * For Windows x86 and x64  http://mingw-w64.sourceforge.net/
   * Microsoft C/C++ Compiler  http://msdn.microsoft.com/
     * [http://www.microsoft.com/en-us/download/details.aspx?id=8442  Microsoft Windows SDK 7.1]
     * [http://msdn.microsoft.com/en-us/library/ff660764.aspx  Building Applications that Use the Windows SDK]
@@ -33,7 +34,10 @@ To modify the source code, please note that the project files were created for:
  * Maven 2 or 3  http://maven.apache.org/download.html
 
 Finally, because we are dealing with native code, bugs can easily crash the virtual machine. Luckily, Java provides some tools to help us debug under those circumstances:
- * Troubleshooting Guide for HotSpot VM  http://docs.oracle.com/javase/7/docs/webnotes/tsg/TSG-VM/html/
+ * Troubleshooting Guide for Java SE with HotSpot VM
+  * http://www.oracle.com/technetwork/java/javase/index-137495.html
+  * http://www.oracle.com/technetwork/java/javase/tsg-vm-149989.pdf
+  * http://docs.oracle.com/javase/7/docs/webnotes/tsg/TSG-VM/html/
 
 
 ==Key Use Cases==
@@ -301,6 +305,8 @@ This project was conceived at the Okutomi & Tanaka Laboratory, Tokyo Institute o
 
 
 ==Changes==
+
+ * Cleaned up and optimized `Generator` a bit, and fixed a crash that could occur when `FindClass()` returns NULL
 
 ===January 6, 2014 version 0.7===
  * Tweaked a few things to support RoboVM and target iOS, but `JNI_OnLoad()` does not appear to get called...
