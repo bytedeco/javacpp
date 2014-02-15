@@ -8,8 +8,10 @@ import java.lang.annotation.Target;
 
 /**
  * An annotation indicating that a method should behave like a value getter.
- * However, a pair of methods named {@code get()} and {@code put()}, one with a
- * return value, the other without, but with the same number of parameters, plus 1,
+ * However, a pair of methods named {@code get()} and {@code put()}, where the
+ * number of parameters are either equal, in the case of arrays, or differs by one
+ * where the type of the extra parameter is the same as the return value of the other,
+ * and the remaining return value types are {@code void} or of the enclosing class,
  * are recognized as a value getter/setter pair even without annotation. This behavior
  * can be changed by annotating the methods with the {@link Function} annotation.
  * <p>

@@ -1,9 +1,9 @@
 =JavaCPP=
 
 ==Introduction==
-JavaCPP provides efficient access to native C++ inside Java, not unlike the way some C/C++ compilers interact with assembly language. No need to invent new languages such as [http://www.ecma-international.org/publications/standards/Ecma-372.htm C++/CLI], [http://www.cython.org/ Cython], or [http://doc.pypy.org/en/latest/coding-guide.html#id1 RPython] as required by [http://doc.pypy.org/en/latest/cppyy.html cppyy]. Instead, it exploits the syntactic and semantic similarities between Java and C++. Under the hood, it uses JNI, so it works with all implementations of Java SE, in addition to [http://www.android.com/ Android] and [http://www.robovm.org/ RoboVM] ([#Instructions_for_Android_and_RoboVM instructions]).
+JavaCPP provides efficient access to native C++ inside Java, not unlike the way some C/C++ compilers interact with assembly language. No need to invent new languages such as with [http://www.swig.org/ SWIG], [http://riverbankcomputing.co.uk/software/sip/ SIP], [http://www.ecma-international.org/publications/standards/Ecma-372.htm C++/CLI], [http://www.cython.org/ Cython], or [http://doc.pypy.org/en/latest/coding-guide.html#id1 RPython] as required by [http://doc.pypy.org/en/latest/cppyy.html cppyy]. Instead, it exploits the syntactic and semantic similarities between Java and C++. Under the hood, it uses JNI, so it works with all implementations of Java SE, in addition to [http://www.android.com/ Android], [http://oss.readytalk.com/avian/ Avian], and [http://www.robovm.org/ RoboVM] ([#Instructions_for_Android,_Avian,_and_RoboVM instructions]).
 
-In contrast to other approaches ([http://www.swig.org/ SWIG], [http://www.itk.org/ITK/resources/CableSwig.html CableSwig], [http://www.eclipse.org/swt/jnigen.php JNIGeneratorApp], [http://cxxwrap.sourceforge.net/ cxxwrap], [http://www.teamdev.com/jniwrapper/ JNIWrapper], [http://msdn.microsoft.com/en-us/library/0h9e9t7d.aspx Platform Invoke], [http://jogamp.org/gluegen/www/ GlueGen], [http://homepage.mac.com/pcbeard/JNIDirect/ JNIDirect], [http://docs.python.org/library/ctypes.html ctypes], [https://github.com/twall/jna JNA], [http://www.innowhere.com/ JNIEasy], [http://flinflon.brandonu.ca/Dueck/SystemsProgramming/JniMarshall/ JniMarshall], [http://jnative.free.fr/ JNative], [http://www.jinvoke.com/ J/Invoke], [http://hawtjni.fusesource.org/ HawtJNI], [http://code.google.com/p/bridj/ BridJ], [http://ianwookim.org/fficxx/ fficxx], etc.), it maps naturally and efficiently many common features afforded by the C++ language and often considered problematic, including overloaded operators, template classes and functions, member function pointers, callback functions, function objects (aka functors), nested struct definitions, variable length arguments, nested namespaces, large data structures containing arbitrary cycles, virtual and multiple inheritance, passing/returning by value/reference/vector, anonymous unions, bit fields, exceptions, destructors with garbage collection, and documentation comments. Obviously, neatly supporting the whole of C++ would require more work (although one could argue about the intrinsic neatness of C++), but I am releasing it here as a proof of concept. I have already used it to produce complete interfaces to OpenCV, FFmpeg, libdc1394, PGR FlyCapture, OpenKinect, videoInput, and ARToolKitPlus as part of [http://code.google.com/p/javacv/ JavaCV].
+More specifically, when compared to the approaches above or elsewhere ([http://www.itk.org/ITK/resources/CableSwig.html CableSwig], [http://www.eclipse.org/swt/jnigen.php JNIGeneratorApp], [http://cxxwrap.sourceforge.net/ cxxwrap], [http://www.teamdev.com/jniwrapper/ JNIWrapper], [http://msdn.microsoft.com/en-us/library/0h9e9t7d.aspx Platform Invoke], [http://jogamp.org/gluegen/www/ GlueGen], [http://web.archive.org/web/20050329122501/http://homepage.mac.com/pcbeard/JNIDirect/ JNIDirect], [http://docs.python.org/library/ctypes.html ctypes], [https://github.com/twall/jna JNA], [http://www.innowhere.com/jnieasy/ JNIEasy], [http://flinflon.brandonu.ca/Dueck/SystemsProgramming/JniMarshall/ JniMarshall], [http://jnative.free.fr/ JNative], [http://web.archive.org/web/20110727133817/http://www.jinvoke.com/ J/Invoke], [http://hawtjni.fusesource.org/ HawtJNI], [http://code.google.com/p/bridj/ BridJ], [http://ianwookim.org/fficxx/ fficxx], etc.), it maps naturally and efficiently many common features afforded by the C++ language and often considered problematic, including overloaded operators, class and function templates, member function pointers, callback functions, function objects (aka functors), nested struct definitions, variable length arguments, nested namespaces, large data structures containing arbitrary cycles, virtual and multiple inheritance, passing/returning by value/reference/vector, anonymous unions, bit fields, exceptions, destructors with garbage collection, and documentation comments. Obviously, neatly supporting the whole of C++ would require more work (although one could argue about the intrinsic neatness of C++), but I am releasing it here as a proof of concept. I have already used it to produce complete interfaces to OpenCV, FFmpeg, libdc1394, PGR FlyCapture, OpenKinect, videoInput, and ARToolKitPlus as part of [http://code.google.com/p/javacv/ JavaCV].
 
 The new [https://code.google.com/p/javacpp/wiki/Presets JavaCPP Presets] subproject also demonstrates early parsing capabilities of C/C++ header files that already show promising and useful results with at least the C API of OpenCV, FFmpeg, libdc1394, OpenKinect, videoInput, and ARToolKitPlus.
 
@@ -155,7 +155,7 @@ public class VectorTest {
 }
 }}}
 
-Executing that program on my machine using these commands produces the following output:
+Executing that program using these commands produces the following output:
 {{{
 $ javac -cp javacpp.jar VectorTest.java
 $ java -jar javacpp.jar VectorTest
@@ -279,8 +279,13 @@ java.lang.Exception: bar 42
 In this example, the `FunctionPointer` object gets created implicitly, but to call a native function pointer, we could define one that instead contains a `native call()/apply()` method, and create an instance explicitly. Such a class can also be extended in Java to create callbacks, and like any other normal `Pointer` object, must be allocated with a `native void allocate()` method, *so please remember to hang on to references in Java*, as those will get garbage collected. As a bonus, `FunctionPointer.call()/apply()` maps in fact to an overloaded `operator()` of a C++ function object that we can pass to other functions by annotating parameters with `@ByVal` or `@ByRef`, as with the `sort()` function in the example above.
 
 
-==Instructions for Android and RoboVM==
-Inside the directory of the Android project:
+==Instructions for Android, Avian, and RoboVM==
+The easiest one to get working is Avian compiled with OpenJDK class libraries, so let's start with that. After creating and building a program as described above, without any further modifications, we can directly execute it with this command:
+{{{
+$ avian-dynamic -Xbootclasspath/a:javacpp.jar <MainClass>
+}}}
+
+However, in the case of Android, we need to do a bit more work. Inside the directory of the project:
  # Copy the `javacpp.jar` file into the `libs/` subdirectory, and
  # Run this command to produce the `*.so` library files in `libs/armeabi/`:
 {{{
@@ -306,6 +311,8 @@ This project was conceived at the Okutomi & Tanaka Laboratory, Tokyo Institute o
 
 ==Changes==
 
+ * Fixed a few potential issues with the hacks in `Loader`
+ * Generalized somewhat more the compiler options used inside `linux-arm.properties` (issue javacv:418)
  * Cleaned up and optimized `Generator` a bit, and fixed a crash that could occur when `FindClass()` returns NULL
 
 ===January 6, 2014 version 0.7===
@@ -314,7 +321,7 @@ This project was conceived at the Okutomi & Tanaka Laboratory, Tokyo Institute o
  * Made `Loader.load()` work, within reason, even when all annotations and resources have been removed, for example, by ProGuard
  * Fixed compile error when using a `FunctionPointer` as parameter from outside its top-level enclosing class
  * Added new `Pointer.deallocate(false)` call to disable garbage collection on a per object basis, allowing users to deal with memory leaks in other ways
- * Changed the default compiler option `-mfpu=vfpv` for ARM to `-mfpu=vfpv3-d16`, because the former is not supported by Tegra 2
+ * Changed the default compiler option `-mfpu=vfpv` for ARM to `-mfpu=vfpv3-d16`, because the former is not supported by Tegra 2 (issue javacv:366)
  * Removed call to `Arrays.copyOf()` in `Loader.findLibrary()`, which would prevent it from working on Android 2.2 (issue #39)
  * Fixed invalid code generated for `FunctionPointer` parameters annotated with `@Const @ByRef`
  * Fixed `NullPointerException` in `Loader.load()` when no `@Platform` annotation is provided (issue #38)

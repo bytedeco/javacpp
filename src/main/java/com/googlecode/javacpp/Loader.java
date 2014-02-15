@@ -57,9 +57,9 @@ public class Loader {
     private static Properties platformProperties = null;
 
     static {
-        String jvmName = System.getProperty("java.vm.name").toLowerCase();
-        String osName  = System.getProperty("os.name").toLowerCase();
-        String osArch  = System.getProperty("os.arch").toLowerCase();
+        String jvmName = System.getProperty("java.vm.name", "").toLowerCase();
+        String osName  = System.getProperty("os.name", "").toLowerCase();
+        String osArch  = System.getProperty("os.arch", "").toLowerCase();
         if (jvmName.startsWith("dalvik") && osName.startsWith("linux")) {
             osName = "android";
         } else if (jvmName.startsWith("robovm") && osName.startsWith("darwin")) {
@@ -400,11 +400,14 @@ public class Loader {
      * @return the Class found from the calling context, or {@code null} if not found
      */
     public static Class getCallerClass(int i) {
-        Class[] classContext = new SecurityManager() {
-            @Override public Class[] getClassContext() {
-                return super.getClassContext();
-            }
-        }.getClassContext();
+        Class[] classContext = null;
+        try {
+            new SecurityManager() {
+                @Override public Class[] getClassContext() {
+                    return super.getClassContext();
+                }
+            }.getClassContext();
+        } catch (NoSuchMethodError e) { }
         if (classContext != null) {
             for (int j = 0; j < classContext.length; j++) {
                 if (classContext[j] == Loader.class) {
