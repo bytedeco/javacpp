@@ -311,9 +311,12 @@ This project was conceived at the Okutomi & Tanaka Laboratory, Tokyo Institute o
 
 ==Changes==
 
+ * Continued to clean up the `Parser` and improve the support of comments, templates, overloaded operators, and namespaces, for the most part
  * Fixed a few potential issues with the hacks in `Loader`
  * Generalized somewhat more the compiler options used inside `linux-arm.properties` (issue javacv:418)
- * Cleaned up and optimized `Generator` a bit, and fixed a crash that could occur when `FindClass()` returns NULL
+ * Unified the function pointer type of native deallocators to `void (*)(void*)`
+ * Removed dependency on (efficient) `AllocObject()` and `CallNonvirtualVoidMethodA()` JNI functions, which are not supported by Avian
+ * Cleaned up and optimized `Generator` a bit, also fixing a crash that could occur when `FindClass()` returns `NULL`
 
 ===January 6, 2014 version 0.7===
  * Tweaked a few things to support RoboVM and target iOS, but `JNI_OnLoad()` does not appear to get called...

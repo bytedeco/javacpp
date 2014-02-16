@@ -304,6 +304,8 @@ public class Generator implements Closeable {
             }
         }
         out.println("static JavaVM* JavaCPP_vm = NULL;");
+        out.println("static bool JavaCPP_haveAllocObject = false;");
+        out.println("static bool JavaCPP_haveNonvirtual = false;");
         out.println("static const char* JavaCPP_classNames[" + jclasses.size() + "] = {");
         Iterator<Class> classIterator = jclasses.iterator();
         int maxMemberSize = 0;
@@ -397,6 +399,39 @@ public class Generator implements Closeable {
         out.println("    return mid;");
         out.println("}");
         out.println();
+        out.println("static JavaCPP_noinline jobject JavaCPP_createPointer(JNIEnv* env, int i) {");
+        out.println("    jclass cls = JavaCPP_getClass(env, i);");
+        out.println("    if (JavaCPP_haveAllocObject) {");
+        out.println("        return env->AllocObject(cls);");
+        out.println("    } else {");
+        out.println("        jmethodID mid = env->GetMethodID(cls, \"<init>\", \"()V\");");
+        out.println("        if (mid == NULL || env->ExceptionCheck()) {");
+        out.println("            JavaCPP_log(\"Error getting default constructor of %s, while VM does not support AllocObject()\", JavaCPP_classNames[i]);");
+        out.println("            return NULL;");
+        out.println("        }");
+        out.println("        return env->NewObject(cls, mid);");
+        out.println("    }");
+        out.println("}");
+        out.println();
+        out.println("static JavaCPP_noinline void JavaCPP_initPointer(JNIEnv* env, jobject obj, const void* ptr, int size, void (*deallocator)(void*)) {");
+        out.println("    if (deallocator != NULL) {");
+        out.println("        jvalue args[3];");
+        out.println("        args[0].j = ptr_to_jlong(ptr);");
+        out.println("        args[1].i = size;");
+        out.println("        args[2].j = ptr_to_jlong(deallocator);");
+        out.println("        if (JavaCPP_haveNonvirtual) {");
+        out.println("            env->CallNonvirtualVoidMethodA(obj, JavaCPP_getClass(env, "
+                                     + jclasses.index(Pointer.class) + "), JavaCPP_initMID, args);");
+        out.println("        } else {");
+        out.println("            env->CallVoidMethodA(obj, JavaCPP_initMID, args);");
+        out.println("        }");
+        out.println("    } else {");
+        out.println("        env->SetLongField(obj, JavaCPP_addressFID, ptr_to_jlong(ptr));");
+        out.println("        env->SetIntField(obj, JavaCPP_limitFID, size);");
+        out.println("        env->SetIntField(obj, JavaCPP_capacityFID, size);");
+        out.println("    }");
+        out.println("}");
+        out.println();
         out.println("class JavaCPP_hidden JavaCPP_exception : public std::exception {");
         out.println("public:");
         out.println("    JavaCPP_exception(const char* str) throw() {");
@@ -442,7 +477,7 @@ public class Generator implements Closeable {
             out.println("        this->size = size;");
             out.println("        vec.assign(ptr, ptr + size);");
             out.println("    }");
-            out.println("    static void deallocate(P* ptr) { delete[] ptr; }");
+            out.println("    static void deallocate(void* ptr) { delete[] (P*)ptr; }");
             out.println("    operator P*() {");
             out.println("        if (vec.size() > size) {");
             out.println("            ptr = new (std::nothrow) P[vec.size()];");
@@ -478,7 +513,7 @@ public class Generator implements Closeable {
             out.println("        this->size = size;");
             out.println("        str.assign(ptr ? ptr : \"\");");
             out.println("    }");
-            out.println("    static void deallocate(char* ptr) { free(ptr); }");
+            out.println("    static void deallocate(void* ptr) { free(ptr); }");
             out.println("    operator char*() {");
             out.println("        const char* c_str = str.c_str();");
             out.println("        if (ptr == NULL || strcmp(c_str, ptr) != 0) {");
@@ -572,19 +607,20 @@ public class Generator implements Closeable {
         out.println();
         for (Class c : deallocators) {
             String name = "JavaCPP_" + mangle(c.getName());
-            out.print("static void " + name + "_deallocate(");
+            out.print("static void " + name + "_deallocate(void *p) { ");
             if (FunctionPointer.class.isAssignableFrom(c)) {
-                String typeName = functionClassName(c);
-                out.println(typeName + "* p) { JNIEnv *e; bool a = JavaCPP_getEnv(&e); if (e != NULL) e->DeleteWeakGlobalRef(p->obj); delete p; JavaCPP_detach(a); }");
+                String typeName = functionClassName(c) + "*";
+                out.println("JNIEnv *e; bool a = JavaCPP_getEnv(&e); if (e != NULL) e->DeleteWeakGlobalRef((("
+                        + typeName + ")p)->obj); delete (" + typeName + ")p; JavaCPP_detach(a); }");
             } else {
                 String[] typeName = cppTypeName(c);
-                out.println(typeName[0] + " p" + typeName[1] + ") { delete p; }");
+                out.println("delete (" + typeName[0] + typeName[1] + ")p; }");
             }
         }
         for (Class c : arrayDeallocators) {
             String name = "JavaCPP_" + mangle(c.getName());
             String[] typeName = cppTypeName(c);
-            out.println("static void " + name + "_deallocateArray(" + typeName[0] + " p" + typeName[1] + ") { delete[] p; }");
+            out.println("static void " + name + "_deallocateArray(void* p) { delete[] (" + typeName[0] + typeName[1] + ")p; }");
         }
         out.println();
         out.println("extern \"C\" {");
@@ -599,6 +635,10 @@ public class Generator implements Closeable {
             out.println("#if defined(ANDROID) || TARGET_OS_IPHONE");
             out.println("    return JNI_OK;");
             out.println("#else");
+            out.println("    if (JavaCPP_vm != NULL) {");
+            out.println("        return JNI_OK;");
+            out.println("    }");
+            out.println("    int err;");
             out.println("    JavaVM *vm;");
             out.println("    JNIEnv *env;");
             out.println("    int nOptions = 1 + (argc > 255 ? 255 : argc);");
@@ -608,7 +648,7 @@ public class Generator implements Closeable {
             out.println("        options[i].optionString = (char*)argv[i - 1];");
             out.println("    }");
             out.println("    JavaVMInitArgs vm_args = { " + JNI_VERSION + ", nOptions, options };");
-            out.println("    return JNI_CreateJavaVM(&vm, (void **)&env, &vm_args);");
+            out.println("    return (err = JNI_CreateJavaVM(&vm, (void**)&env, &vm_args)) == JNI_OK && vm != NULL && (err = JNI_OnLoad(vm, NULL)) >= 0 ? JNI_OK : err;");
             out.println("#endif");
             out.println("}");
         }
@@ -623,6 +663,8 @@ public class Generator implements Closeable {
         out.println("        return env->GetVersion();");
         out.println("    }");
         out.println("    JavaCPP_vm = vm;");
+        out.println("    JavaCPP_haveAllocObject = env->functions->AllocObject != NULL;");
+        out.println("    JavaCPP_haveNonvirtual = env->functions->CallNonvirtualVoidMethodA != NULL;");
         out.println("    const char* members[" + jclasses.size() + "][" + maxMemberSize + "] = {");
         classIterator = jclasses.iterator();
         while (classIterator.hasNext()) {
@@ -1325,24 +1367,15 @@ public class Generator implements Closeable {
                         break;
                     }
                 }
-                if (!noDeallocator) {
-                    out.println(indent + "jvalue args[3];");
-                    out.println(indent + "args[0].j = ptr_to_jlong(rptr);");
-                    out.println(indent + "args[1].i = rcapacity;");
-                    out.print  (indent + "args[2].j = ptr_to_jlong(&JavaCPP_" + mangle(methodInfo.cls.getName()));
-                    if (methodInfo.arrayAllocator) {
-                        out.println("_deallocateArray);");
-                        arrayDeallocators.index(methodInfo.cls);
-                    } else {
-                        out.println("_deallocate);");
-                        deallocators.index(methodInfo.cls);
-                    }
-                    out.println(indent + "env->CallNonvirtualVoidMethodA(obj, JavaCPP_getClass(env, " +
-                            jclasses.index(Pointer.class) + "), JavaCPP_initMID, args);");
+                out.print(indent + "JavaCPP_initPointer(env, obj, rptr, rcapacity, ");
+                if (noDeallocator) {
+                    out.println("NULL);");
+                } else if (methodInfo.arrayAllocator) {
+                    out.println("&JavaCPP_" + mangle(methodInfo.cls.getName()) + "_deallocateArray);");
+                    arrayDeallocators.index(methodInfo.cls);
                 } else {
-                    out.println(indent + "env->SetLongField(obj, JavaCPP_addressFID, ptr_to_jlong(rptr));");
-                    out.println(indent + "env->SetIntField(obj, JavaCPP_limitFID, rcapacity);");
-                    out.println(indent + "env->SetIntField(obj, JavaCPP_capacityFID, rcapacity);");
+                    out.println("&JavaCPP_" + mangle(methodInfo.cls.getName()) + "_deallocate);");
+                    deallocators.index(methodInfo.cls);
                 }
             }
         } else {
@@ -1358,15 +1391,15 @@ public class Generator implements Closeable {
                     out.println(indent + "rptr = radapter;");
                     if (methodInfo.returnType != String.class) {
                         out.println(indent + "jint rcapacity = (jint)radapter.size;");
-                        out.println(indent + "jlong deallocator = " + (adapterInfo.constant ? "0;" :
-                                "ptr_to_jlong(&(" + adapterInfo.name + "::deallocate));"));
+                        out.println(indent + "void (*deallocator)(void*) = " +
+                                (adapterInfo.constant ? "NULL;" : "&" + adapterInfo.name + "::deallocate;"));
                     }
                     needInit = true;
                 } else if (returnBy instanceof ByVal ||
                         FunctionPointer.class.isAssignableFrom(methodInfo.returnType)) {
                     out.println(indent + "jint rcapacity = 1;");
-                    out.println(indent + "jlong deallocator = ptr_to_jlong(&JavaCPP_" +
-                            mangle(methodInfo.returnType.getName()) + "_deallocate);");
+                    out.println(indent + "void (*deallocator)(void*) = &JavaCPP_" +
+                            mangle(methodInfo.returnType.getName()) + "_deallocate;");
                     deallocators.index(methodInfo.returnType);
                     needInit = true;
                 }
@@ -1378,7 +1411,8 @@ public class Generator implements Closeable {
                         if (Modifier.isStatic(methodInfo.modifiers) && methodInfo.parameterTypes.length > 0) {
                             for (int i = 0; i < methodInfo.parameterTypes.length; i++) {
                                 String cast = cast(methodInfo, i);
-                                if (methodInfo.parameterTypes[i] == methodInfo.returnType) {
+                                if (Arrays.equals(methodInfo.parameterAnnotations[i], methodInfo.annotations)
+                                        && methodInfo.parameterTypes[i] == methodInfo.returnType) {
                                     out.println(         "if (rptr == " + cast + "ptr" + i + ") {");
                                     out.println(indent + "    rarg = arg" + i + ";");
                                     out.print(indent + "} else ");
@@ -1391,21 +1425,9 @@ public class Generator implements Closeable {
                         }
                     }
                     out.println(         "if (rptr != NULL) {");
-                    out.println(indent + "    rarg = env->AllocObject(JavaCPP_getClass(env, " +
-                            jclasses.index(methodInfo.returnType) + "));");
+                    out.println(indent + "    rarg = JavaCPP_createPointer(env, " + jclasses.index(methodInfo.returnType) + ");");
                     if (needInit) {
-                        out.println(indent + "    if (deallocator != 0) {");
-                        out.println(indent + "        jvalue args[3];");
-                        out.println(indent + "        args[0].j = ptr_to_jlong(rptr);");
-                        out.println(indent + "        args[1].i = rcapacity;");
-                        out.println(indent + "        args[2].j = deallocator;");
-                        out.println(indent + "        env->CallNonvirtualVoidMethodA(rarg, JavaCPP_getClass(env, " +
-                                jclasses.index(Pointer.class) + "), JavaCPP_initMID, args);");
-                        out.println(indent + "    } else {");
-                        out.println(indent + "        env->SetLongField(rarg, JavaCPP_addressFID, ptr_to_jlong(rptr));");
-                        out.println(indent + "        env->SetIntField(rarg, JavaCPP_limitFID, rcapacity);");
-                        out.println(indent + "        env->SetIntField(rarg, JavaCPP_capacityFID, rcapacity);");
-                        out.println(indent + "    }");
+                        out.println(indent + "    JavaCPP_initPointer(env, rarg, rptr, rcapacity, deallocator);");
                     } else {
                         out.println(indent + "    env->SetLongField(rarg, JavaCPP_addressFID, ptr_to_jlong(rptr));");
                     }
@@ -1437,7 +1459,7 @@ public class Generator implements Closeable {
                         out.println(indent + "jint rcapacity = rptr != NULL ? 1 : 0;");
                     }
                     out.println(indent + "if (rptr != NULL) {");
-                    out.println(indent + "    rarg = env->NewDirectByteBuffer(rptr, rcapacity);");
+                    out.println(indent + "    rarg = env->NewDirectByteBuffer((void*)rptr, rcapacity);");
                     out.println(indent + "}");
                 }
             }
@@ -1469,12 +1491,7 @@ public class Generator implements Closeable {
                         out.println("    " + typeName[0] + " rptr" + (j+k) + typeName[1] + " = " + cast + "adapter" + j + ";");
                         out.println("    jint rsize" + (j+k) + " = (jint)adapter" + j + ".size" + (k > 0 ? (k+1) + ";" : ";"));
                         out.println("    if (rptr" + (j+k) + " != " + cast + "ptr" + (j+k) + ") {");
-                        out.println("        jvalue args[3];");
-                        out.println("        args[0].j = ptr_to_jlong(rptr" + (j+k) + ");");
-                        out.println("        args[1].i = rsize" + (j+k) + ";");
-                        out.println("        args[2].j = ptr_to_jlong(&(" + adapterInfo.name + "::deallocate));");
-                        out.println("        env->CallNonvirtualVoidMethodA(arg" + j + ", JavaCPP_getClass(env, " +
-                                jclasses.index(Pointer.class) + "), JavaCPP_initMID, args);");
+                        out.println("        JavaCPP_initPointer(env, arg" + j + ", rptr" + (j+k) + ", rsize" + (j+k) + ", &" + adapterInfo.name + "::deallocate);");
                         out.println("    } else {");
                         out.println("        env->SetIntField(arg" + j + ", JavaCPP_limitFID, rsize" + (j+k) + " + position" + (j+k) + ");");
                         out.println("    }");
@@ -1577,14 +1594,14 @@ public class Generator implements Closeable {
                         out.println("    " + adapterInfo.name + " adapter" + j + "(arg" + j + ");");
                         if (callbackParameterTypes[j] != String.class) {
                             out.println("    jint size" + j + " = (jint)adapter" + j + ".size;");
-                            out.println("    jlong deallocator" + j + " = ptr_to_jlong(&(" + adapterInfo.name + "::deallocate));");
+                            out.println("    void (*deallocator" + j + ")(void*) = &" + adapterInfo.name + "::deallocate;");
                         }
                         needInit = true;
                     } else if ((passBy instanceof ByVal && callbackParameterTypes[j] != Pointer.class) ||
                             FunctionPointer.class.isAssignableFrom(callbackParameterTypes[j])) {
                         out.println("    jint size" + j + " = 1;");
-                        out.println("    jlong deallocator" + j + " = ptr_to_jlong(&JavaCPP_" +
-                                mangle(callbackParameterTypes[j].getName()) + "_deallocate);");
+                        out.println("    void (*deallocator" + j + ")(void*) = &JavaCPP_" +
+                                mangle(callbackParameterTypes[j].getName()) + "_deallocate;");
                         deallocators.index(callbackParameterTypes[j]);
                         needInit = true;
                     }
@@ -1626,8 +1643,7 @@ public class Generator implements Closeable {
                     }
 
                     if (Pointer.class.isAssignableFrom(callbackParameterTypes[j])) {
-                        String s = "    obj" + j + " = env->AllocObject(JavaCPP_getClass(env, " +
-                                jclasses.index(callbackParameterTypes[j]) + "));";
+                        String s = "    obj" + j + " = JavaCPP_createPointer(env, " + jclasses.index(callbackParameterTypes[j]) + ");";
                         jclassesInit.index(callbackParameterTypes[j]); // for custom class loaders
                         adapterInfo = adapterInformation(true, valueTypeName, callbackParameterAnnotations[j]);
                         if (adapterInfo != null || passBy instanceof ByPtrPtr || passBy instanceof ByPtrRef) {
@@ -1639,18 +1655,7 @@ public class Generator implements Closeable {
                         }
                         out.println("    if (obj" + j + " != NULL) { ");
                         if (needInit) {
-                            out.println("        if (deallocator" + j + " != 0) {");
-                            out.println("            jvalue args[3];");
-                            out.println("            args[0].j = ptr_to_jlong(ptr" + j + ");");
-                            out.println("            args[1].i = size" + j + ";");
-                            out.println("            args[2].j = deallocator" + j + ";");
-                            out.println("            env->CallNonvirtualVoidMethodA(obj" + j + ", JavaCPP_getClass(env, " +
-                                    jclasses.index(Pointer.class) + "), JavaCPP_initMID, args);");
-                            out.println("        } else {");
-                            out.println("            env->SetLongField(obj" + j + ", JavaCPP_addressFID, ptr_to_jlong(ptr" + j + "));");
-                            out.println("            env->SetIntField(obj" + j + ", JavaCPP_limitFID, size" + j + ");");
-                            out.println("            env->SetIntField(obj" + j + ", JavaCPP_capacityFID, size" + j + ");");
-                            out.println("        }");
+                            out.println("        JavaCPP_initPointer(env, obj" + j + ", ptr" + j + ", size" + j + ", deallocator" + j + ");");
                         } else {
                             out.println("        env->SetLongField(obj" + j + ", JavaCPP_addressFID, ptr_to_jlong(ptr" + j + "));");
                         }
@@ -1681,7 +1686,7 @@ public class Generator implements Closeable {
                             out.println("    jint size" + j + " = ptr" + j + " != NULL ? 1 : 0;");
                         }
                         out.println("    if (ptr" + j + " != NULL) {");
-                        out.println("        obj" + j + " = env->NewDirectByteBuffer(ptr" + j + ", size" + j + ");");
+                        out.println("        obj" + j + " = env->NewDirectByteBuffer((void*)ptr" + j + ", size" + j + ");");
                         out.println("    }");
                     } else {
                         logger.log(Level.WARNING, "Callback \"" + callbackMethod + "\" has unsupported parameter type \"" +
@@ -1692,7 +1697,7 @@ public class Generator implements Closeable {
         }
 
         out.println("    if (obj == NULL) {");
-        out.println("        obj = env->NewGlobalRef(env->AllocObject(JavaCPP_getClass(env, " + jclasses.index(cls) + ")));");
+        out.println("        obj = env->NewGlobalRef(JavaCPP_createPointer(env, " + jclasses.index(cls) + "));");
         out.println("        if (obj == NULL) {");
         out.println("            JavaCPP_log(\"Error creating global reference of " + cls.getCanonicalName() + " instance for callback.\");");
         out.println("        } else {");
@@ -1847,13 +1852,8 @@ public class Generator implements Closeable {
         out.println("    if (rptr != NULL) {");
         out.println("        rptr->ptr = &" + callbackName + ";");
         out.println("        rptr->obj = obj;");
-        out.println("        jvalue args[3];");
-        out.println("        args[0].j = ptr_to_jlong(rptr);");
-        out.println("        args[1].i = 1;");
-        out.println("        args[2].j = ptr_to_jlong(&JavaCPP_" + mangle(cls.getName()) + "_deallocate);");
+        out.println("        JavaCPP_initPointer(env, obj, rptr, 1, &JavaCPP_" + mangle(cls.getName()) + "_deallocate);");
         deallocators.index(cls);
-        out.println("        env->CallNonvirtualVoidMethodA(obj, JavaCPP_getClass(env, " +
-                jclasses.index(Pointer.class) + "), JavaCPP_initMID, args);");
         out.println("        " + callbackName + "_instance = *rptr;");
         out.println("    }");
         out.println("}");
@@ -1989,16 +1989,7 @@ public class Generator implements Closeable {
                 info.parameterTypes[0].isArray() && info.parameterTypes[0].getComponentType().isPrimitive());
         boolean canBeSetter = (info.returnType == void.class ||
                 info.returnType == info.cls) && info.parameterTypes.length > 0;
-//        for (int j = 0; j < info.parameterTypes.length; j++) {
-//            if (info.parameterTypes[j] != int.class && info.parameterTypes[j] != long.class) {
-//                canBeGetter = false;
-//                if (j < info.parameterTypes.length-1) {
-//                    canBeSetter = false;
-//                }
-//            }
-//        }
-        boolean canBeAllocator = !Modifier.isStatic(info.modifiers) &&
-                info.returnType == void.class;
+        boolean canBeAllocator = !Modifier.isStatic(info.modifiers) && info.returnType == void.class;
         boolean canBeArrayAllocator = canBeAllocator && info.parameterTypes.length == 1 &&
                 (info.parameterTypes[0] == int.class || info.parameterTypes[0] == long.class);
 
@@ -2022,12 +2013,24 @@ public class Generator implements Closeable {
 
             boolean canBeValueGetter = false;
             boolean canBeValueSetter = false;
+            boolean canBeMemberGetter = false;
+            boolean canBeMemberSetter = false;
             if (canBeGetter && "get".equals(info.name) && "put".equals(methodName2)) {
                 canBeValueGetter = true;
             } else if (canBeSetter && "put".equals(info.name) && "get".equals(methodName2)) {
                 canBeValueSetter = true;
             } else if (methodName2.equals(info.name)) {
                 info.overloaded = true;
+                canBeMemberGetter = canBeGetter;
+                canBeMemberSetter = canBeSetter;
+                for (int j = 0; j < info.parameterTypes.length; j++) {
+                    if (info.parameterTypes[j] != int.class && info.parameterTypes[j] != long.class) {
+                        canBeMemberGetter = false;
+                        if (j < info.parameterTypes.length - 1) {
+                            canBeMemberSetter = false;
+                        }
+                    }
+                }
             } else {
                 continue;
             }
@@ -2051,15 +2054,15 @@ public class Generator implements Closeable {
                     (parameterAsReturn ? info.parameterTypes[info.parameterTypes.length-1] : info.returnType) ==
                     parameterTypes2[parameterTypes2.length-1] && (returnType2 == void.class || returnType2 == info.cls)) {
                 pairedMethod = method2;
-                valueGetter  =  canBeValueGetter;
-                memberGetter = !canBeValueGetter;
+                valueGetter  = canBeValueGetter;
+                memberGetter = canBeMemberGetter;
                 noReturnGetter = parameterAsReturn;
             } else if (canBeSetter && info.parameterTypes.length - (parameterAsReturn2 ? 0 : 1) == parameterTypes2.length &&
                     (parameterAsReturn2 ? parameterTypes2[parameterTypes2.length-1] : returnType2) ==
                     info.parameterTypes[info.parameterTypes.length-1]) {
                 pairedMethod = method2;
-                valueSetter  =  canBeValueSetter;
-                memberSetter = !canBeValueSetter;
+                valueSetter  = canBeValueSetter;
+                memberSetter = canBeMemberSetter;
             }
         }
 
@@ -2106,9 +2109,9 @@ public class Generator implements Closeable {
                 info.memberSetter = true;
                 info.pairedMethod = pairedMethod;
             }
-        } else {
+        } else if (!(behavior instanceof Function)) {
             logger.log(Level.WARNING, "Method \"" + method + "\" cannot behave like a \"" +
-                    behavior + "\". No code will be generated.");
+                    behavior.annotationType().getSimpleName() + "\". No code will be generated.");
             return null;
         }
 
