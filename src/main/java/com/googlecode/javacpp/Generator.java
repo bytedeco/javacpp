@@ -399,8 +399,10 @@ public class Generator implements Closeable {
         out.println("    return mid;");
         out.println("}");
         out.println();
-        out.println("static JavaCPP_noinline jobject JavaCPP_createPointer(JNIEnv* env, int i) {");
-        out.println("    jclass cls = JavaCPP_getClass(env, i);");
+        out.println("static JavaCPP_noinline jobject JavaCPP_createPointer(JNIEnv* env, int i, jclass cls = NULL) {");
+        out.println("    if (cls == NULL && (cls = JavaCPP_getClass(env, i)) == NULL) {");
+        out.println("        return NULL;");
+        out.println("    }");
         out.println("    if (JavaCPP_haveAllocObject) {");
         out.println("        return env->AllocObject(cls);");
         out.println("    } else {");
@@ -972,7 +974,8 @@ public class Generator implements Closeable {
     void parametersBefore(MethodInformation methodInfo) {
         String adapterLine  = "";
         AdapterInformation prevAdapterInfo = null;
-        for (int j = 0; j < methodInfo.parameterTypes.length; j++) {
+        int skipParameters = methodInfo.parameterTypes.length > 0 && methodInfo.parameterTypes[0] == Class.class ? 1 : 0;
+        for (int j = skipParameters; j < methodInfo.parameterTypes.length; j++) {
             if (!methodInfo.parameterTypes[j].isPrimitive()) {
                 Annotation passBy = by(methodInfo, j);
                 String cast = cast(methodInfo, j);
@@ -1174,7 +1177,7 @@ public class Generator implements Closeable {
         String indent = methodInfo.throwsException != null ? "        " : "    ";
         String prefix = "(";
         String suffix = ")";
-        int skipParameters = 0;
+        int skipParameters = methodInfo.parameterTypes.length > 0 && methodInfo.parameterTypes[0] == Class.class ? 1 : 0;
         boolean index = methodInfo.method.isAnnotationPresent(Index.class) ||
                  (methodInfo.pairedMethod != null &&
                   methodInfo.pairedMethod.isAnnotationPresent(Index.class));
@@ -1269,23 +1272,27 @@ public class Generator implements Closeable {
             }
         }
 
-        for (int j = skipParameters; j < methodInfo.dim; j++) {
-            // print array indices to access array members, or whatever
-            // the C++ operator does with them when the Index annotation is present
-            String cast = cast(methodInfo, j);
-            out.print("[" + cast + (methodInfo.parameterTypes[j].isPrimitive() ? "arg" : "ptr") + j + "]");
-        }
-        if (methodInfo.memberName.length > 1) {
-            out.print(methodInfo.memberName[1]);
-        }
-        out.print(prefix);
-        if (methodInfo.withEnv) {
-            out.print(Modifier.isStatic(methodInfo.modifiers) ? "env, cls" : "env, obj");
-            if (methodInfo.parameterTypes.length - skipParameters - methodInfo.dim > 0) {
-                out.print(", ");
+        for (int j = skipParameters; j <= methodInfo.parameterTypes.length; j++) {
+            if (j == skipParameters + methodInfo.dim) {
+                if (methodInfo.memberName.length > 1) {
+                    out.print(methodInfo.memberName[1]);
+                }
+                out.print(prefix);
+                if (methodInfo.withEnv) {
+                    out.print(Modifier.isStatic(methodInfo.modifiers) ? "env, cls" : "env, obj");
+                    if (methodInfo.parameterTypes.length - skipParameters - methodInfo.dim > 0) {
+                        out.print(", ");
+                    }
+                }
             }
-        }
-        for (int j = skipParameters + methodInfo.dim; j < methodInfo.parameterTypes.length; j++) {
+            if (j == methodInfo.parameterTypes.length) {
+                break;
+            }
+            if (j < skipParameters + methodInfo.dim) {
+                // print array indices to access array members, or whatever
+                // the C++ operator does with them when the Index annotation is present
+                out.print("[");
+            }
             Annotation passBy = by(methodInfo, j);
             String cast = cast(methodInfo, j);
             AdapterInformation adapterInfo = adapterInformation(false, methodInfo, j);
@@ -1313,7 +1320,9 @@ public class Generator implements Closeable {
                 out.print(cast + "ptr" + j);
             }
 
-            if (j < methodInfo.parameterTypes.length - 1) {
+            if (j < skipParameters + methodInfo.dim) {
+                out.print("]");
+            } else if (j < methodInfo.parameterTypes.length - 1) {
                 out.print(", ");
             }
         }
@@ -1425,7 +1434,8 @@ public class Generator implements Closeable {
                         }
                     }
                     out.println(         "if (rptr != NULL) {");
-                    out.println(indent + "    rarg = JavaCPP_createPointer(env, " + jclasses.index(methodInfo.returnType) + ");");
+                    out.println(indent + "    rarg = JavaCPP_createPointer(env, " + jclasses.index(methodInfo.returnType) +
+                            (methodInfo.parameterTypes.length > 0 && methodInfo.parameterTypes[0] == Class.class ? ", arg0);" : ");"));
                     if (needInit) {
                         out.println(indent + "    JavaCPP_initPointer(env, rarg, rptr, rcapacity, deallocator);");
                     } else {
@@ -1474,7 +1484,8 @@ public class Generator implements Closeable {
             out.println("    }");
             out.println();
         }
-        for (int j = 0; j < methodInfo.parameterTypes.length; j++) {
+        int skipParameters = methodInfo.parameterTypes.length > 0 && methodInfo.parameterTypes[0] == Class.class ? 1 : 0;
+        for (int j = skipParameters; j < methodInfo.parameterTypes.length; j++) {
             if (methodInfo.parameterRaw[j]) {
                 continue;
             }
@@ -2006,6 +2017,10 @@ public class Generator implements Closeable {
             Class returnType2       = method2.getReturnType();
             String methodName2      = method2.getName();
             Class[] parameterTypes2 = method2.getParameterTypes();
+            Annotation[] annotations2 = method2.getAnnotations();
+            Annotation[][] parameterAnnotations2 = method2.getParameterAnnotations();
+            int skipParameters = info.parameterTypes.length > 0 && info.parameterTypes[0] == Class.class ? 1 : 0;
+            int skipParameters2 = parameterTypes2.length > 0 && parameterTypes2[0] == Class.class ? 1 : 0;
 
             if (method.equals(method2) || !Modifier.isNative(modifiers2)) {
                 continue;
@@ -2023,7 +2038,7 @@ public class Generator implements Closeable {
                 info.overloaded = true;
                 canBeMemberGetter = canBeGetter;
                 canBeMemberSetter = canBeSetter;
-                for (int j = 0; j < info.parameterTypes.length; j++) {
+                for (int j = skipParameters; j < info.parameterTypes.length; j++) {
                     if (info.parameterTypes[j] != int.class && info.parameterTypes[j] != long.class) {
                         canBeMemberGetter = false;
                         if (j < info.parameterTypes.length - 1) {
@@ -2036,8 +2051,8 @@ public class Generator implements Closeable {
             }
 
             boolean sameIndexParameters = true;
-            for (int j = 0; j < info.parameterTypes.length && j < parameterTypes2.length; j++) {
-                if (info.parameterTypes[j] != parameterTypes2[j]) {
+            for (int j = 0; j < info.parameterTypes.length - skipParameters && j < parameterTypes2.length - skipParameters2; j++) {
+                if (info.parameterTypes[j + skipParameters] != parameterTypes2[j + skipParameters2]) {
                     sameIndexParameters = false;
                 }
             }
@@ -2050,16 +2065,20 @@ public class Generator implements Closeable {
             boolean parameterAsReturn2 = canBeValueSetter && parameterTypes2.length > 0 &&
                     parameterTypes2[0].isArray() && parameterTypes2[0].getComponentType().isPrimitive();
 
-            if (canBeGetter && parameterTypes2.length - (parameterAsReturn ? 0 : 1) == info.parameterTypes.length &&
-                    (parameterAsReturn ? info.parameterTypes[info.parameterTypes.length-1] : info.returnType) ==
-                    parameterTypes2[parameterTypes2.length-1] && (returnType2 == void.class || returnType2 == info.cls)) {
+            if (canBeGetter && parameterTypes2.length - (parameterAsReturn ? 0 : 1) == info.parameterTypes.length - skipParameters
+                    && (parameterAsReturn ? info.parameterTypes[info.parameterTypes.length - 1] : info.returnType) ==
+                        parameterTypes2[parameterTypes2.length - 1] && (returnType2 == void.class || returnType2 == info.cls)
+                    && (parameterAnnotations2[parameterAnnotations2.length - 1].length == 0
+                        || (Arrays.equals(parameterAnnotations2[parameterAnnotations2.length - 1], info.annotations)))) {
                 pairedMethod = method2;
                 valueGetter  = canBeValueGetter;
                 memberGetter = canBeMemberGetter;
                 noReturnGetter = parameterAsReturn;
-            } else if (canBeSetter && info.parameterTypes.length - (parameterAsReturn2 ? 0 : 1) == parameterTypes2.length &&
-                    (parameterAsReturn2 ? parameterTypes2[parameterTypes2.length-1] : returnType2) ==
-                    info.parameterTypes[info.parameterTypes.length-1]) {
+            } else if (canBeSetter && info.parameterTypes.length - (parameterAsReturn2 ? 0 : 1) == parameterTypes2.length - skipParameters2
+                    && (parameterAsReturn2 ? parameterTypes2[parameterTypes2.length - 1] : returnType2) ==
+                        info.parameterTypes[info.parameterTypes.length - 1] && (info.returnType == void.class || info.returnType == info.cls)
+                    && (info.parameterAnnotations[info.parameterAnnotations.length - 1].length == 0
+                        || (Arrays.equals(info.parameterAnnotations[info.parameterAnnotations.length - 1], annotations2)))) {
                 pairedMethod = method2;
                 valueSetter  = canBeValueSetter;
                 memberSetter = canBeMemberSetter;
@@ -2183,7 +2202,7 @@ public class Generator implements Closeable {
         }
         String valueTypeName = valueTypeName(typeName);
         AdapterInformation adapter = adapterInformation(out, valueTypeName, methodInfo.parameterAnnotations[j]);
-        if (adapter == null && methodInfo.pairedMethod != null &&
+        if (adapter == null && methodInfo.pairedMethod != null && j == methodInfo.parameterTypes.length - 1 &&
                 (methodInfo.valueSetter || methodInfo.memberSetter)) {
             adapter = adapterInformation(out, valueTypeName, methodInfo.pairedMethod.getAnnotations());
         }
@@ -2385,6 +2404,8 @@ public class Generator implements Closeable {
                 Annotation by = by(annotations);
                 if (by instanceof ByPtrPtr) {
                     typeName[0] += "*";
+                } else if (by instanceof ByPtrRef) {
+                    typeName[0] += "&";
                 }
             } else if (a instanceof Adapter || a.annotationType().isAnnotationPresent(Adapter.class)) {
                 adapter = true;
@@ -2610,9 +2631,9 @@ public class Generator implements Closeable {
             } else if (type == void.class) {
                 signature.append("V");
             } else if (type.isArray()) {
-                signature.append(type.getName().replace(".", "/"));
+                signature.append(type.getName().replace('.', '/'));
             } else {
-                signature.append("L").append(type.getName().replace(".", "/")).append(";");
+                signature.append("L").append(type.getName().replace('.', '/')).append(";");
             }
         }
         return signature.toString();

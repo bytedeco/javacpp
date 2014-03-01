@@ -311,8 +311,11 @@ This project was conceived at the Okutomi & Tanaka Laboratory, Tokyo Institute o
 
 ==Changes==
 
+ * Annotations such as `@Adapter` or `@ByVal` are no longer ignored on parameters of getters or setters annotated with `@Index`
+ * Fixed some other corner cases in `Generator` and a few potential issues with the hacks in `Loader`
+ * Added for convenience to `PointerPointer` a generic parameter `<P extends Pointer>` and the associated `get(Class<P> ...)` getters, as well as `String` getters and setters
+ * Passing a `Class` object as first argument to a native method that returns a `Pointer` now determines the runtime type of that returned object
  * Continued to clean up the `Parser` and improve the support of comments, templates, overloaded operators, and namespaces, for the most part
- * Fixed a few potential issues with the hacks in `Loader`
  * Generalized somewhat more the compiler options used inside `linux-arm.properties` (issue javacv:418)
  * Unified the function pointer type of native deallocators to `void (*)(void*)`
  * Removed dependency on (efficient) `AllocObject()` and `CallNonvirtualVoidMethodA()` JNI functions, which are not supported by Avian

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011,2012,2013 Samuel Audet
+ * Copyright (C) 2011,2012,2013,2014 Samuel Audet
  *
  * This file is part of JavaCPP.
  *
@@ -20,6 +20,8 @@
 
 package com.googlecode.javacpp;
 
+import java.io.UnsupportedEncodingException;
+
 /**
  * The peer class to native pointers and arrays of {@code void*}.
  * All operations take into account the position and limit, when appropriate.
@@ -29,14 +31,32 @@ package com.googlecode.javacpp;
  *
  * @author Samuel Audet
  */
-public class PointerPointer extends Pointer {
+public class PointerPointer<P extends Pointer> extends Pointer {
+    /**
+     * Allocates enough memory for the array of strings and copies it.
+     *
+     * @param array the array of strings to copy
+     * @see #putString(String[])
+     */
+    public PointerPointer(String ... array) { this(array.length); putString(array); }
+    /**
+     * Allocates enough memory for the array of strings and copies it.
+     *
+     * @param array the array of strings to copy
+     * @param charsetName the charset in which the bytes are encoded
+     * @see #putString(String[], String)
+     * @throws UnsupportedEncodingException
+     */
+    public PointerPointer(String[] array, String charsetName) throws UnsupportedEncodingException {
+        this(array.length); putString(array, charsetName);
+    }
     /**
      * Allocates enough memory for the array and copies it.
      *
      * @param array the array to copy
      * @see #put(Pointer[])
      */
-    public PointerPointer(Pointer  ... array) { this(array.length); put(array); }
+    public PointerPointer(P ... array) { this(array.length); put(array); }
     /**
      * Allocates enough memory for the array of arrays and copies it.
      *
@@ -99,23 +119,65 @@ public class PointerPointer extends Pointer {
         }
     }
     /** @see Pointer#Pointer(Pointer) */
-    public PointerPointer(Pointer p) { super(p); }
+    public PointerPointer(P p) { super(p); }
     private native void allocateArray(int size);
 
     /** This is just to keep references to Pointer objects we create. */
-    private Pointer[] pointerArray;
+    private P[] pointerArray;
 
     /** @see Pointer#position(int) */
-    @Override public PointerPointer position(int position) {
+    @Override public PointerPointer<P> position(int position) {
         return super.position(position);
     }
     /** @see Pointer#limit(int) */
-    @Override public PointerPointer limit(int limit) {
+    @Override public PointerPointer<P> limit(int limit) {
         return super.limit(limit);
     }
     /** @see Pointer#capacity(int) */
-    @Override public PointerPointer capacity(int capacity) {
+    @Override public PointerPointer<P> capacity(int capacity) {
         return super.capacity(capacity);
+    }
+
+    /** @return {@code get(BytePointer.class, i).getString()}
+     *  @see BytePointer#getString() */
+    public String getString(int i) {
+        return ((BytePointer)get((Class<P>)BytePointer.class, i)).getString();
+    }
+    /** @return {@code get(BytePointer.class, i).getString(charsetName)}
+     *  @see BytePointer#getString(String) */
+    public String getString(int i, String charsetName) throws UnsupportedEncodingException {
+        return ((BytePointer)get((Class<P>)BytePointer.class, i)).getString(charsetName);
+    }
+
+    /**
+     * Creates one by one a new {@link BytePointer} for each {@link String},
+     * and writes them into the native {@code void*} array.
+     *
+     * @param array the array of {@link String} to read from
+     * @return this
+     */
+    public PointerPointer<P> putString(String ... array) {
+        pointerArray = (P[])new BytePointer[array.length];
+        for (int i = 0; i < array.length; i++) {
+            pointerArray[i] = array[i] != null ? (P)new BytePointer(array[i]) : null;
+        }
+        return put(pointerArray);
+    }
+    /**
+     * Creates one by one a new {@link BytePointer} for each {@link String},
+     * and writes them into the native {@code void*} array.
+     *
+     * @param array the array of {@link String} to read from
+     * @param charsetName the charset in which the bytes are encoded
+     * @return this
+     * @throws UnsupportedEncodingException
+     */
+    public PointerPointer<P> putString(String[] array, String charsetName) throws UnsupportedEncodingException {
+        pointerArray = (P[])new BytePointer[array.length];
+        for (int i = 0; i < array.length; i++) {
+            pointerArray[i] = array[i] != null ? (P)new BytePointer(array[i], charsetName) : null;
+        }
+        return put(pointerArray);
     }
 
     /**
@@ -124,117 +186,121 @@ public class PointerPointer extends Pointer {
      * @param array the array of Pointer values to read from
      * @return this
      */
-    public PointerPointer put(Pointer ... array) {
+    public PointerPointer<P> put(P ... array) {
         for (int i = 0; i < array.length; i++) {
             put(i, array[i]);
         }
         return this;
     }
     /**
-     * Creates one by one a new Pointer for each {@code byte[]},
+     * Creates one by one a new {@link BytePointer} for each {@code byte[]},
      * and writes them into the native {@code void*} array.
      *
      * @param array the array of {@code byte[]} to read from
      * @return this
      */
-    public PointerPointer put(byte[] ... array) {
-        pointerArray = new Pointer[array.length];
+    public PointerPointer<P> put(byte[] ... array) {
+        pointerArray = (P[])new BytePointer[array.length];
         for (int i = 0; i < array.length; i++) {
-            pointerArray[i] = new BytePointer(array[i]);
+            pointerArray[i] = array[i] != null ? (P)new BytePointer(array[i]) : null;
         }
         return put(pointerArray);
     }
     /**
-     * Creates one by one a new Pointer for each {@code short[]},
+     * Creates one by one a new {@link ShortPointer} for each {@code short[]},
      * and writes them into the native {@code void*} array.
      *
      * @param array the array of {@code short[]} to read from
      * @return this
      */
-    public PointerPointer put(short[] ... array) {
-        pointerArray = new Pointer[array.length];
+    public PointerPointer<P> put(short[] ... array) {
+        pointerArray = (P[])new ShortPointer[array.length];
         for (int i = 0; i < array.length; i++) {
-            pointerArray[i] = new ShortPointer(array[i]);
+            pointerArray[i] = array[i] != null ? (P)new ShortPointer(array[i]) : null;
         }
         return put(pointerArray);
     }
     /**
-     * Creates one by one a new Pointer for each {@code int[]},
+     * Creates one by one a new {@link IntPointer} for each {@code int[]},
      * and writes them into the native {@code void*} array.
      *
      * @param array the array of {@code int[]} to read from
      * @return this
      */
-    public PointerPointer put(int[] ... array) {
-        pointerArray = new Pointer[array.length];
+    public PointerPointer<P> put(int[] ... array) {
+        pointerArray = (P[])new IntPointer[array.length];
         for (int i = 0; i < array.length; i++) {
-            pointerArray[i] = new IntPointer(array[i]);
+            pointerArray[i] = array[i] != null ? (P)new IntPointer(array[i]) : null;
         }
         return put(pointerArray);
     }
     /**
-     * Creates one by one a new Pointer for each {@code long[]},
+     * Creates one by one a new {@link LongPointer} for each {@code long[]},
      * and writes them into the native {@code void*} array.
      *
      * @param array the array of {@code long[]} to read from
      * @return this
      */
-    public PointerPointer put(long[] ... array) {
-        pointerArray = new Pointer[array.length];
+    public PointerPointer<P> put(long[] ... array) {
+        pointerArray = (P[])new LongPointer[array.length];
         for (int i = 0; i < array.length; i++) {
-            pointerArray[i] = new LongPointer(array[i]);
+            pointerArray[i] = array[i] != null ? (P)new LongPointer(array[i]) : null;
         }
         return put(pointerArray);
     }
     /**
-     * Creates one by one a new Pointer for each {@code float[]},
+     * Creates one by one a new {@link FloatPointer} for each {@code float[]},
      * and writes them into the native {@code void*} array.
      *
      * @param array the array of {@code float[]} to read from
      * @return this
      */
-    public PointerPointer put(float[] ... array) {
-        pointerArray = new Pointer[array.length];
+    public PointerPointer<P> put(float[] ... array) {
+        pointerArray = (P[])new FloatPointer[array.length];
         for (int i = 0; i < array.length; i++) {
-            pointerArray[i] = new FloatPointer(array[i]);
+            pointerArray[i] = array[i] != null ? (P)new FloatPointer(array[i]) : null;
         }
         return put(pointerArray);
     }
     /**
-     * Creates one by one a new Pointer for each {@code double[]},
+     * Creates one by one a new {@link DoublePointer} for each {@code double[]},
      * and writes them into the native {@code void*} array.
      *
      * @param array the array of {@code double[]} to read from
      * @return this
      */
-    public PointerPointer put(double[] ... array) {
-        pointerArray = new Pointer[array.length];
+    public PointerPointer<P> put(double[] ... array) {
+        pointerArray = (P[])new DoublePointer[array.length];
         for (int i = 0; i < array.length; i++) {
-            pointerArray[i] = new DoublePointer(array[i]);
+            pointerArray[i] = array[i] != null ? (P)new DoublePointer(array[i]) : null;
         }
         return put(pointerArray);
     }
     /**
-     * Creates one by one a new Pointer for each {@code char[]},
+     * Creates one by one a new {@link CharPointer} for each {@code char[]},
      * and writes them into the native {@code void*} array.
      *
      * @param array the array of {@code char[]} to read from
      * @return this
      */
-    public PointerPointer put(char[] ... array) {
-        pointerArray = new Pointer[array.length];
+    public PointerPointer<P> put(char[] ... array) {
+        pointerArray = (P[])new CharPointer[array.length];
         for (int i = 0; i < array.length; i++) {
-            pointerArray[i] = new CharPointer(array[i]);
+            pointerArray[i] = array[i] != null ? (P)new CharPointer(array[i]) : null;
         }
         return put(pointerArray);
     }
 
     /** @return {@code get(0)} */
     public Pointer get() { return get(0); }
+    /** @return {@code get(cls, 0)} */
+    public P get(Class<P> cls) { return get(cls, 0); }
     /** @return the i-th Pointer value of a native array */
-    public native Pointer get(int i);
+    public Pointer get(int i) { return get((Class<P>)Pointer.class, i); }
+    /** @return in the given class the i-th Pointer value of a native array */
+    public native P get(Class<P> cls, int i);
     /** @return {@code put(0, p)} */
-    public PointerPointer put(Pointer p) { return put(0, p); }
+    public PointerPointer<P> put(Pointer p) { return put(0, p); }
     /**
      * Copies the Pointer value to the i-th element of a native array.
      *
@@ -242,5 +308,5 @@ public class PointerPointer extends Pointer {
      * @param p the Pointer value to copy
      * @return this
      */
-    public native PointerPointer put(int i, Pointer p);
+    public native PointerPointer<P> put(int i, Pointer p);
 }
