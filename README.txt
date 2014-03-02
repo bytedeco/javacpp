@@ -5,7 +5,7 @@ JavaCPP provides efficient access to native C++ inside Java, not unlike the way 
 
 More specifically, when compared to the approaches above or elsewhere ([http://www.itk.org/ITK/resources/CableSwig.html CableSwig], [http://www.eclipse.org/swt/jnigen.php JNIGeneratorApp], [http://cxxwrap.sourceforge.net/ cxxwrap], [http://www.teamdev.com/jniwrapper/ JNIWrapper], [http://msdn.microsoft.com/en-us/library/0h9e9t7d.aspx Platform Invoke], [http://jogamp.org/gluegen/www/ GlueGen], [http://web.archive.org/web/20050329122501/http://homepage.mac.com/pcbeard/JNIDirect/ JNIDirect], [http://docs.python.org/library/ctypes.html ctypes], [https://github.com/twall/jna JNA], [http://www.innowhere.com/jnieasy/ JNIEasy], [http://flinflon.brandonu.ca/Dueck/SystemsProgramming/JniMarshall/ JniMarshall], [http://jnative.free.fr/ JNative], [http://web.archive.org/web/20110727133817/http://www.jinvoke.com/ J/Invoke], [http://hawtjni.fusesource.org/ HawtJNI], [http://code.google.com/p/bridj/ BridJ], [http://ianwookim.org/fficxx/ fficxx], etc.), it maps naturally and efficiently many common features afforded by the C++ language and often considered problematic, including overloaded operators, class and function templates, member function pointers, callback functions, function objects (aka functors), nested struct definitions, variable length arguments, nested namespaces, large data structures containing arbitrary cycles, virtual and multiple inheritance, passing/returning by value/reference/vector, anonymous unions, bit fields, exceptions, destructors with garbage collection, and documentation comments. Obviously, neatly supporting the whole of C++ would require more work (although one could argue about the intrinsic neatness of C++), but I am releasing it here as a proof of concept. I have already used it to produce complete interfaces to OpenCV, FFmpeg, libdc1394, PGR FlyCapture, OpenKinect, videoInput, and ARToolKitPlus as part of [http://code.google.com/p/javacv/ JavaCV].
 
-The new [https://code.google.com/p/javacpp/wiki/Presets JavaCPP Presets] subproject also demonstrates early parsing capabilities of C/C++ header files that already show promising and useful results with at least the C API of OpenCV, FFmpeg, libdc1394, OpenKinect, videoInput, and ARToolKitPlus.
+The new [https://code.google.com/p/javacpp/wiki/Presets JavaCPP Presets] subproject also demonstrates early parsing capabilities of C/C++ header files that already show promising and useful results with at least OpenCV, FFmpeg, libdc1394, OpenKinect, videoInput, and ARToolKitPlus.
 
 Please feel free to ask questions on [http://groups.google.com/group/javacpp-project the mailing list] if you encounter any problems with the software! I am sure it is far from perfect...
 
@@ -311,11 +311,11 @@ This project was conceived at the Okutomi & Tanaka Laboratory, Tokyo Institute o
 
 ==Changes==
 
+ * Continued to clean up the `Parser` and improve the support of comments, templates, overloaded operators, namespaces, and standard containers, for the most part
  * Annotations such as `@Adapter` or `@ByVal` are no longer ignored on parameters of getters or setters annotated with `@Index`
  * Fixed some other corner cases in `Generator` and a few potential issues with the hacks in `Loader`
  * Added for convenience to `PointerPointer` a generic parameter `<P extends Pointer>` and the associated `get(Class<P> ...)` getters, as well as `String` getters and setters
  * Passing a `Class` object as first argument to a native method that returns a `Pointer` now determines the runtime type of that returned object
- * Continued to clean up the `Parser` and improve the support of comments, templates, overloaded operators, and namespaces, for the most part
  * Generalized somewhat more the compiler options used inside `linux-arm.properties` (issue javacv:418)
  * Unified the function pointer type of native deallocators to `void (*)(void*)`
  * Removed dependency on (efficient) `AllocObject()` and `CallNonvirtualVoidMethodA()` JNI functions, which are not supported by Avian

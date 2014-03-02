@@ -211,6 +211,7 @@ public class Loader {
         }
 
         String platformName, platformRoot, pathSeparator;
+        LinkedList<Class> inherited = null;
 
         public LinkedList<String> get(String key) {
             LinkedList<String> list = super.get(key);
@@ -278,8 +279,14 @@ public class Loader {
             } else {
                 Class[] classes = classProperties.inherit();
                 if (inherit && classes != null) {
+                    if (inherited == null) {
+                        inherited = new LinkedList<Class>();
+                    }
                     for (Class c2 : classes) {
                         load(c2, inherit);
+                        if (!inherited.contains(c2)) {
+                            inherited.add(c2);
+                        }
                     }
                 }
                 String target = classProperties.target();
@@ -357,10 +364,14 @@ public class Loader {
                     }
                 }
                 if (!found) {
-                    throw new FileNotFoundException("Could not find header file: " + include);
+                    files.add(new File(include));
                 }
             }
             return files;
+        }
+
+        public LinkedList<Class> getInherited() {
+            return inherited;
         }
     }
 

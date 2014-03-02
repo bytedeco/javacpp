@@ -141,12 +141,14 @@ public class PointerPointer<P extends Pointer> extends Pointer {
     /** @return {@code get(BytePointer.class, i).getString()}
      *  @see BytePointer#getString() */
     public String getString(int i) {
-        return ((BytePointer)get((Class<P>)BytePointer.class, i)).getString();
+        BytePointer p = (BytePointer)get((Class<P>)BytePointer.class, i);
+        return p != null ? p.getString() : null;
     }
     /** @return {@code get(BytePointer.class, i).getString(charsetName)}
      *  @see BytePointer#getString(String) */
     public String getString(int i, String charsetName) throws UnsupportedEncodingException {
-        return ((BytePointer)get((Class<P>)BytePointer.class, i)).getString(charsetName);
+        BytePointer p = (BytePointer)get((Class<P>)BytePointer.class, i);
+        return p != null ? p.getString(charsetName) : null;
     }
 
     /**

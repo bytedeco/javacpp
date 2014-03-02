@@ -63,17 +63,7 @@ public class Builder {
      * @throws Parser.Exception on C/C++ header file parsing error
      */
     public File parse(Class cls) throws IOException, Parser.Exception {
-        Parser.InfoMap infoMap = new Parser.InfoMap();
-        try {
-            Object obj = cls.newInstance();
-            if (obj instanceof Parser.InfoMapper) {
-                ((Parser.InfoMapper)obj).map(infoMap);
-            }
-        } catch (InstantiationException e) {
-        } catch (IllegalAccessException e) {
-            // fail silently as if the interface wasn't implemented
-        }
-        return new Parser(properties, infoMap).parse(outputDirectory, cls);
+        return new Parser(properties).parse(outputDirectory, cls);
     }
 
     /**
