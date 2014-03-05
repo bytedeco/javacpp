@@ -2875,8 +2875,8 @@ public class Parser {
         Loader.ClassProperties clsProperties = Loader.loadProperties(cls, properties, false);
         LinkedList<File> allFiles = allProperties.getHeaderFiles();
         LinkedList<File> clsFiles = clsProperties.getHeaderFiles();
-        LinkedList<String> allTargets = allProperties.get("parser.target");
-        LinkedList<String> clsTargets = clsProperties.get("parser.target");
+        LinkedList<String> allTargets = allProperties.get("target");
+        LinkedList<String> clsTargets = clsProperties.get("target");
         String target = clsTargets.getFirst(); // there can only be one
         LinkedList<Class> allInherited = allProperties.getInherited();
 

@@ -291,7 +291,7 @@ However, in the case of Android, we need to do a bit more work. Inside the direc
 {{{
 $ java -jar libs/javacpp.jar -classpath bin/ -classpath bin/classes/ \
 > -properties android-arm -Dplatform.root=<path/to/android-ndk-r9c> \
-> -Dcompiler.path=<path/to/arm-linux-androideabi-g++> -d libs/armeabi/
+> -Dplatform.compiler=<path/to/arm-linux-androideabi-g++> -d libs/armeabi/
 }}}
 To make everything automatic, we may also insert that command into, for example, the Ant `build.xml` file or the Eclipse `.project` file as a [http://help.eclipse.org/helios/index.jsp?topic=/org.eclipse.platform.doc.user/gettingStarted/qs-96_non_ant_pjs.htm Non-Ant project builder].
 
@@ -299,7 +299,7 @@ Similarly for RoboVM, assuming that the compiled classes are in the `classes` su
  # Copy the `javacpp.jar` file into the project directory, and
  # Run the following commands to produce the native binary file:
 {{{
-$ java -jar javacpp.jar -cp classes/ -properties ios-arm -Dcompiler.sysroot=SDKs/iPhoneOS7.0.sdk/ -o lib
+$ java -jar javacpp.jar -cp classes/ -properties ios-arm -Dplatform.sysroot=SDKs/iPhoneOS7.0.sdk/ -o lib
 $ robovm -arch thumbv7 -os ios -cp javacpp.jar:classes/ -libs ios-arm/lib.o
 }}}
 And instead of `Loader.load()`, the library should be loaded with `System.load("lib.o")`, in this case.
@@ -311,6 +311,7 @@ This project was conceived at the Okutomi & Tanaka Laboratory, Tokyo Institute o
 
 ==Changes==
 
+ * Unified the property names with the `@Properties` and `@Platform` annotations into a consistent naming scheme
  * Continued to clean up the `Parser` and improve the support of comments, templates, overloaded operators, namespaces, and standard containers, for the most part
  * Annotations such as `@Adapter` or `@ByVal` are no longer ignored on parameters of getters or setters annotated with `@Index`
  * Fixed some other corner cases in `Generator` and a few potential issues with the hacks in `Loader`

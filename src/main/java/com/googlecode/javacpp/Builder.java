@@ -74,11 +74,11 @@ public class Builder {
      * @param header to request support for exporting callbacks via generated header file
      */
     public static void includeJavaPaths(Loader.ClassProperties properties, boolean header) {
-        String platformName  = Loader.getPlatformName();
-        final String jvmlink = properties.getProperty("compiler.link.prefix", "") +
-                       "jvm" + properties.getProperty("compiler.link.suffix", "");
-        final String jvmlib  = properties.getProperty("library.prefix", "") +
-                       "jvm" + properties.getProperty("library.suffix", "");
+        String platform = Loader.getPlatform();
+        final String jvmlink = properties.getProperty("platform.link.prefix", "") +
+                       "jvm" + properties.getProperty("platform.link.suffix", "");
+        final String jvmlib  = properties.getProperty("platform.library.prefix", "") +
+                       "jvm" + properties.getProperty("platform.library.suffix", "");
         final String[] jnipath = new String[2];
         final String[] jvmpath = new String[2];
         FilenameFilter filter = new FilenameFilter() {
@@ -126,15 +126,15 @@ public class Builder {
         if (jvmpath[0] != null && jvmpath[0].equals(jvmpath[1])) {
             jvmpath[1] = null;
         }
-        properties.addAll("compiler.includepath", jnipath);
-        if (platformName.equals(properties.getProperty("platform.name", platformName))) {
+        properties.addAll("platform.includepath", jnipath);
+        if (platform.equals(properties.getProperty("platform", platform))) {
             if (header) {
                 // We only need libjvm for callbacks exported with the header file
-                properties.get("compiler.link").add(0, "jvm");
-                properties.addAll("compiler.linkpath", jvmpath);
+                properties.get("platform.link").add(0, "jvm");
+                properties.addAll("platform.linkpath", jvmpath);
             }
-            if (platformName.startsWith("macosx")) {
-                properties.addAll("compiler.framework", "JavaVM");
+            if (platform.startsWith("macosx")) {
+                properties.addAll("platform.framework", "JavaVM");
             }
         }
     }
@@ -182,13 +182,13 @@ public class Builder {
 
         includeJavaPaths(properties, header);
 
-        String platformName  = Loader.getPlatformName();
-        String compilerPath = properties.getProperty("compiler.path");
+        String platform  = Loader.getPlatform();
+        String compilerPath = properties.getProperty("platform.compiler");
         command.add(compilerPath);
 
         {
-            String p = properties.getProperty("compiler.sysroot.prefix", "");
-            for (String s : properties.get("compiler.sysroot")) {
+            String p = properties.getProperty("platform.sysroot.prefix", "");
+            for (String s : properties.get("platform.sysroot")) {
                 if (new File(s).isDirectory()) {
                     if (p.endsWith(" ")) {
                         command.add(p.trim()); command.add(s);
@@ -200,8 +200,8 @@ public class Builder {
         }
 
         {
-            String p = properties.getProperty("compiler.includepath.prefix", "");
-            for (String s : properties.get("compiler.includepath")) {
+            String p = properties.getProperty("platform.includepath.prefix", "");
+            for (String s : properties.get("platform.includepath")) {
                 if (new File(s).isDirectory()) {
                     if (p.endsWith(" ")) {
                         command.add(p.trim()); command.add(s);
@@ -214,7 +214,7 @@ public class Builder {
 
         command.add(sourceFilename);
 
-        Collection<String> allOptions = properties.get("compiler.options");
+        Collection<String> allOptions = properties.get("platform.compiler.*");
         if (allOptions.isEmpty()) {
             allOptions.add("default");
         }
@@ -222,7 +222,7 @@ public class Builder {
             if (s == null || s.length() == 0) {
                 continue;
             }
-            String p = "compiler.options." + s;
+            String p = "platform.compiler." + s;
             String options = properties.getProperty(p);
             if (options != null && options.length() > 0) {
                 command.addAll(Arrays.asList(options.split(" ")));
@@ -233,21 +233,21 @@ public class Builder {
 
         command.addAll(compilerOptions);
 
-        String outputPrefix = properties.getProperty("compiler.output.prefix");
-        if (outputPrefix != null && outputPrefix.length() > 0) {
-            command.addAll(Arrays.asList(outputPrefix.split(" ")));
+        String output = properties.getProperty("platform.compiler.output");
+        if (output != null && output.length() > 0) {
+            command.addAll(Arrays.asList(output.split(" ")));
         }
 
-        if (outputPrefix == null || outputPrefix.length() == 0 || outputPrefix.endsWith(" ")) {
+        if (output == null || output.length() == 0 || output.endsWith(" ")) {
             command.add(outputFilename);
         } else {
             command.add(command.removeLast() + outputFilename);
         }
 
         {
-            String p  = properties.getProperty("compiler.linkpath.prefix", "");
-            String p2 = properties.getProperty("compiler.linkpath.prefix2");
-            for (String s : properties.get("compiler.linkpath")) {
+            String p  = properties.getProperty("platform.linkpath.prefix", "");
+            String p2 = properties.getProperty("platform.linkpath.prefix2");
+            for (String s : properties.get("platform.linkpath")) {
                 if (new File(s).isDirectory()) {
                     if (p.endsWith(" ")) {
                         command.add(p.trim()); command.add(s);
@@ -266,10 +266,10 @@ public class Builder {
         }
 
         {
-            String p = properties.getProperty("compiler.link.prefix", "");
-            String x = properties.getProperty("compiler.link.suffix", "");
+            String p = properties.getProperty("platform.link.prefix", "");
+            String x = properties.getProperty("platform.link.suffix", "");
             int i = command.size(); // to inverse order and satisfy typical compilers
-            for (String s : properties.get("compiler.link")) {
+            for (String s : properties.get("platform.link")) {
                 String[] libnameversion = s.split("@");
                 if (libnameversion.length == 3 && libnameversion[1].length() == 0) {
                     // Only use the version number when the user gave us a double @
@@ -290,9 +290,9 @@ public class Builder {
         }
 
         {
-            String p = properties.getProperty("compiler.framework.prefix", "");
-            String x = properties.getProperty("compiler.framework.suffix", "");
-            for (String s : properties.get("compiler.framework")) {
+            String p = properties.getProperty("platform.framework.prefix", "");
+            String x = properties.getProperty("platform.framework.suffix", "");
+            for (String s : properties.get("platform.framework")) {
                 if (p.endsWith(" ") && x.startsWith(" ")) {
                     command.add(p.trim()); command.add(s); command.add(x.trim());
                 } else if (p.endsWith(" ")) {
@@ -305,7 +305,7 @@ public class Builder {
             }
         }
 
-        boolean windows = platformName.startsWith("windows");
+        boolean windows = platform.startsWith("windows");
         for (String s : command) {
             boolean hasSpaces = s.indexOf(" ") > 0;
             if (hasSpaces) {
@@ -342,15 +342,15 @@ public class Builder {
     public File generateAndCompile(Class[] classes, String outputName) throws IOException, InterruptedException {
         File outputFile = null;
         Loader.ClassProperties p = Loader.loadProperties(classes, properties, true);
-        String platformName = p.getProperty("platform.name"), sourcePrefix;
-        String sourceSuffix = p.getProperty("source.suffix", ".cpp");
-        String libraryName  = p.getProperty("library.prefix", "") + outputName + p.getProperty("library.suffix", "");
+        String platform     = p.getProperty("platform"), sourcePrefix;
+        String sourceSuffix = p.getProperty("platform.source.suffix", ".cpp");
+        String libraryName  = p.getProperty("platform.library.prefix", "") + outputName + p.getProperty("platform.library.suffix", "");
         File outputPath;
         if (outputDirectory == null) {
             try {
                 URL resourceURL = classes[0].getResource('/' + classes[0].getName().replace('.', '/') + ".class");
                 File packageDir = new File(resourceURL.toURI()).getParentFile();
-                outputPath      = new File(packageDir, platformName);
+                outputPath      = new File(packageDir, platform);
                 sourcePrefix    = packageDir.getPath() + File.separator + outputName;
             } catch (URISyntaxException e) {
                 throw new RuntimeException(e);
@@ -665,9 +665,9 @@ public class Builder {
         return this;
     }
     /** Sets the {@link #properties} field to the ones loaded from resources for the specified platform. */
-    public Builder properties(String platformName) {
-        if (platformName != null) {
-            properties = Loader.loadProperties(platformName);
+    public Builder properties(String platform) {
+        if (platform != null) {
+            properties = Loader.loadProperties(platform);
         }
         return this;
     }
@@ -759,7 +759,7 @@ public class Builder {
                 continue;
             }
             Loader.ClassProperties p = Loader.loadProperties(c, properties, false);
-            String target = p.getProperty("parser.target");
+            String target = p.getProperty("target");
             if (target != null && !c.getName().equals(target)) {
                 File f = parse(c);
                 if (f != null) {
@@ -767,7 +767,7 @@ public class Builder {
                 }
                 continue;
             }
-            String libraryName = outputName != null ? outputName : p.getProperty("loader.library", "");
+            String libraryName = outputName != null ? outputName : p.getProperty("platform.library", "");
             if (libraryName.length() == 0) {
                 continue;
             }
@@ -787,8 +787,8 @@ public class Builder {
                     // Do not copy library files from inherit properties ...
                     Loader.ClassProperties p = Loader.loadProperties(classArray, properties, false);
                     LinkedList<String> preloads = new LinkedList<String>();
-                    preloads.addAll(p.get("loader.preload"));
-                    preloads.addAll(p.get("compiler.link"));
+                    preloads.addAll(p.get("platform.preload"));
+                    preloads.addAll(p.get("platform.link"));
                     // ... but we should use all the inherited paths!
                     p = Loader.loadProperties(classArray, properties, true);
 
@@ -822,7 +822,7 @@ public class Builder {
 
         File[] files = outputFiles.toArray(new File[outputFiles.size()]);
         if (jarPrefix != null && files.length > 0) {
-            File jarFile = new File(jarPrefix + "-" + properties.get("platform.name") + ".jar");
+            File jarFile = new File(jarPrefix + "-" + properties.get("platform") + ".jar");
             File d = jarFile.getParentFile();
             if (d != null && !d.exists()) {
                 d.mkdir();
@@ -842,7 +842,7 @@ public class Builder {
         }
         System.out.println(
             "JavaCPP version " + version + "\n" +
-            "Copyright (C) 2011-2013 Samuel Audet <samuel.audet@gmail.com>\n" +
+            "Copyright (C) 2011-2014 Samuel Audet <samuel.audet@gmail.com>\n" +
             "Project site: http://code.google.com/p/javacpp/\n\n" +
 
             "Licensed under the GNU General Public License version 2 (GPLv2) with Classpath exception.\n" +
@@ -858,7 +858,7 @@ public class Builder {
         System.out.println("    -nocompile             Do not compile or delete the generated source files");
         System.out.println("    -header                Generate header file with declarations of callbacks functions");
         System.out.println("    -copylibs              Copy to output directory dependent libraries (link and preload)");
-        System.out.println("    -jarprefix <prefix>    Also create a JAR file named \"<prefix>-<platform.name>.jar\"");
+        System.out.println("    -jarprefix <prefix>    Also create a JAR file named \"<prefix>-<platform>.jar\"");
         System.out.println("    -properties <resource> Load all properties from resource");
         System.out.println("    -propertyfile <file>   Load all properties from file");
         System.out.println("    -D<property>=<value>   Set property to value");

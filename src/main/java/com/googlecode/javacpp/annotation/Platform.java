@@ -55,8 +55,8 @@ public @interface Platform {
     /** A list of options applied for the native compiler. The options here refer to
      *  property names. The actual command line options of the native compiler are the
      *  values of these properties, which need to be defined elsewhere. On an empty
-     *  array, the {@link Builder} uses the "compiler.options.default" property. */
-    String[] options()     default {};
+     *  array, the {@link Builder} uses the "platform.compiler.default" property. */
+    String[] compiler()    default {};
     /** A list of library paths passed to the native compiler for use at link time. */
     String[] linkpath()    default {};
     /** A list of libraries the native compiler should link with. */

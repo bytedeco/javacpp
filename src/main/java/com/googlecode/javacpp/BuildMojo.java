@@ -81,7 +81,7 @@ public class BuildMojo extends AbstractMojo {
     private boolean copyLibs = false;
 
     /**
-     * Also create a JAR file named {@code <jarPrefix>-<platform.name>.jar}
+     * Also create a JAR file named {@code <jarPrefix>-<platform>.jar}
      * @parameter expression="${jarPrefix}"
      */
     private String jarPrefix = null;
