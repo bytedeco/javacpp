@@ -56,14 +56,15 @@ public class Builder {
      * Calls {@link Parser#parse(File, Class)} after creating an instance of the
      * Class and running {@link Parser.InfoMapper#map(Parser.InfoMap)}.
      *
+     * @param classPath an array of paths to try to load header files from
      * @param cls The class annotated with {@link com.googlecode.javacpp.annotation.Properties}
      *            and implementing {@link Parser.InfoMapper}
      * @return the target File produced
      * @throws IOException on Java target file writing error
      * @throws Parser.Exception on C/C++ header file parsing error
      */
-    public File parse(Class cls) throws IOException, Parser.Exception {
-        return new Parser(properties).parse(outputDirectory, cls);
+    public File parse(String[] classPath, Class cls) throws IOException, Parser.Exception {
+        return new Parser(properties).parse(outputDirectory, classPath, cls);
     }
 
     /**
@@ -348,7 +349,7 @@ public class Builder {
         File outputPath;
         if (outputDirectory == null) {
             try {
-                URL resourceURL = classes[0].getResource('/' + classes[0].getName().replace('.', '/') + ".class");
+                URL resourceURL = classes[classes.length - 1].getResource('/' + classes[classes.length - 1].getName().replace('.', '/') + ".class");
                 File packageDir = new File(resourceURL.toURI()).getParentFile();
                 outputPath      = new File(packageDir, platform);
                 sourcePrefix    = packageDir.getPath() + File.separator + outputName;
@@ -396,22 +397,22 @@ public class Builder {
      * of the filenames to each element of a list of classpaths.
      *
      * @param jarFile the JAR file to create
-     * @param classpath an array of classpaths to try to use as root
+     * @param classPath an array of paths to try to use as root for classes
      * @param files a list of files to store in the JAR file
      * @throws IOException
      */
-    public static void createJar(File jarFile, String[] classpath, File ... files) throws IOException {
+    public static void createJar(File jarFile, String[] classPath, File ... files) throws IOException {
         System.out.println("Creating JAR file: " + jarFile);
         JarOutputStream jos = new JarOutputStream(new FileOutputStream(jarFile));
         for (File f : files) {
             String name = f.getPath();
-            if (classpath != null) {
+            if (classPath != null) {
                 // Store only the path relative to the classpath so that
                 // our Loader may use the package name of the associated
                 // class to get the file as a resource from the ClassLoader.
-                String[] names = new String[classpath.length];
-                for (int i = 0; i < classpath.length; i++) {
-                    String path = new File(classpath[i]).getCanonicalPath();
+                String[] names = new String[classPath.length];
+                for (int i = 0; i < classPath.length; i++) {
+                    String path = new File(classPath[i]).getCanonicalPath();
                     if (name.startsWith(path)) {
                         names[i] = name.substring(path.length() + 1);
                     }
@@ -746,6 +747,7 @@ public class Builder {
      * @return the array of File produced
      * @throws IOException
      * @throws InterruptedException
+     * @throws Parser.Exception
      */
     public File[] build() throws IOException, InterruptedException, Parser.Exception {
         if (classScanner.getClasses().isEmpty()) {
@@ -761,7 +763,7 @@ public class Builder {
             Loader.ClassProperties p = Loader.loadProperties(c, properties, false);
             String target = p.getProperty("target");
             if (target != null && !c.getName().equals(target)) {
-                File f = parse(c);
+                File f = parse(classScanner.getClassLoader().getPaths(), c);
                 if (f != null) {
                     outputFiles.add(f);
                 }
@@ -774,6 +776,9 @@ public class Builder {
             LinkedList<Class> classList = map.get(libraryName);
             if (classList == null) {
                 map.put(libraryName, classList = new LinkedList<Class>());
+            }
+            if (c != p.getEffectiveClass()) {
+                classList.add(p.getEffectiveClass());
             }
             classList.add(c);
         }

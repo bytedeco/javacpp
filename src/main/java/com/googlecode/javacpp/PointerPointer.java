@@ -119,7 +119,7 @@ public class PointerPointer<P extends Pointer> extends Pointer {
         }
     }
     /** @see Pointer#Pointer(Pointer) */
-    public PointerPointer(P p) { super(p); }
+    public PointerPointer(Pointer p) { super(p); }
     private native void allocateArray(int size);
 
     /** This is just to keep references to Pointer objects we create. */

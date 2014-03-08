@@ -41,6 +41,12 @@ import java.util.Properties;
 import java.util.Scanner;
 
 /**
+ * To do:
+ * - castPointerName() with dynamic_cast<> for multiple inheritance
+ * - Inherit constructors from helper classes, if possible
+ * - Pick up custom function names from some user-specified attribute
+ * - Wrap functions that make use of default parameters
+ * - etc.
  *
  * @author Samuel Audet
  */
@@ -101,40 +107,40 @@ public class Parser {
         static final InfoMap defaults = new InfoMap(null)
             .put(new Info("void").valueTypes("void").pointerTypes("Pointer"))
             .put(new Info("va_list", "FILE", "std::exception", "std::istream", "std::ostream", "std::iostream",
-                    "std::ifstream", "std::ofstream", "std::fstream").pointerTypes("Pointer").cast(true))
+                    "std::ifstream", "std::ofstream", "std::fstream").cast(true).pointerTypes("Pointer"))
 
             .put(new Info("int8_t", "jbyte", "signed char")
                 .valueTypes("byte").pointerTypes("BytePointer", "ByteBuffer", "byte[]"))
-            .put(new Info("uint8_t", "char", "unsigned char")
-                .valueTypes("byte").pointerTypes("BytePointer", "ByteBuffer", "byte[]").cast(true))
+            .put(new Info("uint8_t", "char", "unsigned char").cast(true)
+                .valueTypes("byte").pointerTypes("BytePointer", "ByteBuffer", "byte[]"))
 
             .put(new Info("int16_t", "jshort", "short", "signed short", "short int", "signed short int")
                 .valueTypes("short").pointerTypes("ShortPointer", "ShortBuffer", "short[]"))
-            .put(new Info("uint16_t", "unsigned short", "unsigned short int")
-                .valueTypes("short").pointerTypes("ShortPointer", "ShortBuffer", "short[]").cast(true))
+            .put(new Info("uint16_t", "unsigned short", "unsigned short int").cast(true)
+                .valueTypes("short").pointerTypes("ShortPointer", "ShortBuffer", "short[]"))
 
             .put(new Info("int32_t", "jint", "int", "signed int", "signed")
                 .valueTypes("int").pointerTypes("IntPointer", "IntBuffer", "int[]"))
-            .put(new Info("uint32_t", "unsigned int", "unsigned")
-                .valueTypes("int").pointerTypes("IntPointer", "IntBuffer", "int[]").cast(true))
+            .put(new Info("uint32_t", "unsigned int", "unsigned").cast(true)
+                .valueTypes("int").pointerTypes("IntPointer", "IntBuffer", "int[]"))
 
             .put(new Info("int64_t", "__int64", "jlong", "long long", "signed long long", "long long int", "signed long long int")
                 .valueTypes("long").pointerTypes("LongPointer", "LongBuffer", "long[]"))
-            .put(new Info("uint64_t", "__uint64", "unsigned long long", "unsigned long long int")
-                .valueTypes("long").pointerTypes("LongPointer", "LongBuffer", "long[]").cast(true))
+            .put(new Info("uint64_t", "__uint64", "unsigned long long", "unsigned long long int").cast(true)
+                .valueTypes("long").pointerTypes("LongPointer", "LongBuffer", "long[]"))
 
             .put(new Info("long", "signed long", "long int", "signed long int")
                 .valueTypes("long").pointerTypes("CLongPointer"))
-            .put(new Info("unsigned long", "unsigned long int")
-                .valueTypes("long").pointerTypes("CLongPointer").cast(true))
+            .put(new Info("unsigned long", "unsigned long int").cast(true)
+                .valueTypes("long").pointerTypes("CLongPointer"))
 
-            .put(new Info("size_t", "ptrdiff_t").valueTypes("long").pointerTypes("SizeTPointer").cast(true))
+            .put(new Info("size_t", "ptrdiff_t").cast(true).valueTypes("long").pointerTypes("SizeTPointer"))
             .put(new Info("float", "jfloat").valueTypes("float").pointerTypes("FloatPointer", "FloatBuffer", "float[]"))
             .put(new Info("double", "jdouble").valueTypes("double").pointerTypes("DoublePointer", "DoubleBuffer", "double[]"))
-            .put(new Info("std::complex<float>").pointerTypes("FloatPointer", "FloatBuffer", "float[]").cast(true))
-            .put(new Info("std::complex<double>").pointerTypes("DoublePointer", "DoubleBuffer", "double[]").cast(true))
-            .put(new Info("bool", "jboolean").valueTypes("boolean").pointerTypes("BoolPointer").cast(true))
-            .put(new Info("wchar_t", "WCHAR").valueTypes("char").pointerTypes("CharPointer").cast(true))
+            .put(new Info("std::complex<float>").cast(true).pointerTypes("FloatPointer", "FloatBuffer", "float[]"))
+            .put(new Info("std::complex<double>").cast(true).pointerTypes("DoublePointer", "DoubleBuffer", "double[]"))
+            .put(new Info("bool", "jboolean").cast(true).valueTypes("boolean").pointerTypes("BoolPointer"))
+            .put(new Info("wchar_t", "WCHAR").cast(true).valueTypes("char").pointerTypes("CharPointer"))
             .put(new Info("const char").valueTypes("byte").pointerTypes("@Cast(\"const char*\") BytePointer", "String"))
             .put(new Info("std::string").annotations("@StdString").valueTypes("BytePointer", "String"))
             .put(new Info("std::vector").annotations("@StdVector"))
@@ -2592,7 +2598,7 @@ public class Parser {
         }
         decl.text += enumSpacing + "public static final int" + enumerators + token.expect(';').spacing + ";";
         if (name.length() > 0) {
-            infoMap.put(new Info(name).valueTypes("int").pointerTypes("IntPointer", "IntBuffer", "int[]").cast(true));
+            infoMap.put(new Info(name).cast(true).valueTypes("int").pointerTypes("IntPointer", "IntBuffer", "int[]"));
         }
         tokens.next();
         decl.text += macroText + comment;
@@ -2799,17 +2805,26 @@ public class Parser {
         }
     }
 
-    void parse(String outputFilename, Context context, String ... inputFilenames) throws IOException, Exception {
+    void parse(String outputFilename, Context context, String[] includePath, String ... inputFilenames) throws IOException, Exception {
         File[] files = new File[inputFilenames.length];
         for (int i = 0; i < files.length; i++) {
             files[i] = new File(inputFilenames[i]);
         }
-        parse(new File(outputFilename), context, files);
+        parse(new File(outputFilename), context, includePath, files);
     }
-    void parse(File outputFile, Context context, File ... inputFiles) throws IOException, Exception {
+    void parse(File outputFile, Context context, String[] includePath, File ... inputFiles) throws IOException, Exception {
         ArrayList<Token> tokenList = new ArrayList<Token>();
         String lineSeparator = null;
         for (File file : inputFiles) {
+            if (!file.exists()) {
+                for (String s : includePath) {
+                    File f = new File(s, file.getPath());
+                    if (f.exists()) {
+                        file = f;
+                        break;
+                    }
+                }
+            }
             Info info = infoMap.getFirst(file.getName());
             if (info != null && info.skip) {
                 continue;
@@ -2817,7 +2832,7 @@ public class Parser {
             System.out.println("Parsing header file: " + file);
             Token token = new Token();
             token.type = Token.COMMENT;
-            token.value = "\n/* Wrapper for header file " + file + " */\n\n";
+            token.value = "\n// Parsed from header file " + file + "\n\n";
             tokenList.add(token);
             Tokenizer tokenizer = new Tokenizer(file);
             while (!(token = tokenizer.nextToken()).isEmpty()) {
@@ -2867,10 +2882,10 @@ public class Parser {
         out.append("\n}\n").close();
     }
 
-    public File parse(String outputDirectory, Class cls) throws IOException, Exception {
-        return parse(new File(outputDirectory), cls);
+    public File parse(String outputDirectory, String[] classPath, Class cls) throws IOException, Exception {
+        return parse(new File(outputDirectory), classPath, cls);
     }
-    public File parse(File outputDirectory, Class cls) throws IOException, Exception {
+    public File parse(File outputDirectory, String[] classPath, Class cls) throws IOException, Exception {
         Loader.ClassProperties allProperties = Loader.loadProperties(cls, properties, true);
         Loader.ClassProperties clsProperties = Loader.loadProperties(cls, properties, false);
         LinkedList<File> allFiles = allProperties.getHeaderFiles();
@@ -2878,7 +2893,7 @@ public class Parser {
         LinkedList<String> allTargets = allProperties.get("target");
         LinkedList<String> clsTargets = clsProperties.get("target");
         String target = clsTargets.getFirst(); // there can only be one
-        LinkedList<Class> allInherited = allProperties.getInherited();
+        LinkedList<Class> allInherited = allProperties.getInheritedClasses();
 
         infoMap = new Parser.InfoMap();
         for (Class c : allInherited) {
@@ -2900,7 +2915,11 @@ public class Parser {
         }
         infoMap.putAll(leafInfoMap);
 
-        String text = "/* DO NOT EDIT THIS FILE - IT IS MACHINE GENERATED */\n\n";
+        String version = Generator.class.getPackage().getImplementationVersion();
+        if (version == null) {
+            version = "unknown";
+        }
+        String text = "// Targeted by JavaCPP version " + version + "\n\n";
         int n = target.lastIndexOf('.');
         if (n >= 0) {
             text += "package " + target.substring(0, n) + ";\n\n";
@@ -2925,15 +2944,24 @@ public class Parser {
         text += "public class " + target.substring(n + 1) + " extends " + cls.getCanonicalName() + " {";
         leafInfoMap.putFirst(new Info().javaText(text));
 
-        File targetFile = new File(outputDirectory, target.replace('.', '/') + ".java");
+        String targetPath = target.replace('.', File.separatorChar);
+        File targetFile = new File(outputDirectory, targetPath + ".java");
         System.out.println("Targeting file: " + targetFile);
         Context context = new Context();
-        for (File f : allFiles) {
-            if (!clsFiles.contains(f)) {
-                parse(null, context, f);
+        String[] includePath = classPath;
+        n = targetPath.lastIndexOf(File.separatorChar);
+        if (n >= 0) {
+            includePath = classPath.clone();
+            for (int i = 0; i < includePath.length; i++) {
+                includePath[i] += File.separator + targetPath.substring(0, n);
             }
         }
-        parse(targetFile, context, clsFiles.toArray(new File[clsFiles.size()]));
+        for (File f : allFiles) {
+            if (!clsFiles.contains(f)) {
+                parse(null, context, includePath, f);
+            }
+        }
+        parse(targetFile, context, includePath, clsFiles.toArray(new File[clsFiles.size()]));
         return targetFile;
     }
 }

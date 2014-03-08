@@ -211,7 +211,8 @@ public class Loader {
         }
 
         String platform, platformRoot, pathSeparator;
-        LinkedList<Class> inherited = null;
+        LinkedList<Class> inheritedClass = null;
+        Class effectiveClass = null;
 
         public LinkedList<String> get(String key) {
             LinkedList<String> list = super.get(key);
@@ -268,6 +269,7 @@ public class Loader {
                     && !c.isAnnotationPresent(Platform.class) && c.getSuperclass() != Object.class) {
                 c = c.getSuperclass();
             }
+            effectiveClass = c;
             com.googlecode.javacpp.annotation.Properties classProperties =
                     c.getAnnotation(com.googlecode.javacpp.annotation.Properties.class);
             Platform[] platforms = null;
@@ -279,13 +281,13 @@ public class Loader {
             } else {
                 Class[] classes = classProperties.inherit();
                 if (inherit && classes != null) {
-                    if (inherited == null) {
-                        inherited = new LinkedList<Class>();
+                    if (inheritedClass == null) {
+                        inheritedClass = new LinkedList<Class>();
                     }
                     for (Class c2 : classes) {
                         load(c2, inherit);
-                        if (!inherited.contains(c2)) {
-                            inherited.add(c2);
+                        if (!inheritedClass.contains(c2)) {
+                            inheritedClass.add(c2);
                         }
                     }
                 }
@@ -370,8 +372,12 @@ public class Loader {
             return files;
         }
 
-        public LinkedList<Class> getInherited() {
-            return inherited;
+        public LinkedList<Class> getInheritedClasses() {
+            return inheritedClass;
+        }
+
+        public Class getEffectiveClass() {
+            return effectiveClass;
         }
     }
 
