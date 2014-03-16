@@ -66,8 +66,6 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * The Generator is where all the C++ source code that we need gets generated.
@@ -113,7 +111,8 @@ import java.util.logging.Logger;
  */
 public class Generator implements Closeable {
 
-    public Generator(Loader.ClassProperties properties) {
+    public Generator(Logger logger, Loader.ClassProperties properties) {
+        this.logger = logger;
         this.properties = properties;
     }
 
@@ -132,7 +131,6 @@ public class Generator implements Closeable {
     }
 
     static final String JNI_VERSION = "JNI_VERSION_1_4";
-    static final Logger logger = Logger.getLogger(Generator.class.getName());
     static final List<Class> baseClasses = Arrays.asList(new Class[] {
             Pointer.class,
             //FunctionPointer.class,
@@ -148,7 +146,8 @@ public class Generator implements Closeable {
             CLongPointer.class,
             SizeTPointer.class });
 
-    Loader.ClassProperties properties;
+    final Logger logger;
+    final Loader.ClassProperties properties;
     PrintWriter out, out2;
     IndexedSet<String> callbacks;
     IndexedSet<Class> functions, deallocators, arrayDeallocators, jclasses, jclassesInit;
@@ -827,7 +826,7 @@ public class Generator implements Closeable {
             try {
                 didSomethingUseful |= methods(cls);
             } catch (NoClassDefFoundError e) {
-                logger.log(Level.WARNING, "Could not generate code for class " + cls.getCanonicalName() + ": " + e);
+                logger.warn("Could not generate code for class " + cls.getCanonicalName() + ": " + e);
             }
         }
 
@@ -859,11 +858,10 @@ public class Generator implements Closeable {
         }
 
         boolean didSomething = false;
-        Class[] classes = cls.getDeclaredClasses();
-        for (int i = 0; i < classes.length; i++) {
-            if (Pointer.class.isAssignableFrom(classes[i]) ||
-                    Pointer.Deallocator.class.isAssignableFrom(classes[i])) {
-                didSomething |= methods(classes[i]);
+        for (Class<?> c : cls.getDeclaredClasses()) {
+            if (Pointer.class.isAssignableFrom(c) ||
+                    Pointer.Deallocator.class.isAssignableFrom(c)) {
+                didSomething |= methods(c);
             }
         }
 
@@ -880,7 +878,7 @@ public class Generator implements Closeable {
 
             String callbackName = "JavaCPP_" + nativeName + "_callback";
             if (callbackAllocators[i] && functionMethod == null) {
-                logger.log(Level.WARNING, "No callback method call() or apply() has been not declared in \"" +
+                logger.warn("No callback method call() or apply() has been not declared in \"" +
                         cls.getCanonicalName() + "\". No code will be generated for callback allocator.");
                 continue;
             } else if (callbackAllocators[i] || (methods[i].equals(functionMethod) && methodInfo == null)) {
@@ -990,7 +988,7 @@ public class Generator implements Closeable {
                 if (FunctionPointer.class.isAssignableFrom(methodInfo.parameterTypes[j])) {
                     functions.index(methodInfo.parameterTypes[j]);
                     if (methodInfo.parameterTypes[j] == FunctionPointer.class) {
-                        logger.log(Level.WARNING, "Method \"" + methodInfo.method + "\" has an abstract FunctionPointer parameter, " +
+                        logger.warn("Method \"" + methodInfo.method + "\" has an abstract FunctionPointer parameter, " +
                                 "but a concrete subclass is required. Compilation will most likely fail.");
                     }
                     typeName[0] = functionClassName(methodInfo.parameterTypes[j]) + "*";
@@ -1061,7 +1059,7 @@ public class Generator implements Closeable {
                     }
                 } else {
                     out.println("arg" + j + ";");
-                    logger.log(Level.WARNING, "Method \"" + methodInfo.method + "\" has an unsupported parameter of type \"" +
+                    logger.warn("Method \"" + methodInfo.method + "\" has an unsupported parameter of type \"" +
                             methodInfo.parameterTypes[j].getCanonicalName() + "\". Compilation will most likely fail.");
                 }
 
@@ -1160,7 +1158,7 @@ public class Generator implements Closeable {
                         returnPrefix += "(const char*)";
                     }
                 } else {
-                    logger.log(Level.WARNING, "Method \"" + methodInfo.method + "\" has unsupported return type \"" +
+                    logger.warn("Method \"" + methodInfo.method + "\" has unsupported return type \"" +
                             methodInfo.returnType.getCanonicalName() + "\". Compilation will most likely fail.");
                 }
 
@@ -1354,7 +1352,8 @@ public class Generator implements Closeable {
         }
         if ((Pointer.class.isAssignableFrom(methodInfo.returnType) ||
                 (methodInfo.returnType.isArray() &&
-                 methodInfo.returnType.getComponentType().isPrimitive()))) {
+                 methodInfo.returnType.getComponentType().isPrimitive()) ||
+                Buffer.class.isAssignableFrom(methodInfo.returnType))) {
             if (returnBy instanceof ByVal) {
                 suffix = ")" + suffix;
             } else if (returnBy instanceof ByPtrPtr) {
@@ -1453,7 +1452,7 @@ public class Generator implements Closeable {
                     out.println(indent + "}");
                 } else if (methodInfo.returnType.isArray() &&
                         methodInfo.returnType.getComponentType().isPrimitive()) {
-                    if (adapterInfo == null) {
+                    if (adapterInfo == null && !(returnBy instanceof ByVal)) {
                         out.println(indent + "jint rcapacity = rptr != NULL ? 1 : 0;");
                     }
                     String s = methodInfo.returnType.getComponentType().getName();
@@ -1470,7 +1469,7 @@ public class Generator implements Closeable {
                 } else if (Buffer.class.isAssignableFrom(methodInfo.returnType)) {
                     if (methodInfo.bufferGetter) {
                         out.println(indent + "jint rcapacity = size;");
-                    } else if (adapterInfo == null) {
+                    } else if (adapterInfo == null && !(returnBy instanceof ByVal)) {
                         out.println(indent + "jint rcapacity = rptr != NULL ? 1 : 0;");
                     }
                     out.println(indent + "if (rptr != NULL) {");
@@ -1705,7 +1704,7 @@ public class Generator implements Closeable {
                         out.println("        obj" + j + " = env->NewDirectByteBuffer((void*)ptr" + j + ", size" + j + ");");
                         out.println("    }");
                     } else {
-                        logger.log(Level.WARNING, "Callback \"" + callbackMethod + "\" has unsupported parameter type \"" +
+                        logger.warn("Callback \"" + callbackMethod + "\" has unsupported parameter type \"" +
                                 callbackParameterTypes[j].getCanonicalName() + "\". Compilation will most likely fail.");
                     }
                 }
@@ -1811,7 +1810,7 @@ public class Generator implements Closeable {
                     out.println("    jint rsize = rarg == NULL ? 0 : env->GetDirectBufferCapacity(rarg);");
                 }
             } else if (!callbackReturnType.isPrimitive()) {
-                logger.log(Level.WARNING, "Callback \"" + callbackMethod + "\" has unsupported return type \"" +
+                logger.warn("Callback \"" + callbackMethod + "\" has unsupported return type \"" +
                         callbackReturnType.getCanonicalName() + "\". Compilation will most likely fail.");
             }
         }
@@ -1972,7 +1971,7 @@ public class Generator implements Closeable {
         Class<?> throwsException;
     }
 
-    static MethodInformation methodInformation(Method method) {
+    MethodInformation methodInformation(Method method) {
         if (!Modifier.isNative(method.getModifiers())) {
             return null;
         }
@@ -2015,9 +2014,7 @@ public class Generator implements Closeable {
         boolean memberSetter = false;
         boolean noReturnGetter = false;
         Method pairedMethod = null;
-        Method[] methods = info.cls.getDeclaredMethods();
-        for (int i = 0; i < methods.length; i++) {
-            Method method2 = methods[i];
+        for (Method method2 : info.cls.getDeclaredMethods()) {
             int modifiers2          = method2.getModifiers();
             Class returnType2       = method2.getReturnType();
             String methodName2      = method2.getName();
@@ -2134,7 +2131,7 @@ public class Generator implements Closeable {
                 info.pairedMethod = pairedMethod;
             }
         } else if (!(behavior instanceof Function)) {
-            logger.log(Level.WARNING, "Method \"" + method + "\" cannot behave like a \"" +
+            logger.warn("Method \"" + method + "\" cannot behave like a \"" +
                     behavior.annotationType().getSimpleName() + "\". No code will be generated.");
             return null;
         }
@@ -2194,7 +2191,7 @@ public class Generator implements Closeable {
         boolean constant;
     }
 
-    static AdapterInformation adapterInformation(boolean out, MethodInformation methodInfo, int j) {
+    AdapterInformation adapterInformation(boolean out, MethodInformation methodInfo, int j) {
         if (out && (methodInfo.parameterTypes[j] == String.class || methodInfo.valueSetter || methodInfo.memberSetter)) {
             return null;
         }
@@ -2214,7 +2211,7 @@ public class Generator implements Closeable {
         return adapter;
     }
 
-    static AdapterInformation adapterInformation(boolean out, String valueTypeName, Annotation ... annotations) {
+    AdapterInformation adapterInformation(boolean out, String valueTypeName, Annotation ... annotations) {
         AdapterInformation adapterInfo = null;
         boolean constant = false;
         String cast = "";
@@ -2251,7 +2248,7 @@ public class Generator implements Closeable {
                             }
                         }
                     } catch (Exception ex) { 
-                        logger.log(Level.WARNING, "Could not invoke the value() method on annotation \"" + a + "\".", ex);
+                        logger.warn("Could not invoke the value() method on annotation \"" + a + "\": " + ex);
                     }
                     if (valueTypeName != null && valueTypeName.length() > 0) {
                         adapterInfo.name += "< " + valueTypeName + " >";
@@ -2273,7 +2270,7 @@ public class Generator implements Closeable {
         return out && constant ? null : adapterInfo;
     }
 
-    static String cast(MethodInformation methodInfo, int j) {
+    String cast(MethodInformation methodInfo, int j) {
         String cast = cast(methodInfo.parameterTypes[j], methodInfo.parameterAnnotations[j]);
         if ((cast == null || cast.length() == 0) && j == methodInfo.parameterTypes.length-1 &&
                 (methodInfo.valueSetter || methodInfo.memberSetter) && methodInfo.pairedMethod != null) {
@@ -2282,7 +2279,7 @@ public class Generator implements Closeable {
         return cast;
     }
 
-    static String cast(Class<?> type, Annotation ... annotations) {
+    String cast(Class<?> type, Annotation ... annotations) {
         String[] typeName = null;
         for (Annotation a : annotations) {
             if ((a instanceof Cast && ((Cast)a).value()[0].length() > 0) || a instanceof Const) {
@@ -2293,7 +2290,7 @@ public class Generator implements Closeable {
         return typeName != null && typeName.length > 0 ? "(" + typeName[0] + typeName[1] + ")" : "";
     }
 
-    static Annotation by(MethodInformation methodInfo, int j) {
+    Annotation by(MethodInformation methodInfo, int j) {
         Annotation passBy = by(methodInfo.parameterAnnotations[j]);
         if (passBy == null && methodInfo.pairedMethod != null &&
                 (methodInfo.valueSetter || methodInfo.memberSetter)) {
@@ -2302,13 +2299,13 @@ public class Generator implements Closeable {
         return passBy;
     }
 
-    static Annotation by(Annotation ... annotations) {
+    Annotation by(Annotation ... annotations) {
         Annotation byAnnotation = null;
         for (Annotation a : annotations) {
             if (a instanceof ByPtr || a instanceof ByPtrPtr || a instanceof ByPtrRef ||
                     a instanceof ByRef || a instanceof ByVal) {
                 if (byAnnotation != null) {
-                    logger.log(Level.WARNING, "\"By\" annotation \"" + byAnnotation +
+                    logger.warn("\"By\" annotation \"" + byAnnotation +
                             "\" already found. Ignoring superfluous annotation \"" + a + "\".");
                 } else {
                     byAnnotation = a;
@@ -2318,14 +2315,14 @@ public class Generator implements Closeable {
         return byAnnotation;
     }
 
-    static Annotation behavior(Annotation ... annotations) {
+    Annotation behavior(Annotation ... annotations) {
         Annotation behaviorAnnotation = null;
         for (Annotation a : annotations) {
             if (a instanceof Function || a instanceof Allocator || a instanceof ArrayAllocator ||
                     a instanceof ValueSetter || a instanceof ValueGetter ||
                     a instanceof MemberGetter || a instanceof MemberSetter) {
                 if (behaviorAnnotation != null) {
-                    logger.log(Level.WARNING, "Behavior annotation \"" + behaviorAnnotation +
+                    logger.warn("Behavior annotation \"" + behaviorAnnotation +
                             "\" already found. Ignoring superfluous annotation \"" + a + "\".");
                 } else {
                     behaviorAnnotation = a;
@@ -2353,7 +2350,7 @@ public class Generator implements Closeable {
         return type;
     }
 
-    static String[] cppAnnotationTypeName(Class<?> type, Annotation ... annotations) {
+    String[] cppAnnotationTypeName(Class<?> type, Annotation ... annotations) {
         String[] typeName = cppCastTypeName(type, annotations);
         String prefix = typeName[0];
         String suffix = typeName[1];
@@ -2382,7 +2379,7 @@ public class Generator implements Closeable {
         return typeName;
     }
 
-    static String[] cppCastTypeName(Class<?> type, Annotation ... annotations) {
+    String[] cppCastTypeName(Class<?> type, Annotation ... annotations) {
         String[] typeName = null;
         boolean warning = false, adapter = false;
         for (Annotation a : annotations) {
@@ -2401,9 +2398,11 @@ public class Generator implements Closeable {
                     continue;
                 }
                 typeName = cppTypeName(type);
-                if (((Const)a).value()) {
+                boolean[] b = ((Const)a).value();
+                if (b.length > 1 && b[1]) {
                     typeName[0] = valueTypeName(typeName) + " const *";
-                } else {
+                }
+                if (b.length > 0 && b[0]) {
                     typeName[0] = "const " + typeName[0];
                 }
                 Annotation by = by(annotations);
@@ -2417,7 +2416,7 @@ public class Generator implements Closeable {
             }
         }
         if (warning && !adapter) {
-            logger.log(Level.WARNING, "Without \"Adapter\", \"Cast\" and \"Const\" annotations are mutually exclusive.");
+            logger.warn("Without \"Adapter\", \"Cast\" and \"Const\" annotations are mutually exclusive.");
         }
         if (typeName == null) {
             typeName = cppTypeName(type);
@@ -2425,7 +2424,7 @@ public class Generator implements Closeable {
         return typeName;
     }
 
-    static String[] cppTypeName(Class<?> type) {
+    String[] cppTypeName(Class<?> type) {
         String prefix = "", suffix = "";
         if (type == Buffer.class || type == Pointer.class) {
             prefix = "void*";
@@ -2483,7 +2482,7 @@ public class Generator implements Closeable {
                 prefix += " (" + callingConvention + spaceName + "*";
                 suffix = ")(";
                 if (namespace != null && !Pointer.class.isAssignableFrom(parameterTypes[0])) {
-                    logger.log(Level.WARNING, "First parameter of caller method call() or apply() for member function pointer " +
+                    logger.warn("First parameter of caller method call() or apply() for member function pointer " +
                             type.getCanonicalName() + " is not a Pointer. Compilation will most likely fail.");
                 }
                 for (int j = namespace == null ? 0 : 1; j < parameterTypes.length; j++) {
@@ -2508,7 +2507,7 @@ public class Generator implements Closeable {
             if (scopedType.length() > 0) {
                 prefix = scopedType + "*";
             } else {
-                logger.log(Level.WARNING, "The class " + type.getCanonicalName() +
+                logger.warn("The class " + type.getCanonicalName() +
                         " does not map to any C++ type. Compilation will most likely fail.");
             }
         }

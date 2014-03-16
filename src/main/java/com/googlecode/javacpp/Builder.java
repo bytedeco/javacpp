@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011,2012,2013 Samuel Audet
+ * Copyright (C) 2011,2012,2013,2014 Samuel Audet
  *
  * This file is part of JavaCPP.
  *
@@ -43,18 +43,17 @@ import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
 
 /**
- * The Builder is responsible for coordinating efforts between the Generator
- * and the native compiler. It contains the main() method, and basically takes
- * care of the tasks one would expect from a command line build tool, but can
- * also be used programmatically by setting its properties and calling build().
+ * The Builder is responsible for coordinating efforts between the Parser, the
+ * Generator, and the native compiler. It contains the main() method, and basically
+ * takes care of the tasks one would expect from a command line build tool, but
+ * can also be used programmatically by setting its properties and calling build().
  *
  * @author Samuel Audet
  */
 public class Builder {
 
     /**
-     * Calls {@link Parser#parse(File, Class)} after creating an instance of the
-     * Class and running {@link Parser.InfoMapper#map(Parser.InfoMap)}.
+     * Calls {@link Parser#parse(File, String[], Class)} after creating an instance of the Class.
      *
      * @param classPath an array of paths to try to load header files from
      * @param cls The class annotated with {@link com.googlecode.javacpp.annotation.Properties}
@@ -63,8 +62,8 @@ public class Builder {
      * @throws IOException on Java target file writing error
      * @throws Parser.Exception on C/C++ header file parsing error
      */
-    public File parse(String[] classPath, Class cls) throws IOException, Parser.Exception {
-        return new Parser(properties).parse(outputDirectory, classPath, cls);
+    File parse(String[] classPath, Class cls) throws IOException, Parser.Exception {
+        return new Parser(logger, properties).parse(outputDirectory, classPath, cls);
     }
 
     /**
@@ -74,7 +73,7 @@ public class Builder {
      * @param properties the Properties containing the paths to update
      * @param header to request support for exporting callbacks via generated header file
      */
-    public static void includeJavaPaths(Loader.ClassProperties properties, boolean header) {
+    static void includeJavaPaths(Loader.ClassProperties properties, boolean header) {
         String platform = Loader.getPlatform();
         final String jvmlink = properties.getProperty("platform.link.prefix", "") +
                        "jvm" + properties.getProperty("platform.link.suffix", "");
@@ -145,7 +144,7 @@ public class Builder {
      * writes to the {@link OutputStream}. Used by {@link #compile(String, String, Loader.ClassProperties)}
      * to flush the streams of a {@link Process}.
      */
-    public static class Piper extends Thread {
+    class Piper extends Thread {
         public Piper(InputStream is, OutputStream os) {
             this.is = is;
             this.os = os;
@@ -162,7 +161,7 @@ public class Builder {
                     os.write(buffer, 0, length);
                 }
             } catch (IOException e) {
-                System.err.println("Could not pipe from the InputStream to the OutputStream: " + e.getMessage());
+                logger.error("Could not pipe from the InputStream to the OutputStream: " + e.getMessage());
             }
         }
     }
@@ -177,7 +176,7 @@ public class Builder {
      * @throws IOException
      * @throws InterruptedException
      */
-    public int compile(String sourceFilename, String outputFilename, Loader.ClassProperties properties)
+    int compile(String sourceFilename, String outputFilename, Loader.ClassProperties properties)
             throws IOException, InterruptedException {
         LinkedList<String> command = new LinkedList<String>();
 
@@ -228,7 +227,7 @@ public class Builder {
             if (options != null && options.length() > 0) {
                 command.addAll(Arrays.asList(options.split(" ")));
             } else if (!"default".equals(s)) {
-                System.err.println("Warning: Could not get the property named \"" + p + "\"");
+                logger.warn("Could not get the property named \"" + p + "\"");
             }
         }
 
@@ -306,19 +305,20 @@ public class Builder {
             }
         }
 
+        String text = "";
         boolean windows = platform.startsWith("windows");
         for (String s : command) {
             boolean hasSpaces = s.indexOf(" ") > 0;
             if (hasSpaces) {
-                System.out.print(windows ? "\"" : "'");
+                text += windows ? "\"" : "'";
             }
-            System.out.print(s);
+            text += s;
             if (hasSpaces) {
-                System.out.print(windows ? "\"" : "'");
+                text += windows ? "\"" : "'";
             }
-            System.out.print(" ");
+            text += " ";
         }
-        System.out.println();
+        logger.info(text);
 
         ProcessBuilder pb = new ProcessBuilder(command);
         if (environmentVariables != null) {
@@ -340,7 +340,7 @@ public class Builder {
      * @throws IOException
      * @throws InterruptedException
      */
-    public File generateAndCompile(Class[] classes, String outputName) throws IOException, InterruptedException {
+    File generateAndCompile(Class[] classes, String outputName) throws IOException, InterruptedException {
         File outputFile = null;
         Loader.ClassProperties p = Loader.loadProperties(classes, properties, true);
         String platform     = p.getProperty("platform"), sourcePrefix;
@@ -363,19 +363,19 @@ public class Builder {
         if (!outputPath.exists()) {
             outputPath.mkdirs();
         }
-        Generator generator = new Generator(p);
+        Generator generator = new Generator(logger, p);
         String sourceFilename = sourcePrefix + sourceSuffix;
         String headerFilename = header ? sourcePrefix + ".h" : null;
         String classPath = System.getProperty("java.class.path");
         for (String s : classScanner.getClassLoader().getPaths()) {
             classPath += File.pathSeparator + s;
         }
-        System.out.println("Generating source file: " + sourceFilename);
+        logger.info("Generating " + sourceFilename);
         if (generator.generate(sourceFilename, headerFilename, classPath, classes)) {
             generator.close();
             if (compile) {
                 String libraryFilename = outputPath.getPath() + File.separator + libraryName;
-                System.out.println("Compiling library file: " + libraryFilename);
+                logger.info("Compiling " + libraryFilename);
                 int exitValue = compile(sourceFilename, libraryFilename, p);
                 if (exitValue == 0) {
                     new File(sourceFilename).delete();
@@ -387,7 +387,7 @@ public class Builder {
                 outputFile = new File(sourceFilename);
             }
         } else {
-            System.out.println("Source file not generated: " + sourceFilename);
+            logger.info("Nothing generated for " + sourceFilename);
         }
         return outputFile;
     }
@@ -401,8 +401,8 @@ public class Builder {
      * @param files a list of files to store in the JAR file
      * @throws IOException
      */
-    public static void createJar(File jarFile, String[] classPath, File ... files) throws IOException {
-        System.out.println("Creating JAR file: " + jarFile);
+    void createJar(File jarFile, String[] classPath, File ... files) throws IOException {
+        logger.info("Creating " + jarFile);
         JarOutputStream jos = new JarOutputStream(new FileOutputStream(jarFile));
         for (File f : files) {
             String name = f.getPath();
@@ -445,7 +445,7 @@ public class Builder {
      * An extension of {@link URLClassLoader} that keeps a list of paths in memory.
      * Adds {@code System.getProperty("user.dir")} as default path if none are added.
      */
-    public static class UserClassLoader extends URLClassLoader {
+    static class UserClassLoader extends URLClassLoader {
         private LinkedList<String> paths = new LinkedList<String>();
         public UserClassLoader() {
             super(new URL[0]);
@@ -489,8 +489,8 @@ public class Builder {
      * Given a {@link UserClassLoader}, attempts to match and fill in a {@link Collection}
      * of {@link Class}, in various ways in which users may wish to do so.
      */
-    public static class ClassScanner {
-        public ClassScanner(Collection<Class> classes, UserClassLoader loader) {
+    class ClassScanner {
+        ClassScanner(Collection<Class> classes, UserClassLoader loader) {
             this.classes = classes;
             this.loader  = loader;
         }
@@ -517,9 +517,9 @@ public class Builder {
                     classes.add(c);
                 }
             } catch (ClassNotFoundException e) {
-                System.err.println("Warning: Could not find class " + className + ": " + e);
+                logger.warn("Could not find class " + className + ": " + e);
             } catch (NoClassDefFoundError e) {
-                System.err.println("Warning: Could not load class " + className + ": " + e);
+                logger.warn("Could not load class " + className + ": " + e);
             }
         }
 
@@ -564,10 +564,10 @@ public class Builder {
                 }
             }
             if (classes.size() == 0 && packageName == null) {
-                System.err.println("Warning: No classes found in the unnamed package");
+                logger.warn("No classes found in the unnamed package");
                 printHelp();
             } else if (prevSize == classes.size() && packageName != null) {
-                System.err.println("Warning: No classes found in package " + packageName);
+                logger.warn("No classes found in package " + packageName);
             }
         }
 
@@ -590,6 +590,14 @@ public class Builder {
      * Default constructor that simply initializes everything.
      */
     public Builder() {
+        this(new Logger());
+    }
+    /**
+     * Constructor that simply initializes everything.
+     * @param logger where to send messages
+     */
+    public Builder(Logger logger) {
+        this.logger = logger;
         Loader.loadLibraries = false;
         properties = Loader.loadProperties();
         classScanner = new ClassScanner(new LinkedList<Class>(),
@@ -597,6 +605,8 @@ public class Builder {
         compilerOptions = new LinkedList<String>();
     }
 
+    /** Logger where to send debug, info, warning, and error messages. */
+    final Logger logger;
     /** The directory where the generated files and compiled shared libraries get written to.
      *  By default they are placed in the same directory as the {@code .class} file. */
     File outputDirectory = null;
@@ -808,7 +818,7 @@ public class Builder {
                         }
                         File fo = new File(directory, fi.getName());
                         if (fi.exists() && !outputFiles.contains(fo)) {
-                            System.out.println("Copying library file: " + fi);
+                            logger.info("Copying " + fi);
                             FileInputStream fis = new FileInputStream(fi);
                             FileOutputStream fos = new FileOutputStream(fo);
                             byte[] buffer = new byte[1024];
@@ -907,7 +917,7 @@ public class Builder {
             } else if ("-Xcompiler".equals(args[i])) {
                 builder.compilerOptions(args[++i]);
             } else if (args[i].startsWith("-")) {
-                System.err.println("Error: Invalid option \"" + args[i] + "\"");
+                builder.logger.error("Invalid option \"" + args[i] + "\"");
                 printHelp();
                 System.exit(1);
             } else {

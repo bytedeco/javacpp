@@ -8,7 +8,7 @@ import java.lang.annotation.Target;
 
 /**
  * Allows using method arguments to call {@code operator[]} in some circumstances.
- * For example, a call like {@code *this[i].foo(str)} could be accomplished with
+ * For example, a call like {@code (*this)[i].foo(str)} could be accomplished with
  * {@code @Index native void foo(int i, String str)}.
  *
  * @see Generator

@@ -8,7 +8,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * A shortcut annotation that adds {@code const} to the parameter type or a {@link Cast}.
+ * A shortcut annotation to {@link Cast} that simply adds {@code const} to the parameter type.
  * Can also be declared on a {@link FunctionPointer} in the case of {@code const} functions.
  *
  * @see Generator
@@ -18,6 +18,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE, ElementType.METHOD, ElementType.PARAMETER})
 public @interface Const {
-    /** If true, applies {@code const} to the pointer instead of the value. */
-    boolean value() default false;
+    /** If {@code true}, applies {@code const} to the value and to the pointer, respectively. */
+    boolean[] value() default {true, false};
 }

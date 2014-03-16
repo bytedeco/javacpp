@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012,2013 Arnaud Nauwynck, Samuel Audet
+ * Copyright (C) 2012,2013,2014 Arnaud Nauwynck, Samuel Audet
  *
  * This file is part of JavaCPP.
  *
@@ -26,10 +26,11 @@ import java.util.Map;
 import java.util.Properties;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.logging.Log;
 
 /**
  * A Maven Mojo to call the {@link Builder} (C++ header file -> Java class -> C++ JNI -> native library).
- * Can also be seen as an example of how to use the Builder programmatically.
+ * Can also be considered as an example of how to use the Builder programmatically.
  *
  * @goal build
  * @phase process-classes
@@ -40,124 +41,125 @@ public class BuildMojo extends AbstractMojo {
 
     /**
      * Load user classes from classPath
-     * @parameter expression="${classPath}" default-value="${project.build.outputDirectory}"
+     * @parameter property="classPath" default-value="${project.build.outputDirectory}"
      */
     private String classPath = null;
 
     /**
      * Load user classes from classPaths
-     * @parameter expression="${classPaths}"
+     * @parameter property="classPaths"
      */
     private String[] classPaths = null;
 
     /**
      * Output all generated files to outputDirectory
-     * @parameter expression="${outputDirectory}"
+     * @parameter property="outputDirectory"
      */
     private File outputDirectory = null;
 
     /**
      * Output everything in a file named after given outputName
-     * @parameter expression="${outputName}"
+     * @parameter property="outputName"
      */
     private String outputName = null;
 
     /**
      * Compile and delete the generated .cpp files
-     * @parameter expression="${compile}" default-value="true"
+     * @parameter property="compile" default-value="true"
      */
     private boolean compile = true;
 
     /**
      * Generate header file with declarations of callbacks functions
-     * @parameter expression="${header}" default-value="false"
+     * @parameter property="header" default-value="false"
      */
     private boolean header = false;
 
     /**
      * Copy to output directory dependent libraries (link and preload)
-     * @parameter expression="${copylibs}" default-value="false"
+     * @parameter property="copyLibs" default-value="false"
      */
     private boolean copyLibs = false;
 
     /**
      * Also create a JAR file named {@code <jarPrefix>-<platform>.jar}
-     * @parameter expression="${jarPrefix}"
+     * @parameter property="jarPrefix"
      */
     private String jarPrefix = null;
 
     /**
      * Load all properties from resource
-     * @parameter expression="${properties}"
+     * @parameter property="properties"
      */
     private String properties = null;
 
     /**
      * Load all properties from file
-     * @parameter expression="${propertyFile}"
+     * @parameter property="propertyFile"
      */
     private File propertyFile = null;
 
     /**
      * Set property keys to values
-     * @parameter expression="${propertyKeysAndValues}"
+     * @parameter property="propertyKeysAndValues"
      */
     private Properties propertyKeysAndValues = null;
 
     /**
      * Process only this class or package (suffixed with .* or .**)
-     * @parameter expression="${classOrPackageName}"
+     * @parameter property="classOrPackageName"
      */
     private String classOrPackageName = null;
 
     /**
      * Process only these classes or packages (suffixed with .* or .**)
-     * @parameter expression="${classOrPackageNames}"
+     * @parameter property="classOrPackageNames"
      */
     private String[] classOrPackageNames = null;
 
     /**
      * Environment variables added to the compiler subprocess
-     * @parameter expression="${environmentVariables}"
+     * @parameter property="environmentVariables"
      */
     private Map<String,String> environmentVariables = null;
 
     /**
      * Pass compilerOptions directly to compiler
-     * @parameter expression="${compilerOptions}"
+     * @parameter property="compilerOptions"
      */
     private String[] compilerOptions = null;
 
      /**
       * Skip the execution.
-      * @parameter expression="${skip}" default-value="false"
+      * @parameter property="skip" default-value="false"
       */
     private boolean skip = false;
 
     @Override public void execute() throws MojoExecutionException {
+        final Log log = getLog();
         try {
-            getLog().info("Executing JavaCPP Builder");
-            if (getLog().isDebugEnabled()) {
-                getLog().debug("classPath: " + classPath);
-                getLog().debug("classPaths: " + Arrays.deepToString(classPaths));
-                getLog().debug("outputDirectory: " + outputDirectory);
-                getLog().debug("outputName: " + outputName);
-                getLog().debug("compile: " + compile);
-                getLog().debug("header: " + header);
-                getLog().debug("copyLibs: " + copyLibs);
-                getLog().debug("jarPrefix: " + jarPrefix);
-                getLog().debug("properties: " + properties);
-                getLog().debug("propertyFile: " + propertyFile);
-                getLog().debug("propertyKeysAndValues: " + propertyKeysAndValues);
-                getLog().debug("classOrPackageName: " + classOrPackageName);
-                getLog().debug("classOrPackageNames: " + Arrays.deepToString(classOrPackageNames));
-                getLog().debug("environmentVariables: " + environmentVariables);
-                getLog().debug("compilerOptions: " + Arrays.deepToString(compilerOptions));
-                getLog().debug("skip: " + skip);
+            log.info("Executing JavaCPP Builder");
+            if (log.isDebugEnabled()) {
+                log.debug("classPath: " + classPath);
+                log.debug("classPaths: " + Arrays.deepToString(classPaths));
+                log.debug("outputDirectory: " + outputDirectory);
+                log.debug("outputName: " + outputName);
+                log.debug("compile: " + compile);
+                log.debug("header: " + header);
+                log.debug("copyLibs: " + copyLibs);
+                log.debug("jarPrefix: " + jarPrefix);
+                log.debug("properties: " + properties);
+                log.debug("propertyFile: " + propertyFile);
+                log.debug("propertyKeysAndValues: " + propertyKeysAndValues);
+                log.debug("classOrPackageName: " + classOrPackageName);
+                log.debug("classOrPackageNames: " + Arrays.deepToString(classOrPackageNames));
+                log.debug("environmentVariables: " + environmentVariables);
+                log.debug("compilerOptions: " + Arrays.deepToString(compilerOptions));
+                log.debug("skip: " + skip);
             }
 
             if (skip) {
-                getLog().info("Skipped execution of JavaCPP Builder");
+                log.info("Skipped execution of JavaCPP Builder");
                 return;
             }
 
@@ -175,7 +177,13 @@ public class BuildMojo extends AbstractMojo {
                 classOrPackageNames = new String[] { classOrPackageName };
             }
 
-            File[] outputFiles = new Builder()
+            Logger logger = new Logger() {
+                @Override public void debug(CharSequence cs) { log.debug(cs); }
+                @Override public void info (CharSequence cs) { log.info(cs);  }
+                @Override public void warn (CharSequence cs) { log.warn(cs);  }
+                @Override public void error(CharSequence cs) { log.error(cs); }
+            };
+            File[] outputFiles = new Builder(logger)
                     .classPaths(classPaths)
                     .outputDirectory(outputDirectory)
                     .outputName(outputName)
@@ -189,12 +197,12 @@ public class BuildMojo extends AbstractMojo {
                     .classesOrPackages(classOrPackageNames)
                     .environmentVariables(environmentVariables)
                     .compilerOptions(compilerOptions).build();
-            getLog().info("Successfully executed JavaCPP Builder");
-            if (getLog().isDebugEnabled()) {
-                getLog().debug("outputFiles: " + Arrays.deepToString(outputFiles));
+            log.info("Successfully executed JavaCPP Builder");
+            if (log.isDebugEnabled()) {
+                log.debug("outputFiles: " + Arrays.deepToString(outputFiles));
             }
 	} catch (Exception e) {
-            getLog().error("Failed to execute JavaCPP Builder: " + e.getMessage());
+            log.error("Failed to execute JavaCPP Builder: " + e.getMessage());
             throw new MojoExecutionException("Failed to execute JavaCPP Builder", e);
         }
     }

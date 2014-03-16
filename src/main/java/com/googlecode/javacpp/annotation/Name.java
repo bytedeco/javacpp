@@ -22,6 +22,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE, ElementType.METHOD})
 public @interface Name {
-    /** The second value gets used as a suffix to work around arrays of anonymous struct or union. */
+    /** The second element gets used as a suffix to work around arrays of anonymous struct or union. */
     String[] value();
 }

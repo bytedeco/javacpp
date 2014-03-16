@@ -33,10 +33,13 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE})
 public @interface Properties {
-    /** The target Java source code file of the {@link Parser}. */
-    String target() default "";
     /** A list of classes from which to inherit properties. */
     Class[] inherit() default {};
     /** A list of properties for different platforms. */
     Platform[] value() default {};
+    /** The target Java source code file of the {@link Parser}. */
+    String target() default "";
+    /** An optional helper class the {@link Parser} should use as base of the target.
+        Defaults to the class where this annotation was found. */
+    String helper() default "";
 }

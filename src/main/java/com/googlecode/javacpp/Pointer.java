@@ -33,7 +33,7 @@ import java.nio.ByteOrder;
  * All peer classes to native types must be descended from Pointer, the topmost class.
  * It can be thought as mapping the native C++ {@code void*}, which can point to any
  * {@code struct}, {@code class}, or {@code union}. All Pointer classes get parsed
- * by {@link Generator} to produce proper wrapping JNI code, but this parent class also
+ * by {@link Generator} to produce proper wrapping JNI code, but this base class also
  * provides functionality to access native array elements as well as utility methods
  * and classes to let users benefit from garbage collection.
  * <p>
@@ -71,8 +71,8 @@ public class Pointer {
      * Copies the address, position, limit, and capacity of another Pointer.
      * Also keeps a reference to it to prevent its memory from getting deallocated.
      * <p>
-     * This copy constructor basically acts as a static cast, as least on
-     * plain old data (POD) {@code struct}.
+     * This copy constructor basically acts as a {@code reinterpret_cast}, at least
+     * on plain old data (POD) {@code struct}, so we need to be careful with it.
      *
      * @param p the other Pointer to reference
      */

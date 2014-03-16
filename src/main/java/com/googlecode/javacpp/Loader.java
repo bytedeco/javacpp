@@ -295,6 +295,10 @@ public class Loader {
                 if (target.length() > 0) {
                     addAll("target", target);
                 }
+                String helper = classProperties.helper();
+                if (helper.length() > 0) {
+                    addAll("helper", helper);
+                }
                 platforms = classProperties.value();
             }
 
