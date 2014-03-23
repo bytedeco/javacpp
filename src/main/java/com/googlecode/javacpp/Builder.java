@@ -787,10 +787,7 @@ public class Builder {
             if (classList == null) {
                 map.put(libraryName, classList = new LinkedList<Class>());
             }
-            if (c != p.getEffectiveClass()) {
-                classList.add(p.getEffectiveClass());
-            }
-            classList.add(c);
+            classList.addAll(p.getEffectiveClasses());
         }
         for (String libraryName : map.keySet()) {
             LinkedList<Class> classList = map.get(libraryName);

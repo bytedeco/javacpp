@@ -25,7 +25,7 @@ To use JavaCPP, you will need to download and install the following software:
     * [http://msdn.microsoft.com/en-us/library/ff660764.aspx  Building Applications that Use the Windows SDK]
 
 To produce binary files for Android, you will also have to install:
- * Android NDK r9c  http://developer.android.com/tools/sdk/ndk/
+ * Android NDK r9d  http://developer.android.com/tools/sdk/ndk/
 
 And similarly to target iOS, you will need to install:
  * RoboVM 0.0.7  http://download.robovm.org/
@@ -290,7 +290,7 @@ However, in the case of Android, we need to do a bit more work. Inside the direc
  # Run this command to produce the `*.so` library files in `libs/armeabi/`:
 {{{
 $ java -jar libs/javacpp.jar -classpath bin/ -classpath bin/classes/ \
-> -properties android-arm -Dplatform.root=<path/to/android-ndk-r9c> \
+> -properties android-arm -Dplatform.root=<path/to/android-ndk-r9d> \
 > -Dplatform.compiler=<path/to/arm-linux-androideabi-g++> -d libs/armeabi/
 }}}
 To make everything automatic, we may also insert that command into, for example, the Ant `build.xml` file or the Eclipse `.project` file as a [http://help.eclipse.org/helios/index.jsp?topic=/org.eclipse.platform.doc.user/gettingStarted/qs-96_non_ant_pjs.htm Non-Ant project builder].
@@ -311,9 +311,10 @@ This project was conceived at the Okutomi & Tanaka Laboratory, Tokyo Institute o
 
 ==Changes==
 
+ * Upgraded references of the Android NDK to version r9d
  * Introduced a simple `Logger` class and unified the logging output calls around it
  * Unified the property names with the `@Properties` and `@Platform` annotations into a consistent naming scheme
- * Continued to clean up the `Parser` and improve the support of, for the most part, comments, templates, overloaded operators, namespaces, standard containers, default parameter arguments, multiple inheritance, custom names of wrapped declarators, and helper classes written in Java
+ * Continued to clean up the `Parser` and improve the support of, for the most part, comments, functions pointers, anonymous `struct` or `union`, templates, overloaded operators, namespaces, standard containers, default parameter arguments, multiple inheritance, custom names of wrapped declarators, and helper classes written in Java
  * Annotations such as `@Adapter` or `@ByVal` are no longer ignored on parameters of getters or setters annotated with `@Index`
  * Fixed some other corner cases in `Generator` and a few potential issues with the hacks in `Loader`
  * Added for convenience to `PointerPointer` a generic parameter `<P extends Pointer>` and the associated `get(Class<P> ...)` getters, as well as `String` getters and setters

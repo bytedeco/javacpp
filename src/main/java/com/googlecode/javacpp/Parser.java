@@ -102,6 +102,7 @@ public class Parser {
         static final String[] simpleTypes = { "signed", "unsigned", "char", "short", "int", "long", "bool", "float", "double" };
         static { Arrays.sort(simpleTypes); }
         static final InfoMap defaults = new InfoMap(null)
+            .put(new Info(" __attribute__", "__declspec").annotations().skip(true))
             .put(new Info("void").valueTypes("void").pointerTypes("Pointer"))
             .put(new Info("va_list", "FILE", "std::exception", "std::istream", "std::ostream", "std::iostream",
                     "std::ifstream", "std::ofstream", "std::fstream").cast(true).pointerTypes("Pointer"))
@@ -778,7 +779,7 @@ public class Parser {
             namespace = c.namespace;
             group = c.group;
             inaccessible = c.inaccessible;
-            variables = c.variables;
+            variable = c.variable;
             templateMap = c.templateMap;
             usingList = c.usingList;
         }
@@ -786,7 +787,7 @@ public class Parser {
         String namespace = null;
         Type group = null;
         boolean inaccessible = false;
-        Declarator[] variables = null;
+        Declarator variable = null;
         TemplateMap templateMap = null;
         LinkedList<String> usingList = null;
 
@@ -801,14 +802,12 @@ public class Parser {
                 TemplateMap map = templateMap;
                 while (map != null) {
                     if (name.equals(map.getName())) {
-                        String args = "";
-                        char separator = '<';
+                        String args = "<", separator = "";
                         for (String s : map.values()) {
                             args += separator + s;
-                            separator = ',';
+                            separator = ",";
                         }
-                        args += args.endsWith(">") ? " >" : ">";
-                        names.add(name + args);
+                        names.add(name + args + (args.endsWith(">") ? " >" : ">"));
                         break;
                     }
                     map = map.parent;
@@ -938,8 +937,7 @@ public class Parser {
 
                 for (int i = 0; i < dim; i++) {
                     String indexAnnotation = i > 0 ? ("@Index" + (i > 1 ? "(" + i + ") " : " " )) : "";
-                    String indices = "";
-                    String separator = "";
+                    String indices = "", separator = "";
                     for (int j = 0; j < i; j++) {
                         indices += separator + indexType.annotations + indexType.javaName + " " + (char)('i' + j);
                         separator = ", ";
@@ -949,8 +947,7 @@ public class Parser {
                                : "    public native " + indexAnnotation + "void resize(" + indices + separator + "@Cast(\"size_t\") long n);\n");
                 }
 
-                String params = "";
-                String separator = "";
+                String params = "", separator = "";
                 for (int i = 0; i < dim; i++) {
                     params += separator + indexType.annotations + indexType.javaName + " " + (char)('i' + i);
                     separator = ", ";
@@ -972,9 +969,7 @@ public class Parser {
                 if (resizable && firstType == null && secondType == null) {
                     decl.text += "\n"
                               +  "    public " + containerType.javaName + " put(" + valueType.javaName + arrayBrackets + " ... array) {\n";
-                    String indent = "        ";
-                    String indices = "";
-                    String args = "";
+                    String indent = "        ", indices = "", args = "";
                     separator = "";
                     for (int i = 0; i < dim; i++) {
                         char c = (char)('i' + i);
@@ -1137,12 +1132,13 @@ public class Parser {
                 type.cppName += token;
             } else if (token.match('<')) {
                 type.arguments = templateArguments(context);
-                char separator = '<';
+                type.cppName += "<";
+                String separator = "";
                 for (Type t : type.arguments) {
                     type.cppName += separator;
                     Info info = infoMap.getFirst(t.cppName);
                     type.cppName += info != null && info.cppTypes != null ? info.cppTypes[0] : t.cppName;
-                    separator = ',';
+                    separator = ",";
                 }
                 type.cppName += type.cppName.endsWith(">") ? " >" : ">";
             } else if (token.match(Token.CONST)) {
@@ -1258,8 +1254,8 @@ public class Parser {
         Type type = null;
         Parameters parameters = null;
         Declaration definition = null;
-        int infoNumber = 0, indices = 0;
-        boolean constPointer = false;
+        int infoNumber = 0, indices = 0, indirections = 0;
+        boolean constPointer = false, reference = false;
         String cppName = "", javaName = "", signature = "";
     }
 
@@ -1271,23 +1267,6 @@ public class Parser {
         Type type = type(context);
         if (type == null) {
             return null;
-        }
-        Attribute attr = null;
-        if (type.attributes != null) {
-            for (Attribute a : type.attributes) {
-                if (a.arguments.length() > 0 && Character.isJavaIdentifierStart(a.arguments.charAt(0))) {
-                    attr = a;
-                    for (char c : a.arguments.toCharArray()) {
-                        if (!Character.isJavaIdentifierPart(c)) {
-                            attr = null;
-                            break;
-                        }
-                    }
-                }
-                if (attr != null) {
-                    break;
-                }
-            }
         }
 
         int count = 0;
@@ -1307,13 +1286,11 @@ public class Parser {
         }
 
         String cast = type.cppName;
-        int indirections = 0;
-        boolean reference = false;
         for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.next()) {
             if (token.match('*')) {
-                indirections++;
+                dcl.indirections++;
             } else if (token.match('&')) {
-                reference = true;
+                dcl.reference = true;
             } else if (token.match(Token.CONST)) {
                 dcl.constPointer = true;
             } else {
@@ -1321,8 +1298,37 @@ public class Parser {
             }
             cast += token;
         }
-        if (indirections == 0 && reference) {
+        if (dcl.indirections == 0 && dcl.reference) {
             cast = cast.replace('&', '*');
+        }
+
+        ArrayList<Attribute> attributes = new ArrayList<Attribute>();
+        if (type.attributes != null) {
+            attributes.addAll(Arrays.asList(type.attributes));
+        }
+        int backIndex = tokens.index;
+        Attribute attr = attribute();
+        while (attr != null && attr.annotation) {
+            type.annotations += attr.javaName;
+            attributes.add(attr);
+            backIndex = tokens.index;
+            attr = attribute();
+        }
+        attr = null;
+        tokens.index = backIndex;
+        for (Attribute a : attributes) {
+            if (a.arguments.length() > 0 && Character.isJavaIdentifierStart(a.arguments.charAt(0))) {
+                attr = a;
+                for (char c : a.arguments.toCharArray()) {
+                    if (!Character.isJavaIdentifierPart(c)) {
+                        attr = null;
+                        break;
+                    }
+                }
+            }
+            if (attr != null) {
+                break;
+            }
         }
 
         int dims[] = new int[256];
@@ -1331,7 +1337,7 @@ public class Parser {
         Info groupInfo = null;
         Declaration definition = new Declaration();
         boolean operator = false;
-        if (tokens.get().match('(')) {
+        if (tokens.get().match('(') || (typedef && tokens.get(1).match('('))) {
             // probably a function pointer declaration
             while (tokens.get().match('(')) {
                 tokens.next();
@@ -1359,8 +1365,7 @@ public class Parser {
                 } else if (token.match('[')) {
                     Token n = tokens.get(1);
                     dims[dcl.indices++] = n.match(Token.INTEGER) ? Integer.parseInt(n.value) : -1;
-                } else if (token.match(')')) {
-                    tokens.next();
+                } else if (token.match('(', ')')) {
                     break;
                 }
             }
@@ -1423,7 +1428,7 @@ public class Parser {
         }
         if (arrayAsPointer && dcl.indices > 0) {
             // treat array as an additional indirection
-            indirections++;
+            dcl.indirections++;
             String dimCast = "";
             for (int i = 1; i < dcl.indices; i++) {
                 if (dims[i] > 0) {
@@ -1433,10 +1438,10 @@ public class Parser {
             //dcl.indices = 0;
             cast += dimCast.length() > 0 ? "(*)" + dimCast : "*";
         }
-        if (pointerAsArray && indirections > (type.anonymous ? 0 : 1)) {
+        if (pointerAsArray && dcl.indirections > (type.anonymous ? 0 : 1)) {
             // treat second indirection as an array, unless anonymous
             dims[dcl.indices++] = -1;
-            indirections--;
+            dcl.indirections--;
             cast = cast.substring(0, cast.length() - 1);
         }
 
@@ -1449,7 +1454,7 @@ public class Parser {
 
         int infoLength = 1;
         boolean valueType = false, needCast = arrayAsPointer && dcl.indices > 1, implicitConst = false;
-        String prefix = type.constValue && indirections < 2 && !reference ? "const " : "";
+        String prefix = type.constValue && dcl.indirections < 2 && !dcl.reference ? "const " : "";
         Info info = infoMap.getFirst(prefix + type.cppName, false);
         if (!typedef && (info == null || (info.cppTypes != null && info.cppTypes.length > 0))) {
             // substitute template types that have no info with appropriate adapter annotation
@@ -1460,8 +1465,8 @@ public class Parser {
             LinkedList<Info> infoList = infoMap.get(type2.cppName);
             for (Info info2 : infoList) {
                 if (type2.arguments != null && info2.annotations != null) {
-                    indirections = 1;
-                    reference = false;
+                    dcl.indirections = 1;
+                    dcl.reference = false;
                     type = type2.arguments[0];
                     cast = type.cppName + "*";
                     for (String s : info2.annotations) {
@@ -1473,8 +1478,8 @@ public class Parser {
             }
         }
         if (!using && info != null) {
-            valueType = info.valueTypes != null && ((type.constValue && reference) ||
-                    (indirections == 0 && !reference) || info.pointerTypes == null);
+            valueType = info.valueTypes != null && ((type.constValue && dcl.reference) ||
+                    (dcl.indirections == 0 && !dcl.reference) || info.pointerTypes == null);
             implicitConst = info.cppNames[0].startsWith("const ");
             infoLength = valueType ? info.valueTypes.length :
                     info.pointerTypes != null ? info.pointerTypes.length : 1;
@@ -1486,20 +1491,20 @@ public class Parser {
         }
 
         if (!valueType) {
-            if (indirections == 0 && !reference) {
+            if (dcl.indirections == 0 && !dcl.reference) {
                 type.annotations += "@ByVal ";
-            } else if (indirections == 0 && reference) {
+            } else if (dcl.indirections == 0 && dcl.reference) {
                 type.annotations += "@ByRef ";
-            } else if (indirections == 1 && reference) {
+            } else if (dcl.indirections == 1 && dcl.reference) {
                 type.annotations += "@ByPtrRef ";
-            } else if (indirections == 2 && !reference && infoNumber >= 0) {
+            } else if (dcl.indirections == 2 && !dcl.reference && infoNumber >= 0) {
                 type.annotations += "@ByPtrPtr ";
                 needCast |= type.cppName.equals("void");
-            } else if (indirections >= 2) {
+            } else if (dcl.indirections >= 2) {
                 dcl.infoNumber += infoLength;
                 needCast = true;
                 type.javaName = "PointerPointer";
-                if (reference) {
+                if (dcl.reference) {
                     type.annotations += "@ByRef ";
                 }
             }
@@ -1512,7 +1517,7 @@ public class Parser {
             if (type.constValue) {
                 cast = "const " + cast;
             }
-            if (!valueType && indirections == 0 && !reference) {
+            if (!valueType && dcl.indirections == 0 && !dcl.reference) {
                 type.annotations += "@Cast(\"" + cast + "*\") ";
             } else {
                 type.annotations = "@Cast(\"" + cast + "\") " + type.annotations;
@@ -1541,12 +1546,17 @@ public class Parser {
                 type.annotations += "@Name(\"" + localName + "\") ";
             }
         }
+        if (info != null && info.annotations != null) {
+            for (String s : info.annotations) {
+                type.annotations += s + " ";
+            }
+        }
 
         dcl.signature = dcl.javaName;
         dcl.parameters = parameters(context, infoNumber, useDefaults);
         if (dcl.parameters != null) {
             dcl.infoNumber = Math.max(dcl.infoNumber, dcl.parameters.infoNumber);
-            if (indirections2 == 0) {
+            if (indirections2 == 0 && !typedef) {
                 dcl.signature += dcl.parameters.signature;
             } else {
                 String functionType = Character.toUpperCase(dcl.javaName.charAt(0)) + dcl.javaName.substring(1);
@@ -1655,7 +1665,7 @@ public class Parser {
         Attribute attr = new Attribute();
         Info info = infoMap.getFirst(attr.cppName = tokens.get().value);
         if (attr.annotation = info != null && info.annotations != null
-                && info.valueTypes == null && info.pointerTypes == null) {
+                && info.javaNames == null && info.valueTypes == null && info.pointerTypes == null) {
             for (String s : info.annotations) {
                 attr.javaName += s + " ";
             }
@@ -1671,7 +1681,7 @@ public class Parser {
                 count++;
             } else if (token.match(')')) {
                 count--;
-            } else {
+            } else if (info == null || !info.skip) {
                 attr.arguments += token.value;
             }
         }
@@ -1814,7 +1824,26 @@ public class Parser {
         if (context.namespace != null && namespace < 0) {
             dcl.cppName = context.namespace + "::" + dcl.cppName;
         }
-        Info info = infoMap.getFirst(dcl.cppName);
+        Info info = null;
+        if (dcl.parameters != null) {
+            String name = dcl.cppName + "(", separator = "";
+            for (Declarator d : dcl.parameters.declarators) {
+                if (d != null) {
+                    name += separator + d.type.cppName;
+                    for (int i = 0; i < d.indirections; i++) {
+                        name += "*";
+                    }
+                    if (d.reference) {
+                        name += "&";
+                    }
+                    separator = ", ";
+                }
+            }
+            info = infoMap.getFirst(name + ")");
+        }
+        if (info == null) {
+            info = infoMap.getFirst(dcl.cppName);
+        }
         String localName = dcl.cppName;
         if (localName.startsWith(context.namespace + "::")) {
             localName = dcl.cppName.substring(context.namespace.length() + 2);
@@ -1952,88 +1981,87 @@ public class Parser {
             return true;
         }
         boolean first = true;
-        for (Declarator metadcl : context.variables != null ? context.variables : new Declarator[] { null }) {
-            for (int n = 0; n < Integer.MAX_VALUE; n++) {
-                decl = new Declaration();
-                tokens.index = backIndex;
-                dcl = declarator(context, null, -1, false, n, false, true);
-                if (dcl == null) {
-                    break;
-                }
-                decl.declarator = dcl;
-                javaName = dcl.javaName;
-                if (metadcl == null || metadcl.indices == 0 || dcl.indices == 0) {
-                    // arrays are currently not supported for both metadcl and dcl at the same time
-                    String indices = "";
-                    for (int i = 0; i < (metadcl == null || metadcl.indices == 0 ? dcl.indices : metadcl.indices); i++) {
-                        if (i > 0) {
-                            indices += ", ";
-                        }
-                        indices += "int " + (char)('i' + i);
-                    }
-                    if (context.namespace != null && context.group == null) {
-                        decl.text += "@Namespace(\"" + context.namespace + "\") ";
-                    }
-                    if (metadcl != null && metadcl.cppName.length() > 0) {
-                        decl.text += metadcl.indices == 0
-                                ? "@Name(\"" + metadcl.cppName + "." + dcl.cppName + "\") "
-                                : "@Name({\"" + metadcl.cppName + "\", \"." + dcl.cppName + "\"}) ";
-                        javaName = metadcl.javaName + "_" + dcl.javaName;
-                    }
-                    if (dcl.type.constValue) {
-                        decl.text += "@MemberGetter ";
-                    }
-                    decl.text += modifiers + dcl.type.annotations.replace("@ByVal ", "@ByRef ")
-                              + dcl.type.javaName + " " + javaName + "(" + indices + ");";
-                    if (!dcl.type.constValue) {
-                        if (indices.length() > 0) {
-                            indices += ", ";
-                        }
-                        decl.text += " " + modifiers + setterType + javaName + "(" + indices + dcl.type.javaName + " " + javaName + ");";
-                    }
-                    decl.text += "\n";
-                }
-                if (dcl.indices > 0) {
-                    // in the case of arrays, also add a pointer accessor
-                    tokens.index = backIndex;
-                    dcl = declarator(context, null, -1, false, n, true, false);
-                    String indices = "";
-                    for (int i = 0; i < (metadcl == null ? 0 : metadcl.indices); i++) {
-                        if (i > 0) {
-                            indices += ", ";
-                        }
-                        indices += "int " + (char)('i' + i);
-                    }
-                    if (context.namespace != null && context.group == null) {
-                        decl.text += "@Namespace(\"" + context.namespace + "\") ";
-                    }
-                    if (metadcl != null && metadcl.cppName.length() > 0) {
-                        decl.text += metadcl.indices == 0
-                                ? "@Name(\"" + metadcl.cppName + "." + dcl.cppName + "\") "
-                                : "@Name({\"" + metadcl.cppName + "\", \"." + dcl.cppName + "\"}) ";
-                        javaName = metadcl.javaName + "_" + dcl.javaName;
-                    }
-                    decl.text += "@MemberGetter " + modifiers + dcl.type.annotations.replace("@ByVal ", "@ByRef ")
-                              + dcl.type.javaName + " " + javaName + "(" + indices + ");\n";
-                }
-                decl.signature = dcl.signature;
-                if (info != null && info.javaText != null) {
-                    decl.text = info.javaText;
-                    decl.declarator = null;
-                }
-                while (!tokens.get().match(Token.EOF, ';')) {
-                    tokens.next();
-                }
-                tokens.next();
-                String comment = commentAfter();
-                if (first) {
-                    first = false;
-                    declList.spacing = spacing;
-                    decl.text = comment + decl.text;
-                }
-                decl.variable = true;
-                declList.add(decl);
+        Declarator metadcl = context.variable;
+        for (int n = 0; n < Integer.MAX_VALUE; n++) {
+            decl = new Declaration();
+            tokens.index = backIndex;
+            dcl = declarator(context, null, -1, false, n, false, true);
+            if (dcl == null) {
+                break;
             }
+            decl.declarator = dcl;
+            javaName = dcl.javaName;
+            if (metadcl == null || metadcl.indices == 0 || dcl.indices == 0) {
+                // arrays are currently not supported for both metadcl and dcl at the same time
+                String indices = "";
+                for (int i = 0; i < (metadcl == null || metadcl.indices == 0 ? dcl.indices : metadcl.indices); i++) {
+                    if (i > 0) {
+                        indices += ", ";
+                    }
+                    indices += "int " + (char)('i' + i);
+                }
+                if (context.namespace != null && context.group == null) {
+                    decl.text += "@Namespace(\"" + context.namespace + "\") ";
+                }
+                if (metadcl != null && metadcl.cppName.length() > 0) {
+                    decl.text += metadcl.indices == 0
+                            ? "@Name(\"" + metadcl.cppName + "." + dcl.cppName + "\") "
+                            : "@Name({\"" + metadcl.cppName + "\", \"." + dcl.cppName + "\"}) ";
+                    javaName = metadcl.javaName + "_" + dcl.javaName;
+                }
+                if (dcl.type.constValue) {
+                    decl.text += "@MemberGetter ";
+                }
+                decl.text += modifiers + dcl.type.annotations.replace("@ByVal ", "@ByRef ")
+                          + dcl.type.javaName + " " + javaName + "(" + indices + ");";
+                if (!dcl.type.constValue) {
+                    if (indices.length() > 0) {
+                        indices += ", ";
+                    }
+                    decl.text += " " + modifiers + setterType + javaName + "(" + indices + dcl.type.javaName + " " + javaName + ");";
+                }
+                decl.text += "\n";
+            }
+            if (dcl.indices > 0) {
+                // in the case of arrays, also add a pointer accessor
+                tokens.index = backIndex;
+                dcl = declarator(context, null, -1, false, n, true, false);
+                String indices = "";
+                for (int i = 0; i < (metadcl == null ? 0 : metadcl.indices); i++) {
+                    if (i > 0) {
+                        indices += ", ";
+                    }
+                    indices += "int " + (char)('i' + i);
+                }
+                if (context.namespace != null && context.group == null) {
+                    decl.text += "@Namespace(\"" + context.namespace + "\") ";
+                }
+                if (metadcl != null && metadcl.cppName.length() > 0) {
+                    decl.text += metadcl.indices == 0
+                            ? "@Name(\"" + metadcl.cppName + "." + dcl.cppName + "\") "
+                            : "@Name({\"" + metadcl.cppName + "\", \"." + dcl.cppName + "\"}) ";
+                    javaName = metadcl.javaName + "_" + dcl.javaName;
+                }
+                decl.text += "@MemberGetter " + modifiers + dcl.type.annotations.replace("@ByVal ", "@ByRef ")
+                          + dcl.type.javaName + " " + javaName + "(" + indices + ");\n";
+            }
+            decl.signature = dcl.signature;
+            if (info != null && info.javaText != null) {
+                decl.text = info.javaText;
+                decl.declarator = null;
+            }
+            while (!tokens.get().match(Token.EOF, ';')) {
+                tokens.next();
+            }
+            tokens.next();
+            String comment = commentAfter();
+            if (first) {
+                first = false;
+                declList.spacing = spacing;
+                decl.text = comment + decl.text;
+            }
+            decl.variable = true;
+            declList.add(decl);
         }
         declList.spacing = null;
         return true;
@@ -2440,11 +2468,18 @@ public class Parser {
             ctx.namespace = type.cppName;
             ctx.group = type;
         }
-        if (variables.size() > 0) {
-            ctx.variables = variables.toArray(new Declarator[variables.size()]);
-        }
+
         DeclarationList declList2 = new DeclarationList();
-        declarations(ctx, declList2);
+        if (variables.size() == 0) {
+            declarations(ctx, declList2);
+        } else for (Declarator var : variables) {
+            if (context.variable != null) {
+                var.cppName = context.variable.cppName + "." + var.cppName;
+                var.javaName = context.variable.javaName + "_" + var.javaName;
+            }
+            ctx.variable = var;
+            declarations(ctx, declList2);
+        }
         boolean implicitConstructor = true, defaultConstructor = false, intConstructor = false, abstractClass = false, haveVariables = false;
         for (Declaration d : declList2) {
             if (d.declarator != null && d.declarator.type != null && d.declarator.type.constructor) {
@@ -2864,6 +2899,36 @@ public class Parser {
         }
     }
 
+    LinkedList<File> findHeaderFiles(Loader.ClassProperties properties, LinkedList<String> includes) throws FileNotFoundException {
+        LinkedList<String> paths = properties.get("platform.includepath");
+        LinkedList<File> files = new LinkedList<File>();
+        for (String include : includes) {
+            boolean found = false;
+            if (include.startsWith("<") && include.endsWith(">")) {
+                include = include.substring(1, include.length() - 1);
+            } else {
+                File f = new File(include);
+                if (f.exists()) {
+                    found = true;
+                    files.add(f);
+                    continue;
+                }
+            }
+            for (String path : paths) {
+                File f = new File(path, include);
+                if (f.exists()) {
+                    found = true;
+                    files.add(f);
+                    break;
+                }
+            }
+            if (!found) {
+                files.add(new File(include));
+            }
+        }
+        return files;
+    }
+
     void parse(String outputFilename, Context context, String[] includePath, String ... inputFilenames) throws IOException, Exception {
         File[] files = new File[inputFilenames.length];
         for (int i = 0; i < files.length; i++) {
@@ -2875,7 +2940,7 @@ public class Parser {
         ArrayList<Token> tokenList = new ArrayList<Token>();
         String lineSeparator = null;
         for (File file : inputFiles) {
-            if (!file.exists()) {
+            if (!file.exists() && includePath != null) {
                 for (String s : includePath) {
                     File f = new File(s, file.getPath());
                     if (f.exists()) {
@@ -2885,7 +2950,7 @@ public class Parser {
                 }
             }
             Info info = infoMap.getFirst(file.getName());
-            if (info != null && info.skip) {
+            if (!file.exists() || (info != null && info.skip)) {
                 continue;
             }
             logger.info("Parsing " + file);
@@ -2947,8 +3012,14 @@ public class Parser {
     public File parse(File outputDirectory, String[] classPath, Class cls) throws IOException, Exception {
         Loader.ClassProperties allProperties = Loader.loadProperties(cls, properties, true);
         Loader.ClassProperties clsProperties = Loader.loadProperties(cls, properties, false);
-        LinkedList<File> allFiles = allProperties.getHeaderFiles();
-        LinkedList<File> clsFiles = clsProperties.getHeaderFiles();
+        LinkedList<String> clsIncludes = new LinkedList<String>();
+        clsIncludes.addAll(clsProperties.get("platform.include"));
+        clsIncludes.addAll(clsProperties.get("platform.cinclude"));
+        LinkedList<String> allIncludes = new LinkedList<String>();
+        allIncludes.addAll(allProperties.get("platform.include"));
+        allIncludes.addAll(allProperties.get("platform.cinclude"));
+        LinkedList<File> allFiles = findHeaderFiles(allProperties, allIncludes);
+        LinkedList<File> clsFiles = findHeaderFiles(allProperties, clsIncludes);
         LinkedList<String> allTargets = allProperties.get("target");
         LinkedList<String> clsTargets = clsProperties.get("target");
         LinkedList<String> clsHelpers = clsProperties.get("helper");

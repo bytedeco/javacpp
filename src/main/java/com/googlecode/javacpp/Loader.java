@@ -32,6 +32,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Properties;
@@ -211,8 +212,8 @@ public class Loader {
         }
 
         String platform, platformRoot, pathSeparator;
-        LinkedList<Class> inheritedClass = null;
-        Class effectiveClass = null;
+        LinkedList<Class> inheritedClasses = null;
+        LinkedList<Class> effectiveClasses = null;
 
         public LinkedList<String> get(String key) {
             LinkedList<String> list = super.get(key);
@@ -265,11 +266,15 @@ public class Loader {
 
         public void load(Class cls, boolean inherit) {
             Class<?> c = getEnclosingClass(cls);
+            LinkedList<Class> classList = new LinkedList<Class>();
+            classList.addFirst(c);
             while (!c.isAnnotationPresent(com.googlecode.javacpp.annotation.Properties.class)
                     && !c.isAnnotationPresent(Platform.class) && c.getSuperclass() != Object.class) {
-                c = c.getSuperclass();
+                classList.addFirst(c = c.getSuperclass());
             }
-            effectiveClass = c;
+            if (effectiveClasses == null) {
+                effectiveClasses = classList;
+            }
             com.googlecode.javacpp.annotation.Properties classProperties =
                     c.getAnnotation(com.googlecode.javacpp.annotation.Properties.class);
             Platform[] platforms = null;
@@ -281,13 +286,13 @@ public class Loader {
             } else {
                 Class[] classes = classProperties.inherit();
                 if (inherit && classes != null) {
-                    if (inheritedClass == null) {
-                        inheritedClass = new LinkedList<Class>();
+                    if (inheritedClasses == null) {
+                        inheritedClasses = new LinkedList<Class>();
                     }
                     for (Class c2 : classes) {
                         load(c2, inherit);
-                        if (!inheritedClass.contains(c2)) {
-                            inheritedClass.add(c2);
+                        if (!inheritedClasses.contains(c2)) {
+                            inheritedClasses.add(c2);
                         }
                     }
                 }
@@ -343,45 +348,12 @@ public class Loader {
             setProperty("platform.library", library);
         }
 
-        LinkedList<File> getHeaderFiles() throws FileNotFoundException {
-            LinkedList<String> paths = get("platform.includepath");
-            LinkedList<String> includes = new LinkedList<String>();
-            includes.addAll(get("platform.include"));
-            includes.addAll(get("platform.cinclude"));
-            LinkedList<File> files = new LinkedList<File>();
-            for (String include : includes) {
-                boolean found = false;
-                if (include.startsWith("<") && include.endsWith(">")) {
-                    include = include.substring(1, include.length() - 1);
-                } else {
-                    File f = new File(include);
-                    if (f.exists()) {
-                        found = true;
-                        files.add(f);
-                        continue;
-                    }
-                }
-                for (String path : paths) {
-                    File f = new File(path, include);
-                    if (f.exists()) {
-                        found = true;
-                        files.add(f);
-                        break;
-                    }
-                }
-                if (!found) {
-                    files.add(new File(include));
-                }
-            }
-            return files;
-        }
-
         public LinkedList<Class> getInheritedClasses() {
-            return inheritedClass;
+            return inheritedClasses;
         }
 
-        public Class getEffectiveClass() {
-            return effectiveClass;
+        public LinkedList<Class> getEffectiveClasses() {
+            return effectiveClasses;
         }
     }
 
