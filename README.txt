@@ -311,12 +311,13 @@ This project was conceived at the Okutomi & Tanaka Laboratory, Tokyo Institute o
 
 ==Changes==
 
+ * Fixed compilation error on `FunctionPointer` classes containing no native callback methods
  * Added a `platform.library.path` property, such as "lib/armeabi/" in the case of the "android-arm" platform, to be used instead of "package/platform" (issue javacv:427)
  * Generalized references to the path of the Android NDK
  * Improved a few small things in the set of `Pointer` classes
  * Introduced a simple `Logger` class and unified the logging output calls around it
  * Unified the property names with the `@Properties` and `@Platform` annotations into a consistent naming scheme
- * Continued to clean up the `Parser` and improve the support of, for the most part, comments, functions pointers, anonymous `struct` or `union`, templates, overloaded operators, namespaces, standard containers, default parameter arguments, multiple inheritance, custom names of wrapped declarators, and helper classes written in Java
+ * Continued to clean up the `Parser` and improve the support of, for the most part, comments, enumerations, functions pointers, anonymous `struct` or `union`, templates, overloaded operators, namespaces, standard containers, default parameter arguments, multiple inheritance, custom names of wrapped declarators, and helper classes written in Java
  * Annotations such as `@Adapter` or `@ByVal` are no longer ignored on parameters of getters or setters annotated with `@Index`
  * Fixed some other corner cases in `Generator` and a few potential issues with the hacks in `Loader`
  * Added for convenience to `PointerPointer` a generic parameter `<P extends Pointer>` and the associated `get(Class<P> ...)` getters, as well as `String` getters and setters

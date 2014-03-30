@@ -882,6 +882,7 @@ public class Generator implements Closeable {
                         cls.getCanonicalName() + "\". No code will be generated for callback allocator.");
                 continue;
             } else if (callbackAllocators[i] || (methods[i].equals(functionMethod) && methodInfo == null)) {
+                functions.index(cls);
                 Name name = methods[i].getAnnotation(Name.class);
                 if (name != null && name.value().length > 0 && name.value()[0].length() > 0) {
                     callbackName = name.value()[0];

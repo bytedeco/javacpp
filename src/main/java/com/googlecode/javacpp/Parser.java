@@ -2584,11 +2584,12 @@ public class Parser {
         if (typedef && !tokens.get(1).match('{') && tokens.get(2).match(Token.IDENTIFIER)) {
             tokens.next();
         }
-        boolean first = true;
         int count = 0;
+        String separator = "";
+        String enumPrefix = "public static final int";
         String countPrefix = " ";
         String enumerators = "";
-        String macroText = "";
+        String extraText = "";
         String name = tokens.next().expect(Token.IDENTIFIER, '{').value;
         if (!tokens.get().match('{') && !tokens.next().match('{')) {
             tokens.index = backIndex;
@@ -2597,18 +2598,16 @@ public class Parser {
         for (Token token = tokens.next(); !token.match(Token.EOF, '}'); token = tokens.get()) {
             if (macro(context, declList)) {
                 Declaration macroDecl = declList.removeLast();
-                macroText += macroDecl.text;
-                if (!first && !macroDecl.text.trim().startsWith("//")) {
-                    enumerators += ";\n";
-                    macroText += "\npublic static final int";
-                    first = true;
+                extraText += macroDecl.text;
+                if (separator.equals(",") && !macroDecl.text.trim().startsWith("//")) {
+                    separator = ";";
+                    enumPrefix = "\npublic static final int";
                 }
                 continue;
             }
             String comment = commentBefore();
             Token enumerator = tokens.get();
             String spacing2 = " ";
-            String separator = first ? "" : ",";
             if (tokens.next().match('=')) {
                 spacing2 = tokens.get().spacing;
                 countPrefix = " ";
@@ -2622,7 +2621,7 @@ public class Parser {
                     } else if (token.match(')')) {
                         count2--;
                     }
-                    if (prevToken.match(Token.IDENTIFIER) && token.match('(')) {
+                    if ((prevToken.match(Token.IDENTIFIER) && token.match('(')) || token.match('{', '}')) {
                         translate = false;
                     }
                     prevToken = token;
@@ -2635,18 +2634,19 @@ public class Parser {
                     if (translate) {
                         countPrefix = translate(countPrefix);
                     } else {
-                        if (!first) {
-                            separator = ";\n";
-                            first = true;
+                        if (separator.equals(",")) {
+                            separator = ";";
                         }
-                        separator += "public static native @MemberGetter int " + enumerator.value + "();\npublic static final int";
+                        extraText = "\npublic static native @MemberGetter int " + enumerator.value + "();\n";
+                        enumPrefix = "public static final int";
                         countPrefix = " " + enumerator.value + "()";
                     }
                 }
             }
-            first = false;
-            enumerators += separator + macroText + comment;
-            macroText = "";
+            enumerators += separator + extraText + enumPrefix + comment;
+            separator = ",";
+            enumPrefix = "";
+            extraText = "";
             comment = commentAfter();
             if (comment.length() == 0 && tokens.get().match(',')) {
                 tokens.next();
@@ -2659,6 +2659,9 @@ public class Parser {
                 if (newline >= 0) {
                     spacing = spacing.substring(newline + 1);
                 }
+            }
+            if (spacing.length() == 0 && !enumerators.endsWith(",")) {
+                spacing = " ";
             }
             enumerators += spacing + enumerator.value + spacing2 + "=" + countPrefix;
             if (countPrefix.trim().length() > 0) {
@@ -2686,15 +2689,12 @@ public class Parser {
         if (newline >= 0) {
             enumSpacing = enumSpacing.substring(newline + 1);
         }
-        if (!Character.isWhitespace(enumerators.charAt(0))) {
-            enumerators = " " + enumerators;
-        }
-        decl.text += enumSpacing + "public static final int" + enumerators + token.expect(';').spacing + ";";
+        decl.text += enumSpacing + enumerators + token.expect(';').spacing + ";";
         if (name.length() > 0) {
             infoMap.put(new Info(name).cast(true).valueTypes("int").pointerTypes("IntPointer", "IntBuffer", "int[]"));
         }
         tokens.next();
-        decl.text += macroText + comment;
+        decl.text += extraText + comment;
         declList.add(decl);
         return true;
     }
