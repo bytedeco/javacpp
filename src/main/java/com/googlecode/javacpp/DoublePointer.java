@@ -68,6 +68,8 @@ public class DoublePointer extends Pointer {
             throw new RuntimeException("No native JavaCPP library in memory. (Has Loader.load() been called?)", e);
         }
     }
+    /** @see Pointer#Pointer() */
+    public DoublePointer() { }
     /** @see Pointer#Pointer(Pointer) */
     public DoublePointer(Pointer p) { super(p); }
     private native void allocateArray(int size);
@@ -103,7 +105,7 @@ public class DoublePointer extends Pointer {
     /** @return {@code get(array, 0, array.length)} */
     public DoublePointer get(double[] array) { return get(array, 0, array.length); }
     /** @return {@code put(array, 0, array.length)} */
-    public DoublePointer put(double[] array) { return put(array, 0, array.length); }
+    public DoublePointer put(double ... array) { return put(array, 0, array.length); }
     /**
      * Reads a portion of the native array into a Java array.
      *

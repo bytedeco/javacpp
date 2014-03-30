@@ -78,6 +78,8 @@ public class CharPointer extends Pointer {
             throw new RuntimeException("No native JavaCPP library in memory. (Has Loader.load() been called?)", e);
         }
     }
+    /** @see Pointer#Pointer() */
+    public CharPointer() { }
     /** @see Pointer#Pointer(Pointer) */
     public CharPointer(Pointer p) { super(p); }
     private native void allocateArray(int size);
@@ -147,7 +149,7 @@ public class CharPointer extends Pointer {
     /** @return {@code get(array, 0, array.length)} */
     public CharPointer get(char[] array) { return get(array, 0, array.length); }
     /** @return {@code put(array, 0, array.length)} */
-    public CharPointer put(char[] array) { return put(array, 0, array.length); }
+    public CharPointer put(char ... array) { return put(array, 0, array.length); }
     /**
      * Reads a portion of the native array into a Java array.
      *

@@ -238,11 +238,14 @@ public class Loader {
 
                 LinkedList<String> values2 = get(key);
                 for (String value : values) {
-                    if (value != null && !values2.contains(value)) {
-                        if (root != null && !new File(value).isAbsolute() &&
-                                new File(root + value).exists()) {
-                            value = root + value;
-                        }
+                    if (value == null) {
+                        continue;
+                    }
+                    if (root != null && !new File(value).isAbsolute() &&
+                            new File(root + value).exists()) {
+                        value = root + value;
+                    }
+                    if (!values2.contains(value)) {
                         values2.add(value);
                     }
                 }

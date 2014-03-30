@@ -290,8 +290,8 @@ However, in the case of Android, we need to do a bit more work. Inside the direc
  # Run this command to produce the `*.so` library files in `libs/armeabi/`:
 {{{
 $ java -jar libs/javacpp.jar -classpath bin/ -classpath bin/classes/ \
-> -properties android-arm -Dplatform.root=<path/to/android-ndk-r9d> \
-> -Dplatform.compiler=<path/to/arm-linux-androideabi-g++> -d libs/armeabi/
+> -properties android-arm -Dplatform.root=/path/to/android-ndk/ \
+> -Dplatform.compiler=/path/to/arm-linux-androideabi-g++ -d libs/armeabi/
 }}}
 To make everything automatic, we may also insert that command into, for example, the Ant `build.xml` file or the Eclipse `.project` file as a [http://help.eclipse.org/helios/index.jsp?topic=/org.eclipse.platform.doc.user/gettingStarted/qs-96_non_ant_pjs.htm Non-Ant project builder].
 
@@ -311,7 +311,9 @@ This project was conceived at the Okutomi & Tanaka Laboratory, Tokyo Institute o
 
 ==Changes==
 
- * Upgraded references of the Android NDK to version r9d
+ * Added a `platform.library.path` property, such as "lib/armeabi/" in the case of the "android-arm" platform, to be used instead of "package/platform" (issue javacv:427)
+ * Generalized references to the path of the Android NDK
+ * Improved a few small things in the set of `Pointer` classes
  * Introduced a simple `Logger` class and unified the logging output calls around it
  * Unified the property names with the `@Properties` and `@Platform` annotations into a consistent naming scheme
  * Continued to clean up the `Parser` and improve the support of, for the most part, comments, functions pointers, anonymous `struct` or `union`, templates, overloaded operators, namespaces, standard containers, default parameter arguments, multiple inheritance, custom names of wrapped declarators, and helper classes written in Java

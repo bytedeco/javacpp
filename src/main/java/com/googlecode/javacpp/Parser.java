@@ -1928,8 +1928,12 @@ public class Parser {
                 tokens.next();
             }
             if (info != null && info.javaText != null) {
-                decl.text = info.javaText;
-                decl.declarator = null;
+                if (first) {
+                    decl.text = info.javaText;
+                    decl.declarator = null;
+                } else {
+                    break;
+                }
             }
             String comment = commentAfter();
             if (first) {

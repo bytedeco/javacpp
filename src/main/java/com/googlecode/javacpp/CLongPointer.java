@@ -46,6 +46,8 @@ public class CLongPointer extends Pointer {
             throw new RuntimeException("No native JavaCPP library in memory. (Has Loader.load() been called?)", e);
         }
     }
+    /** @see Pointer#Pointer() */
+    public CLongPointer() { }
     /** @see Pointer#Pointer(Pointer) */
     public CLongPointer(Pointer p) { super(p); }
     private native void allocateArray(int size);

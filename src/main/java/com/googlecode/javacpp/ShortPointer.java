@@ -68,6 +68,8 @@ public class ShortPointer extends Pointer {
             throw new RuntimeException("No native JavaCPP library in memory. (Has Loader.load() been called?)", e);
         }
     }
+    /** @see Pointer#Pointer() */
+    public ShortPointer() { }
     /** @see Pointer#Pointer(Pointer) */
     public ShortPointer(Pointer p) { super(p); }
     private native void allocateArray(int size);
@@ -103,7 +105,7 @@ public class ShortPointer extends Pointer {
     /** @return {@code get(array, 0, array.length)} */
     public ShortPointer get(short[] array) { return get(array, 0, array.length); }
     /** @return {@code put(array, 0, array.length)} */
-    public ShortPointer put(short[] array) { return put(array, 0, array.length); }
+    public ShortPointer put(short ... array) { return put(array, 0, array.length); }
     /**
      * Reads a portion of the native array into a Java array.
      *

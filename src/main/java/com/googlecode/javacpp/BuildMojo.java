@@ -27,6 +27,7 @@ import java.util.Properties;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
+import org.apache.maven.project.MavenProject;
 
 /**
  * A Maven Mojo to call the {@link Builder} (C++ header file -> Java class -> C++ JNI -> native library).
@@ -135,6 +136,13 @@ public class BuildMojo extends AbstractMojo {
       */
     private boolean skip = false;
 
+    /**
+     * @parameter default-value="${project}"
+     * @required
+     * @readonly
+     */
+    private MavenProject project;
+
     @Override public void execute() throws MojoExecutionException {
         final Log log = getLog();
         try {
@@ -183,7 +191,7 @@ public class BuildMojo extends AbstractMojo {
                 @Override public void warn (CharSequence cs) { log.warn(cs);  }
                 @Override public void error(CharSequence cs) { log.error(cs); }
             };
-            File[] outputFiles = new Builder(logger)
+            Builder builder = new Builder(logger)
                     .classPaths(classPaths)
                     .outputDirectory(outputDirectory)
                     .outputName(outputName)
@@ -196,12 +204,14 @@ public class BuildMojo extends AbstractMojo {
                     .properties(propertyKeysAndValues)
                     .classesOrPackages(classOrPackageNames)
                     .environmentVariables(environmentVariables)
-                    .compilerOptions(compilerOptions).build();
+                    .compilerOptions(compilerOptions);
+            project.getProperties().putAll(builder.properties);
+            File[] outputFiles = builder.build();
             log.info("Successfully executed JavaCPP Builder");
             if (log.isDebugEnabled()) {
                 log.debug("outputFiles: " + Arrays.deepToString(outputFiles));
             }
-	} catch (Exception e) {
+        } catch (Exception e) {
             log.error("Failed to execute JavaCPP Builder: " + e.getMessage());
             throw new MojoExecutionException("Failed to execute JavaCPP Builder", e);
         }

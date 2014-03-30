@@ -45,6 +45,8 @@ public class SizeTPointer extends Pointer {
             throw new RuntimeException("No native JavaCPP library in memory. (Has Loader.load() been called?)", e);
         }
     }
+    /** @see Pointer#Pointer() */
+    public SizeTPointer() { }
     /** @see Pointer#Pointer(Pointer) */
     public SizeTPointer(Pointer p) { super(p); }
     private native void allocateArray(int size);

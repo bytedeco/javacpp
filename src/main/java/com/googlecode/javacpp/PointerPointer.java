@@ -118,11 +118,13 @@ public class PointerPointer<P extends Pointer> extends Pointer {
             throw new RuntimeException("No native JavaCPP library in memory. (Has Loader.load() been called?)", e);
         }
     }
+    /** @see Pointer#Pointer() */
+    public PointerPointer() { }
     /** @see Pointer#Pointer(Pointer) */
     public PointerPointer(Pointer p) { super(p); }
     private native void allocateArray(int size);
 
-    /** This is just to keep references to Pointer objects we create. */
+    /** This is just to keep references to Pointer objects and prevent premature deallocation. */
     private P[] pointerArray;
 
     /** @see Pointer#position(int) */
@@ -189,6 +191,7 @@ public class PointerPointer<P extends Pointer> extends Pointer {
      * @return this
      */
     public PointerPointer<P> put(P ... array) {
+        pointerArray = array;
         for (int i = 0; i < array.length; i++) {
             put(i, array[i]);
         }

@@ -29,6 +29,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -341,24 +342,26 @@ public class Builder {
      * @throws InterruptedException
      */
     File generateAndCompile(Class[] classes, String outputName) throws IOException, InterruptedException {
-        File outputFile = null;
+        File outputFile = null, outputPath = outputDirectory;
         Loader.ClassProperties p = Loader.loadProperties(classes, properties, true);
-        String platform     = p.getProperty("platform"), sourcePrefix;
+        String platform     = p.getProperty("platform");
+        String sourcePrefix = new File(outputPath, outputName).getPath();
         String sourceSuffix = p.getProperty("platform.source.suffix", ".cpp");
+        String libraryPath  = p.getProperty("platform.library.path", "");
         String libraryName  = p.getProperty("platform.library.prefix", "") + outputName + p.getProperty("platform.library.suffix", "");
-        File outputPath;
-        if (outputDirectory == null) {
+        if (outputPath == null) {
             try {
-                URL resourceURL = classes[classes.length - 1].getResource('/' + classes[classes.length - 1].getName().replace('.', '/') + ".class");
-                File packageDir = new File(resourceURL.toURI()).getParentFile();
-                outputPath      = new File(packageDir, platform);
-                sourcePrefix    = packageDir.getPath() + File.separator + outputName;
+                String resourceName = '/' + classes[classes.length - 1].getName().replace('.', '/')  + ".class";
+                String resourceURL = classes[classes.length - 1].getResource(resourceName).toString();
+                File packageDir = new File(new URI(resourceURL.substring(0, resourceURL.lastIndexOf('/') + 1)));
+                File targetDir = libraryPath.length() > 0
+                        ? new File(new URI(resourceURL.substring(0, resourceURL.length() - resourceName.length() + 1)))
+                        : new File(packageDir, platform);
+                outputPath = new File(targetDir, libraryPath);
+                sourcePrefix = new File(packageDir, outputName).getPath();
             } catch (URISyntaxException e) {
                 throw new RuntimeException(e);
             }
-        } else {
-            outputPath = outputDirectory;
-            sourcePrefix = outputPath.getPath() + File.separator + outputName;
         }
         if (!outputPath.exists()) {
             outputPath.mkdirs();
