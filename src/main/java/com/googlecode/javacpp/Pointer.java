@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011,2012,2013 Samuel Audet
+ * Copyright (C) 2011,2012,2013,2014 Samuel Audet
  *
  * This file is part of JavaCPP.
  *
@@ -294,6 +294,11 @@ public class Pointer {
     /** Sets {@link #address} to 0. */
     public void setNull() {
         address = 0;
+    }
+
+    /** @return {@link #address} */
+    public long address() {
+        return address;
     }
 
     /** @return {@link #position} */

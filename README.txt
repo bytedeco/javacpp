@@ -3,16 +3,16 @@
 ==Introduction==
 JavaCPP provides efficient access to native C++ inside Java, not unlike the way some C/C++ compilers interact with assembly language. No need to invent new languages such as with [http://www.swig.org/ SWIG], [http://riverbankcomputing.co.uk/software/sip/ SIP], [http://www.ecma-international.org/publications/standards/Ecma-372.htm C++/CLI], [http://www.cython.org/ Cython], or [http://doc.pypy.org/en/latest/coding-guide.html#id1 RPython] as required by [http://doc.pypy.org/en/latest/cppyy.html cppyy]. Instead, it exploits the syntactic and semantic similarities between Java and C++. Under the hood, it uses JNI, so it works with all implementations of Java SE, in addition to [http://www.android.com/ Android], [http://oss.readytalk.com/avian/ Avian], and [http://www.robovm.org/ RoboVM] ([#Instructions_for_Android,_Avian,_and_RoboVM instructions]).
 
-More specifically, when compared to the approaches above or elsewhere ([http://www.itk.org/ITK/resources/CableSwig.html CableSwig], [http://www.eclipse.org/swt/jnigen.php JNIGeneratorApp], [http://cxxwrap.sourceforge.net/ cxxwrap], [http://www.teamdev.com/jniwrapper/ JNIWrapper], [http://msdn.microsoft.com/en-us/library/0h9e9t7d.aspx Platform Invoke], [http://jogamp.org/gluegen/www/ GlueGen], [http://web.archive.org/web/20050329122501/http://homepage.mac.com/pcbeard/JNIDirect/ JNIDirect], [http://docs.python.org/library/ctypes.html ctypes], [https://github.com/twall/jna JNA], [http://www.innowhere.com/jnieasy/ JNIEasy], [http://flinflon.brandonu.ca/Dueck/SystemsProgramming/JniMarshall/ JniMarshall], [http://jnative.free.fr/ JNative], [http://web.archive.org/web/20110727133817/http://www.jinvoke.com/ J/Invoke], [http://hawtjni.fusesource.org/ HawtJNI], [http://code.google.com/p/bridj/ BridJ], [http://ianwookim.org/fficxx/ fficxx], etc.), it maps naturally and efficiently many common features afforded by the C++ language and often considered problematic, including overloaded operators, class and function templates, member function pointers, callback functions, function objects (aka functors), nested struct definitions, variable length arguments, nested namespaces, large data structures containing arbitrary cycles, virtual and multiple inheritance, passing/returning by value/reference/vector, anonymous unions, bit fields, exceptions, destructors with garbage collection, and documentation comments. Obviously, neatly supporting the whole of C++ would require more work (although one could argue about the intrinsic neatness of C++), but I am releasing it here as a proof of concept. I have already used it to produce complete interfaces to OpenCV, FFmpeg, libdc1394, PGR FlyCapture, OpenKinect, videoInput, and ARToolKitPlus as part of [http://code.google.com/p/javacv/ JavaCV].
+More specifically, when compared to the approaches above or elsewhere ([http://www.itk.org/ITK/resources/CableSwig.html CableSwig], [http://www.eclipse.org/swt/jnigen.php JNIGeneratorApp], [http://cxxwrap.sourceforge.net/ cxxwrap], [http://www.teamdev.com/jniwrapper/ JNIWrapper], [http://msdn.microsoft.com/en-us/library/0h9e9t7d.aspx Platform Invoke], [http://jogamp.org/gluegen/www/ GlueGen], [http://web.archive.org/web/20050329122501/http://homepage.mac.com/pcbeard/JNIDirect/ JNIDirect], [http://docs.python.org/library/ctypes.html ctypes], [https://github.com/twall/jna JNA], [http://www.innowhere.com/jnieasy/ JNIEasy], [http://flinflon.brandonu.ca/Dueck/SystemsProgramming/JniMarshall/ JniMarshall], [http://jnative.free.fr/ JNative], [http://web.archive.org/web/20110727133817/http://www.jinvoke.com/ J/Invoke], [http://hawtjni.fusesource.org/ HawtJNI], [http://code.google.com/p/bridj/ BridJ], [http://ianwookim.org/fficxx/ fficxx], etc.), it maps naturally and efficiently many common features afforded by the C++ language and often considered problematic, including overloaded operators, class and function templates, member function pointers, callback functions, function objects (aka functors), nested struct definitions, variable length arguments, nested namespaces, large data structures containing arbitrary cycles, virtual and multiple inheritance, passing/returning by value/reference/vector, anonymous unions, bit fields, exceptions, destructors with garbage collection, and documentation comments. Obviously, neatly supporting the whole of C++ would require more work (although one could argue about the intrinsic neatness of C++), but I am releasing it here as a proof of concept. 
 
-The new [https://code.google.com/p/javacpp/wiki/Presets JavaCPP Presets] subproject also demonstrates early parsing capabilities of C/C++ header files that already show promising and useful results with at least OpenCV, FFmpeg, libdc1394, OpenKinect, videoInput, and ARToolKitPlus.
+As a case in point, I have already used it to produce complete interfaces to OpenCV, FFmpeg, libdc1394, PGR FlyCapture, OpenKinect, videoInput, and ARToolKitPlus as part of the [https://code.google.com/p/javacpp/wiki/Presets JavaCPP Presets] subproject, also demonstrating early parsing capabilities of C/C++ header files that show promising and useful results.
 
 Please feel free to ask questions on [http://groups.google.com/group/javacpp-project the mailing list] if you encounter any problems with the software! I am sure it is far from perfect...
 
 
 ==Required Software==
 To use JavaCPP, you will need to download and install the following software:
- * An implementation of Java SE 6 or 7
+ * An implementation of Java SE 6 or newer
   * OpenJDK  http://openjdk.java.net/install/  or
   * Sun JDK  http://www.oracle.com/technetwork/java/javase/downloads/  or
   * IBM JDK  http://www.ibm.com/developerworks/java/jdk/  or
@@ -25,10 +25,10 @@ To use JavaCPP, you will need to download and install the following software:
     * [http://msdn.microsoft.com/en-us/library/ff660764.aspx  Building Applications that Use the Windows SDK]
 
 To produce binary files for Android, you will also have to install:
- * Android NDK r9d  http://developer.android.com/tools/sdk/ndk/
+ * Android NDK r7 or newer  http://developer.android.com/tools/sdk/ndk/
 
 And similarly to target iOS, you will need to install:
- * RoboVM 0.0.7  http://download.robovm.org/
+ * RoboVM 0.0.x  http://download.robovm.org/
 
 To modify the source code, please note that the project files were created for:
  * Maven 2 or 3  http://maven.apache.org/download.html
@@ -300,7 +300,7 @@ Similarly for RoboVM, assuming that the compiled classes are in the `classes` su
  # Run the following commands to produce the native binary file:
 {{{
 $ java -jar javacpp.jar -cp classes/ -properties ios-arm -Dplatform.sysroot=SDKs/iPhoneOS7.0.sdk/ -o lib
-$ robovm -arch thumbv7 -os ios -cp javacpp.jar:classes/ -libs ios-arm/lib.o
+$ bin/robovm -arch thumbv7 -os ios -cp javacpp.jar:classes/ -libs ios-arm/lib.o
 }}}
 And instead of `Loader.load()`, the library should be loaded with `System.load("lib.o")`, in this case.
 
@@ -311,6 +311,8 @@ This project was conceived at the Okutomi & Tanaka Laboratory, Tokyo Institute o
 
 ==Changes==
 
+ * Added `public long Pointer.address()` getter method, useful when one needs to subtract two pointers
+ * Removed old NetBeans project files that cause a conflict when trying to open as a Maven project (issue javacv:210)
  * Fixed compilation error on `FunctionPointer` classes containing no native callback methods
  * Added a `platform.library.path` property, such as "lib/armeabi/" in the case of the "android-arm" platform, to be used instead of "package/platform" (issue javacv:427)
  * Generalized references to the path of the Android NDK
