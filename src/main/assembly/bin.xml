@@ -10,6 +10,7 @@
       <directory>${project.basedir}</directory>
       <outputDirectory>/</outputDirectory>
       <includes>
+        <include>CHANGELOG*</include>
         <include>README*</include>
         <include>LICENSE*</include>
         <include>NOTICE*</include>

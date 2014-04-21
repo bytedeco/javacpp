@@ -2,14 +2,14 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.googlecode.javacpp</groupId>
+  <groupId>org.bytedeco</groupId>
   <artifactId>javacpp</artifactId>
   <version>0.8-SNAPSHOT</version>
   <packaging>maven-plugin</packaging>
 
   <name>JavaCPP</name>
   <description>The missing bridge between Java and native C++</description>
-  <url>http://code.google.com/p/javacpp/</url>
+  <url>https://github.com/bytedeco/javacpp</url>
 
   <licenses>
     <license>
@@ -27,8 +27,9 @@
   </developers>
 
   <scm>
-    <url>https://javacpp.googlecode.com/git/</url>
-    <connection>scm:git:https://javacpp.googlecode.com/git/</connection>
+    <url>https://github.com/bytedeco/javacpp</url>
+    <connection>scm:git:git://github.com/bytedeco/javacpp.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/bytedeco/javacpp.git</developerConnection>
   </scm>
 
   <distributionManagement>
@@ -82,16 +83,16 @@
         <configuration>
           <archive>
             <manifest>
-              <mainClass>com.googlecode.javacpp.Builder</mainClass>
+              <mainClass>org.bytedeco.javacpp.tools.Builder</mainClass>
             </manifest>
             <manifestEntries>
               <Class-Path>./</Class-Path>
-              <Name>com/googlecode/javacpp/</Name>
+              <Name>org/bytedeco/javacpp/</Name>
               <Implementation-Title>${project.name}</Implementation-Title>
-              <Implementation-Vendor>Samuel Audet</Implementation-Vendor>
+              <Implementation-Vendor>Bytedeco</Implementation-Vendor>
               <Implementation-Version>${project.version}</Implementation-Version>
               <Specification-Title>${project.name}</Specification-Title>
-              <Specification-Vendor>Samuel Audet</Specification-Vendor>
+              <Specification-Vendor>Bytedeco</Specification-Vendor>
               <Specification-Version>${project.version}</Specification-Version>
             </manifestEntries>
           </archive>
