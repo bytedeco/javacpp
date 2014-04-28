@@ -1,4 +1,5 @@
 
+### April 28, 2014 version 0.8
  * Move from Google Code to GitHub as main source code repository
  * Place build-time classes in the `org.bytedeco.javacpp.tools` package and bring out static nested classes, in an effort to avoid conflicts and ease development
  * Rename the `com.googlecode.javacpp` package to `org.bytedeco.javacpp`

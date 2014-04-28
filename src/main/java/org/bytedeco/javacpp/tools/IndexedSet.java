@@ -36,7 +36,7 @@ class IndexedSet<E> extends LinkedHashMap<E,Integer> implements Iterable<E> {
         return i;
     }
 
-    public Iterator<E> iterator() {
+    @Override public Iterator<E> iterator() {
         return keySet().iterator();
     }
 }

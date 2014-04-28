@@ -150,8 +150,7 @@ public class Generator implements Closeable {
     final ClassProperties properties;
     PrintWriter out, out2;
     IndexedSet<String> callbacks;
-    IndexedSet<Class> functions;
-    IndexedSet<Class> deallocators, arrayDeallocators, jclasses, jclassesInit;
+    IndexedSet<Class> functions, deallocators, arrayDeallocators, jclasses, jclassesInit;
     HashMap<Class,LinkedList<String>> members;
     boolean mayThrowExceptions, usesAdapters;
 
@@ -860,7 +859,8 @@ public class Generator implements Closeable {
 
         boolean didSomething = false;
         for (Class<?> c : cls.getDeclaredClasses()) {
-            if (Pointer.class.isAssignableFrom(c)) {
+            if (Pointer.class.isAssignableFrom(c) ||
+                    Pointer.class.isAssignableFrom(c.getEnclosingClass())) {
                 didSomething |= methods(c);
             }
         }
