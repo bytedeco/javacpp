@@ -368,18 +368,29 @@ public class Loader {
 
         // Find the top enclosing class, to match the library filename
         cls = getEnclosingClass(cls);
+        ClassProperties p = loadProperties(cls, loadProperties(), true);
 
-        // Force initialization of the class in case it needs it
-        try {
-            cls = Class.forName(cls.getName(), true, cls.getClassLoader());
-        } catch (ClassNotFoundException ex) {
-            Error e = new NoClassDefFoundError(ex.toString());
-            e.initCause(ex);
-            throw e;
+        // Force initialization of all the target classes in case they need it
+        LinkedList<String> targets = p.get("target");
+        if (targets.isEmpty()) {
+            if (p.getInheritedClasses() != null) {
+                for (Class c : p.getInheritedClasses()) {
+                    targets.add(c.getName());
+                }
+            }
+            targets.add(cls.getName());
+        }
+        for (String s : targets) {
+            try {
+                Class.forName(s, true, cls.getClassLoader());
+            } catch (ClassNotFoundException ex) {
+                Error e = new NoClassDefFoundError(ex.toString());
+                e.initCause(ex);
+                throw e;
+            }
         }
 
         // Preload native libraries desired by our class
-        ClassProperties p = loadProperties(cls, loadProperties(), true);
         LinkedList<String> preloads = new LinkedList<String>();
         preloads.addAll(p.get("platform.preload"));
         preloads.addAll(p.get("platform.link"));
