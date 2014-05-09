@@ -1,4 +1,5 @@
 
+ * Fix the `Parser` losing some keywords like `static` on methods annotated with an `@Adapter` ([issue #2](https://github.com/bytedeco/javacpp/issues/2))
  * Fix `Loader.load()` not properly force loading all inherited target classes ([issue #1](https://github.com/bytedeco/javacpp/issues/1))
 
 ### April 28, 2014 version 0.8

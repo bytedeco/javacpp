@@ -593,7 +593,11 @@ public class Parser {
                 if (type2.arguments != null && info2.annotations != null) {
                     dcl.indirections = 1;
                     dcl.reference = false;
-                    type = type2.arguments[0];
+                    type.constValue = type2.arguments[0].constValue;
+                    type.simple = type2.arguments[0].simple;
+                    type.annotations = type2.arguments[0].annotations;
+                    type.cppName = type2.arguments[0].cppName;
+                    type.javaName = type2.arguments[0].javaName;
                     cast = type.cppName + "*";
                     for (String s : info2.annotations) {
                         type.annotations += s + " ";
