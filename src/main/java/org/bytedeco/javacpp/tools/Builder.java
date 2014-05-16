@@ -72,6 +72,10 @@ public class Builder {
      * @param header to request support for exporting callbacks via generated header file
      */
     static void includeJavaPaths(ClassProperties properties, boolean header) {
+        if (properties.getProperty("platform", "").startsWith("android")) {
+            // Android includes its own jni.h file and doesn't have a jvm library
+            return;
+        }
         String platform = Loader.getPlatform();
         final String jvmlink = properties.getProperty("platform.link.prefix", "") +
                        "jvm" + properties.getProperty("platform.link.suffix", "");
@@ -80,7 +84,7 @@ public class Builder {
         final String[] jnipath = new String[2];
         final String[] jvmpath = new String[2];
         FilenameFilter filter = new FilenameFilter() {
-            public boolean accept(File dir, String name) {
+            @Override public boolean accept(File dir, String name) {
                 if (new File(dir, "jni.h").exists()) {
                     jnipath[0] = dir.getAbsolutePath();
                 }
