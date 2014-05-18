@@ -34,9 +34,27 @@ import org.bytedeco.javacpp.ClassProperties;
 import org.bytedeco.javacpp.Loader;
 
 /**
+ * The Parser, just like the Generator, is a mess that is not meant to support the
+ * entirety of C++, but an appropriate subset as used by typical C/C++ header files.
+ * To figure out what that subset is and what the output should be, the idea is to
+ * apply it on as many C/C++ libraries as possible, and patch the code as we go.
+ * At one point in time, when this prototype code appears to have stabilized, we can
+ * start to redesign it in a more meaningful way.
+ * <p>
+ * That said, to understand how it is supposed to function in its present state,
+ * one can step through the code at runtime: It is quite friendly to debuggers.
+ * <p>
+ * Moreover, it relies on {@link Info} objects created as part of the execution
+ * of {@link InfoMapper#map(InfoMap)}. We can understand better how the parsing
+ * is supposed to get accomplished by studying that documentation as well.
+ * <p>
  * To do:
  * - Inherit constructors from helper classes, if possible
  * - etc.
+ *
+ * @see Info
+ * @see InfoMap
+ * @see InfoMapper
  *
  * @author Samuel Audet
  */
@@ -1393,7 +1411,10 @@ public class Parser {
                 if (info.cppTypes == null) {
                     info.cppTypes(typeName);
                 }
-                if (info.pointerTypes == null) {
+                if (info.valueTypes == null && dcl.indirections > 0) {
+                    info.valueTypes(typeName);
+                    info.pointerTypes("PointerPointer");
+                } else if (info.pointerTypes == null) {
                     info.pointerTypes(typeName);
                 }
                 if (info.annotations == null) {
@@ -1457,9 +1478,6 @@ public class Parser {
         }
 
         tokens.next().expect(Token.IDENTIFIER, '{');
-        if (typedef && tokens.get(1).match('*')) {
-            tokens.next();
-        }
         if (!tokens.get().match('{') && tokens.get(1).match(Token.IDENTIFIER)
                 && (typedef || !tokens.get(2).match(';'))) {
             tokens.next();
@@ -1487,6 +1505,12 @@ public class Parser {
                 if (tokens.get().expect(',', '{').match('{')) {
                     break;
                 }
+            }
+        }
+        if (typedef && tokens.get().match('*')) {
+            // skip pointer typedef
+            while (!tokens.get().match(';', Token.EOF)) {
+                tokens.next();
             }
         }
         if (!tokens.get().match('{', ';')) {

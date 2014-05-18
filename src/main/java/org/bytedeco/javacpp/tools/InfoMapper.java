@@ -20,7 +20,16 @@
 
 package org.bytedeco.javacpp.tools;
 
+import org.bytedeco.javacpp.annotation.Properties;
+
 /**
+ * An interface to define a kind of configuration file entirely written in Java.
+ * A class implementing this interface can be passed to the {@link Parser}, which
+ * will create an instance of the class before calling the {@link #map(InfoMap)}
+ * method, to be filled in with {@link Info} objects defined by the user.
+ * <p>
+ * A class further annotated with {@link Properties#target()} gets detected by
+ * the {@link Builder}, which then delegates it to the {@link Parser}.
  *
  * @author Samuel Audet
  */

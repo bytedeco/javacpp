@@ -1,4 +1,6 @@
 
+ * Add some documentation for `Info`, `InfoMap`, `InfoMapper`, and `Parser`
+ * Fix the `Parser` not filtering and expanding properly some preprocessor directives, as well as producing wrong code for `typedef struct *`
  * Skip Java path search when building for Android to prevent including some random `jni.h` file ([issue #3](https://github.com/bytedeco/javacpp/issues/3))
  * Fix the `Parser` losing some keywords like `static` on methods annotated with an `@Adapter` ([issue #2](https://github.com/bytedeco/javacpp/issues/2))
  * Fix `Loader.load()` not properly force loading all inherited target classes ([issue #1](https://github.com/bytedeco/javacpp/issues/1))

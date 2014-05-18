@@ -23,8 +23,12 @@ package org.bytedeco.javacpp.tools;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 
 /**
+ * A {@link Map} containing {@link Info} objects consumed by the {@link Parser}.
+ * Also contains a few utility methods to facilitate its use for both the user
+ * and the {@link Parser}.
  *
  * @author Samuel Audet
  */

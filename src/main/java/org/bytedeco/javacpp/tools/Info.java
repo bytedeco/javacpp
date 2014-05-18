@@ -20,7 +20,18 @@
 
 package org.bytedeco.javacpp.tools;
 
+import org.bytedeco.javacpp.Pointer;
+import org.bytedeco.javacpp.annotation.ByVal;
+import org.bytedeco.javacpp.annotation.Cast;
+
 /**
+ * Holds information useful to the {@link Parser} and associated with C++ identifiers.
+ * Info objects are meant to be added by the user to an {@link InfoMap} passed as
+ * argument to {@link InfoMapper#map(InfoMap)}. A class inheriting from the latter
+ * becomes a kind of configuration file entirely written in Java.
+ * <p>
+ * For usage examples, one can refer to the source code of the default values defined
+ * in the initializer of {@link InfoMap#defaults}.
  *
  * @author Samuel Audet
  */
@@ -43,10 +54,38 @@ public class Info {
         javaText = i.javaText;
     }
 
-    String[] cppNames = null, javaNames = null, annotations = null,
-             cppTypes = null, valueTypes = null, pointerTypes = null;
-    boolean cast = false, define = false, translate = false, skip = false;
-    String base = null, cppText = null, javaText = null;
+    /** A list of C++ identifiers or expressions to which this info is to be bound.
+     * Usually set via the constructor parameter of {@link #Info(String...)}. */
+    String[] cppNames = null;
+    /** The Java identifiers to output corresponding to the C++ identifiers of {@link #cppNames}.
+     * By default, the names of C++ identifiers {@link #cppNames} are used. */
+    String[] javaNames = null;
+    /** Additional Java annotations that should prefix the identifiers on output. */
+    String[] annotations = null;
+    /** A list of C++ types that supply information missing from macros, templates, etc.
+     * By default, identifiers with missing type information are skipped, except for
+     * variable-like macros for which the type is guessed based on the expression. */
+    String[] cppTypes = null;
+    /** A list of (usually) primitive Java types to be used to map C++ value types.
+     * By default, {@link #pointerTypes} prefixed with @{@link ByVal} are used. */
+    String[] valueTypes = null;
+    /** A list of (usually) {@link Pointer} Java subclasses to be used to map C++ pointer types.
+     * By default, the names of the C++ types {@link #cppNames} are used. */
+    String[] pointerTypes = null;
+    /** Annotates Java identifiers with @{@link Cast} containing C++ identifier names {@link #cppNames}. */
+    boolean cast = false;
+    /** Indicates expressions of conditional macro groups to parse, or templates to specialize. */
+    boolean define = false;
+    /** Attempts to translate naively the statements of variable-like macros to Java. */
+    boolean translate = false;
+    /** Skips entirely all the code associated with the C++ identifiers. */
+    boolean skip = false;
+    /** Allows to override the base class of {@link #pointerTypes}. Defaults to {@link Pointer}. */
+    String base = null;
+    /** Replaces the code associated with the declaration of C++ identifiers, before parsing. */
+    String cppText = null;
+    /** Outputs the given code, instead of the result parsed from the declaration of C++ identifiers. */
+    String javaText = null;
 
     public Info cppNames(String ... cppNames) { this.cppNames = cppNames; return this; }
     public Info javaNames(String ... javaNames) { this.javaNames = javaNames; return this; }

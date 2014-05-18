@@ -51,11 +51,14 @@ class TokenIndexer {
             while (index < array.length) {
                 Token keyword = null;
                 if (array[index].match('#')) {
-                    if (count == 0 && array[index + 1].match(Token.IF, Token.IFDEF, Token.IFNDEF)) {
+                    if (array[index + 1].match(Token.IF, Token.IFDEF, Token.IFNDEF)) {
                         count++;
+                    }
+                    if (count == 1 && array[index + 1].match(Token.IF, Token.IFDEF, Token.IFNDEF, Token.ELIF, Token.ELSE, Token.ENDIF)) {
                         keyword = array[index + 1];
-                    } else if (count == 1 && array[index + 1].match(Token.ELIF, Token.ELSE, Token.ENDIF)) {
-                        keyword = array[index + 1];
+                    }
+                    if (array[index + 1].match(Token.ENDIF)) {
+                        count--;
                     }
                 }
                 if (keyword != null) {
@@ -82,7 +85,6 @@ class TokenIndexer {
                     } else if (keyword.match(Token.ELSE)) {
                         define = info == null || !define;
                     } else if (keyword.match(Token.ENDIF)) {
-                        count--;
                         if (count == 0) {
                             break;
                         }
@@ -110,47 +112,52 @@ class TokenIndexer {
                     Tokenizer tokenizer = new Tokenizer(info.cppText);
                     if (!tokenizer.nextToken().match('#')
                             || !tokenizer.nextToken().match(Token.DEFINE)
-                            || !tokenizer.nextToken().match(info.cppNames[0])
-                            || !tokenizer.nextToken().match('(')) {
-                        return;
-                    }
-                    ArrayList<String> params = new ArrayList<String>();
-                    Token token;
-                    while (!(token = tokenizer.nextToken()).isEmpty()) {
-                        if (token.match(Token.IDENTIFIER)) {
-                            params.add(token.value);
-                        } else if (token.match(')')) {
-                            break;
-                        }
-                    }
-                    if (params.size() > 0 && (index + 1 >= array.length
-                            || !array[index + 1].match('('))) {
+                            || !tokenizer.nextToken().match(info.cppNames[0])) {
                         return;
                     }
                     ArrayList<Token> tokens = new ArrayList<Token>();
                     for (int i = 0; i < index; i++) {
                         tokens.add(array[i]);
                     }
-                    ArrayList<Token>[] args = new ArrayList[params.size()];
-                    int count = 0, count2 = 0;
-                    for (index += 2; index < array.length; index++) {
-                        token = array[index];
-                        if (count2 == 0 && token.match(')')) {
-                            break;
-                        } else if (count2 == 0 && token.match(',')) {
-                            count++;
-                            continue;
-                        } else if (token.match('(','[','{')) {
-                            count2++;
-                        } else if (token.match(')',']','}')) {
-                            count2--;
+                    ArrayList<String> params = new ArrayList<String>();
+                    ArrayList<Token>[] args = null;
+                    Token token = tokenizer.nextToken();
+                    if (token.match('(')) {
+                        token = tokenizer.nextToken();
+                        while (!token.isEmpty()) {
+                            if (token.match(Token.IDENTIFIER)) {
+                                params.add(token.value);
+                            } else if (token.match(')')) {
+                                token = tokenizer.nextToken();
+                                break;
+                            }
+                            token = tokenizer.nextToken();
                         }
-                        if (args[count] == null) {
-                            args[count] = new ArrayList<Token>();
+                        index++;
+                        if (params.size() > 0 && (index >= array.length || !array[index].match('('))) {
+                            return;
                         }
-                        args[count].add(token);
+                        args = new ArrayList[params.size()];
+                        int count = 0, count2 = 0;
+                        for (index++; index < array.length; index++) {
+                            Token token2 = array[index];
+                            if (count2 == 0 && token2.match(')')) {
+                                break;
+                            } else if (count2 == 0 && token2.match(',')) {
+                                count++;
+                                continue;
+                            } else if (token2.match('(','[','{')) {
+                                count2++;
+                            } else if (token2.match(')',']','}')) {
+                                count2--;
+                            }
+                            if (args[count] == null) {
+                                args[count] = new ArrayList<Token>();
+                            }
+                            args[count].add(token2);
+                        }
                     }
-                    while (!(token = tokenizer.nextToken()).isEmpty()) {
+                    while (!token.isEmpty()) {
                         boolean foundArg = false;
                         for (int i = 0; i < params.size(); i++) {
                             if (params.get(i).equals(token.value)) {
@@ -168,8 +175,9 @@ class TokenIndexer {
                             }
                             tokens.add(token);
                         }
+                        token = tokenizer.nextToken();
                     }
-                    for (index += 1; index < array.length; index++) {
+                    for (index++; index < array.length; index++) {
                         tokens.add(array[index]);
                     }
                     array = tokens.toArray(new Token[tokens.size()]);
