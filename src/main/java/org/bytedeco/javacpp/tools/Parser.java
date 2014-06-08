@@ -1236,14 +1236,15 @@ public class Parser {
             boolean hasArgs = first.spacing.length() == 0 && first.match('(');
             LinkedList<Info> infoList = infoMap.get(macroName);
             for (Info info : infoList.size() > 0 ? infoList : Arrays.asList(new Info[] { null })) {
-                if (hasArgs && info == null) {
+                if (hasArgs && info == null || (info != null && info.cppText == null && info.cppTypes != null && info.cppTypes.length == 0)) {
                     // save declaration for expansion
                     info = new Info(macroName).cppText("");
                     tokens.index = backIndex;
                     for (Token token = tokens.get(); tokens.index < endIndex; token = tokens.next()) {
-                        info.cppText += token.spacing + token;
+                        info.cppText += token.match("\n") ? token : token.spacing + token;
                     }
-                    infoMap.put(info);
+                    infoMap.putFirst(info);
+                    break;
                 } else if (info != null && info.cppText == null &&
                         info.cppTypes != null && info.cppTypes.length > (hasArgs ? 0 : 1)) {
                     // declare as a static native method
@@ -1942,7 +1943,7 @@ public class Parser {
         }
     }
 
-    LinkedList<File> findHeaderFiles(ClassProperties properties, LinkedList<String> includes) throws FileNotFoundException {
+    LinkedList<File> findHeaderFiles(ClassProperties properties, LinkedList<String> includes) {
         LinkedList<String> paths = properties.get("platform.includepath");
         LinkedList<File> files = new LinkedList<File>();
         for (String include : includes) {
@@ -1993,8 +1994,10 @@ public class Parser {
                 }
             }
             Info info = infoMap.getFirst(file.getName());
-            if (!file.exists() || (info != null && info.skip)) {
+            if (info != null && info.skip) {
                 continue;
+            } else if (!file.exists()) {
+                throw new FileNotFoundException("Could not parse \"" + file + "\": File does not exist");
             }
             logger.info("Parsing " + file);
             Token token = new Token();

@@ -41,6 +41,7 @@ class TokenIndexer {
     void filter(int index) {
         if (index + 1 < array.length && array[index].match('#') &&
                 array[index + 1].match(Token.IF, Token.IFDEF, Token.IFNDEF)) {
+            // copy the array of tokens up to this point
             ArrayList<Token> tokens = new ArrayList<Token>();
             for (int i = 0; i < index; i++) {
                 tokens.add(array[i]);
@@ -50,6 +51,7 @@ class TokenIndexer {
             boolean define = true, defined = false;
             while (index < array.length) {
                 Token keyword = null;
+                // pick up #if, #ifdef, #ifndef, #elif, #else, and #endif directives
                 if (array[index].match('#')) {
                     if (array[index + 1].match(Token.IF, Token.IFDEF, Token.IFNDEF)) {
                         count++;
@@ -61,6 +63,7 @@ class TokenIndexer {
                         count--;
                     }
                 }
+                // conditionally fill up the new array of tokens
                 if (keyword != null) {
                     tokens.add(array[index++]);
                     tokens.add(array[index++]);
@@ -96,6 +99,7 @@ class TokenIndexer {
                 }
                 defined = define || defined;
             }
+            // copy the rest of the tokens from this point on
             while (index < array.length) {
                 tokens.add(array[index++]);
             }
@@ -105,6 +109,7 @@ class TokenIndexer {
 
     void expand(int index) {
         if (index < array.length && infoMap.containsKey(array[index].value)) {
+            // if we hit a token whose info.cppText starts with #define (a macro), expand it
             int startIndex = index;
             Info info = infoMap.getFirst(array[index].value);
             if (info != null && info.cppText != null) {
@@ -115,6 +120,7 @@ class TokenIndexer {
                             || !tokenizer.nextToken().match(info.cppNames[0])) {
                         return;
                     }
+                    // copy the array of tokens up to this point
                     ArrayList<Token> tokens = new ArrayList<Token>();
                     for (int i = 0; i < index; i++) {
                         tokens.add(array[i]);
@@ -122,6 +128,8 @@ class TokenIndexer {
                     ArrayList<String> params = new ArrayList<String>();
                     ArrayList<Token>[] args = null;
                     Token token = tokenizer.nextToken();
+                    // pick up the parameters and arguments of the macro if it has any
+                    String name = array[index].value;
                     if (token.match('(')) {
                         token = tokenizer.nextToken();
                         while (!token.isEmpty()) {
@@ -137,10 +145,12 @@ class TokenIndexer {
                         if (params.size() > 0 && (index >= array.length || !array[index].match('('))) {
                             return;
                         }
+                        name += array[index].spacing + array[index];
                         args = new ArrayList[params.size()];
                         int count = 0, count2 = 0;
                         for (index++; index < array.length; index++) {
                             Token token2 = array[index];
+                            name += token2.spacing + token2;
                             if (count2 == 0 && token2.match(')')) {
                                 break;
                             } else if (count2 == 0 && token2.match(',')) {
@@ -151,34 +161,45 @@ class TokenIndexer {
                             } else if (token2.match(')',']','}')) {
                                 count2--;
                             }
-                            if (args[count] == null) {
-                                args[count] = new ArrayList<Token>();
+                            if (count < args.length) {
+                                if (args[count] == null) {
+                                    args[count] = new ArrayList<Token>();
+                                }
+                                args[count].add(token2);
                             }
-                            args[count].add(token2);
                         }
                     }
-                    while (!token.isEmpty()) {
+                    int startToken = tokens.size();
+                    // expand the token in question, unless we should skip it
+                    info = infoMap.getFirst(name);
+                    while ((info == null || !info.skip) && !token.isEmpty()) {
                         boolean foundArg = false;
                         for (int i = 0; i < params.size(); i++) {
                             if (params.get(i).equals(token.value)) {
-                                if (tokens.size() == startIndex) {
-                                    args[i].get(0).spacing = array[startIndex].spacing;
-                                }
                                 tokens.addAll(args[i]);
                                 foundArg = true;
                                 break;
                             }
                         }
                         if (!foundArg) {
-                            if (tokens.size() == startIndex) {
-                                token.spacing = array[startIndex].spacing;
-                            }
                             tokens.add(token);
                         }
                         token = tokenizer.nextToken();
                     }
+                    // concatenate tokens as required
+                    for (int i = startToken; i < tokens.size(); i++) {
+                        if (tokens.get(i).match("##") && i > 0 && i + 1 < tokens.size()) {
+                            tokens.get(i - 1).value += tokens.get(i + 1).value;
+                            tokens.remove(i);
+                            tokens.remove(i);
+                        }
+                    }
+                    // copy the rest of the tokens from this point on
                     for (index++; index < array.length; index++) {
                         tokens.add(array[index]);
+                    }
+                    if ((info == null || !info.skip) && startToken < tokens.size()) {
+                        tokens.get(startToken).spacing = array[startIndex].spacing;
                     }
                     array = tokens.toArray(new Token[tokens.size()]);
                 } catch (IOException ex) {
@@ -190,15 +211,15 @@ class TokenIndexer {
 
     int preprocess(int index, int count) {
         while (index < array.length) {
-            filter(index);
-            expand(index);
+            filter(index); // conditionals
+            expand(index); // macros
             if (!array[index].match(Token.COMMENT) && --count < 0) {
                 break;
             }
             index++;
         }
-        filter(index);
-        expand(index);
+        filter(index); // conditionals
+        expand(index); // macros
         return index;
     }
 

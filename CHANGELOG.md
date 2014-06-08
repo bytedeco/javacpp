@@ -1,4 +1,6 @@
 
+ * Allow users to instruct the `Parser` to skip the expansion of specific macro invocations
+ * Let `Parser` concatenate tokens when expanding macros containing the `##` operator
  * Add some documentation for `Info`, `InfoMap`, `InfoMapper`, and `Parser`
  * Fix the `Parser` not filtering and expanding properly some preprocessor directives, as well as producing wrong code for `typedef struct *`
  * Skip Java path search when building for Android to prevent including some random `jni.h` file ([issue #3](https://github.com/bytedeco/javacpp/issues/3))

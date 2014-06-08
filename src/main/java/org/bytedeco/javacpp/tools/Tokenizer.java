@@ -52,7 +52,7 @@ class Tokenizer implements Closeable {
     int lastChar = -1, lineNumber = 1;
     StringBuilder buffer = new StringBuilder();
 
-    public void close() throws IOException {
+    @Override public void close() throws IOException {
         reader.close();
     }
 
@@ -170,6 +170,15 @@ class Tokenizer implements Closeable {
             if (c2 == ':') {
                 token.type = Token.SYMBOL;
                 token.value = "::";
+            } else {
+                token.type = c;
+                lastChar = c2;
+            }
+        } else if (c == '#') {
+            int c2 = readChar();
+            if (c2 == '#') {
+                token.type = Token.SYMBOL;
+                token.value = "##";
             } else {
                 token.type = c;
                 lastChar = c2;
