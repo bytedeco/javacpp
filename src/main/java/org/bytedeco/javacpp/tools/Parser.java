@@ -1349,6 +1349,7 @@ public class Parser {
                     if (value.length() > 0) {
                         decl.text += "public static final " + type + " " + macroName + " =" + value + ";\n";
                     }
+                    decl.signature = macroName;
                 }
             }
         }

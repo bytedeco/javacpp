@@ -74,6 +74,7 @@ public class InfoMap extends HashMap<String,LinkedList<Info>> {
         .put(new Info("size_t", "ptrdiff_t").cast().valueTypes("long").pointerTypes("SizeTPointer"))
         .put(new Info("float", "jfloat").valueTypes("float").pointerTypes("FloatPointer", "FloatBuffer", "float[]"))
         .put(new Info("double", "jdouble").valueTypes("double").pointerTypes("DoublePointer", "DoubleBuffer", "double[]"))
+        .put(new Info("long double").cast().valueTypes("double").pointerTypes("Pointer"))
         .put(new Info("std::complex<float>").cast().pointerTypes("FloatPointer", "FloatBuffer", "float[]"))
         .put(new Info("std::complex<double>").cast().pointerTypes("DoublePointer", "DoubleBuffer", "double[]"))
         .put(new Info("bool", "jboolean").cast().valueTypes("boolean").pointerTypes("BoolPointer"))

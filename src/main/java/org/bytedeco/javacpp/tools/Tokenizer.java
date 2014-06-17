@@ -106,12 +106,13 @@ class Tokenizer implements Closeable {
             token.type = c == '.' ? Token.FLOAT : Token.INTEGER;
             buffer.append((char)c);
             int prevc = 0;
-            boolean large = false, unsigned = false, hex = false;
+            boolean exp = false, large = false, unsigned = false, hex = false;
             while ((c = readChar()) != -1 && (Character.isDigit(c) || c == '.' || c == '-' || c == '+' ||
                    (c >= 'a' && c <= 'f') || c == 'l' || c == 'u' || c == 'x' ||
                    (c >= 'A' && c <= 'F') || c == 'L' || c == 'U' || c == 'X')) {
                 switch (c) {
                     case '.': token.type = Token.FLOAT;  break;
+                    case 'e': case 'E': exp      = true; break;
                     case 'l': case 'L': large    = true; break;
                     case 'u': case 'U': unsigned = true; break;
                     case 'x': case 'X': hex      = true; break;
@@ -121,7 +122,7 @@ class Tokenizer implements Closeable {
                 }
                 prevc = c;
             }
-            if (!hex && (prevc == 'f' || prevc == 'F')) {
+            if (!hex && (exp || prevc == 'f' || prevc == 'F')) {
                 token.type = Token.FLOAT;
             }
             if (token.type == Token.INTEGER && (large || (unsigned && !hex))) {

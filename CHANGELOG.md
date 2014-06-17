@@ -1,4 +1,5 @@
 
+ * Fix a few other minor issues in the `Parser`
  * Allow users to instruct the `Parser` to skip the expansion of specific macro invocations
  * Let `Parser` concatenate tokens when expanding macros containing the `##` operator
  * Add some documentation for `Info`, `InfoMap`, `InfoMapper`, and `Parser`
