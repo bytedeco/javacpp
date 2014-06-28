@@ -442,9 +442,6 @@ public class Parser {
             }
             cast += token;
         }
-        if (dcl.indirections == 0 && dcl.reference) {
-            cast = cast.replace('&', '*');
-        }
 
         ArrayList<Attribute> attributes = new ArrayList<Attribute>();
         if (type.attributes != null) {
@@ -662,6 +659,14 @@ public class Parser {
             }
         }
         if (needCast) {
+            if (dcl.indirections == 0 && dcl.reference) {
+                // consider as pointer type
+                cast = cast.replace('&', '*');
+            }
+            if (valueType && type.constValue && dcl.reference) {
+                // consider as value type
+                cast = cast.substring(0, cast.length() - 1);
+            }
             if (type.constValue) {
                 cast = "const " + cast;
             }
@@ -1881,8 +1886,9 @@ public class Parser {
 
     void declarations(Context context, DeclarationList declList) throws ParserException {
         for (Token token = tokens.get(); !token.match(Token.EOF, '}'); token = tokens.get()) {
-            if (token.match(Token.PRIVATE, Token.PROTECTED, Token.PUBLIC) && tokens.next().match(':')) {
+            while (token.match(Token.PRIVATE, Token.PROTECTED, Token.PUBLIC) && tokens.get(1).match(':')) {
                 context.inaccessible = !token.match(Token.PUBLIC);
+                tokens.next();
                 tokens.next();
             }
             Context ctx = context;

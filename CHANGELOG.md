@@ -1,5 +1,5 @@
 
- * Fix a few other minor issues in the `Parser`
+ * Fix a few other minor issues in the `Parser` with the `long double` type, floating-point numbers, macro redefinitions, access specifiers, casting of const values by reference
  * Allow users to instruct the `Parser` to skip the expansion of specific macro invocations
  * Let `Parser` concatenate tokens when expanding macros containing the `##` operator
  * Add some documentation for `Info`, `InfoMap`, `InfoMapper`, and `Parser`
