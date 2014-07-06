@@ -1,4 +1,6 @@
 
+ * Add `includePath`, `linkPath`, and `preloadPath` parameters to `BuildMojo` to let Maven users append paths to the properties easily
+ * In consequence, remove too arbitrary "local" paths from the default platform properties
  * Fix a few other minor issues in the `Parser` with the `long double` type, floating-point numbers, macro redefinitions, access specifiers, casting of const values by reference
  * Allow users to instruct the `Parser` to skip the expansion of specific macro invocations
  * Let `Parser` concatenate tokens when expanding macros containing the `##` operator

@@ -1950,55 +1950,34 @@ public class Parser {
         }
     }
 
-    LinkedList<File> findHeaderFiles(ClassProperties properties, LinkedList<String> includes) {
-        LinkedList<String> paths = properties.get("platform.includepath");
-        LinkedList<File> files = new LinkedList<File>();
-        for (String include : includes) {
-            boolean found = false;
-            if (include.startsWith("<") && include.endsWith(">")) {
-                include = include.substring(1, include.length() - 1);
-            } else {
-                File f = new File(include);
-                if (f.exists()) {
-                    found = true;
-                    files.add(f);
-                    continue;
-                }
-            }
-            for (String path : paths) {
-                File f = new File(path, include);
-                if (f.exists()) {
-                    found = true;
-                    files.add(f);
-                    break;
-                }
-            }
-            if (!found) {
-                files.add(new File(include));
-            }
-        }
-        return files;
+    void parse(String outputFilename, Context context, String[] includePath, String ... includes) throws IOException, ParserException {
+        parse(new File(outputFilename), context, includePath, includes);
     }
-
-    void parse(String outputFilename, Context context, String[] includePath, String ... inputFilenames) throws IOException, ParserException {
-        File[] files = new File[inputFilenames.length];
-        for (int i = 0; i < files.length; i++) {
-            files[i] = new File(inputFilenames[i]);
-        }
-        parse(new File(outputFilename), context, includePath, files);
-    }
-    void parse(File outputFile, Context context, String[] includePath, File ... inputFiles) throws IOException, ParserException {
+    void parse(File outputFile, Context context, String[] includePath, String ... includes) throws IOException, ParserException {
         ArrayList<Token> tokenList = new ArrayList<Token>();
         String lineSeparator = null;
-        for (File file : inputFiles) {
-            if (!file.exists() && includePath != null) {
-                for (String s : includePath) {
-                    File f = new File(s, file.getPath());
+        for (String include : includes) {
+            File file = null;
+            String filename = include;
+            if (filename.startsWith("<") && filename.endsWith(">")) {
+                filename = filename.substring(1, filename.length() - 1);
+            } else {
+                File f = new File(filename);
+                if (f.exists()) {
+                    file = f;
+                }
+            }
+            if (file == null && includePath != null) {
+                for (String path : includePath) {
+                    File f = new File(path, filename);
                     if (f.exists()) {
                         file = f;
                         break;
                     }
                 }
+            }
+            if (file == null) {
+                file = new File(filename);
             }
             Info info = infoMap.getFirst(file.getName());
             if (info != null && info.skip) {
@@ -2009,7 +1988,7 @@ public class Parser {
             logger.info("Parsing " + file);
             Token token = new Token();
             token.type = Token.COMMENT;
-            token.value = "\n// Parsed from " + file + "\n\n";
+            token.value = "\n// Parsed from " + include + "\n\n";
             tokenList.add(token);
             Tokenizer tokenizer = new Tokenizer(file);
             while (!(token = tokenizer.nextToken()).isEmpty()) {
@@ -2071,8 +2050,6 @@ public class Parser {
         LinkedList<String> allIncludes = new LinkedList<String>();
         allIncludes.addAll(allProperties.get("platform.include"));
         allIncludes.addAll(allProperties.get("platform.cinclude"));
-        LinkedList<File> allFiles = findHeaderFiles(allProperties, allIncludes);
-        LinkedList<File> clsFiles = findHeaderFiles(allProperties, clsIncludes);
         LinkedList<String> allTargets = allProperties.get("target");
         LinkedList<String> clsTargets = clsProperties.get("target");
         LinkedList<String> clsHelpers = clsProperties.get("helper");
@@ -2141,12 +2118,15 @@ public class Parser {
                 includePath[i] += File.separator + targetPath.substring(0, n);
             }
         }
-        for (File f : allFiles) {
-            if (!clsFiles.contains(f)) {
-                parse(null, context, includePath, f);
+        LinkedList<String> paths = allProperties.get("platform.includepath");
+        String[] includePaths = paths.toArray(new String[paths.size() + includePath.length]);
+        System.arraycopy(includePath, 0, includePaths, paths.size(), includePath.length);
+        for (String include : allIncludes) {
+            if (!clsIncludes.contains(include)) {
+                parse((File)null, context, includePaths, include);
             }
         }
-        parse(targetFile, context, includePath, clsFiles.toArray(new File[clsFiles.size()]));
+        parse(targetFile, context, includePaths, clsIncludes.toArray(new String[clsIncludes.size()]));
         return targetFile;
     }
 }

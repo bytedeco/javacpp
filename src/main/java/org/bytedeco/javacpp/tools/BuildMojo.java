@@ -53,6 +53,42 @@ public class BuildMojo extends AbstractMojo {
     private String[] classPaths = null;
 
     /**
+     * Add the path to the "platform.includepath" property.
+     * @parameter property="includePath"
+     */
+    private String includePath = null;
+
+    /**
+     * Add the paths to the "platform.includepath" property.
+     * @parameter property="includePaths"
+     */
+    private String[] includePaths = null;
+
+    /**
+     * Add the path to the "platform.linkpath" property.
+     * @parameter property="linkPath"
+     */
+    private String linkPath = null;
+
+    /**
+     * Add the paths to the "platform.linkpath" property.
+     * @parameter property="linkPaths"
+     */
+    private String[] linkPaths = null;
+
+    /**
+     * Add the path to the "platform.preloadpath" property.
+     * @parameter property="preloadPath"
+     */
+    private String preloadPath = null;
+
+    /**
+     * Add the paths to the "platform.preloadpath" property.
+     * @parameter property="preloadPaths"
+     */
+    private String[] preloadPaths = null;
+
+    /**
      * Output all generated files to outputDirectory
      * @parameter property="outputDirectory"
      */
@@ -143,6 +179,16 @@ public class BuildMojo extends AbstractMojo {
      */
     private MavenProject project;
 
+    String[] merge(String[] ss, String s) {
+        if (ss != null && s != null) {
+            ss = Arrays.copyOf(ss, ss.length + 1);
+            ss[ss.length - 1] = s;
+        } else if (s != null) {
+            ss = new String[] { s };
+        }
+        return ss;
+    }
+
     @Override public void execute() throws MojoExecutionException {
         final Log log = getLog();
         try {
@@ -150,6 +196,12 @@ public class BuildMojo extends AbstractMojo {
             if (log.isDebugEnabled()) {
                 log.debug("classPath: " + classPath);
                 log.debug("classPaths: " + Arrays.deepToString(classPaths));
+                log.debug("includePath: " + includePath);
+                log.debug("includePaths: " + Arrays.deepToString(includePaths));
+                log.debug("linkPath: " + linkPath);
+                log.debug("linkPaths: " + Arrays.deepToString(linkPaths));
+                log.debug("preloadPath: " + preloadPath);
+                log.debug("preloadPaths: " + Arrays.deepToString(preloadPaths));
                 log.debug("outputDirectory: " + outputDirectory);
                 log.debug("outputName: " + outputName);
                 log.debug("compile: " + compile);
@@ -171,19 +223,8 @@ public class BuildMojo extends AbstractMojo {
                 return;
             }
 
-            if (classPaths != null && classPath != null) {
-                classPaths = Arrays.copyOf(classPaths, classPaths.length + 1);
-                classPaths[classPaths.length - 1] = classPath;
-            } else if (classPath != null) {
-                classPaths = new String[] { classPath };
-            }
-
-            if (classOrPackageNames != null && classOrPackageName != null) {
-                classOrPackageNames = Arrays.copyOf(classOrPackageNames, classOrPackageNames.length + 1);
-                classOrPackageNames[classOrPackageNames.length - 1] = classOrPackageName;
-            } else if (classOrPackageName != null) {
-                classOrPackageNames = new String[] { classOrPackageName };
-            }
+            classPaths = merge(classPaths, classPath);
+            classOrPackageNames = merge(classOrPackageNames, classOrPackageName);
 
             Logger logger = new Logger() {
                 @Override public void debug(CharSequence cs) { log.debug(cs); }
@@ -205,7 +246,24 @@ public class BuildMojo extends AbstractMojo {
                     .classesOrPackages(classOrPackageNames)
                     .environmentVariables(environmentVariables)
                     .compilerOptions(compilerOptions);
-            project.getProperties().putAll(builder.properties);
+            Properties properties = builder.properties;
+            String separator = properties.getProperty("platform.path.separator");
+            for (String s : merge(includePaths, includePath)) {
+                String v = properties.getProperty("platform.includepath", "");
+                properties.setProperty("platform.includepath",
+                        v.length() == 0 || v.endsWith(separator) ? v + s : v + separator + s);
+            }
+            for (String s : merge(linkPaths, linkPath)) {
+                String v = properties.getProperty("platform.linkpath", "");
+                properties.setProperty("platform.linkpath",
+                        v.length() == 0 || v.endsWith(separator) ? v + s : v + separator + s);
+            }
+            for (String s : merge(preloadPaths, preloadPath)) {
+                String v = properties.getProperty("platform.preloadpath", "");
+                properties.setProperty("platform.preloadpath",
+                        v.length() == 0 || v.endsWith(separator) ? v + s : v + separator + s);
+            }
+            project.getProperties().putAll(properties);
             File[] outputFiles = builder.build();
             log.info("Successfully executed JavaCPP Builder");
             if (log.isDebugEnabled()) {
