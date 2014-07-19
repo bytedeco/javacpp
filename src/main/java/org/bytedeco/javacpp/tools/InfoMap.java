@@ -71,7 +71,7 @@ public class InfoMap extends HashMap<String,LinkedList<Info>> {
         .put(new Info("unsigned long", "unsigned long int").cast()
             .valueTypes("long").pointerTypes("CLongPointer"))
 
-        .put(new Info("size_t", "ptrdiff_t").cast().valueTypes("long").pointerTypes("SizeTPointer"))
+        .put(new Info("size_t", "ptrdiff_t", "intptr_t", "uintptr_t", "off_t").cast().valueTypes("long").pointerTypes("SizeTPointer"))
         .put(new Info("float", "jfloat").valueTypes("float").pointerTypes("FloatPointer", "FloatBuffer", "float[]"))
         .put(new Info("double", "jdouble").valueTypes("double").pointerTypes("DoublePointer", "DoubleBuffer", "double[]"))
         .put(new Info("long double").cast().valueTypes("double").pointerTypes("Pointer"))

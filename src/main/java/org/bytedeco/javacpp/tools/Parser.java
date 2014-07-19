@@ -290,12 +290,37 @@ public class Parser {
                 for (Type t : type.arguments) {
                     type.cppName += separator;
                     Info info = infoMap.getFirst(t.cppName);
-                    type.cppName += info != null && info.cppTypes != null ? info.cppTypes[0] : t.cppName;
+                    String s = info != null && info.cppTypes != null ? info.cppTypes[0] : t.cppName;
+                    if (t.constValue) {
+                        s = "const " + s;
+                    }
+                    if (t.constPointer) {
+                        s = s + " const";
+                    }
+                    if (t.pointer) {
+                        s += "*";
+                    }
+                    if (t.reference) {
+                        s += "&";
+                    }
+                    type.cppName += s;
                     separator = ",";
                 }
                 type.cppName += type.cppName.endsWith(">") ? " >" : ">";
             } else if (token.match(Token.CONST)) {
-                type.constValue = true;
+                if (type.cppName.length() == 0) {
+                    type.constValue = true;
+                } else {
+                    type.constPointer = true;
+                }
+            } else if (token.match('*')) {
+                type.pointer = true;
+                tokens.next();
+                break;
+            } else if (token.match('&')) {
+                type.reference = true;
+                tokens.next();
+                break;
             } else if (token.match('~')) {
                 type.destructor = true;
             } else if (token.match(Token.STATIC)) {
@@ -348,17 +373,41 @@ public class Parser {
                 type.cppName += token;
             }
         }
-        boolean pointer = type.cppName.endsWith("*");
-        boolean reference = type.cppName.endsWith("&");
-        if (pointer || reference) {
+
+        // remove * and & to query template map
+        if (type.cppName.endsWith("*")) {
+            type.pointer = true;
             type.cppName = type.cppName.substring(0, type.cppName.length() - 1);
         }
+        if (type.cppName.endsWith("&")) {
+            type.reference = true;
+            type.cppName = type.cppName.substring(0, type.cppName.length() - 1);
+        }
+
+        // perform template substitution
         if (context.templateMap != null && context.templateMap.get(type.cppName) != null) {
             type.cppName = context.templateMap.get(type.cppName);
         }
-        int namespace = type.cppName.lastIndexOf("::");
-        int template = type.cppName.indexOf('<');
-        type.javaName = namespace >= 0 && template < 0 ? type.cppName.substring(namespace + 2) : type.cppName;
+
+        // remove const, * and & after template substitution for consistency
+        if (type.cppName.startsWith("const ")) {
+            type.constValue = true;
+            type.cppName = type.cppName.substring(6);
+        }
+        if (type.cppName.endsWith("*")) {
+            type.pointer = true;
+            type.cppName = type.cppName.substring(0, type.cppName.length() - 1);
+        }
+        if (type.cppName.endsWith("&")) {
+            type.reference = true;
+            type.cppName = type.cppName.substring(0, type.cppName.length() - 1);
+        }
+        if (type.cppName.endsWith(" const")) {
+            type.constPointer = true;
+            type.cppName = type.cppName.substring(0, type.cppName.length() - 6);
+        }
+
+        // guess the fully qualified C++ type with what's available in the InfoMap
         Info info = null;
         for (String name : context.qualify(type.cppName)) {
             if ((info = infoMap.getFirst(name, false)) != null) {
@@ -368,26 +417,32 @@ public class Parser {
                 type.cppName = name;
             }
         }
+
+        // produce some appropriate name for the peer Java class, relying on Info if available
+        int namespace = type.cppName.lastIndexOf("::");
+        int template = type.cppName.lastIndexOf('<');
+        type.javaName = namespace >= 0 && template < 0 ? type.cppName.substring(namespace + 2) : type.cppName;
         boolean valueType = false;
         if (info != null) {
-            if (!pointer && !reference && info.valueTypes != null && info.valueTypes.length > 0) {
+            if (!type.pointer && !type.reference && info.valueTypes != null && info.valueTypes.length > 0) {
                 type.javaName = info.valueTypes[0];
                 valueType = true;
             } else if (info.pointerTypes != null && info.pointerTypes.length > 0) {
                 type.javaName = info.pointerTypes[0];
             }
         }
+
         if (type.operator) {
             if (type.constValue) {
                 type.annotations += "@Const ";
             }
-            if (!valueType && !pointer && !reference) {
+            if (!valueType && !type.pointer && !type.reference) {
                 type.annotations += "@ByVal ";
-            } else if (!valueType && !pointer && reference) {
+            } else if (!valueType && !type.pointer && type.reference) {
                 type.annotations += "@ByRef ";
             }
             type.annotations += "@Name(\"operator " + (type.constValue ? "const " : "")
-                    + type.cppName + (pointer ? "*" : reference ? "&" : "") + "\") ";
+                    + type.cppName + (type.pointer ? "*" : type.reference ? "&" : "") + "\") ";
         }
         if (info != null && info.annotations != null) {
             for (String s : info.annotations) {
@@ -395,8 +450,14 @@ public class Parser {
             }
         }
         if (context.group != null && type.javaName.length() > 0) {
-            if (type.cppName.equals(context.group.cppName)) {
-                type.constructor = !type.destructor && !type.operator && tokens.get().match('(');
+            String groupName = context.group.cppName;
+            int template2 = groupName != null ? groupName.lastIndexOf('<') : -1;
+            if (template < 0 && template2 >= 0) {
+                groupName = groupName.substring(0, template2);
+            }
+            if (type.cppName.equals(groupName)) {
+                type.constructor = !type.destructor && !type.operator
+                        && !type.pointer && !type.reference && tokens.get().match('(', ':');
             }
             type.javaName = context.shorten(type.javaName);
         }
@@ -413,8 +474,9 @@ public class Parser {
             return null;
         }
 
-        int count = 0;
-        for (Token token = tokens.get(); varNumber > 0 && !token.match(Token.EOF); token = tokens.next()) {
+        // pick the requested identifier out of the statement in the case of multiple variable declaractions
+        int count = 0, number = 0;
+        for (Token token = tokens.get(); number < varNumber && !token.match(Token.EOF); token = tokens.next()) {
             if (token.match('(','[','{')) {
                 count++;
             } else if (token.match(')',']','}')) {
@@ -422,14 +484,27 @@ public class Parser {
             } else if (count > 0) {
                 continue;
             } else if (token.match(',')) {
-                varNumber--;
+                number++;
             } else if (token.match(';')) {
                 tokens.next();
                 return null;
             }
         }
 
+        // start building an appropriate cast for the C++ type
         String cast = type.cppName;
+        if (type.constPointer) {
+            dcl.constPointer = true;
+            cast += " const";
+        }
+        if (varNumber == 0 && type.pointer) {
+            dcl.indirections++;
+            cast += "*";
+        }
+        if (varNumber == 0 && type.reference) {
+            dcl.reference = true;
+            cast += "&";
+        }
         for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.next()) {
             if (token.match('*')) {
                 dcl.indirections++;
@@ -443,6 +518,7 @@ public class Parser {
             cast += token;
         }
 
+        // translate C++ attributes to equivalent Java annotations
         ArrayList<Attribute> attributes = new ArrayList<Attribute>();
         if (type.attributes != null) {
             attributes.addAll(Arrays.asList(type.attributes));
@@ -455,6 +531,8 @@ public class Parser {
             backIndex = tokens.index;
             attr = attribute();
         }
+
+        // consider attributes of the form SOMETHING(name) as hints for an appropriate Java name
         attr = null;
         tokens.index = backIndex;
         for (Attribute a : attributes) {
@@ -472,6 +550,13 @@ public class Parser {
             }
         }
 
+        // ignore superfluous parentheses
+        count = 0;
+        while (tokens.get().match('(') && tokens.get(1).match('(')) {
+            tokens.next();
+            count++;
+        }
+
         int dims[] = new int[256];
         int indirections2 = 0;
         dcl.cppName = "";
@@ -480,7 +565,7 @@ public class Parser {
         boolean operator = false;
         if (tokens.get().match('(') || (typedef && tokens.get(1).match('('))) {
             // probably a function pointer declaration
-            while (tokens.get().match('(')) {
+            if (tokens.get().match('(')) {
                 tokens.next();
             }
             for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.next()) {
@@ -510,7 +595,7 @@ public class Parser {
                     break;
                 }
             }
-            while (tokens.get().match(')')) {
+            if (tokens.get().match(')')) {
                 tokens.next();
             }
         } else if (tokens.get().match(Token.IDENTIFIER)) {
@@ -606,14 +691,31 @@ public class Parser {
             LinkedList<Info> infoList = infoMap.get(type2.cppName);
             for (Info info2 : infoList) {
                 if (type2.arguments != null && info2.annotations != null) {
-                    dcl.indirections = 1;
-                    dcl.reference = false;
+                    type.constPointer = type2.arguments[0].constPointer;
                     type.constValue = type2.arguments[0].constValue;
                     type.simple = type2.arguments[0].simple;
+                    type.pointer = type2.arguments[0].pointer;
+                    type.reference = type2.arguments[0].reference;
                     type.annotations = type2.arguments[0].annotations;
                     type.cppName = type2.arguments[0].cppName;
                     type.javaName = type2.arguments[0].javaName;
+                    dcl.indirections = 1;
+                    dcl.reference = false;
                     cast = type.cppName + "*";
+                    if (type.constValue) {
+                        cast = "const " + cast;
+                    }
+                    if (type.constPointer) {
+                        cast = cast + " const";
+                    }
+                    if (type.pointer) {
+                        dcl.indirections++;
+                        cast += "*";
+                    }
+                    if (type.reference) {
+                        dcl.reference = true;
+                        cast += "&";
+                    }
                     for (String s : info2.annotations) {
                         type.annotations += s + " ";
                     }
@@ -677,6 +779,7 @@ public class Parser {
             }
         }
 
+        // initialize shorten Java name and get fully qualitifed C++ name
         dcl.javaName = attr != null ? attr.arguments : dcl.cppName;
         for (String name : context.qualify(dcl.cppName)) {
             if ((info = infoMap.getFirst(name, false)) != null) {
@@ -686,14 +789,20 @@ public class Parser {
                 dcl.cppName = name;
             }
         }
+
+        // pick the Java name from the InfoMap if appropriate
         if (attr == null && defaultName == null && info != null && info.javaNames != null && info.javaNames.length > 0
                 && (operator || !info.cppNames[0].contains("<") || (context.templateMap != null && context.templateMap.type == null))) {
             dcl.javaName = info.javaNames[0];
         }
+
+        // annotate with @Name if the Java name doesn't match with the C++ name
         if (dcl.cppName != null) {
             String localName = dcl.cppName;
-            if (localName.startsWith(context.namespace + "::")) {
-                localName = dcl.cppName.substring(context.namespace.length() + 2);
+            int namespace = localName.lastIndexOf("::");
+            if (namespace >= 0 && context.namespace != null &&
+                    context.namespace.startsWith(localName.substring(0, namespace - 2))) {
+                localName = dcl.cppName.substring(namespace + 2);
             }
             if (!localName.equals(dcl.javaName)) {
                 type.annotations += "@Name(\"" + localName + "\") ";
@@ -705,6 +814,7 @@ public class Parser {
             }
         }
 
+        // deal with function parameters and function pointers
         dcl.signature = dcl.javaName;
         dcl.parameters = parameters(context, infoNumber, useDefaults);
         if (dcl.parameters != null) {
@@ -741,6 +851,13 @@ public class Parser {
             }
         }
         dcl.type = type;
+
+        // ignore superfluous parentheses
+        while (tokens.get().match(')') && count > 0) {
+            tokens.next();
+            count--;
+        }
+
         return dcl;
     }
 
@@ -925,6 +1042,11 @@ public class Parser {
         int backIndex = tokens.index;
         String spacing = tokens.get().spacing;
         String modifiers = "public native ";
+        boolean friend = false;
+        if (tokens.get().match(Token.FRIEND)) {
+            friend = true;
+            tokens.next();
+        }
         Type type = type(context);
         Parameters params = parameters(context, 0, false);
         Declarator dcl = new Declarator();
@@ -935,6 +1057,13 @@ public class Parser {
             return false;
         } else if (context.group == null && params != null) {
             // this is a constructor definition or specialization, skip over
+            if (tokens.get().match(':')) {
+                for (Token token = tokens.next(); !token.match(Token.EOF); token = tokens.next()) {
+                    if (token.match('{', ';')) {
+                        break;
+                    }
+                }
+            }
             if (tokens.get().match('{')) {
                 body();
             } else {
@@ -991,11 +1120,18 @@ public class Parser {
         if (type.javaName.length() == 0 || dcl.parameters == null) {
             tokens.index = backIndex;
             return false;
-        } else if ((context.group == null && localName.contains("::")) || (info != null && info.skip)) {
-            // this is a member function definition or specialization, skip over
+        } else if (friend || (context.group == null && localName.contains("::")) || (info != null && info.skip)) {
+            // this is a friend declaration, or a member function definition or specialization, skip over
             for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.get()) {
                 if (attribute() == null) {
                     break;
+                }
+            }
+            if (tokens.get().match(':')) {
+                for (Token token = tokens.next(); !token.match(Token.EOF); token = tokens.next()) {
+                    if (token.match('{', ';')) {
+                        break;
+                    }
                 }
             }
             if (tokens.get().match('{')) {
@@ -1038,6 +1174,10 @@ public class Parser {
             } else {
                 dcl = declarator(context, null, n / 2, n % 2 != 0, 0, false, false);
                 type = dcl.type;
+                namespace = dcl.cppName.lastIndexOf("::");
+                if (context.namespace != null && namespace < 0) {
+                    dcl.cppName = context.namespace + "::" + dcl.cppName;
+                }
             }
             decl.declarator = dcl;
             if (context.namespace != null && context.group == null) {
@@ -1070,7 +1210,7 @@ public class Parser {
             if (info != null && info.javaText != null) {
                 if (first) {
                     decl.text = info.javaText;
-                    decl.declarator = null;
+//                    decl.declarator = null;
                 } else {
                     break;
                 }
@@ -1319,7 +1459,7 @@ public class Parser {
                             type = "double"; cat = ""; break;
                         } else if (token.match(Token.INTEGER) && token.value.endsWith("L")) {
                             type = "long"; cat = ""; break;
-                        } else if ((prevToken.match(Token.IDENTIFIER) && token.match('(')) || token.match('{', '}')) {
+                        } else if ((prevToken.match(Token.IDENTIFIER, '>') && token.match('(')) || token.match('{', '}')) {
                             translate = false;
                         }
                         prevToken = token;
@@ -1405,10 +1545,13 @@ public class Parser {
             // some opaque data type
             Info info = infoMap.getFirst(defName);
             if (info == null || !info.skip) {
-                decl.text = "@Opaque public static class " + dcl.javaName + " extends Pointer {\n" +
-                            "    public " + dcl.javaName + "() { }\n" +
-                            "    public " + dcl.javaName + "(Pointer p) { super(p); }\n" +
-                            "}";
+                if (context.namespace != null && context.group == null) {
+                    decl.text += "@Namespace(\"" + context.namespace + "\") ";
+                }
+                decl.text += "@Opaque public static class " + dcl.javaName + " extends Pointer {\n" +
+                             "    public " + dcl.javaName + "() { }\n" +
+                             "    public " + dcl.javaName + "(Pointer p) { super(p); }\n" +
+                             "}";
             }
         } else {
             // point back to original type
@@ -1514,7 +1657,7 @@ public class Parser {
                 }
             }
         }
-        if (typedef && tokens.get().match('*')) {
+        if (typedef && type.pointer) {
             // skip pointer typedef
             while (!tokens.get().match(';', Token.EOF)) {
                 tokens.next();
@@ -1927,7 +2070,21 @@ public class Parser {
                     int count = 0;
                     for (Map.Entry<String,String> e : map.entrySet()) {
                         if (count < type.arguments.length) {
-                            e.setValue(type.arguments[count++].cppName);
+                            Type t = type.arguments[count++];
+                            String s = t.cppName;
+                            if (t.constValue) {
+                                s = "const " + s;
+                            }
+                            if (t.constPointer) {
+                                s = s + " const";
+                            }
+                            if (t.pointer) {
+                                s += "*";
+                            }
+                            if (t.reference) {
+                                s += "&";
+                            }
+                            e.setValue(s);
                         }
                     }
                     tokens.index = startIndex;

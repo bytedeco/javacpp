@@ -25,7 +25,7 @@ import java.util.LinkedList;
 
 /**
  *
- * @author saudet
+ * @author Samuel Audet
  */
 class Context {
     Context() {
@@ -47,6 +47,7 @@ class Context {
     TemplateMap templateMap = null;
     LinkedList<String> usingList = null;
 
+    /** Return all likely combinations of namespaces and template arguments for this C++ type */
     String[] qualify(String cppName) {
         if (cppName == null || cppName.length() == 0) {
             return new String[0];
@@ -86,6 +87,7 @@ class Context {
         return names.toArray(new String[names.size()]);
     }
 
+    /** Shorten a qualified Java name, given the Context */
     String shorten(String javaName) {
         if (group != null) {
             int lastDot = 0;

@@ -100,6 +100,9 @@ class DeclarationList extends LinkedList<Declaration> {
             if (context != null) {
                 decl.inaccessible = context.inaccessible;
             }
+            if (decl.text.length() == 0) {
+                decl.inaccessible = true;
+            }
             it = listIterator();
             boolean found = false;
             while (it.hasNext()) {

@@ -28,8 +28,9 @@ class Type {
     Type() { }
     Type(String name) { cppName = javaName = name; }
 
-    boolean anonymous = false, constValue = false, constructor = false,
-            destructor = false, operator = false, simple = false, staticMember = false;
+    boolean anonymous = false, constPointer = false, constValue = false, constructor = false,
+            destructor = false, operator = false, simple = false, staticMember = false,
+            pointer = false, reference = false;
     String annotations = "", cppName = "", javaName = "";
     Type[] arguments = null;
     Attribute[] attributes = null;
