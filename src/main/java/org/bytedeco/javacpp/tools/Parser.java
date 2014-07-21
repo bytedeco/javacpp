@@ -756,7 +756,7 @@ public class Parser {
                 }
             }
 
-            if (!needCast && type.constValue && !implicitConst) {
+            if (!needCast && type.constValue && !implicitConst && !type.javaName.contains("@Cast")) {
                 type.annotations = "@Const " + type.annotations;
             }
         }
@@ -1540,7 +1540,8 @@ public class Parser {
             if (dcl.javaName.length() > 0 && context.group != null) {
                 dcl.javaName = context.group.javaName + "." + dcl.javaName;
             }
-            infoMap.put(new Info(defName).valueTypes(dcl.javaName));
+            infoMap.put(new Info(defName).valueTypes(dcl.javaName)
+                    .pointerTypes((dcl.indirections > 0 ? "@ByPtrPtr " : "") + dcl.javaName));
         } else if (typeName.equals("void")) {
             // some opaque data type
             Info info = infoMap.getFirst(defName);
