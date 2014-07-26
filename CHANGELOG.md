@@ -1,4 +1,5 @@
 
+ * Fix `Generator.checkPlatform()` not checking super classes
  * Add `includePath`, `linkPath`, and `preloadPath` parameters to `BuildMojo` to let Maven users append paths to the properties easily
  * In consequence, remove too arbitrary "local" paths from the default platform properties
  * Fix a few other more or less minor issues in the `Parser` with the `long double`, `ptrdiff_t`, `intptr_t`, `uintptr_t`, `off_t` types, floating-point numbers, macro redefinitions, access specifiers, casting of const values by reference, optional parentheses, const data types in templates, declarator names equal to a type name, friend functions, inline constructors, `typedef void` declarations within namespaces, pointers to function pointers

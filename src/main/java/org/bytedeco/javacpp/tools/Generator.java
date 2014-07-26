@@ -1876,6 +1876,10 @@ public class Generator implements Closeable {
     }
 
     boolean checkPlatform(Class<?> cls) {
+        while (!cls.isAnnotationPresent(org.bytedeco.javacpp.annotation.Properties.class)
+                && !cls.isAnnotationPresent(Platform.class) && cls.getSuperclass() != null) {
+            cls = cls.getSuperclass();
+        }
         org.bytedeco.javacpp.annotation.Properties classProperties =
             cls.getAnnotation(org.bytedeco.javacpp.annotation.Properties.class);
         if (classProperties != null) {

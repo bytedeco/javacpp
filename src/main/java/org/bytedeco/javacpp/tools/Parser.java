@@ -61,14 +61,19 @@ import org.bytedeco.javacpp.Loader;
 public class Parser {
 
     public Parser(Logger logger, Properties properties) {
+        this(logger, properties, null);
+    }
+    public Parser(Logger logger, Properties properties, String lineSeparator) {
         this.logger = logger;
         this.properties = properties;
+        this.lineSeparator = lineSeparator;
     }
     Parser(Parser p, String text) {
         this.logger = p.logger;
         this.properties = p.properties;
         this.infoMap = p.infoMap;
         this.tokens = new TokenIndexer(infoMap, new Tokenizer(text).tokenize());
+        this.lineSeparator = p.lineSeparator;
     }
 
     final Logger logger;
@@ -76,6 +81,7 @@ public class Parser {
     InfoMap infoMap = null;
     InfoMap leafInfoMap = null;
     TokenIndexer tokens = null;
+    String lineSeparator = null;
 
     String translate(String text) {
         int namespace = text.lastIndexOf("::");
@@ -2113,7 +2119,6 @@ public class Parser {
     }
     void parse(File outputFile, Context context, String[] includePath, String ... includes) throws IOException, ParserException {
         ArrayList<Token> tokenList = new ArrayList<Token>();
-        String lineSeparator = null;
         for (String include : includes) {
             File file = null;
             String filename = include;
