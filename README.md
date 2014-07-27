@@ -14,8 +14,31 @@ Please feel free to ask questions on [the mailing list](http://groups.google.com
 
 Downloads
 ---------
- * JavaCPP 0.8 binary package  [javacpp-0.8-bin.zip](http://search.maven.org/remotecontent?filepath=org/bytedeco/javacpp/0.8/javacpp-0.8-bin.zip) (192 KB)
- * JavaCPP 0.8 source package  [javacpp-0.8-src.zip](http://search.maven.org/remotecontent?filepath=org/bytedeco/javacpp/0.8/javacpp-0.8-src.zip) (167 KB)
+ * JavaCPP 0.9 binary archive  [javacpp-0.9-bin.zip](http://search.maven.org/remotecontent?filepath=org/bytedeco/javacpp/0.9/javacpp-0.9-bin.zip) (195 KB)
+ * JavaCPP 0.9 source archive  [javacpp-0.9-src.zip](http://search.maven.org/remotecontent?filepath=org/bytedeco/javacpp/0.9/javacpp-0.9-src.zip) (171 KB)
+
+We can also have everything downloaded and installed automatically with:
+
+ * Maven (inside the `pom.xml` file)
+```xml
+  <dependency>
+    <groupId>org.bytedeco</groupId>
+    <artifactId>javacpp</artifactId>
+    <version>0.9</version>
+  </dependency>
+```
+
+ * Gradle (inside the `build.gradle` file)
+```groovy
+  dependencies {
+    compile group: 'org.bytedeco', name: 'javacpp', version: '0.9'
+  }
+```
+
+* SBT (inside the `build.sbt` file)
+```scala
+  libraryDependencies += "org.bytedeco" % "javacpp" % "0.9"
+```
 
 
 Required Software
