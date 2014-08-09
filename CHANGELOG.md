@@ -1,4 +1,6 @@
 
+ * Add hack for `typedef void*` definitions and parameters with a double indirection to them
+
 ### July 27, 2014 version 0.9
  * Fix `Generator.checkPlatform()` not checking super classes
  * Add `includePath`, `linkPath`, and `preloadPath` parameters to `BuildMojo` to let Maven users append paths to the properties easily

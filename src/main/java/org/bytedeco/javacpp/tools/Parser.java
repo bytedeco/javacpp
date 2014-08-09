@@ -1552,7 +1552,11 @@ public class Parser {
             // some opaque data type
             Info info = infoMap.getFirst(defName);
             if (info == null || !info.skip) {
-                if (context.namespace != null && context.group == null) {
+                if (dcl.indirections > 0) {
+                    decl.text += "@Namespace @Name(\"void\") ";
+                    info = info != null ? new Info(info) : new Info(defName);
+                    infoMap.put(info.valueTypes(dcl.javaName).pointerTypes("@ByPtrPtr " + dcl.javaName));
+                } else if (context.namespace != null && context.group == null) {
                     decl.text += "@Namespace(\"" + context.namespace + "\") ";
                 }
                 decl.text += "@Opaque public static class " + dcl.javaName + " extends Pointer {\n" +

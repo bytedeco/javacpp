@@ -925,7 +925,7 @@ public class Generator implements Closeable {
                     !methodInfo.arrayAllocator && !methodInfo.deallocator) {
                 // get our "this" pointer
                 String[] typeName = cppTypeName(cls);
-                if ("void*".equals(typeName[0])) {
+                if ("void*".equals(typeName[0]) && !cls.isAnnotationPresent(Opaque.class)) {
                     typeName[0] = "char*";
                 } else if (FunctionPointer.class.isAssignableFrom(cls)) {
                     functions.index(cls);
@@ -1003,7 +1003,7 @@ public class Generator implements Closeable {
                     continue;
                 }
 
-                if ("void*".equals(typeName[0])) {
+                if ("void*".equals(typeName[0]) && !methodInfo.parameterTypes[j].isAnnotationPresent(Opaque.class)) {
                     typeName[0] = "char*";
                 }
                 out.print("    " + typeName[0] + " ptr" + j + typeName[1] + " = ");
@@ -1498,7 +1498,7 @@ public class Generator implements Closeable {
             String cast = cast(methodInfo, j);
             String[] typeName = cppCastTypeName(methodInfo.parameterTypes[j], methodInfo.parameterAnnotations[j]);
             AdapterInformation adapterInfo = adapterInformation(true, methodInfo, j);
-            if ("void*".equals(typeName[0])) {
+            if ("void*".equals(typeName[0]) && !methodInfo.parameterTypes[j].isAnnotationPresent(Opaque.class)) {
                 typeName[0] = "char*";
             }
             if (Pointer.class.isAssignableFrom(methodInfo.parameterTypes[j])) {
@@ -1749,7 +1749,7 @@ public class Generator implements Closeable {
                 String valueTypeName = valueTypeName(typeName);
                 AdapterInformation adapterInfo = adapterInformation(true, valueTypeName, callbackParameterAnnotations[j]);
 
-                if ("void*".equals(typeName[0])) {
+                if ("void*".equals(typeName[0]) && !callbackParameterTypes[j].isAnnotationPresent(Opaque.class)) {
                     typeName[0] = "char*";
                 }
                 if (adapterInfo != null || passBy instanceof ByPtrPtr || passBy instanceof ByPtrRef) {
@@ -1784,7 +1784,7 @@ public class Generator implements Closeable {
         out.println("end:");
 
         if (callbackReturnType != void.class) {
-            if ("void*".equals(returnTypeName[0])) {
+            if ("void*".equals(returnTypeName[0]) && !callbackReturnType.isAnnotationPresent(Opaque.class)) {
                 returnTypeName[0] = "char*";
             }
             if (Pointer.class.isAssignableFrom(callbackReturnType)) {
