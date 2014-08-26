@@ -43,6 +43,7 @@ class Context {
     String namespace = null;
     Type group = null;
     boolean inaccessible = false;
+    boolean virtualize = false;
     Declarator variable = null;
     TemplateMap templateMap = null;
     LinkedList<String> usingList = null;

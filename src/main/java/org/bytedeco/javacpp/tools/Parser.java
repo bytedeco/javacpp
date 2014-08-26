@@ -1185,18 +1185,8 @@ public class Parser {
                     dcl.cppName = context.namespace + "::" + dcl.cppName;
                 }
             }
-            decl.declarator = dcl;
-            if (context.namespace != null && context.group == null) {
-                decl.text += "@Namespace(\"" + context.namespace + "\") ";
-            }
-            if (type.constructor) {
-                decl.text += "public " + dcl.javaName + dcl.parameters.list + " { allocate" + params.names + "; }\n" +
-                             "private native void allocate" + dcl.parameters.list + ";\n";
-            } else {
-                decl.text += modifiers + type.annotations + type.javaName + " " + dcl.javaName + dcl.parameters.list + ";\n";
-            }
-            decl.signature = dcl.signature;
 
+            // check for const and pure virtual functions, ignoring the body if present
             for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.get()) {
                 decl.constMember |= token.match(Token.CONST);
                 if (attribute() == null) {
@@ -1209,10 +1199,29 @@ public class Parser {
                 if (tokens.get().match('=')) {
                     tokens.next().expect("0");
                     tokens.next().expect(';');
+                    if (context.virtualize) {
+                        modifiers = decl.inaccessible ? "@Virtual protected abstract " : "@Virtual public abstract ";
+                        decl.inaccessible = false;
+                    }
                     decl.abstractMember = true;
                 }
                 tokens.next();
             }
+
+            // compose the text of the declaration with the info we got up until this point
+            decl.declarator = dcl;
+            if (context.namespace != null && context.group == null) {
+                decl.text += "@Namespace(\"" + context.namespace + "\") ";
+            }
+            if (type.constructor) {
+                decl.text += "public " + dcl.javaName + dcl.parameters.list + " { allocate" + params.names + "; }\n" +
+                             "private native void allocate" + dcl.parameters.list + ";\n";
+            } else {
+                decl.text += modifiers + type.annotations + type.javaName + " " + dcl.javaName + dcl.parameters.list + ";\n";
+            }
+            decl.signature = dcl.signature;
+
+            // replace all of the declaration by user specified text
             if (info != null && info.javaText != null) {
                 if (first) {
                     decl.text = info.javaText;
@@ -1228,12 +1237,16 @@ public class Parser {
                 decl.text = comment + decl.text;
             }
 
+            // only add nonduplicate declarations and ignore destructors
             boolean found = false;
             for (Declarator d : prevDcl) {
                 found |= dcl.signature.equals(d.signature);
             }
             if (dcl.javaName.length() > 0 && !found && !type.destructor) {
                 declList.add(decl);
+                if (context.virtualize && decl.abstractMember) {
+                    break;
+                }
             } else if (found && n / 2 > 0 && n % 2 == 0) {
                 break;
             }
@@ -1501,6 +1514,10 @@ public class Parser {
                         decl.text += "public static final " + type + " " + macroName + " =" + value + ";\n";
                     }
                     decl.signature = macroName;
+                }
+                if (info != null && info.javaText != null) {
+                    decl.text = info.javaText;
+                    break;
                 }
             }
         }
@@ -1774,6 +1791,9 @@ public class Parser {
             ctx.namespace = type.cppName;
             ctx.group = type;
         }
+        if (info != null && info.virtualize) {
+            ctx.virtualize = true;
+        }
 
         DeclarationList declList2 = new DeclarationList();
         if (variables.size() == 0) {
@@ -1786,6 +1806,7 @@ public class Parser {
             ctx.variable = var;
             declarations(ctx, declList2);
         }
+        String modifiers = "public static ";
         boolean implicitConstructor = true, defaultConstructor = false, intConstructor = false, abstractClass = false, haveVariables = false;
         for (Declaration d : declList2) {
             if (d.declarator != null && d.declarator.type != null && d.declarator.type.constructor) {
@@ -1796,6 +1817,9 @@ public class Parser {
             } else if (d.abstractMember) {
                 implicitConstructor = false;
                 abstractClass = true;
+                if (ctx.virtualize) {
+                    modifiers = "public static abstract ";
+                }
             }
             haveVariables |= d.variable;
         }
@@ -1812,7 +1836,7 @@ public class Parser {
             if (info != null && info.base != null) {
                 base.javaName = info.base;
             }
-            decl.text += "public static class " + name + " extends " + base.javaName + " {\n" +
+            decl.text += modifiers + "class " + name + " extends " + base.javaName + " {\n" +
                          "    static { Loader.load(); }\n";
 
             if (implicitConstructor) {

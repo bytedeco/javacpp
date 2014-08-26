@@ -5,9 +5,9 @@ Introduction
 ------------
 JavaCPP provides efficient access to native C++ inside Java, not unlike the way some C/C++ compilers interact with assembly language. No need to invent new languages such as with [SWIG](http://www.swig.org/), [SIP](http://riverbankcomputing.co.uk/software/sip/), [C++/CLI](http://www.ecma-international.org/publications/standards/Ecma-372.htm), [Cython](http://www.cython.org/), or [RPython](http://doc.pypy.org/en/latest/coding-guide.html#id1) as required by [cppyy](http://doc.pypy.org/en/latest/cppyy.html). Instead, it exploits the syntactic and semantic similarities between Java and C++. Under the hood, it uses JNI, so it works with all implementations of Java SE, in addition to [Android](http://www.android.com/), [Avian](http://oss.readytalk.com/avian/), and [RoboVM](http://www.robovm.org/) ([instructions](#instructions-for-android-avian-and-robovm)).
 
-More specifically, when compared to the approaches above or elsewhere ([CableSwig](http://www.itk.org/ITK/resources/CableSwig.html), [JNIGeneratorApp](http://www.eclipse.org/swt/jnigen.php), [cxxwrap](http://cxxwrap.sourceforge.net/), [JNIWrapper](http://www.teamdev.com/jniwrapper/), [Platform Invoke](http://msdn.microsoft.com/en-us/library/0h9e9t7d.aspx), [GlueGen](http://jogamp.org/gluegen/www/), [JNIDirect](http://web.archive.org/web/20050329122501/http://homepage.mac.com/pcbeard/JNIDirect/), [ctypes](http://docs.python.org/library/ctypes.html), [JNA](https://github.com/twall/jna), [JNIEasy](http://www.innowhere.com/jnieasy/), [JniMarshall](http://flinflon.brandonu.ca/Dueck/SystemsProgramming/JniMarshall/), [JNative](http://jnative.free.fr/), [J/Invoke](http://web.archive.org/web/20110727133817/http://www.jinvoke.com/), [HawtJNI](http://hawtjni.fusesource.org/), [BridJ](http://code.google.com/p/bridj/), [fficxx](http://ianwookim.org/fficxx/), etc.), it maps naturally and efficiently many common features afforded by the C++ language and often considered problematic, including overloaded operators, class and function templates, member function pointers, callback functions, function objects (aka functors), nested struct definitions, variable length arguments, nested namespaces, large data structures containing arbitrary cycles, virtual and multiple inheritance, passing/returning by value/reference/vector, anonymous unions, bit fields, exceptions, destructors with garbage collection, and documentation comments. Obviously, neatly supporting the whole of C++ would require more work (although one could argue about the intrinsic neatness of C++), but I am releasing it here as a proof of concept. 
+More specifically, when compared to the approaches above or elsewhere ([CableSwig](http://www.itk.org/ITK/resources/CableSwig.html), [JNIGeneratorApp](http://www.eclipse.org/swt/jnigen.php), [cxxwrap](http://cxxwrap.sourceforge.net/), [JNIWrapper](http://www.teamdev.com/jniwrapper/), [Platform Invoke](http://msdn.microsoft.com/en-us/library/0h9e9t7d.aspx), [GlueGen](http://jogamp.org/gluegen/www/), [JNIDirect](http://web.archive.org/web/20050329122501/http://homepage.mac.com/pcbeard/JNIDirect/), [ctypes](http://docs.python.org/library/ctypes.html), [JNA](https://github.com/twall/jna), [JNIEasy](http://www.innowhere.com/jnieasy/), [JniMarshall](http://flinflon.brandonu.ca/Dueck/SystemsProgramming/JniMarshall/), [JNative](http://jnative.free.fr/), [J/Invoke](http://web.archive.org/web/20110727133817/http://www.jinvoke.com/), [HawtJNI](http://hawtjni.fusesource.org/), [BridJ](http://code.google.com/p/bridj/), [fficxx](http://ianwookim.org/fficxx/), etc.), it maps naturally and efficiently many common features afforded by the C++ language and often considered problematic, including overloaded operators, class and function templates, callbacks through function pointers, function objects (aka functors) and virtual functions, member function pointers, nested struct definitions, variable length arguments, nested namespaces, large data structures containing arbitrary cycles, virtual and multiple inheritance, passing/returning by value/reference/vector, anonymous unions, bit fields, exceptions, destructors with garbage collection, and documentation comments. Obviously, neatly supporting the whole of C++ would require more work (although one could argue about the intrinsic neatness of C++), but we are releasing it here as a proof of concept. 
 
-As a case in point, I have already used it to produce complete interfaces to OpenCV, FFmpeg, libdc1394, PGR FlyCapture, OpenKinect, videoInput, and ARToolKitPlus as part of the [JavaCPP Presets](https://github.com/bytedeco/javacpp-presets) subproject, also demonstrating early parsing capabilities of C/C++ header files that show promising and useful results.
+As a case in point, we have already used it to produce complete interfaces to OpenCV, FFmpeg, libdc1394, PGR FlyCapture, OpenKinect, videoInput, ARToolKitPlus, and others as part of the [JavaCPP Presets](https://github.com/bytedeco/javacpp-presets) subproject, also demonstrating early parsing capabilities of C/C++ header files that show promising and useful results.
 
 Please feel free to ask questions on [the mailing list](http://groups.google.com/group/javacpp-project) if you encounter any problems with the software! I am sure it is far from perfect...
 
@@ -89,7 +89,7 @@ To implement `native` methods, JavaCPP generates appropriate code for JNI, and p
 
 In addition to the few examples provided below, to learn more about how to use the features of this tool, please refer to [the source code of the JavaCPP Presets](https://github.com/bytedeco/javacpp-presets). For more information about the API itself, one may refer to [the documentation generated by Javadoc](http://bytedeco.org/javacpp/apidocs/).
 
-As a matter of course, this all works with the Scala language as well, but to make the process even smoother, I would imagine that it should not be too hard to add support for "native properties", such that declarations like `@native var` could generate native getter and setter methods...
+As a matter of course, this all works with the Scala language as well, but to make the process even smoother, it should not be too hard to add support for "native properties", such that declarations like `@native var` could generate native getter and setter methods...
 
 
 ### Accessing Native APIs
@@ -260,7 +260,7 @@ Processing in C++...
 
 
 ### Creating Callback Functions
-Some applications also require a way to call back into the JVM from C/C++, so JavaCPP provides a simple way to define custom callback function (pointers). Although there exist frameworks, which are arguably harder to use, such as [Jace](http://code.google.com/p/jace/) and [JunC++ion](http://codemesh.com/products/junction/) that can map complete Java APIs to C++, since invoking a Java method from native code takes at least an order of magnitude more time than the other way around, it does not make much sense in my opinion to export as is an API that was designed to be used in Java. Nevertheless, suppose we want to perform some operations in Java, planning to wrap that into a function named `foo()` that calls some method inside class `Foo`, we can write the following code in a file named `foo.cpp`, taking care to initialize the JVM if necessary with either `JavaCPP_init()` or by any other means:
+Some applications also require a way to call back into the JVM from C/C++, so JavaCPP provides a simple way to define custom callbacks, either as function pointers, function objects, or virtual functions. Although there exist frameworks, which are arguably harder to use, such as [Jace](http://code.google.com/p/jace/) and [JunC++ion](http://codemesh.com/products/junction/) that can map complete Java APIs to C++, since invoking a Java method from native code takes at least an order of magnitude more time than the other way around, it does not make much sense in my opinion to export as is an API that was designed to be used in Java. Nevertheless, suppose we want to perform some operations in Java, planning to wrap that into a function named `foo()` that calls some method inside class `Foo`, we can write the following code in a file named `foo.cpp`, taking care to initialize the JVM if necessary with either `JavaCPP_init()` or by any other means:
 
 ```cpp
 #include <iostream>
@@ -318,6 +318,72 @@ java.lang.Exception: bar 42
 ```
 
 In this example, the `FunctionPointer` object gets created implicitly, but to call a native function pointer, we could define one that instead contains a `native call()/apply()` method, and create an instance explicitly. Such a class can also be extended in Java to create callbacks, and like any other normal `Pointer` object, must be allocated with a `native void allocate()` method, **so please remember to hang on to references in Java**, as those will get garbage collected. As a bonus, `FunctionPointer.call()/apply()` maps in fact to an overloaded `operator()` of a C++ function object that we can pass to other functions by annotating parameters with `@ByVal` or `@ByRef`, as with the `sort()` function in the example above.
+
+It is also possible to do the same thing with virtual functions, whether "pure" or not. Consider the following C++ class defined in a file named `Foo.h`:
+```cpp
+#include <stdio.h>
+
+class Foo {
+public:
+    int n;
+    Foo(int n) : n(n) { }
+    virtual ~Foo() { }
+    virtual void bar() {
+        printf("Callback in C++ (n == %d)\n", n);
+    }
+};
+
+void callback(Foo *foo) {
+    foo->bar();
+}
+
+```
+
+The function `Foo::bar()` can be overridden in Java if we declare the method in the peer class either as `native` or `abstract` and annotate it with `@Virtual`, for example:
+```java
+import org.bytedeco.javacpp.*;
+import org.bytedeco.javacpp.annotation.*;
+
+@Platform(include="Foo.h")
+public class VirtualFoo {
+    static { Loader.load(); }
+
+    public static class Foo extends Pointer {
+        static { Loader.load(); }
+        public Foo(int n) { allocate(n); }
+        private native void allocate(int n);
+
+        @NoOffset public native int n(); public native Foo n(int n);
+        @Virtual  public native void bar();
+    }
+
+    public static native void callback(Foo foo);
+
+    public static void main(String[] args) {
+        Foo foo = new Foo(13);
+        Foo foo2 = new Foo(42) {
+            public void bar() {
+                System.out.println("Callback in Java (n == " + n() + ")");
+            }
+        };
+        foo.bar();
+        foo2.bar();
+        callback(foo);
+        callback(foo2);
+    }
+}
+```
+
+Which outputs what one would naturally assume:
+```bash
+$ javac -cp javacpp.jar VirtualFoo.java
+$ java -jar javacpp.jar VirtualFoo
+$ java  -cp javacpp.jar VirtualFoo
+Callback in C++ (n == 13)
+Callback in Java (n == 42)
+Callback in C++ (n == 13)
+Callback in Java (n == 42)
+```
 
 
 Instructions for Android, Avian, and RoboVM

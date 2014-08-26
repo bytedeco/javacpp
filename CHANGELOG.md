@@ -1,4 +1,6 @@
 
+ * Add `Info.virtualize` to have the `Parser` generate `@Virtual abstract` for pure virtual functions in the given classes
+ * Add `@Virtual` annotation and update `Generator` to support callback by overriding such annotated `native` or `abstract` methods
  * Add hack for `typedef void*` definitions and parameters with a double indirection to them
 
 ### July 27, 2014 version 0.9
