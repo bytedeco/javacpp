@@ -186,7 +186,7 @@ public class BuildMojo extends AbstractMojo {
         } else if (s != null) {
             ss = new String[] { s };
         }
-        return ss;
+        return ss != null ? ss : new String[0];
     }
 
     @Override public void execute() throws MojoExecutionException {

@@ -1,4 +1,5 @@
 
+ * Fix `NullPointerException` when leaving the `includePath`, `linkPath`, or `preloadPath` Mojo parameter empty
  * Add `Info.virtualize` to have the `Parser` generate `@Virtual abstract` for pure virtual functions in the given classes
  * Add `@Virtual` annotation and update `Generator` to support callback by overriding such annotated `native` or `abstract` methods
  * Add hack for `typedef void*` definitions and parameters with a double indirection to them
@@ -6,7 +7,7 @@
 ### July 27, 2014 version 0.9
  * Fix `Generator.checkPlatform()` not checking super classes
  * Add `includePath`, `linkPath`, and `preloadPath` parameters to `BuildMojo` to let Maven users append paths to the properties easily
- * In consequence, remove too arbitrary "local" paths from the default platform properties
+ * In consequence, remove too arbitrary "local" paths from the default platform properties (issue #43)
  * Fix a few other more or less minor issues in the `Parser` with the `long double`, `ptrdiff_t`, `intptr_t`, `uintptr_t`, `off_t` types, floating-point numbers, macro redefinitions, access specifiers, casting of const values by reference, optional parentheses, const data types in templates, declarator names equal to a type name, friend functions, inline constructors, `typedef void` declarations within namespaces, pointers to function pointers
  * Allow users to instruct the `Parser` to skip the expansion of specific macro invocations
  * Let `Parser` concatenate tokens when expanding macros containing the `##` operator
