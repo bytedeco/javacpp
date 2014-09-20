@@ -927,6 +927,7 @@ public class Generator implements Closeable {
             }
 
             if ((Modifier.isNative(methods[i].getModifiers()) || Modifier.isAbstract(methods[i].getModifiers()))
+                    && !methodInfo.valueGetter && !methodInfo.valueSetter && !methodInfo.memberGetter && !methodInfo.memberSetter
                     && !cls.isInterface() && (methods[i].isAnnotationPresent(Virtual.class) || methodInfo.allocator)) {
                 callback(cls, methods[i], methodInfo.memberName[0], !methodInfo.allocator, methodInfo);
             }
@@ -1163,12 +1164,15 @@ public class Generator implements Closeable {
                          methodInfo.returnType.getComponentType().isPrimitive())) {
                     if (FunctionPointer.class.isAssignableFrom(methodInfo.returnType)) {
                         functions.index(methodInfo.returnType);
+                        returnPrefix = "if (rptr != NULL) rptr->ptr = ";
+                        if (methodInfo.method.isAnnotationPresent(Virtual.class)) {
+                            // cast from member function pointers declared in Java
+                            returnPrefix += "(" + typeName[0] + typeName[1] + ")&";
+                        }
                         typeName[0] = functionClassName(methodInfo.returnType) + "*";
                         typeName[1] = "";
                         valueTypeName = valueTypeName(typeName);
-                        returnPrefix = "if (rptr != NULL) rptr->ptr = ";
-                    }
-                    if (virtualFunctions.containsKey(methodInfo.cls)) {
+                    } else if (virtualFunctions.containsKey(methodInfo.cls)) {
                         String subType = "JavaCPP_" + mangle(valueTypeName);
                         valueTypeName = subType;
                     }
@@ -1730,13 +1734,13 @@ public class Generator implements Closeable {
                             Buffer.class.isAssignableFrom(callbackParameterTypes[j]) ||
                             (callbackParameterTypes[j].isArray() &&
                              callbackParameterTypes[j].getComponentType().isPrimitive())) {
+                        String cast = "(" + typeName[0] + typeName[1] + ")";
                         if (FunctionPointer.class.isAssignableFrom(callbackParameterTypes[j])) {
                             functions.index(callbackParameterTypes[j]);
                             typeName[0] = functionClassName(callbackParameterTypes[j]) + "*";
                             typeName[1] = "";
                             valueTypeName = valueTypeName(typeName);
-                        }
-                        if (virtualFunctions.containsKey(callbackParameterTypes[j])) {
+                        } else if (virtualFunctions.containsKey(callbackParameterTypes[j])) {
                             String subType = "JavaCPP_" + mangle(valueTypeName);
                             valueTypeName = subType;
                         }
@@ -1745,24 +1749,24 @@ public class Generator implements Closeable {
                         if (FunctionPointer.class.isAssignableFrom(callbackParameterTypes[j])) {
                             out.println("    ptr" + j + " = new (std::nothrow) " + valueTypeName + ";");
                             out.println("    if (ptr" + j + " != NULL) {");
-                            out.println("        ptr" + j + "->ptr = arg" + j + ";");
+                            out.println("        ptr" + j + "->ptr = " + cast + "&arg" + j + ";");
                             out.println("    }");
                         } else if (adapterInfo != null) {
                             out.println("    ptr" + j + " = adapter" + j + ";");
                         } else if (passBy instanceof ByVal && callbackParameterTypes[j] != Pointer.class) {
                             out.println("    ptr" + j + (noException(callbackParameterTypes[j], callbackMethod) ?
                                 " = new (std::nothrow) " : " = new ") + valueTypeName + typeName[1] +
-                                "(*(" + typeName[0] + typeName[1] + ")&arg" + j + ");");
+                                "(*" + cast + "&arg" + j + ");");
                         } else if (passBy instanceof ByVal || passBy instanceof ByRef) {
-                            out.println("    ptr" + j + " = (" + typeName[0] + typeName[1] + ")&arg" + j + ";");
+                            out.println("    ptr" + j + " = " + cast + "&arg" + j + ";");
                         } else if (passBy instanceof ByPtrPtr) {
                             out.println("    if (arg" + j + " == NULL) {");
                             out.println("        JavaCPP_log(\"Pointer address of argument " + j + " is NULL in callback for " + cls.getCanonicalName() + ".\");");
                             out.println("    } else {");
-                            out.println("        ptr" + j + " = (" + typeName[0] + typeName[1] + ")*arg" + j + ";");
+                            out.println("        ptr" + j + " = " + cast + "*arg" + j + ";");
                             out.println("    }");
                         } else { // ByPtr || ByPtrRef
-                            out.println("    ptr" + j + " = (" + typeName[0] + typeName[1] + ")arg" + j + ";");
+                            out.println("    ptr" + j + " = " + cast + "arg" + j + ";");
                         }
                     }
 
@@ -2591,7 +2595,7 @@ public class Generator implements Closeable {
         prefix += " (" + callingConvention + spaceName + "*";
         suffix = ")(";
         if (FunctionPointer.class.isAssignableFrom(type) && namespace != null
-                && !Pointer.class.isAssignableFrom(parameterTypes[0])) {
+                && (parameterTypes.length == 0 || !Pointer.class.isAssignableFrom(parameterTypes[0]))) {
             logger.warn("First parameter of caller method call() or apply() for member function pointer " +
                     type.getCanonicalName() + " is not a Pointer. Compilation will most likely fail.");
         }
@@ -2616,6 +2620,10 @@ public class Generator implements Closeable {
 
     static String cppScopeName(MethodInformation methodInfo) {
         String scopeName = cppScopeName(methodInfo.cls);
+        if (methodInfo.method.isAnnotationPresent(Virtual.class)) {
+            String subType = "JavaCPP_" + mangle(scopeName);
+            scopeName = subType;
+        }
         Namespace namespace = methodInfo.method.getAnnotation(Namespace.class);
         String spaceName = namespace == null ? "" : namespace.value();
         if ((namespace != null && namespace.value().length() == 0) || spaceName.startsWith("::")) {

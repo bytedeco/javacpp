@@ -1,4 +1,5 @@
 
+ * Let `@Virtual @MemberGetter` annotated methods return member function pointers of functions defined with `@Virtual`, useful for frameworks like Cocos2d-x
  * Fix `NullPointerException` when leaving the `includePath`, `linkPath`, or `preloadPath` Mojo parameter empty
  * Add `Info.virtualize` to have the `Parser` generate `@Virtual abstract` for pure virtual functions in the given classes
  * Add `@Virtual` annotation and update `Generator` to support callback by overriding such annotated `native` or `abstract` methods
