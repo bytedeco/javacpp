@@ -1,4 +1,8 @@
 
+ * Use `Long.decode()` inside the `Tokenizer` to test more precisely when integer values are larger than 32 bits
+ * Have the `Parser` produce `@Name("operator=") ... put(... )` methods for standard C++ containers, avoiding mistaken calls to `Pointer.put(Pointer)` ([issue javacv:34](https://github.com/bytedeco/javacv/issues/34))
+ * Let the `Parser` apply `Info.skip` in the case of macros as well
+ * Remove warning log messages when using the `@Raw` annotation
  * Let `@Virtual @MemberGetter` annotated methods return member function pointers of functions defined with `@Virtual`, useful for frameworks like Cocos2d-x
  * Fix `NullPointerException` when leaving the `includePath`, `linkPath`, or `preloadPath` Mojo parameter empty
  * Add `Info.virtualize` to have the `Parser` generate `@Virtual abstract` for pure virtual functions in the given classes

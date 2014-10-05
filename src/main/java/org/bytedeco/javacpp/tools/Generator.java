@@ -1023,8 +1023,10 @@ public class Generator implements Closeable {
             if (!methodInfo.parameterTypes[j].isPrimitive()) {
                 Annotation passBy = by(methodInfo, j);
                 String cast = cast(methodInfo, j);
-                String[] typeName = cppTypeName(methodInfo.parameterTypes[j]);
-                AdapterInformation adapterInfo = adapterInformation(false, methodInfo, j);
+                String[] typeName = methodInfo.parameterRaw[j] ? new String[] { "" }
+                        : cppTypeName(methodInfo.parameterTypes[j]);
+                AdapterInformation adapterInfo = methodInfo.parameterRaw[j] ? null
+                        : adapterInformation(false, methodInfo, j);
 
                 if (FunctionPointer.class.isAssignableFrom(methodInfo.parameterTypes[j])) {
                     functions.index(methodInfo.parameterTypes[j]);
@@ -1142,7 +1144,8 @@ public class Generator implements Closeable {
             }
         } else {
             String cast = cast(methodInfo.returnType, methodInfo.annotations);
-            String[] typeName = cppCastTypeName(methodInfo.returnType, methodInfo.annotations);
+            String[] typeName = methodInfo.returnRaw ? new String[] { "" }
+                    : cppCastTypeName(methodInfo.returnType, methodInfo.annotations);
             if (methodInfo.valueSetter || methodInfo.memberSetter || methodInfo.noReturnGetter) {
                 out.println("    jobject rarg = obj;");
             } else if (methodInfo.returnType.isPrimitive()) {
@@ -1360,7 +1363,8 @@ public class Generator implements Closeable {
             }
             Annotation passBy = by(methodInfo, j);
             String cast = cast(methodInfo, j);
-            AdapterInformation adapterInfo = adapterInformation(false, methodInfo, j);
+            AdapterInformation adapterInfo = methodInfo.parameterRaw[j] ? null
+                    : adapterInformation(false, methodInfo, j);
 
             if (("(void*)".equals(cast) || "(void *)".equals(cast)) &&
                     methodInfo.parameterTypes[j] == long.class) {
@@ -1407,7 +1411,8 @@ public class Generator implements Closeable {
 
     void returnAfter(MethodInformation methodInfo) {
         String indent = methodInfo.throwsException != null ? "        " : "    ";
-        String[] typeName = cppCastTypeName(methodInfo.returnType, methodInfo.annotations);
+        String[] typeName = methodInfo.returnRaw ? new String[] { "" }
+                : cppCastTypeName(methodInfo.returnType, methodInfo.annotations);
         Annotation returnBy = by(methodInfo.annotations);
         String valueTypeName = valueTypeName(typeName);
         AdapterInformation adapterInfo = adapterInformation(false, valueTypeName, methodInfo.annotations);
@@ -1621,7 +1626,8 @@ public class Generator implements Closeable {
 
         String firstLine = "";
         if (methodInfo != null) {
-            String[] typeName = cppTypeName(methodInfo.cls);
+            String[] typeName = methodInfo.returnRaw ? new String[] { "" }
+                    : cppTypeName(methodInfo.cls);
             String valueTypeName = valueTypeName(typeName);
             String subType = "JavaCPP_" + mangle(valueTypeName);
             LinkedList<String> memberList = virtualMembers.get(cls);

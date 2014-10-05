@@ -148,8 +148,9 @@ public class Parser {
                         : "    public " + containerType.javaName + "(" + valueType.javaName + arrayBrackets + " ... array) { this(array.length); put(array); }\n")
                         + "    public " + containerType.javaName + "()       { allocate();  }\n" + (!resizable ? ""
                         : "    public " + containerType.javaName + "(long n) { allocate(n); }\n")
-                        + "    private native void allocate();\n"                                + (!resizable ? "\n"
-                        : "    private native void allocate(@Cast(\"size_t\") long n);\n\n");
+                        + "    private native void allocate();\n"                                + (!resizable ? ""
+                        : "    private native void allocate(@Cast(\"size_t\") long n);\n")
+                        + "    public native @Name(\"operator=\") @ByRef " + containerType.javaName + " put(@ByRef " + containerType.javaName + " x);\n\n";
 
                 for (int i = 0; i < dim; i++) {
                     String indexAnnotation = i > 0 ? ("@Index" + (i > 1 ? "(" + i + ") " : " " )) : "";
@@ -1379,6 +1380,7 @@ public class Parser {
         String spacing = tokens.get().spacing;
         Token keyword = tokens.next();
 
+        // parse all of the macro to find its last token
         tokens.next();
         int beginIndex = tokens.index;
         for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.next()) {
@@ -1400,7 +1402,9 @@ public class Parser {
             boolean hasArgs = first.spacing.length() == 0 && first.match('(');
             LinkedList<Info> infoList = infoMap.get(macroName);
             for (Info info : infoList.size() > 0 ? infoList : Arrays.asList(new Info[] { null })) {
-                if (hasArgs && info == null || (info != null && info.cppText == null && info.cppTypes != null && info.cppTypes.length == 0)) {
+                if (info != null && info.skip) {
+                    break;
+                } else if (hasArgs && info == null || (info != null && info.cppText == null && info.cppTypes != null && info.cppTypes.length == 0)) {
                     // save declaration for expansion
                     info = new Info(macroName).cppText("");
                     tokens.index = backIndex;

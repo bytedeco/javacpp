@@ -125,6 +125,12 @@ class Tokenizer implements Closeable {
             if (!hex && (exp || prevc == 'f' || prevc == 'F')) {
                 token.type = Token.FLOAT;
             }
+            if (token.type == Token.INTEGER && !large) {
+                try {
+                    long high = Long.decode(buffer.toString()) >> 32;
+                    large = high != 0 && high != 0xFFFFFFFF;
+                } catch (NumberFormatException e) { /* not an integer? */ }
+            }
             if (token.type == Token.INTEGER && (large || (unsigned && !hex))) {
                 buffer.append('L');
             }
