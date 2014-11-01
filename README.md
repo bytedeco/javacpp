@@ -35,7 +35,7 @@ We can also have everything downloaded and installed automatically with:
   }
 ```
 
-* SBT (inside the `build.sbt` file)
+ * SBT (inside the `build.sbt` file)
 ```scala
   libraryDependencies += "org.bytedeco" % "javacpp" % "0.9"
 ```

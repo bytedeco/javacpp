@@ -385,6 +385,7 @@ public class Pointer {
     }
     /**
      * Explicitly deallocates native memory without waiting after the garbage collector.
+     * Has no effect if no deallocator was previously set with {@link #deallocator(Deallocator)}.
      * @param deallocate if false, does not deallocate, rather disabling garbage collection
      */
     public void deallocate(boolean deallocate) {

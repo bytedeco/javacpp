@@ -1,4 +1,5 @@
 
+ * Disable DocLint, which prevents the build from succeeding on Java 8 ([issue #5](https://github.com/bytedeco/javacpp/issues/5))
  * Add new `indexer` package containing a set of `Indexer` for easy and efficient multidimensional access of arrays and buffers ([issue javacv:317](http://code.google.com/p/javacv/issues/detail?id=317))
  * Use `Long.decode()` inside the `Tokenizer` to test more precisely when integer values are larger than 32 bits
  * Have the `Parser` produce `@Name("operator=") ... put(... )` methods for standard C++ containers, avoiding mistaken calls to `Pointer.put(Pointer)` ([issue javacv:34](https://github.com/bytedeco/javacv/issues/34))
