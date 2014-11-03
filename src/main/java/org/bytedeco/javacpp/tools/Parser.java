@@ -231,16 +231,19 @@ public class Parser {
                 for (token = tokens.get(); !token.match(Token.EOF); token = tokens.next()) {
                     if (count == 0 && token.match(',', '>')) {
                         break;
-                    } else if (token.match('<')) {
+                    } else if (token.match('<', '(')) {
                         count++;
-                    } else if (token.match('>')) {
+                    } else if (token.match('>', ')')) {
                         count--;
                     }
                 }
             }
             if (token.expect(',', '>').match('>')) {
-                tokens.next();
-                break;
+                if (tokens.next().match(Token.TEMPLATE)) {
+                    tokens.next().expect('<');
+                } else {
+                    break;
+                }
             }
         }
         return map;
@@ -261,9 +264,9 @@ public class Parser {
                 for (token = tokens.get(); !token.match(Token.EOF); token = tokens.next()) {
                     if (count == 0 && token.match(',', '>')) {
                         break;
-                    } else if (token.match('<')) {
+                    } else if (token.match('<', '(')) {
                         count++;
-                    } else if (token.match('>')) {
+                    } else if (token.match('>', ')')) {
                         count--;
                     }
                     type.cppName += token;
@@ -611,18 +614,21 @@ public class Parser {
                     dcl.cppName += token;
                 } else if (token.match(Token.OPERATOR)) {
                     operator = true;
-                    dcl.cppName += "operator" + tokens.next();
-                    for (token = tokens.next(); !token.match(Token.EOF, '('); token = tokens.next()) {
-                        dcl.cppName += token;
+                    if (!tokens.get(1).match(Token.IDENTIFIER)) {
+                        // assume we can have any symbols until the first open parenthesis
+                        dcl.cppName += "operator" + tokens.next();
+                        for (token = tokens.next(); !token.match(Token.EOF, '('); token = tokens.next()) {
+                            dcl.cppName += token;
+                        }
+                        break;
                     }
-                    break;
                 } else if (token.match('<')) {
-                    // template argument
+                    // template arguments
                     dcl.cppName += token;
                     int count2 = 0;
                     for (token = tokens.next(); !token.match(Token.EOF); token = tokens.next()) {
                         dcl.cppName += token;
-                        if (count2 == 0 && token.match(',', '>')) {
+                        if (count2 == 0 && token.match('>')) {
                             break;
                         } else if (token.match('<')) {
                             count2++;
@@ -1937,6 +1943,15 @@ public class Parser {
             }
             String comment = commentBefore();
             Token enumerator = tokens.get();
+            String cppName = enumerator.value;
+            String javaName = cppName;
+            if (context.namespace != null) {
+                cppName = context.namespace + "::" + cppName;
+            }
+            Info info = infoMap.getFirst(cppName);
+            if (info != null && info.javaNames != null && info.javaNames.length > 0) {
+                javaName = info.javaNames[0];
+            }
             String spacing2 = " ";
             if (tokens.next().match('=')) {
                 spacing2 = tokens.get().spacing;
@@ -1967,9 +1982,9 @@ public class Parser {
                         if (separator.equals(",")) {
                             separator = ";";
                         }
-                        extraText = "\npublic static native @MemberGetter int " + enumerator.value + "();\n";
+                        extraText = "\npublic static native @MemberGetter int " + javaName + "();\n";
                         enumPrefix = "public static final int";
-                        countPrefix = " " + enumerator.value + "()";
+                        countPrefix = " " + javaName + "()";
                     }
                 }
             }
@@ -1993,7 +2008,7 @@ public class Parser {
             if (spacing.length() == 0 && !enumerators.endsWith(",")) {
                 spacing = " ";
             }
-            enumerators += spacing + enumerator.value + spacing2 + "=" + countPrefix;
+            enumerators += spacing + javaName + spacing2 + "=" + countPrefix;
             if (countPrefix.trim().length() > 0) {
                 if (count > 0) {
                     enumerators += " + " + count;
