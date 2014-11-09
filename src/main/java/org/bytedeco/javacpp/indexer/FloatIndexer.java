@@ -21,6 +21,7 @@
 package org.bytedeco.javacpp.indexer;
 
 import java.nio.FloatBuffer;
+import org.bytedeco.javacpp.FloatPointer;
 
 /**
  * Abstract indexer for the {@code float} primitive type.
@@ -39,6 +40,32 @@ public abstract class FloatIndexer extends Indexer {
     /** @return {@code new FloatBufferIndexer(buffer, sizes, strides)} */
     public static FloatIndexer create(FloatBuffer buffer, int[] sizes, int[] strides) {
         return new FloatBufferIndexer(buffer, sizes, strides);
+    }
+    /** @return {@code create(pointer, sizes, strides, true)} */
+    public static FloatIndexer create(FloatPointer pointer, int[] sizes, int[] strides) {
+        return create(pointer, sizes, strides, true);
+    }
+    /**
+     * Creates a float indexer to access efficiently the data of a pointer.
+     *
+     * @param pointer data to access via a buffer or to copy to an array
+     * @param direct {@code true} to use a direct buffer, see {@link Indexer} for details
+     * @return the new float array backed by a buffer or an array
+     */
+    public static FloatIndexer create(final FloatPointer pointer, int[] sizes, int[] strides, boolean direct) {
+        if (direct) {
+            return new FloatBufferIndexer(pointer.asBuffer(), sizes, strides);
+        } else {
+            final int position = pointer.position();
+            float[] array = new float[pointer.limit() - position];
+            pointer.get(array);
+            return new FloatArrayIndexer(array, sizes, strides) {
+                @Override public void release() {
+                    pointer.position(position).put(array);
+                    super.release();
+                }
+            };
+        }
     }
 
     /** @return {@code array/buffer[i]} */

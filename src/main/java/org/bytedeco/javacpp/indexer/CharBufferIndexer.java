@@ -71,4 +71,6 @@ public class CharBufferIndexer extends CharIndexer {
         buffer.put(index(indices), c);
         return this;
     }
+
+    @Override public void release() { buffer = null; }
 }

@@ -25,6 +25,14 @@ import java.nio.Buffer;
 /**
  * Top-level class of all data indexers, providing easy-to-use and efficient
  * multidimensional access to primitive arrays and NIO buffers.
+ * <p>
+ * Subclasses have {@code create()} factory methods for arrays, buffers, and pointers.
+ * The latter ones feature a {@code direct} argument that, when set to {@code false},
+ * instructs the method to create a large enough array, fill its content with the data
+ * from the pointer, and return an array-backed indexer, with the {@link #release()}
+ * method overridden to write back changes to the pointer. This double the memory
+ * usage, but is the only way to get acceptable performance on some implementations,
+ * such as Android. When {@code direct == true}, a buffer-backed indexer is returned.
  *
  * @author Samuel Audet
  */
@@ -81,6 +89,6 @@ public abstract class Indexer {
     public Object array() { return null; }
     /** @return the backing buffer, or {@code null} if none */
     public Buffer buffer() { return null; }
-    /** Should write back changes to the underlying data, if required. */
-    public void release() { }
+    /** Makes sure changes are reflected onto the backing memory and releases any references. */
+    public abstract void release();
 }

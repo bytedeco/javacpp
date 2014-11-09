@@ -71,4 +71,6 @@ public class LongBufferIndexer extends LongIndexer {
         buffer.put(index(indices), l);
         return this;
     }
+
+    @Override public void release() { buffer = null; }
 }

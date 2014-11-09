@@ -68,4 +68,6 @@ public class LongArrayIndexer extends LongIndexer {
         array[index(indices)] = l;
         return this;
     }
+
+    @Override public void release() { array = null; }
 }

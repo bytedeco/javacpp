@@ -21,6 +21,7 @@
 package org.bytedeco.javacpp.indexer;
 
 import java.nio.IntBuffer;
+import org.bytedeco.javacpp.IntPointer;
 
 /**
  * Abstract indexer for the {@code int} primitive type.
@@ -39,6 +40,32 @@ public abstract class IntIndexer extends Indexer {
     /** @return {@code new IntBufferIndexer(buffer, sizes, strides)} */
     public static IntIndexer create(IntBuffer buffer, int[] sizes, int[] strides) {
         return new IntBufferIndexer(buffer, sizes, strides);
+    }
+    /** @return {@code create(pointer, sizes, strides, true)} */
+    public static IntIndexer create(IntPointer pointer, int[] sizes, int[] strides) {
+        return create(pointer, sizes, strides, true);
+    }
+    /**
+     * Creates a int indexer to access efficiently the data of a pointer.
+     *
+     * @param pointer data to access via a buffer or to copy to an array
+     * @param direct {@code true} to use a direct buffer, see {@link Indexer} for details
+     * @return the new int array backed by a buffer or an array
+     */
+    public static IntIndexer create(final IntPointer pointer, int[] sizes, int[] strides, boolean direct) {
+        if (direct) {
+            return new IntBufferIndexer(pointer.asBuffer(), sizes, strides);
+        } else {
+            final int position = pointer.position();
+            int[] array = new int[pointer.limit() - position];
+            pointer.get(array);
+            return new IntArrayIndexer(array, sizes, strides) {
+                @Override public void release() {
+                    pointer.position(position).put(array);
+                    super.release();
+                }
+            };
+        }
     }
 
     /** @return {@code array/buffer[i]} */

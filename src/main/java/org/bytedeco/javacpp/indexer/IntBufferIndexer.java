@@ -71,4 +71,6 @@ public class IntBufferIndexer extends IntIndexer {
         buffer.put(index(indices), n);
         return this;
     }
+
+    @Override public void release() { buffer = null; }
 }

@@ -68,4 +68,6 @@ public class FloatArrayIndexer extends FloatIndexer {
         array[index(indices)] = f;
         return this;
     }
+
+    @Override public void release() { array = null; }
 }

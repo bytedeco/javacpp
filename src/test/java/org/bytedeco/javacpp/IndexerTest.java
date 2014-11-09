@@ -20,29 +20,15 @@
 package org.bytedeco.javacpp;
 
 import java.io.File;
-import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
-import java.nio.DoubleBuffer;
-import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
-import java.nio.LongBuffer;
-import java.nio.ShortBuffer;
 import org.bytedeco.javacpp.annotation.MemberGetter;
 import org.bytedeco.javacpp.annotation.Platform;
-import org.bytedeco.javacpp.indexer.ByteArrayIndexer;
-import org.bytedeco.javacpp.indexer.ByteBufferIndexer;
-import org.bytedeco.javacpp.indexer.CharArrayIndexer;
-import org.bytedeco.javacpp.indexer.CharBufferIndexer;
-import org.bytedeco.javacpp.indexer.DoubleArrayIndexer;
-import org.bytedeco.javacpp.indexer.DoubleBufferIndexer;
-import org.bytedeco.javacpp.indexer.FloatArrayIndexer;
-import org.bytedeco.javacpp.indexer.FloatBufferIndexer;
-import org.bytedeco.javacpp.indexer.IntArrayIndexer;
-import org.bytedeco.javacpp.indexer.IntBufferIndexer;
-import org.bytedeco.javacpp.indexer.LongArrayIndexer;
-import org.bytedeco.javacpp.indexer.LongBufferIndexer;
-import org.bytedeco.javacpp.indexer.ShortArrayIndexer;
-import org.bytedeco.javacpp.indexer.ShortBufferIndexer;
+import org.bytedeco.javacpp.indexer.ByteIndexer;
+import org.bytedeco.javacpp.indexer.CharIndexer;
+import org.bytedeco.javacpp.indexer.DoubleIndexer;
+import org.bytedeco.javacpp.indexer.FloatIndexer;
+import org.bytedeco.javacpp.indexer.IntIndexer;
+import org.bytedeco.javacpp.indexer.LongIndexer;
+import org.bytedeco.javacpp.indexer.ShortIndexer;
 import org.bytedeco.javacpp.tools.Builder;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -76,15 +62,8 @@ public class IndexerTest {
         for (int i = 0; i < size; i++) {
             ptr.position(i).put((byte)i);
         }
-        byte[] array = new byte[size];
-        ptr.position(0).get(array);
-        ByteBuffer buffer = ptr.asBuffer();
-        ByteArrayIndexer arrayIndexer = new ByteArrayIndexer(array, sizes, strides) {
-            @Override public void release() {
-                ptr.position(0).put(array);
-            }
-        };
-        ByteBufferIndexer bufferIndexer = new ByteBufferIndexer(buffer, sizes, strides);
+        ByteIndexer arrayIndexer = ByteIndexer.create(ptr.position(0), sizes, strides, false);
+        ByteIndexer bufferIndexer = ByteIndexer.create(ptr.position(0), sizes, strides, true);
 
         int n = 0;
         for (int i = 0; i < sizes[0]; i++) {
@@ -108,14 +87,6 @@ public class IndexerTest {
             }
         }
 
-        for (int i = 0; i < size; i++) {
-            assertEquals(i + 2, ptr.position(i).get() & 0xFF);
-        }
-        arrayIndexer.release();
-        for (int i = 0; i < size; i++) {
-            assertEquals(i + 1, ptr.position(i).get() & 0xFF);
-        }
-
         try {
             arrayIndexer.get(size);
             fail("IndexOutOfBoundsException should have been thrown.");
@@ -125,6 +96,14 @@ public class IndexerTest {
             bufferIndexer.get(size);
             fail("IndexOutOfBoundsException should have been thrown.");
         } catch (IndexOutOfBoundsException e) { }
+
+        for (int i = 0; i < size; i++) {
+            assertEquals(i + 2, ptr.position(i).get() & 0xFF);
+        }
+        arrayIndexer.release();
+        for (int i = 0; i < size; i++) {
+            assertEquals(i + 1, ptr.position(i).get() & 0xFF);
+        }
     }
 
     @Test public void testShortIndexer() {
@@ -136,15 +115,8 @@ public class IndexerTest {
         for (int i = 0; i < size; i++) {
             ptr.position(i).put((short)i);
         }
-        short[] array = new short[size];
-        ptr.position(0).get(array);
-        ShortBuffer buffer = ptr.asBuffer();
-        ShortArrayIndexer arrayIndexer = new ShortArrayIndexer(array, sizes, strides) {
-            @Override public void release() {
-                ptr.position(0).put(array);
-            }
-        };
-        ShortBufferIndexer bufferIndexer = new ShortBufferIndexer(buffer, sizes, strides);
+        ShortIndexer arrayIndexer = ShortIndexer.create(ptr.position(0), sizes, strides, false);
+        ShortIndexer bufferIndexer = ShortIndexer.create(ptr.position(0), sizes, strides, true);
 
         int n = 0;
         for (int i = 0; i < sizes[0]; i++) {
@@ -168,14 +140,6 @@ public class IndexerTest {
             }
         }
 
-        for (int i = 0; i < size; i++) {
-            assertEquals(3 * i, ptr.position(i).get());
-        }
-        arrayIndexer.release();
-        for (int i = 0; i < size; i++) {
-            assertEquals(2 * i, ptr.position(i).get());
-        }
-
         try {
             arrayIndexer.get(size);
             fail("IndexOutOfBoundsException should have been thrown.");
@@ -185,6 +149,14 @@ public class IndexerTest {
             bufferIndexer.get(size);
             fail("IndexOutOfBoundsException should have been thrown.");
         } catch (IndexOutOfBoundsException e) { }
+
+        for (int i = 0; i < size; i++) {
+            assertEquals(3 * i, ptr.position(i).get());
+        }
+        arrayIndexer.release();
+        for (int i = 0; i < size; i++) {
+            assertEquals(2 * i, ptr.position(i).get());
+        }
     }
 
     @Test public void testIntIndexer() {
@@ -196,15 +168,8 @@ public class IndexerTest {
         for (int i = 0; i < size; i++) {
             ptr.position(i).put((int)i);
         }
-        int[] array = new int[size];
-        ptr.position(0).get(array);
-        IntBuffer buffer = ptr.asBuffer();
-        IntArrayIndexer arrayIndexer = new IntArrayIndexer(array, sizes, strides) {
-            @Override public void release() {
-                ptr.position(0).put(array);
-            }
-        };
-        IntBufferIndexer bufferIndexer = new IntBufferIndexer(buffer, sizes, strides);
+        IntIndexer arrayIndexer = IntIndexer.create(ptr.position(0), sizes, strides, false);
+        IntIndexer bufferIndexer = IntIndexer.create(ptr.position(0), sizes, strides, true);
 
         int n = 0;
         for (int i = 0; i < sizes[0]; i++) {
@@ -228,14 +193,6 @@ public class IndexerTest {
             }
         }
 
-        for (int i = 0; i < size; i++) {
-            assertEquals(3 * i, ptr.position(i).get());
-        }
-        arrayIndexer.release();
-        for (int i = 0; i < size; i++) {
-            assertEquals(2 * i, ptr.position(i).get());
-        }
-
         try {
             arrayIndexer.get(size);
             fail("IndexOutOfBoundsException should have been thrown.");
@@ -245,6 +202,14 @@ public class IndexerTest {
             bufferIndexer.get(size);
             fail("IndexOutOfBoundsException should have been thrown.");
         } catch (IndexOutOfBoundsException e) { }
+
+        for (int i = 0; i < size; i++) {
+            assertEquals(3 * i, ptr.position(i).get());
+        }
+        arrayIndexer.release();
+        for (int i = 0; i < size; i++) {
+            assertEquals(2 * i, ptr.position(i).get());
+        }
     }
 
     @Test public void testLongIndexer() {
@@ -256,15 +221,8 @@ public class IndexerTest {
         for (int i = 0; i < size; i++) {
             ptr.position(i).put((long)i);
         }
-        long[] array = new long[size];
-        ptr.position(0).get(array);
-        LongBuffer buffer = ptr.asBuffer();
-        LongArrayIndexer arrayIndexer = new LongArrayIndexer(array, sizes, strides) {
-            @Override public void release() {
-                ptr.position(0).put(array);
-            }
-        };
-        LongBufferIndexer bufferIndexer = new LongBufferIndexer(buffer, sizes, strides);
+        LongIndexer arrayIndexer = LongIndexer.create(ptr.position(0), sizes, strides, false);
+        LongIndexer bufferIndexer = LongIndexer.create(ptr.position(0), sizes, strides, true);
 
         int n = 0;
         for (int i = 0; i < sizes[0]; i++) {
@@ -288,14 +246,6 @@ public class IndexerTest {
             }
         }
 
-        for (int i = 0; i < size; i++) {
-            assertEquals(3 * i, ptr.position(i).get());
-        }
-        arrayIndexer.release();
-        for (int i = 0; i < size; i++) {
-            assertEquals(2 * i, ptr.position(i).get());
-        }
-
         try {
             arrayIndexer.get(size);
             fail("IndexOutOfBoundsException should have been thrown.");
@@ -305,6 +255,14 @@ public class IndexerTest {
             bufferIndexer.get(size);
             fail("IndexOutOfBoundsException should have been thrown.");
         } catch (IndexOutOfBoundsException e) { }
+
+        for (int i = 0; i < size; i++) {
+            assertEquals(3 * i, ptr.position(i).get());
+        }
+        arrayIndexer.release();
+        for (int i = 0; i < size; i++) {
+            assertEquals(2 * i, ptr.position(i).get());
+        }
     }
 
     @Test public void testFloatIndexer() {
@@ -316,15 +274,8 @@ public class IndexerTest {
         for (int i = 0; i < size; i++) {
             ptr.position(i).put((float)i);
         }
-        float[] array = new float[size];
-        ptr.position(0).get(array);
-        FloatBuffer buffer = ptr.asBuffer();
-        FloatArrayIndexer arrayIndexer = new FloatArrayIndexer(array, sizes, strides) {
-            @Override public void release() {
-                ptr.position(0).put(array);
-            }
-        };
-        FloatBufferIndexer bufferIndexer = new FloatBufferIndexer(buffer, sizes, strides);
+        FloatIndexer arrayIndexer = FloatIndexer.create(ptr.position(0), sizes, strides, false);
+        FloatIndexer bufferIndexer = FloatIndexer.create(ptr.position(0), sizes, strides, true);
 
         int n = 0;
         for (int i = 0; i < sizes[0]; i++) {
@@ -348,14 +299,6 @@ public class IndexerTest {
             }
         }
 
-        for (int i = 0; i < size; i++) {
-            assertEquals(3 * i, ptr.position(i).get(), 0);
-        }
-        arrayIndexer.release();
-        for (int i = 0; i < size; i++) {
-            assertEquals(2 * i, ptr.position(i).get(), 0);
-        }
-
         try {
             arrayIndexer.get(size);
             fail("IndexOutOfBoundsException should have been thrown.");
@@ -365,6 +308,14 @@ public class IndexerTest {
             bufferIndexer.get(size);
             fail("IndexOutOfBoundsException should have been thrown.");
         } catch (IndexOutOfBoundsException e) { }
+
+        for (int i = 0; i < size; i++) {
+            assertEquals(3 * i, ptr.position(i).get(), 0);
+        }
+        arrayIndexer.release();
+        for (int i = 0; i < size; i++) {
+            assertEquals(2 * i, ptr.position(i).get(), 0);
+        }
     }
 
     @Test public void testDoubleIndexer() {
@@ -376,15 +327,8 @@ public class IndexerTest {
         for (int i = 0; i < size; i++) {
             ptr.position(i).put((double)i);
         }
-        double[] array = new double[size];
-        ptr.position(0).get(array);
-        DoubleBuffer buffer = ptr.asBuffer();
-        DoubleArrayIndexer arrayIndexer = new DoubleArrayIndexer(array, sizes, strides) {
-            @Override public void release() {
-                ptr.position(0).put(array);
-            }
-        };
-        DoubleBufferIndexer bufferIndexer = new DoubleBufferIndexer(buffer, sizes, strides);
+        DoubleIndexer arrayIndexer = DoubleIndexer.create(ptr.position(0), sizes, strides, false);
+        DoubleIndexer bufferIndexer = DoubleIndexer.create(ptr.position(0), sizes, strides, true);
 
         int n = 0;
         for (int i = 0; i < sizes[0]; i++) {
@@ -408,14 +352,6 @@ public class IndexerTest {
             }
         }
 
-        for (int i = 0; i < size; i++) {
-            assertEquals(3 * i, ptr.position(i).get(), 0);
-        }
-        arrayIndexer.release();
-        for (int i = 0; i < size; i++) {
-            assertEquals(2 * i, ptr.position(i).get(), 0);
-        }
-
         try {
             arrayIndexer.get(size);
             fail("IndexOutOfBoundsException should have been thrown.");
@@ -425,6 +361,14 @@ public class IndexerTest {
             bufferIndexer.get(size);
             fail("IndexOutOfBoundsException should have been thrown.");
         } catch (IndexOutOfBoundsException e) { }
+
+        for (int i = 0; i < size; i++) {
+            assertEquals(3 * i, ptr.position(i).get(), 0);
+        }
+        arrayIndexer.release();
+        for (int i = 0; i < size; i++) {
+            assertEquals(2 * i, ptr.position(i).get(), 0);
+        }
     }
 
     @Test public void testCharIndexer() {
@@ -436,15 +380,8 @@ public class IndexerTest {
         for (int i = 0; i < size; i++) {
             ptr.position(i).put((char)i);
         }
-        char[] array = new char[size];
-        ptr.position(0).get(array);
-        CharBuffer buffer = ptr.asBuffer();
-        CharArrayIndexer arrayIndexer = new CharArrayIndexer(array, sizes, strides) {
-            @Override public void release() {
-                ptr.position(0).put(array);
-            }
-        };
-        CharBufferIndexer bufferIndexer = new CharBufferIndexer(buffer, sizes, strides);
+        CharIndexer arrayIndexer = CharIndexer.create(ptr.position(0), sizes, strides, false);
+        CharIndexer bufferIndexer = CharIndexer.create(ptr.position(0), sizes, strides, true);
 
         int n = 0;
         for (int i = 0; i < sizes[0]; i++) {
@@ -468,14 +405,6 @@ public class IndexerTest {
             }
         }
 
-        for (int i = 0; i < size; i++) {
-            assertEquals(3 * i, ptr.position(i).get());
-        }
-        arrayIndexer.release();
-        for (int i = 0; i < size; i++) {
-            assertEquals(2 * i, ptr.position(i).get());
-        }
-
         try {
             arrayIndexer.get(size);
             fail("IndexOutOfBoundsException should have been thrown.");
@@ -485,6 +414,14 @@ public class IndexerTest {
             bufferIndexer.get(size);
             fail("IndexOutOfBoundsException should have been thrown.");
         } catch (IndexOutOfBoundsException e) { }
+
+        for (int i = 0; i < size; i++) {
+            assertEquals(3 * i, ptr.position(i).get());
+        }
+        arrayIndexer.release();
+        for (int i = 0; i < size; i++) {
+            assertEquals(2 * i, ptr.position(i).get());
+        }
     }
 
 }

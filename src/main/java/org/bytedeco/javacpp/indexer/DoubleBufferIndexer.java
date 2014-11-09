@@ -71,4 +71,6 @@ public class DoubleBufferIndexer extends DoubleIndexer {
         buffer.put(index(indices), d);
         return this;
     }
+
+    @Override public void release() { buffer = null; }
 }

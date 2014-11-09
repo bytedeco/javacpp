@@ -71,4 +71,6 @@ public class FloatBufferIndexer extends FloatIndexer {
         buffer.put(index(indices), f);
         return this;
     }
+
+    @Override public void release() { buffer = null; }
 }

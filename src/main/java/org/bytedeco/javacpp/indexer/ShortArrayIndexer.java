@@ -68,4 +68,6 @@ public class ShortArrayIndexer extends ShortIndexer {
         array[index(indices)] = s;
         return this;
     }
+
+    @Override public void release() { array = null; }
 }

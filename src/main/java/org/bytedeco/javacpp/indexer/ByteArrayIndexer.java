@@ -68,4 +68,6 @@ public class ByteArrayIndexer extends ByteIndexer {
         array[index(indices)] = b;
         return this;
     }
+
+    @Override public void release() { array = null; }
 }

@@ -71,4 +71,6 @@ public class ByteBufferIndexer extends ByteIndexer {
         buffer.put(index(indices), b);
         return this;
     }
+
+    @Override public void release() { buffer = null; }
 }

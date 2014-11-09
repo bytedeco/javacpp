@@ -71,4 +71,6 @@ public class ShortBufferIndexer extends ShortIndexer {
         buffer.put(index(indices), s);
         return this;
     }
+
+    @Override public void release() { buffer = null; }
 }

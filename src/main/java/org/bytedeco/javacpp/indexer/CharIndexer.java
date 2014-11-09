@@ -21,6 +21,7 @@
 package org.bytedeco.javacpp.indexer;
 
 import java.nio.CharBuffer;
+import org.bytedeco.javacpp.CharPointer;
 
 /**
  * Abstract indexer for the {@code char} primitive type.
@@ -39,6 +40,32 @@ public abstract class CharIndexer extends Indexer {
     /** @return {@code new CharBufferIndexer(buffer, sizes, strides)} */
     public static CharIndexer create(CharBuffer buffer, int[] sizes, int[] strides) {
         return new CharBufferIndexer(buffer, sizes, strides);
+    }
+    /** @return {@code create(pointer, sizes, strides, true)} */
+    public static CharIndexer create(CharPointer pointer, int[] sizes, int[] strides) {
+        return create(pointer, sizes, strides, true);
+    }
+    /**
+     * Creates a char indexer to access efficiently the data of a pointer.
+     *
+     * @param pointer data to access via a buffer or to copy to an array
+     * @param direct {@code true} to use a direct buffer, see {@link Indexer} for details
+     * @return the new char array backed by a buffer or an array
+     */
+    public static CharIndexer create(final CharPointer pointer, int[] sizes, int[] strides, boolean direct) {
+        if (direct) {
+            return new CharBufferIndexer(pointer.asBuffer(), sizes, strides);
+        } else {
+            final int position = pointer.position();
+            char[] array = new char[pointer.limit() - position];
+            pointer.get(array);
+            return new CharArrayIndexer(array, sizes, strides) {
+                @Override public void release() {
+                    pointer.position(position).put(array);
+                    super.release();
+                }
+            };
+        }
     }
 
     /** @return {@code array/buffer[i]} */

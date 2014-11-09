@@ -68,4 +68,6 @@ public class DoubleArrayIndexer extends DoubleIndexer {
         array[index(indices)] = d;
         return this;
     }
+
+    @Override public void release() { array = null; }
 }

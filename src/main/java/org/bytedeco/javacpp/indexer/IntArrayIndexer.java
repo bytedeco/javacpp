@@ -68,4 +68,6 @@ public class IntArrayIndexer extends IntIndexer {
         array[index(indices)] = n;
         return this;
     }
+
+    @Override public void release() { array = null; }
 }

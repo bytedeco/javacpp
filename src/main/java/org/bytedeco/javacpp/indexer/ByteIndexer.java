@@ -21,6 +21,7 @@
 package org.bytedeco.javacpp.indexer;
 
 import java.nio.ByteBuffer;
+import org.bytedeco.javacpp.BytePointer;
 
 /**
  * Abstract indexer for the {@code byte} primitive type.
@@ -39,6 +40,32 @@ public abstract class ByteIndexer extends Indexer {
     /** @return {@code new ByteBufferIndexer(buffer, sizes, strides)} */
     public static ByteIndexer create(ByteBuffer buffer, int[] sizes, int[] strides) {
         return new ByteBufferIndexer(buffer, sizes, strides);
+    }
+    /** @return {@code create(pointer, sizes, strides, true)} */
+    public static ByteIndexer create(BytePointer pointer, int[] sizes, int[] strides) {
+        return create(pointer, sizes, strides, true);
+    }
+    /**
+     * Creates a byte indexer to access efficiently the data of a pointer.
+     *
+     * @param pointer data to access via a buffer or to copy to an array
+     * @param direct {@code true} to use a direct buffer, see {@link Indexer} for details
+     * @return the new byte array backed by a buffer or an array
+     */
+    public static ByteIndexer create(final BytePointer pointer, int[] sizes, int[] strides, boolean direct) {
+        if (direct) {
+            return new ByteBufferIndexer(pointer.asBuffer(), sizes, strides);
+        } else {
+            final int position = pointer.position();
+            byte[] array = new byte[pointer.limit() - position];
+            pointer.get(array);
+            return new ByteArrayIndexer(array, sizes, strides) {
+                @Override public void release() {
+                    pointer.position(position).put(array);
+                    super.release();
+                }
+            };
+        }
     }
 
     /** @return {@code array/buffer[i]} */

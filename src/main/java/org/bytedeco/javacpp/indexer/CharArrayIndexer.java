@@ -68,4 +68,6 @@ public class CharArrayIndexer extends CharIndexer {
         array[index(indices)] = c;
         return this;
     }
+
+    @Override public void release() { array = null; }
 }

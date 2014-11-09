@@ -21,6 +21,7 @@
 package org.bytedeco.javacpp.indexer;
 
 import java.nio.LongBuffer;
+import org.bytedeco.javacpp.LongPointer;
 
 /**
  * Abstract indexer for the {@code long} primitive type.
@@ -39,6 +40,32 @@ public abstract class LongIndexer extends Indexer {
     /** @return {@code new LongBufferIndexer(buffer, sizes, strides)} */
     public static LongIndexer create(LongBuffer buffer, int[] sizes, int[] strides) {
         return new LongBufferIndexer(buffer, sizes, strides);
+    }
+    /** @return {@code create(pointer, sizes, strides, true)} */
+    public static LongIndexer create(LongPointer pointer, int[] sizes, int[] strides) {
+        return create(pointer, sizes, strides, true);
+    }
+    /**
+     * Creates a long indexer to access efficiently the data of a pointer.
+     *
+     * @param pointer data to access via a buffer or to copy to an array
+     * @param direct {@code true} to use a direct buffer, see {@link Indexer} for details
+     * @return the new long array backed by a buffer or an array
+     */
+    public static LongIndexer create(final LongPointer pointer, int[] sizes, int[] strides, boolean direct) {
+        if (direct) {
+            return new LongBufferIndexer(pointer.asBuffer(), sizes, strides);
+        } else {
+            final int position = pointer.position();
+            long[] array = new long[pointer.limit() - position];
+            pointer.get(array);
+            return new LongArrayIndexer(array, sizes, strides) {
+                @Override public void release() {
+                    pointer.position(position).put(array);
+                    super.release();
+                }
+            };
+        }
     }
 
     /** @return {@code array/buffer[i]} */

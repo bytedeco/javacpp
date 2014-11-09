@@ -21,6 +21,7 @@
 package org.bytedeco.javacpp.indexer;
 
 import java.nio.ShortBuffer;
+import org.bytedeco.javacpp.ShortPointer;
 
 /**
  * Abstract indexer for the {@code short} primitive type.
@@ -39,6 +40,32 @@ public abstract class ShortIndexer extends Indexer {
     /** @return {@code new ShortBufferIndexer(buffer, sizes, strides)} */
     public static ShortIndexer create(ShortBuffer buffer, int[] sizes, int[] strides) {
         return new ShortBufferIndexer(buffer, sizes, strides);
+    }
+    /** @return {@code create(pointer, sizes, strides, true)} */
+    public static ShortIndexer create(ShortPointer pointer, int[] sizes, int[] strides) {
+        return create(pointer, sizes, strides, true);
+    }
+    /**
+     * Creates a short indexer to access efficiently the data of a pointer.
+     *
+     * @param pointer data to access via a buffer or to copy to an array
+     * @param direct {@code true} to use a direct buffer, see {@link Indexer} for details
+     * @return the new short array backed by a buffer or an array
+     */
+    public static ShortIndexer create(final ShortPointer pointer, int[] sizes, int[] strides, boolean direct) {
+        if (direct) {
+            return new ShortBufferIndexer(pointer.asBuffer(), sizes, strides);
+        } else {
+            final int position = pointer.position();
+            short[] array = new short[pointer.limit() - position];
+            pointer.get(array);
+            return new ShortArrayIndexer(array, sizes, strides) {
+                @Override public void release() {
+                    pointer.position(position).put(array);
+                    super.release();
+                }
+            };
+        }
     }
 
     /** @return {@code array/buffer[i]} */
