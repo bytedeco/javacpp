@@ -37,6 +37,7 @@ We can also have everything downloaded and installed automatically with:
 
  * SBT (inside the `build.sbt` file)
 ```scala
+  classpathTypes += "maven-plugin"
   libraryDependencies += "org.bytedeco" % "javacpp" % "0.9"
 ```
 

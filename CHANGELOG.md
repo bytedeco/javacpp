@@ -1,5 +1,5 @@
 
- * Fix some `Parser` exceptions on valid declarations with template arguments, and make `Info.javaName` usable in the case of `enum`
+ * Fix some `Parser` exceptions on valid declarations with template arguments, macro expansions, or overloaded cast operators, and make `Info.javaName` usable in the case of `enum`
  * Disable DocLint, which prevents the build from succeeding on Java 8 ([issue #5](https://github.com/bytedeco/javacpp/issues/5))
  * Add new `indexer` package containing a set of `Indexer` for easy and efficient multidimensional access of arrays and buffers ([issue javacv:317](http://code.google.com/p/javacv/issues/detail?id=317))
  * Use `Long.decode()` inside the `Tokenizer` to test more precisely when integer values are larger than 32 bits

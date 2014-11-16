@@ -285,10 +285,6 @@ public class Parser {
 
     Type type(Context context) throws ParserException {
         Type type = new Type();
-        if (tokens.get().match(Token.OPERATOR)) {
-            type.operator = true;
-            tokens.next();
-        }
         ArrayList<Attribute> attributes = new ArrayList<Attribute>();
         for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.next()) {
             if (token.match("::")) {
@@ -336,7 +332,16 @@ public class Parser {
             } else if (token.match(Token.STATIC)) {
                 type.staticMember = true;
             } else if (token.match(Token.OPERATOR)) {
-                break;
+                if (type.cppName.length() == 0) {
+                    type.operator = true;
+                    continue;
+                } else if (type.cppName.endsWith("::")) {
+                    type.operator = true;
+                    tokens.next();
+                    break;
+                } else {
+                    break;
+                }
             } else if (token.match(Token.ENUM, Token.EXPLICIT, Token.EXTERN, Token.INLINE, Token.CLASS,
                     Token.STRUCT, Token.UNION, Token.TYPEDEF, Token.TYPENAME, Token.USING, Token.VIRTUAL)) {
                 continue;
@@ -1068,7 +1073,7 @@ public class Parser {
             // not a function, probably an attribute
             tokens.index = backIndex;
             return false;
-        } else if (context.group == null && params != null) {
+        } else if (context.group == null && !type.operator && params != null) {
             // this is a constructor definition or specialization, skip over
             if (tokens.get().match(':')) {
                 for (Token token = tokens.next(); !token.match(Token.EOF); token = tokens.next()) {
@@ -1100,6 +1105,10 @@ public class Parser {
             tokens.index = backIndex;
             dcl = declarator(context, null, 0, false, 0, false, false);
             type = dcl.type;
+        }
+        if (dcl.cppName == null) {
+            tokens.index = backIndex;
+            return false;
         }
 
         int namespace = dcl.cppName.lastIndexOf("::");

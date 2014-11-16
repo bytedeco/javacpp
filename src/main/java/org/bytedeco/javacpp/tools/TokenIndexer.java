@@ -73,7 +73,9 @@ class TokenIndexer {
                             if (array[index].spacing.indexOf('\n') >= 0) {
                                 break;
                             }
-                            value += array[index].spacing + array[index];
+                            if (!array[index].match(Token.COMMENT)) {
+                                value += array[index].spacing + array[index];
+                            }
                             tokens.add(array[index++]);
                         }
                         define = info == null || !defined;

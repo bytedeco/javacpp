@@ -52,10 +52,12 @@ class DeclarationList extends LinkedList<Declaration> {
     @Override public boolean add(Declaration decl) {
         boolean add = true;
         if (templateMap != null && !templateMap.full() && (decl.type != null || decl.declarator != null)) {
-            Type type = templateMap.type = decl.type;
-            Declarator dcl = templateMap.declarator = decl.declarator;
-            LinkedList<Info> infoList = infoMap.get(dcl != null ? dcl.cppName : type.cppName);
-            infoIterator = infoList.size() > 0 ? infoList.listIterator() : null;
+            if (infoIterator == null) {
+                Type type = templateMap.type = decl.type;
+                Declarator dcl = templateMap.declarator = decl.declarator;
+                LinkedList<Info> infoList = infoMap.get(dcl != null ? dcl.cppName : type.cppName);
+                infoIterator = infoList.size() > 0 ? infoList.listIterator() : null;
+            }
             add = false;
         } else if (decl.declarator != null && decl.declarator.type != null) {
             Info info = infoMap.getFirst(decl.declarator.type.cppName);
