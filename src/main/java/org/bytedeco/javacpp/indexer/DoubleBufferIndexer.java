@@ -45,8 +45,20 @@ public class DoubleBufferIndexer extends DoubleIndexer {
     @Override public double get(int i) {
         return buffer.get(i);
     }
+    @Override public DoubleIndexer get(int i, double[] d, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            d[offset + n] = buffer.get(i * strides[0] + n);
+        }
+        return this;
+    }
     @Override public double get(int i, int j) {
         return buffer.get(i * strides[0] + j);
+    }
+    @Override public DoubleIndexer get(int i, int j, double[] d, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            d[offset + n] = buffer.get(i * strides[0] + j * strides[1] + n);
+        }
+        return this;
     }
     @Override public double get(int i, int j, int k) {
         return buffer.get(i * strides[0] + j * strides[1] + k);
@@ -54,13 +66,31 @@ public class DoubleBufferIndexer extends DoubleIndexer {
     @Override public double get(int ... indices) {
         return buffer.get(index(indices));
     }
+    @Override public DoubleIndexer get(int[] indices, double[] d, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            d[offset + n] = buffer.get(index(indices) + n);
+        }
+        return this;
+    }
 
     @Override public DoubleIndexer put(int i, double d) {
         buffer.put(i, d);
         return this;
     }
+    @Override public DoubleIndexer put(int i, double[] d, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            buffer.put(i * strides[0] + n, d[offset + n]);
+        }
+        return this;
+    }
     @Override public DoubleIndexer put(int i, int j, double d) {
         buffer.put(i * strides[0] + j, d);
+        return this;
+    }
+    @Override public DoubleIndexer put(int i, int j, double[] d, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            buffer.put(i * strides[0] + j * strides[1] + n, d[offset + n]);
+        }
         return this;
     }
     @Override public DoubleIndexer put(int i, int j, int k, double d) {
@@ -69,6 +99,12 @@ public class DoubleBufferIndexer extends DoubleIndexer {
     }
     @Override public DoubleIndexer put(int[] indices, double d) {
         buffer.put(index(indices), d);
+        return this;
+    }
+    @Override public DoubleIndexer put(int[] indices, double[] d, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            buffer.put(index(indices) + n, d[offset + n]);
+        }
         return this;
     }
 

@@ -45,8 +45,20 @@ public class LongBufferIndexer extends LongIndexer {
     @Override public long get(int i) {
         return buffer.get(i);
     }
+    @Override public LongIndexer get(int i, long[] l, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            l[offset + n] = buffer.get(i * strides[0] + n);
+        }
+        return this;
+    }
     @Override public long get(int i, int j) {
         return buffer.get(i * strides[0] + j);
+    }
+    @Override public LongIndexer get(int i, int j, long[] l, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            l[offset + n] = buffer.get(i * strides[0] + j * strides[1] + n);
+        }
+        return this;
     }
     @Override public long get(int i, int j, int k) {
         return buffer.get(i * strides[0] + j * strides[1] + k);
@@ -54,13 +66,31 @@ public class LongBufferIndexer extends LongIndexer {
     @Override public long get(int ... indices) {
         return buffer.get(index(indices));
     }
+    @Override public LongIndexer get(int[] indices, long[] l, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            l[offset + n] = buffer.get(index(indices) + n);
+        }
+        return this;
+    }
 
     @Override public LongIndexer put(int i, long l) {
         buffer.put(i, l);
         return this;
     }
+    @Override public LongIndexer put(int i, long[] l, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            buffer.put(i * strides[0] + n, l[offset + n]);
+        }
+        return this;
+    }
     @Override public LongIndexer put(int i, int j, long l) {
         buffer.put(i * strides[0] + j, l);
+        return this;
+    }
+    @Override public LongIndexer put(int i, int j, long[] l, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            buffer.put(i * strides[0] + j * strides[1] + n, l[offset + n]);
+        }
         return this;
     }
     @Override public LongIndexer put(int i, int j, int k, long l) {
@@ -69,6 +99,12 @@ public class LongBufferIndexer extends LongIndexer {
     }
     @Override public LongIndexer put(int[] indices, long l) {
         buffer.put(index(indices), l);
+        return this;
+    }
+    @Override public LongIndexer put(int[] indices, long[] l, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            buffer.put(index(indices) + n, l[offset + n]);
+        }
         return this;
     }
 

@@ -42,8 +42,20 @@ public class LongArrayIndexer extends LongIndexer {
     @Override public long get(int i) {
         return array[i];
     }
+    @Override public LongIndexer get(int i, long[] l, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            l[offset + n] = array[i * strides[0] + n];
+        }
+        return this;
+    }
     @Override public long get(int i, int j) {
         return array[i * strides[0] + j];
+    }
+    @Override public LongIndexer get(int i, int j, long[] l, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            l[offset + n] = array[i * strides[0] + j * strides[1] + n];
+        }
+        return this;
     }
     @Override public long get(int i, int j, int k) {
         return array[i * strides[0] + j * strides[1] + k];
@@ -51,13 +63,31 @@ public class LongArrayIndexer extends LongIndexer {
     @Override public long get(int ... indices) {
         return array[index(indices)];
     }
+    @Override public LongIndexer get(int[] indices, long[] l, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            l[offset + n] = array[index(indices) + n];
+        }
+        return this;
+    }
 
     @Override public LongIndexer put(int i, long l) {
         array[i] = l;
         return this;
     }
+    @Override public LongIndexer put(int i, long[] l, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            array[i * strides[0] + n] = l[offset + n];
+        }
+        return this;
+    }
     @Override public LongIndexer put(int i, int j, long l) {
         array[i * strides[0] + j] = l;
+        return this;
+    }
+    @Override public LongIndexer put(int i, int j, long[] l, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            array[i * strides[0] + j * strides[1] + n] = l[offset + n];
+        }
         return this;
     }
     @Override public LongIndexer put(int i, int j, int k, long l) {
@@ -66,6 +96,12 @@ public class LongArrayIndexer extends LongIndexer {
     }
     @Override public LongIndexer put(int[] indices, long l) {
         array[index(indices)] = l;
+        return this;
+    }
+    @Override public LongIndexer put(int[] indices, long[] l, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            array[index(indices) + n] = l[offset + n];
+        }
         return this;
     }
 

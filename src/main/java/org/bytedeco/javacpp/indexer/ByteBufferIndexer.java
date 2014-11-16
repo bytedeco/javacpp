@@ -45,8 +45,20 @@ public class ByteBufferIndexer extends ByteIndexer {
     @Override public byte get(int i) {
         return buffer.get(i);
     }
+    @Override public ByteIndexer get(int i, byte[] b, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            b[offset + n] = buffer.get(i * strides[0] + n);
+        }
+        return this;
+    }
     @Override public byte get(int i, int j) {
         return buffer.get(i * strides[0] + j);
+    }
+    @Override public ByteIndexer get(int i, int j, byte[] b, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            b[offset + n] = buffer.get(i * strides[0] + j * strides[1] + n);
+        }
+        return this;
     }
     @Override public byte get(int i, int j, int k) {
         return buffer.get(i * strides[0] + j * strides[1] + k);
@@ -54,13 +66,31 @@ public class ByteBufferIndexer extends ByteIndexer {
     @Override public byte get(int ... indices) {
         return buffer.get(index(indices));
     }
+    @Override public ByteIndexer get(int[] indices, byte[] b, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            b[offset + n] = buffer.get(index(indices) + n);
+        }
+        return this;
+    }
 
     @Override public ByteIndexer put(int i, byte b) {
         buffer.put(i, b);
         return this;
     }
+    @Override public ByteIndexer put(int i, byte[] b, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            buffer.put(i * strides[0] + n, b[offset + n]);
+        }
+        return this;
+    }
     @Override public ByteIndexer put(int i, int j, byte b) {
         buffer.put(i * strides[0] + j, b);
+        return this;
+    }
+    @Override public ByteIndexer put(int i, int j, byte[] b, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            buffer.put(i * strides[0] + j * strides[1] + n, b[offset + n]);
+        }
         return this;
     }
     @Override public ByteIndexer put(int i, int j, int k, byte b) {
@@ -69,6 +99,12 @@ public class ByteBufferIndexer extends ByteIndexer {
     }
     @Override public ByteIndexer put(int[] indices, byte b) {
         buffer.put(index(indices), b);
+        return this;
+    }
+    @Override public ByteIndexer put(int[] indices, byte[] b, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            buffer.put(index(indices) + n, b[offset + n]);
+        }
         return this;
     }
 

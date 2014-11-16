@@ -45,8 +45,20 @@ public class CharBufferIndexer extends CharIndexer {
     @Override public char get(int i) {
         return buffer.get(i);
     }
+    @Override public CharIndexer get(int i, char[] c, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            c[offset + n] = buffer.get(i * strides[0] + n);
+        }
+        return this;
+    }
     @Override public char get(int i, int j) {
         return buffer.get(i * strides[0] + j);
+    }
+    @Override public CharIndexer get(int i, int j, char[] c, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            c[offset + n] = buffer.get(i * strides[0] + j * strides[1] + n);
+        }
+        return this;
     }
     @Override public char get(int i, int j, int k) {
         return buffer.get(i * strides[0] + j * strides[1] + k);
@@ -54,13 +66,31 @@ public class CharBufferIndexer extends CharIndexer {
     @Override public char get(int ... indices) {
         return buffer.get(index(indices));
     }
+    @Override public CharIndexer get(int[] indices, char[] c, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            c[offset + n] = buffer.get(index(indices) + n);
+        }
+        return this;
+    }
 
     @Override public CharIndexer put(int i, char c) {
         buffer.put(i, c);
         return this;
     }
+    @Override public CharIndexer put(int i, char[] c, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            buffer.put(i * strides[0] + n, c[offset + n]);
+        }
+        return this;
+    }
     @Override public CharIndexer put(int i, int j, char c) {
         buffer.put(i * strides[0] + j, c);
+        return this;
+    }
+    @Override public CharIndexer put(int i, int j, char[] c, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            buffer.put(i * strides[0] + j * strides[1] + n, c[offset + n]);
+        }
         return this;
     }
     @Override public CharIndexer put(int i, int j, int k, char c) {
@@ -69,6 +99,12 @@ public class CharBufferIndexer extends CharIndexer {
     }
     @Override public CharIndexer put(int[] indices, char c) {
         buffer.put(index(indices), c);
+        return this;
+    }
+    @Override public CharIndexer put(int[] indices, char[] c, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            buffer.put(index(indices) + n, c[offset + n]);
+        }
         return this;
     }
 

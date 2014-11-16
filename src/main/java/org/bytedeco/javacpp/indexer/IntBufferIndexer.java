@@ -45,8 +45,20 @@ public class IntBufferIndexer extends IntIndexer {
     @Override public int get(int i) {
         return buffer.get(i);
     }
+    @Override public IntIndexer get(int i, int[] m, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            m[offset + n] = buffer.get(i * strides[0] + n);
+        }
+        return this;
+    }
     @Override public int get(int i, int j) {
         return buffer.get(i * strides[0] + j);
+    }
+    @Override public IntIndexer get(int i, int j, int[] m, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            m[offset + n] = buffer.get(i * strides[0] + j * strides[1] + n);
+        }
+        return this;
     }
     @Override public int get(int i, int j, int k) {
         return buffer.get(i * strides[0] + j * strides[1] + k);
@@ -54,13 +66,31 @@ public class IntBufferIndexer extends IntIndexer {
     @Override public int get(int ... indices) {
         return buffer.get(index(indices));
     }
+    @Override public IntIndexer get(int[] indices, int[] m, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            m[offset + n] = buffer.get(index(indices) + n);
+        }
+        return this;
+    }
 
     @Override public IntIndexer put(int i, int n) {
         buffer.put(i, n);
         return this;
     }
+    @Override public IntIndexer put(int i, int[] m, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            buffer.put(i * strides[0] + n, m[offset + n]);
+        }
+        return this;
+    }
     @Override public IntIndexer put(int i, int j, int n) {
         buffer.put(i * strides[0] + j, n);
+        return this;
+    }
+    @Override public IntIndexer put(int i, int j, int[] m, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            buffer.put(i * strides[0] + j * strides[1] + n, m[offset + n]);
+        }
         return this;
     }
     @Override public IntIndexer put(int i, int j, int k, int n) {
@@ -69,6 +99,12 @@ public class IntBufferIndexer extends IntIndexer {
     }
     @Override public IntIndexer put(int[] indices, int n) {
         buffer.put(index(indices), n);
+        return this;
+    }
+    @Override public IntIndexer put(int[] indices, int[] m, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            buffer.put(index(indices) + n, m[offset + n]);
+        }
         return this;
     }
 

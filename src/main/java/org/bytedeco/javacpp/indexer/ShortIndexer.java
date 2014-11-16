@@ -70,19 +70,43 @@ public abstract class ShortIndexer extends Indexer {
 
     /** @return {@code array/buffer[i]} */
     public abstract short get(int i);
+    /** @return {@code this} where {@code s = array/buffer[i]} */
+    public ShortIndexer get(int i, short[] s) { return get(i, s, 0, s.length); }
+    /** @return {@code this} where {@code s[offset:offset + length] = array/buffer[i]} */
+    public abstract ShortIndexer get(int i, short[] s, int offset, int length);
     /** @return {@code array/buffer[i * strides[0] + j]} */
     public abstract short get(int i, int j);
+    /** @return {@code this} where {@code s = array/buffer[i * strides[0] + j]} */
+    public ShortIndexer get(int i, int j, short[] s) { return get(i, j, s, 0, s.length); }
+    /** @return {@code this} where {@code s[offset:offset + length] = array/buffer[i * strides[0] + j]} */
+    public abstract ShortIndexer get(int i, int j, short[] s, int offset, int length);
     /** @return {@code array/buffer[i * strides[0] + j * strides[1] + k]} */
     public abstract short get(int i, int j, int k);
     /** @return {@code array/buffer[index(indices)]} */
     public abstract short get(int ... indices);
+    /** @return {@code this} where {@code s = array/buffer[index(indices)]} */
+    public ShortIndexer get(int[] indices, short[] s) { return get(indices, s, 0, s.length); }
+    /** @return {@code this} where {@code s[offset:offset + length] = array/buffer[index(indices)]} */
+    public abstract ShortIndexer get(int[] indices, short[] s, int offset, int length);
 
     /** @return {@code this} where {@code array/buffer[i] = s} */
     public abstract ShortIndexer put(int i, short s);
+    /** @return {@code this} where {@code array/buffer[i] = s} */
+    public ShortIndexer put(int i, short ... s) { return put(i, s, 0, s.length); }
+    /** @return {@code this} where {@code array/buffer[i] = s[offset:offset + length]} */
+    public abstract ShortIndexer put(int i, short[] s, int offset, int length);
     /** @return {@code this} where {@code array/buffer[i * strides[0] + j] = s} */
     public abstract ShortIndexer put(int i, int j, short s);
+    /** @return {@code this} where {@code array/buffer[i * strides[0] + j] = s} */
+    public ShortIndexer put(int i, int j, short ... s) { return put(i, j, s, 0, s.length); }
+    /** @return {@code this} where {@code array/buffer[i * strides[0] + j] = s[offset:offset + length]} */
+    public abstract ShortIndexer put(int i, int j, short[] s, int offset, int length);
     /** @return {@code this} where {@code array/buffer[i * strides[0] + j * strides[1] + k] = s} */
     public abstract ShortIndexer put(int i, int j, int k, short s);
     /** @return {@code this} where {@code array/buffer[index(indices)] = s} */
     public abstract ShortIndexer put(int[] indices, short s);
+    /** @return {@code this} where {@code array/buffer[index(indices)] = s} */
+    public ShortIndexer put(int[] indices, short ... s) { return put(indices, s, 0, s.length); }
+    /** @return {@code this} where {@code array/buffer[index(indices)] = s[offset:offset + length]} */
+    public abstract ShortIndexer put(int[] indices, short[] s, int offset, int length);
 }

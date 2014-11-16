@@ -42,8 +42,20 @@ public class ByteArrayIndexer extends ByteIndexer {
     @Override public byte get(int i) {
         return array[i];
     }
+    @Override public ByteIndexer get(int i, byte[] b, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            b[offset + n] = array[i * strides[0] + n];
+        }
+        return this;
+    }
     @Override public byte get(int i, int j) {
         return array[i * strides[0] + j];
+    }
+    @Override public ByteIndexer get(int i, int j, byte[] b, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            b[offset + n] = array[i * strides[0] + j * strides[1] + n];
+        }
+        return this;
     }
     @Override public byte get(int i, int j, int k) {
         return array[i * strides[0] + j * strides[1] + k];
@@ -51,13 +63,31 @@ public class ByteArrayIndexer extends ByteIndexer {
     @Override public byte get(int ... indices) {
         return array[index(indices)];
     }
+    @Override public ByteIndexer get(int[] indices, byte[] b, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            b[offset + n] = array[index(indices) + n];
+        }
+        return this;
+    }
 
     @Override public ByteIndexer put(int i, byte b) {
         array[i] = b;
         return this;
     }
+    @Override public ByteIndexer put(int i, byte[] b, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            array[i * strides[0] + n] = b[offset + n];
+        }
+        return this;
+    }
     @Override public ByteIndexer put(int i, int j, byte b) {
         array[i * strides[0] + j] = b;
+        return this;
+    }
+    @Override public ByteIndexer put(int i, int j, byte[] b, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            array[i * strides[0] + j * strides[1] + n] = b[offset + n];
+        }
         return this;
     }
     @Override public ByteIndexer put(int i, int j, int k, byte b) {
@@ -66,6 +96,12 @@ public class ByteArrayIndexer extends ByteIndexer {
     }
     @Override public ByteIndexer put(int[] indices, byte b) {
         array[index(indices)] = b;
+        return this;
+    }
+    @Override public ByteIndexer put(int[] indices, byte[] b, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            array[index(indices) + n] = b[offset + n];
+        }
         return this;
     }
 

@@ -42,8 +42,20 @@ public class ShortArrayIndexer extends ShortIndexer {
     @Override public short get(int i) {
         return array[i];
     }
+    @Override public ShortIndexer get(int i, short[] s, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            s[offset + n] = array[i * strides[0] + n];
+        }
+        return this;
+    }
     @Override public short get(int i, int j) {
         return array[i * strides[0] + j];
+    }
+    @Override public ShortIndexer get(int i, int j, short[] s, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            s[offset + n] = array[i * strides[0] + j * strides[1] + n];
+        }
+        return this;
     }
     @Override public short get(int i, int j, int k) {
         return array[i * strides[0] + j * strides[1] + k];
@@ -51,13 +63,31 @@ public class ShortArrayIndexer extends ShortIndexer {
     @Override public short get(int ... indices) {
         return array[index(indices)];
     }
+    @Override public ShortIndexer get(int[] indices, short[] s, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            s[offset + n] = array[index(indices) + n];
+        }
+        return this;
+    }
 
     @Override public ShortIndexer put(int i, short s) {
         array[i] = s;
         return this;
     }
+    @Override public ShortIndexer put(int i, short[] s, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            array[i * strides[0] + n] = s[offset + n];
+        }
+        return this;
+    }
     @Override public ShortIndexer put(int i, int j, short s) {
         array[i * strides[0] + j] = s;
+        return this;
+    }
+    @Override public ShortIndexer put(int i, int j, short[] s, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            array[i * strides[0] + j * strides[1] + n] = s[offset + n];
+        }
         return this;
     }
     @Override public ShortIndexer put(int i, int j, int k, short s) {
@@ -66,6 +96,12 @@ public class ShortArrayIndexer extends ShortIndexer {
     }
     @Override public ShortIndexer put(int[] indices, short s) {
         array[index(indices)] = s;
+        return this;
+    }
+    @Override public ShortIndexer put(int[] indices, short[] s, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            array[index(indices) + n] = s[offset + n];
+        }
         return this;
     }
 

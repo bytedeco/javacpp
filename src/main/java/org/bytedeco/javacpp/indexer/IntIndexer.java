@@ -70,19 +70,43 @@ public abstract class IntIndexer extends Indexer {
 
     /** @return {@code array/buffer[i]} */
     public abstract int get(int i);
+    /** @return {@code this} where {@code n = array/buffer[i]} */
+    public IntIndexer get(int i, int[] n) { return get(i, n, 0, n.length); }
+    /** @return {@code this} where {@code n[offset:offset + length] = array/buffer[i]} */
+    public abstract IntIndexer get(int i, int[] n, int offset, int length);
     /** @return {@code array/buffer[i * strides[0] + j]} */
     public abstract int get(int i, int j);
+    /** @return {@code this} where {@code n = array/buffer[i * strides[0] + j]} */
+    public IntIndexer get(int i, int j, int[] n) { return get(i, j, n, 0, n.length); }
+    /** @return {@code this} where {@code n[offset:offset + length] = array/buffer[i * strides[0] + j]} */
+    public abstract IntIndexer get(int i, int j, int[] n, int offset, int length);
     /** @return {@code array/buffer[i * strides[0] + j * strides[1] + k]} */
     public abstract int get(int i, int j, int k);
     /** @return {@code array/buffer[index(indices)]} */
     public abstract int get(int ... indices);
+    /** @return {@code this} where {@code n = array/buffer[index(indices)]} */
+    public IntIndexer get(int[] indices, int[] n) { return get(indices, n, 0, n.length); }
+    /** @return {@code this} where {@code n[offset:offset + length] = array/buffer[index(indices)]} */
+    public abstract IntIndexer get(int[] indices, int[] n, int offset, int length);
 
     /** @return {@code this} where {@code array/buffer[i] = n} */
     public abstract IntIndexer put(int i, int n);
+    /** @return {@code this} where {@code array/buffer[i] = n} */
+    public IntIndexer put(int i, int ... n) { return put(i, n, 0, n.length); }
+    /** @return {@code this} where {@code array/buffer[i] = n[offset:offset + length]} */
+    public abstract IntIndexer put(int i, int[] n, int offset, int length);
     /** @return {@code this} where {@code array/buffer[i * strides[0] + j] = n} */
     public abstract IntIndexer put(int i, int j, int n);
+    /** @return {@code this} where {@code array/buffer[i * strides[0] + j] = n} */
+    public IntIndexer put(int i, int j, int ... n) { return put(i, j, n, 0, n.length); }
+    /** @return {@code this} where {@code array/buffer[i * strides[0] + j] = n[offset:offset + length]} */
+    public abstract IntIndexer put(int i, int j, int[] n, int offset, int length);
     /** @return {@code this} where {@code array/buffer[i * strides[0] + j * strides[1] + k] = n} */
     public abstract IntIndexer put(int i, int j, int k, int n);
     /** @return {@code this} where {@code array/buffer[index(indices)] = n} */
     public abstract IntIndexer put(int[] indices, int n);
+    /** @return {@code this} where {@code array/buffer[index(indices)] = n} */
+    public IntIndexer put(int[] indices, int ... n) { return put(indices, n, 0, n.length); }
+    /** @return {@code this} where {@code array/buffer[index(indices)] = n[offset:offset + length]} */
+    public abstract IntIndexer put(int[] indices, int[] n, int offset, int length);
 }

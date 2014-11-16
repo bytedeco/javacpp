@@ -70,19 +70,43 @@ public abstract class ByteIndexer extends Indexer {
 
     /** @return {@code array/buffer[i]} */
     public abstract byte get(int i);
+    /** @return {@code this} where {@code b = array/buffer[i]} */
+    public ByteIndexer get(int i, byte[] b) { return get(i, b, 0, b.length); }
+    /** @return {@code this} where {@code b[offset:offset + length] = array/buffer[i]} */
+    public abstract ByteIndexer get(int i, byte[] b, int offset, int length);
     /** @return {@code array/buffer[i * strides[0] + j]} */
     public abstract byte get(int i, int j);
+    /** @return {@code this} where {@code b = array/buffer[i * strides[0] + j]} */
+    public ByteIndexer get(int i, int j, byte[] b) { return get(i, j, b, 0, b.length); }
+    /** @return {@code this} where {@code b[offset:offset + length] = array/buffer[i * strides[0] + j]} */
+    public abstract ByteIndexer get(int i, int j, byte[] b, int offset, int length);
     /** @return {@code array/buffer[i * strides[0] + j * strides[1] + k]} */
     public abstract byte get(int i, int j, int k);
     /** @return {@code array/buffer[index(indices)]} */
     public abstract byte get(int ... indices);
+    /** @return {@code this} where {@code b = array/buffer[index(indices)]} */
+    public ByteIndexer get(int[] indices, byte[] b) { return get(indices, b, 0, b.length); }
+    /** @return {@code this} where {@code b[offset:offset + length] = array/buffer[index(indices)]} */
+    public abstract ByteIndexer get(int[] indices, byte[] b, int offset, int length);
 
     /** @return {@code this} where {@code array/buffer[i] = b} */
     public abstract ByteIndexer put(int i, byte b);
+    /** @return {@code this} where {@code array/buffer[i] = b} */
+    public ByteIndexer put(int i, byte ... b) { return put(i, b, 0, b.length); }
+    /** @return {@code this} where {@code array/buffer[i] = b[offset:offset + length]} */
+    public abstract ByteIndexer put(int i, byte[] b, int offset, int length);
     /** @return {@code this} where {@code array/buffer[i * strides[0] + j] = b} */
     public abstract ByteIndexer put(int i, int j, byte b);
+    /** @return {@code this} where {@code array/buffer[i * strides[0] + j] = b} */
+    public ByteIndexer put(int i, int j, byte ... b) { return put(i, j, b, 0, b.length); }
+    /** @return {@code this} where {@code array/buffer[i * strides[0] + j] = b[offset:offset + length]} */
+    public abstract ByteIndexer put(int i, int j, byte[] b, int offset, int length);
     /** @return {@code this} where {@code array/buffer[i * strides[0] + j * strides[1] + k] = b} */
     public abstract ByteIndexer put(int i, int j, int k, byte b);
     /** @return {@code this} where {@code array/buffer[index(indices)] = b} */
     public abstract ByteIndexer put(int[] indices, byte b);
+    /** @return {@code this} where {@code array/buffer[index(indices)] = b} */
+    public ByteIndexer put(int[] indices, byte ... b) { return put(indices, b, 0, b.length); }
+    /** @return {@code this} where {@code array/buffer[index(indices)] = b[offset:offset + length]} */
+    public abstract ByteIndexer put(int[] indices, byte[] b, int offset, int length);
 }

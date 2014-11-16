@@ -42,8 +42,20 @@ public class DoubleArrayIndexer extends DoubleIndexer {
     @Override public double get(int i) {
         return array[i];
     }
+    @Override public DoubleIndexer get(int i, double[] d, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            d[offset + n] = array[i * strides[0] + n];
+        }
+        return this;
+    }
     @Override public double get(int i, int j) {
         return array[i * strides[0] + j];
+    }
+    @Override public DoubleIndexer get(int i, int j, double[] d, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            d[offset + n] = array[i * strides[0] + j * strides[1] + n];
+        }
+        return this;
     }
     @Override public double get(int i, int j, int k) {
         return array[i * strides[0] + j * strides[1] + k];
@@ -51,13 +63,31 @@ public class DoubleArrayIndexer extends DoubleIndexer {
     @Override public double get(int ... indices) {
         return array[index(indices)];
     }
+    @Override public DoubleIndexer get(int[] indices, double[] d, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            d[offset + n] = array[index(indices) + n];
+        }
+        return this;
+    }
 
     @Override public DoubleIndexer put(int i, double d) {
         array[i] = d;
         return this;
     }
+    @Override public DoubleIndexer put(int i, double[] d, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            array[i * strides[0] + n] = d[offset + n];
+        }
+        return this;
+    }
     @Override public DoubleIndexer put(int i, int j, double d) {
         array[i * strides[0] + j] = d;
+        return this;
+    }
+    @Override public DoubleIndexer put(int i, int j, double[] d, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            array[i * strides[0] + j * strides[1] + n] = d[offset + n];
+        }
         return this;
     }
     @Override public DoubleIndexer put(int i, int j, int k, double d) {
@@ -66,6 +96,12 @@ public class DoubleArrayIndexer extends DoubleIndexer {
     }
     @Override public DoubleIndexer put(int[] indices, double d) {
         array[index(indices)] = d;
+        return this;
+    }
+    @Override public DoubleIndexer put(int[] indices, double[] d, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            array[index(indices) + n] = d[offset + n];
+        }
         return this;
     }
 

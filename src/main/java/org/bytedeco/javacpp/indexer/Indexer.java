@@ -78,8 +78,8 @@ public abstract class Indexer {
      * @return index to access array or buffer
      */
     public int index(int ... indices) {
-        int index = indices[indices.length - 1]; // assuming stride == 1
-        for (int i = 0; i < indices.length - 1; i++) {
+        int index = 0;
+        for (int i = 0; i < indices.length; i++) {
             index += indices[i] * strides[i];
         }
         return index;
