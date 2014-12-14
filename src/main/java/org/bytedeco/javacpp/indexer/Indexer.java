@@ -91,4 +91,39 @@ public abstract class Indexer {
     public Buffer buffer() { return null; }
     /** Makes sure changes are reflected onto the backing memory and releases any references. */
     public abstract void release();
+
+    /** Calls {@code get(int...indices)} and returns the value as a double. */
+    public abstract double getDouble(int ... indices);
+
+    @Override public String toString() {
+        int rows     = sizes.length > 0 ? sizes[0] : 1,
+            cols     = sizes.length > 1 ? sizes[1] : 1,
+            channels = sizes.length > 2 ? sizes[2] : 1;
+        StringBuilder s = new StringBuilder(rows > 1 ? "\n[ " : "[ ");
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                if (channels > 1) {
+                    s.append("(");
+                }
+                for (int k = 0; k < channels; k++) {
+                    double v = getDouble(i, j, k);
+                    s.append((float)v);
+                    if (k < channels - 1) {
+                        s.append(", ");
+                    }
+                }
+                if (channels > 1) {
+                    s.append(")");
+                }
+                if (j < cols - 1) {
+                    s.append(", ");
+                }
+            }
+            if (i < rows - 1) {
+                s.append("\n  ");
+            }
+        }
+        s.append(" ]");
+        return s.toString();
+    }
 }

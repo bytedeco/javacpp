@@ -109,4 +109,6 @@ public abstract class ByteIndexer extends Indexer {
     public ByteIndexer put(int[] indices, byte ... b) { return put(indices, b, 0, b.length); }
     /** @return {@code this} where {@code array/buffer[index(indices)] = b[offset:offset + length]} */
     public abstract ByteIndexer put(int[] indices, byte[] b, int offset, int length);
+
+    @Override public double getDouble(int ... indices) { return get(indices); }
 }

@@ -109,4 +109,6 @@ public abstract class CharIndexer extends Indexer {
     public CharIndexer put(int[] indices, char ... c) { return put(indices, c, 0, c.length); }
     /** @return {@code this} where {@code array/buffer[index(indices)] = c[offset:offset + length]} */
     public abstract CharIndexer put(int[] indices, char[] c, int offset, int length);
+
+    @Override public double getDouble(int ... indices) { return get(indices); }
 }

@@ -97,6 +97,9 @@ public class IndexerTest {
             fail("IndexOutOfBoundsException should have been thrown.");
         } catch (IndexOutOfBoundsException e) { }
 
+        System.out.println("array" + arrayIndexer);
+        System.out.println("buffer" + bufferIndexer);
+        System.out.println();
         for (int i = 0; i < size; i++) {
             assertEquals(i + 2, ptr.position(i).get() & 0xFF);
         }
@@ -150,6 +153,9 @@ public class IndexerTest {
             fail("IndexOutOfBoundsException should have been thrown.");
         } catch (IndexOutOfBoundsException e) { }
 
+        System.out.println("array" + arrayIndexer);
+        System.out.println("buffer" + bufferIndexer);
+        System.out.println();
         for (int i = 0; i < size; i++) {
             assertEquals(3 * i, ptr.position(i).get());
         }
@@ -203,6 +209,9 @@ public class IndexerTest {
             fail("IndexOutOfBoundsException should have been thrown.");
         } catch (IndexOutOfBoundsException e) { }
 
+        System.out.println("array" + arrayIndexer);
+        System.out.println("buffer" + bufferIndexer);
+        System.out.println();
         for (int i = 0; i < size; i++) {
             assertEquals(3 * i, ptr.position(i).get());
         }
@@ -256,6 +265,9 @@ public class IndexerTest {
             fail("IndexOutOfBoundsException should have been thrown.");
         } catch (IndexOutOfBoundsException e) { }
 
+        System.out.println("array" + arrayIndexer);
+        System.out.println("buffer" + bufferIndexer);
+        System.out.println();
         for (int i = 0; i < size; i++) {
             assertEquals(3 * i, ptr.position(i).get());
         }
@@ -309,6 +321,9 @@ public class IndexerTest {
             fail("IndexOutOfBoundsException should have been thrown.");
         } catch (IndexOutOfBoundsException e) { }
 
+        System.out.println("array" + arrayIndexer);
+        System.out.println("buffer" + bufferIndexer);
+        System.out.println();
         for (int i = 0; i < size; i++) {
             assertEquals(3 * i, ptr.position(i).get(), 0);
         }
@@ -362,6 +377,9 @@ public class IndexerTest {
             fail("IndexOutOfBoundsException should have been thrown.");
         } catch (IndexOutOfBoundsException e) { }
 
+        System.out.println("array" + arrayIndexer);
+        System.out.println("buffer" + bufferIndexer);
+        System.out.println();
         for (int i = 0; i < size; i++) {
             assertEquals(3 * i, ptr.position(i).get(), 0);
         }
@@ -415,6 +433,9 @@ public class IndexerTest {
             fail("IndexOutOfBoundsException should have been thrown.");
         } catch (IndexOutOfBoundsException e) { }
 
+        System.out.println("array" + arrayIndexer);
+        System.out.println("buffer" + bufferIndexer);
+        System.out.println();
         for (int i = 0; i < size; i++) {
             assertEquals(3 * i, ptr.position(i).get());
         }

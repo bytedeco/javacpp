@@ -109,4 +109,6 @@ public abstract class IntIndexer extends Indexer {
     public IntIndexer put(int[] indices, int ... n) { return put(indices, n, 0, n.length); }
     /** @return {@code this} where {@code array/buffer[index(indices)] = n[offset:offset + length]} */
     public abstract IntIndexer put(int[] indices, int[] n, int offset, int length);
+
+    @Override public double getDouble(int ... indices) { return get(indices); }
 }

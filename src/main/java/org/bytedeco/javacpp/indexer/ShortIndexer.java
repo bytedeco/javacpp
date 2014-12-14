@@ -109,4 +109,6 @@ public abstract class ShortIndexer extends Indexer {
     public ShortIndexer put(int[] indices, short ... s) { return put(indices, s, 0, s.length); }
     /** @return {@code this} where {@code array/buffer[index(indices)] = s[offset:offset + length]} */
     public abstract ShortIndexer put(int[] indices, short[] s, int offset, int length);
+
+    @Override public double getDouble(int ... indices) { return get(indices); }
 }

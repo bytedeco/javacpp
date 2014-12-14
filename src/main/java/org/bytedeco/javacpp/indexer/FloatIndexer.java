@@ -109,4 +109,6 @@ public abstract class FloatIndexer extends Indexer {
     public FloatIndexer put(int[] indices, float ... f) { return put(indices, f, 0, f.length); }
     /** @return {@code this} where {@code array/buffer[index(indices)] = f[offset:offset + length]} */
     public abstract FloatIndexer put(int[] indices, float[] f, int offset, int length);
+
+    @Override public double getDouble(int ... indices) { return get(indices); }
 }
