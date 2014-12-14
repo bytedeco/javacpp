@@ -64,7 +64,7 @@ To produce binary files for Android, you will also have to install:
 
 And similarly to target iOS, you will need to install:
 
- * RoboVM 0.0.x  http://download.robovm.org/
+ * RoboVM 0.0.x or 1.0.x  http://download.robovm.org/
 
 To modify the source code, please note that the project files were created for:
 
@@ -394,7 +394,7 @@ The easiest one to get working is Avian compiled with OpenJDK class libraries, s
 $ /path/to/avian-dynamic -Xbootclasspath/a:javacpp.jar <MainClass>
 ```
 
-However, in the case of Android, we need to do a bit more work. Inside the directory of the project:
+However, in the case of Android, we need to do a bit more work. For the command line build system based on Ant, inside the directory of the project:
 
  1. Copy the `javacpp.jar` file into the `libs/` subdirectory, and
  2. Run this command to produce the `*.so` library files in `libs/armeabi/`:
@@ -403,7 +403,8 @@ $ java -jar libs/javacpp.jar -classpath bin/ -classpath bin/classes/ \
 > -properties android-arm -Dplatform.root=/path/to/android-ndk/ \
 > -Dplatform.compiler=/path/to/arm-linux-androideabi-g++ -d libs/armeabi/
 ```
-To make everything automatic, we may also insert that command into, for example, the Ant `build.xml` file or the Eclipse `.project` file as a [Non-Ant project builder](http://help.eclipse.org/helios/index.jsp?topic=/org.eclipse.platform.doc.user/gettingStarted/qs-96_non_ant_pjs.htm).
+To make everything automatic, we may also insert that command into the `build.xml` file. Alternatively, for integration with Android Studio, we can use the [Maven plugin](http://bytedeco.org/javacpp/apidocs/org/bytedeco/javacpp/tools/BuildMojo.html) with the [build system based on Gradle](http://tools.android.com/tech-docs/new-build-system/user-guide).
+
 
 Similarly for RoboVM, assuming that the compiled classes are in the `classes` subdirectory:
 
