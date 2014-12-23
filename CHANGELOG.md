@@ -1,4 +1,5 @@
 
+### December 23, 2014 version 0.10
  * Fix multiple "platform.preload" or "platform.preloadpath" properties not getting considered by the `Loader`
  * Fix some `Parser` exceptions on valid declarations with template arguments, macro expansions, or overloaded cast operators, and make `Info.javaName` usable in the case of `enum`
  * Disable DocLint, which prevents the build from succeeding on Java 8 ([issue #5](https://github.com/bytedeco/javacpp/issues/5))
