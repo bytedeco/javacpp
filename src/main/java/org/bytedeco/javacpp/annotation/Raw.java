@@ -1,5 +1,6 @@
 package org.bytedeco.javacpp.annotation;
 
+import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -19,7 +20,7 @@ import org.bytedeco.javacpp.tools.Generator;
  *
  * @author Samuel Audet
  */
-@Retention(RetentionPolicy.RUNTIME)
+@Documented @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.PARAMETER})
 public @interface Raw {
     /** If {@code true}, passes the {@code JNIEnv*} as first argument to the native function. */

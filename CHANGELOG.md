@@ -1,4 +1,8 @@
 
+ * Append `@Documented` to annotation types to have them picked up by Javadoc
+ * Fix `friend` functions not getting skipped by the `Parser`
+ * Add `Info` for `__int8`, `__int16`, `__int32`, and `__int64` to `InfoMap.defaults`
+
 ### December 23, 2014 version 0.10
  * Fix multiple "platform.preload" or "platform.preloadpath" properties not getting considered by the `Loader`
  * Fix some `Parser` exceptions on valid declarations with template arguments, macro expansions, or overloaded cast operators, and make `Info.javaName` usable in the case of `enum`

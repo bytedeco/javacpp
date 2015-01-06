@@ -1065,6 +1065,7 @@ public class Parser {
             friend = true;
             tokens.next();
         }
+        int startIndex = tokens.index;
         Type type = type(context);
         Parameters params = parameters(context, 0, false);
         Declarator dcl = new Declarator();
@@ -1102,7 +1103,7 @@ public class Parser {
             }
             dcl.signature = dcl.javaName + params.signature;
         } else {
-            tokens.index = backIndex;
+            tokens.index = startIndex;
             dcl = declarator(context, null, 0, false, 0, false, false);
             type = dcl.type;
         }
@@ -1172,7 +1173,7 @@ public class Parser {
         boolean first = true;
         for (int n = -2; n < Integer.MAX_VALUE; n++) {
             decl = new Declaration();
-            tokens.index = backIndex;
+            tokens.index = startIndex;
             if (type.constructor || type.destructor || type.operator) {
                 type = type(context);
                 params = parameters(context, n / 2, n % 2 != 0);

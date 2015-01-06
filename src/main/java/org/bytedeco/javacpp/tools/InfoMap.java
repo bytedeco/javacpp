@@ -46,24 +46,24 @@ public class InfoMap extends HashMap<String,LinkedList<Info>> {
         .put(new Info("va_list", "FILE", "std::exception", "std::istream", "std::ostream", "std::iostream",
                 "std::ifstream", "std::ofstream", "std::fstream").cast().pointerTypes("Pointer"))
 
-        .put(new Info("int8_t", "jbyte", "signed char")
+        .put(new Info("int8_t", "__int8", "jbyte", "signed char")
             .valueTypes("byte").pointerTypes("BytePointer", "ByteBuffer", "byte[]"))
-        .put(new Info("uint8_t", "char", "unsigned char").cast()
+        .put(new Info("uint8_t", "unsigned __int8", "char", "unsigned char").cast()
             .valueTypes("byte").pointerTypes("BytePointer", "ByteBuffer", "byte[]"))
 
-        .put(new Info("int16_t", "jshort", "short", "signed short", "short int", "signed short int")
+        .put(new Info("int16_t", "__int16", "jshort", "short", "signed short", "short int", "signed short int")
             .valueTypes("short").pointerTypes("ShortPointer", "ShortBuffer", "short[]"))
-        .put(new Info("uint16_t", "unsigned short", "unsigned short int").cast()
+        .put(new Info("uint16_t", "unsigned __int16", "unsigned short", "unsigned short int").cast()
             .valueTypes("short").pointerTypes("ShortPointer", "ShortBuffer", "short[]"))
 
-        .put(new Info("int32_t", "jint", "int", "signed int", "signed")
+        .put(new Info("int32_t", "__int32", "jint", "int", "signed int", "signed")
             .valueTypes("int").pointerTypes("IntPointer", "IntBuffer", "int[]"))
-        .put(new Info("uint32_t", "unsigned int", "unsigned").cast()
+        .put(new Info("uint32_t", "unsigned __int32", "unsigned int", "unsigned").cast()
             .valueTypes("int").pointerTypes("IntPointer", "IntBuffer", "int[]"))
 
         .put(new Info("int64_t", "__int64", "jlong", "long long", "signed long long", "long long int", "signed long long int")
             .valueTypes("long").pointerTypes("LongPointer", "LongBuffer", "long[]"))
-        .put(new Info("uint64_t", "__uint64", "unsigned long long", "unsigned long long int").cast()
+        .put(new Info("uint64_t", "unsigned __int64", "unsigned long long", "unsigned long long int").cast()
             .valueTypes("long").pointerTypes("LongPointer", "LongBuffer", "long[]"))
 
         .put(new Info("long", "signed long", "long int", "signed long int")
