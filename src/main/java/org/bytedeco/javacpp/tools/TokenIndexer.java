@@ -33,9 +33,13 @@ class TokenIndexer {
         this.array = array;
     }
 
+    /** Set to true to disable temporarily the preprocessor. */
     boolean raw = false;
+    /** The set of {@link Info} objects to use during preprocessing. */
     InfoMap infoMap = null;
+    /** The token of array, modified by the preprocessor as we go. */
     Token[] array = null;
+    /** The current index, in the array of tokens. Used by {@link #get(int)} and {@link #next()}. */
     int index = 0;
 
     void filter(int index) {
@@ -50,6 +54,8 @@ class TokenIndexer {
             Info info = null;
             boolean define = true, defined = false;
             while (index < array.length) {
+                String spacing = array[index].spacing;
+                int n = spacing.lastIndexOf('\n') + 1;
                 Token keyword = null;
                 // pick up #if, #ifdef, #ifndef, #elif, #else, and #endif directives
                 if (array[index].match('#')) {
@@ -65,18 +71,25 @@ class TokenIndexer {
                 }
                 // conditionally fill up the new array of tokens
                 if (keyword != null) {
-                    tokens.add(array[index++]);
-                    tokens.add(array[index++]);
+                    index += 2;
+
+                    // keep the directive as comment
+                    Token comment = new Token();
+                    comment.type = Token.COMMENT;
+                    comment.spacing = spacing.substring(0, n);
+                    comment.value = "// " + spacing.substring(n) + "#" + keyword.spacing + keyword;
+                    tokens.add(comment);
+
                     if (keyword.match(Token.IF, Token.IFDEF, Token.IFNDEF, Token.ELIF)) {
                         String value = "";
-                        while (index < array.length) {
+                        for ( ; index < array.length; index++) {
                             if (array[index].spacing.indexOf('\n') >= 0) {
                                 break;
                             }
                             if (!array[index].match(Token.COMMENT)) {
                                 value += array[index].spacing + array[index];
                             }
-                            tokens.add(array[index++]);
+                            comment.value += array[index].match("\n") ? "\n// " : array[index].spacing + array[index];
                         }
                         define = info == null || !defined;
                         info = infoMap.getFirst(value);
@@ -102,8 +115,8 @@ class TokenIndexer {
                 defined = define || defined;
             }
             // copy the rest of the tokens from this point on
-            while (index < array.length) {
-                tokens.add(array[index++]);
+            for ( ; index < array.length; index++) {
+                tokens.add(array[index]);
             }
             array = tokens.toArray(new Token[tokens.size()]);
         }
@@ -212,26 +225,29 @@ class TokenIndexer {
     }
 
     int preprocess(int index, int count) {
-        while (index < array.length) {
+        for ( ; index < array.length; index++) {
             filter(index); // conditionals
             expand(index); // macros
+            // skip comments
             if (!array[index].match(Token.COMMENT) && --count < 0) {
                 break;
             }
-            index++;
         }
         filter(index); // conditionals
         expand(index); // macros
         return index;
     }
 
+    /** Returns {@code get(0)}. */
     Token get() {
         return get(0);
     }
+    /** Returns {@code array[index + i]}. After preprocessing if {@code raw == false}. */
     Token get(int i) {
         int k = raw ? index + i : preprocess(index, i);
         return k < array.length ? array[k] : Token.EOF;
     }
+    /** Increments {@code index} and returns {@code array[index]}. After preprocessing if {@code raw == false}. */
     Token next() {
         index = raw ? index + 1 : preprocess(index, 1);
         return index < array.length ? array[index] : Token.EOF;

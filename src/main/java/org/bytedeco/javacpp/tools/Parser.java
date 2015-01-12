@@ -879,6 +879,8 @@ public class Parser {
         return dcl;
     }
 
+    /** Converts Doxygen-like documentation comments placed before identifiers to Javadoc-style.
+     *  Also leaves as is non-documentation comments. */
     String commentBefore() throws ParserException {
         String comment = "";
         tokens.raw = true;
@@ -898,16 +900,21 @@ public class Parser {
                 } else if (!s.startsWith("///")) {
                     s = "/**" + s.substring(3);
                 }
+            } else if (closeComment && !comment.endsWith("*/")) {
+                closeComment = false;
+                comment += " */";
             }
             comment += token.spacing + s;
         }
         if (closeComment && !comment.endsWith("*/")) {
+            closeComment = false;
             comment += " */";
         }
         tokens.raw = false;
         return comment;
     }
 
+    /** Converts Doxygen-like documentation comments placed after identifiers to Javadoc-style. */
     String commentAfter() throws ParserException {
         String comment = "";
         tokens.raw = true;
@@ -917,6 +924,8 @@ public class Parser {
         boolean closeComment = false;
         for (Token token = tokens.get(); token.match(Token.COMMENT); token = tokens.next()) {
             String s = token.value;
+            String spacing = token.spacing;
+            int n = spacing.lastIndexOf('\n') + 1;
             if (s.startsWith("/**") || s.startsWith("/*!") || s.startsWith("///") || s.startsWith("//!")) {
                 if (s.charAt(3) != '<') {
                     continue;
@@ -927,7 +936,7 @@ public class Parser {
                 } else {
                     s = "/**" + s.substring(4);
                 }
-                comment += s;
+                comment += spacing.substring(0, n) + s;
             }
         }
         if (closeComment && !comment.endsWith("*/")) {
@@ -1890,7 +1899,6 @@ public class Parser {
                 decl.text += d.text;
             }
         }
-        decl.text += commentBefore(); // for comments at the end without declarations
         if (!anonymous) {
             decl.text += tokens.get().spacing + '}';
         }
@@ -1942,16 +1950,16 @@ public class Parser {
             return false;
         }
         for (Token token = tokens.next(); !token.match(Token.EOF, '}'); token = tokens.get()) {
+            String comment = commentBefore();
             if (macro(context, declList)) {
                 Declaration macroDecl = declList.removeLast();
-                extraText += macroDecl.text;
+                extraText += comment + macroDecl.text;
                 if (separator.equals(",") && !macroDecl.text.trim().startsWith("//")) {
                     separator = ";";
                     enumPrefix = "\npublic static final int";
                 }
                 continue;
             }
-            String comment = commentBefore();
             Token enumerator = tokens.get();
             String cppName = enumerator.value;
             String javaName = cppName;
@@ -2169,6 +2177,14 @@ public class Parser {
                 }
             } while (declList.infoIterator != null && declList.infoIterator.hasNext());
         }
+
+        // for comments at the end without declarations
+        String comment = commentBefore();
+        Declaration decl = new Declaration();
+        if (comment != null && comment.length() > 0) {
+            decl.text = comment;
+            declList.add(decl);
+        }
     }
 
     void parse(String outputFilename, Context context, String[] includePath, String ... includes) throws IOException, ParserException {
@@ -2250,10 +2266,6 @@ public class Parser {
         declarations(context, declList);
         for (Declaration d : declList) {
             out.append(d.text);
-        }
-        String comment = commentBefore();
-        if (comment != null) {
-            out.append(comment);
         }
         out.append("\n}\n").close();
     }

@@ -1,4 +1,5 @@
 
+ * Adjust `TokenIndexer` and `Parser` to handle `#if`, `#ifdef`, `#ifndef`, `#elif`, `#else`, and `#endif` preprocessor directives more appropriately, even when placed in the middle of declarations
  * Append `@Documented` to annotation types to have them picked up by Javadoc
  * Fix `friend` functions not getting skipped by the `Parser`
  * Add `Info` for `__int8`, `__int16`, `__int32`, and `__int64` to `InfoMap.defaults`
