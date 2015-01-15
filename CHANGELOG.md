@@ -1,4 +1,5 @@
 
+ * Fix `@Virtual` callback functions defined inside a `@Namespace`
  * Adjust `TokenIndexer` and `Parser` to handle `#if`, `#ifdef`, `#ifndef`, `#elif`, `#else`, and `#endif` preprocessor directives more appropriately, even when placed in the middle of declarations
  * Append `@Documented` to annotation types to have them picked up by Javadoc
  * Fix `friend` functions not getting skipped by the `Parser`
