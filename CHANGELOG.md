@@ -1,4 +1,5 @@
 
+ * In addition to direct NIO buffers, also accept as function arguments non-direct ones backed by arrays ([issue bytedeco/javacpp-presets#36](https://github.com/bytedeco/javacpp-presets/issues/36))
  * Fix `@Virtual` callback functions defined inside a `@Namespace`
  * Adjust `TokenIndexer` and `Parser` to handle `#if`, `#ifdef`, `#ifndef`, `#elif`, `#else`, and `#endif` preprocessor directives more appropriately, even when placed in the middle of declarations
  * Append `@Documented` to annotation types to have them picked up by Javadoc

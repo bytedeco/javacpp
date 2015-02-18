@@ -334,6 +334,7 @@ public class Generator implements Closeable {
         out.println("static jfieldID JavaCPP_limitFID = NULL;");
         out.println("static jfieldID JavaCPP_capacityFID = NULL;");
         out.println("static jmethodID JavaCPP_initMID = NULL;");
+        out.println("static jmethodID JavaCPP_arrayMID = NULL;");
         out.println("static jmethodID JavaCPP_toStringMID = NULL;");
         out.println();
         out.println("static inline void JavaCPP_log(const char* fmt, ...) {");
@@ -805,6 +806,11 @@ public class Generator implements Closeable {
         out.println("    if (JavaCPP_initMID == NULL) {");
         out.println("        return JNI_ERR;");
         out.println("    }");
+        out.println("    JavaCPP_arrayMID = JavaCPP_getMethodID(env, " +
+                jclasses.index(Buffer.class) + ", \"array\", \"()Ljava/lang/Object;\");");
+        out.println("    if (JavaCPP_arrayMID == NULL) {");
+        out.println("        return JNI_ERR;");
+        out.println("    }");
         out.println("    JavaCPP_toStringMID = JavaCPP_getMethodID(env, " +
                 jclasses.index(Object.class) + ", \"toString\", \"()Ljava/lang/String;\");");
         out.println("    if (JavaCPP_toStringMID == NULL) {");
@@ -1099,6 +1105,24 @@ public class Generator implements Closeable {
                     if (adapterInfo != null || prevAdapterInfo != null) {
                         out.println("    jint size" + j +
                                 " = arg" + j + " == NULL ? 0 : env->GetDirectBufferCapacity(arg" + j + ");");
+                    }
+                    if (methodInfo.parameterTypes[j] != Buffer.class) {
+                        // given the component type, we can also fetch the array of non-direct buffers
+                        String S = methodInfo.parameterTypes[j].getSimpleName();
+                        S = S.substring(0, S.length() - 6);
+                        String s = Character.toLowerCase(S.charAt(0)) + S.substring(1);
+                        out.println("    j" + s + "Array arr" + j + " = NULL;");
+                        out.println("    if (arg" + j + " != NULL && ptr" + j + " == NULL) {");
+                        out.println("        arr" + j + " = (j" + s + "Array)env->CallObjectMethod(arg" + j + ", JavaCPP_arrayMID);");
+                        out.println("        if (env->ExceptionOccurred() != NULL) {");
+                        out.println("            env->ExceptionClear();");
+                        out.println("        } else {");
+                        out.println("            ptr" + j + " = arr" + j + " == NULL ? NULL : env->Get" + S + "ArrayElements(arr" + j + ", NULL);");
+                        if (adapterInfo != null || prevAdapterInfo != null) {
+                            out.println("            size" + j + " = env->GetArrayLength(arr" + j + ");");
+                        }
+                        out.println("        }");
+                        out.println("    }");
                     }
                 } else {
                     out.println("arg" + j + ";");
@@ -1607,6 +1631,13 @@ public class Generator implements Closeable {
                     String S = Character.toUpperCase(s.charAt(0)) + s.substring(1);
                     out.println("env->Release" + S + "ArrayElements(arg" + j + ", (j" + s + "*)ptr" + j + ", 0);");
                 }
+            } else if (Buffer.class.isAssignableFrom(methodInfo.parameterTypes[j])
+                    && methodInfo.parameterTypes[j] != Buffer.class) {
+                out.print("    if (arr" + j + " != NULL) ");
+                String S = methodInfo.parameterTypes[j].getSimpleName();
+                S = S.substring(0, S.length() - 6);
+                String s = Character.toLowerCase(S.charAt(0)) + S.substring(1);
+                out.println("env->Release" + S + "ArrayElements(arr" + j + ", (j" + s + "*)ptr" + j + ", 0);");
             }
         }
     }
