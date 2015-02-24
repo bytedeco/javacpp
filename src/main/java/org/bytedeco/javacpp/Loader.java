@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -569,11 +570,13 @@ public class Loader {
                         LinkedList<String> command = new LinkedList<String>();
                         command.add(System.getProperty("java.home") + "/bin/java");
                         command.add("-classpath");
-                        command.add(System.getProperty("java.class.path"));
+                        command.add((new File(Loader.class.getProtectionDomain().getCodeSource().getLocation().toURI())).toString());
                         command.add(Loader.class.getName());
                         command.add(tempDir.getAbsolutePath());
                         new ProcessBuilder(command).start();
                     } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    } catch (URISyntaxException e) {
                         throw new RuntimeException(e);
                     }
                 }
