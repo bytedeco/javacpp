@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Samuel Audet
+ * Copyright (C) 2014, 2015 Samuel Audet
  *
  * This file is part of JavaCPP.
  *
@@ -29,6 +29,8 @@ import org.bytedeco.javacpp.indexer.FloatIndexer;
 import org.bytedeco.javacpp.indexer.IntIndexer;
 import org.bytedeco.javacpp.indexer.LongIndexer;
 import org.bytedeco.javacpp.indexer.ShortIndexer;
+import org.bytedeco.javacpp.indexer.UByteIndexer;
+import org.bytedeco.javacpp.indexer.UShortIndexer;
 import org.bytedeco.javacpp.tools.Builder;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -417,6 +419,118 @@ public class IndexerTest {
                         assertEquals(n, bufferIndexer.get(index));
                         arrayIndexer.put(index, (char)(2 * n));
                         bufferIndexer.put(index, (char)(3 * n));
+                        n++;
+                    }
+                }
+            }
+        }
+
+        try {
+            arrayIndexer.get(size);
+            fail("IndexOutOfBoundsException should have been thrown.");
+        } catch (IndexOutOfBoundsException e) { }
+
+        try {
+            bufferIndexer.get(size);
+            fail("IndexOutOfBoundsException should have been thrown.");
+        } catch (IndexOutOfBoundsException e) { }
+
+        System.out.println("array" + arrayIndexer);
+        System.out.println("buffer" + bufferIndexer);
+        System.out.println();
+        for (int i = 0; i < size; i++) {
+            assertEquals(3 * i, ptr.position(i).get());
+        }
+        arrayIndexer.release();
+        for (int i = 0; i < size; i++) {
+            assertEquals(2 * i, ptr.position(i).get());
+        }
+    }
+
+    @Test public void testUByteIndexer() {
+        System.out.println("UByteIndexer");
+        int size = 7 * 5 * 3 * 2;
+        int[] sizes = { 7, 5, 3, 2 };
+        int[] strides = { 5 * 3 * 2, 3 * 2, 2, 1 };
+        final BytePointer ptr = new BytePointer(size);
+        for (int i = 0; i < size; i++) {
+            ptr.position(i).put((byte)i);
+        }
+        UByteIndexer arrayIndexer = UByteIndexer.create(ptr.position(0), sizes, strides, false);
+        UByteIndexer bufferIndexer = UByteIndexer.create(ptr.position(0), sizes, strides, true);
+
+        int n = 0;
+        for (int i = 0; i < sizes[0]; i++) {
+            assertEquals(n, arrayIndexer.get(i * strides[0]));
+            assertEquals(n, bufferIndexer.get(i * strides[0]));
+            for (int j = 0; j < sizes[1]; j++) {
+                assertEquals(n, arrayIndexer.get(i, j * strides[1]));
+                assertEquals(n, bufferIndexer.get(i, j * strides[1]));
+                for (int k = 0; k < sizes[2]; k++) {
+                    assertEquals(n, arrayIndexer.get(i, j, k * strides[2]));
+                    assertEquals(n, bufferIndexer.get(i, j, k * strides[2]));
+                    for (int m = 0; m < sizes[3]; m++) {
+                        int[] index = { i, j, k, m  * strides[3] };
+                        assertEquals(n, arrayIndexer.get(index));
+                        assertEquals(n, bufferIndexer.get(index));
+                        arrayIndexer.put(index, n + 1);
+                        bufferIndexer.put(index, n + 2);
+                        n++;
+                    }
+                }
+            }
+        }
+
+        try {
+            arrayIndexer.get(size);
+            fail("IndexOutOfBoundsException should have been thrown.");
+        } catch (IndexOutOfBoundsException e) { }
+
+        try {
+            bufferIndexer.get(size);
+            fail("IndexOutOfBoundsException should have been thrown.");
+        } catch (IndexOutOfBoundsException e) { }
+
+        System.out.println("array" + arrayIndexer);
+        System.out.println("buffer" + bufferIndexer);
+        System.out.println();
+        for (int i = 0; i < size; i++) {
+            assertEquals(i + 2, ptr.position(i).get() & 0xFF);
+        }
+        arrayIndexer.release();
+        for (int i = 0; i < size; i++) {
+            assertEquals(i + 1, ptr.position(i).get() & 0xFF);
+        }
+    }
+
+    @Test public void testUShortIndexer() {
+        System.out.println("UShortIndexer");
+        int size = 7 * 5 * 3 * 2;
+        int[] sizes = { 7, 5, 3, 2 };
+        int[] strides = { 5 * 3 * 2, 3 * 2, 2, 1 };
+        final ShortPointer ptr = new ShortPointer(size);
+        for (int i = 0; i < size; i++) {
+            ptr.position(i).put((short)i);
+        }
+        UShortIndexer arrayIndexer = UShortIndexer.create(ptr.position(0), sizes, strides, false);
+        UShortIndexer bufferIndexer = UShortIndexer.create(ptr.position(0), sizes, strides, true);
+
+        int n = 0;
+        for (int i = 0; i < sizes[0]; i++) {
+            assertEquals(n, arrayIndexer.get(i * strides[0]));
+            assertEquals(n, bufferIndexer.get(i * strides[0]));
+            for (int j = 0; j < sizes[1]; j++) {
+                assertEquals(n, arrayIndexer.get(i, j * strides[1]));
+                assertEquals(n, bufferIndexer.get(i, j * strides[1]));
+                for (int k = 0; k < sizes[2]; k++) {
+                    assertEquals(n, arrayIndexer.get(i, j, k * strides[2]));
+                    assertEquals(n, bufferIndexer.get(i, j, k * strides[2]));
+                    for (int m = 0; m < sizes[3]; m++) {
+                        int[] index = { i, j, k, m  * strides[3] };
+                        assertEquals(n, arrayIndexer.get(index));
+                        assertEquals(n, bufferIndexer.get(index));
+                        arrayIndexer.put(index, 2 * n);
+                        bufferIndexer.put(index, 3 * n);
                         n++;
                     }
                 }

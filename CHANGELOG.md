@@ -1,4 +1,6 @@
 
+ * Provide `UByteIndexer` and `UShortIndexer`, treating array and buffer data as unsigned integers, for ease of use
+ * Clean up Windows `java.io.tmpdir` even when program messes with `java.class.path` ([issue #12](https://github.com/bytedeco/javacpp/issues/12))
  * In addition to direct NIO buffers, also accept as function arguments non-direct ones backed by arrays ([issue bytedeco/javacpp-presets#36](https://github.com/bytedeco/javacpp-presets/issues/36))
  * Fix `@Virtual` callback functions defined inside a `@Namespace`
  * Adjust `TokenIndexer` and `Parser` to handle `#if`, `#ifdef`, `#ifndef`, `#elif`, `#else`, and `#endif` preprocessor directives more appropriately, even when placed in the middle of declarations
