@@ -257,6 +257,7 @@ public class Generator implements Closeable {
         out.println("#include <stdlib.h>");
         out.println("#include <string.h>");
         out.println("#include <exception>");
+        out.println("#include <memory>");
         out.println("#include <new>");
         out.println();
         out.println("#define jlong_to_ptr(a) ((void*)(uintptr_t)(a))");
@@ -544,6 +545,36 @@ public class Generator implements Closeable {
             out.println("    std::string str2;");
             out.println("    std::string& str;");
             out.println("};");
+            out.println();
+            out.println("#ifdef SHARED_PTR_NAMESPACE");
+            out.println("template<class T> class SharedPtrAdapter {");
+            out.println("public:");
+            out.println("    SharedPtrAdapter(const T* ptr, int size) : ptr((T*)ptr), size(size), sharedPtr2((T*)ptr), sharedPtr(sharedPtr2) { }");
+            out.println("    SharedPtrAdapter(const SHARED_PTR_NAMESPACE::shared_ptr<T>& sharedPtr) : ptr(0), size(0), sharedPtr2(sharedPtr), sharedPtr(sharedPtr2) { }");
+            out.println("    SharedPtrAdapter(      SHARED_PTR_NAMESPACE::shared_ptr<T>& sharedPtr) : ptr(0), size(0), sharedPtr(sharedPtr) { }");
+            out.println("    void assign(T* ptr, int size) {");
+            out.println("        this->ptr = ptr;");
+            out.println("        this->size = size;");
+            out.println("        this->sharedPtr = ptr;");
+            out.println("    }");
+            out.println("    static void deallocate(void* ptr) { SHARED_PTR_NAMESPACE::shared_ptr<T> deallocator((T*)ptr); }");
+            out.println("    operator T*() {");
+            out.println("        // take ownership, if unique");
+            out.println("        ptr = sharedPtr.get();");
+            out.println("        if (sharedPtr.unique()) {");
+            out.println("            memset(&sharedPtr, 0, sizeof(SHARED_PTR_NAMESPACE::shared_ptr<T>));");
+            out.println("        }");
+            out.println("        return ptr;");
+            out.println("    }");
+            out.println("    operator                             const T*() { return sharedPtr.get(); }");
+            out.println("    operator SHARED_PTR_NAMESPACE::shared_ptr<T>&() { return sharedPtr; }");
+            out.println("    operator SHARED_PTR_NAMESPACE::shared_ptr<T>*() { return ptr ? &sharedPtr : 0; }");
+            out.println("    T* ptr;");
+            out.println("    int size;");
+            out.println("    SHARED_PTR_NAMESPACE::shared_ptr<T> sharedPtr2;");
+            out.println("    SHARED_PTR_NAMESPACE::shared_ptr<T>& sharedPtr;");
+            out.println("};");
+            out.println("#endif");
             out.println();
         }
         if (!functions.isEmpty() || !virtualFunctions.isEmpty()) {
@@ -1448,7 +1479,7 @@ public class Generator implements Closeable {
                 (methodInfo.returnType.isArray() &&
                  methodInfo.returnType.getComponentType().isPrimitive()) ||
                 Buffer.class.isAssignableFrom(methodInfo.returnType))) {
-            if (returnBy instanceof ByVal) {
+            if (returnBy instanceof ByVal && adapterInfo == null) {
                 suffix = ")" + suffix;
             } else if (returnBy instanceof ByPtrPtr) {
                 out.println(suffix);

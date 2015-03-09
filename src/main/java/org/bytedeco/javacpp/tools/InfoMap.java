@@ -80,6 +80,7 @@ public class InfoMap extends HashMap<String,LinkedList<Info>> {
         .put(new Info("bool", "jboolean").cast().valueTypes("boolean").pointerTypes("BoolPointer"))
         .put(new Info("wchar_t", "WCHAR").cast().valueTypes("char").pointerTypes("CharPointer"))
         .put(new Info("const char").valueTypes("byte").pointerTypes("@Cast(\"const char*\") BytePointer", "String"))
+        .put(new Info("boost::shared_ptr", "std::shared_ptr").annotations("@SharedPtr"))
         .put(new Info("std::string").annotations("@StdString").valueTypes("BytePointer", "String"))
         .put(new Info("std::vector").annotations("@StdVector"))
 

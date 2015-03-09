@@ -127,14 +127,14 @@ public class Parser {
                 if (valueType.cppName.startsWith("std::pair")) {
                     firstType = valueType.arguments[0];
                     secondType = valueType.arguments[1];
-                    if (firstType.annotations == null || firstType.annotations.length() == 0) {
+                    if (!firstType.pointer && (firstType.annotations == null || firstType.annotations.length() == 0)) {
                         firstType.annotations = "@ByRef ";
                     }
-                    if (secondType.annotations == null || secondType.annotations.length() == 0) {
+                    if (!secondType.pointer && (secondType.annotations == null || secondType.annotations.length() == 0)) {
                         secondType.annotations = "@ByRef ";
                     }
                 }
-                if (valueType.annotations == null || valueType.annotations.length() == 0) {
+                if (!valueType.pointer && (valueType.annotations == null || valueType.annotations.length() == 0)) {
                     valueType.annotations = "@ByRef ";
                 }
                 String arrayBrackets = "";
@@ -2067,9 +2067,13 @@ public class Parser {
             return false;
         }
         Declaration decl = new Declaration();
+        String spacing = tokens.get().spacing;
         String name = tokens.next().expect(Token.IDENTIFIER).value;
         tokens.next().expect('{');
         tokens.next();
+        if (tokens.get().spacing.indexOf('\n') < 0) {
+            tokens.get().spacing = spacing;
+        }
 
         context = new Context(context);
         context.namespace = context.namespace != null ? context.namespace + "::" + name : name;

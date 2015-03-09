@@ -52,6 +52,9 @@ class Context {
     String[] qualify(String cppName) {
         if (cppName == null || cppName.length() == 0) {
             return new String[0];
+        } else if (cppName.startsWith("::")) {
+            // already in global namespace, so strip leading operator
+            return new String[] { cppName.substring(2) };
         }
         ArrayList<String> names = new ArrayList<String>();
         String ns = namespace != null ? namespace : "";
