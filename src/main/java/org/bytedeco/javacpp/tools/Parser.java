@@ -27,7 +27,9 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Properties;
 import org.bytedeco.javacpp.ClassProperties;
@@ -120,7 +122,9 @@ public class Parser {
                     indexType.javaName = "long";
                     valueType = containerType.arguments[0];
                 }
-                while (valueType.cppName.startsWith(containerName)) {
+                while (valueType.cppName.startsWith(containerName)
+                        && leafInfoMap.get(valueType.cppName, false).size() == 0) {
+                    // increase dimension, unless the user has provided info for the intermediate type
                     dim++;
                     valueType = valueType.arguments[0];
                 }
@@ -2191,87 +2195,58 @@ public class Parser {
         }
     }
 
-    void parse(String outputFilename, Context context, String[] includePath, String ... includes) throws IOException, ParserException {
-        parse(new File(outputFilename), context, includePath, includes);
-    }
-    void parse(File outputFile, Context context, String[] includePath, String ... includes) throws IOException, ParserException {
+    void parse(Context context, DeclarationList declList, String[] includePath, String include) throws IOException, ParserException {
         ArrayList<Token> tokenList = new ArrayList<Token>();
-        for (String include : includes) {
-            File file = null;
-            String filename = include;
-            if (filename.startsWith("<") && filename.endsWith(">")) {
-                filename = filename.substring(1, filename.length() - 1);
-            } else {
-                File f = new File(filename);
+        File file = null;
+        String filename = include;
+        if (filename.startsWith("<") && filename.endsWith(">")) {
+            filename = filename.substring(1, filename.length() - 1);
+        } else {
+            File f = new File(filename);
+            if (f.exists()) {
+                file = f;
+            }
+        }
+        if (file == null && includePath != null) {
+            for (String path : includePath) {
+                File f = new File(path, filename);
                 if (f.exists()) {
                     file = f;
+                    break;
                 }
             }
-            if (file == null && includePath != null) {
-                for (String path : includePath) {
-                    File f = new File(path, filename);
-                    if (f.exists()) {
-                        file = f;
-                        break;
-                    }
-                }
+        }
+        if (file == null) {
+            file = new File(filename);
+        }
+        Info info = infoMap.getFirst(file.getName());
+        if (info != null && info.skip) {
+            return;
+        } else if (!file.exists()) {
+            throw new FileNotFoundException("Could not parse \"" + file + "\": File does not exist");
+        }
+        logger.info("Parsing " + file);
+        Token token = new Token();
+        token.type = Token.COMMENT;
+        token.value = "\n// Parsed from " + include + "\n\n";
+        tokenList.add(token);
+        Tokenizer tokenizer = new Tokenizer(file);
+        while (!(token = tokenizer.nextToken()).isEmpty()) {
+            if (token.type == -1) {
+                token.type = Token.COMMENT;
             }
-            if (file == null) {
-                file = new File(filename);
-            }
-            Info info = infoMap.getFirst(file.getName());
-            if (info != null && info.skip) {
-                continue;
-            } else if (!file.exists()) {
-                throw new FileNotFoundException("Could not parse \"" + file + "\": File does not exist");
-            }
-            logger.info("Parsing " + file);
-            Token token = new Token();
-            token.type = Token.COMMENT;
-            token.value = "\n// Parsed from " + include + "\n\n";
-            tokenList.add(token);
-            Tokenizer tokenizer = new Tokenizer(file);
-            while (!(token = tokenizer.nextToken()).isEmpty()) {
-                if (token.type == -1) {
-                    token.type = Token.COMMENT;
-                }
-                tokenList.add(token);
-            }
-            if (lineSeparator == null) {
-                lineSeparator = tokenizer.lineSeparator;
-            }
-            tokenizer.close();
-            token = new Token();
-            token.type = Token.COMMENT;
-            token.spacing = "\n";
             tokenList.add(token);
         }
+        if (lineSeparator == null) {
+            lineSeparator = tokenizer.lineSeparator;
+        }
+        tokenizer.close();
+        token = new Token();
+        token.type = Token.COMMENT;
+        token.spacing = "\n";
+        tokenList.add(token);
         tokens = new TokenIndexer(infoMap, tokenList.toArray(new Token[tokenList.size()]));
-
-        final String newline = lineSeparator != null ? lineSeparator : "\n";
-        Writer out = outputFile != null ? new FileWriter(outputFile) {
-            @Override public Writer append(CharSequence text) throws IOException {
-                return super.append(((String)text).replace("\n", newline).replace("\\u", "\\u005Cu"));
-            }} : new Writer() {
-            @Override public void write(char[] cbuf, int off, int len) { }
-            @Override public void flush() { }
-            @Override public void close() { }
-        };
-        LinkedList<Info> infoList = leafInfoMap.get(null);
-        for (Info info : infoList) {
-            if (info.javaText != null && !info.javaText.startsWith("import")) {
-                out.append(info.javaText + "\n");
-            }
-        }
-        out.append("    static { Loader.load(); }\n");
-
-        DeclarationList declList = new DeclarationList();
-        containers(context, declList);
         declarations(context, declList);
-        for (Declaration d : declList) {
-            out.append(d.text);
-        }
-        out.append("\n}\n").close();
     }
 
     public File parse(String outputDirectory, String[] classPath, Class cls) throws IOException, ParserException {
@@ -2327,9 +2302,9 @@ public class Parser {
                 text += info.javaText + "\n";
             }
         }
-        text += "import java.nio.*;\n" +
-                "import org.bytedeco.javacpp.*;\n" +
-                "import org.bytedeco.javacpp.annotation.*;\n\n";
+        text += "import java.nio.*;\n"
+             +  "import org.bytedeco.javacpp.*;\n"
+             +  "import org.bytedeco.javacpp.annotation.*;\n\n";
         for (String s : allTargets) {
             if (!target.equals(s)) {
                 text += "import static " + s + ".*;\n";
@@ -2339,8 +2314,8 @@ public class Parser {
             text += "\n";
         }
         text += "public class " + target.substring(n + 1) + " extends "
-             + (clsHelpers.size() > 0 ? clsHelpers.getFirst() : cls.getCanonicalName()) + " {";
-        leafInfoMap.putFirst(new Info().javaText(text));
+             + (clsHelpers.size() > 0 ? clsHelpers.getFirst() : cls.getCanonicalName()) + " {\n"
+             + "    static { Loader.load(); }\n";
 
         String targetPath = target.replace('.', File.separatorChar);
         File targetFile = new File(outputDirectory, targetPath + ".java");
@@ -2357,12 +2332,35 @@ public class Parser {
         LinkedList<String> paths = allProperties.get("platform.includepath");
         String[] includePaths = paths.toArray(new String[paths.size() + includePath.length]);
         System.arraycopy(includePath, 0, includePaths, paths.size(), includePath.length);
+        DeclarationList declList = new DeclarationList();
         for (String include : allIncludes) {
             if (!clsIncludes.contains(include)) {
-                parse((File)null, context, includePaths, include);
+                parse(context, declList, includePaths, include);
             }
         }
-        parse(targetFile, context, includePaths, clsIncludes.toArray(new String[clsIncludes.size()]));
+        declList = new DeclarationList(declList);
+        containers(context, declList);
+        for (String include : clsIncludes) {
+            parse(context, declList, includePaths, include);
+        }
+
+        final String newline = lineSeparator != null ? lineSeparator : "\n";
+        Writer out = new FileWriter(targetFile) {
+            @Override public Writer append(CharSequence text) throws IOException {
+                return super.append(((String)text).replace("\n", newline).replace("\\u", "\\u005Cu"));
+            }
+        };
+        out.append(text);
+        for (Info info : infoList) {
+            if (info.javaText != null && !info.javaText.startsWith("import")) {
+                out.append(info.javaText + "\n");
+            }
+        }
+        for (Declaration d : declList) {
+            out.append(d.text);
+        }
+        out.append("\n}\n").close();
+
         return targetFile;
     }
 }

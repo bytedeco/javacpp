@@ -34,6 +34,12 @@ class DeclarationList extends LinkedList<Declaration> {
     TemplateMap templateMap = null;
     ListIterator<Info> infoIterator = null;
     String spacing = null;
+    DeclarationList inherited = null;
+
+    DeclarationList() { }
+    DeclarationList(DeclarationList inherited) {
+        this.inherited = inherited;
+    }
 
     String rescan(String lines) {
         if (spacing == null) {
@@ -115,6 +121,17 @@ class DeclarationList extends LinkedList<Declaration> {
                         it.remove();
                     } else {
                         found = true;
+                    }
+                }
+            }
+            if (inherited != null) {
+                it = inherited.listIterator();
+                while (it.hasNext()) {
+                    Declaration d = it.next();
+                    if (d.signature.length() > 0 && d.signature.equals(decl.signature) && !d.incomplete && decl.incomplete) {
+                        // suppress forward declaration if they are found complete in inherited declarations
+                        found = true;
+                        break;
                     }
                 }
             }

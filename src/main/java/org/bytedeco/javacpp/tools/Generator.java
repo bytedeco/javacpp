@@ -561,7 +561,7 @@ public class Generator implements Closeable {
             out.println("    operator T*() {");
             out.println("        // take ownership, if unique");
             out.println("        ptr = sharedPtr.get();");
-            out.println("        if (sharedPtr.unique()) {");
+            out.println("        if (sharedPtr.unique() && &sharedPtr == &sharedPtr2) {");
             out.println("            memset(&sharedPtr, 0, sizeof(SHARED_PTR_NAMESPACE::shared_ptr<T>));");
             out.println("        }");
             out.println("        return ptr;");
