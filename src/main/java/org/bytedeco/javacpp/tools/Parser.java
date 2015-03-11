@@ -1824,8 +1824,9 @@ public class Parser {
             ctx.namespace = type.cppName;
             ctx.group = type;
         }
-        if (info != null && info.virtualize) {
-            ctx.virtualize = true;
+        Info baseInfo = infoMap.getFirst(base.cppName);
+        if ((info != null && info.virtualize) || (baseInfo != null && baseInfo.virtualize)) {
+            ctx.virtualize = info.virtualize = true;
         }
 
         DeclarationList declList2 = new DeclarationList();
@@ -1840,13 +1841,15 @@ public class Parser {
             declarations(ctx, declList2);
         }
         String modifiers = "public static ";
-        boolean implicitConstructor = true, defaultConstructor = false, intConstructor = false, abstractClass = false, haveVariables = false;
+        boolean implicitConstructor = true, defaultConstructor = false, intConstructor = false,
+                pointerConstructor = false, abstractClass = info.virtualize, haveVariables = false;
         for (Declaration d : declList2) {
             if (d.declarator != null && d.declarator.type != null && d.declarator.type.constructor) {
                 implicitConstructor = false;
                 Declarator[] paramDcls = d.declarator.parameters.declarators;
                 defaultConstructor |= paramDcls.length == 0 && !d.inaccessible;
                 intConstructor |= paramDcls.length == 1 && paramDcls[0].type.javaName.equals("int") && !d.inaccessible;
+                pointerConstructor |= paramDcls.length == 1 && paramDcls[0].type.javaName.equals("Pointer") && !d.inaccessible;
             } else if (d.abstractMember) {
                 implicitConstructor = false;
                 abstractClass = true;
@@ -1885,7 +1888,9 @@ public class Parser {
                 if (!defaultConstructor || abstractClass) {
                     decl.text += "    public " + name + "() { }\n";
                 }
-                decl.text += "    public " + name + "(Pointer p) { super(p); }\n";
+                if (!pointerConstructor) {
+                    decl.text += "    public " + name + "(Pointer p) { super(p); }\n";
+                }
                 if (defaultConstructor && !abstractClass && !intConstructor) {
                     decl.text += "    public " + name + "(int size) { allocateArray(size); }\n" +
                                  "    private native void allocateArray(int size);\n" +

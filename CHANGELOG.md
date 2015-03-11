@@ -1,6 +1,6 @@
 
  * Add `SharedPtrAdapter` and corresponding `@SharedPtr` annotation to support `shared_ptr` containers
- * Fix a few small issues with the `Parser` and the `Generator`
+ * Fix a few small issues and work around a few additional corner cases with the `Parser` and the `Generator`
  * Provide `UByteIndexer` and `UShortIndexer`, treating array and buffer data as unsigned integers, for ease of use
  * Clean up Windows `java.io.tmpdir` even when program messes with `java.class.path` ([issue #12](https://github.com/bytedeco/javacpp/issues/12))
  * In addition to direct NIO buffers, also accept as function arguments non-direct ones backed by arrays ([issue bytedeco/javacpp-presets#36](https://github.com/bytedeco/javacpp-presets/issues/36))
