@@ -1,4 +1,5 @@
 
+ * Clarify with documentation comments various constructors produced by the `Parser`
  * Add `SharedPtrAdapter` and corresponding `@SharedPtr` annotation to support `shared_ptr` containers
  * Fix a few small issues and work around a few additional corner cases with the `Parser` and the `Generator`
  * Provide `UByteIndexer` and `UShortIndexer`, treating array and buffer data as unsigned integers, for ease of use

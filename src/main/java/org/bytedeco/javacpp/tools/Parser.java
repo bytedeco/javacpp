@@ -148,6 +148,7 @@ public class Parser {
                 decl.text += "\n"
                         + "@Name(\"" + containerType.cppName + "\") public static class " + containerType.javaName + " extends Pointer {\n"
                         + "    static { Loader.load(); }\n"
+                        + "    /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */\n"
                         + "    public " + containerType.javaName + "(Pointer p) { super(p); }\n" + (!resizable || firstType != null || secondType != null ? ""
                         : "    public " + containerType.javaName + "(" + valueType.javaName + arrayBrackets + " ... array) { this(array.length); put(array); }\n")
                         + "    public " + containerType.javaName + "()       { allocate();  }\n" + (!resizable ? ""
@@ -855,6 +856,7 @@ public class Parser {
                 definition.text += (tokens.get().match(Token.CONST) ? "@Const " : "") +
                         "public static class " + functionType + " extends FunctionPointer {\n" +
                         "    static { Loader.load(); }\n" +
+                        "    /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */\n" +
                         "    public    " + functionType + "(Pointer p) { super(p); }\n" +
                     (groupInfo != null ? "" :
                         "    protected " + functionType + "() { allocate(); }\n" +
@@ -1610,7 +1612,9 @@ public class Parser {
                     decl.text += "@Namespace(\"" + context.namespace + "\") ";
                 }
                 decl.text += "@Opaque public static class " + dcl.javaName + " extends Pointer {\n" +
+                             "    /** Empty constructor. */\n" +
                              "    public " + dcl.javaName + "() { }\n" +
+                             "    /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */\n" +
                              "    public " + dcl.javaName + "(Pointer p) { super(p); }\n" +
                              "}";
             }
@@ -1805,7 +1809,9 @@ public class Parser {
                 decl.text += "@Namespace(\"" + context.namespace + "\") ";
             }
             decl.text += "@Opaque public static class " + name + " extends " + base.javaName + " {\n" +
+                         "    /** Empty constructor. */\n" +
                          "    public " + name + "() { }\n" +
+                         "    /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */\n" +
                          "    public " + name + "(Pointer p) { super(p); }\n" +
                          "}";
             decl.type = type;
@@ -1876,8 +1882,11 @@ public class Parser {
                          "    static { Loader.load(); }\n";
 
             if (implicitConstructor) {
-                decl.text += "    public " + name + "() { allocate(); }\n" +
+                decl.text += "    /** Default native constructor. */\n" +
+                             "    public " + name + "() { allocate(); }\n" +
+                             "    /** Native array allocator. Access with {@link Pointer#position(int)}. */\n" +
                              "    public " + name + "(int size) { allocateArray(size); }\n" +
+                             "    /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */\n" +
                              "    public " + name + "(Pointer p) { super(p); }\n" +
                              "    private native void allocate();\n" +
                              "    private native void allocateArray(int size);\n" +
@@ -1886,13 +1895,16 @@ public class Parser {
                              "    }\n";
             } else {
                 if (!defaultConstructor || abstractClass) {
-                    decl.text += "    public " + name + "() { }\n";
+                    decl.text += "    /** Empty constructor. */\n" +
+                                 "    public " + name + "() { }\n";
                 }
                 if (!pointerConstructor) {
-                    decl.text += "    public " + name + "(Pointer p) { super(p); }\n";
+                    decl.text += "    /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */\n" +
+                                 "    public " + name + "(Pointer p) { super(p); }\n";
                 }
                 if (defaultConstructor && !abstractClass && !intConstructor) {
-                    decl.text += "    public " + name + "(int size) { allocateArray(size); }\n" +
+                    decl.text += "    /** Native array allocator. Access with {@link Pointer#position(int)}. */\n" +
+                                 "    public " + name + "(int size) { allocateArray(size); }\n" +
                                  "    private native void allocateArray(int size);\n" +
                                  "    @Override public " + name + " position(int position) {\n" +
                                  "        return (" + name + ")super.position(position);\n" +
