@@ -1,4 +1,5 @@
 
+### April 4, 2014 version 0.11
  * Clarify with documentation comments various constructors produced by the `Parser`
  * Add `SharedPtrAdapter` and corresponding `@SharedPtr` annotation to support `shared_ptr` containers
  * Fix a few small issues and work around a few additional corner cases with the `Parser` and the `Generator`

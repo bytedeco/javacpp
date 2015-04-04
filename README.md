@@ -14,8 +14,8 @@ Please feel free to ask questions on [the mailing list](http://groups.google.com
 
 Downloads
 ---------
- * JavaCPP 0.10 binary archive  [javacpp-0.10-bin.zip](http://search.maven.org/remotecontent?filepath=org/bytedeco/javacpp/0.10/javacpp-0.10-bin.zip) (227 KB)
- * JavaCPP 0.10 source archive  [javacpp-0.10-src.zip](http://search.maven.org/remotecontent?filepath=org/bytedeco/javacpp/0.10/javacpp-0.10-src.zip) (208 KB)
+ * JavaCPP 0.11 binary archive  [javacpp-0.11-bin.zip](http://search.maven.org/remotecontent?filepath=org/bytedeco/javacpp/0.11/javacpp-0.11-bin.zip) (238 KB)
+ * JavaCPP 0.11 source archive  [javacpp-0.11-src.zip](http://search.maven.org/remotecontent?filepath=org/bytedeco/javacpp/0.11/javacpp-0.11-src.zip) (219 KB)
 
 We can also have everything downloaded and installed automatically with:
 
@@ -24,21 +24,21 @@ We can also have everything downloaded and installed automatically with:
   <dependency>
     <groupId>org.bytedeco</groupId>
     <artifactId>javacpp</artifactId>
-    <version>0.10</version>
+    <version>0.11</version>
   </dependency>
 ```
 
  * Gradle (inside the `build.gradle` file)
 ```groovy
   dependencies {
-    compile group: 'org.bytedeco', name: 'javacpp', version: '0.10'
+    compile group: 'org.bytedeco', name: 'javacpp', version: '0.11'
   }
 ```
 
  * SBT (inside the `build.sbt` file)
 ```scala
   classpathTypes += "maven-plugin"
-  libraryDependencies += "org.bytedeco" % "javacpp" % "0.10"
+  libraryDependencies += "org.bytedeco" % "javacpp" % "0.11"
 ```
 
 
