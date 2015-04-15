@@ -1,4 +1,6 @@
 
+ * Fix `Parser` crash on empty comments ([issue #14](https://github.com/bytedeco/javacpp/issues/14))
+
 ### April 4, 2014 version 0.11
  * Clarify with documentation comments various constructors produced by the `Parser`
  * Add `SharedPtrAdapter` and corresponding `@SharedPtr` annotation to support `shared_ptr` containers
