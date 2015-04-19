@@ -1,4 +1,5 @@
 
+ * Let `StringAdapter` (via the `@StdString` annotation) support `std::string*`, that is to say, pointers to strings
  * Fix `Tokenizer` failing on some character and string literals
  * Fix `Parser` errors caused by constructors in `typedef struct` constructs
  * Generalize `Info.virtualize` to let non-pure virtual functions get annotated with `@Virtual native`

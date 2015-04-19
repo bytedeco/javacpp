@@ -519,6 +519,7 @@ public class Generator implements Closeable {
             out.println("        str2(ptr ? (char*)ptr : \"\"), str(str2) { }");
             out.println("    StringAdapter(const std::string& str) : ptr(0), size(0), str2(str), str(str2) { }");
             out.println("    StringAdapter(      std::string& str) : ptr(0), size(0), str(str) { }");
+            out.println("    StringAdapter(const std::string* str) : ptr(0), size(0), str(*(std::string*)str) { }");
             out.println("    void assign(char* ptr, size_t size) {");
             out.println("        this->ptr = ptr;");
             out.println("        this->size = size;");
