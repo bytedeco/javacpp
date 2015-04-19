@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Samuel Audet
+ * Copyright (C) 2014,2015 Samuel Audet
  *
  * This file is part of JavaCPP.
  *
@@ -136,13 +136,27 @@ class Tokenizer implements Closeable {
             }
             token.value = buffer.toString();
             lastChar = c;
+        } else if (c == '\'') {
+            token.type = Token.INTEGER;
+            buffer.append('\'');
+            while ((c = readChar()) != -1 && c != '\'') {
+                buffer.append((char)c);
+                if (c == '\\') {
+                    c = readChar();
+                    buffer.append((char)c);
+                }
+            }
+            buffer.append('\'');
+            token.value = buffer.toString();
         } else if (c == '"') {
             token.type = Token.STRING;
             buffer.append('"');
-            int prevc = 0;
-            while ((c = readChar()) != -1 && (prevc == '\\' || c != '"')) {
+            while ((c = readChar()) != -1 && c != '"') {
                 buffer.append((char)c);
-                prevc = c;
+                if (c == '\\') {
+                    c = readChar();
+                    buffer.append((char)c);
+                }
             }
             buffer.append('"');
             token.value = buffer.toString();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Samuel Audet
+ * Copyright (C) 2014,2015 Samuel Audet
  *
  * This file is part of JavaCPP.
  *
@@ -33,7 +33,8 @@ class Context {
     }
     Context(Context c) {
         namespace = c.namespace;
-        group = c.group;
+        cppName = c.cppName;
+        javaName = c.javaName;
         inaccessible = c.inaccessible;
         variable = c.variable;
         templateMap = c.templateMap;
@@ -41,7 +42,8 @@ class Context {
     }
 
     String namespace = null;
-    Type group = null;
+    String cppName = null;
+    String javaName = null;
     boolean inaccessible = false;
     boolean virtualize = false;
     Declarator variable = null;
@@ -93,9 +95,9 @@ class Context {
 
     /** Shorten a qualified Java name, given the Context */
     String shorten(String javaName) {
-        if (group != null) {
+        if (this.javaName != null) {
             int lastDot = 0;
-            String s1 = javaName, s2 = group.javaName + '.';
+            String s1 = javaName, s2 = this.javaName + '.';
             for (int i = 0; i < s1.length() && i < s2.length(); i++) {
                 if (s1.charAt(i) != s2.charAt(i)) {
                     break;

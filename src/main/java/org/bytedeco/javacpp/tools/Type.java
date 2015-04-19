@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Samuel Audet
+ * Copyright (C) 2014,2015 Samuel Audet
  *
  * This file is part of JavaCPP.
  *
@@ -30,7 +30,7 @@ class Type {
 
     boolean anonymous = false, constPointer = false, constValue = false, constructor = false,
             destructor = false, operator = false, simple = false, staticMember = false,
-            pointer = false, reference = false;
+            pointer = false, reference = false, virtual = false;
     String annotations = "", cppName = "", javaName = "";
     Type[] arguments = null;
     Attribute[] attributes = null;

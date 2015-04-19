@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Samuel Audet
+ * Copyright (C) 2014,2015 Samuel Audet
  *
  * This file is part of JavaCPP.
  *
@@ -37,7 +37,7 @@ public class InfoMap extends HashMap<String,LinkedList<Info>> {
     public InfoMap(InfoMap parent) { this.parent = parent; }
 
     InfoMap parent = null;
-    static final String[] containers = { "std::deque", "std::list", "std::map", "std::queue", "std::set", "std::stack", "std::vector", "std::valarray" };
+    static final String[] containers = { "std::deque", "std::list", "std::map", "std::queue", "std::set", "std::stack", "std::vector", "std::valarray", "std::pair" };
     static final String[] simpleTypes = { "signed", "unsigned", "char", "short", "int", "long", "bool", "float", "double" };
     static { Arrays.sort(simpleTypes); }
     static final InfoMap defaults = new InfoMap(null)

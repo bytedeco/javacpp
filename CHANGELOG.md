@@ -1,4 +1,9 @@
 
+ * Fix `Tokenizer` failing on some character and string literals
+ * Fix `Parser` errors caused by constructors in `typedef struct` constructs
+ * Generalize `Info.virtualize` to let non-pure virtual functions get annotated with `@Virtual native`
+ * Make `VectorAdapter` work even with elements that have no default constructor
+ * Add `Parser` support for `std::pair` as a sort of zero-dimensional container type
  * Fix `Parser` crash on empty comments ([issue #14](https://github.com/bytedeco/javacpp/issues/14))
 
 ### April 4, 2014 version 0.11

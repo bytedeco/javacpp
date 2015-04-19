@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011,2012,2013,2014 Samuel Audet
+ * Copyright (C) 2011,2012,2013,2014,2015 Samuel Audet
  *
  * This file is part of JavaCPP.
  *
@@ -488,10 +488,10 @@ public class Generator implements Closeable {
             out.println("        this->size = size;");
             out.println("        vec.assign(ptr, ptr + size);");
             out.println("    }");
-            out.println("    static void deallocate(void* ptr) { delete[] (P*)ptr; }");
+            out.println("    static void deallocate(void* ptr) { free(ptr); }");
             out.println("    operator P*() {");
             out.println("        if (vec.size() > size) {");
-            out.println("            ptr = new (std::nothrow) P[vec.size()];");
+            out.println("            ptr = (P*)malloc(vec.size() * sizeof(P));");
             out.println("        }");
             out.println("        if (ptr) {");
             out.println("            std::copy(vec.begin(), vec.end(), ptr);");
@@ -562,6 +562,7 @@ public class Generator implements Closeable {
             out.println("        // take ownership, if unique");
             out.println("        ptr = sharedPtr.get();");
             out.println("        if (sharedPtr.unique() && &sharedPtr == &sharedPtr2) {");
+            out.println("            // XXX: this probably causes a small memory leak");
             out.println("            memset(&sharedPtr, 0, sizeof(SHARED_PTR_NAMESPACE::shared_ptr<T>));");
             out.println("        }");
             out.println("        return ptr;");

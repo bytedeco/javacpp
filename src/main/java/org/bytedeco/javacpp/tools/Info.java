@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Samuel Audet
+ * Copyright (C) 2014,2015 Samuel Audet
  *
  * This file is part of JavaCPP.
  *
@@ -23,6 +23,7 @@ package org.bytedeco.javacpp.tools;
 import org.bytedeco.javacpp.Pointer;
 import org.bytedeco.javacpp.annotation.ByVal;
 import org.bytedeco.javacpp.annotation.Cast;
+import org.bytedeco.javacpp.annotation.Virtual;
 
 /**
  * Holds information useful to the {@link Parser} and associated with C++ identifiers.
@@ -79,9 +80,11 @@ public class Info {
     boolean define = false;
     /** Attempts to translate naively the statements of variable-like macros to Java. */
     boolean translate = false;
-    /** Skips entirely all the code associated with the C++ identifiers. */
+    /** Skips entirely all the code associated with the C++ identifiers.
+     * Unless more {@link Info} is provided... */
     boolean skip = false;
-    /** Maps C++ classes with pure virtual functions to abstract Java classes. */
+    /** Maps C++ classes with pure virtual functions to abstract Java classes.
+     * Also removes default constructor and annotates virtual functions with @{@link Virtual}. */
     boolean virtualize = false;
     /** Allows to override the base class of {@link #pointerTypes}. Defaults to {@link Pointer}. */
     String base = null;
