@@ -106,7 +106,8 @@ class DeclarationList extends LinkedList<Declaration> {
         while (!stack.isEmpty()) {
             decl = stack.removeLast();
             if (context != null) {
-                decl.inaccessible = context.inaccessible;
+                decl.inaccessible = context.inaccessible
+                        && !(context.virtualize && decl.declarator != null && decl.declarator.type != null && decl.declarator.type.virtual);
             }
             if (decl.text.length() == 0) {
                 decl.inaccessible = true;

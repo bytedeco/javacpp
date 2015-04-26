@@ -1,4 +1,7 @@
 
+ * Fix and enhance in various ways the support of `Parser` and `Generator` for function pointers, virtual functions, and abstract classes
+ * Improve `Parser` check for `const` references and pointers required to output appropriate `@Const` annotation
+ * Add `Info.purify` to force the `Parser` in producing abstract classes
  * Let `StringAdapter` (via the `@StdString` annotation) support `std::string*`, that is to say, pointers to strings
  * Fix `Tokenizer` failing on some character and string literals
  * Fix `Parser` errors caused by constructors in `typedef struct` constructs

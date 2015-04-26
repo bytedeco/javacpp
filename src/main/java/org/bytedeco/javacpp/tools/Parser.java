@@ -90,7 +90,7 @@ public class Parser {
         if (namespace >= 0) {
             Info info2 = infoMap.getFirst(text.substring(0, namespace));
             text = text.substring(namespace + 2);
-            if (info2.pointerTypes != null) {
+            if (info2 != null && info2.pointerTypes != null) {
                 text = info2.pointerTypes[0] + "." + text;
             }
         }
@@ -136,13 +136,13 @@ public class Parser {
                     firstType = valueType.arguments[0];
                     secondType = valueType.arguments[1];
                 }
-                if (firstType != null && !firstType.pointer && (firstType.annotations == null || firstType.annotations.length() == 0)) {
+                if (firstType != null && !firstType.pointer && !firstType.value && (firstType.annotations == null || firstType.annotations.length() == 0)) {
                     firstType.annotations = "@ByRef ";
                 }
-                if (secondType != null && !secondType.pointer && (secondType.annotations == null || secondType.annotations.length() == 0)) {
+                if (secondType != null && !secondType.pointer && !secondType.value && (secondType.annotations == null || secondType.annotations.length() == 0)) {
                     secondType.annotations = "@ByRef ";
                 }
-                if (valueType != null && !valueType.pointer && (valueType.annotations == null || valueType.annotations.length() == 0)) {
+                if (valueType != null && !valueType.pointer && !valueType.value && (valueType.annotations == null || valueType.annotations.length() == 0)) {
                     valueType.annotations = "@ByRef ";
                 }
                 String arrayBrackets = "";
@@ -448,11 +448,10 @@ public class Parser {
         int namespace = type.cppName.lastIndexOf("::");
         int template = type.cppName.lastIndexOf('<');
         type.javaName = namespace >= 0 && template < 0 ? type.cppName.substring(namespace + 2) : type.cppName;
-        boolean valueType = false;
         if (info != null) {
             if (!type.pointer && !type.reference && info.valueTypes != null && info.valueTypes.length > 0) {
                 type.javaName = info.valueTypes[0];
-                valueType = true;
+                type.value = true;
             } else if (info.pointerTypes != null && info.pointerTypes.length > 0) {
                 type.javaName = info.pointerTypes[0];
             }
@@ -462,9 +461,9 @@ public class Parser {
             if (type.constValue) {
                 type.annotations += "@Const ";
             }
-            if (!valueType && !type.pointer && !type.reference) {
+            if (!type.pointer && !type.reference && !type.value) {
                 type.annotations += "@ByVal ";
-            } else if (!valueType && !type.pointer && type.reference) {
+            } else if (!type.pointer && type.reference && !type.value) {
                 type.annotations += "@ByRef ";
             }
             type.annotations += "@Name(\"operator " + (type.constValue ? "const " : "")
@@ -518,7 +517,7 @@ public class Parser {
         }
 
         // start building an appropriate cast for the C++ type
-        String cast = type.cppName;
+        String precast = null, cast = type.cppName;
         if (type.constPointer) {
             dcl.constPointer = true;
             cast += " const";
@@ -730,6 +729,11 @@ public class Parser {
                     type.javaName = type2.arguments[0].javaName;
                     dcl.indirections = 1;
                     dcl.reference = false;
+                    if (context.virtualize) {
+                        // force cast in callbacks
+                        needCast = true;
+                        precast = cast;
+                    }
                     cast = type.cppName + "*";
                     if (type.constValue) {
                         cast = "const " + cast;
@@ -785,8 +789,12 @@ public class Parser {
                 }
             }
 
-            if (!needCast && type.constValue && !implicitConst && !type.javaName.contains("@Cast")) {
-                type.annotations = "@Const " + type.annotations;
+            if (!needCast && !type.javaName.contains("@Cast")) {
+                if (type.constValue && !implicitConst && !type.constPointer) {
+                    type.annotations = "@Const " + type.annotations;
+                } else if (type.constPointer) {
+                    type.annotations = "@Const({" + type.constValue + ", " + type.constPointer + "}) " + type.annotations;
+                }
             }
         }
         if (needCast) {
@@ -801,7 +809,9 @@ public class Parser {
             if (type.constValue) {
                 cast = "const " + cast;
             }
-            if (!valueType && dcl.indirections == 0 && !dcl.reference) {
+            if (precast != null) {
+                type.annotations = "@Cast({\"" + cast + "\", \"" + precast + "\"}) " + type.annotations;
+            } else if (!valueType && dcl.indirections == 0 && !dcl.reference) {
                 type.annotations += "@Cast(\"" + cast + "*\") ";
             } else {
                 type.annotations = "@Cast(\"" + cast + "\") " + type.annotations;
@@ -905,11 +915,11 @@ public class Parser {
             if (s.startsWith("/**") || s.startsWith("/*!") || s.startsWith("///") || s.startsWith("//!")) {
                 if (s.length() > 3 && s.charAt(3) == '<') {
                     continue;
-                } else if (s.startsWith("/// ") || s.startsWith("//!")) {
+                } else if (s.length() > 3 && (s.startsWith("/// ") || s.startsWith("//!"))) {
                     s = (comment.length() == 0 || comment.contains("*/")
                             || !comment.contains("/*") ? "/**" : " * ") + s.substring(3);
                     closeComment = true;
-                } else if (!s.startsWith("///")) {
+                } else if (s.length() > 3 && !s.startsWith("///")) {
                     s = "/**" + s.substring(3);
                 }
             } else if (closeComment && !comment.endsWith("*/")) {
@@ -941,11 +951,11 @@ public class Parser {
             if (s.startsWith("/**") || s.startsWith("/*!") || s.startsWith("///") || s.startsWith("//!")) {
                 if (s.length() > 3 && s.charAt(3) != '<') {
                     continue;
-                } else if (s.startsWith("///") || s.startsWith("//!")) {
+                } else if (s.length() > 4 && (s.startsWith("///") || s.startsWith("//!"))) {
                     s = (comment.length() == 0 || comment.contains("*/")
                             || !comment.contains("/*") ? "/**" : " * ") + s.substring(4);
                     closeComment = true;
-                } else {
+                } else if (s.length() > 4) {
                     s = "/**" + s.substring(4);
                 }
                 comment += spacing.substring(0, n) + s;
@@ -1245,9 +1255,8 @@ public class Parser {
 
             // add @Virtual annotation on user request only, inherited through context
             if (type.virtual && context.virtualize) {
-                modifiers = decl.inaccessible ? "@Virtual protected " : "@Virtual public ";
+                modifiers = context.inaccessible ? "@Virtual protected " : "@Virtual public ";
                 modifiers += decl.abstractMember ? "abstract " : "native ";
-                decl.inaccessible = false;
             }
 
             // compose the text of the declaration with the info we got up until this point
@@ -1858,9 +1867,9 @@ public class Parser {
             ctx.variable = var;
             declarations(ctx, declList2);
         }
-        String modifiers = "public static ";
+        String modifiers = info.purify && ctx.virtualize ? "public static abstract " : "public static ";
         boolean implicitConstructor = true, defaultConstructor = false, intConstructor = false,
-                pointerConstructor = false, abstractClass = info.virtualize, haveVariables = false;
+                pointerConstructor = false, abstractClass = info.purify && !ctx.virtualize, havePureConst = false, haveVariables = false;
         for (Declaration d : declList2) {
             if (d.declarator != null && d.declarator.type != null && d.declarator.type.constructor) {
                 implicitConstructor = false;
@@ -1868,14 +1877,16 @@ public class Parser {
                 defaultConstructor |= paramDcls.length == 0 && !d.inaccessible;
                 intConstructor |= paramDcls.length == 1 && paramDcls[0].type.javaName.equals("int") && !d.inaccessible;
                 pointerConstructor |= paramDcls.length == 1 && paramDcls[0].type.javaName.equals("Pointer") && !d.inaccessible;
-            } else if (d.abstractMember) {
-                implicitConstructor = false;
-                abstractClass = true;
-                if (ctx.virtualize) {
-                    modifiers = "public static abstract ";
-                }
             }
+            abstractClass |= d.abstractMember;
+            havePureConst |= d.constMember && d.abstractMember;
             haveVariables |= d.variable;
+        }
+        if (abstractClass && ctx.virtualize) {
+            modifiers = "public static abstract ";
+        }
+        if (havePureConst && ctx.virtualize) {
+            modifiers = "@Const " + modifiers;
         }
         if (!anonymous) {
             String fullName = context.namespace != null ? context.namespace + "::" + name : name;
@@ -1893,7 +1904,7 @@ public class Parser {
             decl.text += modifiers + "class " + name + " extends " + base.javaName + " {\n" +
                          "    static { Loader.load(); }\n";
 
-            if (implicitConstructor && !abstractClass) {
+            if (implicitConstructor && (!abstractClass || ctx.virtualize)) {
                 decl.text += "    /** Default native constructor. */\n" +
                              "    public " + name + "() { allocate(); }\n" +
                              "    /** Native array allocator. Access with {@link Pointer#position(int)}. */\n" +
@@ -1906,7 +1917,7 @@ public class Parser {
                              "        return (" + name + ")super.position(position);\n" +
                              "    }\n";
             } else {
-                if (!defaultConstructor || abstractClass) {
+                if (!defaultConstructor || (abstractClass && !ctx.virtualize)) {
                     decl.text += "    /** Empty constructor. */\n" +
                                  "    public " + name + "() { }\n";
                 }
@@ -1914,7 +1925,7 @@ public class Parser {
                     decl.text += "    /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */\n" +
                                  "    public " + name + "(Pointer p) { super(p); }\n";
                 }
-                if (defaultConstructor && !abstractClass && !intConstructor) {
+                if (defaultConstructor && (!abstractClass || ctx.virtualize) && !intConstructor) {
                     decl.text += "    /** Native array allocator. Access with {@link Pointer#position(int)}. */\n" +
                                  "    public " + name + "(int size) { allocateArray(size); }\n" +
                                  "    private native void allocateArray(int size);\n" +

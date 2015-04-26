@@ -939,16 +939,44 @@ public class Generator implements Closeable {
         }
 
         Method[] methods = cls.getDeclaredMethods();
+        MethodInformation[] methodInfos = new MethodInformation[methods.length];
+        for (int i = 0; i < methods.length; i++) {
+            methodInfos[i] = methodInformation(methods[i]);
+        }
+        Class<?> c = cls.getSuperclass();
+        while (c != null && c != Object.class) {
+            // consider non-duplicate virtual functions from superclasses as well
+            for (Method m : c.getDeclaredMethods()) {
+                if (m.isAnnotationPresent(Virtual.class)) {
+                    boolean found = false;
+                    String name = m.getName();
+                    Class<?>[] types = m.getParameterTypes();
+                    for (Method m2 : methods) {
+                        if (name.equals(m2.getName()) && Arrays.equals(types, m2.getParameterTypes())) {
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        methods = Arrays.copyOf(methods, methods.length + 1);
+                        methods[methods.length - 1] = m;
+                        methodInfos = Arrays.copyOf(methodInfos, methodInfos.length + 1);
+                        methodInfos[methods.length - 1] = methodInformation(m);
+                        methodInfos[methods.length - 1].cls = cls;
+                    }
+                }
+            }
+            c = c.getSuperclass();
+        }
         boolean[] callbackAllocators = new boolean[methods.length];
         Method functionMethod = functionMethod(cls, callbackAllocators);
         boolean firstCallback = true;
         for (int i = 0; i < methods.length; i++) {
-            String nativeName = mangle(cls.getName()) + "_" + mangle(methods[i].getName());
             if (!checkPlatform(methods[i].getAnnotation(Platform.class))) {
                 continue;
             }
-            MethodInformation methodInfo = methodInformation(methods[i]);
-
+            MethodInformation methodInfo = methodInfos[i];
+            String nativeName = mangle(cls.getName()) + "_" + mangle(methods[i].getName());
             String callbackName = "JavaCPP_" + nativeName + "_callback";
             if (callbackAllocators[i] && functionMethod == null) {
                 logger.warn("No callback method call() or apply() has been not declared in \"" +
@@ -1384,11 +1412,16 @@ public class Generator implements Closeable {
                 String valueTypeName = valueTypeName(typeName);
                 if (virtualFunctions.containsKey(methodInfo.cls) && !secondCall) {
                     String subType = "JavaCPP_" + mangle(valueTypeName);
-                    out.print("dynamic_cast<" + subType + "*>(ptr) != NULL ? ");
-                    name = valueTypeName + "::" + name;
-                    needSecondCall = true;
-                }
-                if (index) {
+                    if (Modifier.isPublic(methodInfo.method.getModifiers())) {
+                        // non-protected method that could be from any subclass, so check for ours
+                        out.print("(dynamic_cast<" + subType + "*>(ptr) != NULL ? ");
+                        needSecondCall = true;
+                    }
+                    if (methodInfo.method.isAnnotationPresent(Virtual.class)) {
+                        name = "super_" + name;
+                    }
+                    out.print("((" + subType + "*)ptr)->" + name);
+                } else if (index) {
                     out.print("(*ptr)");
                     prefix = "." + name + prefix;
                 } else {
@@ -1463,6 +1496,7 @@ public class Generator implements Closeable {
         }
         if (needSecondCall) {
             call(methodInfo, " : ", true);
+            out.print(")");
         }
     }
 
@@ -1690,6 +1724,10 @@ public class Generator implements Closeable {
 
         String firstLine = "";
         if (methodInfo != null) {
+            // stuff from a virtualized class
+            String nonconstParamDeclaration = parameterDeclaration.endsWith(" const")
+                    ? parameterDeclaration.substring(0, parameterDeclaration.length() - 6)
+                    : parameterDeclaration;
             String[] typeName = methodInfo.returnRaw ? new String[] { "" }
                     : cppTypeName(methodInfo.cls);
             String valueTypeName = valueTypeName(typeName);
@@ -1699,8 +1737,10 @@ public class Generator implements Closeable {
                 virtualMembers.put(cls, memberList = new LinkedList<String>());
             }
             String member = "    ";
-            if (methodInfo.allocator) {
-                member += subType + parameterDeclaration + " : " + valueTypeName + "(";
+            if (methodInfo.arrayAllocator) {
+                return;
+            } else if (methodInfo.allocator) {
+                member += subType + nonconstParamDeclaration + " : " + valueTypeName + "(";
                 for (int j = 0; j < callbackParameterTypes.length; j++) {
                     member += "arg" + j;
                     if (j < callbackParameterTypes.length - 1) {
@@ -1714,7 +1754,16 @@ public class Generator implements Closeable {
                     virtualFunctions.put(cls, functionList = new LinkedList<String>());
                 }
                 member += "virtual " + returnConvention[0] + (returnConvention.length > 1 ? returnConvention[1] : "")
-                        + methodInfo.memberName[0] + parameterDeclaration + ";";
+                       + methodInfo.memberName[0] + parameterDeclaration + ";\n    "
+                       + returnConvention[0] + "super_" + methodInfo.memberName[0] + nonconstParamDeclaration + " { "
+                       + (callbackReturnType != void.class ? "return " : "") + valueTypeName + "::" + methodInfo.memberName[0] + "(";
+                for (int j = 0; j < callbackParameterTypes.length; j++) {
+                    member += "arg" + j;
+                    if (j < callbackParameterTypes.length - 1) {
+                        member += ", ";
+                    }
+                }
+                member += "); }";
                 firstLine = returnConvention[0] + (returnConvention.length > 1 ? returnConvention[1] : "")
                         + subType + "::" + methodInfo.memberName[0] + parameterDeclaration + " {";
                 functionList.add(fieldName);

@@ -83,8 +83,10 @@ public class Info {
     /** Skips entirely all the code associated with the C++ identifiers.
      * Unless more {@link Info} is provided... */
     boolean skip = false;
-    /** Maps C++ classes with pure virtual functions to abstract Java classes.
-     * Also removes default constructor and annotates virtual functions with @{@link Virtual}. */
+    /** Forces a class to be treated as if it were abstract. */
+    boolean purify = false;
+    /** Annotates virtual functions with @{@link Virtual} and adds appropriate constructors.
+     * Also maps C++ classes with pure virtual functions to abstract Java classes. */
     boolean virtualize = false;
     /** Allows to override the base class of {@link #pointerTypes}. Defaults to {@link Pointer}. */
     String base = null;
@@ -107,6 +109,8 @@ public class Info {
     public Info translate(boolean translate) { this.translate = translate; return this; }
     public Info skip() { this.skip = true; return this; }
     public Info skip(boolean skip) { this.skip = skip; return this; }
+    public Info purify() { this.purify = true; return this; }
+    public Info purify(boolean purify) { this.purify = purify; return this; }
     public Info virtualize() { this.virtualize = true; return this; }
     public Info virtualize(boolean virtualize) { this.virtualize = virtualize; return this; }
     public Info base(String base) { this.base = base; return this; }
