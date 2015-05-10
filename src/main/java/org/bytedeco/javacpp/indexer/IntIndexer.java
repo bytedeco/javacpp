@@ -111,4 +111,5 @@ public abstract class IntIndexer extends Indexer {
     public abstract IntIndexer put(int[] indices, int[] n, int offset, int length);
 
     @Override public double getDouble(int ... indices) { return get(indices); }
+    @Override public IntIndexer putDouble(int[] indices, double n) { return put(indices, (int)n); }
 }

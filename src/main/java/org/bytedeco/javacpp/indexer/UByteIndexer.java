@@ -111,4 +111,5 @@ public abstract class UByteIndexer extends Indexer {
     public abstract UByteIndexer put(int[] indices, int[] b, int offset, int length);
 
     @Override public double getDouble(int ... indices) { return get(indices); }
+    @Override public UByteIndexer putDouble(int[] indices, double b) { return put(indices, (int)b); }
 }

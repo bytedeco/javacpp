@@ -1,4 +1,5 @@
 
+ * Add slow but generic `Indexer.putDouble()` to complement existing `Indexer.getDouble()` (useful for testing)
  * Fix and enhance in various ways the support of `Parser` and `Generator` for function pointers, virtual functions, and abstract classes
  * Improve `Parser` check for `const` references and pointers required to output appropriate `@Const` annotation
  * Add `Info.purify` to force the `Parser` in producing abstract classes

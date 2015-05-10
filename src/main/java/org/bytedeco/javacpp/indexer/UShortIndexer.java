@@ -111,4 +111,5 @@ public abstract class UShortIndexer extends Indexer {
     public abstract UShortIndexer put(int[] indices, int[] s, int offset, int length);
 
     @Override public double getDouble(int ... indices) { return get(indices); }
+    @Override public UShortIndexer putDouble(int[] indices, double s) { return put(indices, (int)s); }
 }

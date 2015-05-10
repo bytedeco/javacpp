@@ -111,4 +111,5 @@ public abstract class FloatIndexer extends Indexer {
     public abstract FloatIndexer put(int[] indices, float[] f, int offset, int length);
 
     @Override public double getDouble(int ... indices) { return get(indices); }
+    @Override public FloatIndexer putDouble(int[] indices, double f) { return put(indices, (float)f); }
 }

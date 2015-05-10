@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Samuel Audet
+ * Copyright (C) 2014,2015 Samuel Audet
  *
  * This file is part of JavaCPP.
  *
@@ -94,6 +94,8 @@ public abstract class Indexer {
 
     /** Calls {@code get(int...indices)} and returns the value as a double. */
     public abstract double getDouble(int ... indices);
+    /** Casts value to primitive type and calls {@code put(int[] indices, <type> value)}. */
+    public abstract Indexer putDouble(int[] indices, double value);
 
     @Override public String toString() {
         int rows     = sizes.length > 0 ? sizes[0] : 1,

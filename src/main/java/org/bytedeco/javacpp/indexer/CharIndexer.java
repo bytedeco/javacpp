@@ -111,4 +111,5 @@ public abstract class CharIndexer extends Indexer {
     public abstract CharIndexer put(int[] indices, char[] c, int offset, int length);
 
     @Override public double getDouble(int ... indices) { return get(indices); }
+    @Override public CharIndexer putDouble(int[] indices, double c) { return put(indices, (char)c); }
 }
