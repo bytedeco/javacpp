@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011,2012,2013,2014 Samuel Audet
+ * Copyright (C) 2011,2012,2013,2014,2015 Samuel Audet
  *
  * This file is part of JavaCPP.
  *
@@ -76,6 +76,8 @@ public class Loader {
             osArch = "x86";
         } else if (osArch.equals("amd64") || osArch.equals("x86-64") || osArch.equals("x64")) {
             osArch = "x86_64";
+        } else if (osArch.startsWith("aarch64") || osArch.startsWith("armv8") || osArch.startsWith("arm64")) {
+            osArch = "arm64";
         } else if (osArch.startsWith("arm")) {
             osArch = "arm";
         }
