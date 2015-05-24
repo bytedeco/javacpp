@@ -50,6 +50,7 @@ public class Info {
         define = i.define;
         translate = i.translate;
         skip = i.skip;
+        purify = i.purify;
         virtualize = i.virtualize;
         base = i.base;
         cppText = i.cppText;

@@ -587,7 +587,6 @@ public class Parser {
         dcl.cppName = "";
         Info groupInfo = null;
         Declaration definition = new Declaration();
-        boolean operator = false;
         if (tokens.get().match('(') || (typedef && tokens.get(1).match('('))) {
             // probably a function pointer declaration
             if (tokens.get().match('(')) {
@@ -628,7 +627,7 @@ public class Parser {
                 if (token.match("::")) {
                     dcl.cppName += token;
                 } else if (token.match(Token.OPERATOR)) {
-                    operator = true;
+                    dcl.operator = true;
                     if (!tokens.get(1).match(Token.IDENTIFIER)) {
                         // assume we can have any symbols until the first open parenthesis
                         dcl.cppName += "operator" + tokens.next();
@@ -831,7 +830,7 @@ public class Parser {
 
         // pick the Java name from the InfoMap if appropriate
         if (attr == null && defaultName == null && info != null && info.javaNames != null && info.javaNames.length > 0
-                && (operator || !info.cppNames[0].contains("<") || (context.templateMap != null && context.templateMap.type == null))) {
+                && (dcl.operator || !info.cppNames[0].contains("<") || (context.templateMap != null && context.templateMap.type == null))) {
             dcl.javaName = info.javaNames[0];
         }
 
@@ -1040,9 +1039,67 @@ public class Parser {
             }
             Declarator dcl = declarator(context, "arg" + count++, infoNumber, useDefaults, 0, true, false);
             boolean hasDefault = !tokens.get().match(',', ')');
+            Token defaultToken = null;
+            String defaultValue = "";
+            if (hasDefault) {
+                defaultToken = tokens.get();
+                int count2 = 0;
+                for (token = tokens.next(), token.spacing = ""; !token.match(Token.EOF); token = tokens.next()) {
+                    if (count2 == 0 && token.match(',', ')')) {
+                        break;
+                    } else if (token.match('(')) {
+                        count2++;
+                    } else if (token.match(')')) {
+                        count2--;
+                    }
+
+                    // try to qualify all the identifiers
+                    String cppName = token.value;
+                    for (String name : context.qualify(cppName)) {
+                        if (infoMap.getFirst(name, false) != null) {
+                            cppName = name;
+                            break;
+                        } else if (infoMap.getFirst(name) != null) {
+                            cppName = name;
+                        }
+                    }
+                    if (token.match(Token.IDENTIFIER)) {
+                        while (tokens.get(1).equals("::")) {
+                            tokens.next();
+                            Token t = tokens.next();
+                            cppName += "::" + t.spacing + t;
+                        }
+                    }
+                    defaultValue += token.spacing + (cppName != null && cppName.length() > 0 ? cppName : token);
+                }
+                for (String name : context.qualify(defaultValue)) {
+                    if (infoMap.getFirst(name, false) != null) {
+                        defaultValue = name;
+                        break;
+                    } else if (infoMap.getFirst(name) != null) {
+                        defaultValue = name;
+                    }
+                }
+
+                // insert default value as nullValue for pass by value or by reference
+                String s = dcl.type.annotations;
+                int n = s.indexOf("@ByVal ");
+                if (n < 0) {
+                    n = s.indexOf("@ByRef ");
+                }
+                if (n >= 0) {
+                    s = s.substring(0, n + 6) + "(nullValue = \""
+                            + defaultValue.replaceAll("\n(\\s*)", "\"\n$1 + \"") + "\")" + s.substring(n + 6);
+                }
+                dcl.type.annotations = s;
+            }
             if (dcl != null && !dcl.type.javaName.equals("void") && (!hasDefault || !useDefaults)) {
                 params.infoNumber = Math.max(params.infoNumber, dcl.infoNumber);
                 params.list += (count > 1 ? "," : "") + spacing + dcl.type.annotations + dcl.type.javaName + " " + dcl.javaName;
+                if (hasDefault) {
+                    // output default argument as a comment
+                    params.list += "/*" + defaultToken + defaultValue + "*/";
+                }
                 params.signature += '_';
                 for (char c : dcl.type.javaName.substring(dcl.type.javaName.lastIndexOf(' ') + 1).toCharArray()) {
                     params.signature += Character.isJavaIdentifierPart(c) ? c : '_';
@@ -1056,28 +1113,6 @@ public class Parser {
             }
             if (!hasDefault || !useDefaults) {
                 dcls.add(dcl);
-            }
-            if (hasDefault) {
-                // output default argument as a comment
-                if (!useDefaults) {
-                    params.list += "/*" + tokens.get();
-                }
-                int count2 = 0;
-                for (token = tokens.next(), token.spacing = ""; !token.match(Token.EOF); token = tokens.next()) {
-                    if (count2 == 0 && token.match(',', ')')) {
-                        break;
-                    } else if (token.match('(')) {
-                        count2++;
-                    } else if (token.match(')')) {
-                        count2--;
-                    }
-                    if (!useDefaults) {
-                        params.list += token.spacing + token;
-                    }
-                }
-                if (!useDefaults) {
-                    params.list += "*/";
-                }
             }
             if (tokens.get().expect(',', ')').match(',')) {
                 tokens.next();
@@ -1138,7 +1173,7 @@ public class Parser {
             dcl = declarator(context, null, 0, false, 0, false, false);
             type = dcl.type;
         }
-        if (dcl.cppName == null) {
+        if (dcl.cppName == null || type.javaName.length() == 0 || dcl.parameters == null) {
             tokens.index = backIndex;
             return false;
         }
@@ -1162,7 +1197,10 @@ public class Parser {
                     separator = ", ";
                 }
             }
-            info = infoMap.getFirst(name + ")");
+            info = infoMap.getFirst(name += ")");
+            if (info == null && !type.constructor && !type.destructor && !type.operator) {
+                infoMap.put(new Info(name));
+            }
         }
         if (info == null) {
             info = infoMap.getFirst(dcl.cppName);
@@ -1171,10 +1209,7 @@ public class Parser {
         if (localName.startsWith(context.namespace + "::")) {
             localName = dcl.cppName.substring(context.namespace.length() + 2);
         }
-        if (type.javaName.length() == 0 || dcl.parameters == null) {
-            tokens.index = backIndex;
-            return false;
-        } else if (friend || (context.javaName == null && localName.contains("::")) || (info != null && info.skip)) {
+        if (friend || (context.javaName == null && localName.contains("::")) || (info != null && info.skip)) {
             // this is a friend declaration, or a member function definition or specialization, skip over
             for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.get()) {
                 if (attribute() == null) {
@@ -1333,6 +1368,9 @@ public class Parser {
             decl.text = spacing;
             declList.add(decl);
             return true;
+        } else if (info == null) {
+            Info info2 = infoMap.getFirst(dcl.cppName);
+            infoMap.put(info2 != null ? new Info(info2).cppNames(cppName) : new Info(cppName));
         }
         boolean first = true;
         Declarator metadcl = context.variable;
@@ -1344,6 +1382,11 @@ public class Parser {
                 break;
             }
             decl.declarator = dcl;
+            cppName = dcl.cppName;
+            namespace = cppName.lastIndexOf("::");
+            if (namespace >= 0) {
+                cppName = cppName.substring(namespace + 2);
+            }
             javaName = dcl.javaName;
             if (metadcl == null || metadcl.indices == 0 || dcl.indices == 0) {
                 // arrays are currently not supported for both metadcl and dcl at the same time
@@ -1359,8 +1402,8 @@ public class Parser {
                 }
                 if (metadcl != null && metadcl.cppName.length() > 0) {
                     decl.text += metadcl.indices == 0
-                            ? "@Name(\"" + metadcl.cppName + "." + dcl.cppName + "\") "
-                            : "@Name({\"" + metadcl.cppName + "\", \"." + dcl.cppName + "\"}) ";
+                            ? "@Name(\"" + metadcl.cppName + "." + cppName + "\") "
+                            : "@Name({\"" + metadcl.cppName + "\", \"." + cppName + "\"}) ";
                     javaName = metadcl.javaName + "_" + dcl.javaName;
                 }
                 if (dcl.type.constValue) {
@@ -1392,8 +1435,8 @@ public class Parser {
                 }
                 if (metadcl != null && metadcl.cppName.length() > 0) {
                     decl.text += metadcl.indices == 0
-                            ? "@Name(\"" + metadcl.cppName + "." + dcl.cppName + "\") "
-                            : "@Name({\"" + metadcl.cppName + "\", \"." + dcl.cppName + "\"}) ";
+                            ? "@Name(\"" + metadcl.cppName + "." + cppName + "\") "
+                            : "@Name({\"" + metadcl.cppName + "\", \"." + cppName + "\"}) ";
                     javaName = metadcl.javaName + "_" + dcl.javaName;
                 }
                 decl.text += "@MemberGetter " + modifiers + dcl.type.annotations.replace("@ByVal ", "@ByRef ")
@@ -2013,6 +2056,8 @@ public class Parser {
             Info info = infoMap.getFirst(cppName);
             if (info != null && info.javaNames != null && info.javaNames.length > 0) {
                 javaName = info.javaNames[0];
+            } else if (info == null) {
+                infoMap.put(info = new Info(cppName));
             }
             String spacing2 = " ";
             if (tokens.next().match('=')) {

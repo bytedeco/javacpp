@@ -1119,9 +1119,10 @@ public class Generator implements Closeable {
                 if (Pointer.class.isAssignableFrom(methodInfo.parameterTypes[j])) {
                     out.println("arg" + j + " == NULL ? NULL : (" + typeName[0] + typeName[1] +
                             ")jlong_to_ptr(env->GetLongField(arg" + j + ", JavaCPP_addressFID));");
-                    if ((j == 0 && FunctionPointer.class.isAssignableFrom(methodInfo.cls) &&
-                            methodInfo.cls.isAnnotationPresent(Namespace.class)) ||
-                            passBy instanceof ByVal || passBy instanceof ByRef) {
+                    if ((j == 0 && FunctionPointer.class.isAssignableFrom(methodInfo.cls)
+                            && methodInfo.cls.isAnnotationPresent(Namespace.class))
+                            || (passBy instanceof ByVal && ((ByVal)passBy).nullValue().length() == 0)
+                            || (passBy instanceof ByRef && ((ByRef)passBy).nullValue().length() == 0)) {
                         // in the case of member ptr, ptr0 is our object pointer, which cannot be NULL
                         out.println("    if (ptr" + j + " == NULL) {");
                         out.println("        env->ThrowNew(JavaCPP_getClass(env, " +
@@ -1472,7 +1473,9 @@ public class Generator implements Closeable {
                 out.print(cast + "(ptr" + j + " == NULL ? NULL : " + (passBy instanceof ByPtrPtr ? "&ptr" : "ptr") + j + "->ptr)");
             } else if (passBy instanceof ByVal || (passBy instanceof ByRef &&
                     methodInfo.parameterTypes[j] != String.class)) {
-                out.print("*" + cast + "ptr" + j);
+                String nullValue = passBy instanceof ByVal ? ((ByVal)passBy).nullValue()
+                                 : passBy instanceof ByRef ? ((ByRef)passBy).nullValue() : "";
+                out.print((nullValue.length() > 0 ? "ptr" + j + " == NULL ? " + nullValue + " : " : "") + "*" + cast + "ptr" + j);
             } else if (passBy instanceof ByPtrPtr) {
                 out.print(cast + "(arg" + j + " == NULL ? NULL : &ptr" + j + ")");
             } else { // ByPtr || ByPtrRef || (ByRef && std::string)

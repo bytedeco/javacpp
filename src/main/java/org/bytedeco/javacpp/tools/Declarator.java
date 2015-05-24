@@ -29,6 +29,6 @@ class Declarator {
     Parameters parameters = null;
     Declaration definition = null;
     int infoNumber = 0, indices = 0, indirections = 0;
-    boolean constPointer = false, reference = false;
+    boolean constPointer = false, operator = false, reference = false;
     String cppName = "", javaName = "", signature = "";
 }
