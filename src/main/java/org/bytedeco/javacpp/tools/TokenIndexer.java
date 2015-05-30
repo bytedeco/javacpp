@@ -80,17 +80,19 @@ class TokenIndexer {
                     comment.value = "// " + spacing.substring(n) + "#" + keyword.spacing + keyword;
                     tokens.add(comment);
 
-                    if (keyword.match(Token.IF, Token.IFDEF, Token.IFNDEF, Token.ELIF)) {
-                        String value = "";
-                        for ( ; index < array.length; index++) {
-                            if (array[index].spacing.indexOf('\n') >= 0) {
-                                break;
-                            }
-                            if (!array[index].match(Token.COMMENT)) {
-                                value += array[index].spacing + array[index];
-                            }
-                            comment.value += array[index].match("\n") ? "\n// " : array[index].spacing + array[index];
+                    String value = "";
+                    for ( ; index < array.length; index++) {
+                        if (array[index].spacing.indexOf('\n') >= 0) {
+                            break;
                         }
+                        if (!array[index].match(Token.COMMENT)) {
+                            value += array[index].spacing + array[index];
+                        }
+                        comment.value += array[index].match("\n") ? "\n// "
+                                       : array[index].spacing + array[index].toString().replaceAll("\n", "\n// ");
+                    }
+
+                    if (keyword.match(Token.IF, Token.IFDEF, Token.IFNDEF, Token.ELIF)) {
                         define = info == null || !defined;
                         info = infoMap.getFirst(value);
                         if (info != null) {

@@ -1,4 +1,5 @@
 
+ * Fix `Parser` errors on unnamed `namespace` blocks, preprocessor directives with comments, and empty macros
  * Introduce a `nullValue` to `@ByRef` and `@ByVal` annotations to let us specify what to do when passed `null`
  * Add properties for `android-arm64`, `android-x86_64`, and `linux-arm64` platforms
  * Add slow but generic `Indexer.putDouble()` to complement existing `Indexer.getDouble()` (useful for testing)

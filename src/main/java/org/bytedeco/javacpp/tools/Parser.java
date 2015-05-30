@@ -1488,7 +1488,7 @@ public class Parser {
         int lastIndex = tokens.index;
 
         Declaration decl = new Declaration();
-        if (keyword.match(Token.DEFINE) && beginIndex + 1 < endIndex) {
+        if (keyword.match(Token.DEFINE) && beginIndex < endIndex) {
             tokens.index = beginIndex;
             String macroName = tokens.get().value;
             Token first = tokens.next();
@@ -1497,7 +1497,8 @@ public class Parser {
             for (Info info : infoList.size() > 0 ? infoList : Arrays.asList(new Info[] { null })) {
                 if (info != null && info.skip) {
                     break;
-                } else if (hasArgs && info == null || (info != null && info.cppText == null && info.cppTypes != null && info.cppTypes.length == 0)) {
+                } else if ((info == null && (hasArgs || beginIndex + 1 == endIndex))
+                        || (info != null && info.cppText == null && info.cppTypes != null && info.cppTypes.length == 0)) {
                     // save declaration for expansion
                     info = new Info(macroName).cppText("");
                     tokens.index = backIndex;
@@ -2157,15 +2158,20 @@ public class Parser {
         }
         Declaration decl = new Declaration();
         String spacing = tokens.get().spacing;
-        String name = tokens.next().expect(Token.IDENTIFIER).value;
-        tokens.next().expect('{');
+        String name = null;
+        tokens.next();
+        if (tokens.get().match(Token.IDENTIFIER)) {
+            name = tokens.get().value;
+            tokens.next();
+        }
+        tokens.get().expect('{');
         tokens.next();
         if (tokens.get().spacing.indexOf('\n') < 0) {
             tokens.get().spacing = spacing;
         }
 
         context = new Context(context);
-        context.namespace = context.namespace != null ? context.namespace + "::" + name : name;
+        context.namespace = name == null ? null : context.namespace != null ? context.namespace + "::" + name : name;
         declarations(context, declList);
         decl.text += tokens.get().expect('}').spacing;
         tokens.next();
