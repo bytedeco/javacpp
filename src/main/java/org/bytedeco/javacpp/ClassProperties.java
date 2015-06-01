@@ -126,7 +126,8 @@ public class ClassProperties extends HashMap<String,LinkedList<String>> {
         LinkedList<Class> classList = new LinkedList<Class>();
         classList.addFirst(c);
         while (!c.isAnnotationPresent(org.bytedeco.javacpp.annotation.Properties.class)
-                && !c.isAnnotationPresent(Platform.class) && c.getSuperclass() != Object.class) {
+                && !c.isAnnotationPresent(Platform.class) && c.getSuperclass() != null
+                && c.getSuperclass() != Object.class) {
             // accumulate superclasses to process native methods from those as well
             classList.addFirst(c = c.getSuperclass());
         }
