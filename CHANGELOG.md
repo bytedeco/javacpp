@@ -1,4 +1,5 @@
 
+ * Offer the Apache License, Version 2.0, as a new choice of license, in addition to the GPLv2 with Classpath exception
  * Fix `NullPointerException` when trying to process an `interface` class
  * Fix `Parser` errors on unnamed `namespace` blocks, preprocessor directives with comments, and empty macros
  * Introduce a `nullValue` to `@ByRef` and `@ByVal` annotations to let us specify what to do when passed `null`
