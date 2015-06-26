@@ -1,4 +1,5 @@
 
+ * Add `Parser` support for the `interface` keyword of the Microsoft C/C++ Compiler
  * Fix `Generator` performance issue on classes with a lot of methods ([issue bytedeco/javacpp-presets#36](https://github.com/bytedeco/javacpp-presets/issues/36))
  * Offer the Apache License, Version 2.0, as a new choice of license, in addition to the GPLv2 with Classpath exception
  * Fix `NullPointerException` when trying to process an `interface` class

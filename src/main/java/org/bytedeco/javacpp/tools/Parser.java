@@ -355,7 +355,7 @@ public class Parser {
                 }
             } else if (token.match(Token.VIRTUAL)) {
                 type.virtual = true;
-            } else if (token.match(Token.ENUM, Token.EXPLICIT, Token.EXTERN, Token.INLINE, Token.CLASS,
+            } else if (token.match(Token.ENUM, Token.EXPLICIT, Token.EXTERN, Token.INLINE, Token.CLASS, Token.INTERFACE,
                                    Token.STRUCT, Token.UNION, Token.TYPEDEF, Token.TYPENAME, Token.USING)) {
                 continue;
             } else if (token.match((Object[])InfoMap.simpleTypes)) {
@@ -1742,9 +1742,9 @@ public class Parser {
         boolean foundGroup = false, friend = false;
         Context ctx = new Context(context);
         for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.next()) {
-            if (token.match(Token.CLASS, Token.STRUCT, Token.UNION)) {
+            if (token.match(Token.CLASS, Token.INTERFACE, Token.STRUCT, Token.UNION)) {
                 foundGroup = true;
-                ctx.inaccessible = token.match(Token.CLASS);
+                ctx.inaccessible = token.match(Token.CLASS, Token.INTERFACE);
                 break;
             } else if (token.match(Token.FRIEND)) {
                 friend = true;
