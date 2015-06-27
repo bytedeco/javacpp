@@ -267,6 +267,19 @@ public class Builder {
         }
 
         {
+            String p = properties.getProperty("platform.frameworkpath.prefix", "");
+            for (String s : properties.get("platform.frameworkpath")) {
+                if (new File(s).isDirectory()) {
+                    if (p.endsWith(" ")) {
+                        command.add(p.trim()); command.add(s);
+                    } else {
+                        command.add(p + s);
+                    }
+                }
+            }
+        }
+
+        {
             String p = properties.getProperty("platform.framework.prefix", "");
             String x = properties.getProperty("platform.framework.suffix", "");
             for (String s : properties.get("platform.framework")) {

@@ -62,6 +62,8 @@ public @interface Platform {
     String[] linkpath()    default {};
     /** A list of libraries the native compiler should link with. */
     String[] link()        default {};
+    /** A list of framework paths passed to the native compiler for use at link time. */
+    String[] frameworkpath() default {};
     /** A list of frameworks the native compiler should build against. */
     String[] framework()   default {};
     /** A list of paths from which to attempt preloading libraries from the

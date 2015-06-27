@@ -169,7 +169,7 @@ public class ClassProperties extends HashMap<String,LinkedList<String>> {
         }
 
         String[] define = {}, include = {}, cinclude = {}, includepath = {}, compiler = {},
-                 linkpath = {}, link = {}, framework = {}, preloadpath = {}, preload = {};
+                 linkpath = {}, link = {}, frameworkpath = {}, framework = {}, preloadpath = {}, preload = {};
         String library = "jni" + c.getSimpleName();
         for (Platform p : platforms != null ? platforms : new Platform[0]) {
             String[][] names = { p.value(), p.not() };
@@ -190,6 +190,7 @@ public class ClassProperties extends HashMap<String,LinkedList<String>> {
                 if (p.compiler()   .length > 0) { compiler    = p.compiler();    }
                 if (p.linkpath()   .length > 0) { linkpath    = p.linkpath();    }
                 if (p.link()       .length > 0) { link        = p.link();        }
+                if (p.frameworkpath().length > 0) { frameworkpath = p.frameworkpath(); }
                 if (p.framework()  .length > 0) { framework   = p.framework();   }
                 if (p.preloadpath().length > 0) { preloadpath = p.preloadpath(); }
                 if (p.preload()    .length > 0) { preload     = p.preload();     }
@@ -203,6 +204,7 @@ public class ClassProperties extends HashMap<String,LinkedList<String>> {
         addAll("platform.compiler.*", compiler);
         addAll("platform.linkpath", linkpath);
         addAll("platform.link", link);
+        addAll("platform.frameworkpath", frameworkpath);
         addAll("platform.framework", framework);
         addAll("platform.preloadpath", preloadpath);
         addAll("platform.preload", preload);
