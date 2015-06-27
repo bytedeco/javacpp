@@ -12,7 +12,7 @@
  * Add `Info.purify` to force the `Parser` in producing abstract classes
  * Let `StringAdapter` (via the `@StdString` annotation) support `std::string*`, that is to say, pointers to strings
  * Fix `Tokenizer` failing on some character and string literals
- * Fix `Parser` errors caused by constructors in `typedef struct` constructs
+ * Fix `Parser` errors caused by constructors in `typedef struct` constructs, included nested ones, and skip over pointer names too ([issue bytedeco/javacpp-presets#62](https://github.com/bytedeco/javacpp-presets/issues/62))
  * Generalize `Info.virtualize` to let non-pure virtual functions get annotated with `@Virtual native`
  * Make `VectorAdapter` work even with elements that have no default constructor
  * Add `Parser` support for `std::pair` as a sort of zero-dimensional container type

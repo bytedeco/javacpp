@@ -482,6 +482,10 @@ public class Parser {
             if (template < 0 && template2 >= 0) {
                 groupName = groupName.substring(0, template2);
             }
+            int namespace2 = groupName.lastIndexOf("::");
+            if (namespace < 0 && namespace2 >= 0) {
+                groupName = groupName.substring(namespace2 + 2);
+            }
             if (type.cppName.equals(groupName)) {
                 type.constructor = !type.destructor && !type.operator
                         && !type.pointer && !type.reference && tokens.get().match('(', ':');
@@ -1302,7 +1306,7 @@ public class Parser {
                 decl.text += "@Namespace(\"" + context.namespace + "\") ";
             }
             if (type.constructor) {
-                decl.text += "public " + dcl.javaName + dcl.parameters.list + " { allocate" + params.names + "; }\n" +
+                decl.text += "public " + context.shorten(context.javaName) + dcl.parameters.list + " { allocate" + params.names + "; }\n" +
                              "private native void allocate" + dcl.parameters.list + ";\n";
             } else {
                 decl.text += modifiers + type.annotations + type.javaName + " " + dcl.javaName + dcl.parameters.list + ";\n";
@@ -1802,11 +1806,12 @@ public class Parser {
         String originalName = type.cppName;
         if (body() != null && !tokens.get().match(';')) {
             if (typedef) {
-                for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.next()) {
+                for (Token prevToken = null, token = tokens.get(); !token.match(Token.EOF); prevToken = token, token = tokens.next()) {
                     if (token.match(';')) {
                         decl.text += token.spacing;
                         break;
-                    } else {
+                    } else if ((prevToken == null || prevToken.match('}', ',')) && token.match(Token.IDENTIFIER)) {
+                        // use typedef name, unless it's something weird like a pointer
                         name = type.javaName = type.cppName = token.value;
                     }
                 }
