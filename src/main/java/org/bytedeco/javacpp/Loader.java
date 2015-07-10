@@ -455,6 +455,16 @@ public class Loader {
             prefix + suffix            // without version
         };
 
+        String[] suffixes = properties.get("platform.library.suffix").toArray(new String[0]);
+        if (suffixes.length > 1) {
+            styles = new String[3 * suffixes.length];
+            for (int i = 0; i < suffixes.length; i++) {
+                styles[3 * i    ] = prefix + suffixes[i] + version; // Linux style
+                styles[3 * i + 1] = prefix + version + suffixes[i]; // Mac OS X style
+                styles[3 * i + 2] = prefix + suffixes[i];           // without version
+            }
+        }
+
         int k = 0;
         LinkedList<String> paths = new LinkedList<String>();
         paths.addAll(properties.get("platform.preloadpath"));

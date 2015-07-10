@@ -59,7 +59,8 @@ public class ClassProperties extends HashMap<String,LinkedList<String>> {
             if (k.equals("platform.includepath") || k.equals("platform.include") ||
                     k.equals("platform.linkpath") || k.equals("platform.link") ||
                     k.equals("platform.preloadpath") || k.equals("platform.preload") ||
-                    k.equals("platform.framework")) {
+                    k.equals("platform.frameworkpath") || k.equals("platform.framework") ||
+                    k.equals("platform.library.suffix")) {
                 addAll(k, v.split(pathSeparator));
             } else {
                 setProperty(k, v);

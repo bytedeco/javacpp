@@ -1,4 +1,5 @@
 
+ * Add `-undefined dynamic_lookup` option to Mac OS X compiler, making its native linker behave a bit better, plus search for libraries suffixed with ".so" too
  * Add missing `@Platform(frameworkpath=...)` value and corresponding property to set custom framework paths for the linker
  * Add `Parser` support for the `interface` keyword of the Microsoft C/C++ Compiler
  * Fix `Generator` performance issue on classes with a lot of methods ([issue bytedeco/javacpp-presets#36](https://github.com/bytedeco/javacpp-presets/issues/36))
