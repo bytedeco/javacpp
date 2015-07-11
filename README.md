@@ -14,8 +14,8 @@ Please feel free to ask questions on [the mailing list](http://groups.google.com
 
 Downloads
 ---------
- * JavaCPP 0.11 binary archive  [javacpp-0.11-bin.zip](http://search.maven.org/remotecontent?filepath=org/bytedeco/javacpp/0.11/javacpp-0.11-bin.zip) (238 KB)
- * JavaCPP 0.11 source archive  [javacpp-0.11-src.zip](http://search.maven.org/remotecontent?filepath=org/bytedeco/javacpp/0.11/javacpp-0.11-src.zip) (219 KB)
+ * JavaCPP 1.0 binary archive  [javacpp-1.0-bin.zip](http://search.maven.org/remotecontent?filepath=org/bytedeco/javacpp/1.0/javacpp-1.0-bin.zip) (247 KB)
+ * JavaCPP 1.0 source archive  [javacpp-1.0-src.zip](http://search.maven.org/remotecontent?filepath=org/bytedeco/javacpp/1.0/javacpp-1.0-src.zip) (231 KB)
 
 We can also have everything downloaded and installed automatically with:
 
@@ -24,21 +24,21 @@ We can also have everything downloaded and installed automatically with:
   <dependency>
     <groupId>org.bytedeco</groupId>
     <artifactId>javacpp</artifactId>
-    <version>0.11</version>
+    <version>1.0</version>
   </dependency>
 ```
 
  * Gradle (inside the `build.gradle` file)
 ```groovy
   dependencies {
-    compile group: 'org.bytedeco', name: 'javacpp', version: '0.11'
+    compile group: 'org.bytedeco', name: 'javacpp', version: '1.0'
   }
 ```
 
  * sbt (inside the `build.sbt` file)
 ```scala
   classpathTypes += "maven-plugin"
-  libraryDependencies += "org.bytedeco" % "javacpp" % "0.11"
+  libraryDependencies += "org.bytedeco" % "javacpp" % "1.0"
 ```
 
 
@@ -64,7 +64,7 @@ To produce binary files for Android, you will also have to install:
 
 And similarly to target iOS, you will need to install:
 
- * RoboVM 0.0.x or 1.0.x  http://download.robovm.org/
+ * RoboVM 1.x  http://download.robovm.org/
 
 To modify the source code, please note that the project files were created for:
 

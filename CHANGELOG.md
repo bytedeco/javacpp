@@ -1,4 +1,5 @@
 
+### July 11, 2015 version 1.0
  * Add `-undefined dynamic_lookup` option to Mac OS X compiler, making its native linker behave a bit better, plus search for libraries suffixed with ".so" too
  * Add missing `@Platform(frameworkpath=...)` value and corresponding property to set custom framework paths for the linker
  * Add `Parser` support for the `interface` keyword of the Microsoft C/C++ Compiler
@@ -20,7 +21,7 @@
  * Add `Parser` support for `std::pair` as a sort of zero-dimensional container type
  * Fix `Parser` crash on empty comments ([issue #14](https://github.com/bytedeco/javacpp/issues/14))
 
-### April 4, 2014 version 0.11
+### April 4, 2015 version 0.11
  * Clarify with documentation comments various constructors produced by the `Parser`
  * Add `SharedPtrAdapter` and corresponding `@SharedPtr` annotation to support `shared_ptr` containers
  * Fix a few small issues and work around a few additional corner cases with the `Parser` and the `Generator`
