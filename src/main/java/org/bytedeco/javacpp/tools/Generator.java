@@ -682,13 +682,13 @@ public class Generator implements Closeable {
             out.print("static void " + name + "_deallocate(void *p) { ");
             if (FunctionPointer.class.isAssignableFrom(c)) {
                 String typeName = functionClassName(c) + "*";
-                out.println("JNIEnv *e; bool a = JavaCPP_getEnv(&e); if (e != NULL) e->DeleteWeakGlobalRef((("
+                out.println("JNIEnv *e; bool a = JavaCPP_getEnv(&e); if (e != NULL) e->DeleteWeakGlobalRef((jweak)(("
                         + typeName + ")p)->obj); delete (" + typeName + ")p; JavaCPP_detach(a); }");
             } else if (virtualFunctions.containsKey(c)) {
                 String[] typeName = cppTypeName(c);
                 String valueTypeName = valueTypeName(typeName);
                 String subType = "JavaCPP_" + mangle(valueTypeName);
-                out.println("JNIEnv *e; bool a = JavaCPP_getEnv(&e); if (e != NULL) e->DeleteWeakGlobalRef((("
+                out.println("JNIEnv *e; bool a = JavaCPP_getEnv(&e); if (e != NULL) e->DeleteWeakGlobalRef((jweak)(("
                         + subType + "*)p)->obj); delete (" + subType + "*)p; JavaCPP_detach(a); }");
             } else {
                 String[] typeName = cppTypeName(c);
@@ -887,7 +887,7 @@ public class Generator implements Closeable {
         out.println("        return;");
         out.println("    }");
         out.println("    for (int i = 0; i < " + jclasses.size() + "; i++) {");
-        out.println("        env->DeleteWeakGlobalRef(JavaCPP_classes[i]);");
+        out.println("        env->DeleteWeakGlobalRef((jweak)JavaCPP_classes[i]);");
         out.println("        JavaCPP_classes[i] = NULL;");
         out.println("    }");
         out.println("    JavaCPP_vm = NULL;");

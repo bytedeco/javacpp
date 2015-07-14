@@ -1,4 +1,6 @@
 
+ * Insure `Generator` casts properly to `jweak` when calling `DeleteWeakGlobalRef()` ([issue #23](https://github.com/bytedeco/javacpp/issues/23))
+
 ### July 11, 2015 version 1.0
  * Add `-undefined dynamic_lookup` option to Mac OS X compiler, making its native linker behave a bit better, plus search for libraries suffixed with ".so" too
  * Add missing `@Platform(frameworkpath=...)` value and corresponding property to set custom framework paths for the linker
