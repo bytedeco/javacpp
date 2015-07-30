@@ -1609,15 +1609,17 @@ public class Generator implements Closeable {
                     out.println(         "if (rptr != NULL) {");
                     out.println(indent + "    rarg = JavaCPP_createPointer(env, " + jclasses.index(methodInfo.returnType) +
                             (methodInfo.parameterTypes.length > 0 && methodInfo.parameterTypes[0] == Class.class ? ", arg0);" : ");"));
+                    out.println(indent + "    if (rarg != NULL) {");
                     if (needInit) {
-                        out.println(indent + "    JavaCPP_initPointer(env, rarg, rptr, rcapacity, deallocator);");
+                        out.println(indent + "        JavaCPP_initPointer(env, rarg, rptr, rcapacity, deallocator);");
                     } else {
-                        out.println(indent + "    env->SetLongField(rarg, JavaCPP_addressFID, ptr_to_jlong(rptr));");
+                        out.println(indent + "        env->SetLongField(rarg, JavaCPP_addressFID, ptr_to_jlong(rptr));");
                     }
                     if (returnBy instanceof ByVal && virtualFunctions.containsKey(methodInfo.cls)) {
                         String subType = "JavaCPP_" + mangle(valueTypeName);
                         out.println(indent + "    ((" + subType + "*))rptr->obj = env->NewWeakGlobalRef(rarg);");
                     }
+                    out.println(indent + "    }");
                     out.println(indent + "}");
                 } else if (methodInfo.returnType == String.class) {
                     out.println(indent + "if (rptr != NULL) {");
@@ -1958,7 +1960,8 @@ public class Generator implements Closeable {
             out.println("    jmethodID mid = " + fieldName + ";");
         } else {
             out.println("    if (obj == NULL) {");
-            out.println("        obj = env->NewGlobalRef(JavaCPP_createPointer(env, " + jclasses.index(cls) + "));");
+            out.println("        obj = JavaCPP_createPointer(env, " + jclasses.index(cls) + ");");
+            out.println("        obj = obj == NULL ? NULL : env->NewGlobalRef(obj);");
             out.println("        if (obj == NULL) {");
             out.println("            JavaCPP_log(\"Error creating global reference of " + cls.getCanonicalName() + " instance for callback.\");");
             out.println("        } else {");
