@@ -1296,8 +1296,7 @@ public class Parser {
 
             // add @Virtual annotation on user request only, inherited through context
             if (type.virtual && context.virtualize) {
-                modifiers = context.inaccessible ? "@Virtual protected " : "@Virtual public ";
-                modifiers += decl.abstractMember ? "abstract " : "native ";
+                modifiers = context.inaccessible ? "@Virtual protected native " : "@Virtual public native ";
             }
 
             // compose the text of the declaration with the info we got up until this point
@@ -1918,7 +1917,7 @@ public class Parser {
             ctx.variable = var;
             declarations(ctx, declList2);
         }
-        String modifiers = info.purify && ctx.virtualize ? "public static abstract " : "public static ";
+        String modifiers = "public static ";
         boolean implicitConstructor = true, defaultConstructor = false, intConstructor = false,
                 pointerConstructor = false, abstractClass = info.purify && !ctx.virtualize, havePureConst = false, haveVariables = false;
         for (Declaration d : declList2) {
@@ -1932,9 +1931,6 @@ public class Parser {
             abstractClass |= d.abstractMember;
             havePureConst |= d.constMember && d.abstractMember;
             haveVariables |= d.variable;
-        }
-        if (abstractClass && ctx.virtualize) {
-            modifiers = "public static abstract ";
         }
         if (havePureConst && ctx.virtualize) {
             modifiers = "@Const " + modifiers;
