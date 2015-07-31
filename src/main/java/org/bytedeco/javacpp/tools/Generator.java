@@ -516,14 +516,14 @@ public class Generator implements Closeable {
             out.println("class JavaCPP_hidden StringAdapter {");
             out.println("public:");
             out.println("    StringAdapter(const          char* ptr, size_t size) : ptr((char*)ptr), size(size),");
-            out.println("        str2(ptr ? (char*)ptr : \"\"), str(str2) { }");
+            out.println("        str2(ptr ? (char*)ptr : \"\", size == (size_t) (jint) -1 ? strlen((char*)ptr) : size), str(str2) { }");
             out.println("    StringAdapter(const signed   char* ptr, size_t size) : ptr((char*)ptr), size(size),");
-            out.println("        str2(ptr ? (char*)ptr : \"\"), str(str2) { }");
+            out.println("        str2(ptr ? (char*)ptr : \"\", size == (size_t) (jint) -1 ? strlen((char*)ptr) : size), str(str2) { }");
             out.println("    StringAdapter(const unsigned char* ptr, size_t size) : ptr((char*)ptr), size(size),");
-            out.println("        str2(ptr ? (char*)ptr : \"\"), str(str2) { }");
-            out.println("    StringAdapter(const std::string& str) : ptr(0), size(0), str2(str), str(str2) { }");
-            out.println("    StringAdapter(      std::string& str) : ptr(0), size(0), str(str) { }");
-            out.println("    StringAdapter(const std::string* str) : ptr(0), size(0), str(*(std::string*)str) { }");
+            out.println("        str2(ptr ? (char*)ptr : \"\", size == (size_t) (jint) -1 ? strlen((char*)ptr) : size), str(str2) { }");
+            out.println("    StringAdapter(const std::string& str) : ptr(0), size(str.size()), str2(str), str(str2) { }");
+            out.println("    StringAdapter(      std::string& str) : ptr(0), size(str.size()), str(str) { }");
+            out.println("    StringAdapter(const std::string* str) : ptr(0), size(str->size()), str(*(std::string*)str) { }");
             out.println("    void assign(char* ptr, size_t size) {");
             out.println("        this->ptr = ptr;");
             out.println("        this->size = size;");
@@ -533,9 +533,12 @@ public class Generator implements Closeable {
             out.println("    operator char*() {");
             out.println("        const char* c_str = str.c_str();");
             out.println("        if (ptr == NULL || strcmp(c_str, ptr) != 0) {");
-            out.println("            ptr = strdup(c_str);");
+//            out.println("            ptr = strdup(c_str);");
+            out.println("            ptr = (char*) malloc(size + 1);");
+            out.println("            memcpy(ptr, c_str, size);");
+            out.println("            ptr[size] = 0;");
             out.println("        }");
-            out.println("        size = strlen(c_str) + 1;");
+//            out.println("        size = strlen(c_str) + 1;");
             out.println("        return ptr;");
             out.println("    }");
             out.println("    operator       signed   char*() { return (signed   char*)(operator char*)(); }");
@@ -1149,7 +1152,7 @@ public class Generator implements Closeable {
                 } else if (methodInfo.parameterTypes[j] == String.class) {
                     out.println("arg" + j + " == NULL ? NULL : env->GetStringUTFChars(arg" + j + ", NULL);");
                     if (adapterInfo != null || prevAdapterInfo != null) {
-                        out.println("    jint size" + j + " = 0;");
+                        out.println("    jint size" + j + " = -1;");
                     }
                 } else if (methodInfo.parameterTypes[j].isArray() &&
                         methodInfo.parameterTypes[j].getComponentType().isPrimitive()) {
