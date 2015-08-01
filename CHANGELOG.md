@@ -1,4 +1,5 @@
 
+ * Adjust `BytePointer`, `CharPointer`, `IntPointer`, and `StringAdapter` to work with data strings that are not null-terminated ([issue #24](https://github.com/bytedeco/javacpp/issues/24))
  * Forbid `Parser` from producing `abstract` classes, preventing C++ factory methods and such from working properly ([issue #25](https://github.com/bytedeco/javacpp/issues/25))
  * Fix crash when trying to create objects from abstract classes, to let the exception be thrown on return ([issue #26](https://github.com/bytedeco/javacpp/issues/26))
  * Switch to GCC 4.9 by default on Android, probably dropping support for Android 2.2, because GCC 4.6 has been dropped from the NDK since r10e

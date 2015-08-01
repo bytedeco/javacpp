@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2013 Samuel Audet
+ * Copyright (C) 2011-2015 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -99,8 +99,14 @@ public class IntPointer extends Pointer {
         return super.capacity(capacity);
     }
 
-    /** @return the code points from the null-terminated string */
+    /** Returns the code points, assuming a null-terminated string if {@code limit <= position}. */
     public int[] getStringCodePoints() {
+        if (limit > position) {
+            int[] array = new int[limit - position];
+            get(array);
+            return array;
+        }
+
         // This may be kind of slow, and should be moved to a JNI function.
         int[] buffer = new int[16];
         int i = 0, j = position();
@@ -116,13 +122,14 @@ public class IntPointer extends Pointer {
         System.arraycopy(buffer, 0, newbuffer, 0, i);
         return newbuffer;
     }
-    /** @return the String from the null-terminated string */
+    /** Returns the String, assuming a null-terminated string if {@code limit <= position}. */
     public String getString() {
         int[] codePoints = getStringCodePoints();
         return new String(codePoints, 0, codePoints.length);
     }
     /**
      * Copies the String code points into native memory, including a terminating null int.
+     * Sets the limit to just before the terminating null code point.
      *
      * @param s the String to copy
      * @return this
@@ -134,7 +141,7 @@ public class IntPointer extends Pointer {
         for (int i = 0; i < codePoints.length; i++) {
             codePoints[i] = s.codePointAt(i);
         }
-        return put(codePoints).put(codePoints.length, (int)0);
+        return put(codePoints).put(codePoints.length, (int)0).limit(codePoints.length);
     }
 
     /** @return {@code get(0)} */

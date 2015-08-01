@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2013 Samuel Audet
+ * Copyright (C) 2011-2015 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -99,8 +99,14 @@ public class CharPointer extends Pointer {
         return super.capacity(capacity);
     }
 
-    /** @return the chars from the null-terminated string */
+    /** Returns the chars, assuming a null-terminated string if {@code limit <= position}. */
     public char[] getStringChars() {
+        if (limit > position) {
+            char[] array = new char[limit - position];
+            get(array);
+            return array;
+        }
+
         // This may be kind of slow, and should be moved to a JNI function.
         char[] buffer = new char[16];
         int i = 0, j = position();
@@ -116,12 +122,13 @@ public class CharPointer extends Pointer {
         System.arraycopy(buffer, 0, newbuffer, 0, i);
         return newbuffer;
     }
-    /** @return the String from the null-terminated string */
+    /** Returns the String, assuming a null-terminated string if {@code limit <= position}. */
     public String getString() {
         return new String(getStringChars());
     }
     /**
      * Copies the String chars into native memory, including a terminating null char.
+     * Sets the limit to just before the terminating null character.
      *
      * @param s the String to copy
      * @return this
@@ -130,7 +137,7 @@ public class CharPointer extends Pointer {
      */
     public CharPointer putString(String s) {
         char[] chars = s.toCharArray();
-        return put(chars).put(chars.length, (char)0);
+        return put(chars).put(chars.length, (char)0).limit(chars.length);
     }
 
     /** @return {@code get(0)} */

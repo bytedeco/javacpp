@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2013 Samuel Audet
+ * Copyright (C) 2011-2015 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -115,8 +115,14 @@ public class BytePointer extends Pointer {
         return super.capacity(capacity);
     }
 
-    /** @return the bytes from the null-terminated string */
+    /** Returns the bytes, assuming a null-terminated string if {@code limit <= position}. */
     public byte[] getStringBytes() {
+        if (limit > position) {
+            byte[] array = new byte[limit - position];
+            get(array);
+            return array;
+        }
+
         // This may be kind of slow, and should be moved to a JNI function.
         byte[] buffer = new byte[16];
         int i = 0, j = position();
@@ -134,6 +140,8 @@ public class BytePointer extends Pointer {
     }
     /**
      * Decodes the native bytes assuming they are encoded in the named charset.
+     * Assumes a null-terminated string if {@code limit <= position}.
+     *
      * @param charsetName the charset in which the bytes are encoded
      * @return a String from the null-terminated string
      * @throws UnsupportedEncodingException
@@ -144,6 +152,8 @@ public class BytePointer extends Pointer {
     }
     /**
      * Decodes the native bytes assuming they are encoded in the platform's default charset.
+     * Assumes a null-terminated string if {@code limit <= position}.
+     *
      * @return a String from the null-terminated string
      */
     public String getString() {
@@ -153,6 +163,7 @@ public class BytePointer extends Pointer {
     /**
      * Encodes the String into the named charset and copies it in native memory,
      * including a terminating null byte.
+     * Sets the limit to just before the terminating null byte.
      *
      * @param s the String to encode and copy
      * @param charsetName the charset in which to encode the bytes
@@ -164,13 +175,12 @@ public class BytePointer extends Pointer {
     public BytePointer putString(String s, String charsetName)
             throws UnsupportedEncodingException {
         byte[] bytes = s.getBytes(charsetName);
-        //capacity(bytes.length+1);
-        put(bytes).put(bytes.length, (byte)0);
-        return this;
+        return put(bytes).put(bytes.length, (byte)0).limit(bytes.length);
     }
     /**
      * Encodes the String into the platform's default charset and copies it in
      * native memory, including a terminating null byte.
+     * Sets the limit to just before the terminating null byte.
      *
      * @param s the String to encode and copy
      * @return this
@@ -179,7 +189,7 @@ public class BytePointer extends Pointer {
      */
     public BytePointer putString(String s) {
         byte[] bytes = s.getBytes();
-        return put(bytes).put(bytes.length, (byte)0);
+        return put(bytes).put(bytes.length, (byte)0).limit(bytes.length);
     }
 
     /** @return {@code get(0)} */
