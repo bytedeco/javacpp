@@ -5,9 +5,9 @@ JavaCPP
 
 Introduction
 ------------
-JavaCPP provides efficient access to native C++ inside Java, not unlike the way some C/C++ compilers interact with assembly language. No need to invent new languages such as with [SWIG](http://www.swig.org/), [SIP](http://riverbankcomputing.co.uk/software/sip/), [C++/CLI](http://www.ecma-international.org/publications/standards/Ecma-372.htm), [Cython](http://www.cython.org/), or [RPython](http://doc.pypy.org/en/latest/coding-guide.html#id1) as required by [cppyy](http://doc.pypy.org/en/latest/cppyy.html). Instead, it exploits the syntactic and semantic similarities between Java and C++. Under the hood, it uses JNI, so it works with all implementations of Java SE, in addition to [Android](http://www.android.com/), [Avian](http://oss.readytalk.com/avian/), and [RoboVM](http://www.robovm.org/) ([instructions](#instructions-for-android-avian-and-robovm)).
+JavaCPP provides efficient access to native C++ inside Java, not unlike the way some C/C++ compilers interact with assembly language. No need to invent new languages such as with [SWIG](http://www.swig.org/), [SIP](http://riverbankcomputing.co.uk/software/sip/), [C++/CLI](http://www.ecma-international.org/publications/standards/Ecma-372.htm), [Cython](http://www.cython.org/), or [RPython](https://pypi.python.org/pypi/rpython) as required by [cppyy](http://doc.pypy.org/en/latest/cppyy.html). Instead, it exploits the syntactic and semantic similarities between Java and C++. Under the hood, it uses JNI, so it works with all implementations of Java SE, in addition to [Android](http://www.android.com/), [Avian](http://oss.readytalk.com/avian/), and [RoboVM](http://www.robovm.org/) ([instructions](#instructions-for-android-avian-and-robovm)).
 
-More specifically, when compared to the approaches above or elsewhere ([CableSwig](http://www.itk.org/ITK/resources/CableSwig.html), [JNIGeneratorApp](http://www.eclipse.org/swt/jnigen.php), [cxxwrap](http://cxxwrap.sourceforge.net/), [JNIWrapper](http://www.teamdev.com/jniwrapper/), [Platform Invoke](http://msdn.microsoft.com/en-us/library/0h9e9t7d.aspx), [GlueGen](http://jogamp.org/gluegen/www/), [LWJGL Generator](https://github.com/LWJGL/lwjgl3-wiki/wiki/4.5.-The-Generator), [JNIDirect](http://web.archive.org/web/20050329122501/http://homepage.mac.com/pcbeard/JNIDirect/), [ctypes](http://docs.python.org/library/ctypes.html), [JNA](https://github.com/twall/jna), [JNIEasy](http://www.innowhere.com/jnieasy/), [JniMarshall](http://flinflon.brandonu.ca/Dueck/SystemsProgramming/JniMarshall/), [JNative](http://jnative.free.fr/), [J/Invoke](http://web.archive.org/web/20110727133817/http://www.jinvoke.com/), [HawtJNI](http://hawtjni.fusesource.org/), [JNR](https://github.com/jnr/), [BridJ](http://code.google.com/p/bridj/), [fficxx](http://ianwookim.org/fficxx/), etc.), it maps naturally and efficiently many common features afforded by the C++ language and often considered problematic, including overloaded operators, class and function templates, callbacks through function pointers, function objects (aka functors), virtual functions and member function pointers, nested struct definitions, variable length arguments, nested namespaces, large data structures containing arbitrary cycles, virtual and multiple inheritance, passing/returning by value/reference/vector, anonymous unions, bit fields, exceptions, destructors with garbage collection, and documentation comments. Obviously, neatly supporting the whole of C++ would require more work (although one could argue about the intrinsic neatness of C++), but we are releasing it here as a proof of concept.
+More specifically, when compared to the approaches above or elsewhere ([CableSwig](http://www.itk.org/ITK/resources/CableSwig.html), [JNIGeneratorApp](http://www.eclipse.org/swt/jnigen.php), [cxxwrap](http://cxxwrap.sourceforge.net/), [JNIWrapper](http://www.teamdev.com/jniwrapper/), [Platform Invoke](https://msdn.microsoft.com/en-us/library/aa719485.aspx), [GlueGen](http://jogamp.org/gluegen/www/), [LWJGL Generator](https://github.com/LWJGL/lwjgl3-wiki/wiki/4.5.-The-Generator), [JNIDirect](http://web.archive.org/web/20050329122501/http://homepage.mac.com/pcbeard/JNIDirect/), [ctypes](http://docs.python.org/library/ctypes.html), [JNA](https://github.com/twall/jna), [JNIEasy](http://www.innowhere.com/jnieasy/), [JniMarshall](http://flinflon.brandonu.ca/Dueck/SystemsProgramming/JniMarshall/), [JNative](http://jnative.free.fr/), [J/Invoke](http://web.archive.org/web/20110727133817/http://www.jinvoke.com/), [HawtJNI](http://hawtjni.fusesource.org/), [JNR](https://github.com/jnr/), [BridJ](http://code.google.com/p/bridj/), [fficxx](http://ianwookim.org/fficxx/), etc.), it maps naturally and efficiently many common features afforded by the C++ language and often considered problematic, including overloaded operators, class and function templates, callbacks through function pointers, function objects (aka functors), virtual functions and member function pointers, nested struct definitions, variable length arguments, nested namespaces, large data structures containing arbitrary cycles, virtual and multiple inheritance, passing/returning by value/reference/vector, anonymous unions, bit fields, exceptions, destructors with garbage collection, and documentation comments. Obviously, neatly supporting the whole of C++ would require more work (although one could argue about the intrinsic neatness of C++), but we are releasing it here as a proof of concept.
 
 As a case in point, we have already used it to produce complete interfaces to OpenCV, FFmpeg, libdc1394, PGR FlyCapture, OpenKinect, videoInput, ARToolKitPlus, and others as part of the [JavaCPP Presets](https://github.com/bytedeco/javacpp-presets) subproject, also demonstrating early parsing capabilities of C/C++ header files that show promising and useful results.
 
@@ -54,10 +54,10 @@ To use JavaCPP, you will need to download and install the following software:
    * IBM JDK  http://www.ibm.com/developerworks/java/jdk/  or
    * Java SE for Mac OS X  http://developer.apple.com/java/  etc.
  * A C++ compiler, out of which these have been tested
-   * GNU C/C++ Compiler (Linux, Mac OS X, etc.)  http://gcc.gnu.org/
+   * GNU C/C++ Compiler (Linux, etc.)  http://gcc.gnu.org/
      * For Windows x86 and x64  http://mingw-w64.sourceforge.net/
-   * Microsoft C/C++ Compiler  http://msdn.microsoft.com/
-     * Part of [Visual Studio](https://www.visualstudio.com/)
+   * Clang (Mac OS X, etc.)  http://clang.llvm.org/
+   * Microsoft C/C++ Compiler, part of Visual Studio  https://www.visualstudio.com/
      * [Walkthrough: Compiling a Native C++ Program on the Command Line](https://msdn.microsoft.com/en-us/library/ms235639.aspx)
 
 To produce binary files for Android, you will also have to install:
@@ -78,7 +78,7 @@ Finally, because we are dealing with native code, bugs can easily crash the virt
    * http://www.oracle.com/technetwork/java/javase/index-137495.html
    * http://www.oracle.com/technetwork/java/javase/tsg-vm-149989.pdf
    * http://docs.oracle.com/javase/7/docs/webnotes/tsg/TSG-VM/html/
-   * http://docs.oracle.com/javase/8/docs/technotes/guides/tsgvm/
+   * http://docs.oracle.com/javase/8/docs/technotes/guides/troubleshoot/
 
 
 Key Use Cases
@@ -263,7 +263,7 @@ Processing in C++...
 
 
 ### Creating Callback Functions
-Some applications also require a way to call back into the JVM from C/C++, so JavaCPP provides a simple way to define custom callbacks, either as function pointers, function objects, or virtual functions. Although there exist frameworks, which are arguably harder to use, such as [Jace](http://code.google.com/p/jace/) and [JunC++ion](http://codemesh.com/products/junction/) that can map complete Java APIs to C++, since invoking a Java method from native code takes at least an order of magnitude more time than the other way around, it does not make much sense in my opinion to export as is an API that was designed to be used in Java. Nevertheless, suppose we want to perform some operations in Java, planning to wrap that into a function named `foo()` that calls some method inside class `Foo`, we can write the following code in a file named `foo.cpp`, taking care to initialize the JVM if necessary with either `JavaCPP_init()` or by any other means:
+Some applications also require a way to call back into the JVM from C/C++, so JavaCPP provides a simple way to define custom callbacks, either as function pointers, function objects, or virtual functions. Although there exist frameworks, which are arguably harder to use, such as [Jace](https://bitbucket.org/cowwoc/jace/) and [JunC++ion](http://codemesh.com/products/junction/) that can map complete Java APIs to C++, since invoking a Java method from native code takes at least an order of magnitude more time than the other way around, it does not make much sense in my opinion to export as is an API that was designed to be used in Java. Nevertheless, suppose we want to perform some operations in Java, planning to wrap that into a function named `foo()` that calls some method inside class `Foo`, we can write the following code in a file named `foo.cpp`, taking care to initialize the JVM if necessary with either `JavaCPP_init()` or by any other means:
 
 ```cpp
 #include <iostream>
@@ -402,8 +402,8 @@ However, in the case of Android, we need to do a bit more work. For the command 
  2. Run this command to produce the `*.so` library files in `libs/armeabi/`:
 ```bash
 $ java -jar libs/javacpp.jar -classpath bin/ -classpath bin/classes/ \
-> -properties android-arm -Dplatform.root=/path/to/android-ndk/ \
-> -Dplatform.compiler=/path/to/arm-linux-androideabi-g++ -d libs/armeabi/
+> -properties <android-arm|android-x86> -Dplatform.root=/path/to/android-ndk/ \
+> -Dplatform.compiler=/path/to/<arm-linux-androideabi-g++|i686-linux-android-g++> -d libs/<armeabi|x86>/
 ```
 To make everything automatic, we may also insert that command into the `build.xml` file. Alternatively, for integration with Android Studio, we can use the [Maven plugin](http://bytedeco.org/javacpp/apidocs/org/bytedeco/javacpp/tools/BuildMojo.html) with the [build system based on Gradle](http://tools.android.com/tech-docs/new-build-system/user-guide).
 
@@ -413,10 +413,10 @@ Similarly for RoboVM, assuming that the compiled classes are in the `classes` su
  1. Copy the `javacpp.jar` file into the project directory, and
  2. Run the following commands to produce the native binary file:
 ```bash
-$ java -jar javacpp.jar -cp classes/ -properties ios-arm -Dplatform.sysroot=SDKs/iPhoneOS7.0.sdk/ -o lib
-$ /path/to/robovm -arch thumbv7 -os ios -cp javacpp.jar:classes/ -libs ios-arm/lib.o
+$ java -jar javacpp.jar -cp classes/ -properties <ios-arm|ios-x86> -o lib
+$ /path/to/bin/robovm -arch <thumbv7|x86> -os ios -cp javacpp.jar:classes/ -libs classes/<ios-arm|ios-x86>/lib.o <MainClass>
 ```
-And instead of `Loader.load()`, the library should be loaded with `System.load("lib.o")`, in this case.
+And instead of `Loader.load()`, the library should be loaded with `System.load("lib.o")`, in this case, and might not be required at all.
 
 
 ----
