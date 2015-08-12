@@ -192,6 +192,21 @@ public class Parser {
                     decl.text += "\n"
                               +  "    @Index public native " + valueType.annotations + valueType.javaName + " get(" + params + ");\n"
                               +  "    public native " + containerType.javaName + " put(" + params + separator + valueType.javaName + " value);\n";
+                    if (containerType.arguments.length > 1) {
+                        decl.text += "\n"
+                                  +  "    public native @ByVal Iterator begin();\n"
+                                  +  "    public native @ByVal Iterator end();\n"
+                                  +  "    @NoOffset @Name(\"iterator\") public static class Iterator extends Pointer {\n"
+                                  +  "        public Iterator(Pointer p) { super(p); }\n"
+                                  +  "        public Iterator() { }\n\n"
+
+                                  +  "        public native @Name(\"operator++\") @ByRef Iterator increment();\n"
+                                  +  "        public native @Name(\"operator==\") boolean equals(@ByRef Iterator it);\n"
+                                  +  "        public native @Name(\"operator*().first\") @MemberGetter " + indexType.annotations + indexType.javaName + " first();\n"
+                                  +  "        public native @Name(\"operator*().second\") @MemberGetter " + valueType.annotations + valueType.javaName + " second();\n"
+//                                  +  "        public native @Name(\"operator*\") " + valueType.annotations + valueType.javaName + " get();\n"
+                                  +  "    }\n";
+                    }
                 }
 
                 if (resizable && firstType == null && secondType == null) {

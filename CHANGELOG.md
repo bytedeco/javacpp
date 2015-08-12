@@ -1,4 +1,5 @@
 
+ * Have the `Parser` wrap the `iterator` of some standard C++ containers when useful
  * Use Clang as the default compiler for Mac OS X and iOS (via RoboVM)
  * Adjust `BytePointer`, `CharPointer`, `IntPointer`, and `StringAdapter` to work with data strings that are not null-terminated ([issue #24](https://github.com/bytedeco/javacpp/issues/24))
  * Forbid `Parser` from producing `abstract` classes, preventing C++ factory methods and such from working properly ([issue #25](https://github.com/bytedeco/javacpp/issues/25))

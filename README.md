@@ -96,12 +96,12 @@ As a matter of course, this all works with the Scala language as well, but to ma
 
 
 ### Accessing Native APIs
-The most common use case involves accessing some legacy library written for C++, for example, inside a file named `LegacyLibrary.h` containing this C++ class:
+The most common use case involves accessing some native library written for C++, for example, inside a file named `NativeLibrary.h` containing this C++ class:
 ```cpp
 #include <string>
 
-namespace LegacyLibrary {
-    class LegacyClass {
+namespace NativeLibrary {
+    class NativeClass {
         public:
             const std::string& get_property() { return property; }
             void set_property(const std::string& property) { this->property = property; }
@@ -115,12 +115,12 @@ To get the job done with JavaCPP, we can easily define a Java class such as this
 import org.bytedeco.javacpp.*;
 import org.bytedeco.javacpp.annotation.*;
 
-@Platform(include="LegacyLibrary.h")
-@Namespace("LegacyLibrary")
-public class LegacyLibrary {
-    public static class LegacyClass extends Pointer {
+@Platform(include="NativeLibrary.h")
+@Namespace("NativeLibrary")
+public class NativeLibrary {
+    public static class NativeClass extends Pointer {
         static { Loader.load(); }
-        public LegacyClass() { allocate(); }
+        public NativeClass() { allocate(); }
         private native void allocate();
 
         // to call the getter and setter functions 
@@ -133,7 +133,7 @@ public class LegacyLibrary {
     public static void main(String[] args) {
         // Pointer objects allocated in Java get deallocated once they become unreachable,
         // but C++ destructors can still be called in a timely fashion with Pointer.deallocate()
-        LegacyClass l = new LegacyClass();
+        NativeClass l = new NativeClass();
         l.set_property("Hello World!");
         System.out.println(l.property());
     }
@@ -142,9 +142,9 @@ public class LegacyLibrary {
 
 After compiling the Java source code in the usual way, we also need to build using JavaCPP before executing it as follows:
 ```bash
-$ javac -cp javacpp.jar LegacyLibrary.java 
-$ java -jar javacpp.jar LegacyLibrary
-$ java  -cp javacpp.jar LegacyLibrary
+$ javac -cp javacpp.jar NativeLibrary.java 
+$ java -jar javacpp.jar NativeLibrary
+$ java  -cp javacpp.jar NativeLibrary
 Hello World!
 ```
 
