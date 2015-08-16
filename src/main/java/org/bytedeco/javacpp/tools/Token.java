@@ -72,6 +72,8 @@ class Token implements Comparable<Token> {
             TYPENAME  = new Token(IDENTIFIER, "typename"),
             USING     = new Token(IDENTIFIER, "using"),
             NAMESPACE = new Token(IDENTIFIER, "namespace"),
+            NEW       = new Token(IDENTIFIER, "new"),
+            DELETE    = new Token(IDENTIFIER, "delete"),
             OPERATOR  = new Token(IDENTIFIER, "operator"),
             PRIVATE   = new Token(IDENTIFIER, "private"),
             PROTECTED = new Token(IDENTIFIER, "protected"),

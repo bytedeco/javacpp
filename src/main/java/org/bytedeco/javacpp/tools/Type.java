@@ -32,7 +32,7 @@ class Type {
 
     boolean anonymous = false, constPointer = false, constValue = false, constructor = false,
             destructor = false, operator = false, simple = false, staticMember = false,
-            pointer = false, reference = false, value = false, virtual = false;
+            pointer = false, reference = false, value = false, friend = false, virtual = false;
     String annotations = "", cppName = "", javaName = "";
     Type[] arguments = null;
     Attribute[] attributes = null;

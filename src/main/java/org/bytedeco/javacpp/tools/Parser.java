@@ -29,9 +29,7 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.ListIterator;
 import java.util.Map;
 import java.util.Properties;
 import org.bytedeco.javacpp.ClassProperties;
@@ -111,7 +109,8 @@ public class Parser {
                 boolean resizable = true;
                 Type containerType = new Parser(this, info.cppNames[0]).type(context),
                         indexType, valueType, firstType = null, secondType = null;
-                if (containerType.arguments == null || containerType.arguments.length == 0) {
+                if (containerType.arguments == null || containerType.arguments.length == 0 || containerType.arguments[0] == null
+                        || containerType.arguments[containerType.arguments.length - 1] == null) {
                     continue;
                 } else if (containerType.arguments.length > 1) {
                     resizable = false;
@@ -368,6 +367,8 @@ public class Parser {
                 } else {
                     break;
                 }
+            } else if (token.match(Token.FRIEND)) {
+                type.friend = true;
             } else if (token.match(Token.VIRTUAL)) {
                 type.virtual = true;
             } else if (token.match(Token.ENUM, Token.EXPLICIT, Token.EXTERN, Token.INLINE, Token.CLASS, Token.INTERFACE,
@@ -649,9 +650,9 @@ public class Parser {
                     dcl.cppName += token;
                 } else if (token.match(Token.OPERATOR)) {
                     dcl.operator = true;
-                    if (!tokens.get(1).match(Token.IDENTIFIER)) {
+                    if (!tokens.get(1).match(Token.IDENTIFIER) || tokens.get(1).match(Token.NEW, Token.DELETE)) {
                         // assume we can have any symbols until the first open parenthesis
-                        dcl.cppName += "operator" + tokens.next();
+                        dcl.cppName += "operator " + tokens.next();
                         for (token = tokens.next(); !token.match(Token.EOF, '('); token = tokens.next()) {
                             dcl.cppName += token;
                         }
@@ -1147,11 +1148,7 @@ public class Parser {
         int backIndex = tokens.index;
         String spacing = tokens.get().spacing;
         String modifiers = "public native ";
-        boolean friend = false;
-        if (tokens.get().match(Token.FRIEND)) {
-            friend = true;
-            tokens.next();
-        }
+
         int startIndex = tokens.index;
         Type type = type(context);
         Parameters params = parameters(context, 0, false);
@@ -1178,7 +1175,7 @@ public class Parser {
             decl.text = spacing;
             declList.add(decl);
             return true;
-        } else if (type.constructor || type.destructor || type.operator) {
+        } else if ((type.constructor || type.destructor || type.operator) && params != null) {
             // this is a constructor, destructor, or cast operator
             dcl.type = type;
             dcl.parameters = params;
@@ -1230,7 +1227,7 @@ public class Parser {
         if (localName.startsWith(context.namespace + "::")) {
             localName = dcl.cppName.substring(context.namespace.length() + 2);
         }
-        if (friend || (context.javaName == null && localName.contains("::")) || (info != null && info.skip)) {
+        if (type.friend || (context.javaName == null && localName.contains("::")) || (info != null && info.skip)) {
             // this is a friend declaration, or a member function definition or specialization, skip over
             for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.get()) {
                 if (attribute() == null) {
@@ -1319,7 +1316,7 @@ public class Parser {
             if (context.namespace != null && context.javaName == null) {
                 decl.text += "@Namespace(\"" + context.namespace + "\") ";
             }
-            if (type.constructor) {
+            if (type.constructor && params != null) {
                 decl.text += "public " + context.shorten(context.javaName) + dcl.parameters.list + " { allocate" + params.names + "; }\n" +
                              "private native void allocate" + dcl.parameters.list + ";\n";
             } else {
@@ -1934,12 +1931,13 @@ public class Parser {
         }
         String modifiers = "public static ";
         boolean implicitConstructor = true, defaultConstructor = false, intConstructor = false,
-                pointerConstructor = false, abstractClass = info.purify && !ctx.virtualize, havePureConst = false, haveVariables = false;
+                pointerConstructor = false, abstractClass = info != null && info.purify && !ctx.virtualize,
+                havePureConst = false, haveVariables = false;
         for (Declaration d : declList2) {
             if (d.declarator != null && d.declarator.type != null && d.declarator.type.constructor) {
                 implicitConstructor = false;
                 Declarator[] paramDcls = d.declarator.parameters.declarators;
-                defaultConstructor |= paramDcls.length == 0 && !d.inaccessible;
+                defaultConstructor |= (paramDcls.length == 0 || (paramDcls.length == 1 && paramDcls[0].type.javaName.equals("void"))) && !d.inaccessible;
                 intConstructor |= paramDcls.length == 1 && paramDcls[0].type.javaName.equals("int") && !d.inaccessible;
                 pointerConstructor |= paramDcls.length == 1 && paramDcls[0].type.javaName.equals("Pointer") && !d.inaccessible;
             }

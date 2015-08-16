@@ -1,4 +1,6 @@
 
+ * Properly parse overloaded `new` and `delete` operators, `friend` declarations, and default constructors with an explicit `void` parameter ([issue #31](https://github.com/bytedeco/javacpp/issues/31))
+ * Fix a couple of potential `NullPointerException` in `Parser` ([issue #30](https://github.com/bytedeco/javacpp/issues/30))
  * Have the `Parser` wrap the `iterator` of some standard C++ containers when useful
  * Use Clang as the default compiler for Mac OS X and iOS (via RoboVM)
  * Adjust `BytePointer`, `CharPointer`, `IntPointer`, and `StringAdapter` to work with data strings that are not null-terminated ([issue #24](https://github.com/bytedeco/javacpp/issues/24))
