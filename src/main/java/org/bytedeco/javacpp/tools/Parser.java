@@ -1258,7 +1258,7 @@ public class Parser {
         for (int n = -2; n < Integer.MAX_VALUE; n++) {
             decl = new Declaration();
             tokens.index = startIndex;
-            if (type.constructor || type.destructor || type.operator) {
+            if ((type.constructor || type.destructor || type.operator) && params != null) {
                 type = type(context);
                 params = parameters(context, n / 2, n % 2 != 0);
                 dcl = new Declarator();
