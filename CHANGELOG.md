@@ -1,4 +1,5 @@
 
+ * Add `Parser` support for the `std::bitset` "container"
  * Properly parse overloaded `new` and `delete` operators, `friend` declarations, and default constructors with an explicit `void` parameter ([issue #31](https://github.com/bytedeco/javacpp/issues/31))
  * Fix a couple of potential `NullPointerException` in `Parser` ([issue #30](https://github.com/bytedeco/javacpp/issues/30))
  * Have the `Parser` wrap the `iterator` of some standard C++ containers when useful

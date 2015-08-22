@@ -123,6 +123,11 @@ public class Parser {
                     indexType.javaName = "long";
                     valueType = containerType.arguments[0];
                 }
+                if (valueType.javaName == null || valueType.javaName.length() == 0
+                        || containerName.startsWith("std::bitset")) {
+                    valueType.javaName = "boolean";
+                    resizable = false;
+                }
                 while (valueType.cppName.startsWith(containerName)
                         && leafInfoMap.get(valueType.cppName, false).size() == 0) {
                     // increase dimension, unless the user has provided info for the intermediate type
