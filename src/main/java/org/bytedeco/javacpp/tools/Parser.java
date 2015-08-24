@@ -942,8 +942,14 @@ public class Parser {
                 if (s.length() > 3 && s.charAt(3) == '<') {
                     continue;
                 } else if (s.length() > 3 && (s.startsWith("/// ") || s.startsWith("//!"))) {
+                    String lastComment = comment.trim();
+                    int n2 = lastComment.indexOf('\n');
+                    while (!lastComment.startsWith("/*") && n2 > 0) {
+                        lastComment = n2 + 1 < lastComment.length() ? lastComment.substring(n2 + 1).trim() : "";
+                        n2 = lastComment.indexOf('\n');
+                    }
                     s = (comment.length() == 0 || comment.contains("*/")
-                            || !comment.contains("/*") ? "/**" : " * ") + s.substring(3);
+                            || !lastComment.startsWith("/*") ? "/**" : " * ") + s.substring(3);
                     closeComment = true;
                 } else if (s.length() > 3 && !s.startsWith("///")) {
                     s = "/**" + s.substring(3);
@@ -978,8 +984,14 @@ public class Parser {
                 if (s.length() > 3 && s.charAt(3) != '<') {
                     continue;
                 } else if (s.length() > 4 && (s.startsWith("///") || s.startsWith("//!"))) {
+                    String lastComment = comment.trim();
+                    int n2 = lastComment.indexOf('\n');
+                    while (!lastComment.startsWith("/*") && n2 > 0) {
+                        lastComment = n2 + 1 < lastComment.length() ? lastComment.substring(n2 + 1).trim() : "";
+                        n2 = lastComment.indexOf('\n');
+                    }
                     s = (comment.length() == 0 || comment.contains("*/")
-                            || !comment.contains("/*") ? "/**" : " * ") + s.substring(4);
+                            || !lastComment.startsWith("/*") ? "/**" : " * ") + s.substring(4);
                     closeComment = true;
                 } else if (s.length() > 4) {
                     s = "/**" + s.substring(4);
