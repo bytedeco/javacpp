@@ -1,4 +1,5 @@
 
+ * Take into account `Buffer.arrayOffset()` when creating a `Pointer` from a buffer backed by an array ([issue bytedeco/javacv#190](https://github.com/bytedeco/javacv/issues/190))
  * Fix some incorrectly translated comments in `Parser` ([issue #32](https://github.com/bytedeco/javacpp/issues/32))
  * Add `Parser` support for the `std::bitset` "container"
  * Properly parse overloaded `new` and `delete` operators, `friend` declarations, and default constructors with an explicit `void` parameter ([issue #31](https://github.com/bytedeco/javacpp/issues/31))
