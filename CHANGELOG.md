@@ -1,4 +1,5 @@
 
+ * Fix a couple of `Parser` issues on complex template types ([issue #37](https://github.com/bytedeco/javacpp/issues/37))
  * Take into account `Buffer.arrayOffset()` when creating a `Pointer` from a buffer backed by an array ([issue bytedeco/javacv#190](https://github.com/bytedeco/javacv/issues/190))
  * Fix some incorrectly translated comments in `Parser` ([issue #32](https://github.com/bytedeco/javacpp/issues/32))
  * Add `Parser` support for the `std::bitset` "container"
