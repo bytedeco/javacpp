@@ -68,6 +68,7 @@ public class ClassProperties extends HashMap<String,LinkedList<String>> {
         }
     }
 
+    String[] defaultNames = {};
     String platform, platformRoot, pathSeparator;
     LinkedList<Class> inheritedClasses = null;
     LinkedList<Class> effectiveClasses = null;
@@ -166,6 +167,10 @@ public class ClassProperties extends HashMap<String,LinkedList<String>> {
             if (helper.length() > 0) {
                 addAll("helper", helper);
             }
+            String[] names = classProperties.names();
+            if (names.length > 0) {
+                defaultNames = names;
+            }
             platforms = classProperties.value();
         }
 
@@ -173,7 +178,7 @@ public class ClassProperties extends HashMap<String,LinkedList<String>> {
                  linkpath = {}, link = {}, frameworkpath = {}, framework = {}, preloadpath = {}, preload = {};
         String library = "jni" + c.getSimpleName();
         for (Platform p : platforms != null ? platforms : new Platform[0]) {
-            String[][] names = { p.value(), p.not() };
+            String[][] names = { p.value().length > 0 ? p.value() : defaultNames, p.not() };
             boolean[] matches = { false, false };
             for (int i = 0; i < names.length; i++) {
                 for (String s : names[i]) {

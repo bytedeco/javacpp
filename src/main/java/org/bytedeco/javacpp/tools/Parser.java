@@ -2482,7 +2482,9 @@ public class Parser {
         declList = new DeclarationList(declList);
         containers(context, declList);
         for (String include : clsIncludes) {
-            parse(context, declList, includePaths, include);
+            if (allIncludes.contains(include)) {
+                parse(context, declList, includePaths, include);
+            }
         }
 
         final String newline = lineSeparator != null ? lineSeparator : "\n";

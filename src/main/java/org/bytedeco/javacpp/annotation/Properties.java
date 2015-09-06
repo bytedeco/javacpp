@@ -36,6 +36,8 @@ import org.bytedeco.javacpp.tools.Parser;
 public @interface Properties {
     /** A list of classes from which to inherit properties. */
     Class[] inherit() default {};
+    /** A list of platform names to be used as default for {@link #value()}. */
+    String[] names() default {};
     /** A list of properties for different platforms. */
     Platform[] value() default {};
     /** The target Java source code file of the {@link Parser}. */
