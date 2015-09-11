@@ -379,7 +379,7 @@ public class Parser {
             } else if (token.match(Token.ENUM, Token.EXPLICIT, Token.EXTERN, Token.INLINE, Token.CLASS, Token.INTERFACE,
                                    Token.STRUCT, Token.UNION, Token.TYPEDEF, Token.TYPENAME, Token.USING)) {
                 continue;
-            } else if (token.match((Object[])InfoMap.simpleTypes)) {
+            } else if (token.match((Object[])InfoMap.simpleTypes) && (type.cppName.length() == 0 || type.simple)) {
                 type.cppName += token.value + " ";
                 type.simple = true;
             } else if (token.match(Token.IDENTIFIER)) {
