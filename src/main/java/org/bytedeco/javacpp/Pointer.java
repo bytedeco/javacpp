@@ -267,13 +267,18 @@ public class Pointer {
         }
     }
 
-    /** The {@link ReferenceQueue} used by {@link DeallocatorReference}. */
-    private static final ReferenceQueue<Pointer> referenceQueue = new ReferenceQueue<Pointer>();
+    /** The {@link ReferenceQueue} used by {@link DeallocatorReference}.
+     * Initialized to null if the "org.bytedeco.javacpp.nopointergc" system property is "true". */
+    private static final ReferenceQueue<Pointer> referenceQueue;
+    static {
+        String s = System.getProperty("org.bytedeco.javacpp.nopointergc", "false").toLowerCase();
+        referenceQueue = s.equals("true") || s.equals("t") || s.equals("") ? null : new ReferenceQueue<Pointer>();
+    }
 
     /** Clears, deallocates, and removes all garbage collected objects from the {@link #referenceQueue}. */
     public static void deallocateReferences() {
         DeallocatorReference r = null;
-        while ((r = (DeallocatorReference)referenceQueue.poll()) != null) {
+        while (referenceQueue != null && (r = (DeallocatorReference)referenceQueue.poll()) != null) {
             r.clear();
             r.remove();
         }
@@ -290,7 +295,7 @@ public class Pointer {
     /** The deallocator associated with this Pointer that should be called on garbage collection. */
     private Deallocator deallocator = null;
 
-    /** @return {@code address == 0} */
+    /** Returns {@code address == 0}. */
     public boolean isNull() {
         return address == 0;
     }
@@ -299,12 +304,12 @@ public class Pointer {
         address = 0;
     }
 
-    /** @return {@link #address} */
+    /** Returns {@link #address}. */
     public long address() {
         return address;
     }
 
-    /** @return {@link #position} */
+    /** Returns {@link #position}. */
     public int position() {
         return position;
     }
@@ -320,7 +325,7 @@ public class Pointer {
         return (P)this;
     }
 
-    /** @return {@link #limit} */
+    /** Returns {@link #limit}. */
     public int limit() {
         return limit;
     }
@@ -336,7 +341,7 @@ public class Pointer {
         return (P)this;
     }
 
-    /** @return {@link #capacity} */
+    /** Returns {@link #capacity}. */
     public int capacity() {
         return capacity;
     }
@@ -353,7 +358,7 @@ public class Pointer {
         return (P)this;
     }
 
-    /** @return {@link #deallocator} */
+    /** Returns {@link #deallocator}. */
     protected Deallocator deallocator() {
         return deallocator;
     }
@@ -408,7 +413,7 @@ public class Pointer {
         }
     }
 
-    /** @return {@code Loader.offsetof(getClass(), member)} or -1 on error */
+    /** Returns {@code Loader.offsetof(getClass(), member)} or -1 on error. */
     public int offsetof(String member) {
         int offset = -1;
         try {
@@ -420,7 +425,7 @@ public class Pointer {
         return offset;
     }
 
-    /** @return 1 for Pointer or BytePointer else {@code Loader.sizeof(getClass())} or -1 on error */
+    /** Returns 1 for Pointer or BytePointer else {@code Loader.sizeof(getClass())} or -1 on error. */
     public int sizeof() {
         Class c = getClass();
         if (c == Pointer.class || c == BytePointer.class) {
@@ -520,7 +525,7 @@ public class Pointer {
         position /= size;
         return (P)this;
     }
-    /** @return {@code fill(0)} */
+    /** Returns {@code fill(0)}. */
     public <P extends Pointer> P zero() { return (P)fill(0); }
 
     /**
@@ -544,13 +549,13 @@ public class Pointer {
         }
     }
 
-    /** @return {@code (int)address} */
+    /** Returns {@code (int)address}. */
     @Override public int hashCode() {
         return (int)address;
     }
 
-    /** @return a {@link String} representation of {@link #address},
-     * {@link #position}, {@link #limit}, {@link #capacity}, and {@link #deallocator} */
+    /** Returns a {@link String} representation of {@link #address},
+     * {@link #position}, {@link #limit}, {@link #capacity}, and {@link #deallocator}. */
     @Override public String toString() {
         return getClass().getName() + "[address=0x" + Long.toHexString(address) +
                 ",position=" + position + ",limit=" + limit + ",capacity=" + capacity + ",deallocator=" + deallocator + "]";
