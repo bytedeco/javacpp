@@ -1,4 +1,5 @@
 
+ * Let `Parser` pick up names from `Info.pointerTypes` in the case of function pointers as well
  * Add new "org.bytedeco.javacpp.nopointergc" system property to prevent `Pointer` from registering deallocators with the garbage collector
  * Add `@Properties(names=...)` value to specify a list of default platform names that can be inherited by other classes
  * Fix a couple of `Parser` issues on complex template types ([issue #37](https://github.com/bytedeco/javacpp/issues/37))

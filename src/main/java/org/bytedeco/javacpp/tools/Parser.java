@@ -887,6 +887,7 @@ public class Parser {
         }
 
         // deal with function parameters and function pointers
+        dcl.type = type;
         dcl.signature = dcl.javaName;
         dcl.parameters = parameters(context, infoNumber, useDefaults);
         if (dcl.parameters != null) {
@@ -894,8 +895,36 @@ public class Parser {
             if (indirections2 == 0 && !typedef) {
                 dcl.signature += dcl.parameters.signature;
             } else {
+                String cppType = "";
+                if (dcl.type != null) {
+                    cppType += dcl.type.cppName;
+                    for (int i = 0; i < dcl.indirections; i++) {
+                        cppType += "*";
+                    }
+                    if (dcl.reference) {
+                        cppType += "&";
+                    }
+                }
+                cppType += " (*)(";
+                String separator = "";
+                for (Declarator d : dcl.parameters.declarators) {
+                    if (d != null) {
+                        cppType += separator + d.type.cppName;
+                        for (int i = 0; i < d.indirections; i++) {
+                            cppType += "*";
+                        }
+                        if (d.reference) {
+                            cppType += "&";
+                        }
+                        separator = ", ";
+                    }
+                }
+                info = infoMap.getFirst(cppType += ")");
+
                 String functionType = Character.toUpperCase(dcl.javaName.charAt(0)) + dcl.javaName.substring(1);
-                if (typedef) {
+                if (info != null && info.pointerTypes.length > 0) {
+                    functionType = info.pointerTypes[0];
+                } else if (typedef) {
                     functionType = dcl.javaName;
                 } else if (dcl.parameters.signature.length() > 0) {
                     functionType += dcl.parameters.signature;
@@ -923,7 +952,6 @@ public class Parser {
                 type.javaName = functionType;
             }
         }
-        dcl.type = type;
 
         // ignore superfluous parentheses
         while (tokens.get().match(')') && count > 0) {
