@@ -65,6 +65,7 @@ class Token implements Comparable<Token> {
             STATIC    = new Token(IDENTIFIER, "static"),
             CLASS     = new Token(IDENTIFIER, "class"),
             INTERFACE = new Token(IDENTIFIER, "interface"),
+            __INTERFACE = new Token(IDENTIFIER, "__interface"),
             STRUCT    = new Token(IDENTIFIER, "struct"),
             UNION     = new Token(IDENTIFIER, "union"),
             TEMPLATE  = new Token(IDENTIFIER, "template"),
