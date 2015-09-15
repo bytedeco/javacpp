@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2014 Samuel Audet
+ * Copyright (C) 2011-2015 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -118,12 +118,12 @@ public class Pointer {
      * @param deallocatorAddress the pointer to the native deallocation function
      * @see NativeDeallocator
      */
-    void init(long allocatedAddress, int allocatedCapacity, long deallocatorAddress) {
+    void init(long allocatedAddress, int allocatedCapacity, long ownerAddress, long deallocatorAddress) {
         address = allocatedAddress;
         position = 0;
         limit = allocatedCapacity;
         capacity = allocatedCapacity;
-        deallocator(new NativeDeallocator(this, deallocatorAddress));
+        deallocator(new NativeDeallocator(this, ownerAddress, deallocatorAddress));
     }
 
     /** The interface to implement to produce a Deallocator usable by Pointer. */
@@ -191,29 +191,29 @@ public class Pointer {
 
     /**
      * A {@link Deallocator} that calls, during garbage collection, a native function.
-     * Passes as argument the {@link #address} of the Pointer passed to the constructor.
+     * Passes as single argument the {@link #ownerAddress} passed to the constructor.
      */
     protected static class NativeDeallocator extends DeallocatorReference implements Deallocator {
-        NativeDeallocator(Pointer p, long deallocatorAddress) {
+        NativeDeallocator(Pointer p, long ownerAddress, long deallocatorAddress) {
             super(p, null);
             this.deallocator = this;
-            this.allocatedAddress = p.address;
+            this.ownerAddress = ownerAddress;
             this.deallocatorAddress = deallocatorAddress;
         }
 
-        private long allocatedAddress;
+        private long ownerAddress;
         private long deallocatorAddress;
 
-        public void deallocate() {
-            if (allocatedAddress != 0 && deallocatorAddress != 0) {
-//                System.out.println("deallocating 0x" + Long.toHexString(allocatedAddress) +
+        @Override public void deallocate() {
+            if (ownerAddress != 0 && deallocatorAddress != 0) {
+//                System.out.println("deallocating 0x" + Long.toHexString(ownerAddress) +
 //                        " 0x" + Long.toHexString(deallocatorAddress));
-                deallocate(allocatedAddress, deallocatorAddress);
-                allocatedAddress = deallocatorAddress = 0;
+                deallocate(ownerAddress, deallocatorAddress);
+                ownerAddress = deallocatorAddress = 0;
             }
         }
 
-        private native void deallocate(long allocatedAddress, long deallocatorAddress);
+        private native void deallocate(long ownerAddress, long deallocatorAddress);
     }
 
     /**

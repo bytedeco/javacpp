@@ -22,9 +22,12 @@
 package org.bytedeco.javacpp;
 
 import java.io.File;
+import java.nio.IntBuffer;
 import org.bytedeco.javacpp.annotation.Cast;
 import org.bytedeco.javacpp.annotation.Platform;
+import org.bytedeco.javacpp.annotation.SharedPtr;
 import org.bytedeco.javacpp.annotation.StdString;
+import org.bytedeco.javacpp.annotation.StdVector;
 import org.bytedeco.javacpp.tools.Builder;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -35,8 +38,8 @@ import static org.junit.Assert.*;
  *
  * @author Samuel Audet
  */
-@Platform(include="StringTest.h")
-public class StringTest {
+@Platform(compiler="cpp11", define="SHARED_PTR_NAMESPACE std", include="AdapterTest.h")
+public class AdapterTest {
 
     static native @StdString String testStdString(@StdString String str);
     static native @StdString BytePointer testStdString(@StdString BytePointer str);
@@ -48,8 +51,26 @@ public class StringTest {
 
     static native IntPointer testIntString(IntPointer str);
 
+    static class SharedData extends Pointer {
+        SharedData(int data) { allocate(data); }
+        native void allocate(int data);
+
+        native int data(); native SharedData data(int data);
+    }
+
+    static native @SharedPtr SharedData createSharedData();
+    static native void storeSharedData(@SharedPtr SharedData s);
+    static native @SharedPtr SharedData fetchSharedData();
+
+    static native int constructorCount(); static native void constructorCount(int c);
+    static native int destructorCount(); static native void destructorCount(int c);
+
+    static native @StdVector IntPointer testStdVectorByVal(@StdVector IntPointer v);
+    static native @StdVector IntPointer testStdVectorByRef(@StdVector IntBuffer v);
+    static native @StdVector int[] testStdVectorByPtr(@StdVector int[] v);
+
     @BeforeClass public static void setUpClass() throws Exception {
-        Class c = StringTest.class;
+        Class c = AdapterTest.class;
         Builder builder = new Builder().classesOrPackages(c.getName());
         File[] outputFiles = builder.build();
         Loader.loadLibraries = true;
@@ -113,4 +134,36 @@ public class StringTest {
         assertEquals(textStr, textPtr2.getString());
     }
 
+    @Test public void testSharedPtr() {
+        System.out.println("SharedPtr");
+        SharedData sharedData = createSharedData();
+        assertEquals(42, sharedData.data());
+
+        storeSharedData(sharedData);
+        sharedData.deallocate();
+
+        sharedData = fetchSharedData();
+        assertEquals(13, sharedData.data());
+        sharedData.deallocate();
+
+        assertEquals(1, constructorCount());
+        assertEquals(1, destructorCount());
+    }
+
+    @Test public void testStdVector() {
+        System.out.println("StdVector");
+        int[] arr = {5, 7, 13, 37, 42};
+        IntPointer ptr = new IntPointer(arr);
+        IntBuffer buf = ptr.asBuffer();
+
+        IntPointer ptr2 = testStdVectorByVal(ptr);
+        IntBuffer buf2 = testStdVectorByRef(buf).asBuffer();
+        int[] arr2 = testStdVectorByPtr(arr);
+
+        for (int i = 0; i < arr.length; i++) {
+            assertEquals(ptr.get(i), ptr2.get(i));
+            assertEquals(buf.get(i), buf2.get(i));
+            assertEquals(arr[i], arr2[i]);
+        }
+    }
 }

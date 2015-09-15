@@ -338,6 +338,8 @@ public class Generator implements Closeable {
         out.println("static jfieldID JavaCPP_positionFID = NULL;");
         out.println("static jfieldID JavaCPP_limitFID = NULL;");
         out.println("static jfieldID JavaCPP_capacityFID = NULL;");
+        out.println("static jfieldID JavaCPP_deallocatorFID = NULL;");
+        out.println("static jfieldID JavaCPP_ownerAddressFID = NULL;");
         out.println("static jmethodID JavaCPP_initMID = NULL;");
         out.println("static jmethodID JavaCPP_arrayMID = NULL;");
         out.println("static jmethodID JavaCPP_toStringMID = NULL;");
@@ -428,12 +430,13 @@ public class Generator implements Closeable {
         out.println("    }");
         out.println("}");
         out.println();
-        out.println("static JavaCPP_noinline void JavaCPP_initPointer(JNIEnv* env, jobject obj, const void* ptr, int size, void (*deallocator)(void*)) {");
+        out.println("static JavaCPP_noinline void JavaCPP_initPointer(JNIEnv* env, jobject obj, const void* ptr, int size, void* owner, void (*deallocator)(void*)) {");
         out.println("    if (deallocator != NULL) {");
-        out.println("        jvalue args[3];");
+        out.println("        jvalue args[4];");
         out.println("        args[0].j = ptr_to_jlong(ptr);");
         out.println("        args[1].i = size;");
-        out.println("        args[2].j = ptr_to_jlong(deallocator);");
+        out.println("        args[2].j = ptr_to_jlong(owner);");
+        out.println("        args[3].j = ptr_to_jlong(deallocator);");
         out.println("        if (JavaCPP_haveNonvirtual) {");
         out.println("            env->CallNonvirtualVoidMethodA(obj, JavaCPP_getClass(env, "
                                      + jclasses.index(Pointer.class) + "), JavaCPP_initMID, args);");
@@ -479,20 +482,40 @@ public class Generator implements Closeable {
             out.println("}");
             out.println();
         }
+        Class deallocator, nativeDeallocator;
+        try {
+            deallocator = Class.forName(Pointer.class.getName() + "$Deallocator", false, Pointer.class.getClassLoader());
+            nativeDeallocator = Class.forName(Pointer.class.getName() + "$NativeDeallocator", false, Pointer.class.getClassLoader());
+        } catch (ClassNotFoundException ex) {
+            throw new RuntimeException(ex);
+        }
         if (defineAdapters) {
+            out.println("static JavaCPP_noinline void* JavaCPP_getPointerOwner(JNIEnv* env, jobject obj) {");
+            out.println("    if (obj != NULL) {");
+            out.println("        jobject deallocator = env->GetObjectField(obj, JavaCPP_deallocatorFID);");
+            out.println("        if (deallocator != NULL && env->IsInstanceOf(deallocator, JavaCPP_getClass(env, "
+                                                                + jclasses.index(nativeDeallocator) + "))) {");
+            out.println("            return jlong_to_ptr(env->GetLongField(deallocator, JavaCPP_ownerAddressFID));");
+            out.println("        }");
+            out.println("    }");
+            out.println("    return NULL;");
+            out.println("}");
+            out.println();
             out.println("#include <vector>");
             out.println("template<typename P, typename T = P> class JavaCPP_hidden VectorAdapter {");
             out.println("public:");
-            out.println("    VectorAdapter(const P* ptr, typename std::vector<T>::size_type size) : ptr((P*)ptr), size(size),");
+            out.println("    VectorAdapter(const P* ptr, typename std::vector<T>::size_type size, void* owner) : ptr((P*)ptr), size(size), owner(owner),");
             out.println("        vec2(ptr ? std::vector<T>((P*)ptr, (P*)ptr + size) : std::vector<T>()), vec(vec2) { }");
-            out.println("    VectorAdapter(const std::vector<T>& vec) : ptr(0), size(0), vec2(vec), vec(vec2) { }");
-            out.println("    VectorAdapter(      std::vector<T>& vec) : ptr(0), size(0), vec(vec) { }");
-            out.println("    void assign(P* ptr, typename std::vector<T>::size_type size) {");
+            out.println("    VectorAdapter(const std::vector<T>& vec) : ptr(0), size(0), owner(0), vec2(vec), vec(vec2) { }");
+            out.println("    VectorAdapter(      std::vector<T>& vec) : ptr(0), size(0), owner(0), vec(vec) { }");
+            out.println("    VectorAdapter(const std::vector<T>* vec) : ptr(0), size(0), owner(0), vec(*(std::vector<T>*)vec) { }");
+            out.println("    void assign(P* ptr, typename std::vector<T>::size_type size, void* owner) {");
             out.println("        this->ptr = ptr;");
             out.println("        this->size = size;");
+            out.println("        this->owner = owner;");
             out.println("        vec.assign(ptr, ptr + size);");
             out.println("    }");
-            out.println("    static void deallocate(void* ptr) { free(ptr); }");
+            out.println("    static void deallocate(void* owner) { free(owner); }");
             out.println("    operator P*() {");
             out.println("        if (vec.size() > size) {");
             out.println("            ptr = (P*)malloc(vec.size() * sizeof(P));");
@@ -501,6 +524,7 @@ public class Generator implements Closeable {
             out.println("            std::copy(vec.begin(), vec.end(), ptr);");
             out.println("        }");
             out.println("        size = vec.size();");
+            out.println("        owner = ptr;");
             out.println("        return ptr;");
             out.println("    }");
             out.println("    operator const P*()        { return &vec[0]; }");
@@ -508,6 +532,7 @@ public class Generator implements Closeable {
             out.println("    operator std::vector<T>*() { return ptr ? &vec : 0; }");
             out.println("    P* ptr;");
             out.println("    typename std::vector<T>::size_type size;");
+            out.println("    void* owner;");
             out.println("    std::vector<T> vec2;");
             out.println("    std::vector<T>& vec;");
             out.println("};");
@@ -515,21 +540,22 @@ public class Generator implements Closeable {
             out.println("#include <string>");
             out.println("class JavaCPP_hidden StringAdapter {");
             out.println("public:");
-            out.println("    StringAdapter(const          char* ptr, size_t size) : ptr((char*)ptr), size(size),");
+            out.println("    StringAdapter(const          char* ptr, size_t size, void* owner) : ptr((char*)ptr), size(size), owner(owner),");
             out.println("        str2(ptr ? (char*)ptr : \"\", ptr ? (size > 0 ? size : strlen((char*)ptr)) : 0), str(str2) { }");
-            out.println("    StringAdapter(const signed   char* ptr, size_t size) : ptr((char*)ptr), size(size),");
+            out.println("    StringAdapter(const signed   char* ptr, size_t size, void* owner) : ptr((char*)ptr), size(size), owner(owner),");
             out.println("        str2(ptr ? (char*)ptr : \"\", ptr ? (size > 0 ? size : strlen((char*)ptr)) : 0), str(str2) { }");
-            out.println("    StringAdapter(const unsigned char* ptr, size_t size) : ptr((char*)ptr), size(size),");
+            out.println("    StringAdapter(const unsigned char* ptr, size_t size, void* owner) : ptr((char*)ptr), size(size), owner(owner),");
             out.println("        str2(ptr ? (char*)ptr : \"\", ptr ? (size > 0 ? size : strlen((char*)ptr)) : 0), str(str2) { }");
-            out.println("    StringAdapter(const std::string& str) : ptr(0), size(0), str2(str), str(str2) { }");
-            out.println("    StringAdapter(      std::string& str) : ptr(0), size(0), str(str) { }");
-            out.println("    StringAdapter(const std::string* str) : ptr(0), size(0), str(*(std::string*)str) { }");
-            out.println("    void assign(char* ptr, size_t size) {");
+            out.println("    StringAdapter(const std::string& str) : ptr(0), size(0), owner(0), str2(str), str(str2) { }");
+            out.println("    StringAdapter(      std::string& str) : ptr(0), size(0), owner(0), str(str) { }");
+            out.println("    StringAdapter(const std::string* str) : ptr(0), size(0), owner(0), str(*(std::string*)str) { }");
+            out.println("    void assign(char* ptr, size_t size, void* owner) {");
             out.println("        this->ptr = ptr;");
             out.println("        this->size = size;");
+            out.println("        this->owner = owner;");
             out.println("        str.assign(ptr ? ptr : \"\", ptr ? (size > 0 ? size : strlen((char*)ptr)) : 0);");
             out.println("    }");
-            out.println("    static void deallocate(void* ptr) { free(ptr); }");
+            out.println("    static void deallocate(void* owner) { free(owner); }");
             out.println("    operator char*() {");
             out.println("        const char* data = str.data();");
             out.println("        if (str.size() > size) {");
@@ -540,6 +566,7 @@ public class Generator implements Closeable {
             out.println("            if (size > str.size()) ptr[str.size()] = 0;");
             out.println("        }");
             out.println("        size = str.size();");
+            out.println("        owner = ptr;");
             out.println("        return ptr;");
             out.println("    }");
             out.println("    operator       signed   char*() { return (signed   char*)(operator char*)(); }");
@@ -551,6 +578,7 @@ public class Generator implements Closeable {
             out.println("    operator         std::string*() { return ptr ? &str : 0; }");
             out.println("    char* ptr;");
             out.println("    size_t size;");
+            out.println("    void* owner;");
             out.println("    std::string str2;");
             out.println("    std::string& str;");
             out.println("};");
@@ -558,31 +586,33 @@ public class Generator implements Closeable {
             out.println("#ifdef SHARED_PTR_NAMESPACE");
             out.println("template<class T> class SharedPtrAdapter {");
             out.println("public:");
-            out.println("    SharedPtrAdapter(const T* ptr, int size) : ptr((T*)ptr), size(size), sharedPtr2((T*)ptr), sharedPtr(sharedPtr2) { }");
-            out.println("    SharedPtrAdapter(const SHARED_PTR_NAMESPACE::shared_ptr<T>& sharedPtr) : ptr(0), size(0), sharedPtr2(sharedPtr), sharedPtr(sharedPtr2) { }");
-            out.println("    SharedPtrAdapter(      SHARED_PTR_NAMESPACE::shared_ptr<T>& sharedPtr) : ptr(0), size(0), sharedPtr(sharedPtr) { }");
-            out.println("    void assign(T* ptr, int size) {");
+            out.println("    typedef SHARED_PTR_NAMESPACE::shared_ptr<T> S;");
+            out.println("    SharedPtrAdapter(const T* ptr, int size, void* owner) : ptr((T*)ptr), size(size), owner(owner),");
+            out.println("            sharedPtr2(owner != NULL && owner != ptr ? *(S*)owner : S((T*)ptr)), sharedPtr(sharedPtr2) { }");
+            out.println("    SharedPtrAdapter(const S& sharedPtr) : ptr(0), size(0), owner(0), sharedPtr2(sharedPtr), sharedPtr(sharedPtr2) { }");
+            out.println("    SharedPtrAdapter(      S& sharedPtr) : ptr(0), size(0), owner(0), sharedPtr(sharedPtr) { }");
+            out.println("    void assign(T* ptr, int size, S* owner) {");
             out.println("        this->ptr = ptr;");
             out.println("        this->size = size;");
-            out.println("        this->sharedPtr = ptr;");
+            out.println("        this->owner = owner;");
+            out.println("        this->sharedPtr = owner != NULL && owner != ptr ? *(S*)owner : S((T*)ptr);");
             out.println("    }");
-            out.println("    static void deallocate(void* ptr) { SHARED_PTR_NAMESPACE::shared_ptr<T> deallocator((T*)ptr); }");
+            out.println("    static void deallocate(void* owner) { delete (S*)owner; }");
             out.println("    operator T*() {");
-            out.println("        // take ownership, if unique");
             out.println("        ptr = sharedPtr.get();");
-            out.println("        if (sharedPtr.unique() && &sharedPtr == &sharedPtr2) {");
-            out.println("            // XXX: this probably causes a small memory leak");
-            out.println("            memset(&sharedPtr, 0, sizeof(SHARED_PTR_NAMESPACE::shared_ptr<T>));");
+            out.println("        if (owner == NULL || owner == ptr) {");
+            out.println("            owner = new S(sharedPtr);");
             out.println("        }");
             out.println("        return ptr;");
             out.println("    }");
-            out.println("    operator                             const T*() { return sharedPtr.get(); }");
-            out.println("    operator SHARED_PTR_NAMESPACE::shared_ptr<T>&() { return sharedPtr; }");
-            out.println("    operator SHARED_PTR_NAMESPACE::shared_ptr<T>*() { return ptr ? &sharedPtr : 0; }");
+            out.println("    operator const T*() { return sharedPtr.get(); }");
+            out.println("    operator       S&() { return sharedPtr; }");
+            out.println("    operator       S*() { return ptr ? &sharedPtr : 0; }");
             out.println("    T* ptr;");
             out.println("    int size;");
-            out.println("    SHARED_PTR_NAMESPACE::shared_ptr<T> sharedPtr2;");
-            out.println("    SHARED_PTR_NAMESPACE::shared_ptr<T>& sharedPtr;");
+            out.println("    void* owner;");
+            out.println("    S sharedPtr2;");
+            out.println("    S& sharedPtr;");
             out.println("};");
             out.println("#endif");
             out.println();
@@ -842,8 +872,18 @@ public class Generator implements Closeable {
         out.println("    if (JavaCPP_capacityFID == NULL) {");
         out.println("        return JNI_ERR;");
         out.println("    }");
+        out.println("    JavaCPP_deallocatorFID = JavaCPP_getFieldID(env, " +
+                jclasses.index(Pointer.class) + ", \"deallocator\", \"" + signature(deallocator) + "\");");
+        out.println("    if (JavaCPP_deallocatorFID == NULL) {");
+        out.println("        return JNI_ERR;");
+        out.println("    }");
+        out.println("    JavaCPP_ownerAddressFID = JavaCPP_getFieldID(env, " +
+                jclasses.index(nativeDeallocator) + ", \"ownerAddress\", \"J\");");
+        out.println("    if (JavaCPP_ownerAddressFID == NULL) {");
+        out.println("        return JNI_ERR;");
+        out.println("    }");
         out.println("    JavaCPP_initMID = JavaCPP_getMethodID(env, " +
-                jclasses.index(Pointer.class) + ", \"init\", \"(JIJ)V\");");
+                jclasses.index(Pointer.class) + ", \"init\", \"(JIJJ)V\");");
         out.println("    if (JavaCPP_initMID == NULL) {");
         out.println("        return JNI_ERR;");
         out.println("    }");
@@ -928,8 +968,9 @@ public class Generator implements Closeable {
         }
 
         LinkedList<String> memberList = members.get(cls);
-        if (!cls.isAnnotationPresent(Opaque.class) &&
-                !FunctionPointer.class.isAssignableFrom(cls)) {
+        if (!cls.isAnnotationPresent(Opaque.class)
+                && !FunctionPointer.class.isAssignableFrom(cls)
+                && cls.getEnclosingClass() != Pointer.class) {
             if (memberList == null) {
                 members.put(cls, memberList = new LinkedList<String>());
             }
@@ -1141,6 +1182,7 @@ public class Generator implements Closeable {
                     if (adapterInfo != null || prevAdapterInfo != null) {
                         out.println("    jint size" + j + " = arg" + j + " == NULL ? 0 : env->GetIntField(arg" + j +
                                 ", JavaCPP_limitFID);");
+                        out.println("    void* owner" + j + " = JavaCPP_getPointerOwner(env, arg" + j + ");");
                     }
                     if (!methodInfo.parameterTypes[j].isAnnotationPresent(Opaque.class)) {
                         out.println("    jint position" + j + " = arg" + j + " == NULL ? 0 : env->GetIntField(arg" + j +
@@ -1154,6 +1196,7 @@ public class Generator implements Closeable {
                     out.println("arg" + j + " == NULL ? NULL : env->GetStringUTFChars(arg" + j + ", NULL);");
                     if (adapterInfo != null || prevAdapterInfo != null) {
                         out.println("    jint size" + j + " = 0;");
+                        out.println("    void* owner" + j + " = (void*)ptr" + j + ";");
                     }
                 } else if (methodInfo.parameterTypes[j].isArray() &&
                         methodInfo.parameterTypes[j].getComponentType().isPrimitive()) {
@@ -1169,12 +1212,14 @@ public class Generator implements Closeable {
                     if (adapterInfo != null || prevAdapterInfo != null) {
                         out.println("    jint size" + j +
                                 " = arg" + j + " == NULL ? 0 : env->GetArrayLength(arg" + j + ");");
+                        out.println("    void* owner" + j + " = (void*)ptr" + j + ";");
                     }
                 } else if (Buffer.class.isAssignableFrom(methodInfo.parameterTypes[j])) {
                     out.println("arg" + j + " == NULL ? NULL : (" + typeName[0] + typeName[1] + ")env->GetDirectBufferAddress(arg" + j + ");");
                     if (adapterInfo != null || prevAdapterInfo != null) {
                         out.println("    jint size" + j +
                                 " = arg" + j + " == NULL ? 0 : env->GetDirectBufferCapacity(arg" + j + ");");
+                        out.println("    void* owner" + j + " = (void*)ptr" + j + ";");
                     }
                     if (methodInfo.parameterTypes[j] != Buffer.class) {
                         // given the component type, we can also fetch the array of non-direct buffers
@@ -1210,7 +1255,7 @@ public class Generator implements Closeable {
                         // sometimes we need to use the Cast annotation for declaring functions only
                         adapterLine += cast;
                     }
-                    adapterLine += "ptr" + j + ", size" + j;
+                    adapterLine += "ptr" + j + ", size" + j + ", owner" + j;
                     if (--prevAdapterInfo.argc > 0) {
                         adapterLine += ", ";
                     }
@@ -1547,7 +1592,7 @@ public class Generator implements Closeable {
                 boolean noDeallocator = methodInfo.cls == Pointer.class ||
                         methodInfo.cls.isAnnotationPresent(NoDeallocator.class) ||
                         methodInfo.method.isAnnotationPresent(NoDeallocator.class);
-                out.print(indent + "JavaCPP_initPointer(env, obj, rptr, rcapacity, ");
+                out.print(indent + "JavaCPP_initPointer(env, obj, rptr, rcapacity, rptr, ");
                 if (noDeallocator) {
                     out.println("NULL);");
                 } else if (methodInfo.arrayAllocator) {
@@ -1577,6 +1622,9 @@ public class Generator implements Closeable {
                     out.println(indent + "rptr = radapter;");
                     if (methodInfo.returnType != String.class) {
                         out.println(indent + "jint rcapacity = (jint)radapter.size;");
+                        if (Pointer.class.isAssignableFrom(methodInfo.returnType)) {
+                            out.println(indent + "void* rowner = radapter.owner;");
+                        }
                         out.println(indent + "void (*deallocator)(void*) = " +
                                 (adapterInfo.constant ? "NULL;" : "&" + adapterInfo.name + "::deallocate;"));
                     }
@@ -1584,6 +1632,7 @@ public class Generator implements Closeable {
                 } else if (returnBy instanceof ByVal ||
                         FunctionPointer.class.isAssignableFrom(methodInfo.returnType)) {
                     out.println(indent + "jint rcapacity = 1;");
+                    out.println(indent + "void* rowner = (void*)rptr;");
                     out.println(indent + "void (*deallocator)(void*) = &JavaCPP_" +
                             mangle(methodInfo.returnType.getName()) + "_deallocate;");
                     deallocators.index(methodInfo.returnType);
@@ -1615,7 +1664,7 @@ public class Generator implements Closeable {
                             (methodInfo.parameterTypes.length > 0 && methodInfo.parameterTypes[0] == Class.class ? ", arg0);" : ");"));
                     out.println(indent + "    if (rarg != NULL) {");
                     if (needInit) {
-                        out.println(indent + "        JavaCPP_initPointer(env, rarg, rptr, rcapacity, deallocator);");
+                        out.println(indent + "        JavaCPP_initPointer(env, rarg, rptr, rcapacity, rowner, deallocator);");
                     } else {
                         out.println(indent + "        env->SetLongField(rarg, JavaCPP_addressFID, ptr_to_jlong(rptr));");
                     }
@@ -1652,7 +1701,7 @@ public class Generator implements Closeable {
                         out.println(indent + "jint rcapacity = rptr != NULL ? 1 : 0;");
                     }
                     out.println(indent + "if (rptr != NULL) {");
-                    out.println(indent + "    rarg = env->NewDirectByteBuffer((void*)rptr, rcapacity);");
+                    out.println(indent + "    rarg = env->NewDirectByteBuffer((void*)rptr, rcapacity * sizeof(rptr[0]));");
                     out.println(indent + "}");
                 }
             }
@@ -1684,8 +1733,9 @@ public class Generator implements Closeable {
                     for (int k = 0; k < adapterInfo.argc; k++) {
                         out.println("    " + typeName[0] + " rptr" + (j+k) + typeName[1] + " = " + cast + "adapter" + j + ";");
                         out.println("    jint rsize" + (j+k) + " = (jint)adapter" + j + ".size" + (k > 0 ? (k+1) + ";" : ";"));
+                        out.println("    void* rowner" + (j+k) + " = adapter" + j + ".owner" + (k > 0 ? (k+1) + ";" : ";"));
                         out.println("    if (rptr" + (j+k) + " != " + cast + "ptr" + (j+k) + ") {");
-                        out.println("        JavaCPP_initPointer(env, arg" + j + ", rptr" + (j+k) + ", rsize" + (j+k) + ", &" + adapterInfo.name + "::deallocate);");
+                        out.println("        JavaCPP_initPointer(env, arg" + j + ", rptr" + (j+k) + ", rsize" + (j+k) + ", rowner" + (j+k) + ", &" + adapterInfo.name + "::deallocate);");
                         out.println("    } else {");
                         out.println("        env->SetIntField(arg" + j + ", JavaCPP_limitFID, rsize" + (j+k) + " + position" + (j+k) + ");");
                         out.println("    }");
@@ -1844,22 +1894,9 @@ public class Generator implements Closeable {
                     String valueTypeName = valueTypeName(typeName);
                     AdapterInformation adapterInfo = adapterInformation(false, valueTypeName, callbackParameterAnnotations[j]);
 
-                    boolean needInit = false;
                     if (adapterInfo != null) {
                         usesAdapters = true;
                         out.println("    " + adapterInfo.name + " adapter" + j + "(arg" + j + ");");
-                        if (callbackParameterTypes[j] != String.class) {
-                            out.println("    jint size" + j + " = (jint)adapter" + j + ".size;");
-                            out.println("    void (*deallocator" + j + ")(void*) = &" + adapterInfo.name + "::deallocate;");
-                        }
-                        needInit = true;
-                    } else if ((passBy instanceof ByVal && callbackParameterTypes[j] != Pointer.class) ||
-                            FunctionPointer.class.isAssignableFrom(callbackParameterTypes[j])) {
-                        out.println("    jint size" + j + " = 1;");
-                        out.println("    void (*deallocator" + j + ")(void*) = &JavaCPP_" +
-                                mangle(callbackParameterTypes[j].getName()) + "_deallocate;");
-                        deallocators.index(callbackParameterTypes[j]);
-                        needInit = true;
                     }
 
                     if (Pointer.class.isAssignableFrom(callbackParameterTypes[j]) ||
@@ -1902,6 +1939,24 @@ public class Generator implements Closeable {
                         }
                     }
 
+                    boolean needInit = false;
+                    if (adapterInfo != null) {
+                        if (callbackParameterTypes[j] != String.class) {
+                            out.println("    jint size" + j + " = (jint)adapter" + j + ".size;");
+                            out.println("    void* owner" + j + " = adapter" + j + ".owner;");
+                            out.println("    void (*deallocator" + j + ")(void*) = &" + adapterInfo.name + "::deallocate;");
+                        }
+                        needInit = true;
+                    } else if ((passBy instanceof ByVal && callbackParameterTypes[j] != Pointer.class) ||
+                            FunctionPointer.class.isAssignableFrom(callbackParameterTypes[j])) {
+                        out.println("    jint size" + j + " = 1;");
+                        out.println("    void* owner" + j + " = ptr" + j + ";");
+                        out.println("    void (*deallocator" + j + ")(void*) = &JavaCPP_" +
+                                mangle(callbackParameterTypes[j].getName()) + "_deallocate;");
+                        deallocators.index(callbackParameterTypes[j]);
+                        needInit = true;
+                    }
+
                     if (Pointer.class.isAssignableFrom(callbackParameterTypes[j])) {
                         String s = "    obj" + j + " = JavaCPP_createPointer(env, " + jclasses.index(callbackParameterTypes[j]) + ");";
                         jclassesInit.index(callbackParameterTypes[j]); // for custom class loaders
@@ -1915,7 +1970,7 @@ public class Generator implements Closeable {
                         }
                         out.println("    if (obj" + j + " != NULL) { ");
                         if (needInit) {
-                            out.println("        JavaCPP_initPointer(env, obj" + j + ", ptr" + j + ", size" + j + ", deallocator" + j + ");");
+                            out.println("        JavaCPP_initPointer(env, obj" + j + ", ptr" + j + ", size" + j + ", owner" + j + ", deallocator" + j + ");");
                         } else {
                             out.println("        env->SetLongField(obj" + j + ", JavaCPP_addressFID, ptr_to_jlong(ptr" + j + "));");
                         }
@@ -1946,7 +2001,7 @@ public class Generator implements Closeable {
                             out.println("    jint size" + j + " = ptr" + j + " != NULL ? 1 : 0;");
                         }
                         out.println("    if (ptr" + j + " != NULL) {");
-                        out.println("        obj" + j + " = env->NewDirectByteBuffer((void*)ptr" + j + ", size" + j + ");");
+                        out.println("        obj" + j + " = env->NewDirectByteBuffer((void*)ptr" + j + ", size" + j + " * sizeof(ptr" + j + "[0]));");
                         out.println("    }");
                     } else {
                         logger.warn("Callback \"" + callbackMethod + "\" has unsupported parameter type \"" +
@@ -2010,6 +2065,7 @@ public class Generator implements Closeable {
                             typeName[0] + typeName[1] + ")jlong_to_ptr(env->GetLongField(obj" + j + ", JavaCPP_addressFID));");
                     if (adapterInfo != null) {
                         out.println("    jint rsize" + j + " = env->GetIntField(obj" + j + ", JavaCPP_limitFID);");
+                        out.println("    void* rowner" + j + " = JavaCPP_getPointerOwner(env, obj" + j + ");");
                     }
                     if (!callbackParameterTypes[j].isAnnotationPresent(Opaque.class)) {
                         out.println("    jint rposition" + j + " = env->GetIntField(obj" + j + ", JavaCPP_positionFID);");
@@ -2019,7 +2075,7 @@ public class Generator implements Closeable {
                         }
                     }
                     if (adapterInfo != null) {
-                        out.println("    adapter" + j + ".assign(rptr" + j + ", rsize" + j + ");");
+                        out.println("    adapter" + j + ".assign(rptr" + j + ", rsize" + j + ", rowner" + j + ");");
                     } else if (passBy instanceof ByPtrPtr) {
                         out.println("    if (arg" + j + " != NULL) {");
                         out.println("        *arg" + j + " = *" + cast + "&rptr" + j + ";");
@@ -2045,6 +2101,7 @@ public class Generator implements Closeable {
                         returnTypeName[0] + returnTypeName[1] + ")jlong_to_ptr(env->GetLongField(rarg, JavaCPP_addressFID));");
                 if (returnAdapterInfo != null) {
                     out.println("    jint rsize = rarg == NULL ? 0 : env->GetIntField(rarg, JavaCPP_limitFID);");
+                    out.println("    void* rowner = JavaCPP_getPointerOwner(env, rarg);");
                 }
                 if (!callbackReturnType.isAnnotationPresent(Opaque.class)) {
                     out.println("    jint rposition = rarg == NULL ? 0 : env->GetIntField(rarg, JavaCPP_positionFID);");
@@ -2057,11 +2114,13 @@ public class Generator implements Closeable {
                 out.println("    " + returnTypeName[0] + " rptr" + returnTypeName[1] + " = rarg == NULL ? NULL : env->GetStringUTFChars(rarg, NULL);");
                 if (returnAdapterInfo != null) {
                     out.println("    jint rsize = 0;");
+                    out.println("    void* rowner = (void*)rptr");
                 }
             } else if (Buffer.class.isAssignableFrom(callbackReturnType)) {
                 out.println("    " + returnTypeName[0] + " rptr" + returnTypeName[1] + " = rarg == NULL ? NULL : env->GetDirectBufferAddress(rarg);");
                 if (returnAdapterInfo != null) {
                     out.println("    jint rsize = rarg == NULL ? 0 : env->GetDirectBufferCapacity(rarg);");
+                    out.println("    void* rowner = (void*)rptr;");
                 }
             } else if (!callbackReturnType.isPrimitive()) {
                 logger.warn("Callback \"" + callbackMethod + "\" has unsupported return type \"" +
@@ -2087,7 +2146,7 @@ public class Generator implements Closeable {
                 out.println("    return " + callbackReturnCast + "rarg;");
             } else if (returnAdapterInfo != null) {
                 usesAdapters = true;
-                out.println("    return " + returnAdapterInfo.name + "(" + callbackReturnCast + "rptr, rsize);");
+                out.println("    return " + returnAdapterInfo.name + "(" + callbackReturnCast + "rptr, rsize, rowner);");
             } else if (FunctionPointer.class.isAssignableFrom(callbackReturnType)) {
                 functions.index(callbackReturnType);
                 out.println("    return " + callbackReturnCast + "(rptr == NULL ? NULL : rptr->ptr);");
@@ -2121,7 +2180,7 @@ public class Generator implements Closeable {
         out.println("    if (rptr != NULL) {");
         out.println("        rptr->ptr = &" + callbackName + ";");
         out.println("        rptr->obj = obj;");
-        out.println("        JavaCPP_initPointer(env, obj, rptr, 1, &JavaCPP_" + mangle(cls.getName()) + "_deallocate);");
+        out.println("        JavaCPP_initPointer(env, obj, rptr, 1, rptr, &JavaCPP_" + mangle(cls.getName()) + "_deallocate);");
         deallocators.index(cls);
         out.println("        " + callbackName + "_instance = *rptr;");
         out.println("    }");

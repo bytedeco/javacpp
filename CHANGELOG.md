@@ -1,4 +1,5 @@
 
+ * Introduce the concept of "owner address" to integrate `Pointer` transparently with `std::shared_ptr`, etc (Thanks to Cyprien Noel for the idea!)
  * Add new "cpp11" option for the `@Platform(compiler=...)` value to build against the C++11 standard
  * Fix `Parser` support for the `interface` keyword of the Microsoft C/C++ Compiler
  * Let `Parser` pick up names from `Info.pointerTypes` in the case of function pointers as well
