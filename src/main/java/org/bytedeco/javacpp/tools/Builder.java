@@ -437,7 +437,7 @@ public class Builder {
      * Default constructor that simply initializes everything.
      */
     public Builder() {
-        this(new Logger());
+        this(Logger.create(Builder.class));
     }
     /**
      * Constructor that simply initializes everything.

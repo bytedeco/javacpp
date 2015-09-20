@@ -229,10 +229,10 @@ public class BuildMojo extends AbstractMojo {
             classOrPackageNames = merge(classOrPackageNames, classOrPackageName);
 
             Logger logger = new Logger() {
-                @Override public void debug(CharSequence cs) { log.debug(cs); }
-                @Override public void info (CharSequence cs) { log.info(cs);  }
-                @Override public void warn (CharSequence cs) { log.warn(cs);  }
-                @Override public void error(CharSequence cs) { log.error(cs); }
+                @Override public void debug(String s) { log.debug(s); }
+                @Override public void info (String s) { log.info(s);  }
+                @Override public void warn (String s) { log.warn(s);  }
+                @Override public void error(String s) { log.error(s); }
             };
             Builder builder = new Builder(logger)
                     .classPaths(classPaths)

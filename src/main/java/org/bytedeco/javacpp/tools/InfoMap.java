@@ -127,6 +127,7 @@ public class InfoMap extends HashMap<String,LinkedList<Info>> {
         .put(new Info("operator delete").javaNames("_delete"))
 
         .put(new Info("allocate").javaNames("_allocate"))
+        .put(new Info("close").javaNames("_close"))
         .put(new Info("deallocate").javaNames("_deallocate"))
         .put(new Info("address").javaNames("_address"))
         .put(new Info("position").javaNames("_position"))

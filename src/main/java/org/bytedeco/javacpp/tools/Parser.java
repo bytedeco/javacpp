@@ -863,23 +863,12 @@ public class Parser {
         }
 
         // pick the Java name from the InfoMap if appropriate
+        String originalName = dcl.javaName;
         if (attr == null && defaultName == null && info != null && info.javaNames != null && info.javaNames.length > 0
                 && (dcl.operator || !info.cppNames[0].contains("<") || (context.templateMap != null && context.templateMap.type == null))) {
             dcl.javaName = info.javaNames[0];
         }
 
-        // annotate with @Name if the Java name doesn't match with the C++ name
-        if (dcl.cppName != null) {
-            String localName = dcl.cppName;
-            int namespace = localName.lastIndexOf("::");
-            if (namespace >= 0 && context.namespace != null &&
-                    context.namespace.startsWith(localName.substring(0, namespace - 2))) {
-                localName = dcl.cppName.substring(namespace + 2);
-            }
-            if (!localName.equals(dcl.javaName)) {
-                type.annotations += "@Name(\"" + localName + "\") ";
-            }
-        }
         if (info != null && info.annotations != null) {
             for (String s : info.annotations) {
                 type.annotations += s + " ";
@@ -921,11 +910,11 @@ public class Parser {
                 }
                 info = infoMap.getFirst(cppType += ")");
 
-                String functionType = Character.toUpperCase(dcl.javaName.charAt(0)) + dcl.javaName.substring(1);
+                String functionType = Character.toUpperCase(originalName.charAt(0)) + originalName.substring(1);
                 if (info != null && info.pointerTypes.length > 0) {
                     functionType = info.pointerTypes[0];
                 } else if (typedef) {
-                    functionType = dcl.javaName;
+                    functionType = originalName;
                 } else if (dcl.parameters.signature.length() > 0) {
                     functionType += dcl.parameters.signature;
                 } else if (!type.javaName.equals("void")) {
@@ -950,6 +939,19 @@ public class Parser {
                 dcl.parameters = null;
                 type.annotations = "";
                 type.javaName = functionType;
+            }
+        }
+
+        // annotate with @Name if the Java name doesn't match with the C++ name
+        if (dcl.cppName != null) {
+            String localName = dcl.cppName;
+            int namespace = localName.lastIndexOf("::");
+            if (namespace >= 0 && context.namespace != null &&
+                    context.namespace.startsWith(localName.substring(0, namespace - 2))) {
+                localName = dcl.cppName.substring(namespace + 2);
+            }
+            if (!localName.equals(dcl.javaName)) {
+                type.annotations += "@Name(\"" + localName + "\") ";
             }
         }
 

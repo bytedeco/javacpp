@@ -111,6 +111,7 @@ public class IndexerTest {
         for (int i = 0; i < size; i++) {
             assertEquals(i + 1, ptr.position(i).get() & 0xFF);
         }
+        System.gc();
     }
 
     @Test public void testShortIndexer() {
@@ -167,6 +168,7 @@ public class IndexerTest {
         for (int i = 0; i < size; i++) {
             assertEquals(2 * i, ptr.position(i).get());
         }
+        System.gc();
     }
 
     @Test public void testIntIndexer() {
@@ -223,6 +225,7 @@ public class IndexerTest {
         for (int i = 0; i < size; i++) {
             assertEquals(2 * i, ptr.position(i).get());
         }
+        System.gc();
     }
 
     @Test public void testLongIndexer() {
@@ -279,6 +282,7 @@ public class IndexerTest {
         for (int i = 0; i < size; i++) {
             assertEquals(2 * i, ptr.position(i).get());
         }
+        System.gc();
     }
 
     @Test public void testFloatIndexer() {
@@ -335,6 +339,7 @@ public class IndexerTest {
         for (int i = 0; i < size; i++) {
             assertEquals(2 * i, ptr.position(i).get(), 0);
         }
+        System.gc();
     }
 
     @Test public void testDoubleIndexer() {
@@ -391,6 +396,7 @@ public class IndexerTest {
         for (int i = 0; i < size; i++) {
             assertEquals(2 * i, ptr.position(i).get(), 0);
         }
+        System.gc();
     }
 
     @Test public void testCharIndexer() {
@@ -447,6 +453,7 @@ public class IndexerTest {
         for (int i = 0; i < size; i++) {
             assertEquals(2 * i, ptr.position(i).get());
         }
+        System.gc();
     }
 
     @Test public void testUByteIndexer() {
@@ -503,6 +510,7 @@ public class IndexerTest {
         for (int i = 0; i < size; i++) {
             assertEquals(i + 1, ptr.position(i).get() & 0xFF);
         }
+        System.gc();
     }
 
     @Test public void testUShortIndexer() {
@@ -559,6 +567,7 @@ public class IndexerTest {
         for (int i = 0; i < size; i++) {
             assertEquals(2 * i, ptr.position(i).get());
         }
+        System.gc();
     }
 
 }

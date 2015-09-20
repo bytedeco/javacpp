@@ -79,6 +79,12 @@
       <version>4.11</version>
       <optional>true</optional>
     </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-simple</artifactId>
+      <version>1.7.7</version>
+      <optional>true</optional>
+    </dependency>
   </dependencies>
 
   <build>

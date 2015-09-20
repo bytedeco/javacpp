@@ -1,4 +1,6 @@
 
+ * Log when `Pointer.deallocator` gets registered, garbage collected, or deallocated manually, if `Logger.isDebugEnabled()` (redirectable to SLF4J)
+ * Make `Pointer implements AutoCloseable` to let us try-with-resources, thus bumping requirements to Java SE 7 and Android 4.0
  * Introduce the concept of "owner address" to integrate `Pointer` transparently with `std::shared_ptr`, etc (Thanks to Cyprien Noel for the idea!)
  * Add new "cpp11" option for the `@Platform(compiler=...)` value to build against the C++11 standard
  * Fix `Parser` support for the `interface` keyword of the Microsoft C/C++ Compiler

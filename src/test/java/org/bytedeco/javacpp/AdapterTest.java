@@ -99,6 +99,7 @@ public class AdapterTest {
         BytePointer textPtr2 = testStdString(textPtr1);
         assertEquals(textStr1, textPtr1.getString());
         assertEquals(textStr1, textPtr2.getString());
+        System.gc();
     }
 
     @Test public void testCharString() {
@@ -112,6 +113,7 @@ public class AdapterTest {
         BytePointer textPtr2 = testCharString(textPtr1);
         assertEquals(textStr1, textPtr1.getString());
         assertEquals(textStr1, textPtr2.getString());
+        System.gc();
     }
 
     @Test public void testShortString() {
@@ -122,6 +124,7 @@ public class AdapterTest {
         CharPointer textPtr2 = testShortString(textPtr1);
         assertEquals(textStr, textPtr1.getString());
         assertEquals(textStr, textPtr2.getString());
+        System.gc();
     }
 
     @Test public void testIntString() {
@@ -132,6 +135,7 @@ public class AdapterTest {
         IntPointer textPtr2 = testIntString(textPtr1);
         assertEquals(textStr, textPtr1.getString());
         assertEquals(textStr, textPtr2.getString());
+        System.gc();
     }
 
     @Test public void testSharedPtr() {
@@ -148,6 +152,7 @@ public class AdapterTest {
 
         assertEquals(1, constructorCount());
         assertEquals(1, destructorCount());
+        System.gc();
     }
 
     @Test public void testStdVector() {
@@ -165,5 +170,6 @@ public class AdapterTest {
             assertEquals(buf.get(i), buf2.get(i));
             assertEquals(arr[i], arr2[i]);
         }
+        System.gc();
     }
 }

@@ -21,7 +21,7 @@ import org.bytedeco.javacpp.tools.Generator;
  * the {@link Pointer#deallocator} with {@code NativeDeallocator}, based on the
  * {@code delete} operator, if not additionally annotated with {@link NoDeallocator}.
  *
- * @see Pointer#init(long, int, long)
+ * @see Pointer#init(long, int, long, long)
  * @see Generator
  *
  * @author Samuel Audet

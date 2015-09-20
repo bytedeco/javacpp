@@ -31,6 +31,7 @@ import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import org.bytedeco.javacpp.tools.Generator;
+import org.bytedeco.javacpp.tools.Logger;
 
 /**
  * All peer classes to native types must be descended from Pointer, the topmost class.
@@ -56,7 +57,7 @@ import org.bytedeco.javacpp.tools.Generator;
  *
  * @author Samuel Audet
  */
-public class Pointer {
+public class Pointer implements AutoCloseable {
     /** Default constructor that does nothing. */
     public Pointer() {
         // Make sure our top enclosing class is initialized and the
@@ -123,7 +124,9 @@ public class Pointer {
         position = 0;
         limit = allocatedCapacity;
         capacity = allocatedCapacity;
-        deallocator(new NativeDeallocator(this, ownerAddress, deallocatorAddress));
+        if (ownerAddress != 0 && deallocatorAddress != 0) {
+            deallocator(new NativeDeallocator(this, ownerAddress, deallocatorAddress));
+        }
     }
 
     /** The interface to implement to produce a Deallocator usable by Pointer. */
@@ -187,6 +190,10 @@ public class Pointer {
                 throw new RuntimeException(ex);
             }
         }
+
+        @Override public String toString() {
+            return getClass().getName() + "[pointer=" + pointer + ",method=" + method + "]";
+        }
     }
 
     /**
@@ -214,6 +221,11 @@ public class Pointer {
         }
 
         private native void deallocate(long ownerAddress, long deallocatorAddress);
+
+        @Override public String toString() {
+            return getClass().getName() + "[ownerAddress=0x" + Long.toHexString(ownerAddress)
+                    + ",deallocatorAddress=0x" + Long.toHexString(deallocatorAddress) + "]";
+        }
     }
 
     /**
@@ -261,11 +273,20 @@ public class Pointer {
         @Override public void clear() {
             super.clear();
             if (deallocator != null) {
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Collecting " + this);
+                }
                 deallocator.deallocate();
                 deallocator = null;
             }
         }
+
+        @Override public String toString() {
+            return getClass().getName() + "[deallocator=" + deallocator + "]";
+        }
     }
+
+    private static final Logger logger = Logger.create(Pointer.class);
 
     /** The {@link ReferenceQueue} used by {@link DeallocatorReference}.
      * Initialized to null if the "org.bytedeco.javacpp.nopointergc" system property is "true". */
@@ -372,6 +393,9 @@ public class Pointer {
      */
     protected <P extends Pointer> P deallocator(Deallocator deallocator) {
         if (this.deallocator != null) {
+            if (logger.isDebugEnabled()) {
+                logger.debug("Predeallocating " + this);
+            }
             this.deallocator.deallocate();
             this.deallocator = null;
         }
@@ -381,22 +405,33 @@ public class Pointer {
             DeallocatorReference r = deallocator instanceof DeallocatorReference ?
                     (DeallocatorReference)deallocator :
                     new DeallocatorReference(this, deallocator);
+            if (logger.isDebugEnabled()) {
+                logger.debug("Registering " + this);
+            }
             r.add();
         }
         return (P)this;
     }
 
-    /** @see #deallocate(boolean) */
+    /** Calls {@code deallocate()}. */
+    @Override public void close() throws Exception {
+        deallocate();
+    }
+
+    /** Calls {@code deallocate(true)}. */
     public void deallocate() {
         deallocate(true);
     }
     /**
-     * Explicitly deallocates native memory without waiting after the garbage collector.
+     * Explicitly manages native memory without waiting after the garbage collector.
      * Has no effect if no deallocator was previously set with {@link #deallocator(Deallocator)}.
-     * @param deallocate if false, does not deallocate, rather disabling garbage collection
+     * @param deallocate if true, deallocates, else does not, but disables garbage collection
      */
     public void deallocate(boolean deallocate) {
         if (deallocate && deallocator != null) {
+            if (logger.isDebugEnabled()) {
+                logger.debug("Deallocating " + this);
+            }
             deallocator.deallocate();
             address = 0;
         } else synchronized(DeallocatorReference.class) {

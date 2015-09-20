@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Samuel Audet
+ * Copyright (C) 2014-2015 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -28,19 +28,32 @@ package org.bytedeco.javacpp.tools;
  * @author Samuel Audet
  */
 public class Logger {
-    public void debug(CharSequence cs) {
-        System.out.println(cs);
+    /** If the "org.bytedeco.javacpp.logger" system property is set to "slf4j",
+     *  returns new {@link Slf4jLogger#Slf4jLogger(Class)}, else returns new {@link #Logger()}. */
+    public static Logger create(Class cls) {
+        String s = System.getProperty("org.bytedeco.javacpp.logger", "simple").toLowerCase();
+        if (s.equals("slf4j") || s.equals("slf4jlogger")) {
+            return new Slf4jLogger(cls);
+        } else {
+            return new Logger();
+        }
     }
 
-    public void info(CharSequence cs) {
-        System.out.println(cs);
-    }
+    /** Returns false. */
+    public boolean isDebugEnabled() { return false; }
+    /** Returns true. */
+    public boolean isInfoEnabled()  { return true; }
+    /** Returns true. */
+    public boolean isWarnEnabled()  { return true; }
+    /** Returns true. */
+    public boolean isErrorEnabled() { return true; }
 
-    public void warn(CharSequence cs) {
-        System.err.println("Warning: " + cs);
-    }
-
-    public void error(CharSequence cs) {
-        System.err.println("Error: " + cs);
-    }
+    /** Calls {@code System.out.println(s)}. */
+    public void debug(String s) { System.out.println(s); }
+    /** Calls {@code System.out.println(s)}. */
+    public void info(String s)  { System.out.println(s); }
+    /** Calls {@code System.err.println("Warning: " + s)}. */
+    public void warn(String s)  { System.err.println("Warning: " + s); }
+    /** Calls {@code System.err.println("Error: " + s)}. */
+    public void error(String s) { System.err.println("Error: " + s); }
 }
