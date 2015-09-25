@@ -17,4 +17,7 @@ import org.bytedeco.javacpp.tools.Generator;
  */
 @Documented @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD})
-public @interface Virtual { }
+public @interface Virtual {
+    /** Pure (abstract) or not. */
+    boolean value() default false;
+}

@@ -1362,7 +1362,8 @@ public class Parser {
 
             // add @Virtual annotation on user request only, inherited through context
             if (type.virtual && context.virtualize) {
-                modifiers = context.inaccessible ? "@Virtual protected native " : "@Virtual public native ";
+                modifiers = "@Virtual" + (decl.abstractMember ? "(true) " : " ")
+                          + (context.inaccessible ? "protected native " : "public native ");
             }
 
             // compose the text of the declaration with the info we got up until this point

@@ -1818,15 +1818,19 @@ public class Generator implements Closeable {
                 }
                 member += "virtual " + returnConvention[0] + (returnConvention.length > 1 ? returnConvention[1] : "")
                        + methodInfo.memberName[0] + parameterDeclaration + ";\n    "
-                       + returnConvention[0] + "super_" + methodInfo.memberName[0] + nonconstParamDeclaration + " { "
-                       + (callbackReturnType != void.class ? "return " : "") + valueTypeName + "::" + methodInfo.memberName[0] + "(";
-                for (int j = 0; j < callbackParameterTypes.length; j++) {
-                    member += "arg" + j;
-                    if (j < callbackParameterTypes.length - 1) {
-                        member += ", ";
+                       + returnConvention[0] + "super_" + methodInfo.memberName[0] + nonconstParamDeclaration + " { ";
+                if (methodInfo.method.getAnnotation(Virtual.class).value()) {
+                    member += "throw JavaCPP_exception(\"Cannot call a pure virtual function.\"); }";
+                } else {
+                    member += (callbackReturnType != void.class ? "return " : "") + valueTypeName + "::" + methodInfo.memberName[0] + "(";
+                    for (int j = 0; j < callbackParameterTypes.length; j++) {
+                        member += "arg" + j;
+                        if (j < callbackParameterTypes.length - 1) {
+                            member += ", ";
+                        }
                     }
+                    member += "); }";
                 }
-                member += "); }";
                 firstLine = returnConvention[0] + (returnConvention.length > 1 ? returnConvention[1] : "")
                         + subType + "::" + methodInfo.memberName[0] + parameterDeclaration + " {";
                 functionList.add(fieldName);
