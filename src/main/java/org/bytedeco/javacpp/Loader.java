@@ -313,12 +313,31 @@ public class Loader {
     }
 
 
+    /** Initialized to {@code System.getProperty("org.bytedeco.javacpp.cachedir", null)}. */
+    static final String cacheDirName = System.getProperty("org.bytedeco.javacpp.cachedir", null);
+    /** User-specified cache directory set and returned by {@link #getCacheDir()}. */
+    static File cacheDir = null;
     /** Temporary directory set and returned by {@link #getTempDir()}. */
     static File tempDir = null;
     /** Flag set by the {@link Builder} to tell us not to try to load anything. */
     static boolean loadLibraries = System.getProperty("org.bytedeco.javacpp.loadlibraries", "true").equals("true");
     /** Contains all the native libraries that we have loaded to avoid reloading them. */
     static Map<String,String> loadedLibraries = Collections.synchronizedMap(new HashMap<String,String>());
+
+    /**
+     * Creates and returns {@code System.getProperty("org.bytedeco.javacpp.cachedir")}, or null when not set.
+     *
+     * @return {@link #cacheDir}
+     */
+    public static File getCacheDir() {
+        if (cacheDir == null && cacheDirName != null) {
+            File f = new File(cacheDirName);
+            if (f.exists() || f.mkdirs()) {
+                cacheDir = f;
+            }
+        }
+        return cacheDir;
+    }
 
     /**
      * Creates a unique name for {@link #tempDir} out of
@@ -525,11 +544,23 @@ public class Loader {
                     // ... if the URL is not already a file ...
                     file = new File(url.toURI());
                 } catch (Exception e) {
-                    if (tempFile != null && tempFile.exists()) {
-                        tempFile.deleteOnExit();
+                    // ... then check if it's not already cached, and if not ...
+                    if (getCacheDir() == null || !(file = new File(getCacheDir(), new File(url.getPath()).getName())).exists()) {
+                        if (tempFile != null && tempFile.exists()) {
+                            tempFile.deleteOnExit();
+                        }
+                        // ... then extract it from our resources ...
+                        if (getCacheDir() != null) {
+                            file = extractResource(url, getCacheDir(), null, null);
+                        } else {
+                            file = tempFile = extractResource(url, getTempDir(), null, null);
+                        }
+                    } else while (System.currentTimeMillis() - file.lastModified() < 1000) {
+                        // ... else wait until the file is at least 1 second old ...
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException ex) { }
                     }
-                    // ... then extract it from our resources ...
-                    file = tempFile = extractResource(url, getTempDir(), null, null);
                 }
                 if (file != null && file.exists()) {
                     filename = file.getAbsolutePath();

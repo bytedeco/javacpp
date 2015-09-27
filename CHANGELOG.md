@@ -1,4 +1,5 @@
 
+ * Add new "org.bytedeco.javacpp.cachedir" system property to specify where to extract and leave native libraries to share across multiple JVM instances
  * Provide `@Virtual(true)` to specify pure virtual functions and prevent `Generator` from making undefined calls
  * Update properties for Android to detect undefined symbols at compile time
  * Log when `Pointer.deallocator` gets registered, garbage collected, or deallocated manually, if `Logger.isDebugEnabled()` (redirectable to SLF4J)
