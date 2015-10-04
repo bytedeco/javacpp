@@ -1,9 +1,10 @@
 
+ * Upgrade all Maven dependencies and plugins to latest versions, thus bumping minimum requirements to Maven 3.0
  * Add new "org.bytedeco.javacpp.cachedir" system property to specify where to extract and leave native libraries to share across multiple JVM instances
  * Provide `@Virtual(true)` to specify pure virtual functions and prevent `Generator` from making undefined calls
  * Update properties for Android to detect undefined symbols at compile time
  * Log when `Pointer.deallocator` gets registered, garbage collected, or deallocated manually, if `Logger.isDebugEnabled()` (redirectable to SLF4J)
- * Make `Pointer implements AutoCloseable` to let us try-with-resources, thus bumping requirements to Java SE 7 and Android 4.0
+ * Make `Pointer implements AutoCloseable` to let us try-with-resources, thus bumping minimum requirements to Java SE 7 and Android 4.0
  * Introduce the concept of "owner address" to integrate `Pointer` transparently with `std::shared_ptr`, etc (Thanks to Cyprien Noel for the idea!)
  * Add new "cpp11" option for the `@Platform(compiler=...)` value to build against the C++11 standard
  * Fix `Parser` support for the `interface` keyword of the Microsoft C/C++ Compiler
