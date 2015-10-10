@@ -166,7 +166,7 @@ public class Loader {
             }
             if (c.isAnnotationPresent(Platform.class)) {
                 Platform p = c.getAnnotation(Platform.class);
-                if (p.define().length > 0 || p.include().length > 0 || p.cinclude().length > 0 ||
+                if (p.pragma().length > 0 || p.define().length > 0 || p.include().length > 0 || p.cinclude().length > 0 ||
                         p.includepath().length > 0 || p.compiler().length > 0 || p.linkpath().length > 0 ||
                         p.link().length > 0 || p.frameworkpath().length > 0 || p.framework().length > 0 ||
                         p.preloadpath().length > 0 || p.preload().length > 0 || p.library().length() > 0) {

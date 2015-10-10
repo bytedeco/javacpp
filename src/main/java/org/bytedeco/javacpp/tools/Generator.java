@@ -212,6 +212,9 @@ public class Generator implements Closeable {
             out2.println(warning);
             out2.println();
         }
+        for (String s : properties.get("platform.pragma")) {
+            out.println("#pragma " + s);
+        }
         for (String s : properties.get("platform.define")) {
             out.println("#define " + s);
         }

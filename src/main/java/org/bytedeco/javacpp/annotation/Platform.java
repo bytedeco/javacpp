@@ -44,6 +44,9 @@ public @interface Platform {
     /** The properties, class, or method do NOT apply to the named platforms.
      *  The strings are matched with {@link String#startsWith(String)} */
     String[] not()         default {};
+    /** A list of {@code pragma} directives to list at the top of the generated
+     *  code, before {@link #define()} macros and any included header files. */
+    String[] pragma()      default {};
     /** A list of macros to {@code #define} at the top of the generated code,
      *  before {@link #include()} and {@link #cinclude()} header files. */
     String[] define()      default {};

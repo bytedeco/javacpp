@@ -174,7 +174,7 @@ public class ClassProperties extends HashMap<String,LinkedList<String>> {
             platforms = classProperties.value();
         }
 
-        String[] define = {}, include = {}, cinclude = {}, includepath = {}, compiler = {},
+        String[] pragma = {}, define = {}, include = {}, cinclude = {}, includepath = {}, compiler = {},
                  linkpath = {}, link = {}, frameworkpath = {}, framework = {}, preloadpath = {}, preload = {};
         String library = "jni" + c.getSimpleName();
         for (Platform p : platforms != null ? platforms : new Platform[0]) {
@@ -189,6 +189,7 @@ public class ClassProperties extends HashMap<String,LinkedList<String>> {
                 }
             }
             if ((names[0].length == 0 || matches[0]) && (names[1].length == 0 || !matches[1])) {
+                if (p.pragma()     .length > 0) { pragma      = p.pragma();      }
                 if (p.define()     .length > 0) { define      = p.define();      }
                 if (p.include()    .length > 0) { include     = p.include();     }
                 if (p.cinclude()   .length > 0) { cinclude    = p.cinclude();    }
@@ -203,6 +204,7 @@ public class ClassProperties extends HashMap<String,LinkedList<String>> {
                 if (p.library().length() > 0)   { library     = p.library();     }
             }
         }
+        addAll("platform.pragma", pragma);
         addAll("platform.define", define);
         addAll("platform.include", include);
         addAll("platform.cinclude", cinclude);
