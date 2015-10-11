@@ -31,7 +31,7 @@ public class Logger {
     /** If the "org.bytedeco.javacpp.logger" system property is set to "slf4j",
      *  returns new {@link Slf4jLogger#Slf4jLogger(Class)}, else returns new {@link #Logger()}. */
     public static Logger create(Class cls) {
-        String s = System.getProperty("org.bytedeco.javacpp.logger", "simple").toLowerCase();
+        String s = System.getProperty("org.bytedeco.javacpp.logger", "").toLowerCase();
         if (s.equals("slf4j") || s.equals("slf4jlogger")) {
             return new Slf4jLogger(cls);
         } else {

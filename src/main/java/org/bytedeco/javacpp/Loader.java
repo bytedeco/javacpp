@@ -37,6 +37,7 @@ import java.util.Properties;
 import java.util.WeakHashMap;
 import org.bytedeco.javacpp.annotation.Platform;
 import org.bytedeco.javacpp.tools.Builder;
+import org.bytedeco.javacpp.tools.Logger;
 
 /**
  * The Loader contains functionality to load native libraries, but also has a bit
@@ -50,6 +51,8 @@ import org.bytedeco.javacpp.tools.Builder;
  * @author Samuel Audet
  */
 public class Loader {
+
+    private static final Logger logger = Logger.create(Loader.class);
 
     /** Value created out of "java.vm.name", "os.name", and "os.arch" system properties.
      *  Returned by {@link #getPlatform()} as default. */
@@ -550,6 +553,9 @@ public class Loader {
                             tempFile.deleteOnExit();
                         }
                         // ... then extract it from our resources ...
+                        if (logger.isDebugEnabled()) {
+                            logger.debug("Extracting " + url);
+                        }
                         if (getCacheDir() != null) {
                             file = extractResource(url, getCacheDir(), null, null);
                         } else {
@@ -566,17 +572,26 @@ public class Loader {
                     filename = file.getAbsolutePath();
                     try {
                         // ... and load it!
+                        if (logger.isDebugEnabled()) {
+                            logger.debug("Loading " + filename);
+                        }
                         loadedLibraries.put(libnameversion, filename);
                         System.load(filename);
                         return filename;
                     } catch (UnsatisfiedLinkError e) {
                         loadError = e;
                         loadedLibraries.remove(libnameversion);
+                        if (logger.isDebugEnabled()) {
+                            logger.debug("Failed to load " + filename + ": " + e);
+                        }
                     }
                 }
             }
             // ... or as last resort, try to load it via the system.
             String libname = libnameversion.split("@")[0];
+            if (logger.isDebugEnabled()) {
+                logger.debug("Loading library " + libname);
+            }
             loadedLibraries.put(libnameversion, libname);
             System.loadLibrary(libname);
             return libname;
@@ -584,6 +599,9 @@ public class Loader {
             loadedLibraries.remove(libnameversion);
             if (loadError != null && e.getCause() == null) {
                 e.initCause(loadError);
+            }
+            if (logger.isDebugEnabled()) {
+                logger.debug("Failed to load for " + libnameversion + ": " + e);
             }
             throw e;
         } catch (IOException ex) {
@@ -593,6 +611,9 @@ public class Loader {
             }
             Error e = new UnsatisfiedLinkError(ex.toString());
             e.initCause(ex);
+            if (logger.isDebugEnabled()) {
+                logger.debug("Failed to extract for " + libnameversion + ": " + e);
+            }
             throw e;
         } finally {
             if (tempFile != null && tempFile.exists()) {

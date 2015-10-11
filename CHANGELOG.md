@@ -1,4 +1,5 @@
 
+ * Add logging to `Loader.loadLibrary()` to help diagnose loading problems ([issue #41](https://github.com/bytedeco/javacpp/issues/41))
  * Provide new `@Platform(pragma=...)` value to have `Generator` output `#pragma` directives
  * Upgrade all Maven dependencies and plugins to latest versions, thus bumping minimum requirements to Maven 3.0
  * Add new "org.bytedeco.javacpp.cachedir" system property to specify where to extract and leave native libraries to share across multiple JVM instances
