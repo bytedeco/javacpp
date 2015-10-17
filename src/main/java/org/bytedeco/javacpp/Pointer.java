@@ -238,8 +238,8 @@ public class Pointer implements AutoCloseable {
             this.deallocator = deallocator;
         }
 
-        static DeallocatorReference head = null;
-        DeallocatorReference prev = null, next = null;
+        static volatile DeallocatorReference head = null;
+        volatile DeallocatorReference prev = null, next = null;
         Deallocator deallocator;
 
         final void add() {

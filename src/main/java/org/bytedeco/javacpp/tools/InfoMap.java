@@ -46,7 +46,7 @@ public class InfoMap extends HashMap<String,LinkedList<Info>> {
     static final InfoMap defaults = new InfoMap(null)
         .put(new Info(" __attribute__", "__declspec").annotations().skip())
         .put(new Info("void").valueTypes("void").pointerTypes("Pointer"))
-        .put(new Info("va_list", "FILE", "std::exception", "std::istream", "std::ostream", "std::iostream",
+        .put(new Info("FILE", "time_t", "va_list", "std::exception", "std::istream", "std::ostream", "std::iostream",
                 "std::ifstream", "std::ofstream", "std::fstream").cast().pointerTypes("Pointer"))
 
         .put(new Info("int8_t", "__int8", "jbyte", "signed char")

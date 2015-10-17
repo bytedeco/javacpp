@@ -88,8 +88,7 @@ public class Info {
     boolean skip = false;
     /** Forces a class to be treated as if it were abstract. */
     boolean purify = false;
-    /** Annotates virtual functions with @{@link Virtual} and adds appropriate constructors.
-     * Also maps C++ classes with pure virtual functions to abstract Java classes. */
+    /** Annotates virtual functions with @{@link Virtual} and adds appropriate constructors. */
     boolean virtualize = false;
     /** Allows to override the base class of {@link #pointerTypes}. Defaults to {@link Pointer}. */
     String base = null;
