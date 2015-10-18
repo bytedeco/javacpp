@@ -1482,7 +1482,16 @@ public class Generator implements Closeable {
                     out.print("(*ptr)");
                     prefix = "." + name + prefix;
                 } else {
-                    out.print("ptr->" + name);
+                    String op = name.startsWith("operator") ? name.substring(8).trim() : "";
+                    if (methodInfo.parameterTypes.length > 0
+                            && (op.equals("=") || op.equals("+") || op.equals("-") || op.equals("*") || op.equals("/") || op.equals("%")
+                            || op.equals("==") || op.equals("!=") || op.equals("<") || op.equals(">") || op.equals("<=") || op.equals(">="))) {
+                        out.print("((*ptr)");
+                        prefix = op + prefix;
+                        suffix += ")";
+                    } else {
+                        out.print("ptr->" + name);
+                    }
                 }
             }
         }
