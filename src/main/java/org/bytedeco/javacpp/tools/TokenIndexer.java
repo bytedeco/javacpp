@@ -24,6 +24,7 @@ package org.bytedeco.javacpp.tools;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -48,7 +49,7 @@ class TokenIndexer {
         if (index + 1 < array.length && array[index].match('#') &&
                 array[index + 1].match(Token.IF, Token.IFDEF, Token.IFNDEF)) {
             // copy the array of tokens up to this point
-            ArrayList<Token> tokens = new ArrayList<Token>();
+            List<Token> tokens = new ArrayList<Token>();
             for (int i = 0; i < index; i++) {
                 tokens.add(array[i]);
             }
@@ -140,12 +141,12 @@ class TokenIndexer {
                         return;
                     }
                     // copy the array of tokens up to this point
-                    ArrayList<Token> tokens = new ArrayList<Token>();
+                    List<Token> tokens = new ArrayList<Token>();
                     for (int i = 0; i < index; i++) {
                         tokens.add(array[i]);
                     }
-                    ArrayList<String> params = new ArrayList<String>();
-                    ArrayList<Token>[] args = null;
+                    List<String> params = new ArrayList<String>();
+                    List<Token>[] args = null;
                     Token token = tokenizer.nextToken();
                     // pick up the parameters and arguments of the macro if it has any
                     String name = array[index].value;

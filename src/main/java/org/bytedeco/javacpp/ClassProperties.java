@@ -23,10 +23,11 @@
 package org.bytedeco.javacpp;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import org.bytedeco.javacpp.annotation.Platform;
@@ -39,7 +40,7 @@ import org.bytedeco.javacpp.annotation.Platform;
  *
  * @see Loader#loadProperties(Class, java.util.Properties, boolean)
  */
-public class ClassProperties extends HashMap<String,LinkedList<String>> {
+public class ClassProperties extends HashMap<String,List<String>> {
     public ClassProperties() { }
     public ClassProperties(Properties properties) {
         platform      = properties.getProperty("platform");
@@ -70,13 +71,13 @@ public class ClassProperties extends HashMap<String,LinkedList<String>> {
 
     String[] defaultNames = {};
     String platform, platformRoot, pathSeparator;
-    LinkedList<Class> inheritedClasses = null;
-    LinkedList<Class> effectiveClasses = null;
+    List<Class> inheritedClasses = null;
+    List<Class> effectiveClasses = null;
 
-    public LinkedList<String> get(String key) {
-        LinkedList<String> list = super.get(key);
+    public List<String> get(String key) {
+        List<String> list = super.get(key);
         if (list == null) {
-            put((String)key, list = new LinkedList<String>());
+            put((String)key, list = new ArrayList<String>());
         }
         return list;
     }
@@ -94,7 +95,7 @@ public class ClassProperties extends HashMap<String,LinkedList<String>> {
                 root = platformRoot;
             }
 
-            LinkedList<String> values2 = get(key);
+            List<String> values2 = get(key);
             for (String value : values) {
                 if (value == null) {
                     continue;
@@ -114,11 +115,11 @@ public class ClassProperties extends HashMap<String,LinkedList<String>> {
         return getProperty(key, null);
     }
     public String getProperty(String key, String defaultValue) {
-        LinkedList<String> values = get(key);
+        List<String> values = get(key);
         return values.isEmpty() ? defaultValue : values.get(0);
     }
     public String setProperty(String key, String value) {
-        LinkedList<String> values = get(key);
+        List<String> values = get(key);
         String oldValue = values.isEmpty() ? null : values.get(0);
         values.clear();
         addAll(key, value);
@@ -127,13 +128,13 @@ public class ClassProperties extends HashMap<String,LinkedList<String>> {
 
     public void load(Class cls, boolean inherit) {
         Class<?> c = Loader.getEnclosingClass(cls);
-        LinkedList<Class> classList = new LinkedList<Class>();
-        classList.addFirst(c);
+        List<Class> classList = new ArrayList<Class>();
+        classList.add(0, c);
         while (!c.isAnnotationPresent(org.bytedeco.javacpp.annotation.Properties.class)
                 && !c.isAnnotationPresent(Platform.class) && c.getSuperclass() != null
                 && c.getSuperclass() != Object.class) {
             // accumulate superclasses to process native methods from those as well
-            classList.addFirst(c = c.getSuperclass());
+            classList.add(0, c = c.getSuperclass());
         }
         if (effectiveClasses == null) {
             effectiveClasses = classList;
@@ -150,7 +151,7 @@ public class ClassProperties extends HashMap<String,LinkedList<String>> {
             Class[] classes = classProperties.inherit();
             if (inherit && classes != null) {
                 if (inheritedClasses == null) {
-                    inheritedClasses = new LinkedList<Class>();
+                    inheritedClasses = new ArrayList<Class>();
                 }
                 for (Class c2 : classes) {
                     load(c2, inherit);
@@ -219,11 +220,11 @@ public class ClassProperties extends HashMap<String,LinkedList<String>> {
         setProperty("platform.library", library);
     }
 
-    public LinkedList<Class> getInheritedClasses() {
+    public List<Class> getInheritedClasses() {
         return inheritedClasses;
     }
 
-    public LinkedList<Class> getEffectiveClasses() {
+    public List<Class> getEffectiveClasses() {
         return effectiveClasses;
     }
 }

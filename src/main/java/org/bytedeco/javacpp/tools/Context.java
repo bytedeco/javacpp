@@ -23,7 +23,7 @@
 package org.bytedeco.javacpp.tools;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
+import java.util.List;
 
 /**
  *
@@ -31,7 +31,7 @@ import java.util.LinkedList;
  */
 class Context {
     Context() {
-        usingList = new LinkedList<String>();
+        usingList = new ArrayList<String>();
     }
     Context(Context c) {
         namespace = c.namespace;
@@ -50,7 +50,7 @@ class Context {
     boolean virtualize = false;
     Declarator variable = null;
     TemplateMap templateMap = null;
-    LinkedList<String> usingList = null;
+    List<String> usingList = null;
 
     /** Return all likely combinations of namespaces and template arguments for this C++ type */
     String[] qualify(String cppName) {
@@ -60,7 +60,7 @@ class Context {
             // already in global namespace, so strip leading operator
             return new String[] { cppName.substring(2) };
         }
-        ArrayList<String> names = new ArrayList<String>();
+        List<String> names = new ArrayList<String>();
         String ns = namespace != null ? namespace : "";
         while (ns != null) {
             String name = ns.length() > 0 ? ns + "::" + cppName : cppName;

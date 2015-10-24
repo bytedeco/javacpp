@@ -22,9 +22,10 @@
 
 package org.bytedeco.javacpp.tools;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -34,7 +35,7 @@ import java.util.Map;
  *
  * @author Samuel Audet
  */
-public class InfoMap extends HashMap<String,LinkedList<Info>> {
+public class InfoMap extends HashMap<String,List<Info>> {
     public InfoMap() { this.parent = defaults; }
     public InfoMap(InfoMap parent) { this.parent = parent; }
 
@@ -187,12 +188,12 @@ public class InfoMap extends HashMap<String,LinkedList<Info>> {
         return name.trim();
     }
 
-    public LinkedList<Info> get(String cppName) {
+    public List<Info> get(String cppName) {
         return get(cppName, true);
     }
-    public LinkedList<Info> get(String cppName, boolean partial) {
+    public List<Info> get(String cppName, boolean partial) {
         String key = normalize(cppName, false, false);
-        LinkedList<Info> infoList = super.get(key);
+        List<Info> infoList = super.get(key);
         if (infoList == null) {
             key = normalize(cppName, true, false);
             infoList = super.get(key);
@@ -202,12 +203,12 @@ public class InfoMap extends HashMap<String,LinkedList<Info>> {
             infoList = super.get(key);
         }
         if (infoList == null) {
-            infoList = new LinkedList<Info>();
+            infoList = new ArrayList<Info>();
         }
         if (parent != null) {
-            LinkedList<Info> l = parent.get(cppName, partial);
+            List<Info> l = parent.get(cppName, partial);
             if (l != null && l.size() > 0) {
-                infoList = new LinkedList<Info>(infoList);
+                infoList = new ArrayList<Info>(infoList);
                 infoList.addAll(l);
             }
         }
@@ -218,7 +219,7 @@ public class InfoMap extends HashMap<String,LinkedList<Info>> {
         return get(index, cppName, true);
     }
     public Info get(int index, String cppName, boolean partial) {
-        LinkedList<Info> infoList = get(cppName, partial);
+        List<Info> infoList = get(cppName, partial);
         return infoList.size() > 0 ? infoList.get(index) : null;
     }
 
@@ -226,8 +227,8 @@ public class InfoMap extends HashMap<String,LinkedList<Info>> {
         return getFirst(cppName, true);
     }
     public Info getFirst(String cppName, boolean partial) {
-        LinkedList<Info> infoList = get(cppName, partial);
-        return infoList.size() > 0 ? infoList.getFirst() : null;
+        List<Info> infoList = get(cppName, partial);
+        return infoList.size() > 0 ? infoList.get(0) : null;
     }
 
     public InfoMap put(int index, Info info) {
@@ -235,14 +236,13 @@ public class InfoMap extends HashMap<String,LinkedList<Info>> {
             String[] keys = { normalize(cppName, false, false),
                               normalize(cppName, false, true) };
             for (String key : keys) {
-                LinkedList<Info> infoList = super.get(key);
+                List<Info> infoList = super.get(key);
                 if (infoList == null) {
-                    super.put(key, infoList = new LinkedList<Info>());
+                    super.put(key, infoList = new ArrayList<Info>());
                 }
                 if (!infoList.contains(info)) {
                     switch (index) {
                         case -1: infoList.add(info); break;
-                        case  0: infoList.addFirst(info); break;
                         default: infoList.add(index, info); break;
                     }
                 }

@@ -29,7 +29,7 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import org.bytedeco.javacpp.ClassProperties;
@@ -99,7 +99,7 @@ public class Parser {
 
     void containers(Context context, DeclarationList declList) throws ParserException {
         for (String containerName : InfoMap.containers) {
-            LinkedList<Info> infoList = leafInfoMap.get(containerName);
+            List<Info> infoList = leafInfoMap.get(containerName);
             for (Info info : infoList) {
                 Declaration decl = new Declaration();
                 if (info == null || info.skip || !info.define) {
@@ -283,7 +283,7 @@ public class Parser {
         if (!tokens.get().match('<')) {
             return null;
         }
-        ArrayList<Type> arguments = new ArrayList<Type>();
+        List<Type> arguments = new ArrayList<Type>();
         for (Token token = tokens.next(); !token.match(Token.EOF); token = tokens.next()) {
             Type type = type(context);
             arguments.add(type);
@@ -315,7 +315,7 @@ public class Parser {
 
     Type type(Context context) throws ParserException {
         Type type = new Type();
-        ArrayList<Attribute> attributes = new ArrayList<Attribute>();
+        List<Attribute> attributes = new ArrayList<Attribute>();
         for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.next()) {
             if (token.match("::")) {
                 type.cppName += token;
@@ -576,7 +576,7 @@ public class Parser {
         }
 
         // translate C++ attributes to equivalent Java annotations
-        ArrayList<Attribute> attributes = new ArrayList<Attribute>();
+        List<Attribute> attributes = new ArrayList<Attribute>();
         if (type.attributes != null) {
             attributes.addAll(Arrays.asList(type.attributes));
         }
@@ -747,7 +747,7 @@ public class Parser {
             if (info != null) {
                 type2 = new Parser(this, info.cppTypes[0]).type(context);
             }
-            LinkedList<Info> infoList = infoMap.get(type2.cppName);
+            List<Info> infoList = infoMap.get(type2.cppName);
             for (Info info2 : infoList) {
                 if (type2.arguments != null && info2.annotations != null) {
                     type.constPointer = type2.arguments[0].constPointer;
@@ -1102,7 +1102,7 @@ public class Parser {
 
         int count = 0;
         Parameters params = new Parameters();
-        ArrayList<Declarator> dcls = new ArrayList<Declarator>();
+        List<Declarator> dcls = new ArrayList<Declarator>();
         params.list = "(";
         params.names = "(";
         for (Token token = tokens.next(); !token.match(Token.EOF); token = tokens.get()) {
@@ -1307,7 +1307,7 @@ public class Parser {
             modifiers = "public static native ";
         }
 
-        LinkedList<Declarator> prevDcl = new LinkedList<Declarator>();
+        List<Declarator> prevDcl = new ArrayList<Declarator>();
         boolean first = true;
         for (int n = -2; n < Integer.MAX_VALUE; n++) {
             decl = new Declaration();
@@ -1572,7 +1572,7 @@ public class Parser {
             String macroName = tokens.get().value;
             Token first = tokens.next();
             boolean hasArgs = first.spacing.length() == 0 && first.match('(');
-            LinkedList<Info> infoList = infoMap.get(macroName);
+            List<Info> infoList = infoMap.get(macroName);
             for (Info info : infoList.size() > 0 ? infoList : Arrays.asList(new Info[] { null })) {
                 if (info != null && info.skip) {
                     break;
@@ -1589,7 +1589,7 @@ public class Parser {
                 } else if (info != null && info.cppText == null &&
                         info.cppTypes != null && info.cppTypes.length > (hasArgs ? 0 : 1)) {
                     // declare as a static native method
-                    LinkedList<Declarator> prevDcl = new LinkedList<Declarator>();
+                    List<Declarator> prevDcl = new ArrayList<Declarator>();
                     for (int n = -1; n < Integer.MAX_VALUE; n++) {
                         int count = 1;
                         tokens.index = beginIndex + 2;
@@ -1840,7 +1840,7 @@ public class Parser {
             tokens.next();
         }
         Type type = type(context);
-        ArrayList<Type> baseClasses = new ArrayList<Type>();
+        List<Type> baseClasses = new ArrayList<Type>();
         Declaration decl = new Declaration();
         decl.text = type.annotations;
         String name = type.javaName;
@@ -1875,7 +1875,7 @@ public class Parser {
             return false;
         }
         int startIndex = tokens.index;
-        ArrayList<Declarator> variables = new ArrayList<Declarator>();
+        List<Declarator> variables = new ArrayList<Declarator>();
         String originalName = type.cppName;
         if (body() != null && !tokens.get().match(';')) {
             if (typedef) {
@@ -2118,7 +2118,7 @@ public class Parser {
         for (Token token = tokens.next(); !token.match(Token.EOF, '}'); token = tokens.get()) {
             String comment = commentBefore();
             if (macro(context, declList)) {
-                Declaration macroDecl = declList.removeLast();
+                Declaration macroDecl = declList.remove(declList.size() - 1);
                 extraText += comment + macroDecl.text;
                 if (separator.equals(",") && !macroDecl.text.trim().startsWith("//")) {
                     separator = ";";
@@ -2368,7 +2368,7 @@ public class Parser {
     }
 
     void parse(Context context, DeclarationList declList, String[] includePath, String include) throws IOException, ParserException {
-        ArrayList<Token> tokenList = new ArrayList<Token>();
+        List<Token> tokenList = new ArrayList<Token>();
         File file = null;
         String filename = include;
         if (filename.startsWith("<") && filename.endsWith(">")) {
@@ -2427,17 +2427,17 @@ public class Parser {
     public File parse(File outputDirectory, String[] classPath, Class cls) throws IOException, ParserException {
         ClassProperties allProperties = Loader.loadProperties(cls, properties, true);
         ClassProperties clsProperties = Loader.loadProperties(cls, properties, false);
-        LinkedList<String> clsIncludes = new LinkedList<String>();
+        List<String> clsIncludes = new ArrayList<String>();
         clsIncludes.addAll(clsProperties.get("platform.include"));
         clsIncludes.addAll(clsProperties.get("platform.cinclude"));
-        LinkedList<String> allIncludes = new LinkedList<String>();
+        List<String> allIncludes = new ArrayList<String>();
         allIncludes.addAll(allProperties.get("platform.include"));
         allIncludes.addAll(allProperties.get("platform.cinclude"));
-        LinkedList<String> allTargets = allProperties.get("target");
-        LinkedList<String> clsTargets = clsProperties.get("target");
-        LinkedList<String> clsHelpers = clsProperties.get("helper");
-        String target = clsTargets.getFirst(); // there can only be one
-        LinkedList<Class> allInherited = allProperties.getInheritedClasses();
+        List<String> allTargets = allProperties.get("target");
+        List<String> clsTargets = clsProperties.get("target");
+        List<String> clsHelpers = clsProperties.get("helper");
+        String target = clsTargets.get(0); // there can only be one
+        List<Class> allInherited = allProperties.getInheritedClasses();
 
         infoMap = new InfoMap();
         for (Class c : allInherited) {
@@ -2468,7 +2468,7 @@ public class Parser {
         if (n >= 0) {
             text += "package " + target.substring(0, n) + ";\n\n";
         }
-        LinkedList<Info> infoList = leafInfoMap.get(null);
+        List<Info> infoList = leafInfoMap.get(null);
         for (Info info : infoList) {
             if (info.javaText != null && info.javaText.startsWith("import")) {
                 text += info.javaText + "\n";
@@ -2486,7 +2486,7 @@ public class Parser {
             text += "\n";
         }
         text += "public class " + target.substring(n + 1) + " extends "
-             + (clsHelpers.size() > 0 ? clsHelpers.getFirst() : cls.getCanonicalName()) + " {\n"
+             + (clsHelpers.size() > 0 ? clsHelpers.get(0) : cls.getCanonicalName()) + " {\n"
              + "    static { Loader.load(); }\n";
 
         String targetPath = target.replace('.', File.separatorChar);
@@ -2501,7 +2501,7 @@ public class Parser {
                 includePath[i] += File.separator + targetPath.substring(0, n);
             }
         }
-        LinkedList<String> paths = allProperties.get("platform.includepath");
+        List<String> paths = allProperties.get("platform.includepath");
         String[] includePaths = paths.toArray(new String[paths.size() + includePath.length]);
         System.arraycopy(includePath, 0, includePaths, paths.size(), includePath.length);
         DeclarationList declList = new DeclarationList();

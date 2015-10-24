@@ -31,10 +31,11 @@ import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.jar.JarOutputStream;
@@ -106,9 +107,9 @@ public class Builder {
         try {
             javaHome = javaHome.getCanonicalFile();
         } catch (IOException e) { }
-        LinkedList<File> dirs = new LinkedList<File>(Arrays.asList(javaHome.listFiles(filter)));
+        ArrayList<File> dirs = new ArrayList<File>(Arrays.asList(javaHome.listFiles(filter)));
         while (!dirs.isEmpty()) {
-            File d = dirs.pop();
+            File d = dirs.remove(dirs.size() - 1);
             String dpath = d.getPath();
             for (File f : d.listFiles(filter)) {
                 try {
@@ -155,7 +156,7 @@ public class Builder {
      */
     int compile(String sourceFilename, String outputFilename, ClassProperties properties)
             throws IOException, InterruptedException {
-        LinkedList<String> command = new LinkedList<String>();
+        ArrayList<String> command = new ArrayList<String>();
 
         includeJavaPaths(properties, header);
 
@@ -218,7 +219,7 @@ public class Builder {
         if (output == null || output.length() == 0 || output.endsWith(" ")) {
             command.add(outputFilename);
         } else {
-            command.add(command.removeLast() + outputFilename);
+            command.add(command.remove(command.size() - 1) + outputFilename);
         }
 
         {
@@ -447,9 +448,9 @@ public class Builder {
         this.logger = logger;
         System.setProperty("org.bytedeco.javacpp.loadlibraries", "false");
         properties = Loader.loadProperties();
-        classScanner = new ClassScanner(logger, new LinkedList<Class>(),
+        classScanner = new ClassScanner(logger, new ArrayList<Class>(),
                 new UserClassLoader(Thread.currentThread().getContextClassLoader()));
-        compilerOptions = new LinkedList<String>();
+        compilerOptions = new ArrayList<String>();
     }
 
     /** Logger where to send debug, info, warning, and error messages. */
@@ -611,8 +612,8 @@ public class Builder {
             return null;
         }
 
-        LinkedList<File> outputFiles = new LinkedList<File>();
-        Map<String, LinkedList<Class>> map = new LinkedHashMap<String, LinkedList<Class>>();
+        List<File> outputFiles = new ArrayList<File>();
+        Map<String, List<Class>> map = new LinkedHashMap<String, List<Class>>();
         for (Class c : classScanner.getClasses()) {
             if (Loader.getEnclosingClass(c) != c) {
                 continue;
@@ -630,14 +631,14 @@ public class Builder {
             if (libraryName.length() == 0) {
                 continue;
             }
-            LinkedList<Class> classList = map.get(libraryName);
+            List<Class> classList = map.get(libraryName);
             if (classList == null) {
-                map.put(libraryName, classList = new LinkedList<Class>());
+                map.put(libraryName, classList = new ArrayList<Class>());
             }
             classList.addAll(p.getEffectiveClasses());
         }
         for (String libraryName : map.keySet()) {
-            LinkedList<Class> classList = map.get(libraryName);
+            List<Class> classList = map.get(libraryName);
             Class[] classArray = classList.toArray(new Class[classList.size()]);
             File f = generateAndCompile(classArray, libraryName);
             if (f != null) {
@@ -645,7 +646,7 @@ public class Builder {
                 if (copyLibs) {
                     // Do not copy library files from inherit properties ...
                     ClassProperties p = Loader.loadProperties(classArray, properties, false);
-                    LinkedList<String> preloads = new LinkedList<String>();
+                    List<String> preloads = new ArrayList<String>();
                     preloads.addAll(p.get("platform.preload"));
                     preloads.addAll(p.get("platform.link"));
                     // ... but we should use all the inherited paths!

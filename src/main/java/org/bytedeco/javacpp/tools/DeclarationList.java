@@ -22,7 +22,8 @@
 
 package org.bytedeco.javacpp.tools;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ListIterator;
 import java.util.Scanner;
 
@@ -30,7 +31,7 @@ import java.util.Scanner;
  *
  * @author Samuel Audet
  */
-class DeclarationList extends LinkedList<Declaration> {
+class DeclarationList extends ArrayList<Declaration> {
     InfoMap infoMap = null;
     Context context = null;
     TemplateMap templateMap = null;
@@ -63,7 +64,7 @@ class DeclarationList extends LinkedList<Declaration> {
             if (infoIterator == null) {
                 Type type = templateMap.type = decl.type;
                 Declarator dcl = templateMap.declarator = decl.declarator;
-                LinkedList<Info> infoList = infoMap.get(dcl != null ? dcl.cppName : type.cppName);
+                List<Info> infoList = infoMap.get(dcl != null ? dcl.cppName : type.cppName);
                 infoIterator = infoList.size() > 0 ? infoList.listIterator() : null;
             }
             add = false;
@@ -87,7 +88,7 @@ class DeclarationList extends LinkedList<Declaration> {
             return false;
         }
 
-        LinkedList<Declaration> stack = new LinkedList<Declaration>();
+        List<Declaration> stack = new ArrayList<Declaration>();
         ListIterator<Declaration> it = stack.listIterator();
         it.add(decl); it.previous();
         while (it.hasNext()) {
@@ -106,7 +107,7 @@ class DeclarationList extends LinkedList<Declaration> {
         }
 
         while (!stack.isEmpty()) {
-            decl = stack.removeLast();
+            decl = stack.remove(stack.size() - 1);
             if (context != null) {
                 decl.inaccessible = context.inaccessible
                         && !(context.virtualize && decl.declarator != null && decl.declarator.type != null && decl.declarator.type.virtual);

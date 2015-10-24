@@ -26,14 +26,15 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.LinkedList;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * An extension of {@link URLClassLoader} that keeps a list of paths in memory.
  * Adds {@code System.getProperty("user.dir")} as default path if none are added.
  */
 class UserClassLoader extends URLClassLoader {
-    private LinkedList<String> paths = new LinkedList<String>();
+    private List<String> paths = new ArrayList<String>();
     public UserClassLoader() {
         super(new URL[0]);
     }

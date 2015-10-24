@@ -29,9 +29,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.WeakHashMap;
@@ -398,7 +399,7 @@ public class Loader {
         ClassProperties p = loadProperties(cls, loadProperties(), true);
 
         // Force initialization of all the target classes in case they need it
-        LinkedList<String> targets = p.get("target");
+        List<String> targets = p.get("target");
         if (targets.isEmpty()) {
             if (p.getInheritedClasses() != null) {
                 for (Class c : p.getInheritedClasses()) {
@@ -418,7 +419,7 @@ public class Loader {
         }
 
         // Preload native libraries desired by our class
-        LinkedList<String> preloads = new LinkedList<String>();
+        List<String> preloads = new ArrayList<String>();
         preloads.addAll(p.get("platform.preload"));
         preloads.addAll(p.get("platform.link"));
         UnsatisfiedLinkError preloadError = null;
@@ -488,7 +489,7 @@ public class Loader {
         }
 
         int k = 0;
-        LinkedList<String> paths = new LinkedList<String>();
+        List<String> paths = new ArrayList<String>();
         paths.addAll(properties.get("platform.preloadpath"));
         paths.addAll(properties.get("platform.linkpath"));
         URL[] urls = new URL[styles.length * (1 + paths.size())];
@@ -633,7 +634,7 @@ public class Loader {
                     }
                     try {
                         // ... to launch a separate process ...
-                        LinkedList<String> command = new LinkedList<String>();
+                        List<String> command = new ArrayList<String>();
                         command.add(System.getProperty("java.home") + "/bin/java");
                         command.add("-classpath");
                         command.add((new File(Loader.class.getProtectionDomain().getCodeSource().getLocation().toURI())).toString());
