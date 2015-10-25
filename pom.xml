@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.bytedeco</groupId>
   <artifactId>javacpp</artifactId>
-  <version>1.1-SNAPSHOT</version>
+  <version>1.1</version>
   <packaging>maven-plugin</packaging>
 
   <name>JavaCPP</name>
@@ -253,6 +253,9 @@
                 </goals>
               </execution>
             </executions>
+            <configuration>
+              <useAgent>false</useAgent>
+            </configuration>
           </plugin>
         </plugins>
       </build>

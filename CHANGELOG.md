@@ -1,4 +1,5 @@
 
+### October 25, 2015 version 1.1
  * Make `Generator` use actual C++ operators for commonly overloaded ones instead of calling `operator??()` functions, for better portability
  * Fix potential race condition when deallocating `Pointer` objects from multiple threads
  * Add logging to `Loader.loadLibrary()` to help diagnose loading problems ([issue #41](https://github.com/bytedeco/javacpp/issues/41))
