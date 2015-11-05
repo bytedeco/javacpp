@@ -32,6 +32,9 @@ We can also have everything downloaded and installed automatically with:
 
  * Gradle (inside the `build.gradle` file)
 ```groovy
+  repositories {
+    mavenCentral()
+  }
   dependencies {
     compile group: 'org.bytedeco', name: 'javacpp', version: '1.1'
   }
