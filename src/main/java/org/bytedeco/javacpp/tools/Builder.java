@@ -31,6 +31,14 @@ import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -54,7 +62,8 @@ import org.bytedeco.javacpp.Loader;
 public class Builder {
 
     /**
-     * Calls {@link Parser#parse(File, String[], Class)} after creating an instance of the Class.
+     * Calls {@link Parser#parse(File, String[], Class, Coordinates)} after creating an
+     * instance of the Class.
      *
      * @param classPath an array of paths to try to load header files from
      * @param cls The class annotated with {@link org.bytedeco.javacpp.annotation.Properties}
@@ -64,7 +73,7 @@ public class Builder {
      * @throws ParserException on C/C++ header file parsing error
      */
     File parse(String[] classPath, Class cls) throws IOException, ParserException {
-        return new Parser(logger, properties).parse(outputDirectory, classPath, cls);
+        return new Parser(logger, properties).parse(outputDirectory, classPath, cls, coordinates);
     }
 
     /**
@@ -455,6 +464,8 @@ public class Builder {
 
     /** Logger where to send debug, info, warning, and error messages. */
     final Logger logger;
+    /** Include file directory for this library. */
+    String includePath;
     /** The directory where the generated files and compiled shared libraries get written to.
      *  By default they are placed in the same directory as the {@code .class} file. */
     File outputDirectory = null;
@@ -477,6 +488,8 @@ public class Builder {
     Map<String,String> environmentVariables = null;
     /** Contains additional command line options from the user for the native compiler. */
     Collection<String> compilerOptions = null;
+    /** Coordinates of the library. */
+    Coordinates coordinates = null;
 
     /** Splits argument with {@link File#pathSeparator} and appends result to paths of the {@link #classScanner}. */
     public Builder classPaths(String classPaths) {
@@ -486,6 +499,11 @@ public class Builder {
     /** Appends argument to the paths of the {@link #classScanner}. */
     public Builder classPaths(String ... classPaths) {
         classScanner.getClassLoader().addPaths(classPaths);
+        return this;
+    }
+    /** Sets the {@link #includePath} field to the argument. */
+    public Builder includePath(String includePath) {
+        this.includePath = includePath;
         return this;
     }
     /** Sets the {@link #outputDirectory} field to the argument. */
@@ -598,6 +616,11 @@ public class Builder {
         }
         return this;
     }
+    /** Sets the library coordinates. */
+    public Builder coordinates(Coordinates coordinates) {
+        this.coordinates = coordinates;
+        return this;
+    }
 
     /**
      * Starts the build process and returns an array of {@link File} produced.
@@ -652,30 +675,49 @@ public class Builder {
                     // ... but we should use all the inherited paths!
                     p = Loader.loadProperties(classArray, properties, true);
 
-                    File directory = f.getParentFile();
+                    Path directory = f.toPath().getParent();
                     for (String s : preloads) {
                         URL[] urls = Loader.findLibrary(null, p, s);
-                        File fi;
+                        Path fi;
                         try {
-                            fi = new File(urls[0].toURI());
+                            fi = Paths.get(urls[0].toURI());
                         } catch (Exception e) {
                             continue;
                         }
-                        File fo = new File(directory, fi.getName());
-                        if (fi.exists() && !outputFiles.contains(fo)) {
-                            logger.info("Copying " + fi);
-                            FileInputStream fis = new FileInputStream(fi);
-                            FileOutputStream fos = new FileOutputStream(fo);
-                            byte[] buffer = new byte[1024];
-                            int length;
-                            while ((length = fis.read(buffer)) != -1) {
-                                fos.write(buffer, 0, length);
-                            }
-                            fos.close();
-                            fis.close();
-                            outputFiles.add(fo);
+                        if (!Files.isSymbolicLink(fi)) {
+                            Path fo = directory.resolve(fi.getFileName());
+                            logger.info("Copying " + fi + " to " + fo);
+                            Files.copy(fi, fo, StandardCopyOption.REPLACE_EXISTING);
+                        } else {
+                            Path parent = fi.getParent();
+                            Path linked = Files.readSymbolicLink(fi);
+                            logger.info("Copying " + parent.resolve(linked) + " to " + directory.resolve(linked));
+                            Files.copy(parent.resolve(linked), directory.resolve(linked),
+                                StandardCopyOption.REPLACE_EXISTING);
+                            copyLinks(parent, directory, linked);
                         }
                     }
+                    // Copy include files to target for packaging
+                    final Path src = Paths.get(includePath);
+                    final Path dst = directory.getParent().resolve("include");
+                    Files.walkFileTree(src, new SimpleFileVisitor<Path>(){
+                        @Override
+                        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                            Path rel = src.relativize(dir);
+                            rel = dst.resolve(rel.toString());
+                            if (!Files.exists(rel))
+                                Files.createDirectories(rel);
+                            return FileVisitResult.CONTINUE;
+                        }
+
+                        @Override
+                        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                            Path rel = src.relativize(file);
+                            rel = dst.resolve(rel.toString());
+                            Files.copy(file, rel, StandardCopyOption.REPLACE_EXISTING);
+                            return FileVisitResult.CONTINUE;
+                        }
+                    });
                 }
             }
         }
@@ -690,6 +732,24 @@ public class Builder {
             createJar(jarFile, outputDirectory == null ? classScanner.getClassLoader().getPaths() : null, files);
         }
         return files;
+    }
+
+    /**
+     * Iterates over links in src and copies the ones that point to match.
+     */
+    private void copyLinks(Path src, Path dst, Path match) throws IOException {
+        for (Path path : Files.newDirectoryStream(src)) {
+            Path p = path;
+            while (Files.isSymbolicLink(p)) {
+                Path target = Files.readSymbolicLink(p);
+                if (target.equals(match)) {
+                    logger.info("Copying link " + path);
+                    Files.copy(path, dst.resolve(path.getFileName()),
+                        StandardCopyOption.REPLACE_EXISTING, LinkOption.NOFOLLOW_LINKS);
+                }
+                p = src.resolve(target);
+            }
+        }
     }
 
     /**
@@ -718,6 +778,7 @@ public class Builder {
         System.out.println("    -jarprefix <prefix>    Also create a JAR file named \"<prefix>-<platform>.jar\"");
         System.out.println("    -properties <resource> Load all properties from resource");
         System.out.println("    -propertyfile <file>   Load all properties from file");
+        System.out.println("    -coordinates <value>   Library identifier (group:id:version).");
         System.out.println("    -D<property>=<value>   Set property to value");
         System.out.println("    -Xcompiler <option>    Pass option directly to compiler");
         System.out.println();
@@ -754,6 +815,9 @@ public class Builder {
                 builder.properties(args[++i]);
             } else if ("-propertyfile".equals(args[i])) {
                 builder.propertyFile(args[++i]);
+            } else if ("-coordinates".equals(args[i])) {
+                String[] parts = args[++i].split(":");
+                builder.coordinates(new Coordinates(parts[0], parts[1], parts[2]));
             } else if (args[i].startsWith("-D")) {
                 builder.property(args[i]);
             } else if ("-Xcompiler".equals(args[i])) {
