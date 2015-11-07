@@ -1,4 +1,7 @@
 
+ * Enhance a bit the conversion from Doxygen-style documentation comments to Javadoc-style
+ * Remove class check in allocators, which prevented peer classes from being extended in Java, instead relying on `super((Pointer)null)` in child peer classes
+
 ### October 25, 2015 version 1.1
  * Make `Generator` use actual C++ operators for commonly overloaded ones instead of calling `operator??()` functions, for better portability
  * Fix potential race condition when deallocating `Pointer` objects from multiple threads
@@ -7,7 +10,7 @@
  * Upgrade all Maven dependencies and plugins to latest versions, thus bumping minimum requirements to Maven 3.0
  * Add new "org.bytedeco.javacpp.cachedir" system property to specify where to extract and leave native libraries to share across multiple JVM instances
  * Provide `@Virtual(true)` to specify pure virtual functions and prevent `Generator` from making undefined calls
- * Update properties for Android to detect undefined symbols at compile time
+ * Update properties for Android to detect undefined symbols at compile time, instead of getting errors only at runtime
  * Log when `Pointer.deallocator` gets registered, garbage collected, or deallocated manually, if `Logger.isDebugEnabled()` (redirectable to SLF4J)
  * Make `Pointer implements AutoCloseable` to let us try-with-resources, thus bumping minimum requirements to Java SE 7 and Android 4.0
  * Introduce the concept of "owner address" to integrate `Pointer` transparently with `std::shared_ptr`, etc (Thanks to Cyprien Noel for the idea!)

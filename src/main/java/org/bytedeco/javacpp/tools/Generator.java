@@ -180,6 +180,9 @@ public class Generator implements Closeable {
         annotationCache     = new HashMap<Method,MethodInformation>();
         mayThrowExceptions  = false;
         usesAdapters        = false;
+        for (Class<?> cls : baseClasses) {
+            jclasses.index(cls);
+        }
         if (classes(true, true, classPath, classes)) {
             // second pass with a real writer
             out = new PrintWriter(sourceFilename);
@@ -1276,12 +1279,6 @@ public class Generator implements Closeable {
         String returnPrefix = "";
         if (methodInfo.returnType == void.class) {
             if (methodInfo.allocator || methodInfo.arrayAllocator) {
-                if (methodInfo.cls != Pointer.class && !virtualFunctions.containsKey(methodInfo.cls)) {
-                    out.println("    if (!env->IsSameObject(env->GetObjectClass(obj), JavaCPP_getClass(env, " +
-                            jclasses.index(methodInfo.cls) + "))) {");
-                    out.println("        return;");
-                    out.println("    }");
-                }
                 String[] typeName = cppTypeName(methodInfo.cls);
                 returnPrefix = typeName[0] + " rptr" + typeName[1] + " = ";
             }

@@ -964,6 +964,64 @@ public class Parser {
         return dcl;
     }
 
+    /** Documentation tags, where we keep only the ones that could be compatible between Javadoc and Doxygen. */
+    String[] docTags = {"author", "deprecated", "exception", "param", "return", "see", "since", "throws", "version",
+        /* "code", "docRoot", "inheritDoc", "link", "linkplain", "literal", "serial", "serialData", "serialField", "value" */};
+
+    /** Tries to adapt a Doxygen-style documentation comment to Javadoc-style. */
+    String commentDoc(String s) {
+        int index = 0;
+        StringBuilder sb = new StringBuilder(s);
+        while (index < sb.length()) {
+            char c = sb.charAt(index);
+            String ss = sb.substring(index + 1);
+            if (c == '`') {
+                sb.replace(index, index + 1, "{@code ");
+                index = sb.indexOf("`", index);
+                if (index < 0) {
+                    break;
+                }
+                sb.replace(index, index + 1, "}");
+            } else if ((c == '\\' || c == '@') && ss.startsWith("code")) {
+                sb.replace(index, index + 5, "<pre><code>");
+                index = sb.indexOf(c + "endcode", index);
+                if (index < 0) {
+                    break;
+                }
+                sb.replace(index, index + 8, "</code></pre>");
+            } else if ((c == '\\' || c == '@') && ss.startsWith("verbatim")) {
+                sb.replace(index, index + 9, "<pre>");
+                index = sb.indexOf(c + "endverbatim", index);
+                if (index < 0) {
+                    break;
+                }
+                sb.replace(index, index + 12, "</pre>");
+            } else if (c == '\n' && ss.startsWith("\n")) {
+                sb.insert(index + 1, "<p>");
+            } else if (c == '\\' || c == '@') {
+                String foundTag = null;
+                for (String tag : docTags) {
+                    if (ss.startsWith(tag)) {
+                        foundTag = tag;
+                        break;
+                    }
+                }
+                if (foundTag != null) {
+                    sb.setCharAt(index, '@');
+                    if (sb.charAt(index + foundTag.length() + 1) == 's'
+                            && !foundTag.endsWith("s")) {
+                        sb.deleteCharAt(index + foundTag.length() + 1);
+                    }
+                } else {
+                    // keep unmapped tags around as part of the comments
+                    sb.setCharAt(index, '\\');
+                }
+            }
+            index++;
+        }
+        return sb.toString();
+    }
+
     /** Converts Doxygen-like documentation comments placed before identifiers to Javadoc-style.
      *  Also leaves as is non-documentation comments. */
     String commentBefore() throws ParserException {
@@ -991,6 +1049,7 @@ public class Parser {
                 } else if (s.length() > 3 && !s.startsWith("///")) {
                     s = "/**" + s.substring(3);
                 }
+                s = commentDoc(s);
             } else if (closeComment && !comment.endsWith("*/")) {
                 closeComment = false;
                 comment += " */";
@@ -1033,6 +1092,7 @@ public class Parser {
                 } else if (s.length() > 4) {
                     s = "/**" + s.substring(4);
                 }
+                s = commentDoc(s);
                 comment += spacing.substring(0, n) + s;
             }
         }
@@ -1372,7 +1432,7 @@ public class Parser {
                 decl.text += "@Namespace(\"" + context.namespace + "\") ";
             }
             if (type.constructor && params != null) {
-                decl.text += "public " + context.shorten(context.javaName) + dcl.parameters.list + " { allocate" + params.names + "; }\n" +
+                decl.text += "public " + context.shorten(context.javaName) + dcl.parameters.list + " { super((Pointer)null); allocate" + params.names + "; }\n" +
                              "private native void allocate" + dcl.parameters.list + ";\n";
             } else {
                 decl.text += modifiers + type.annotations + type.javaName + " " + dcl.javaName + dcl.parameters.list + ";\n";
@@ -1916,7 +1976,7 @@ public class Parser {
             declList.add(decl);
             return true;
         } else if (info != null && info.pointerTypes != null && info.pointerTypes.length > 0) {
-            name = type.javaName = info.pointerTypes[0];
+            name = type.javaName = context.shorten(info.pointerTypes[0]);
         } else if (info == null) {
             if (type.javaName.length() > 0 && context.javaName != null) {
                 type.javaName = context.javaName + "." + type.javaName;
@@ -2028,9 +2088,9 @@ public class Parser {
 
             if (implicitConstructor && (!abstractClass || ctx.virtualize)) {
                 decl.text += "    /** Default native constructor. */\n" +
-                             "    public " + name + "() { allocate(); }\n" +
+                             "    public " + name + "() { super((Pointer)null); allocate(); }\n" +
                              "    /** Native array allocator. Access with {@link Pointer#position(int)}. */\n" +
-                             "    public " + name + "(int size) { allocateArray(size); }\n" +
+                             "    public " + name + "(int size) { super((Pointer)null); allocateArray(size); }\n" +
                              "    /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */\n" +
                              "    public " + name + "(Pointer p) { super(p); }\n" +
                              "    private native void allocate();\n" +
@@ -2049,7 +2109,7 @@ public class Parser {
                 }
                 if (defaultConstructor && (!abstractClass || ctx.virtualize) && !intConstructor) {
                     decl.text += "    /** Native array allocator. Access with {@link Pointer#position(int)}. */\n" +
-                                 "    public " + name + "(int size) { allocateArray(size); }\n" +
+                                 "    public " + name + "(int size) { super((Pointer)null); allocateArray(size); }\n" +
                                  "    private native void allocateArray(int size);\n" +
                                  "    @Override public " + name + " position(int position) {\n" +
                                  "        return (" + name + ")super.position(position);\n" +
