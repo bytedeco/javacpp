@@ -428,12 +428,12 @@ public class Generator implements Closeable {
         out.println("    if (JavaCPP_haveAllocObject) {");
         out.println("        return env->AllocObject(cls);");
         out.println("    } else {");
-        out.println("        jmethodID mid = env->GetMethodID(cls, \"<init>\", \"()V\");");
+        out.println("        jmethodID mid = env->GetMethodID(cls, \"<init>\", \"(Lorg/bytedeco/javacpp/Pointer;)V\");");
         out.println("        if (mid == NULL || env->ExceptionCheck()) {");
-        out.println("            JavaCPP_log(\"Error getting default constructor of %s, while VM does not support AllocObject()\", JavaCPP_classNames[i]);");
+        out.println("            JavaCPP_log(\"Error getting Pointer constructor of %s, while VM does not support AllocObject()\", JavaCPP_classNames[i]);");
         out.println("            return NULL;");
         out.println("        }");
-        out.println("        return env->NewObject(cls, mid);");
+        out.println("        return env->NewObject(cls, mid, NULL);");
         out.println("    }");
         out.println("}");
         out.println();
@@ -1762,6 +1762,13 @@ public class Generator implements Closeable {
                 out.println("    if (arg" + j + " != NULL) env->ReleaseStringUTFChars(arg" + j + ", ptr" + j + ");");
             } else if (methodInfo.parameterTypes[j].isArray() &&
                     methodInfo.parameterTypes[j].getComponentType().isPrimitive()) {
+                for (int k = 0; adapterInfo != null && k < adapterInfo.argc; k++) {
+                    out.println("    " + typeName[0] + " rptr" + (j+k) + typeName[1] + " = " + cast + "adapter" + j + ";");
+                    out.println("    void* rowner" + (j+k) + " = adapter" + j + ".owner" + (k > 0 ? (k+1) + ";" : ";"));
+                    out.println("    if (rptr" + (j+k) + " != " + cast + "ptr" + (j+k) + ") {");
+                    out.println("        " + adapterInfo.name + "::deallocate(rowner" + (j+k) + ");");
+                    out.println("    }");
+                }
                 out.print("    if (arg" + j + " != NULL) ");
                 if (methodInfo.valueGetter || methodInfo.valueSetter ||
                         methodInfo.memberGetter || methodInfo.memberSetter) {
@@ -1773,6 +1780,13 @@ public class Generator implements Closeable {
                 }
             } else if (Buffer.class.isAssignableFrom(methodInfo.parameterTypes[j])
                     && methodInfo.parameterTypes[j] != Buffer.class) {
+                for (int k = 0; adapterInfo != null && k < adapterInfo.argc; k++) {
+                    out.println("    " + typeName[0] + " rptr" + (j+k) + typeName[1] + " = " + cast + "adapter" + j + ";");
+                    out.println("    void* rowner" + (j+k) + " = adapter" + j + ".owner" + (k > 0 ? (k+1) + ";" : ";"));
+                    out.println("    if (rptr" + (j+k) + " != " + cast + "ptr" + (j+k) + ") {");
+                    out.println("        " + adapterInfo.name + "::deallocate(rowner" + (j+k) + ");");
+                    out.println("    }");
+                }
                 out.print("    if (arr" + j + " != NULL) ");
                 String S = methodInfo.parameterTypes[j].getSimpleName();
                 S = S.substring(0, S.length() - 6);

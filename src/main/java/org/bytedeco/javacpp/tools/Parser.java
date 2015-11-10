@@ -983,21 +983,32 @@ public class Parser {
                 }
                 sb.replace(index, index + 1, "}");
             } else if ((c == '\\' || c == '@') && ss.startsWith("code")) {
-                sb.replace(index, index + 5, "<pre><code>");
+                sb.replace(index, index + 5, "<pre>{@code"
+                        + (Character.isWhitespace(sb.charAt(index + 5)) ? "" : " "));
                 index = sb.indexOf(c + "endcode", index);
                 if (index < 0) {
                     break;
                 }
-                sb.replace(index, index + 8, "</code></pre>");
+                sb.replace(index, index + 8, "}</pre>");
             } else if ((c == '\\' || c == '@') && ss.startsWith("verbatim")) {
-                sb.replace(index, index + 9, "<pre>");
+                sb.replace(index, index + 9, "<pre>{@literal"
+                        + (Character.isWhitespace(sb.charAt(index + 9)) ? "" : " "));
                 index = sb.indexOf(c + "endverbatim", index);
                 if (index < 0) {
                     break;
                 }
-                sb.replace(index, index + 12, "</pre>");
-            } else if (c == '\n' && ss.startsWith("\n")) {
-                sb.insert(index + 1, "<p>");
+                sb.replace(index, index + 12, "}</pre>");
+            } else if (c == '\n' && ss.charAt(0) == '\n') {
+                int n = 0;
+                while (n < ss.length() && ss.charAt(n) == '\n') {
+                    n++;
+                }
+                String indent = "";
+                while (n < ss.length() && Character.isWhitespace(ss.charAt(n))) {
+                    indent += ss.charAt(n);
+                    n++;
+                }
+                sb.insert(index + 1, indent + "<p>");
             } else if (c == '\\' || c == '@') {
                 String foundTag = null;
                 for (String tag : docTags) {
@@ -1008,9 +1019,11 @@ public class Parser {
                 }
                 if (foundTag != null) {
                     sb.setCharAt(index, '@');
-                    if (sb.charAt(index + foundTag.length() + 1) == 's'
-                            && !foundTag.endsWith("s")) {
-                        sb.deleteCharAt(index + foundTag.length() + 1);
+                    int n = index + foundTag.length() + 1;
+                    if (sb.charAt(n) == 's' && !foundTag.endsWith("s")) {
+                        sb.deleteCharAt(n);
+                    } else if (!Character.isWhitespace(sb.charAt(n))) {
+                        sb.insert(n, ' ');
                     }
                 } else {
                     // keep unmapped tags around as part of the comments
@@ -1814,8 +1827,8 @@ public class Parser {
                     decl.text += "@Namespace(\"" + context.namespace + "\") ";
                 }
                 decl.text += "@Opaque public static class " + dcl.javaName + " extends Pointer {\n" +
-                             "    /** Empty constructor. */\n" +
-                             "    public " + dcl.javaName + "() { }\n" +
+                             "    /** Empty constructor. Calls {@code super((Pointer)null)}. */\n" +
+                             "    public " + dcl.javaName + "() { super((Pointer)null); }\n" +
                              "    /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */\n" +
                              "    public " + dcl.javaName + "(Pointer p) { super(p); }\n" +
                              "}";
@@ -2014,8 +2027,8 @@ public class Parser {
                 decl.text += "@Namespace(\"" + context.namespace + "\") ";
             }
             decl.text += "@Opaque public static class " + name + " extends " + base.javaName + " {\n" +
-                         "    /** Empty constructor. */\n" +
-                         "    public " + name + "() { }\n" +
+                         "    /** Empty constructor. Calls {@code super((Pointer)null)}. */\n" +
+                         "    public " + name + "() { super((Pointer)null); }\n" +
                          "    /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */\n" +
                          "    public " + name + "(Pointer p) { super(p); }\n" +
                          "}";
@@ -2099,10 +2112,6 @@ public class Parser {
                              "        return (" + name + ")super.position(position);\n" +
                              "    }\n";
             } else {
-                if (!defaultConstructor || (abstractClass && !ctx.virtualize)) {
-                    decl.text += "    /** Empty constructor. */\n" +
-                                 "    public " + name + "() { }\n";
-                }
                 if (!pointerConstructor) {
                     decl.text += "    /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */\n" +
                                  "    public " + name + "(Pointer p) { super(p); }\n";
