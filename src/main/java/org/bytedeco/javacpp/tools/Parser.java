@@ -2308,8 +2308,17 @@ public class Parser {
         String name = null;
         tokens.next();
         if (tokens.get().match(Token.IDENTIFIER)) {
+            // get the name, unless anonymous
             name = tokens.get().value;
             tokens.next();
+        }
+        if (tokens.get().match('=')) {
+            // ignore namespace aliases
+            while (!tokens.get().match(Token.EOF, ';')) {
+                tokens.next();
+            }
+            tokens.next();
+            return true;
         }
         tokens.get().expect('{');
         tokens.next();
