@@ -29,6 +29,7 @@ package org.bytedeco.javacpp.tools;
 class Declaration {
     Type type = null;
     Declarator declarator = null;
-    boolean abstractMember = false, constMember = false, inaccessible = false, incomplete = false, variable = false;
+    boolean abstractMember = false, constMember = false, inaccessible = false,
+            incomplete = false, function = false, variable = false;
     String signature = "", text = "";
 }

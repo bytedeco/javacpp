@@ -24,6 +24,7 @@ package org.bytedeco.javacpp.tools;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -45,7 +46,7 @@ class TokenIndexer {
     /** The current index, in the array of tokens. Used by {@link #get(int)} and {@link #next()}. */
     int index = 0;
 
-    void filter(int index) {
+    Token[] filter(Token[] array, int index) {
         if (index + 1 < array.length && array[index].match('#') &&
                 array[index + 1].match(Token.IF, Token.IFDEF, Token.IFNDEF)) {
             // copy the array of tokens up to this point
@@ -125,9 +126,10 @@ class TokenIndexer {
             }
             array = tokens.toArray(new Token[tokens.size()]);
         }
+        return array;
     }
 
-    void expand(int index) {
+    Token[] expand(Token[] array, int index) {
         if (index < array.length && infoMap.containsKey(array[index].value)) {
             // if we hit a token whose info.cppText starts with #define (a macro), expand it
             int startIndex = index;
@@ -138,7 +140,7 @@ class TokenIndexer {
                     if (!tokenizer.nextToken().match('#')
                             || !tokenizer.nextToken().match(Token.DEFINE)
                             || !tokenizer.nextToken().match(info.cppNames[0])) {
-                        return;
+                        return array;
                     }
                     // copy the array of tokens up to this point
                     List<Token> tokens = new ArrayList<Token>();
@@ -163,10 +165,10 @@ class TokenIndexer {
                         }
                         index++;
                         if (params.size() > 0 && (index >= array.length || !array[index].match('('))) {
-                            return;
+                            return array;
                         }
                         name += array[index].spacing + array[index];
-                        args = new ArrayList[params.size()];
+                        args = new List[params.size()];
                         int count = 0, count2 = 0;
                         for (index++; index < array.length; index++) {
                             Token token2 = array[index];
@@ -186,6 +188,12 @@ class TokenIndexer {
                                     args[count] = new ArrayList<Token>();
                                 }
                                 args[count].add(token2);
+                            }
+                        }
+                        // expand the arguments of the macros as well
+                        for (int i = 0; i < args.length; i++) {
+                            if (infoMap.containsKey(args[i].get(0).value)) {
+                                args[i] = Arrays.asList(expand(args[i].toArray(new Token[args[i].size()]), 0));
                             }
                         }
                     }
@@ -212,6 +220,7 @@ class TokenIndexer {
                             tokens.get(i - 1).value += tokens.get(i + 1).value;
                             tokens.remove(i);
                             tokens.remove(i);
+                            i--;
                         }
                     }
                     // copy the rest of the tokens from this point on
@@ -227,19 +236,28 @@ class TokenIndexer {
                 }
             }
         }
+        return array;
     }
 
     int preprocess(int index, int count) {
         for ( ; index < array.length; index++) {
-            filter(index); // conditionals
-            expand(index); // macros
+            Token[] a = null;
+            while (a != array) {
+                a = array;
+                array = filter(array, index); // conditionals
+                array = expand(array, index); // macros
+            }
             // skip comments
             if (!array[index].match(Token.COMMENT) && --count < 0) {
                 break;
             }
         }
-        filter(index); // conditionals
-        expand(index); // macros
+        Token[] a = null;
+        while (a != array) {
+            a = array;
+            array = filter(array, index); // conditionals
+            array = expand(array, index); // macros
+        }
         return index;
     }
 

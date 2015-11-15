@@ -251,9 +251,12 @@ public class Parser {
         tokens.next().expect('<');
         for (Token token = tokens.next(); !token.match(Token.EOF); token = tokens.next()) {
             if (token.match(Token.IDENTIFIER)) {
-                String key = tokens.next().expect(Token.IDENTIFIER).value;
-                map.put(key, map.get(key));
-                token = tokens.next();
+                Token t = tokens.next();
+                if (t.match(Token.IDENTIFIER)) {
+                    String key = t.value;
+                    map.put(key, map.get(key));
+                    token = tokens.next();
+                }
             }
             if (!token.match(',', '>')) {
                 // ignore default argument
@@ -1300,6 +1303,7 @@ public class Parser {
                 tokens.next();
             }
             decl.text = spacing;
+            decl.function = true;
             declList.add(decl);
             return true;
         } else if ((type.constructor || type.destructor || type.operator) && params != null) {
@@ -1374,6 +1378,7 @@ public class Parser {
                 tokens.next();
             }
             decl.text = spacing;
+            decl.function = true;
             declList.add(decl);
             return true;
         } else if (type.staticMember || context.javaName == null) {
@@ -1467,6 +1472,7 @@ public class Parser {
                 declList.spacing = spacing;
                 decl.text = comment + decl.text;
             }
+            decl.function = true;
 
             // only add nonduplicate declarations and ignore destructors
             boolean found = false;
@@ -1570,6 +1576,14 @@ public class Parser {
                     decl.text += " " + modifiers + setterType + javaName + "(" + indices + dcl.type.javaName + " " + javaName + ");";
                 }
                 decl.text += "\n";
+                if (dcl.type.constValue && dcl.type.staticMember && indices.length() == 0) {
+                    String rawType = dcl.type.javaName.substring(dcl.type.javaName.lastIndexOf(' ') + 1);
+                    if ("byte".equals(rawType) || "short".equals(rawType) || "int".equals(rawType) || "long".equals(rawType)
+                            || "float".equals(rawType) || "double".equals(rawType) || "char".equals(rawType) || "boolean".equals(rawType)) {
+                        // only mind of what looks like constants that we can keep without hogging memory
+                        decl.text += "public static final " + rawType + " " + javaName + " = " + javaName + "();\n";
+                    }
+                }
             }
             if (dcl.indices > 0) {
                 // in the case of arrays, also add a pointer accessor
@@ -2313,10 +2327,10 @@ public class Parser {
             tokens.next();
         }
         if (tokens.get().match('=')) {
-            // ignore namespace aliases
-            while (!tokens.get().match(Token.EOF, ';')) {
-                tokens.next();
-            }
+            // deal with namespace aliases
+            String realName = tokens.next().expect(Token.IDENTIFIER).value;
+            context.namespaceMap.put(name, realName);
+            tokens.next().expect(';');
             tokens.next();
             return true;
         }

@@ -23,7 +23,9 @@
 package org.bytedeco.javacpp.tools;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -32,6 +34,7 @@ import java.util.List;
 class Context {
     Context() {
         usingList = new ArrayList<String>();
+        namespaceMap = new HashMap<String,String>();
     }
     Context(Context c) {
         namespace = c.namespace;
@@ -41,6 +44,7 @@ class Context {
         variable = c.variable;
         templateMap = c.templateMap;
         usingList = c.usingList;
+        namespaceMap = c.namespaceMap;
     }
 
     String namespace = null;
@@ -51,12 +55,17 @@ class Context {
     Declarator variable = null;
     TemplateMap templateMap = null;
     List<String> usingList = null;
+    Map<String,String> namespaceMap = null;
 
     /** Return all likely combinations of namespaces and template arguments for this C++ type */
     String[] qualify(String cppName) {
         if (cppName == null || cppName.length() == 0) {
             return new String[0];
-        } else if (cppName.startsWith("::")) {
+        }
+        for (Map.Entry<String, String> e : namespaceMap.entrySet()) {
+            cppName = cppName.replaceAll(e.getKey() + "::", e.getValue() + "::");
+        }
+        if (cppName.startsWith("::")) {
             // already in global namespace, so strip leading operator
             return new String[] { cppName.substring(2) };
         }

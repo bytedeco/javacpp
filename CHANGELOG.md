@@ -1,5 +1,5 @@
 
- * Make `Parser` ignore namespace aliases
+ * Make `Parser` take namespace aliases into account, and fix a couple of preprocessing issues with `TokenIndexer`
  * Fix primitive arrays and NIO buffers not getting updated on return when used as arguments with adapters ([issue bytedeco/javacpp-presets#109](https://github.com/bytedeco/javacpp-presets/issues/109))
  * Enhance a bit the conversion from Doxygen-style documentation comments to Javadoc-style
  * Remove class check in allocators, which prevented peer classes from being extended in Java, instead relying on `super((Pointer)null)` in child peer classes, and remove confusing and now unnecessary empty constructors

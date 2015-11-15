@@ -65,7 +65,13 @@ class DeclarationList extends ArrayList<Declaration> {
                 Type type = templateMap.type = decl.type;
                 Declarator dcl = templateMap.declarator = decl.declarator;
                 List<Info> infoList = infoMap.get(dcl != null ? dcl.cppName : type.cppName);
-                infoIterator = infoList.size() > 0 ? infoList.listIterator() : null;
+                boolean hasJavaName = false;
+                for (Info info : infoList) {
+                    hasJavaName |= info.javaNames != null && info.javaNames.length > 0;
+                }
+                if (!decl.function || hasJavaName) {
+                    infoIterator = infoList.size() > 0 ? infoList.listIterator() : null;
+                }
             }
             add = false;
         } else if (decl.declarator != null && decl.declarator.type != null) {
