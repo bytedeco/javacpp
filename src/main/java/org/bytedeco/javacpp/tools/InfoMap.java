@@ -143,7 +143,7 @@ public class InfoMap extends HashMap<String,List<Info>> {
         Token[] tokens = new Tokenizer(name).tokenize();
         int n = tokens.length;
         for (int i = 0; i < n; i++) {
-            if (tokens[i].match(Token.CONST)) {
+            if (tokens[i].match(Token.CONST, Token.CONSTEXPR)) {
                 foundConst = true;
                 for (int j = i + 1; j < n; j++) {
                     tokens[j - 1] = tokens[j];

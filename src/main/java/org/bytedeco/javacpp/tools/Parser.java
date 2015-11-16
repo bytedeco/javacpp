@@ -346,7 +346,7 @@ public class Parser {
                     separator = ",";
                 }
                 type.cppName += type.cppName.endsWith(">") ? " >" : ">";
-            } else if (token.match(Token.CONST)) {
+            } else if (token.match(Token.CONST, Token.CONSTEXPR)) {
                 if (type.cppName.length() == 0) {
                     type.constValue = true;
                 } else {
@@ -399,7 +399,7 @@ public class Parser {
                     } else {
                         Info info = infoMap.getFirst(tokens.get(1).value);
                         if ((info != null && info.annotations != null) ||
-                                !tokens.get(1).match('*', '&', Token.IDENTIFIER, Token.CONST)) {
+                                !tokens.get(1).match('*', '&', Token.IDENTIFIER, Token.CONST, Token.CONSTEXPR)) {
                             // we probably reached a variable or function name identifier
                             break;
                         }
@@ -570,7 +570,7 @@ public class Parser {
                 dcl.indirections++;
             } else if (token.match('&')) {
                 dcl.reference = true;
-            } else if (token.match(Token.CONST)) {
+            } else if (token.match(Token.CONST, Token.CONSTEXPR)) {
                 dcl.constPointer = true;
             } else {
                 break;
@@ -923,7 +923,7 @@ public class Parser {
                 } else if (!type.javaName.equals("void")) {
                     functionType = type.javaName + "_" + functionType;
                 }
-                definition.text += (tokens.get().match(Token.CONST) ? "@Const " : "") +
+                definition.text += (tokens.get().match(Token.CONST, Token.CONSTEXPR) ? "@Const " : "") +
                         "public static class " + functionType + " extends FunctionPointer {\n" +
                         "    static { Loader.load(); }\n" +
                         "    /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */\n" +
@@ -1421,7 +1421,7 @@ public class Parser {
 
             // check for const and pure virtual functions, ignoring the body if present
             for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.get()) {
-                decl.constMember |= token.match(Token.CONST);
+                decl.constMember |= token.match(Token.CONST, Token.CONSTEXPR);
                 if (attribute() == null) {
                     break;
                 }

@@ -1315,9 +1315,9 @@ public class Generator implements Closeable {
                         typeName[0] = functionClassName(methodInfo.returnType) + "*";
                         typeName[1] = "";
                         valueTypeName = valueTypeName(typeName);
-                    } else if (virtualFunctions.containsKey(methodInfo.cls)) {
-                        String subType = "JavaCPP_" + mangle(valueTypeName);
-                        valueTypeName = subType;
+//                    } else if (virtualFunctions.containsKey(methodInfo.returnType)) {
+//                        String subType = "JavaCPP_" + mangle(valueTypeName);
+//                        valueTypeName = subType;
                     }
                     if (returnBy instanceof ByVal) {
                         returnPrefix += (noException(methodInfo.returnType, methodInfo.method) ?
@@ -1678,10 +1678,10 @@ public class Generator implements Closeable {
                     } else {
                         out.println(indent + "        env->SetLongField(rarg, JavaCPP_addressFID, ptr_to_jlong(rptr));");
                     }
-                    if (returnBy instanceof ByVal && virtualFunctions.containsKey(methodInfo.cls)) {
-                        String subType = "JavaCPP_" + mangle(valueTypeName);
-                        out.println(indent + "    ((" + subType + "*))rptr->obj = env->NewWeakGlobalRef(rarg);");
-                    }
+//                    if (returnBy instanceof ByVal && virtualFunctions.containsKey(methodInfo.returnType)) {
+//                        String subType = "JavaCPP_" + mangle(valueTypeName);
+//                        out.println(indent + "        ((" + subType + "*))rptr->obj = env->NewWeakGlobalRef(rarg);");
+//                    }
                     out.println(indent + "    }");
                     out.println(indent + "}");
                 } else if (methodInfo.returnType == String.class) {
