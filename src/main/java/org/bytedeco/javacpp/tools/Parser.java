@@ -2188,6 +2188,7 @@ public class Parser {
             tokens.next();
         }
         int count = 0;
+        boolean longenum = false;
         String separator = "";
         String enumPrefix = "public static final int";
         String countPrefix = " ";
@@ -2229,6 +2230,9 @@ public class Parser {
                 Token prevToken = new Token();
                 boolean translate = true;
                 for (token = tokens.next(); !token.match(Token.EOF, ',', '}') || count2 > 0; token = tokens.next()) {
+                    if (token.match(Token.INTEGER) && token.value.endsWith("L")) {
+                        longenum = true;
+                    }
                     countPrefix += token.spacing + token;
                     if (token.match('(')) {
                         count2++;
@@ -2305,7 +2309,12 @@ public class Parser {
         }
         decl.text += enumSpacing + enumerators + token.expect(';').spacing + ";";
         if (name.length() > 0) {
-            infoMap.put(new Info(name).cast().valueTypes("int").pointerTypes("IntPointer", "IntBuffer", "int[]"));
+            if (longenum) {
+                decl.text = decl.text.replaceAll(" int", " long");
+                infoMap.put(new Info(name).cast().valueTypes("long").pointerTypes("LongPointer", "LongBuffer", "long[]"));
+            } else {
+                infoMap.put(new Info(name).cast().valueTypes("int").pointerTypes("IntPointer", "IntBuffer", "int[]"));
+            }
         }
         tokens.next();
         decl.text += extraText + comment;

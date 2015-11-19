@@ -1,4 +1,5 @@
 
+ * Insure `Parser` maps 64-bit values in C++ `enum` to `long` variables ([issue #48](https://github.com/bytedeco/javacpp/issues/48))
  * Fix `Generator` trying to cast improperly objects on return from  `@Virtual` functions
  * Make `Parser` take `constexpr` and `namespace` aliases into account, and fix a couple of preprocessing issues with `TokenIndexer`
  * Fix primitive arrays and NIO buffers not getting updated on return when used as arguments with adapters ([issue bytedeco/javacpp-presets#109](https://github.com/bytedeco/javacpp-presets/issues/109))
