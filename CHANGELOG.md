@@ -1,4 +1,7 @@
 
+ * Allow `Parser` to generate `@Cast()` annotations and overloaded `put()` methods in basic containers too
+ * Move list of basic containers and types to `Info.cppTypes` of the "basic/containers" and "basic/types" `InfoMap` entries, letting users change them at build time
+ * Fix some `Parser` issues with `typedef` and forward declarations inside `class` definitions
  * Insure `Parser` maps 64-bit values in C++ `enum` to `long` variables ([issue #48](https://github.com/bytedeco/javacpp/issues/48))
  * Fix `Generator` trying to cast improperly objects on return from  `@Virtual` functions
  * Make `Parser` take `constexpr` and `namespace` aliases into account, and fix a couple of preprocessing issues with `TokenIndexer`

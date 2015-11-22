@@ -34,7 +34,7 @@ class Type {
     boolean anonymous = false, constPointer = false, constValue = false, constructor = false,
             destructor = false, operator = false, simple = false, staticMember = false,
             reference = false, value = false, friend = false, virtual = false;
-    String annotations = "", cppName = "", javaName = "";
+    String annotations = "", cppName = "", javaName = "", javaNames[] = null;
     Type[] arguments = null;
     Attribute[] attributes = null;
 

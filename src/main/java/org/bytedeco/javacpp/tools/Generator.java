@@ -2181,7 +2181,7 @@ public class Generator implements Closeable {
             } else if (returnBy instanceof ByVal || returnBy instanceof ByRef) {
                 out.println("    if (rptr == NULL) {");
                 out.println("        JavaCPP_log(\"Return pointer address is NULL in callback for " + cls.getCanonicalName() + ".\");");
-                out.println("        static " + returnValueTypeName + " empty" + returnTypeName[1] + ";");
+                out.println("        static " + returnConvention[0] + " empty" + returnTypeName[1] + ";");
                 out.println("        return empty;");
                 out.println("    } else {");
                 out.println("        return *" + callbackReturnCast + "rptr;");

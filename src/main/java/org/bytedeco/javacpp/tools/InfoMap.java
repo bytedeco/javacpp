@@ -40,11 +40,11 @@ public class InfoMap extends HashMap<String,List<Info>> {
     public InfoMap(InfoMap parent) { this.parent = parent; }
 
     InfoMap parent = null;
-    static final String[] containers = { "std::bitset", "std::deque", "std::list", "std::map", "std::queue", "std::set",
-                                         "std::stack", "std::vector", "std::valarray", "std::pair" };
-    static final String[] simpleTypes = { "signed", "unsigned", "char", "short", "int", "long", "bool", "float", "double" };
-    static { Arrays.sort(simpleTypes); }
     static final InfoMap defaults = new InfoMap(null)
+        .put(new Info("basic/containers").cppTypes("std::bitset", "std::deque", "std::list", "std::map", "std::queue", "std::set",
+                                                   "std::stack", "std::vector", "std::valarray", "std::pair"))
+        .put(new Info("basic/types").cppTypes("signed", "unsigned", "char", "short", "int", "long", "bool", "float", "double"))
+
         .put(new Info(" __attribute__", "__declspec").annotations().skip())
         .put(new Info("void").valueTypes("void").pointerTypes("Pointer"))
         .put(new Info("FILE", "time_t", "va_list", "std::exception", "std::istream", "std::ostream", "std::iostream",
@@ -135,13 +135,15 @@ public class InfoMap extends HashMap<String,List<Info>> {
         .put(new Info("limit").javaNames("_limit"))
         .put(new Info("capacity").javaNames("_capacity"));
 
-    static String normalize(String name, boolean unconst, boolean untemplate) {
-        if (name == null || name.length() == 0) {
+    String normalize(String name, boolean unconst, boolean untemplate) {
+        if (name == null || name.length() == 0 || name.startsWith("basic/")) {
             return name;
         }
         boolean foundConst = false, simpleType = true;
         Token[] tokens = new Tokenizer(name).tokenize();
         int n = tokens.length;
+        String[] basicTypes = getFirst("basic/types").cppTypes;
+        Arrays.sort(basicTypes);
         for (int i = 0; i < n; i++) {
             if (tokens[i].match(Token.CONST, Token.CONSTEXPR)) {
                 foundConst = true;
@@ -149,7 +151,7 @@ public class InfoMap extends HashMap<String,List<Info>> {
                     tokens[j - 1] = tokens[j];
                 }
                 i--; n--;
-            } else if (Arrays.binarySearch(simpleTypes, tokens[i].value) < 0) {
+            } else if (Arrays.binarySearch(basicTypes, tokens[i].value) < 0) {
                 simpleType = false;
                 break;
             }

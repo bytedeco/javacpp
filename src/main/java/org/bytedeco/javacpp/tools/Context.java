@@ -42,6 +42,7 @@ class Context {
         javaName = c.javaName;
         inaccessible = c.inaccessible;
         variable = c.variable;
+        infoMap = c.infoMap;
         templateMap = c.templateMap;
         usingList = c.usingList;
         namespaceMap = c.namespaceMap;
@@ -53,6 +54,7 @@ class Context {
     boolean inaccessible = false;
     boolean virtualize = false;
     Declarator variable = null;
+    InfoMap infoMap = null;
     TemplateMap templateMap = null;
     List<String> usingList = null;
     Map<String,String> namespaceMap = null;
@@ -88,12 +90,12 @@ class Context {
             }
             names.add(name);
 
-            ns = InfoMap.normalize(ns, false, true);
+            ns = infoMap.normalize(ns, false, true);
             int i = ns.lastIndexOf("::");
             ns = i >= 0 ? ns.substring(0, i) : ns.length() > 0 ? "" : null;
         }
         for (String s : usingList) {
-            String prefix = InfoMap.normalize(cppName, false, true);
+            String prefix = infoMap.normalize(cppName, false, true);
             int i = s.lastIndexOf("::") + 2;
             ns = s.substring(0, i);
             String suffix = s.substring(i);
