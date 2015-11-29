@@ -47,6 +47,7 @@ public class InfoMap extends HashMap<String,List<Info>> {
 
         .put(new Info(" __attribute__", "__declspec").annotations().skip())
         .put(new Info("void").valueTypes("void").pointerTypes("Pointer"))
+        .put(new Info("std::nullptr_t").valueTypes("Pointer").pointerTypes("PointerPointer"))
         .put(new Info("FILE", "time_t", "va_list", "std::exception", "std::istream", "std::ostream", "std::iostream",
                 "std::ifstream", "std::ofstream", "std::fstream").cast().pointerTypes("Pointer"))
 
@@ -81,7 +82,7 @@ public class InfoMap extends HashMap<String,List<Info>> {
         .put(new Info("long double").cast().valueTypes("double").pointerTypes("Pointer"))
         .put(new Info("std::complex<float>").cast().pointerTypes("FloatPointer", "FloatBuffer", "float[]"))
         .put(new Info("std::complex<double>").cast().pointerTypes("DoublePointer", "DoubleBuffer", "double[]"))
-        .put(new Info("bool", "jboolean").cast().valueTypes("boolean").pointerTypes("BoolPointer"))
+        .put(new Info("bool", "jboolean").cast().valueTypes("boolean").pointerTypes("BoolPointer", "boolean[]"))
         .put(new Info("wchar_t", "WCHAR").cast().valueTypes("char").pointerTypes("CharPointer"))
         .put(new Info("const char").valueTypes("byte").pointerTypes("@Cast(\"const char*\") BytePointer", "String"))
         .put(new Info("boost::shared_ptr", "std::shared_ptr").annotations("@SharedPtr"))

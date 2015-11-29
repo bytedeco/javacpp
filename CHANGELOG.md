@@ -1,10 +1,13 @@
 
+ * Enhance basic support for containers of the style `std::vector<std::pair< ... > >` with user-friendly array-based setter methods
+ * Fix `Generator` not passing function objects even when annotating `FunctionPointer` parameters with `@ByVal` or `@ByRef`
+ * Map `bool*` to `boolean[]` tentatively in `Parser` since `sizeof(bool) == sizeof(jboolean)` on most platforms
  * Allow `Parser` to generate `@Cast()` annotations and overloaded `put()` methods in basic containers too
  * Move list of basic containers and types to `Info.cppTypes` of the "basic/containers" and "basic/types" `InfoMap` entries, letting users change them at build time
  * Fix some `Parser` issues with `typedef` and forward declarations inside `class` definitions
  * Insure `Parser` maps 64-bit values in C++ `enum` to `long` variables ([issue #48](https://github.com/bytedeco/javacpp/issues/48))
  * Fix `Generator` trying to cast improperly objects on return from  `@Virtual` functions
- * Make `Parser` take `constexpr` and `namespace` aliases into account, and fix a couple of preprocessing issues with `TokenIndexer`
+ * Make `Parser` take `constexpr`, `nullptr`, and `namespace` aliases into account, and fix a couple of preprocessing issues with `TokenIndexer`
  * Fix primitive arrays and NIO buffers not getting updated on return when used as arguments with adapters ([issue bytedeco/javacpp-presets#109](https://github.com/bytedeco/javacpp-presets/issues/109))
  * Enhance a bit the conversion from Doxygen-style documentation comments to Javadoc-style
  * Remove class check in allocators, which prevented peer classes from being extended in Java, instead relying on `super((Pointer)null)` in child peer classes, and remove confusing and now unnecessary empty constructors

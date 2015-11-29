@@ -1532,7 +1532,8 @@ public class Generator implements Closeable {
                 }
                 out.print(cast + "adapter" + j);
                 j += adapterInfo.argc - 1;
-            } else if (FunctionPointer.class.isAssignableFrom(methodInfo.parameterTypes[j])) {
+            } else if (FunctionPointer.class.isAssignableFrom(methodInfo.parameterTypes[j])
+                    && !(passBy instanceof ByVal || passBy instanceof ByRef)) {
                 out.print(cast + "(ptr" + j + " == NULL ? NULL : " + (passBy instanceof ByPtrPtr ? "&ptr" : "ptr") + j + "->ptr)");
             } else if (passBy instanceof ByVal || (passBy instanceof ByRef &&
                     methodInfo.parameterTypes[j] != String.class)) {

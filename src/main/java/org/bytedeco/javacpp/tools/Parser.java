@@ -184,7 +184,16 @@ public class Parser {
                         + "    static { Loader.load(); }\n"
                         + "    /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */\n"
                         + "    public " + containerType.javaName + "(Pointer p) { super(p); }\n";
-                if (resizable && firstType == null && secondType == null) {
+                if (firstType != null && secondType != null) {
+                    String[] firstNames = firstType.javaNames != null ? firstType.javaNames : new String[] {firstType.javaName};
+                    String[] secondNames = secondType.javaNames != null ? secondType.javaNames : new String[] {secondType.javaName};
+                    String brackets = arrayBrackets + (dim > 0 ? "[]" : "");
+                    for (int n = 0; n < firstNames.length || n < secondNames.length; n++) {
+                        decl.text += "    public " + containerType.javaName + "(" + firstNames[Math.min(n, firstNames.length - 1)] + brackets + " firstValue, "
+                                                                                  + secondNames[Math.min(n, secondNames.length - 1)] + brackets + " secondValue) "
+                                  +  "{ this(" + (dim > 0 ? "Math.min(firstValue.length, secondValue.length)" : "") + "); put(firstValue, secondValue); }\n";
+                    }
+                } else if (resizable && firstType == null && secondType == null) {
                     for (String javaName : valueType.javaNames != null ? valueType.javaNames : new String[] {valueType.javaName}) {
                         decl.text += "    public " + containerType.javaName + "(" + javaName + arrayBrackets + " ... array) { this(array.length); put(array); }\n";
                     }
@@ -220,6 +229,12 @@ public class Parser {
                               +  " public native " + containerType.javaName + " first(" + params + separator + firstType.javaName + " first);\n"
                               +  "    " + indexAnnotation + "public native " + secondType.annotations + secondType.javaName + " second(" + params + "); "
                               +  " public native " + containerType.javaName + " second(" + params + separator + secondType.javaName + " second);\n";
+                    for (int i = 1; firstType.javaNames != null && i < firstType.javaNames.length; i++) {
+                        decl.text += "    @MemberSetter @Index public native " + containerType.javaName + " first(" + params + separator + firstType.annotations + firstType.javaNames[i] + " first);\n";
+                    }
+                    for (int i = 1; secondType.javaNames != null && i < secondType.javaNames.length; i++) {
+                        decl.text += "    @MemberSetter @Index public native " + containerType.javaName + " second(" + params + separator + secondType.annotations + secondType.javaNames[i] + " second);\n";
+                    }
                 } else {
                     decl.text += "\n"
                               +  "    @Index public native " + valueType.annotations + valueType.javaName + " get(" + params + ");\n"
@@ -244,7 +259,36 @@ public class Parser {
                     }
                 }
 
-                if (resizable && firstType == null && secondType == null) {
+                if (firstType != null && secondType != null) {
+                    String[] firstNames = firstType.javaNames != null ? firstType.javaNames : new String[] {firstType.javaName};
+                    String[] secondNames = secondType.javaNames != null ? secondType.javaNames : new String[] {secondType.javaName};
+                    String brackets = arrayBrackets + (dim > 0 ? "[]" : "");
+                    for (int n = 0; n < firstNames.length || n < secondNames.length; n++) {
+                        decl.text += "\n"
+                                  +  "    public " + containerType.javaName + " put(" + firstNames[Math.min(n, firstNames.length - 1)] + brackets + " firstValue, "
+                                                                                     + secondNames[Math.min(n, secondNames.length - 1)] + brackets + " secondValue) {\n";
+                        String indent = "        ", indices = "", args = "";
+                        separator = "";
+                        for (int i = 0; i < dim; i++) {
+                            char c = (char)('i' + i);
+                            decl.text +=
+                                    indent + "for (int " + c + " = 0; " + c + " < firstValue" + indices + ".length && "
+                                                                        + c + " < secondValue" + indices + ".length; " + c + "++) {\n";
+                            indent += "    ";
+                            indices += "[" + c + "]";
+                            args += separator + c;
+                            separator = ", ";
+                        }
+                        decl.text += indent + "first(" + args + separator + "firstValue" + indices + ");\n"
+                                  +  indent + "second(" + args + separator + "secondValue" + indices + ");\n";
+                        for (int i = 0; i < dim; i++) {
+                            indent = indent.substring(4);
+                            decl.text += indent + "}\n";
+                        }
+                        decl.text += "        return this;\n"
+                                  +  "    }\n";
+                    }
+                } else if (resizable && firstType == null && secondType == null) {
                     for (String javaName : valueType.javaNames != null ? valueType.javaNames : new String[] {valueType.javaName}) {
                         decl.text += "\n"
                                   +  "    public " + containerType.javaName + " put(" + javaName + arrayBrackets + " ... array) {\n";
