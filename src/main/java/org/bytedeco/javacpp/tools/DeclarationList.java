@@ -112,6 +112,7 @@ class DeclarationList extends ArrayList<Declaration> {
             }
         }
 
+        add = false;
         while (!stack.isEmpty()) {
             decl = stack.remove(stack.size() - 1);
             if (context != null) {
@@ -148,8 +149,9 @@ class DeclarationList extends ArrayList<Declaration> {
             if (!found) {
                 decl.text = rescan(decl.text);
                 super.add(decl);
+                add = true;
             }
         }
-        return true;
+        return add;
     }
 }

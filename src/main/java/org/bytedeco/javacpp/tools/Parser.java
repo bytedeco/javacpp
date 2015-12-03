@@ -1283,6 +1283,7 @@ public class Parser {
         List<Declarator> dcls = new ArrayList<Declarator>();
         params.list = "(";
         params.names = "(";
+        int lastVarargs = -1;
         for (Token token = tokens.next(); !token.match(Token.EOF); token = tokens.get()) {
             String spacing = token.spacing;
             if (token.match(')')) {
@@ -1348,8 +1349,14 @@ public class Parser {
                 dcl.type.annotations = s;
             }
             if (dcl != null && !dcl.type.javaName.equals("void") && (!hasDefault || !useDefaults)) {
+                if (lastVarargs >= 0) {
+                    // substitute varargs that are not last with array
+                    params.list = params.list.substring(0, lastVarargs) + "[]" + params.list.substring(lastVarargs + 3);
+                }
+                int n = params.list.length();
                 params.infoNumber = Math.max(params.infoNumber, dcl.infoNumber);
                 params.list += (count > 1 ? "," : "") + spacing + dcl.type.annotations + dcl.type.javaName + " " + dcl.javaName;
+                lastVarargs = params.list.indexOf("...", n);
                 if (hasDefault) {
                     // output default argument as a comment
                     params.list += "/*" + defaultToken + defaultValue + "*/";
@@ -1570,7 +1577,6 @@ public class Parser {
             }
             String comment = commentAfter();
             if (first) {
-                first = false;
                 declList.spacing = spacing;
                 decl.text = comment + decl.text;
             }
@@ -1582,7 +1588,9 @@ public class Parser {
                 found |= dcl.signature.equals(d.signature);
             }
             if (dcl.javaName.length() > 0 && !found && !type.destructor) {
-                declList.add(decl);
+                if (declList.add(decl)) {
+                    first = false;
+                }
                 if (type.virtual && context.virtualize) {
                     break;
                 }

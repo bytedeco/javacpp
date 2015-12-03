@@ -1,4 +1,6 @@
 
+ * Fix the `Parser` skipping over some declarations by mistake
+ * To let users specify `...` varargs as `Info.pointerTypes()`, have the `Parser` replace them with array `[]` when not found on the last parameter
  * Enhance basic support for containers of the style `std::vector<std::pair< ... > >` with user-friendly array-based setter methods
  * Fix `Generator` not passing function objects even when annotating `FunctionPointer` parameters with `@ByVal` or `@ByRef`
  * Map `bool*` to `boolean[]` tentatively in `Parser` since `sizeof(bool) == sizeof(jboolean)` on most platforms
