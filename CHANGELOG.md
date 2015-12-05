@@ -1,4 +1,5 @@
 
+ * Let `Parser` place appropriate `Info.javaText()` provided by users in the case of destructors as well
  * Fix the `Parser` skipping over some declarations by mistake
  * To let users specify `...` varargs as `Info.pointerTypes()`, have the `Parser` replace them with array `[]` when not found on the last parameter
  * Enhance basic support for containers of the style `std::vector<std::pair< ... > >` with user-friendly array-based setter methods

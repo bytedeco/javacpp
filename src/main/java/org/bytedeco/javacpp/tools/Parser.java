@@ -438,6 +438,7 @@ public class Parser {
                 tokens.next();
                 break;
             } else if (token.match('~')) {
+                type.cppName += "~";
                 type.destructor = true;
             } else if (token.match(Token.STATIC)) {
                 type.staticMember = true;
@@ -471,7 +472,7 @@ public class Parser {
                     attributes.add(attr);
                 } else {
                     tokens.index = backIndex;
-                    if (type.cppName.length() == 0 || type.cppName.endsWith("::")) {
+                    if (type.cppName.length() == 0 || type.cppName.endsWith("::") || type.cppName.endsWith("~")) {
                         type.cppName += token.value;
                     } else {
                         Info info = infoMap.getFirst(tokens.get(1).value);
@@ -1587,7 +1588,7 @@ public class Parser {
             for (Declarator d : prevDcl) {
                 found |= dcl.signature.equals(d.signature);
             }
-            if (dcl.javaName.length() > 0 && !found && !type.destructor) {
+            if (dcl.javaName.length() > 0 && !found && (!type.destructor || (info != null && info.javaText != null))) {
                 if (declList.add(decl)) {
                     first = false;
                 }
