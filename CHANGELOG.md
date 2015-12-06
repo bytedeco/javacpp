@@ -1,6 +1,6 @@
 
  * Let `Parser` place appropriate `Info.javaText()` provided by users in the case of destructors as well
- * Fix the `Parser` skipping over some declarations by mistake
+ * Fix the `Parser` skipping over some declarations by mistake and producing invalid comments for macros
  * To let users specify `...` varargs as `Info.pointerTypes()`, have the `Parser` replace them with array `[]` when not found on the last parameter
  * Enhance basic support for containers of the style `std::vector<std::pair< ... > >` with user-friendly array-based setter methods
  * Fix `Generator` not passing function objects even when annotating `FunctionPointer` parameters with `@ByVal` or `@ByRef`

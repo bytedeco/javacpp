@@ -1903,7 +1903,7 @@ public class Parser {
             int n = spacing.lastIndexOf('\n') + 1;
             decl.text += "// " + spacing.substring(n) + "#" + keyword.spacing + keyword;
             for (Token token = tokens.get(); tokens.index < lastIndex; token = tokens.next()) {
-                decl.text += token.match("\n") ? "\n// " : token.spacing + token;
+                decl.text += token.match("\n") ? "\n// " : token.spacing + token.toString().replace("\n", "\n//");
             }
             spacing = spacing.substring(0, n);
         }
