@@ -23,13 +23,27 @@
 package org.bytedeco.javacpp;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.net.JarURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.net.URISyntaxException;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystemNotFoundException;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -38,7 +52,9 @@ import java.util.Properties;
 import java.util.WeakHashMap;
 import org.bytedeco.javacpp.annotation.Platform;
 import org.bytedeco.javacpp.tools.Builder;
+import org.bytedeco.javacpp.tools.Coordinates;
 import org.bytedeco.javacpp.tools.Logger;
+import org.bytedeco.javacpp.tools.Repository;
 
 /**
  * The Loader contains functionality to load native libraries, but also has a bit
@@ -247,123 +263,10 @@ public class Loader {
         return null;
     }
 
-    /**
-     * Extracts by name a resource using the {@link ClassLoader} of the caller.
-     *
-     * @param name the name of the resource passed to {@link Class#getResource(String)}
-     * @see #extractResource(URL, File, String, String)
-     */
-    public static File extractResource(String name, File directory,
-            String prefix, String suffix) throws IOException {
-        Class cls = getCallerClass(2);
-        return extractResource(cls, name, directory, prefix, suffix);
-    }
-    /**
-     * Extracts by name a resource using the {@link ClassLoader} of the specified {@link Class}.
-     *
-     * @param cls the Class from which to load resources
-     * @param name the name of the resource passed to {@link Class#getResource(String)}
-     * @see #extractResource(URL, File, String, String)
-     */
-    public static File extractResource(Class cls, String name, File directory,
-            String prefix, String suffix) throws IOException {
-        return extractResource(cls.getResource(name), directory, prefix, suffix);
-    }
-    /**
-     * Extracts a resource into the specified directory and with the specified
-     * prefix and suffix for the filename. If both prefix and suffix are {@code null},
-     * the original filename is used, so the directory must not be {@code null}.
-     *
-     * @param resourceURL the URL of the resource to extract
-     * @param directory the output directory ({@code null == System.getProperty("java.io.tmpdir")})
-     * @param prefix the prefix of the temporary filename to use
-     * @param suffix the suffix of the temporary filename to use
-     * @return the File object representing the extracted file
-     * @throws IOException if fails to extract resource properly
-     */
-    public static File extractResource(URL resourceURL, File directory,
-            String prefix, String suffix) throws IOException {
-        InputStream is = resourceURL != null ? resourceURL.openStream() : null;
-        if (is == null) {
-            return null;
-        }
-        File file = null;
-        boolean fileExisted = false;
-        try {
-            if (prefix == null && suffix == null) {
-                if (directory == null) {
-                    directory = new File(System.getProperty("java.io.tmpdir"));
-                }
-                file = new File(directory, new File(resourceURL.getPath()).getName());
-                fileExisted = file.exists();
-            } else {
-                file = File.createTempFile(prefix, suffix, directory);
-            }
-            FileOutputStream os = new FileOutputStream(file);
-            byte[] buffer = new byte[1024];
-            int length;
-            while ((length = is.read(buffer)) != -1) {
-                os.write(buffer, 0, length);
-            }
-            is.close();
-            os.close();
-        } catch (IOException e) {
-            if (file != null && !fileExisted) {
-                file.delete();
-            }
-            throw e;
-        }
-        return file;
-    }
-
-
-    /** Initialized to {@code System.getProperty("org.bytedeco.javacpp.cachedir", null)}. */
-    static final String cacheDirName = System.getProperty("org.bytedeco.javacpp.cachedir", null);
-    /** User-specified cache directory set and returned by {@link #getCacheDir()}. */
-    static File cacheDir = null;
-    /** Temporary directory set and returned by {@link #getTempDir()}. */
-    static File tempDir = null;
     /** Flag set by the {@link Builder} to tell us not to try to load anything. */
     static boolean loadLibraries = System.getProperty("org.bytedeco.javacpp.loadlibraries", "true").equals("true");
     /** Contains all the native libraries that we have loaded to avoid reloading them. */
     static Map<String,String> loadedLibraries = Collections.synchronizedMap(new HashMap<String,String>());
-
-    /**
-     * Creates and returns {@code System.getProperty("org.bytedeco.javacpp.cachedir")}, or null when not set.
-     *
-     * @return {@link #cacheDir}
-     */
-    public static File getCacheDir() {
-        if (cacheDir == null && cacheDirName != null) {
-            File f = new File(cacheDirName);
-            if (f.exists() || f.mkdirs()) {
-                cacheDir = f;
-            }
-        }
-        return cacheDir;
-    }
-
-    /**
-     * Creates a unique name for {@link #tempDir} out of
-     * {@code System.getProperty("java.io.tmpdir")} and {@code System.nanoTime()}.
-     *
-     * @return {@link #tempDir}
-     */
-    public static File getTempDir() {
-        if (tempDir == null) {
-            File tmpdir = new File(System.getProperty("java.io.tmpdir"));
-            File f = null;
-            for (int i = 0; i < 1000; i++) {
-                f = new File(tmpdir, "javacpp" + System.nanoTime());
-                if (f.mkdir()) {
-                    tempDir = f;
-                    tempDir.deleteOnExit();
-                    break;
-                }
-            }
-        }
-        return tempDir;
-    }
 
     /** @return {@link #loadLibraries} */
     public static boolean isLoadLibraries() {
@@ -398,6 +301,15 @@ public class Loader {
         cls = getEnclosingClass(cls);
         ClassProperties p = loadProperties(cls, loadProperties(), true);
 
+        // Get library coordinates if available
+        Coordinates coordinates;
+        try {
+            Method method = cls.getMethod("coordinates");
+            coordinates = (Coordinates) method.invoke(null);
+        } catch(Exception _) {
+            coordinates = null;
+        }
+
         // Force initialization of all the target classes in case they need it
         List<String> targets = p.get("target");
         if (targets.isEmpty()) {
@@ -426,7 +338,7 @@ public class Loader {
         for (String preload : preloads) {
             try {
                 URL[] urls = findLibrary(cls, p, preload);
-                loadLibrary(urls, preload);
+                loadLibrary(urls, preload, coordinates);
             } catch (UnsatisfiedLinkError e) {
                 preloadError = e;
             }
@@ -435,7 +347,7 @@ public class Loader {
         try {
             String library = p.getProperty("platform.library");
             URL[] urls = findLibrary(cls, p, library);
-            return loadLibrary(urls, library);
+            return loadLibrary(urls, library, coordinates);
         } catch (UnsatisfiedLinkError e) {
             if (preloadError != null && e.getCause() == null) {
                 e.initCause(preloadError);
@@ -528,7 +440,7 @@ public class Loader {
      *         (but {@code if (!loadLibraries) { return null; }})
      * @throws UnsatisfiedLinkError on failure
      */
-    public static String loadLibrary(URL[] urls, String libnameversion) {
+    public static String loadLibrary(URL[] urls, String libnameversion, Coordinates coordinates) {
         if (!loadLibraries) {
             return null;
         }
@@ -539,7 +451,6 @@ public class Loader {
             return filename;
         }
 
-        File tempFile = null;
         UnsatisfiedLinkError loadError = null;
         try {
             for (URL url : urls) {
@@ -548,26 +459,20 @@ public class Loader {
                     // ... if the URL is not already a file ...
                     file = new File(url.toURI());
                 } catch (Exception e) {
-                    // ... then check if it's not already cached, and if not ...
-                    if (getCacheDir() == null || !(file = new File(getCacheDir(), new File(url.getPath()).getName())).exists()) {
-                        if (tempFile != null && tempFile.exists()) {
-                            tempFile.deleteOnExit();
-                        }
-                        // ... then extract it from our resources ...
-                        if (logger.isDebugEnabled()) {
-                            logger.debug("Extracting " + url);
-                        }
-                        if (getCacheDir() != null) {
-                            file = extractResource(url, getCacheDir(), null, null);
-                        } else {
-                            file = tempFile = extractResource(url, getTempDir(), null, null);
-                        }
-                    } else while (System.currentTimeMillis() - file.lastModified() < 1000) {
-                        // ... else wait until the file is at least 1 second old ...
-                        try {
-                            Thread.sleep(1000);
-                        } catch (InterruptedException ex) { }
+                    // ... then extract if not already in repo ...
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("Extracting " + url);
                     }
+                    JarURLConnection c = (JarURLConnection) url.openConnection();
+                    Path jar = Paths.get(c.getJarFileURL().getFile());
+
+                    // For legacy jars without coordinates, use a hash to get consistent
+                    // and unique file name
+                    if (coordinates == null)
+                        coordinates = new Coordinates(md5(jar), "id", "version");
+
+                    Path repo = Repository.getPath(new Coordinates(coordinates, getPlatform(), jar));
+                    file = new File(repo.toFile(), new File(url.getPath()).getName());
                 }
                 if (file != null && file.exists()) {
                     filename = file.getAbsolutePath();
@@ -616,60 +521,29 @@ public class Loader {
                 logger.debug("Failed to extract for " + libnameversion + ": " + e);
             }
             throw e;
-        } finally {
-            if (tempFile != null && tempFile.exists()) {
-                tempFile.deleteOnExit();
+        }
+    }
+
+    private static String md5(Path jar) throws IOException {
+        byte[] hash;
+        try (InputStream is = new FileInputStream(jar.toFile())) {
+            MessageDigest md5;
+            try {
+                md5 = MessageDigest.getInstance("MD5");
+            } catch (NoSuchAlgorithmException ex) {
+                throw new RuntimeException(ex);
             }
-            // But under Windows, it won't get deleted!
+            byte[] buf = new byte[4096];
+            int pos;
+            while ((pos = is.read(buf)) > 0)
+                md5.update(buf, 0, pos);
+            hash = md5.digest();
         }
+        StringBuilder hex = new StringBuilder(hash.length * 2);
+        for (byte b : hash)
+            hex.append(String.format("%02x", b & 0xff));
+        return hex.toString();
     }
-
-    // So, let's use a shutdown hook...
-    static {
-        if (getPlatform().startsWith("windows")) {
-            Runtime.getRuntime().addShutdownHook(new Thread() {
-                @Override public void run() {
-                    if (tempDir == null) {
-                        return;
-                    }
-                    try {
-                        // ... to launch a separate process ...
-                        List<String> command = new ArrayList<String>();
-                        command.add(System.getProperty("java.home") + "/bin/java");
-                        command.add("-classpath");
-                        command.add((new File(Loader.class.getProtectionDomain().getCodeSource().getLocation().toURI())).toString());
-                        command.add(Loader.class.getName());
-                        command.add(tempDir.getAbsolutePath());
-                        new ProcessBuilder(command).start();
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    } catch (URISyntaxException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-            });
-        }
-    }
-
-    // ... that makes sure to delete all our files.
-    public static void main(String[] args) {
-        File tmpdir = new File(System.getProperty("java.io.tmpdir"));
-        File tempDir = new File(args[0]);
-        if (!tmpdir.equals(tempDir.getParentFile()) ||
-                !tempDir.getName().startsWith("javacpp")) {
-            // Someone is trying to break us ... ?
-            return;
-        }
-        for (File file : tempDir.listFiles()) {
-            while (file.exists() && !file.delete()) {
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) { }
-            }
-        }
-        tempDir.delete();
-    }
-
 
     /**
      * Contains {@code offsetof()} and {@code sizeof()} values of native types

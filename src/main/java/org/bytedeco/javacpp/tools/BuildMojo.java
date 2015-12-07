@@ -22,8 +22,26 @@
 
 package org.bytedeco.javacpp.tools;
 
+import org.apache.maven.model.Dependency;
+import org.apache.maven.plugin.AbstractMojo;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.logging.Log;
+import org.apache.maven.project.MavenProject;
+import org.bytedeco.javacpp.Loader;
+import org.eclipse.aether.RepositorySystem;
+import org.eclipse.aether.RepositorySystemSession;
+import org.eclipse.aether.artifact.Artifact;
+import org.eclipse.aether.artifact.DefaultArtifact;
+import org.eclipse.aether.repository.RemoteRepository;
+import org.eclipse.aether.resolution.ArtifactRequest;
+import org.eclipse.aether.resolution.ArtifactResult;
+import org.eclipse.aether.resolution.VersionRequest;
+import org.eclipse.aether.resolution.VersionResult;
+
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import org.apache.maven.plugin.AbstractMojo;
@@ -179,7 +197,24 @@ public class BuildMojo extends AbstractMojo {
      * @required
      * @readonly
      */
-    private MavenProject project;
+    private MavenProject project = null;
+
+    /**
+     * @component
+     */
+    private RepositorySystem repoSystem = null;
+
+    /**
+     * @parameter default-value="${repositorySystemSession}"
+     * @readonly
+     */
+    private RepositorySystemSession repoSession = null;
+
+    /**
+     * @parameter default-value="${project.remoteProjectRepositories}"
+     * @readonly
+     */
+    private List<RemoteRepository> remoteRepos = null;
 
     String[] merge(String[] ss, String s) {
         if (ss != null && s != null) {
@@ -225,6 +260,32 @@ public class BuildMojo extends AbstractMojo {
                 return;
             }
 
+            for (Dependency dependency : project.getModel().getDependencies()) {
+                if (dependency.getGroupId().equals("org.bytedeco.javacpp-presets")) {
+                    dependency = dependency.clone(); // Not sure if they copy the output
+                    Coordinates coord = resolve(dependency);
+                    classPaths = merge(classPaths, coord.jar.toAbsolutePath().toString());
+
+                    try {
+                        dependency.setClassifier("include");
+                        coord = resolve(dependency);
+                        Path path = Repository.getPath(coord);
+                        includePaths = merge(includePaths, path.toString());
+                    } catch (Exception _) {
+                        // Ignore, include might not exist for legacy builds
+                    }
+
+                    dependency.setClassifier(Loader.getPlatform());
+                    coord = resolve(dependency);
+                    Path path = Repository.getPath(coord);
+                    linkPaths = merge(linkPaths, path.toString());
+                }
+            }
+            if (log.isDebugEnabled()) {
+                log.debug("includePaths with dependencies: " + Arrays.deepToString(includePaths));
+                log.debug("linkPaths with dependencies: " + Arrays.deepToString(linkPaths));
+            }
+
             classPaths = merge(classPaths, classPath);
             classOrPackageNames = merge(classOrPackageNames, classOrPackageName);
 
@@ -234,8 +295,15 @@ public class BuildMojo extends AbstractMojo {
                 @Override public void warn (String s) { log.warn(s);  }
                 @Override public void error(String s) { log.error(s); }
             };
+
+            Coordinates coordinates = new Coordinates(
+                project.getGroupId(),
+                project.getArtifactId(),
+                project.getVersion()
+            );
             Builder builder = new Builder(logger)
                     .classPaths(classPaths)
+                    .includePath(includePath)
                     .outputDirectory(outputDirectory)
                     .outputName(outputName)
                     .compile(compile)
@@ -247,7 +315,8 @@ public class BuildMojo extends AbstractMojo {
                     .properties(propertyKeysAndValues)
                     .classesOrPackages(classOrPackageNames)
                     .environmentVariables(environmentVariables)
-                    .compilerOptions(compilerOptions);
+                    .compilerOptions(compilerOptions)
+                    .coordinates(coordinates);
             Properties properties = builder.properties;
             String separator = properties.getProperty("platform.path.separator");
             for (String s : merge(includePaths, includePath)) {
@@ -275,5 +344,32 @@ public class BuildMojo extends AbstractMojo {
             log.error("Failed to execute JavaCPP Builder: " + e.getMessage());
             throw new MojoExecutionException("Failed to execute JavaCPP Builder", e);
         }
+    }
+
+    private Coordinates resolve(Dependency dependency) throws Exception {
+        Artifact artifact = new DefaultArtifact(
+            dependency.getGroupId(),
+            dependency.getArtifactId(),
+            dependency.getClassifier(),
+            "jar",
+            dependency.getVersion());
+
+        VersionRequest versionRequest = new VersionRequest();
+        versionRequest.setArtifact(artifact);
+        versionRequest.setRepositories(remoteRepos);
+        VersionResult versionResult = repoSystem.resolveVersion(repoSession, versionRequest);
+        artifact.setVersion(versionResult.getVersion());
+
+        ArtifactRequest request = new ArtifactRequest();
+        request.setArtifact(artifact);
+        request.setRepositories(remoteRepos);
+        ArtifactResult result = repoSystem.resolveArtifact(repoSession, request);
+        return new Coordinates(
+            artifact.getGroupId(),
+            artifact.getArtifactId(),
+            artifact.getBaseVersion(),
+            dependency.getClassifier(),
+            result.getArtifact().getFile().toPath()
+        );
     }
 }
