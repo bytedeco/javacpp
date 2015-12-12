@@ -1,4 +1,6 @@
 
+ * Add missing calls to `close()` for `InputStream` and `OutputStream` in `Loader` ([issue #53](https://github.com/bytedeco/javacpp/issues/53))
+ * Remove `Piper` class no longer needed with Java SE 7
  * Let `Parser` place appropriate `Info.javaText()` provided by users in the case of destructors as well
  * Fix the `Parser` skipping over some declarations by mistake and producing invalid comments for macros
  * To let users specify `...` varargs as `Info.pointerTypes()`, have the `Parser` replace them with array `[]` when not found on the last parameter

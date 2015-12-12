@@ -315,10 +315,7 @@ public class Builder {
         if (environmentVariables != null) {
             pb.environment().putAll(environmentVariables);
         }
-        Process p = pb.start();
-        new Piper(logger, p.getErrorStream(), System.err).start();
-        new Piper(logger, p.getInputStream(), System.out).start();
-        return p.waitFor();
+        return pb.inheritIO().start().waitFor();
     }
 
     /**

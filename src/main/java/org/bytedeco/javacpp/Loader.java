@@ -27,6 +27,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.URL;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -137,16 +138,24 @@ public class Loader {
             }
         } catch (Exception e) {
             name = "properties/generic.properties";
-            is = Loader.class.getResourceAsStream(name);
+            InputStream is2 = Loader.class.getResourceAsStream(name);
             try {
                 try {
-                    p.load(new InputStreamReader(is));
+                    p.load(new InputStreamReader(is2));
                 } catch (NoSuchMethodError e2) {
-                    p.load(is);
+                    p.load(is2);
                 }
             } catch (Exception e2) {
                 // give up and return defaults
+            } finally {
+                try {
+                    is2.close();
+                } catch (IOException ex) { }
             }
+        } finally {
+            try {
+                is.close();
+            } catch (IOException ex) { }
         }
         return p;
     }
@@ -284,6 +293,7 @@ public class Loader {
     public static File extractResource(URL resourceURL, File directory,
             String prefix, String suffix) throws IOException {
         InputStream is = resourceURL != null ? resourceURL.openStream() : null;
+        OutputStream os = null;
         if (is == null) {
             return null;
         }
@@ -299,7 +309,7 @@ public class Loader {
             } else {
                 file = File.createTempFile(prefix, suffix, directory);
             }
-            FileOutputStream os = new FileOutputStream(file);
+            os = new FileOutputStream(file);
             byte[] buffer = new byte[1024];
             int length;
             while ((length = is.read(buffer)) != -1) {
@@ -312,6 +322,11 @@ public class Loader {
                 file.delete();
             }
             throw e;
+        } finally {
+            is.close();
+            if (os != null) {
+                os.close();
+            }
         }
         return file;
     }
