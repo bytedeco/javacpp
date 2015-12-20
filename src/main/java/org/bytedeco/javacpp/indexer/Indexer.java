@@ -38,7 +38,13 @@ import java.nio.Buffer;
  *
  * @author Samuel Audet
  */
-public abstract class Indexer {
+public abstract class Indexer implements AutoCloseable {
+
+    /** Calls {@link #release()}. */
+    @Override public void close() throws Exception {
+        release();
+    }
+
     /**
      * The number of elements in each dimension.
      * These values are not typically used by the indexer.

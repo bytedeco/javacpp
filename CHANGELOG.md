@@ -1,4 +1,6 @@
 
+ * Prevent `Loader` from extracting libraries more than once, which can cause problems ([issue bytedeco/javacpp-presets#126](https://github.com/bytedeco/javacpp-presets/issues/126))
+ * Make `Indexer implements AutoCloseable` to let us try-with-resources
  * Add missing calls to `close()` for `InputStream` and `OutputStream` in `Loader` ([issue #53](https://github.com/bytedeco/javacpp/issues/53))
  * Remove `Piper` class no longer needed with Java SE 7
  * Let `Parser` place appropriate `Info.javaText()` provided by users in the case of destructors as well

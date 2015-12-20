@@ -563,8 +563,8 @@ public class Loader {
                     // ... if the URL is not already a file ...
                     file = new File(url.toURI());
                 } catch (Exception e) {
-                    // ... then check if it's not already cached, and if not ...
-                    if (getCacheDir() == null || !(file = new File(getCacheDir(), new File(url.getPath()).getName())).exists()) {
+                    // ... then check if it has not already been extracted, and if not ...
+                    if (!(file = new File(getCacheDir() != null ? getCacheDir() : getTempDir(), new File(url.getPath()).getName())).exists()) {
                         if (tempFile != null && tempFile.exists()) {
                             tempFile.deleteOnExit();
                         }
