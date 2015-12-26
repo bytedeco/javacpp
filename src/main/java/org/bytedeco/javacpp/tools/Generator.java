@@ -154,7 +154,7 @@ public class Generator implements Closeable {
     final ClassProperties properties;
     PrintWriter out, out2;
     IndexedSet<String> callbacks;
-    IndexedSet<Class> functions, deallocators, arrayDeallocators, jclasses, jclassesInit;
+    IndexedSet<Class> functions, deallocators, arrayDeallocators, jclasses;
     Map<Class,List<String>> members, virtualFunctions, virtualMembers;
     Map<Method,MethodInformation> annotationCache;
     boolean mayThrowExceptions, usesAdapters;
@@ -173,7 +173,6 @@ public class Generator implements Closeable {
         deallocators        = new IndexedSet<Class>();
         arrayDeallocators   = new IndexedSet<Class>();
         jclasses            = new IndexedSet<Class>();
-        jclassesInit        = new IndexedSet<Class>();
         members             = new HashMap<Class,List<String>>();
         virtualFunctions    = new HashMap<Class,List<String>>();
         virtualMembers      = new HashMap<Class,List<String>>();
@@ -790,7 +789,9 @@ public class Generator implements Closeable {
             out.print("            { ");
             List<String> m = members.get(classIterator.next());
             Iterator<String> memberIterator = m == null ? null : m.iterator();
-            while (memberIterator != null && memberIterator.hasNext()) {
+            if (memberIterator == null) {
+                out.print("NULL");
+            } else while (memberIterator.hasNext()) {
                 out.print("\"" + memberIterator.next() + "\"");
                 if (memberIterator.hasNext()) {
                     out.print(", ");
@@ -809,7 +810,9 @@ public class Generator implements Closeable {
             Class c = classIterator.next();
             List<String> m = members.get(c);
             Iterator<String> memberIterator = m == null ? null : m.iterator();
-            while (memberIterator != null && memberIterator.hasNext()) {
+            if (memberIterator == null) {
+                out.print("-1");
+            } else while (memberIterator.hasNext()) {
                 String[] typeName = cppTypeName(c);
                 String valueTypeName = valueTypeName(typeName);
                 String memberName = memberIterator.next();
@@ -835,26 +838,35 @@ public class Generator implements Closeable {
         classIterator = jclasses.iterator();
         while (classIterator.hasNext()) {
             List<String> m = members.get(classIterator.next());
-            out.print(m == null ? 0 : m.size());
+            out.print(m == null ? 1 : m.size());
             if (classIterator.hasNext()) {
                 out.print(", ");
             }
         }
         out.println(" };");
         out.println("    jmethodID putMemberOffsetMID = JavaCPP_getStaticMethodID(env, " +
-                jclasses.index(Loader.class) + ", \"putMemberOffset\", \"(Ljava/lang/String;Ljava/lang/String;I)V\");");
+                jclasses.index(Loader.class) + ", \"putMemberOffset\", \"(Ljava/lang/String;Ljava/lang/String;I)Ljava/lang/Class;\");");
         out.println("    if (putMemberOffsetMID == NULL) {");
         out.println("        return JNI_ERR;");
         out.println("    }");
         out.println("    for (int i = 0; i < " + jclasses.size() + " && !env->ExceptionCheck(); i++) {");
         out.println("        for (int j = 0; j < memberOffsetSizes[i] && !env->ExceptionCheck(); j++) {");
-        out.println("            if (env->PushLocalFrame(2) == 0) {");
+        out.println("            if (env->PushLocalFrame(3) == 0) {");
         out.println("                jvalue args[3];");
         out.println("                args[0].l = env->NewStringUTF(JavaCPP_classNames[i]);");
-        out.println("                args[1].l = env->NewStringUTF(members[i][j]);");
+        out.println("                args[1].l = members[i][j] == NULL ? NULL : env->NewStringUTF(members[i][j]);");
         out.println("                args[2].i = offsets[i][j];");
-        out.println("                env->CallStaticVoidMethodA(JavaCPP_getClass(env, " +
+        out.println("                jclass cls = (jclass)env->CallStaticObjectMethodA(JavaCPP_getClass(env, " +
                 jclasses.index(Loader.class) + "), putMemberOffsetMID, args);");
+        out.println("                if (cls == NULL || env->ExceptionCheck()) {");
+        out.println("                    JavaCPP_log(\"Error putting member offsets for class %s.\", JavaCPP_classNames[i]);");
+        out.println("                    return JNI_ERR;");
+        out.println("                }");
+        out.println("                JavaCPP_classes[i] = (jclass)env->NewWeakGlobalRef(cls);"); // cache here for custom class loaders
+        out.println("                if (JavaCPP_classes[i] == NULL || env->ExceptionCheck()) {");
+        out.println("                    JavaCPP_log(\"Error creating global reference of class %s.\", JavaCPP_classNames[i]);");
+        out.println("                    return JNI_ERR;");
+        out.println("                }");
         out.println("                env->PopLocalFrame(NULL);");
         out.println("            }");
         out.println("        }");
@@ -904,16 +916,6 @@ public class Generator implements Closeable {
         out.println("    if (JavaCPP_toStringMID == NULL) {");
         out.println("        return JNI_ERR;");
         out.println("    }");
-        classIterator = jclassesInit.iterator();
-        while (classIterator.hasNext()) {
-            Class c = classIterator.next();
-            if (c == Pointer.class) {
-                continue;
-            }
-            out.println("    if (JavaCPP_getClass(env, " + jclasses.index(c) + ") == NULL) {");
-            out.println("        return JNI_ERR;");
-            out.println("    }");
-        }
         out.println("    return env->GetVersion();");
         out.println("}");
         out.println();
@@ -1859,12 +1861,10 @@ public class Generator implements Closeable {
                 firstLine = returnConvention[0] + (returnConvention.length > 1 ? returnConvention[1] : "")
                         + subType + "::" + methodInfo.memberName[0] + parameterDeclaration + " {";
                 functionList.add(fieldName);
-                jclassesInit.index(cls); // for custom class loaders
             }
             memberList.add(member);
         } else {
             callbacks.index("static " + instanceTypeName + " " + callbackName + "_instance;");
-            jclassesInit.index(cls); // for custom class loaders
             if (out2 != null) {
                 out2.println("JNIIMPORT " + returnConvention[0] + (returnConvention.length > 1 ?
                         returnConvention[1] : "") + callbackName + parameterDeclaration + ";");
@@ -1988,7 +1988,6 @@ public class Generator implements Closeable {
 
                     if (Pointer.class.isAssignableFrom(callbackParameterTypes[j])) {
                         String s = "    obj" + j + " = JavaCPP_createPointer(env, " + jclasses.index(callbackParameterTypes[j]) + ");";
-                        jclassesInit.index(callbackParameterTypes[j]); // for custom class loaders
                         adapterInfo = adapterInformation(true, valueTypeName, callbackParameterAnnotations[j]);
                         if (adapterInfo != null || passBy instanceof ByPtrPtr || passBy instanceof ByPtrRef) {
                             out.println(s);

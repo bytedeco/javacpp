@@ -425,8 +425,14 @@ public class Loader {
         }
         for (String s : targets) {
             try {
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Loading class " + s);
+                }
                 Class.forName(s, true, cls.getClassLoader());
             } catch (ClassNotFoundException ex) {
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Failed to load class " + s + ": " + ex);
+                }
                 Error e = new NoClassDefFoundError(ex.toString());
                 e.initCause(ex);
                 throw e;
@@ -700,13 +706,17 @@ public class Loader {
      * Tries to load the Class object for typeName using the {@link ClassLoader} of the Loader.
      *
      * @param typeName the name of the peer Class acting as interface to the native type
-     * @param member the name of the native member variable
+     * @param member the name of the native member variable (can be null to retrieve the Class object only)
      * @param offset the value of {@code offsetof()} (or {@code sizeof()} when {@code member.equals("sizeof")})
+     * @return {@code Class.forName(typeName, false)}
      * @throws ClassNotFoundException on Class initialization failure
      */
-    static void putMemberOffset(String typeName, String member, int offset) throws ClassNotFoundException {
+    static Class putMemberOffset(String typeName, String member, int offset) throws ClassNotFoundException {
         Class<?> c = Class.forName(typeName.replace('/', '.'), false, Loader.class.getClassLoader());
-        putMemberOffset(c.asSubclass(Pointer.class), member, offset);
+        if (member != null) {
+            putMemberOffset(c.asSubclass(Pointer.class), member, offset);
+        }
+        return c;
     }
     /**
      * Called by native libraries to put {@code offsetof()} and {@code sizeof()} values in {@link #memberOffsets}.

@@ -39,8 +39,14 @@ public class Logger {
         }
     }
 
-    /** Returns false. */
-    public boolean isDebugEnabled() { return false; }
+    static boolean debug = false;
+    static {
+        String s = System.getProperty("org.bytedeco.javacpp.logger.debug", "false").toLowerCase();
+        debug = s.equals("true") || s.equals("t") || s.equals("");
+    }
+
+    /** Returns the "org.bytedeco.javacpp.logger.debug" system property. */
+    public boolean isDebugEnabled() { return debug; }
     /** Returns true. */
     public boolean isInfoEnabled()  { return true; }
     /** Returns true. */
