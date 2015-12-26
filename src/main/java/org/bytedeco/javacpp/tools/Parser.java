@@ -457,8 +457,8 @@ public class Parser {
                 type.friend = true;
             } else if (token.match(Token.VIRTUAL)) {
                 type.virtual = true;
-            } else if (token.match(Token.ENUM, Token.EXPLICIT, Token.EXTERN, Token.INLINE, Token.CLASS, Token.INTERFACE,
-                                   Token.__INTERFACE, Token.STRUCT, Token.UNION, Token.TYPEDEF, Token.TYPENAME, Token.USING)) {
+            } else if (token.match(Token.ENUM, Token.EXPLICIT, Token.EXTERN, Token.INLINE, Token.CLASS, Token.INTERFACE, Token.__INTERFACE,
+                                   Token.NAMESPACE, Token.STRUCT, Token.UNION, Token.TYPEDEF, Token.TYPENAME, Token.USING)) {
                 continue;
             } else if (token.match((Object[])infoMap.getFirst("basic/types").cppTypes) && (type.cppName.length() == 0 || type.simple)) {
                 type.cppName += token.value + " ";
@@ -2254,6 +2254,12 @@ public class Parser {
             decl.text = declList.rescan(decl.text + casts + "\n");
             declList.spacing = null;
         }
+        Info baseInfo = infoMap.getFirst(base.cppName);
+        if (baseInfo != null && baseInfo.flatten && baseInfo.javaText != null) {
+            int start = baseInfo.javaText.indexOf("\n\n");
+            int end   = baseInfo.javaText.lastIndexOf("}");
+            decl.text += baseInfo.javaText.substring(start, end).replaceAll("(\\s+)" + base.javaName + "(\\s+)", "$1" + type.javaName + "$2");
+        }
         for (Declaration d : declList2) {
             if (!d.inaccessible && (d.declarator == null || d.declarator.type == null || !d.declarator.type.constructor || !abstractClass)) {
                 decl.text += d.text;
@@ -2272,6 +2278,8 @@ public class Parser {
         decl.type = type;
         if (info != null && info.javaText != null) {
             decl.text = info.javaText;
+        } else if (info != null && info.flatten) {
+            info.javaText = decl.text;
         }
         declList.add(decl);
         return true;

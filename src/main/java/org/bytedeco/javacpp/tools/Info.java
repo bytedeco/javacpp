@@ -81,6 +81,8 @@ public class Info {
     boolean cast = false;
     /** Indicates expressions of conditional macro groups to parse, or templates to specialize. */
     boolean define = false;
+    /** Outputs declarations for this class into their subclasses as well. */
+    boolean flatten = false;
     /** Attempts to translate naively the statements of variable-like macros to Java. */
     boolean translate = false;
     /** Skips entirely all the code associated with the C++ identifiers.
@@ -107,6 +109,8 @@ public class Info {
     public Info cast(boolean cast) { this.cast = cast; return this;  }
     public Info define() { this.define = true; return this; }
     public Info define(boolean define) { this.define = define; return this; }
+    public Info flatten() { this.flatten = true; return this; }
+    public Info flatten(boolean flatten) { this.flatten = flatten; return this; }
     public Info translate() { this.translate = true; return this; }
     public Info translate(boolean translate) { this.translate = translate; return this; }
     public Info skip() { this.skip = true; return this; }

@@ -1,4 +1,5 @@
 
+ * Add `Info.flatten` to duplicate class declarations into their subclasses, useful when a subclass pointer cannot be used for the base class as well
  * Prevent `Loader` from extracting libraries more than once, which can cause problems ([issue bytedeco/javacpp-presets#126](https://github.com/bytedeco/javacpp-presets/issues/126))
  * Make `Indexer implements AutoCloseable` to let us try-with-resources
  * Add missing calls to `close()` for `InputStream` and `OutputStream` in `Loader` ([issue #53](https://github.com/bytedeco/javacpp/issues/53))
