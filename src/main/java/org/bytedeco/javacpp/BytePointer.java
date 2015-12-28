@@ -24,6 +24,7 @@ package org.bytedeco.javacpp;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
+import org.bytedeco.javacpp.annotation.Cast;
 
 /**
  * The peer class to native pointers and arrays of {@code signed char}, including strings.
@@ -117,26 +118,13 @@ public class BytePointer extends Pointer {
 
     /** Returns the bytes, assuming a null-terminated string if {@code limit <= position}. */
     public byte[] getStringBytes() {
-        if (limit > position) {
-            byte[] array = new byte[limit - position];
-            get(array);
-            return array;
+        int size = limit - position;
+        if (size <= 0) {
+            size = (int)strlen(this);
         }
-
-        // This may be kind of slow, and should be moved to a JNI function.
-        byte[] buffer = new byte[16];
-        int i = 0, j = position();
-        while ((buffer[i] = position(j).get()) != 0) {
-            i++; j++;
-            if (i >= buffer.length) {
-                byte[] newbuffer = new byte[2*buffer.length];
-                System.arraycopy(buffer, 0, newbuffer, 0, buffer.length);
-                buffer = newbuffer;
-            }
-        }
-        byte[] newbuffer = new byte[i];
-        System.arraycopy(buffer, 0, newbuffer, 0, i);
-        return newbuffer;
+        byte[] array = new byte[size];
+        get(array);
+        return array;
     }
     /**
      * Decodes the native bytes assuming they are encoded in the named charset.
@@ -234,4 +222,22 @@ public class BytePointer extends Pointer {
     @Override public final ByteBuffer asBuffer() {
         return asByteBuffer();
     }
+
+    public static native @Cast("char*") BytePointer strcat(@Cast("char*") BytePointer dst, @Cast("char*") BytePointer src);
+    public static native @Cast("char*") BytePointer strchr(@Cast("char*") BytePointer str, int ch);
+    public static native int strcmp(@Cast("char*") BytePointer str1, @Cast("char*") BytePointer str2);
+    public static native int strcoll(@Cast("char*") BytePointer str1, @Cast("char*") BytePointer str2);
+    public static native @Cast("char*") BytePointer strcpy(@Cast("char*") BytePointer dst, @Cast("char*") BytePointer src);
+    public static native @Cast("size_t") long strcspn(@Cast("char*") BytePointer str1, @Cast("char*") BytePointer str2);
+    public static native @Cast("char*") BytePointer strerror(int errnum);
+    public static native @Cast("size_t") long strlen(@Cast("char*") BytePointer str);
+    public static native @Cast("char*") BytePointer strncat(@Cast("char*") BytePointer dst, @Cast("char*") BytePointer src, @Cast("size_t") long n);
+    public static native int strncmp(@Cast("char*") BytePointer str1, @Cast("char*") BytePointer str2, @Cast("size_t") long n);
+    public static native @Cast("char*") BytePointer strncpy(@Cast("char*") BytePointer dst, @Cast("char*") BytePointer src, @Cast("size_t") long n);
+    public static native @Cast("char*") BytePointer strpbrk(@Cast("char*") BytePointer str1, @Cast("char*") BytePointer str2);
+    public static native @Cast("char*") BytePointer strrchr(@Cast("char*") BytePointer str, int ch);
+    public static native @Cast("size_t") long strspn(@Cast("char*") BytePointer str1, @Cast("char*") BytePointer str2);
+    public static native @Cast("char*") BytePointer strstr(@Cast("char*") BytePointer str1, @Cast("char*") BytePointer str2);
+    public static native @Cast("char*") BytePointer strtok(@Cast("char*") BytePointer str, @Cast("char*") BytePointer delim);
+    public static native @Cast("size_t") long strxfrm (@Cast("char*") BytePointer dst, @Cast("char*") BytePointer src, @Cast("size_t") long n);
 }

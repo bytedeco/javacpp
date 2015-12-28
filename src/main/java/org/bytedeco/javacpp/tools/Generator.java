@@ -2869,7 +2869,8 @@ public class Generator implements Closeable {
         while (type != null) {
             Namespace namespace = type.getAnnotation(Namespace.class);
             String spaceName = namespace == null ? "" : namespace.value();
-            if (Pointer.class.isAssignableFrom(type) && type != Pointer.class) {
+            if (Pointer.class.isAssignableFrom(type) && (!baseClasses.contains(type)
+                    || type.isAnnotationPresent(Name.class))) {
                 Name name = type.getAnnotation(Name.class);
                 String s;
                 if (name == null) {

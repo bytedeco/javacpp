@@ -1,4 +1,5 @@
 
+ * Improve the performance of `BytePointer.getString()` by using `strlen()`
  * Prevent `Generator` from initializing classes when preloading them, which can cause problems ([issue bytedeco/javacpp-presets#126](https://github.com/bytedeco/javacpp-presets/issues/126))
  * Add `Info.flatten` to duplicate class declarations into their subclasses, useful when a subclass pointer cannot be used for the base class as well
  * Prevent `Loader` from extracting libraries more than once, which can cause problems ([issue bytedeco/javacpp-presets#126](https://github.com/bytedeco/javacpp-presets/issues/126))
