@@ -111,7 +111,7 @@
               <mainClass>org.bytedeco.javacpp.tools.Builder</mainClass>
             </manifest>
             <manifestEntries>
-              <Class-Path>./</Class-Path>
+              <Class-Path>.</Class-Path>
               <Name>org/bytedeco/javacpp/</Name>
               <Implementation-Title>${project.name}</Implementation-Title>
               <Implementation-Vendor>Bytedeco</Implementation-Vendor>
