@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -2122,8 +2123,15 @@ public class Parser {
             infoMap.put(info = new Info(type.cppName).pointerTypes(type.javaName));
         }
         Type base = new Type("Pointer");
-        if (baseClasses.size() > 0) {
-            base = baseClasses.remove(0);
+        Iterator<Type> it = baseClasses.iterator();
+        while (it.hasNext()) {
+            Type next = it.next();
+            Info nextInfo = infoMap.getFirst(next.cppName);
+            if (nextInfo == null || !nextInfo.flatten) {
+                base = next;
+                it.remove();
+                break;
+            }
         }
         String casts = "";
         if (baseClasses.size() > 0) {
@@ -2254,11 +2262,22 @@ public class Parser {
             decl.text = declList.rescan(decl.text + casts + "\n");
             declList.spacing = null;
         }
-        Info baseInfo = infoMap.getFirst(base.cppName);
-        if (baseInfo != null && baseInfo.flatten && baseInfo.javaText != null) {
-            int start = baseInfo.javaText.indexOf("\n\n");
-            int end   = baseInfo.javaText.lastIndexOf("}");
-            decl.text += baseInfo.javaText.substring(start, end).replaceAll("(\\s+)" + base.javaName + "(\\s+)", "$1" + type.javaName + "$2");
+        for (Type base2 : baseClasses) {
+            Info baseInfo = infoMap.getFirst(base2.cppName);
+            if (baseInfo != null && baseInfo.flatten && baseInfo.javaText != null) {
+                String text = baseInfo.javaText;
+                int start = text.indexOf('{');
+                for (int n = 0; n < 2; start++) {
+                    int c = text.charAt(start);
+                    if (c == '\n') {
+                        n++;
+                    } else if (!Character.isWhitespace(c)) {
+                        n = 0;
+                    }
+                }
+                int end = text.lastIndexOf('}');
+                decl.text += text.substring(start, end).replaceAll("(\\s+)" + base2.javaName + "(\\s+)", "$1" + type.javaName + "$2");
+            }
         }
         for (Declaration d : declList2) {
             if (!d.inaccessible && (d.declarator == null || d.declarator.type == null || !d.declarator.type.constructor || !abstractClass)) {

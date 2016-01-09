@@ -97,7 +97,7 @@ public abstract class Indexer implements AutoCloseable {
     public Object array() { return null; }
     /** @return the backing buffer, or {@code null} if none */
     public Buffer buffer() { return null; }
-    /** Makes sure changes are reflected onto the backing memory and releases any references. */
+    /** Makes sure changes are reflected onto the backing memory and clears any references. */
     public abstract void release();
 
     /** Calls {@code get(int...indices)} and returns the value as a double. */

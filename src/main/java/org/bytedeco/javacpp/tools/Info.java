@@ -50,6 +50,7 @@ public class Info {
         pointerTypes = i.pointerTypes != null ? i.pointerTypes.clone() : null;
         cast = i.cast;
         define = i.define;
+        flatten = i.flatten;
         translate = i.translate;
         skip = i.skip;
         purify = i.purify;
@@ -81,7 +82,8 @@ public class Info {
     boolean cast = false;
     /** Indicates expressions of conditional macro groups to parse, or templates to specialize. */
     boolean define = false;
-    /** Outputs declarations for this class into their subclasses as well. */
+    /** Outputs declarations for this class into their subclasses as well.
+     * Also adds methods for explicit casting, as done for multiple inheritance by default. */
     boolean flatten = false;
     /** Attempts to translate naively the statements of variable-like macros to Java. */
     boolean translate = false;

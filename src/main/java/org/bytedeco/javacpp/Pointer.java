@@ -39,7 +39,8 @@ import org.bytedeco.javacpp.tools.Logger;
  * {@code struct}, {@code class}, or {@code union}. All Pointer classes get parsed
  * by {@link Generator} to produce proper wrapping JNI code, but this base class also
  * provides functionality to access native array elements as well as utility methods
- * and classes to let users benefit from garbage collection.
+ * and classes to let users benefit not only from from garbage collection, but also the
+ * try-with-resources statement, since it implements the {@link AutoCloseable} interface.
  * <p>
  * For examples of subclasses, please refer to the following:
  *
