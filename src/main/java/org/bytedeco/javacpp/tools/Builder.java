@@ -34,6 +34,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -610,7 +611,7 @@ public class Builder {
         }
 
         List<File> outputFiles = new ArrayList<File>();
-        Map<String, List<Class>> map = new LinkedHashMap<String, List<Class>>();
+        Map<String, LinkedHashSet<Class>> map = new LinkedHashMap<String, LinkedHashSet<Class>>();
         for (Class c : classScanner.getClasses()) {
             if (Loader.getEnclosingClass(c) != c) {
                 continue;
@@ -628,15 +629,15 @@ public class Builder {
             if (libraryName.length() == 0) {
                 continue;
             }
-            List<Class> classList = map.get(libraryName);
+            LinkedHashSet<Class> classList = map.get(libraryName);
             if (classList == null) {
-                map.put(libraryName, classList = new ArrayList<Class>());
+                map.put(libraryName, classList = new LinkedHashSet<Class>());
             }
             classList.addAll(p.getEffectiveClasses());
         }
         for (String libraryName : map.keySet()) {
-            List<Class> classList = map.get(libraryName);
-            Class[] classArray = classList.toArray(new Class[classList.size()]);
+            LinkedHashSet<Class> classSet = map.get(libraryName);
+            Class[] classArray = classSet.toArray(new Class[classSet.size()]);
             File f = generateAndCompile(classArray, libraryName);
             if (f != null) {
                 outputFiles.add(f);
