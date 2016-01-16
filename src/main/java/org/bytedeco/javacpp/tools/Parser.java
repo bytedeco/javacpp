@@ -2440,23 +2440,28 @@ public class Parser {
         if (context.namespace != null) {
             name = context.namespace + "::" + name;
         }
-        decl.text += enumSpacing + "/** enum " + name + " */\n";
-        int newline = enumSpacing.lastIndexOf('\n');
-        if (newline >= 0) {
-            enumSpacing = enumSpacing.substring(newline + 1);
-        }
-        decl.text += enumSpacing + enumerators + token.expect(';').spacing + ";";
-        if (name.length() > 0) {
-            if (longenum) {
-                decl.text = decl.text.replaceAll(" int", " long");
-                infoMap.put(new Info(name).cast().valueTypes("long").pointerTypes("LongPointer", "LongBuffer", "long[]"));
-            } else {
-                infoMap.put(new Info(name).cast().valueTypes("int").pointerTypes("IntPointer", "IntBuffer", "int[]"));
+        Info info = infoMap.getFirst(name);
+        if (info != null && info.skip) {
+            decl.text = enumSpacing;
+        } else {
+            decl.text += enumSpacing + "/** enum " + name + " */\n";
+            int newline = enumSpacing.lastIndexOf('\n');
+            if (newline >= 0) {
+                enumSpacing = enumSpacing.substring(newline + 1);
             }
+            decl.text += enumSpacing + enumerators + token.expect(';').spacing + ";";
+            if (name.length() > 0) {
+                if (longenum) {
+                    decl.text = decl.text.replaceAll(" int", " long");
+                    infoMap.put(new Info(name).cast().valueTypes("long").pointerTypes("LongPointer", "LongBuffer", "long[]"));
+                } else {
+                    infoMap.put(new Info(name).cast().valueTypes("int").pointerTypes("IntPointer", "IntBuffer", "int[]"));
+                }
+            }
+            decl.text += extraText + comment;
         }
-        tokens.next();
-        decl.text += extraText + comment;
         declList.add(decl);
+        tokens.next();
         return true;
     }
 
