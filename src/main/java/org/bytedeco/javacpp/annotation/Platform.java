@@ -52,7 +52,8 @@ public @interface Platform {
     String[] define()      default {};
     /** A list of C++ header files to include at the top of the generated code. */
     String[] include()     default {};
-    /** A list of C header files to include at the top of the generated code. */
+    /** A list of C header files to include at the top of the generated code. The
+     *  {@code #include} directives will be generated in a {@code extern "C" { } } block.*/
     String[] cinclude()    default {};
     /** A list of include paths passed to the native compiler. */
     String[] includepath() default {};

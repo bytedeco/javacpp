@@ -210,6 +210,9 @@ class TokenIndexer {
                             }
                         }
                         if (!foundArg) {
+                            if (token.type == -1) {
+                                token.type = Token.COMMENT;
+                            }
                             tokens.add(token);
                         }
                         token = tokenizer.nextToken();

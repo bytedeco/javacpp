@@ -1,4 +1,5 @@
 
+ * Fix `TokenIndexer` inserting an invalid token while expanding macros ending with a backslash ([issue #63](https://github.com/bytedeco/javacpp/issues/63))
  * Make `Parser` take `Info.skip` into account for `enum` declarations as well
  * Improve the performance of `BytePointer.getString()` by using `strlen()`
  * Prevent `Generator` from initializing classes when preloading them, which can cause problems ([issue bytedeco/javacpp-presets#126](https://github.com/bytedeco/javacpp-presets/issues/126))
