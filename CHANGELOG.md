@@ -1,4 +1,5 @@
 
+ * Adjust a few things in `Generator` preventing `@Virtual` from working properly in some cases ([issue bytedeco/javacpp-presets#143](https://github.com/bytedeco/javacpp-presets/issues/143))
  * Fix `TokenIndexer` inserting an invalid token while expanding macros ending with a backslash ([issue #63](https://github.com/bytedeco/javacpp/issues/63))
  * Make `Parser` take `Info.skip` into account for `enum` declarations as well
  * Improve the performance of `BytePointer.getString()` by using `strlen()`

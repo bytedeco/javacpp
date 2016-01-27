@@ -41,8 +41,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.bytedeco.javacpp.BoolPointer;
 import org.bytedeco.javacpp.BytePointer;
 import org.bytedeco.javacpp.CLongPointer;
@@ -155,7 +157,7 @@ public class Generator implements Closeable {
     PrintWriter out, out2;
     IndexedSet<String> callbacks;
     IndexedSet<Class> functions, deallocators, arrayDeallocators, jclasses;
-    Map<Class,List<String>> members, virtualFunctions, virtualMembers;
+    Map<Class,Set<String>> members, virtualFunctions, virtualMembers;
     Map<Method,MethodInformation> annotationCache;
     boolean mayThrowExceptions, usesAdapters;
 
@@ -173,9 +175,9 @@ public class Generator implements Closeable {
         deallocators        = new IndexedSet<Class>();
         arrayDeallocators   = new IndexedSet<Class>();
         jclasses            = new IndexedSet<Class>();
-        members             = new HashMap<Class,List<String>>();
-        virtualFunctions    = new HashMap<Class,List<String>>();
-        virtualMembers      = new HashMap<Class,List<String>>();
+        members             = new HashMap<Class,Set<String>>();
+        virtualFunctions    = new HashMap<Class,Set<String>>();
+        virtualMembers      = new HashMap<Class,Set<String>>();
         annotationCache     = new HashMap<Method,MethodInformation>();
         mayThrowExceptions  = false;
         usesAdapters        = false;
@@ -333,7 +335,7 @@ public class Generator implements Closeable {
             if (classIterator.hasNext()) {
                 out.println(",");
             }
-            List<String> m = members.get(c);
+            Set<String> m = members.get(c);
             if (m != null && m.size() > maxMemberSize) {
                 maxMemberSize = m.size();
             }
@@ -561,6 +563,9 @@ public class Generator implements Closeable {
             out.println("        this->owner = owner;");
             out.println("        str.assign(ptr ? ptr : \"\", ptr ? (size > 0 ? size : strlen((char*)ptr)) : 0);");
             out.println("    }");
+            out.println("    void assign(const          char* ptr, size_t size, void* owner) { assign((char*)ptr, size, owner); }");
+            out.println("    void assign(const signed   char* ptr, size_t size, void* owner) { assign((char*)ptr, size, owner); }");
+            out.println("    void assign(const unsigned char* ptr, size_t size, void* owner) { assign((char*)ptr, size, owner); }");
             out.println("    static void deallocate(void* owner) { free(owner); }");
             out.println("    operator char*() {");
             out.println("        const char* data = str.data();");
@@ -689,11 +694,11 @@ public class Generator implements Closeable {
         }
         out.println();
         for (Class c : jclasses) {
-            List<String> functionList = virtualFunctions.get(c);
+            Set<String> functionList = virtualFunctions.get(c);
             if (functionList == null) {
                 continue;
             }
-            List<String> memberList = virtualMembers.get(c);
+            Set<String> memberList = virtualMembers.get(c);
             String[] typeName = cppTypeName(c);
             String valueTypeName = valueTypeName(typeName);
             String subType = "JavaCPP_" + mangle(valueTypeName);
@@ -787,7 +792,7 @@ public class Generator implements Closeable {
         classIterator = jclasses.iterator();
         while (classIterator.hasNext()) {
             out.print("            { ");
-            List<String> m = members.get(classIterator.next());
+            Set<String> m = members.get(classIterator.next());
             Iterator<String> memberIterator = m == null ? null : m.iterator();
             if (memberIterator == null) {
                 out.print("NULL");
@@ -808,7 +813,7 @@ public class Generator implements Closeable {
         while (classIterator.hasNext()) {
             out.print("            { ");
             Class c = classIterator.next();
-            List<String> m = members.get(c);
+            Set<String> m = members.get(c);
             Iterator<String> memberIterator = m == null ? null : m.iterator();
             if (memberIterator == null) {
                 out.print("-1");
@@ -837,7 +842,7 @@ public class Generator implements Closeable {
         out.print("    int memberOffsetSizes[" + jclasses.size() + "] = { ");
         classIterator = jclasses.iterator();
         while (classIterator.hasNext()) {
-            List<String> m = members.get(classIterator.next());
+            Set<String> m = members.get(classIterator.next());
             out.print(m == null ? 1 : m.size());
             if (classIterator.hasNext()) {
                 out.print(", ");
@@ -976,12 +981,12 @@ public class Generator implements Closeable {
             return false;
         }
 
-        List<String> memberList = members.get(cls);
+        Set<String> memberList = members.get(cls);
         if (!cls.isAnnotationPresent(Opaque.class)
                 && !FunctionPointer.class.isAssignableFrom(cls)
                 && cls.getEnclosingClass() != Pointer.class) {
             if (memberList == null) {
-                members.put(cls, memberList = new ArrayList<String>());
+                members.put(cls, memberList = new LinkedHashSet<String>());
             }
             if (!memberList.contains("sizeof")) {
                 memberList.add("sizeof");
@@ -1822,9 +1827,9 @@ public class Generator implements Closeable {
                     : cppTypeName(methodInfo.cls);
             String valueTypeName = valueTypeName(typeName);
             String subType = "JavaCPP_" + mangle(valueTypeName);
-            List<String> memberList = virtualMembers.get(cls);
+            Set<String> memberList = virtualMembers.get(cls);
             if (memberList == null) {
-                virtualMembers.put(cls, memberList = new ArrayList<String>());
+                virtualMembers.put(cls, memberList = new LinkedHashSet<String>());
             }
             String member = "    ";
             if (methodInfo.arrayAllocator) {
@@ -1839,13 +1844,14 @@ public class Generator implements Closeable {
                 }
                 member += "), obj(NULL) { }";
             } else {
-                List<String> functionList = virtualFunctions.get(cls);
+                Set<String> functionList = virtualFunctions.get(cls);
                 if (functionList == null) {
-                    virtualFunctions.put(cls, functionList = new ArrayList<String>());
+                    virtualFunctions.put(cls, functionList = new LinkedHashSet<String>());
                 }
-                member += "virtual " + returnConvention[0] + (returnConvention.length > 1 ? returnConvention[1] : "")
-                       + methodInfo.memberName[0] + parameterDeclaration + ";\n    "
-                       + returnConvention[0] + "super_" + methodInfo.memberName[0] + nonconstParamDeclaration + " { ";
+                member += "using " + valueTypeName + "::" + methodInfo.memberName[0] + ";\n    "
+                       +  "virtual " + returnConvention[0] + (returnConvention.length > 1 ? returnConvention[1] : "")
+                       +  methodInfo.memberName[0] + parameterDeclaration + ";\n    "
+                       +  returnConvention[0] + "super_" + methodInfo.memberName[0] + nonconstParamDeclaration + " { ";
                 if (methodInfo.method.getAnnotation(Virtual.class).value()) {
                     member += "throw JavaCPP_exception(\"Cannot call a pure virtual function.\"); }";
                 } else {
