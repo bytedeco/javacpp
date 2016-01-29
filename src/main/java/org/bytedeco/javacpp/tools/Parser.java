@@ -804,7 +804,6 @@ public class Parser {
                     dimCast += "[" + dims[i] + "]";
                 }
             }
-            //dcl.indices = 0;
             cast += dimCast.length() > 0 ? "(*)" + dimCast : "*";
         }
         if (pointerAsArray && dcl.indirections > (type.anonymous ? 0 : 1)) {
@@ -1572,7 +1571,6 @@ public class Parser {
             if (info != null && info.javaText != null) {
                 if (first) {
                     decl.text = info.javaText;
-//                    decl.declarator = null;
                 } else {
                     break;
                 }

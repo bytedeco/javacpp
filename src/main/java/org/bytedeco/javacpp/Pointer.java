@@ -60,18 +60,7 @@ import org.bytedeco.javacpp.tools.Logger;
  */
 public class Pointer implements AutoCloseable {
     /** Default constructor that does nothing. */
-    public Pointer() {
-        // Make sure our top enclosing class is initialized and the
-        // associated native library loaded. This code is actually quite efficient,
-        // but it still does not cover all corner cases...
-//        Class cls = getClass();
-//        String className = cls.getName();
-//        int topIndex = className.indexOf('$');
-//        if (topIndex > 0 && Loader.loadedLibraries.
-//                get(className.substring(0, topIndex)) == null) {
-//            Loader.load(cls);
-//        }
-    }
+    public Pointer() {}
     /**
      * Copies the address, position, limit, and capacity of another Pointer.
      * Also keeps a reference to it to prevent its memory from getting deallocated.
@@ -214,8 +203,6 @@ public class Pointer implements AutoCloseable {
 
         @Override public void deallocate() {
             if (ownerAddress != 0 && deallocatorAddress != 0) {
-//                System.out.println("deallocating 0x" + Long.toHexString(ownerAddress) +
-//                        " 0x" + Long.toHexString(deallocatorAddress));
                 deallocate(ownerAddress, deallocatorAddress);
                 ownerAddress = deallocatorAddress = 0;
             }
