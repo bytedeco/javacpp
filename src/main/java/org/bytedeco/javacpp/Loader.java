@@ -58,7 +58,7 @@ public class Loader {
 
     /** Value created out of "java.vm.name", "os.name", and "os.arch" system properties.
      *  Returned by {@link #getPlatform()} as default. */
-    private static final String platform;
+    private static final String PLATFORM;
     /** Default platform properties loaded and returned by {@link #loadProperties()}. */
     private static Properties platformProperties = null;
 
@@ -88,18 +88,18 @@ public class Loader {
         } else if (osArch.startsWith("arm")) {
             osArch = "arm";
         }
-        platform = osName + "-" + osArch;
+        PLATFORM = osName + "-" + osArch;
     }
 
     /**
      * Returns either the value of the "org.bytedeco.javacpp.platform"
-     * system property, or {@link #platform} when the former is not set.
+     * system property, or {@link #PLATFORM} when the former is not set.
      *
      * @return {@code System.getProperty("org.bytedeco.javacpp.platform", platform)}
-     * @see #platform
+     * @see #PLATFORM
      */
     public static String getPlatform() {
-        return System.getProperty("org.bytedeco.javacpp.platform", platform);
+        return System.getProperty("org.bytedeco.javacpp.platform", PLATFORM);
     }
 
     /**
@@ -333,7 +333,7 @@ public class Loader {
 
 
     /** Initialized to {@code System.getProperty("org.bytedeco.javacpp.cachedir", null)}. */
-    static final String cacheDirName = System.getProperty("org.bytedeco.javacpp.cachedir", null);
+    static final String CACHE_DIR_NAME = System.getProperty("org.bytedeco.javacpp.cachedir", null);
     /** User-specified cache directory set and returned by {@link #getCacheDir()}. */
     static File cacheDir = null;
     /** Temporary directory set and returned by {@link #getTempDir()}. */
@@ -349,8 +349,8 @@ public class Loader {
      * @return {@link #cacheDir}
      */
     public static File getCacheDir() {
-        if (cacheDir == null && cacheDirName != null) {
-            File f = new File(cacheDirName);
+        if (cacheDir == null && CACHE_DIR_NAME != null) {
+            File f = new File(CACHE_DIR_NAME);
             if (f.exists() || f.mkdirs()) {
                 cacheDir = f;
             }

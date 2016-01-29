@@ -35,7 +35,7 @@ public class MethodInformation {
     Annotation[] annotations;
     int modifiers;
     Class<?> returnType;
-    String name, memberName[];
+    String[] name, memberName;
     int dim;
     boolean[] parameterRaw;
     Class<?>[] parameterTypes;
