@@ -587,7 +587,10 @@ public class Loader {
                         // ... else wait until the file is at least 1 second old ...
                         try {
                             Thread.sleep(1000);
-                        } catch (InterruptedException ex) { }
+                        } catch (InterruptedException ex) {
+                            // ... reset interrupt to be nice ...
+                            Thread.currentThread().interrupt();
+                        }
                     }
                 }
                 if (file != null && file.exists()) {
@@ -673,7 +676,7 @@ public class Loader {
     }
 
     // ... that makes sure to delete all our files.
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         File tmpdir = new File(System.getProperty("java.io.tmpdir"));
         File tempDir = new File(args[0]);
         if (!tmpdir.equals(tempDir.getParentFile()) ||
@@ -683,9 +686,7 @@ public class Loader {
         }
         for (File file : tempDir.listFiles()) {
             while (file.exists() && !file.delete()) {
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) { }
+                Thread.sleep(100);
             }
         }
         tempDir.delete();
