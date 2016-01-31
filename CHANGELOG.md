@@ -1,4 +1,5 @@
 
+ * Split type names at `::` delimiters before mapping them against templates in `Parser`
  * Fix swallowed `InterruptedException` ([issue bytedeco/javacv#315](https://github.com/bytedeco/javacv/issues/315))
  * Adjust a few things in `Generator` preventing `@Virtual` from working properly in some cases ([issue bytedeco/javacpp-presets#143](https://github.com/bytedeco/javacpp-presets/issues/143))
  * Fix `TokenIndexer` inserting an invalid token while expanding macros ending with a backslash ([issue #63](https://github.com/bytedeco/javacpp/issues/63))

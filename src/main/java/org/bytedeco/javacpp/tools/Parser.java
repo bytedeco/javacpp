@@ -516,8 +516,15 @@ public class Parser {
         }
 
         // perform template substitution
-        if (context.templateMap != null && context.templateMap.get(type.cppName) != null) {
-            type.cppName = context.templateMap.get(type.cppName);
+        if (context.templateMap != null) {
+            String[] types = type.cppName.split("::");
+            String separator = "";
+            type.cppName = "";
+            for (String t : types) {
+                String t2 = context.templateMap.get(t);
+                type.cppName += separator + (t2 != null ? t2 : t);
+                separator = "::";
+            }
         }
 
         // remove const, * and & after template substitution for consistency
