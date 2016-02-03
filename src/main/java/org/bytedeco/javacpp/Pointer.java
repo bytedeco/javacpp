@@ -457,7 +457,9 @@ public class Pointer implements AutoCloseable {
             if (c != Pointer.class) {
                 offset = Loader.offsetof(c, member);
             }
-        } catch (NullPointerException e) { }
+        } catch (NullPointerException e) {
+            return offset;
+        }
         return offset;
     }
 
