@@ -1,4 +1,5 @@
 
+ * Prepend "javacpp." to all properties associated with Maven in `BuildMojo` to avoid name clashes
  * Let users define the `GENERIC_EXCEPTION_CLASS` macro (default of `std::exception`) to indicate the base exception thrown by native methods
  * Split type names at `::` delimiters before mapping them against templates in `Parser`
  * Fix swallowed `InterruptedException` ([issue bytedeco/javacv#315](https://github.com/bytedeco/javacv/issues/315))
