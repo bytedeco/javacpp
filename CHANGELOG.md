@@ -1,4 +1,5 @@
 
+ * Let `Parser` use adapters in the case `FunctionPointer` as well ([issue bytedeco/javacpp-presets#145](https://github.com/bytedeco/javacpp-presets/issues/145))
  * Prepend "javacpp." to all properties associated with Maven in `BuildMojo` to avoid name clashes
  * Let users define the `GENERIC_EXCEPTION_CLASS` macro (default of `std::exception`) to indicate the base exception thrown by native methods
  * Split type names at `::` delimiters before mapping them against templates in `Parser`

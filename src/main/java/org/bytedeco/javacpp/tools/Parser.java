@@ -828,11 +828,14 @@ public class Parser {
             tokens.next().expect(',', ';');
         }
 
+        // if this is a function pointer, get parameters
+        dcl.parameters = parameters(context, infoNumber, useDefaults);
+
         int infoLength = 1;
         boolean valueType = false, needCast = arrayAsPointer && dcl.indices > 1, implicitConst = false;
         String prefix = type.constValue && dcl.indirections < 2 && !dcl.reference ? "const " : "";
         Info info = infoMap.getFirst(prefix + type.cppName, false);
-        if (!typedef && (info == null || (info.cppTypes != null && info.cppTypes.length > 0))) {
+        if ((!typedef || dcl.parameters != null) && (info == null || (info.cppTypes != null && info.cppTypes.length > 0))) {
             // substitute template types that have no info with appropriate adapter annotation
             Type type2 = type;
             if (info != null) {
@@ -969,7 +972,6 @@ public class Parser {
         // deal with function parameters and function pointers
         dcl.type = type;
         dcl.signature = dcl.javaName;
-        dcl.parameters = parameters(context, infoNumber, useDefaults);
         if (dcl.parameters != null) {
             dcl.infoNumber = Math.max(dcl.infoNumber, dcl.parameters.infoNumber);
             if (indirections2 == 0 && !typedef) {
