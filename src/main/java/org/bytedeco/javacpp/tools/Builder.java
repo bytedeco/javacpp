@@ -426,8 +426,6 @@ public class Builder {
             }
             fis.close();
             jos.closeEntry();
-//            f.delete();
-//            f.getParentFile().delete();
         }
         jos.close();
     }
