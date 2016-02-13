@@ -1289,6 +1289,7 @@ public class Generator implements Closeable {
         String returnPrefix = "";
         if (methodInfo.returnType == void.class) {
             if (methodInfo.allocator || methodInfo.arrayAllocator) {
+                jclasses.index(methodInfo.cls); // makes sure to index all POD structs
                 String[] typeName = cppTypeName(methodInfo.cls);
                 returnPrefix = typeName[0] + " rptr" + typeName[1] + " = ";
             }
