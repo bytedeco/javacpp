@@ -705,7 +705,7 @@ public class Parser {
             count++;
         }
 
-        int dims[] = new int[256];
+        int[] dims = new int[256];
         int indirections2 = 0;
         dcl.cppName = "";
         Info groupInfo = null;

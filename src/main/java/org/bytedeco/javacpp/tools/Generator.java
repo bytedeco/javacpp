@@ -1240,16 +1240,16 @@ public class Generator implements Closeable {
                     }
                     if (methodInfo.parameterTypes[j] != Buffer.class) {
                         // given the component type, we can also fetch the array of non-direct buffers
-                        String S = methodInfo.parameterTypes[j].getSimpleName();
-                        S = S.substring(0, S.length() - 6);
-                        String s = Character.toLowerCase(S.charAt(0)) + S.substring(1);
-                        out.println("    j" + s + "Array arr" + j + " = NULL;");
+                        String paramName = methodInfo.parameterTypes[j].getSimpleName();
+                        paramName = paramName.substring(0, paramName.length() - 6);
+                        String paramNameLowerCase = Character.toLowerCase(paramName.charAt(0)) + paramName.substring(1);
+                        out.println("    j" + paramNameLowerCase + "Array arr" + j + " = NULL;");
                         out.println("    if (arg" + j + " != NULL && ptr" + j + " == NULL) {");
-                        out.println("        arr" + j + " = (j" + s + "Array)env->CallObjectMethod(arg" + j + ", JavaCPP_arrayMID);");
+                        out.println("        arr" + j + " = (j" + paramNameLowerCase + "Array)env->CallObjectMethod(arg" + j + ", JavaCPP_arrayMID);");
                         out.println("        if (env->ExceptionOccurred() != NULL) {");
                         out.println("            env->ExceptionClear();");
                         out.println("        } else {");
-                        out.println("            ptr" + j + " = arr" + j + " == NULL ? NULL : env->Get" + S + "ArrayElements(arr" + j + ", NULL);");
+                        out.println("            ptr" + j + " = arr" + j + " == NULL ? NULL : env->Get" + paramName + "ArrayElements(arr" + j + ", NULL);");
                         if (adapterInfo != null || prevAdapterInfo != null) {
                             out.println("            size" + j + " = env->GetArrayLength(arr" + j + ");");
                         }
@@ -1698,11 +1698,11 @@ public class Generator implements Closeable {
                     if (adapterInfo == null && !(returnBy instanceof ByVal)) {
                         out.println(indent + "jint rcapacity = rptr != NULL ? 1 : 0;");
                     }
-                    String s = methodInfo.returnType.getComponentType().getName();
-                    String S = Character.toUpperCase(s.charAt(0)) + s.substring(1);
+                    String componentName = methodInfo.returnType.getComponentType().getName();
+                    String componentNameUpperCase = Character.toUpperCase(componentName.charAt(0)) + componentName.substring(1);
                     out.println(indent + "if (rptr != NULL) {");
-                    out.println(indent + "    rarg = env->New" + S + "Array(rcapacity);");
-                    out.println(indent + "    env->Set" + S + "ArrayRegion(rarg, 0, rcapacity, (j" + s + "*)rptr);");
+                    out.println(indent + "    rarg = env->New" + componentNameUpperCase + "Array(rcapacity);");
+                    out.println(indent + "    env->Set" + componentNameUpperCase + "ArrayRegion(rarg, 0, rcapacity, (j" + componentName + "*)rptr);");
                     out.println(indent + "}");
                     if (adapterInfo != null) {
                         out.println(indent + "if (deallocator != 0 && rptr != NULL) {");
@@ -1779,9 +1779,9 @@ public class Generator implements Closeable {
                         methodInfo.memberGetter || methodInfo.memberSetter) {
                     out.println("env->ReleasePrimitiveArrayCritical(arg" + j + ", ptr" + j + ", 0);");
                 } else {
-                    String s = methodInfo.parameterTypes[j].getComponentType().getName();
-                    String S = Character.toUpperCase(s.charAt(0)) + s.substring(1);
-                    out.println("env->Release" + S + "ArrayElements(arg" + j + ", (j" + s + "*)ptr" + j + ", 0);");
+                    String componentType = methodInfo.parameterTypes[j].getComponentType().getName();
+                    String componentTypeUpperCase = Character.toUpperCase(componentType.charAt(0)) + componentType.substring(1);
+                    out.println("env->Release" + componentTypeUpperCase + "ArrayElements(arg" + j + ", (j" + componentType + "*)ptr" + j + ", 0);");
                 }
             } else if (Buffer.class.isAssignableFrom(methodInfo.parameterTypes[j])
                     && methodInfo.parameterTypes[j] != Buffer.class) {
@@ -1793,10 +1793,10 @@ public class Generator implements Closeable {
                     out.println("    }");
                 }
                 out.print("    if (arr" + j + " != NULL) ");
-                String S = methodInfo.parameterTypes[j].getSimpleName();
-                S = S.substring(0, S.length() - 6);
-                String s = Character.toLowerCase(S.charAt(0)) + S.substring(1);
-                out.println("env->Release" + S + "ArrayElements(arr" + j + ", (j" + s + "*)ptr" + j + ", 0);");
+                String parameterSimpleName = methodInfo.parameterTypes[j].getSimpleName();
+                parameterSimpleName = parameterSimpleName.substring(0, parameterSimpleName.length() - 6);
+                String parameterSimpleNameLowerCase = Character.toLowerCase(parameterSimpleName.charAt(0)) + parameterSimpleName.substring(1);
+                out.println("env->Release" + parameterSimpleName + "ArrayElements(arr" + j + ", (j" + parameterSimpleNameLowerCase + "*)ptr" + j + ", 0);");
             }
         }
     }
@@ -2016,11 +2016,11 @@ public class Generator implements Closeable {
                         if (adapterInfo == null) {
                             out.println("    jint size" + j + " = ptr" + j + " != NULL ? 1 : 0;");
                         }
-                        String s = callbackParameterTypes[j].getComponentType().getName();
-                        String S = Character.toUpperCase(s.charAt(0)) + s.substring(1);
+                        String componentType = callbackParameterTypes[j].getComponentType().getName();
+                        String S = Character.toUpperCase(componentType.charAt(0)) + componentType.substring(1);
                         out.println("    if (ptr" + j + " != NULL) {");
                         out.println("        obj" + j + " = env->New" + S + "Array(size"+ j + ");");
-                        out.println("        env->Set" + S + "ArrayRegion(obj" + j + ", 0, size" + j + ", (j" + s + "*)ptr" + j + ");");
+                        out.println("        env->Set" + S + "ArrayRegion(obj" + j + ", 0, size" + j + ", (j" + componentType + "*)ptr" + j + ");");
                         out.println("    }");
                         if (adapterInfo != null) {
                             out.println("    if (deallocator" + j + " != 0 && ptr" + j + " != NULL) {");
