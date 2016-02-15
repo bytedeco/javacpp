@@ -1002,7 +1002,10 @@ public class Parser {
                 }
                 info = infoMap.getFirst(cppType += ")");
 
-                String functionType = Character.toUpperCase(originalName.charAt(0)) + originalName.substring(1);
+                String functionType = null;
+                if (originalName != null) {
+                    functionType = Character.toUpperCase(originalName.charAt(0)) + originalName.substring(1);
+                }
                 if (info != null && info.pointerTypes.length > 0) {
                     functionType = info.pointerTypes[0];
                 } else if (typedef) {
