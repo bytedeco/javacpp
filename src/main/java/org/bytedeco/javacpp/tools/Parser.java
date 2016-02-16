@@ -595,9 +595,9 @@ public class Parser {
             String groupName = context.cppName;
             int template2 = groupName != null ? groupName.lastIndexOf('<') : -1;
             if (template < 0 && template2 >= 0) {
-                groupName = groupName.substring(0, template2);
+                groupName = groupName != null ? groupName.substring(0, template2) : null;
             }
-            int namespace2 = groupName.lastIndexOf("::");
+            int namespace2 = groupName != null ? groupName.lastIndexOf("::") : null;
             if (namespace < 0 && namespace2 >= 0) {
                 groupName = groupName.substring(namespace2 + 2);
             }
@@ -1245,8 +1245,10 @@ public class Parser {
         Info info = infoMap.getFirst(attr.cppName = tokens.get().value);
         if (attr.annotation = info != null && info.annotations != null
                 && info.javaNames == null && info.valueTypes == null && info.pointerTypes == null) {
-            for (String s : info.annotations) {
-                attr.javaName += s + " ";
+            if(info != null) {
+                for (String s : info.annotations) {
+                    attr.javaName += s + " ";
+                }
             }
         }
         if (!tokens.next().match('(')) {
