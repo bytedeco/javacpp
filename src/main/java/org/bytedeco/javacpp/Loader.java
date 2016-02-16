@@ -367,7 +367,7 @@ public class Loader {
     public static File getTempDir() {
         if (tempDir == null) {
             File tmpdir = new File(System.getProperty("java.io.tmpdir"));
-            File f = null;
+            File f;
             for (int i = 0; i < 1000; i++) {
                 f = new File(tmpdir, "javacpp" + System.nanoTime());
                 if (f.mkdir()) {

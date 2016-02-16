@@ -111,7 +111,7 @@ public class Parser {
                     continue;
                 }
                 int dim = containerName.startsWith("std::pair") ? 0 : 1;
-                boolean resizable = true;
+                boolean resizable;
                 Type containerType = new Parser(this, info.cppNames[0]).type(context),
                         indexType, valueType, firstType = null, secondType = null;
                 if (containerType.arguments == null || containerType.arguments.length == 0 || containerType.arguments[0] == null
@@ -1185,7 +1185,6 @@ public class Parser {
             comment += token.spacing + s;
         }
         if (closeComment && !comment.endsWith("*/")) {
-            closeComment = false;
             comment += " */";
         }
         tokens.raw = false;
