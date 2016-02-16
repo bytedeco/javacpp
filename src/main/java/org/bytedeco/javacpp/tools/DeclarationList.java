@@ -49,11 +49,12 @@ class DeclarationList extends ArrayList<Declaration> {
             return lines;
         }
         String text = "";
-        Scanner scanner = new Scanner(lines);
-        while (scanner.hasNextLine()) {
-            text += spacing + scanner.nextLine();
-            int newline = spacing.lastIndexOf('\n');
-            spacing = newline >= 0 ? spacing.substring(newline) : "\n";
+        try (Scanner scanner = new Scanner(lines)) {
+            while (scanner.hasNextLine()) {
+                text += spacing + scanner.nextLine();
+                int newline = spacing.lastIndexOf('\n');
+                spacing = newline >= 0 ? spacing.substring(newline) : "\n";
+            }
         }
         return text;
     }
