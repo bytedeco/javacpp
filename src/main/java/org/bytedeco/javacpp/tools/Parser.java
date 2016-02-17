@@ -2773,21 +2773,22 @@ public class Parser {
         }
 
         final String newline = lineSeparator != null ? lineSeparator : "\n";
-        Writer out = new FileWriter(targetFile) {
-            @Override public Writer append(CharSequence text) throws IOException {
-                return super.append(((String)text).replace("\n", newline).replace("\\u", "\\u005Cu"));
+        try (Writer out = new FileWriter(targetFile) {
+                 @Override public Writer append(CharSequence text) throws IOException {
+                     return super.append(((String)text).replace("\n", newline).replace("\\u", "\\u005Cu"));
+                 }
+             }) {
+            out.append(text);
+            for (Info info : infoList) {
+                if (info.javaText != null && !info.javaText.startsWith("import")) {
+                    out.append(info.javaText + "\n");
+                }
             }
-        };
-        out.append(text);
-        for (Info info : infoList) {
-            if (info.javaText != null && !info.javaText.startsWith("import")) {
-                out.append(info.javaText + "\n");
+            for (Declaration d : declList) {
+                out.append(d.text);
             }
+            out.append("\n}\n").close();
         }
-        for (Declaration d : declList) {
-            out.append(d.text);
-        }
-        out.append("\n}\n").close();
 
         return targetFile;
     }
