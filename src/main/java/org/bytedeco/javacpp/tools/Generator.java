@@ -2799,7 +2799,7 @@ public class Generator implements Closeable {
     }
 
     String[] cppFunctionTypeName(Method functionMethod) {
-        String prefix = "", suffix = "";
+        String prefix, suffix;
         Class<?> type = functionMethod.getDeclaringClass();
         Convention convention = type.getAnnotation(Convention.class);
         String callingConvention = convention == null ? "" : convention.value() + " ";

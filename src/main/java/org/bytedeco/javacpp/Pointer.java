@@ -286,7 +286,7 @@ public class Pointer implements AutoCloseable {
 
     /** Clears, deallocates, and removes all garbage collected objects from the {@link #referenceQueue}. */
     public static void deallocateReferences() {
-        DeallocatorReference r = null;
+        DeallocatorReference r;
         while (referenceQueue != null && (r = (DeallocatorReference)referenceQueue.poll()) != null) {
             r.clear();
             r.remove();
