@@ -2696,18 +2696,14 @@ public class Parser {
         for (Class c : allInherited) {
             try {
                 ((InfoMapper)c.newInstance()).map(infoMap);
-            } catch (ClassCastException e) {
-            } catch (InstantiationException e) {
-            } catch (IllegalAccessException e) {
+            } catch (ClassCastException |  InstantiationException | IllegalAccessException e) {
                 // fail silently as if the interface wasn't implemented
             }
         }
         leafInfoMap = new InfoMap();
         try {
             ((InfoMapper)cls.newInstance()).map(leafInfoMap);
-        } catch (ClassCastException e) {
-        } catch (InstantiationException e) {
-        } catch (IllegalAccessException e) {
+        } catch (ClassCastException |  InstantiationException | IllegalAccessException e) {
             // fail silently as if the interface wasn't implemented
         }
         infoMap.putAll(leafInfoMap);

@@ -150,12 +150,16 @@ public class Loader {
             } finally {
                 try {
                     is2.close();
-                } catch (IOException ex) { }
+                } catch (IOException ex) {
+                    logger.error("Unable to close resource : " + ex.getMessage());
+                }
             }
         } finally {
             try {
                 is.close();
-            } catch (IOException ex) { }
+            } catch (IOException ex) {
+                logger.error("Unable to close resource : " + ex.getMessage());
+            }
         }
         return p;
     }
@@ -235,7 +239,9 @@ public class Loader {
                     return super.getClassContext();
                 }
             }.getClassContext();
-        } catch (NoSuchMethodError e) { }
+        } catch (NoSuchMethodError e) {
+            logger.error("No definition of this method : " + e.getMessage());
+        }
         if (classContext != null) {
             for (int j = 0; j < classContext.length; j++) {
                 if (classContext[j] == Loader.class) {
@@ -251,7 +257,9 @@ public class Loader {
                         return Class.forName(classNames[i+j].getClassName());
                     }
                 }
-            } catch (ClassNotFoundException e) { }
+            } catch (ClassNotFoundException e) {
+                logger.error("No definition for the class found : " + e.getMessage());
+            }
         }
         return null;
     }
