@@ -66,6 +66,7 @@ public class Loader {
         String jvmName = System.getProperty("java.vm.name", "").toLowerCase();
         String osName  = System.getProperty("os.name", "").toLowerCase();
         String osArch  = System.getProperty("os.arch", "").toLowerCase();
+        String abiType = System.getProperty("sun.arch.abi", "").toLowerCase();
         if (jvmName.startsWith("dalvik") && osName.startsWith("linux")) {
             osName = "android";
         } else if (jvmName.startsWith("robovm") && osName.startsWith("darwin")) {
@@ -85,7 +86,9 @@ public class Loader {
             osArch = "x86_64";
         } else if (osArch.startsWith("aarch64") || osArch.startsWith("armv8") || osArch.startsWith("arm64")) {
             osArch = "arm64";
-        } else if (osArch.startsWith("arm")) {
+        } else if ((osArch.startsWith("arm")) && abiType.equals("gnueabihf")) {
+            osArch = "armhf";
+	} else if (osArch.startsWith("arm")) {
             osArch = "arm";
         }
         PLATFORM = osName + "-" + osArch;
