@@ -1,4 +1,5 @@
 
+ * Add properties for the `linux-armhf` platform, and pick up `macosx` when `os.name` is `darwin`
  * Fix `NullPointerException` in `Parser` on unexpected forms of function pointers ([issue #70](https://github.com/bytedeco/javacpp/issues/70))
  * Make sure `Generator` produces calls to `sizeof()` and `offsetof()` for all `Pointer` classes with allocators
  * Let `Parser` use adapters in the case of `FunctionPointer` as well ([issue bytedeco/javacpp-presets#145](https://github.com/bytedeco/javacpp-presets/issues/145))

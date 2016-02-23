@@ -72,7 +72,7 @@ public class Loader {
         } else if (jvmName.startsWith("robovm") && osName.startsWith("darwin")) {
             osName = "ios";
             osArch = "arm";
-        } else if (osName.startsWith("mac os x")) {
+        } else if (osName.startsWith("mac os x") || osName.startsWith("darwin")) {
             osName = "macosx";
         } else {
             int spaceIndex = osName.indexOf(' ');
