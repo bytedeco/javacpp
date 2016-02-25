@@ -79,8 +79,8 @@ class Context {
             while (map != null) {
                 if (name.equals(map.getName())) {
                     String args = "<", separator = "";
-                    for (String s : map.values()) {
-                        args += separator + s;
+                    for (Type t : map.values()) {
+                        args += separator + (t != null ? t.cppName : t);
                         separator = ",";
                     }
                     names.add(name + args + (args.endsWith(">") ? " >" : ">"));

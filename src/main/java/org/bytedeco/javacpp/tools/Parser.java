@@ -438,6 +438,8 @@ public class Parser {
                 type.reference = true;
                 tokens.next();
                 break;
+            } else if (token.match("&&")) {
+                // rvalue reference... ignore?
             } else if (token.match('~')) {
                 type.cppName += "~";
                 type.destructor = true;
@@ -520,10 +522,17 @@ public class Parser {
             String[] types = type.cppName.split("::");
             String separator = "";
             type.cppName = "";
+            List<Type> arguments = new ArrayList<Type>();
             for (String t : types) {
-                String t2 = context.templateMap.get(t);
-                type.cppName += separator + (t2 != null ? t2 : t);
+                Type t2 = context.templateMap.get(t);
+                type.cppName += separator + (t2 != null ? t2.cppName : t);
+                if (t2 != null && t2.arguments != null) {
+                    arguments.addAll(Arrays.asList(t2.arguments));
+                }
                 separator = "::";
+            }
+            if (arguments.size() > 0) {
+                type.arguments = arguments.toArray(new Type[arguments.size()]);
             }
         }
 
@@ -658,6 +667,8 @@ public class Parser {
                 dcl.indirections++;
             } else if (token.match('&')) {
                 dcl.reference = true;
+            } else if (token.match("&&")) {
+                // rvalue reference... ignore?
             } else if (token.match(Token.CONST, Token.CONSTEXPR)) {
                 dcl.constPointer = true;
             } else {
@@ -1040,12 +1051,12 @@ public class Parser {
         // annotate with @Name if the Java name doesn't match with the C++ name
         if (dcl.cppName != null) {
             String localName = dcl.cppName;
-            int namespace = localName.lastIndexOf("::");
-            if (namespace >= 0 && context.namespace != null &&
-                    context.namespace.startsWith(localName.substring(0, namespace - 2))) {
-                localName = dcl.cppName.substring(namespace + 2);
+            if (context.namespace != null && localName.startsWith(context.namespace + "::")) {
+                localName = dcl.cppName.substring(context.namespace.length() + 2);
             }
-            if (!localName.equals(dcl.javaName)) {
+            int template = localName.lastIndexOf('<');
+            String simpleName = template >= 0 ? localName.substring(0, template) : localName;
+            if (!simpleName.equals(dcl.javaName) && (!localName.contains("::") || context.javaName == null)) {
                 type.annotations += "@Name(\"" + localName + "\") ";
             }
         }
@@ -2571,7 +2582,7 @@ public class Parser {
                         continue;
                     }
                     int count = 0;
-                    for (Map.Entry<String,String> e : map.entrySet()) {
+                    for (Map.Entry<String,Type> e : map.entrySet()) {
                         if (count < type.arguments.length) {
                             Type t = type.arguments[count++];
                             String s = t.cppName;
@@ -2589,7 +2600,8 @@ public class Parser {
                             if (t.reference) {
                                 s += "&";
                             }
-                            e.setValue(s);
+                            t.cppName = s;
+                            e.setValue(t);
                         }
                     }
                     tokens.index = startIndex;

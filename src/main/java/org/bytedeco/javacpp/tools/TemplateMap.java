@@ -28,7 +28,7 @@ import java.util.LinkedHashMap;
  *
  * @author Samuel Audet
  */
-class TemplateMap extends LinkedHashMap<String,String> {
+class TemplateMap extends LinkedHashMap<String,Type> {
     TemplateMap(TemplateMap parent) {
         this.parent = parent;
     }
@@ -41,16 +41,16 @@ class TemplateMap extends LinkedHashMap<String,String> {
     }
 
     boolean full() {
-        for (String s : values()) {
-            if (s == null) {
+        for (Type t : values()) {
+            if (t == null) {
                 return false;
             }
         }
         return true;
     }
 
-    String get(String key) {
-        String value = super.get(key);
+    Type get(String key) {
+        Type value = super.get(key);
         if (value == null && parent != null) {
             return parent.get(key);
         } else {
