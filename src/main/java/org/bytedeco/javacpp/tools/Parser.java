@@ -2360,20 +2360,27 @@ public class Parser {
         String countPrefix = " ";
         String enumerators = "";
         String extraText = "";
-        String name = tokens.next().expect(Token.IDENTIFIER, '{').value;
-        if (tokens.get(1).match(':')) {
-            tokens.next();
+        String name = "";
+        Token token = tokens.next().expect(Token.IDENTIFIER, '{', ':', ';');
+        if (token.match(Token.IDENTIFIER)) {
+            name = token.value;
+            token = tokens.next();
+        }
+        if (token.match(':')) {
             cppType = tokens.next().value;
             Info info = infoMap.getFirst(cppType);
             if (info != null && info.valueTypes != null && info.valueTypes.length > 0) {
                 javaType = info.valueTypes[0];
             }
+            token = tokens.next();
         }
-        if (!tokens.get().match('{') && !tokens.next().match('{')) {
+        if (!typedef && token.match(';')) {
+            // skip for loop
+        } else if (!token.match('{')) {
+            // not an enum
             tokens.index = backIndex;
             return false;
-        }
-        for (Token token = tokens.next(); !token.match(Token.EOF, '}'); token = tokens.get()) {
+        } else for (token = tokens.next(); !token.match(Token.EOF, '}'); token = tokens.get()) {
             String comment = commentBefore();
             if (macro(context, declList)) {
                 Declaration macroDecl = declList.remove(declList.size() - 1);
@@ -2467,9 +2474,12 @@ public class Parser {
         }
         String comment = commentBefore();
         Declaration decl = new Declaration();
-        Token token = tokens.next();
+        token = tokens.get();
+        if (!token.match(';')) {
+            token = tokens.next();
+        }
         if (token.match(Token.IDENTIFIER)) {
-            // XXX: If !isTypedef, this is a variable declaration with anonymous type
+            // XXX: If !typedef, this is a variable declaration with anonymous type
             name = token.value;
             token = tokens.next();
         }
