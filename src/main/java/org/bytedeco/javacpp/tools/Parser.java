@@ -381,6 +381,9 @@ public class Parser {
                         count--;
                     }
                     type.cppName += token;
+                    if (token.match(Token.CONST)) {
+                        type.cppName += " ";
+                    }
                 }
                 if (type.cppName.endsWith("*")) {
                     type.javaName = "PointerPointer";
