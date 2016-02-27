@@ -73,6 +73,7 @@ public class ClassProperties extends HashMap<String,List<String>> {
     String platform, platformRoot, pathSeparator;
     List<Class> inheritedClasses = null;
     List<Class> effectiveClasses = null;
+    boolean loaded = false;
 
     public List<String> get(String key) {
         List<String> list = super.get(key);
@@ -218,6 +219,10 @@ public class ClassProperties extends HashMap<String,List<String>> {
         addAll("platform.preloadpath", preloadpath);
         addAll("platform.preload", preload);
         setProperty("platform.library", library);
+
+        if (platforms != null && platforms.length > 0) {
+            loaded = true;
+        }
     }
 
     public List<Class> getInheritedClasses() {
@@ -226,5 +231,9 @@ public class ClassProperties extends HashMap<String,List<String>> {
 
     public List<Class> getEffectiveClasses() {
         return effectiveClasses;
+    }
+
+    public boolean isLoaded() {
+        return loaded;
     }
 }

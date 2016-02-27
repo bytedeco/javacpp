@@ -955,12 +955,12 @@ public class Generator implements Closeable {
         out.println("}");
         out.println();
 
-        for (Class<?> cls : baseClasses) {
-            methods(cls);
-        }
+        List<Class> allClasses = new ArrayList<Class>();
+        allClasses.addAll(baseClasses);
+        allClasses.addAll(Arrays.asList(classes));
 
         boolean didSomethingUseful = false;
-        for (Class<?> cls : classes) {
+        for (Class<?> cls : allClasses) {
             try {
                 didSomethingUseful |= methods(cls);
             } catch (NoClassDefFoundError e) {

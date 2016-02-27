@@ -43,6 +43,7 @@ import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
 import org.bytedeco.javacpp.ClassProperties;
 import org.bytedeco.javacpp.Loader;
+import org.bytedeco.javacpp.annotation.Platform;
 
 /**
  * The Builder is responsible for coordinating efforts between the Parser, the
@@ -615,6 +616,10 @@ public class Builder {
                 continue;
             }
             ClassProperties p = Loader.loadProperties(c, properties, false);
+            if (!p.isLoaded()) {
+                logger.warn("Could not load platform properties for " + c);
+                continue;
+            }
             String target = p.getProperty("target");
             if (target != null && !c.getName().equals(target)) {
                 File f = parse(classScanner.getClassLoader().getPaths(), c);

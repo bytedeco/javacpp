@@ -43,11 +43,8 @@ import static org.junit.Assert.*;
  *
  * @author Samuel Audet
  */
-@Platform(include="errno.h")
+@Platform
 public class IndexerTest {
-
-    /** Just something to get the {@link Builder} to compile a library for us. */
-    @MemberGetter public static native int errno();
 
     @BeforeClass public static void setUpClass() throws Exception {
         Class c = IndexerTest.class;
