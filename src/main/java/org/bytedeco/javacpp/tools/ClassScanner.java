@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Samuel Audet
+ * Copyright (C) 2014-2016 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -41,9 +41,9 @@ class ClassScanner {
         this.loader  = loader;
     }
 
-    private Logger logger;
-    private Collection<Class> classes;
-    private UserClassLoader loader;
+    final Logger logger;
+    final Collection<Class> classes;
+    final UserClassLoader loader;
 
     public Collection<Class> getClasses() {
         return classes;
@@ -52,25 +52,19 @@ class ClassScanner {
         return loader;
     }
 
-    public void addClass(String className) {
+    public void addClass(String className) throws ClassNotFoundException, NoClassDefFoundError {
         if (className == null) {
             return;
         } else if (className.endsWith(".class")) {
             className = className.substring(0, className.length()-6);
         }
-        try {
-            Class c = Class.forName(className, false, loader);
-            if (!classes.contains(c)) {
-                classes.add(c);
-            }
-        } catch (ClassNotFoundException e) {
-            logger.warn("Could not find class " + className + ": " + e);
-        } catch (NoClassDefFoundError e) {
-            logger.warn("Could not load class " + className + ": " + e);
+        Class c = Class.forName(className, false, loader);
+        if (!classes.contains(c)) {
+            classes.add(c);
         }
     }
 
-    public void addMatchingFile(String filename, String packagePath, boolean recursive) {
+    public void addMatchingFile(String filename, String packagePath, boolean recursive) throws ClassNotFoundException, NoClassDefFoundError {
         if (filename != null && filename.endsWith(".class") &&
                 (packagePath == null || (recursive && filename.startsWith(packagePath)) ||
                 filename.regionMatches(0, packagePath, 0, Math.max(filename.lastIndexOf('/'), packagePath.lastIndexOf('/'))))) {
@@ -78,7 +72,7 @@ class ClassScanner {
         }
     }
 
-    public void addMatchingDir(String parentName, File dir, String packagePath, boolean recursive) {
+    public void addMatchingDir(String parentName, File dir, String packagePath, boolean recursive) throws ClassNotFoundException, NoClassDefFoundError {
         File[] files = dir.listFiles();
         Arrays.sort(files);
         for (File f : files) {
@@ -91,7 +85,7 @@ class ClassScanner {
         }
     }
 
-    public void addPackage(String packageName, boolean recursive) throws IOException {
+    public void addPackage(String packageName, boolean recursive) throws IOException, ClassNotFoundException, NoClassDefFoundError {
         String[] paths = loader.getPaths();
         final String packagePath = packageName == null ? null : (packageName.replace('.', '/') + "/");
         int prevSize = classes.size();
@@ -118,7 +112,7 @@ class ClassScanner {
         }
     }
 
-    public void addClassOrPackage(String name) throws IOException {
+    public void addClassOrPackage(String name) throws IOException, ClassNotFoundException, NoClassDefFoundError {
         if (name == null) {
             return;
         }

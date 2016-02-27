@@ -23,6 +23,7 @@
 package org.bytedeco.javacpp.tools;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Properties;
@@ -226,7 +227,7 @@ public class BuildMojo extends AbstractMojo {
             if (log.isDebugEnabled()) {
                 log.debug("outputFiles: " + Arrays.deepToString(outputFiles));
             }
-        } catch (Exception e) {
+        } catch (IOException | ClassNotFoundException | NoClassDefFoundError | InterruptedException | ParserException e) {
             log.error("Failed to execute JavaCPP Builder: " + e.getMessage());
             throw new MojoExecutionException("Failed to execute JavaCPP Builder", e);
         }

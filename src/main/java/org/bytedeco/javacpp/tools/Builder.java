@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2014 Samuel Audet
+ * Copyright (C) 2011-2016 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -575,7 +575,7 @@ public class Builder {
     }
     /** Requests the {@link #classScanner} to add a class or all classes from a package.
      *  A {@code null} argument indicates the unnamed package. */
-    public Builder classesOrPackages(String ... classesOrPackages) throws IOException {
+    public Builder classesOrPackages(String ... classesOrPackages) throws IOException, ClassNotFoundException, NoClassDefFoundError {
         if (classesOrPackages == null) {
             classScanner.addPackage(null, true);
         } else for (String s : classesOrPackages) {
@@ -703,7 +703,7 @@ public class Builder {
         }
         System.out.println(
             "JavaCPP version " + version + "\n" +
-            "Copyright (C) 2011-2015 Samuel Audet <samuel.audet@gmail.com>\n" +
+            "Copyright (C) 2011-2016 Samuel Audet <samuel.audet@gmail.com>\n" +
             "Project site: https://github.com/bytedeco/javacpp");
         System.out.println();
         System.out.println("Usage: java -jar javacpp.jar [options] [class or package (suffixed with .* or .**)]");

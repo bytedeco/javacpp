@@ -1,4 +1,5 @@
 
+ * Make `Builder` fail on `ClassNotFoundException` or `NoClassDefFoundError` instead of logging warnings
  * Allow `Builder` to generate native libraries with empty `@Platform` annotation even without user defined `native` methods
  * Enhance `Parser` to support a bit better `&&` tokens and C++11 rvalue references ([issue bytedeco/javacpp-presets#160](https://github.com/bytedeco/javacpp-presets/issues/160))
  * Add properties for the `linux-armhf` platform, and pick up `macosx` when `os.name` is `darwin`
