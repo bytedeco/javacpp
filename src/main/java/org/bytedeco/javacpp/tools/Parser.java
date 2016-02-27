@@ -2344,18 +2344,31 @@ public class Parser {
             tokens.index = backIndex;
             return false;
         }
-
+        String enumType = "enum";
+        if (tokens.get(1).match(Token.CLASS, Token.STRUCT)) {
+            enumType += " " + tokens.next();
+        }
         if (typedef && !tokens.get(1).match('{') && tokens.get(2).match(Token.IDENTIFIER)) {
             tokens.next();
         }
         int count = 0;
         boolean longenum = false;
+        String cppType = "int";
+        String javaType = "int";
         String separator = "";
-        String enumPrefix = "public static final int";
+        String enumPrefix = "public static final " + javaType;
         String countPrefix = " ";
         String enumerators = "";
         String extraText = "";
         String name = tokens.next().expect(Token.IDENTIFIER, '{').value;
+        if (tokens.get(1).match(':')) {
+            tokens.next();
+            cppType = tokens.next().value;
+            Info info = infoMap.getFirst(cppType);
+            if (info != null && info.valueTypes != null && info.valueTypes.length > 0) {
+                javaType = info.valueTypes[0];
+            }
+        }
         if (!tokens.get().match('{') && !tokens.next().match('{')) {
             tokens.index = backIndex;
             return false;
@@ -2367,7 +2380,7 @@ public class Parser {
                 extraText += comment + macroDecl.text;
                 if (separator.equals(",") && !macroDecl.text.trim().startsWith("//")) {
                     separator = ";";
-                    enumPrefix = "\npublic static final int";
+                    enumPrefix = "\npublic static final " + javaType;
                 }
                 continue;
             }
@@ -2416,8 +2429,8 @@ public class Parser {
                         if (separator.equals(",")) {
                             separator = ";";
                         }
-                        extraText = "\npublic static native @MemberGetter int " + javaName + "();\n";
-                        enumPrefix = "public static final int";
+                        extraText = "\npublic static native @MemberGetter " + javaType + " " + javaName + "();\n";
+                        enumPrefix = "public static final " + javaType;
                         countPrefix = " " + javaName + "()";
                     }
                 }
@@ -2467,7 +2480,7 @@ public class Parser {
         if (info != null && info.skip) {
             decl.text = enumSpacing;
         } else {
-            decl.text += enumSpacing + "/** enum " + name + " */\n";
+            decl.text += enumSpacing + "/** " + enumType + " " + name + " */\n";
             int newline = enumSpacing.lastIndexOf('\n');
             if (newline >= 0) {
                 enumSpacing = enumSpacing.substring(newline + 1);
@@ -2475,11 +2488,12 @@ public class Parser {
             decl.text += enumSpacing + enumerators + token.expect(';').spacing + ";";
             if (name.length() > 0) {
                 if (longenum) {
-                    decl.text = decl.text.replaceAll(" int", " long");
-                    infoMap.put(new Info(name).cast().valueTypes("long").pointerTypes("LongPointer", "LongBuffer", "long[]"));
-                } else {
-                    infoMap.put(new Info(name).cast().valueTypes("int").pointerTypes("IntPointer", "IntBuffer", "int[]"));
+                    decl.text = decl.text.replace(" " + javaType, " long");
+                    cppType = "long long";
+                    javaType = "long";
                 }
+                Info info2 = infoMap.getFirst(cppType);
+                infoMap.put(new Info(info2).cast().cppNames(name));
             }
             decl.text += extraText + comment;
         }
