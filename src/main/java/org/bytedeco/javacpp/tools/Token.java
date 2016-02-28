@@ -51,6 +51,7 @@ class Token implements Comparable<Token> {
             EOF       = new Token(),
             CONST     = new Token(IDENTIFIER, "const"),
             CONSTEXPR = new Token(IDENTIFIER, "constexpr"),
+            DEFAULT   = new Token(IDENTIFIER, "default"),
             DEFINE    = new Token(IDENTIFIER, "define"),
             IF        = new Token(IDENTIFIER, "if"),
             IFDEF     = new Token(IDENTIFIER, "ifdef"),

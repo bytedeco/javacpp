@@ -1,4 +1,5 @@
 
+ * Add support for C++11 `default` and `delete` on function declarations ([issue #80](https://github.com/bytedeco/javacpp/issues/80))
  * Add support for C++11 typed `enum`, with or without enumerator list ([issue #78](https://github.com/bytedeco/javacpp/issues/78))
  * Add missing space for `const` types when normalizing template arguments in `Parser` ([issue bytedeco/javacpp-presets#165](https://github.com/bytedeco/javacpp-presets/issues/165))
  * Make `Builder` fail on `ClassNotFoundException` or `NoClassDefFoundError` instead of logging warnings

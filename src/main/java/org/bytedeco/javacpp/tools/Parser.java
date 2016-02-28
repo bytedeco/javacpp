@@ -1566,9 +1566,15 @@ public class Parser {
             } else {
                 // may be a pure virtual function
                 if (tokens.get().match('=')) {
-                    tokens.next().expect("0");
+                    Token token = tokens.next().expect("0", Token.DELETE, Token.DEFAULT);
+                    if (token.match("0")) {
+                        decl.abstractMember = true;
+                    } else if (token.match(Token.DELETE)) {
+                        decl.text = spacing;
+                        declList.add(decl);
+                        return true;
+                    }
                     tokens.next().expect(';');
-                    decl.abstractMember = true;
                 }
                 tokens.next();
             }
@@ -2552,9 +2558,11 @@ public class Parser {
         if (!tokens.get().match(Token.EXTERN) || !tokens.get(1).match(Token.STRING)) {
             return false;
         }
+        String spacing = tokens.get().spacing;
         Declaration decl = new Declaration();
         tokens.next().expect("\"C\"");
         if (!tokens.next().match('{')) {
+            tokens.get().spacing = spacing;
             declList.add(decl);
             return true;
         }
