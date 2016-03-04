@@ -195,9 +195,9 @@ public class Builder {
         command.add(sourceFilename);
 
         Collection<String> allOptions = properties.get("platform.compiler.*");
-        if (allOptions.isEmpty()) {
-            allOptions.add("default");
-        }
+        // Always include the default
+        allOptions.add("default");
+        
         for (String s : allOptions) {
             if (s == null || s.length() == 0) {
                 continue;
