@@ -339,17 +339,20 @@ public class Builder {
         String libraryPath  = p.getProperty("platform.library.path", "");
         String libraryName  = p.getProperty("platform.library.prefix", "") + outputName + p.getProperty("platform.library.suffix", "");
         if (outputPath == null) {
+            URI uri = null;
             try {
                 String resourceName = '/' + classes[classes.length - 1].getName().replace('.', '/')  + ".class";
                 String resourceURL = classes[classes.length - 1].getResource(resourceName).toString();
-                File packageDir = new File(new URI(resourceURL.substring(0, resourceURL.lastIndexOf('/') + 1)));
+                File packageDir = new File(uri = new URI(resourceURL.substring(0, resourceURL.lastIndexOf('/') + 1)));
                 File targetDir = libraryPath.length() > 0
-                        ? new File(new URI(resourceURL.substring(0, resourceURL.length() - resourceName.length() + 1)))
+                        ? new File(uri = new URI(resourceURL.substring(0, resourceURL.length() - resourceName.length() + 1)))
                         : new File(packageDir, platform);
                 outputPath = new File(targetDir, libraryPath);
                 sourcePrefix = new File(packageDir, outputName).getPath();
             } catch (URISyntaxException e) {
                 throw new RuntimeException(e);
+            } catch (IllegalArgumentException e) {
+                throw new RuntimeException(e + ": " + uri);
             }
         }
         if (!outputPath.exists()) {
