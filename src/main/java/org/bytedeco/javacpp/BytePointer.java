@@ -44,7 +44,7 @@ public class BytePointer extends Pointer {
      */
     public BytePointer(String s, String charsetName)
             throws UnsupportedEncodingException {
-        this(s.getBytes(charsetName).length+1);
+        this(s.getBytes(charsetName).length + 1);
         putString(s, charsetName);
     }
     /**
@@ -103,26 +103,26 @@ public class BytePointer extends Pointer {
     public BytePointer(Pointer p) { super(p); }
     private native void allocateArray(int size);
 
-    /** @see Pointer#position(int) */
-    @Override public BytePointer position(int position) {
+    /** @see Pointer#position(long) */
+    @Override public BytePointer position(long position) {
         return super.position(position);
     }
-    /** @see Pointer#limit(int) */
-    @Override public BytePointer limit(int limit) {
+    /** @see Pointer#limit(long) */
+    @Override public BytePointer limit(long limit) {
         return super.limit(limit);
     }
-    /** @see Pointer#capacity(int) */
-    @Override public BytePointer capacity(int capacity) {
+    /** @see Pointer#capacity(long) */
+    @Override public BytePointer capacity(long capacity) {
         return super.capacity(capacity);
     }
 
     /** Returns the bytes, assuming a null-terminated string if {@code limit <= position}. */
     public byte[] getStringBytes() {
-        int size = limit - position;
+        long size = limit - position;
         if (size <= 0) {
             size = (int)strlen(this);
         }
-        byte[] array = new byte[size];
+        byte[] array = new byte[(int) size];
         get(array);
         return array;
     }

@@ -76,16 +76,16 @@ public class ShortPointer extends Pointer {
     public ShortPointer(Pointer p) { super(p); }
     private native void allocateArray(int size);
 
-    /** @see Pointer#position(int) */
-    @Override public ShortPointer position(int position) {
+    /** @see Pointer#position(long) */
+    @Override public ShortPointer position(long position) {
         return super.position(position);
     }
-    /** @see Pointer#limit(int) */
-    @Override public ShortPointer limit(int limit) {
+    /** @see Pointer#limit(long) */
+    @Override public ShortPointer limit(long limit) {
         return super.limit(limit);
     }
-    /** @see Pointer#capacity(int) */
-    @Override public ShortPointer capacity(int capacity) {
+    /** @see Pointer#capacity(long) */
+    @Override public ShortPointer capacity(long capacity) {
         return super.capacity(capacity);
     }
 
