@@ -73,7 +73,7 @@ public class CharPointer extends Pointer {
      *
      * @param size the number of {@code short} elements to allocate
      */
-    public CharPointer(int size) {
+    public CharPointer(long size) {
         try {
             allocateArray(size);
         } catch (UnsatisfiedLinkError e) {
@@ -84,7 +84,7 @@ public class CharPointer extends Pointer {
     public CharPointer() { }
     /** @see Pointer#Pointer(Pointer) */
     public CharPointer(Pointer p) { super(p); }
-    private native void allocateArray(int size);
+    private native void allocateArray(long size);
 
     /** @see Pointer#position(long) */
     @Override public CharPointer position(long position) {
@@ -143,7 +143,7 @@ public class CharPointer extends Pointer {
     /** @return {@code get(0)} */
     public char get() { return get(0); }
     /** @return the i-th {@code char} value of a native array */
-    public native char get(int i);
+    public native char get(long i);
     /** @return {@code put(0, c)} */
     public CharPointer put(char c) { return put(0, c); }
     /**

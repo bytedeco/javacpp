@@ -63,7 +63,7 @@ public class LongPointer extends Pointer {
      *
      * @param size the number of {@code long long} elements to allocate
      */
-    public LongPointer(int size) {
+    public LongPointer(long size) {
         try {
             allocateArray(size);
         } catch (UnsatisfiedLinkError e) {
@@ -74,7 +74,7 @@ public class LongPointer extends Pointer {
     public LongPointer() { }
     /** @see Pointer#Pointer(Pointer) */
     public LongPointer(Pointer p) { super(p); }
-    private native void allocateArray(int size);
+    private native void allocateArray(long size);
 
     /** @see Pointer#position(long) */
     @Override public LongPointer position(long position) {
@@ -92,7 +92,7 @@ public class LongPointer extends Pointer {
     /** @return {@code get(0)} */
     public long get() { return get(0); }
     /** @return the i-th {@code long long} of a native array */
-    public native long get(int i);
+    public native long get(long i);
     /** @return {@code put(0, l)} */
     public LongPointer put(long l) { return put(0, l); }
     /**

@@ -70,7 +70,7 @@ public class CLongPointer extends Pointer {
     /** @return {@code get(0)} */
     public long get() { return get(0); }
     /** @return the i-th {@code long} value of a native array */
-    @Cast("long") public native long get(int i);
+    @Cast("long") public native long get(long i);
     /** @return {@code put(0, l)} */
     public CLongPointer put(long l) { return put(0, l); }
     /**

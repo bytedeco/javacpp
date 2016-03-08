@@ -73,7 +73,7 @@ public class IntPointer extends Pointer {
      *
      * @param size the number of {@code int} elements to allocate
      */
-    public IntPointer(int size) {
+    public IntPointer(long size) {
         try {
             allocateArray(size);
         } catch (UnsatisfiedLinkError e) {
@@ -84,7 +84,7 @@ public class IntPointer extends Pointer {
     public IntPointer() { }
     /** @see Pointer#Pointer(Pointer) */
     public IntPointer(Pointer p) { super(p); }
-    private native void allocateArray(int size);
+    private native void allocateArray(long size);
 
     /** @see Pointer#position(long) */
     @Override public IntPointer position(long position) {
@@ -147,7 +147,7 @@ public class IntPointer extends Pointer {
     /** @return {@code get(0)} */
     public int get() { return get(0); }
     /** @return the i-th {@code int} value of a native array */
-    public native int get(int i);
+    public native int get(long i);
     /** @return {@code put(0, j)} */
     public IntPointer put(int j) { return put(0, j); }
     /**

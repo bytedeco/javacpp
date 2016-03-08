@@ -63,7 +63,7 @@ public class ShortPointer extends Pointer {
      *
      * @param size the number of {@code short} elements to allocate
      */
-    public ShortPointer(int size) {
+    public ShortPointer(long size) {
         try {
             allocateArray(size);
         } catch (UnsatisfiedLinkError e) {
@@ -74,7 +74,7 @@ public class ShortPointer extends Pointer {
     public ShortPointer() { }
     /** @see Pointer#Pointer(Pointer) */
     public ShortPointer(Pointer p) { super(p); }
-    private native void allocateArray(int size);
+    private native void allocateArray(long size);
 
     /** @see Pointer#position(long) */
     @Override public ShortPointer position(long position) {
@@ -92,7 +92,7 @@ public class ShortPointer extends Pointer {
     /** @return {@code get(0)} */
     public short get() { return get(0); }
     /** @return the i-th {@code short} value of a native array */
-    public native short get(int i);
+    public native short get(long i);
     /** @return {@code put(0, s)} */
     public ShortPointer put(short s) { return put(0, s); }
     /**
