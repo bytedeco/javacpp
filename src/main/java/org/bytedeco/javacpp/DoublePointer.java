@@ -63,7 +63,7 @@ public class DoublePointer extends Pointer {
      *
      * @param size the number of {@code double} elements to allocate
      */
-    public DoublePointer(int size) {
+    public DoublePointer(long size) {
         try {
             allocateArray(size);
         } catch (UnsatisfiedLinkError e) {
@@ -74,7 +74,7 @@ public class DoublePointer extends Pointer {
     public DoublePointer() { }
     /** @see Pointer#Pointer(Pointer) */
     public DoublePointer(Pointer p) { super(p); }
-    private native void allocateArray(int size);
+    private native void allocateArray(long size);
 
     /** @see Pointer#position(long) */
     @Override public DoublePointer position(long position) {
@@ -92,7 +92,7 @@ public class DoublePointer extends Pointer {
     /** @return {@code get(0)} */
     public double get() { return get(0); }
     /** @return the i-th {@code double} value of a native array */
-    public native double get(int i);
+    public native double get(long i);
     /** @return {@code put(0, d)} */
     public DoublePointer put(double d) { return put(0, d); }
     /**

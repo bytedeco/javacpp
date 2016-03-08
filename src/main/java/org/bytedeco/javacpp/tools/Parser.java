@@ -2265,11 +2265,11 @@ public class Parser {
                 decl.text += "    /** Default native constructor. */\n" +
                              "    public " + name + "() { super((Pointer)null); allocate(); }\n" +
                              "    /** Native array allocator. Access with {@link Pointer#position(int)}. */\n" +
-                             "    public " + name + "(int size) { super((Pointer)null); allocateArray(size); }\n" +
+                             "    public " + name + "(long size) { super((Pointer)null); allocateArray(size); }\n" +
                              "    /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */\n" +
                              "    public " + name + "(Pointer p) { super(p); }\n" +
                              "    private native void allocate();\n" +
-                             "    private native void allocateArray(int size);\n" +
+                             "    private native void allocateArray(long size);\n" +
                              "    @Override public " + name + " position(int position) {\n" +
                              "        return (" + name + ")super.position(position);\n" +
                              "    }\n";
@@ -2280,8 +2280,8 @@ public class Parser {
                 }
                 if (defaultConstructor && (!abstractClass || ctx.virtualize) && !intConstructor) {
                     decl.text += "    /** Native array allocator. Access with {@link Pointer#position(int)}. */\n" +
-                                 "    public " + name + "(int size) { super((Pointer)null); allocateArray(size); }\n" +
-                                 "    private native void allocateArray(int size);\n" +
+                                 "    public " + name + "(long size) { super((Pointer)null); allocateArray(size); }\n" +
+                                 "    private native void allocateArray(long size);\n" +
                                  "    @Override public " + name + " position(int position) {\n" +
                                  "        return (" + name + ")super.position(position);\n" +
                                  "    }\n";

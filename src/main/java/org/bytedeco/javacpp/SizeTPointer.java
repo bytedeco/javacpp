@@ -40,7 +40,7 @@ public class SizeTPointer extends Pointer {
      *
      * @param size the number of {@code size_t} elements to allocate
      */
-    public SizeTPointer(int size) {
+    public SizeTPointer(long size) {
         try {
             allocateArray(size);
         } catch (UnsatisfiedLinkError e) {
@@ -79,5 +79,5 @@ public class SizeTPointer extends Pointer {
      * @param s the {@code size_t} value to copy
      * @return this
      */
-    public native SizeTPointer put(int i, long s);
+    public native SizeTPointer put(long i, long s);
 }
