@@ -76,16 +76,16 @@ public class LongPointer extends Pointer {
     public LongPointer(Pointer p) { super(p); }
     private native void allocateArray(int size);
 
-    /** @see Pointer#position(int) */
-    @Override public LongPointer position(int position) {
+    /** @see Pointer#position(long) */
+    @Override public LongPointer position(long position) {
         return super.position(position);
     }
-    /** @see Pointer#limit(int) */
-    @Override public LongPointer limit(int limit) {
+    /** @see Pointer#limit(long) */
+    @Override public LongPointer limit(long limit) {
         return super.limit(limit);
     }
-    /** @see Pointer#capacity(int) */
-    @Override public LongPointer capacity(int capacity) {
+    /** @see Pointer#capacity(long) */
+    @Override public LongPointer capacity(long capacity) {
         return super.capacity(capacity);
     }
 

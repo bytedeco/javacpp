@@ -51,25 +51,25 @@ public class SizeTPointer extends Pointer {
     public SizeTPointer() { }
     /** @see Pointer#Pointer(Pointer) */
     public SizeTPointer(Pointer p) { super(p); }
-    private native void allocateArray(int size);
+    private native void allocateArray(long size);
 
-    /** @see Pointer#position(int) */
-    @Override public SizeTPointer position(int position) {
+    /** @see Pointer#position(long) */
+    @Override public SizeTPointer position(long position) {
         return super.position(position);
     }
-    /** @see Pointer#limit(int) */
-    @Override public SizeTPointer limit(int limit) {
+    /** @see Pointer#limit(long) */
+    @Override public SizeTPointer limit(long limit) {
         return super.limit(limit);
     }
-    /** @see Pointer#capacity(int) */
-    @Override public SizeTPointer capacity(int capacity) {
+    /** @see Pointer#capacity(long) */
+    @Override public SizeTPointer capacity(long capacity) {
         return super.capacity(capacity);
     }
 
     /** @return {@code get(0)} */
     public long get() { return get(0); }
     /** @return the i-th {@code size_t} value of a native array */
-    @Cast("size_t") public native long get(int i);
+    @Cast("size_t") public native long get(long i);
     /** @return {@code put(0, s)} */
     public SizeTPointer put(long s) { return put(0, s); }
     /**

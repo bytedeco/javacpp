@@ -58,8 +58,8 @@ public abstract class FloatIndexer extends Indexer {
         if (direct) {
             return new FloatBufferIndexer(pointer.asBuffer(), sizes, strides);
         } else {
-            final int position = pointer.position();
-            float[] array = new float[pointer.limit() - position];
+            final long position = pointer.position();
+            float[] array = new float[(int) (pointer.limit() - position)];
             pointer.get(array);
             return new FloatArrayIndexer(array, sizes, strides) {
                 @Override public void release() {

@@ -76,16 +76,16 @@ public class FloatPointer extends Pointer {
     public FloatPointer(Pointer p) { super(p); }
     private native void allocateArray(int size);
 
-    /** @see Pointer#position(int) */
-    @Override public FloatPointer position(int position) {
+    /** @see Pointer#position(long) */
+    @Override public FloatPointer position(long position) {
         return super.position(position);
     }
-    /** @see Pointer#position(int) */
-    @Override public FloatPointer limit(int limit) {
+    /** @see Pointer#position(long) */
+    @Override public FloatPointer limit(long limit) {
         return super.limit(limit);
     }
-    /** @see Pointer#capacity(int) */
-    @Override public FloatPointer capacity(int capacity) {
+    /** @see Pointer#capacity(long) */
+    @Override public FloatPointer capacity(long capacity) {
         return super.capacity(capacity);
     }
 

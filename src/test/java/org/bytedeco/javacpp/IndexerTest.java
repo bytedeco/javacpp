@@ -22,7 +22,7 @@
 package org.bytedeco.javacpp;
 
 import java.io.File;
-import org.bytedeco.javacpp.annotation.MemberGetter;
+
 import org.bytedeco.javacpp.annotation.Platform;
 import org.bytedeco.javacpp.indexer.ByteIndexer;
 import org.bytedeco.javacpp.indexer.CharIndexer;

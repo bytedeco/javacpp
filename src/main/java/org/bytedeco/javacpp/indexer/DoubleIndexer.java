@@ -58,8 +58,8 @@ public abstract class DoubleIndexer extends Indexer {
         if (direct) {
             return new DoubleBufferIndexer(pointer.asBuffer(), sizes, strides);
         } else {
-            final int position = pointer.position();
-            double[] array = new double[pointer.limit() - position];
+            final long position = pointer.position();
+            double[] array = new double[(int) (pointer.limit() - position)];
             pointer.get(array);
             return new DoubleArrayIndexer(array, sizes, strides) {
                 @Override public void release() {

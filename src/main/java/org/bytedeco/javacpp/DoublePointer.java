@@ -76,16 +76,16 @@ public class DoublePointer extends Pointer {
     public DoublePointer(Pointer p) { super(p); }
     private native void allocateArray(int size);
 
-    /** @see Pointer#position(int) */
-    @Override public DoublePointer position(int position) {
+    /** @see Pointer#position(long) */
+    @Override public DoublePointer position(long position) {
         return super.position(position);
     }
-    /** @see Pointer#limit(int) */
-    @Override public DoublePointer limit(int limit) {
+    /** @see Pointer#limit(long) */
+    @Override public DoublePointer limit(long limit) {
         return super.limit(limit);
     }
-    /** @see Pointer#capacity(int) */
-    @Override public DoublePointer capacity(int capacity) {
+    /** @see Pointer#capacity(long) */
+    @Override public DoublePointer capacity(long capacity) {
         return super.capacity(capacity);
     }
 

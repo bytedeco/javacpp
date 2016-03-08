@@ -38,7 +38,7 @@ public class IntPointer extends Pointer {
      * @see #putString(String)
      */
     public IntPointer(String s) {
-        this(s.length()+1);
+        this(s.length() + 1);
         putString(s);
     }
     /**
@@ -86,30 +86,30 @@ public class IntPointer extends Pointer {
     public IntPointer(Pointer p) { super(p); }
     private native void allocateArray(int size);
 
-    /** @see Pointer#position(int) */
-    @Override public IntPointer position(int position) {
+    /** @see Pointer#position(long) */
+    @Override public IntPointer position(long position) {
         return super.position(position);
     }
-    /** @see Pointer#limit(int) */
-    @Override public IntPointer limit(int limit) {
+    /** @see Pointer#limit(long) */
+    @Override public IntPointer limit(long limit) {
         return super.limit(limit);
     }
-    /** @see Pointer#capacity(int) */
-    @Override public IntPointer capacity(int capacity) {
+    /** @see Pointer#capacity(long) */
+    @Override public IntPointer capacity(long capacity) {
         return super.capacity(capacity);
     }
 
     /** Returns the code points, assuming a null-terminated string if {@code limit <= position}. */
     public int[] getStringCodePoints() {
         if (limit > position) {
-            int[] array = new int[limit - position];
+            int[] array = new int[(int) (limit - position)];
             get(array);
             return array;
         }
 
         // This may be kind of slow, and should be moved to a JNI function.
         int[] buffer = new int[16];
-        int i = 0, j = position();
+        int i = 0, j = (int) position();
         while ((buffer[i] = position(j).get()) != 0) {
             i++; j++;
             if (i >= buffer.length) {

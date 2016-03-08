@@ -53,16 +53,16 @@ public class BoolPointer extends Pointer {
     public BoolPointer(Pointer p) { super(p); }
     private native void allocateArray(int size);
 
-    /** @see Pointer#position(int) */
-    @Override public BoolPointer position(int position) {
+    /** @see Pointer#position(long) */
+    @Override public BoolPointer position(long position) {
         return super.position(position);
     }
-    /** @see Pointer#limit(int) */
-    @Override public BoolPointer limit(int limit) {
+    /** @see Pointer#limit(long) */
+    @Override public BoolPointer limit(long limit) {
         return super.limit(limit);
     }
-    /** @see Pointer#capacity(int) */
-    @Override public BoolPointer capacity(int capacity) {
+    /** @see Pointer#capacity(long) */
+    @Override public BoolPointer capacity(long capacity) {
         return super.capacity(capacity);
     }
 

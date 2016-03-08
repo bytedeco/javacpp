@@ -296,11 +296,11 @@ public class Pointer implements AutoCloseable {
     /** The native address of this Pointer, which can be an array. */
     protected long address = 0;
     /** The index of the element of a native array that should be accessed. */
-    protected int position = 0;
+    protected long position = 0;
     /** The index of the first element that should not be accessed, or 0 if unknown. */
-    protected int limit = 0;
+    protected long limit = 0;
     /** The number of elements contained in this native array, or 0 if unknown. */
-    protected int capacity = 0;
+    protected long capacity = 0;
     /** The deallocator associated with this Pointer that should be called on garbage collection. */
     private Deallocator deallocator = null;
 
@@ -319,7 +319,7 @@ public class Pointer implements AutoCloseable {
     }
 
     /** Returns {@link #position}. */
-    public int position() {
+    public long position() {
         return position;
     }
     /**
@@ -329,13 +329,13 @@ public class Pointer implements AutoCloseable {
      * @param position the new position
      * @return this
      */
-    public <P extends Pointer> P position(int position) {
+    public <P extends Pointer> P position(long position) {
         this.position = position;
         return (P)this;
     }
 
     /** Returns {@link #limit}. */
-    public int limit() {
+    public long limit() {
         return limit;
     }
     /**
@@ -345,13 +345,13 @@ public class Pointer implements AutoCloseable {
      * @param limit the new limit
      * @return this
      */
-    public <P extends Pointer> P limit(int limit) {
+    public <P extends Pointer> P limit(long limit) {
         this.limit = limit;
         return (P)this;
     }
 
     /** Returns {@link #capacity}. */
-    public int capacity() {
+    public long capacity() {
         return capacity;
     }
     /**
@@ -361,7 +361,7 @@ public class Pointer implements AutoCloseable {
      * @param capacity the new capacity
      * @return this
      */
-    public <P extends Pointer> P capacity(int capacity) {
+    public <P extends Pointer> P capacity(long capacity) {
         this.limit = capacity;
         this.capacity = capacity;
         return (P)this;
@@ -477,8 +477,8 @@ public class Pointer implements AutoCloseable {
             throw new IllegalArgumentException("limit < position: (" + limit + " < " + position + ")");
         }
         int valueSize = sizeof();
-        int arrayPosition = position;
-        int arrayLimit = limit;
+        long arrayPosition = position;
+        long arrayLimit = limit;
         position = valueSize * arrayPosition;
         limit = valueSize * (arrayLimit <= 0 ? arrayPosition + 1 : arrayLimit);
         ByteBuffer b = asDirectBuffer().order(ByteOrder.nativeOrder());
@@ -522,7 +522,7 @@ public class Pointer implements AutoCloseable {
         }
         int size = sizeof();
         int psize = p.sizeof();
-        int length = psize * (p.limit <= 0 ? 1 : p.limit - p.position);
+        long length = psize * (p.limit <= 0 ? 1 : p.limit - p.position);
         position *= size;
         p.position *= psize;
         memcpy(this, p, length);
@@ -544,7 +544,7 @@ public class Pointer implements AutoCloseable {
             throw new IllegalArgumentException("limit < position: (" + limit + " < " + position + ")");
         }
         int size = sizeof();
-        int length = size * (limit <= 0 ? 1 : limit - position);
+        long length = size * (limit <= 0 ? 1 : limit - position);
         position *= size;
         memset(this, b, length);
         position /= size;

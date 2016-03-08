@@ -86,30 +86,30 @@ public class CharPointer extends Pointer {
     public CharPointer(Pointer p) { super(p); }
     private native void allocateArray(int size);
 
-    /** @see Pointer#position(int) */
-    @Override public CharPointer position(int position) {
+    /** @see Pointer#position(long) */
+    @Override public CharPointer position(long position) {
         return super.position(position);
     }
-    /** @see Pointer#limit(int) */
-    @Override public CharPointer limit(int limit) {
+    /** @see Pointer#limit(long) */
+    @Override public CharPointer limit(long limit) {
         return super.limit(limit);
     }
-    /** @see Pointer#capacity(int) */
-    @Override public CharPointer capacity(int capacity) {
+    /** @see Pointer#capacity(long) */
+    @Override public CharPointer capacity(long capacity) {
         return super.capacity(capacity);
     }
 
     /** Returns the chars, assuming a null-terminated string if {@code limit <= position}. */
     public char[] getStringChars() {
         if (limit > position) {
-            char[] array = new char[limit - position];
+            char[] array = new char[(int) (limit - position)];
             get(array);
             return array;
         }
 
         // This may be kind of slow, and should be moved to a JNI function.
         char[] buffer = new char[16];
-        int i = 0, j = position();
+        int i = 0, j = (int) position();
         while ((buffer[i] = position(j).get()) != 0) {
             i++; j++;
             if (i >= buffer.length) {
