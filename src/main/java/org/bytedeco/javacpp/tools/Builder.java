@@ -43,7 +43,6 @@ import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
 import org.bytedeco.javacpp.ClassProperties;
 import org.bytedeco.javacpp.Loader;
-import org.bytedeco.javacpp.annotation.Platform;
 
 /**
  * The Builder is responsible for coordinating efforts between the Parser, the
@@ -156,7 +155,7 @@ public class Builder {
      * @throws IOException
      * @throws InterruptedException
      */
-    int compile(String sourceFilename, String outputFilename, ClassProperties properties)
+    int compile(String sourceFilename, String outputFilename, ClassProperties properties, File workingDirectory)
             throws IOException, InterruptedException {
         ArrayList<String> command = new ArrayList<String>();
 
@@ -314,6 +313,9 @@ public class Builder {
         logger.info(text);
 
         ProcessBuilder pb = new ProcessBuilder(command);
+        // Use the library output path as the working directory so that
+        // intermediate build files from MSVC are dumped there
+        pb.directory(workingDirectory);
         if (environmentVariables != null) {
             pb.environment().putAll(environmentVariables);
         }
@@ -368,7 +370,7 @@ public class Builder {
             if (compile) {
                 String libraryFilename = outputPath.getPath() + File.separator + libraryName;
                 logger.info("Compiling " + libraryFilename);
-                int exitValue = compile(sourceFilename, libraryFilename, p);
+                int exitValue = compile(sourceFilename, libraryFilename, p, outputPath);
                 if (exitValue == 0) {
                     new File(sourceFilename).delete();
                     outputFile = new File(libraryFilename);
