@@ -201,8 +201,8 @@ public class Parser {
                 }
                 decl.text += "    public " + containerType.javaName + "()       { allocate();  }\n" + (!resizable ? ""
                            : "    public " + containerType.javaName + "(long n) { allocate(n); }\n")
-                           + "    private native void allocate();\n"                                + (!resizable ? ""
-                           : "    private native void allocate(@Cast(\"size_t\") long n);\n")
+                           + "    @NoException private native void allocate();\n"                                + (!resizable ? ""
+                           : "    @NoException private native void allocate(@Cast(\"size_t\") long n);\n")
                            + "    public native @Name(\"operator=\") @ByRef " + containerType.javaName + " put(@ByRef " + containerType.javaName + " x);\n\n";
 
                 for (int i = 0; i < dim; i++) {
@@ -1036,8 +1036,8 @@ public class Parser {
                         "    public    " + functionType + "(Pointer p) { super(p); }\n" +
                     (groupInfo != null ? "" :
                         "    protected " + functionType + "() { allocate(); }\n" +
-                        "    private native void allocate();\n") +
-                        "    public native " + type.annotations + type.javaName + " call" +
+                        "    @NoException private native void allocate();\n") +
+                        "    @NoException public native " + type.annotations + type.javaName + " call" +
                     (groupInfo != null ? "(" + groupInfo.pointerTypes[0] + " o" + (dcl.parameters.list.charAt(1) == ')' ?
                             ")" : ", " + dcl.parameters.list.substring(1)) : dcl.parameters.list) + ";\n" +
                         "}\n";
@@ -1592,7 +1592,7 @@ public class Parser {
             }
             if (type.constructor && params != null) {
                 decl.text += "public " + context.shorten(context.javaName) + dcl.parameters.list + " { super((Pointer)null); allocate" + params.names + "; }\n" +
-                             "private native void allocate" + dcl.parameters.list + ";\n";
+                             "@NoException private native void allocate" + dcl.parameters.list + ";\n";
             } else {
                 decl.text += modifiers + type.annotations + type.javaName + " " + dcl.javaName + dcl.parameters.list + ";\n";
             }
@@ -2268,8 +2268,8 @@ public class Parser {
                              "    public " + name + "(int size) { super((Pointer)null); allocateArray(size); }\n" +
                              "    /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */\n" +
                              "    public " + name + "(Pointer p) { super(p); }\n" +
-                             "    private native void allocate();\n" +
-                             "    private native void allocateArray(int size);\n" +
+                             "    @NoException private native void allocate();\n" +
+                             "    @NoException private native void allocateArray(int size);\n" +
                              "    @Override public " + name + " position(int position) {\n" +
                              "        return (" + name + ")super.position(position);\n" +
                              "    }\n";
@@ -2281,7 +2281,7 @@ public class Parser {
                 if (defaultConstructor && (!abstractClass || ctx.virtualize) && !intConstructor) {
                     decl.text += "    /** Native array allocator. Access with {@link Pointer#position(int)}. */\n" +
                                  "    public " + name + "(int size) { super((Pointer)null); allocateArray(size); }\n" +
-                                 "    private native void allocateArray(int size);\n" +
+                                 "    @NoException private native void allocateArray(int size);\n" +
                                  "    @Override public " + name + " position(int position) {\n" +
                                  "        return (" + name + ")super.position(position);\n" +
                                  "    }\n";
