@@ -825,7 +825,19 @@ public class Parser {
                     dimCast += "[" + dims[i] + "]";
                 }
             }
-            cast += dimCast.length() > 0 ? "(*)" + dimCast : "*";
+            
+            if (!dimCast.isEmpty()) {
+                if (dims[0] != -1) {
+                    // Annotate with the first dimension's value
+                    cast += "(*\"+/*[" + dims[0] + "]*/\")";
+                } else {
+                    // Unknown size
+                    cast += "(*)";
+                }
+                cast += dimCast;
+            } else {
+                cast += "*";
+            }
         }
         if (pointerAsArray && dcl.indirections > (type.anonymous ? 0 : 1)) {
             // treat second indirection as an array, unless anonymous
