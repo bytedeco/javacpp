@@ -829,7 +829,7 @@ public class Parser {
             if (!dimCast.isEmpty()) {
                 if (dims[0] != -1) {
                     // Annotate with the first dimension's value
-                    cast += "(*\"+/*[" + dims[0] + "]*/\")";
+                    cast += "(* /*[" + dims[0] + "]*/ )";
                 } else {
                     // Unknown size
                     cast += "(*)";
