@@ -89,6 +89,10 @@ public class BuildMojo extends AbstractMojo {
     @Parameter(property = "javacpp.compile", defaultValue = "true")
     boolean compile = true;
 
+    /** Delete generated C++ JNI files after compilation */
+    @Parameter(property = "javacpp.deleteJniFiles", defaultValue = "true")
+    boolean deleteJniFiles = true;
+
     /** Generate header file with declarations of callbacks functions. */
     @Parameter(property = "javacpp.header", defaultValue = "false")
     boolean header = false;
@@ -161,6 +165,7 @@ public class BuildMojo extends AbstractMojo {
                 log.debug("outputDirectory: " + outputDirectory);
                 log.debug("outputName: " + outputName);
                 log.debug("compile: " + compile);
+                log.debug("deleteJniFiles: " + deleteJniFiles);
                 log.debug("header: " + header);
                 log.debug("copyLibs: " + copyLibs);
                 log.debug("jarPrefix: " + jarPrefix);
@@ -193,6 +198,7 @@ public class BuildMojo extends AbstractMojo {
                     .outputDirectory(outputDirectory)
                     .outputName(outputName)
                     .compile(compile)
+                    .deleteJniFiles(deleteJniFiles)
                     .header(header)
                     .copyLibs(copyLibs)
                     .jarPrefix(jarPrefix)
