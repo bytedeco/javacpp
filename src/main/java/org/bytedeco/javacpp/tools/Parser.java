@@ -75,7 +75,7 @@ public class Parser {
         this.logger = p.logger;
         this.properties = p.properties;
         this.infoMap = p.infoMap;
-        this.tokens = new TokenIndexer(infoMap, new Tokenizer(text).tokenize());
+        this.tokens = new TokenIndexer(infoMap, new Tokenizer(text).tokenize(), false);
         this.lineSeparator = p.lineSeparator;
     }
 
@@ -1518,6 +1518,9 @@ public class Parser {
             return true;
         } else if (type.staticMember || context.javaName == null) {
             modifiers = "public static native ";
+            if (tokens.isCFile) {
+                modifiers = "@NoException " + modifiers;
+            }
         }
 
         List<Declarator> prevDcl = new ArrayList<Declarator>();
@@ -2667,7 +2670,11 @@ public class Parser {
         }
     }
 
-    void parse(Context context, DeclarationList declList, String[] includePath, String include) throws IOException, ParserException {
+    void parse(Context context,
+               DeclarationList declList,
+               String[] includePath,
+               String include,
+               boolean isCFile) throws IOException, ParserException {
         List<Token> tokenList = new ArrayList<Token>();
         File file = null;
         String filename = include;
@@ -2717,7 +2724,7 @@ public class Parser {
         token.type = Token.COMMENT;
         token.spacing = "\n";
         tokenList.add(token);
-        tokens = new TokenIndexer(infoMap, tokenList.toArray(new Token[tokenList.size()]));
+        tokens = new TokenIndexer(infoMap, tokenList.toArray(new Token[tokenList.size()]), isCFile);
         declarations(context, declList);
     }
 
@@ -2727,9 +2734,18 @@ public class Parser {
     public File parse(File outputDirectory, String[] classPath, Class cls) throws IOException, ParserException {
         ClassProperties allProperties = Loader.loadProperties(cls, properties, true);
         ClassProperties clsProperties = Loader.loadProperties(cls, properties, false);
+        
+        // Capture c-includes from "class" and "all" properties
+        List<String> cIncludes = new ArrayList<>();
+        cIncludes.addAll(clsProperties.get("platform.cinclude"));
+        cIncludes.addAll(allProperties.get("platform.cinclude"));
+        
+        // Capture class includes
         List<String> clsIncludes = new ArrayList<String>();
         clsIncludes.addAll(clsProperties.get("platform.include"));
         clsIncludes.addAll(clsProperties.get("platform.cinclude"));
+        
+        // Capture all includes
         List<String> allIncludes = new ArrayList<String>();
         allIncludes.addAll(allProperties.get("platform.include"));
         allIncludes.addAll(allProperties.get("platform.cinclude"));
@@ -2804,14 +2820,16 @@ public class Parser {
         DeclarationList declList = new DeclarationList();
         for (String include : allIncludes) {
             if (!clsIncludes.contains(include)) {
-                parse(context, declList, includePaths, include);
+                boolean isCFile = cIncludes.contains(include);
+                parse(context, declList, includePaths, include, isCFile);
             }
         }
         declList = new DeclarationList(declList);
         containers(context, declList);
         for (String include : clsIncludes) {
             if (allIncludes.contains(include)) {
-                parse(context, declList, includePaths, include);
+                boolean isCFile = cIncludes.contains(include);
+                parse(context, declList, includePaths, include, isCFile);
             }
         }
 

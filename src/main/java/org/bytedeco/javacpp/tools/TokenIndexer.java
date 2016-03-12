@@ -32,9 +32,10 @@ import java.util.List;
  * @author Samuel Audet
  */
 class TokenIndexer {
-    TokenIndexer(InfoMap infoMap, Token[] array) {
+    TokenIndexer(InfoMap infoMap, Token[] array, boolean isCFile) {
         this.infoMap = infoMap;
         this.array = array;
+        this.isCFile = isCFile;
     }
 
     /** Set to true to disable temporarily the preprocessor. */
@@ -45,6 +46,8 @@ class TokenIndexer {
     Token[] array = null;
     /** The current index, in the array of tokens. Used by {@link #get(int)} and {@link #next()}. */
     int index = 0;
+    /** Whether the file came from the C-include path */
+    final boolean isCFile;
 
     Token[] filter(Token[] array, int index) {
         if (index + 1 < array.length && array[index].match('#') &&
