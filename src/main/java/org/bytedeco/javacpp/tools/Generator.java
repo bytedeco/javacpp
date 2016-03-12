@@ -1743,6 +1743,15 @@ public class Generator implements Closeable {
             if ("void*".equals(typeName[0]) && !methodInfo.parameterTypes[j].isAnnotationPresent(Opaque.class)) {
                 typeName[0] = "char*";
             }
+            
+            // If const array, then use JNI_ABORT to avoid copying unmodified data back to JVM
+            final String releaseArrayFlag;
+            if (cast.contains(" const *") || cast.startsWith("(const ")) {
+                releaseArrayFlag = "JNI_ABORT";
+            } else {
+                releaseArrayFlag = "0";
+            }
+
             if (Pointer.class.isAssignableFrom(methodInfo.parameterTypes[j])) {
                 if (adapterInfo != null) {
                     for (int k = 0; k < adapterInfo.argc; k++) {
@@ -1777,11 +1786,11 @@ public class Generator implements Closeable {
                 out.print("    if (arg" + j + " != NULL) ");
                 if (methodInfo.valueGetter || methodInfo.valueSetter ||
                         methodInfo.memberGetter || methodInfo.memberSetter) {
-                    out.println("env->ReleasePrimitiveArrayCritical(arg" + j + ", ptr" + j + ", 0);");
+                    out.println("env->ReleasePrimitiveArrayCritical(arg" + j + ", ptr" + j + ", " + releaseArrayFlag + ");");
                 } else {
                     String componentType = methodInfo.parameterTypes[j].getComponentType().getName();
                     String componentTypeUpperCase = Character.toUpperCase(componentType.charAt(0)) + componentType.substring(1);
-                    out.println("env->Release" + componentTypeUpperCase + "ArrayElements(arg" + j + ", (j" + componentType + "*)ptr" + j + ", 0);");
+                    out.println("env->Release" + componentTypeUpperCase + "ArrayElements(arg" + j + ", (j" + componentType + "*)ptr" + j + ", " + releaseArrayFlag + ");");
                 }
             } else if (Buffer.class.isAssignableFrom(methodInfo.parameterTypes[j])
                     && methodInfo.parameterTypes[j] != Buffer.class) {
@@ -1796,7 +1805,10 @@ public class Generator implements Closeable {
                 String parameterSimpleName = methodInfo.parameterTypes[j].getSimpleName();
                 parameterSimpleName = parameterSimpleName.substring(0, parameterSimpleName.length() - 6);
                 String parameterSimpleNameLowerCase = Character.toLowerCase(parameterSimpleName.charAt(0)) + parameterSimpleName.substring(1);
-                out.println("env->Release" + parameterSimpleName + "ArrayElements(arr" + j + ", (j" + parameterSimpleNameLowerCase + "*)ptr" + j + ", 0);");
+                
+                out.println("env->Release" + parameterSimpleName + "ArrayElements(arr" + j + ", " + 
+                            "(j" + parameterSimpleNameLowerCase + "*)ptr" + j + ", " + 
+                            releaseArrayFlag + ");");
             }
         }
     }
