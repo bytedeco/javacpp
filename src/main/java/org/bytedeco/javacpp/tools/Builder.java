@@ -34,13 +34,14 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.LinkedHashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
+
 import org.bytedeco.javacpp.ClassProperties;
 import org.bytedeco.javacpp.Loader;
 
@@ -375,7 +376,12 @@ public class Builder {
                 logger.info("Compiling " + libraryFilename);
                 int exitValue = compile(sourceFilename, libraryFilename, p, outputPath);
                 if (exitValue == 0) {
-                    new File(sourceFilename).delete();
+                    if (deleteJniFiles) {
+                        logger.info("Deleting " + sourceFilename);
+                        new File(sourceFilename).delete();
+                    } else {
+                        logger.info("Keeping " + sourceFilename);
+                    }
                     outputFile = new File(libraryFilename);
                 } else {
                     System.exit(exitValue);
@@ -467,6 +473,8 @@ public class Builder {
     String jarPrefix = null;
     /** If true, compiles the generated source file to a shared library and deletes source. */
     boolean compile = true;
+    /** If true, preserves the generated C++ JNI files after compilation */
+    boolean deleteJniFiles = true;
     /** If true, also generates C++ header files containing declarations of callback functions. */
     boolean header = false;
     /** If true, also copies to the output directory dependent shared libraries (link and preload). */
@@ -503,6 +511,11 @@ public class Builder {
     /** Sets the {@link #compile} field to the argument. */
     public Builder compile(boolean compile) {
         this.compile = compile;
+        return this;
+    }
+    /** Sets the {@link #deleteJniFiles} field to the argument. */
+    public Builder deleteJniFiles(boolean deleteJniFiles) {
+        this.deleteJniFiles = deleteJniFiles;
         return this;
     }
     /** Sets the {@link #header} field to the argument. */
@@ -719,6 +732,7 @@ public class Builder {
         System.out.println("    -d <directory>         Output all generated files to directory");
         System.out.println("    -o <name>              Output everything in a file named after given name");
         System.out.println("    -nocompile             Do not compile or delete the generated source files");
+        System.out.println("    -nodelete              Do not delete generated C++ JNI files after compilation");
         System.out.println("    -header                Generate header file with declarations of callbacks functions");
         System.out.println("    -copylibs              Copy to output directory dependent libraries (link and preload)");
         System.out.println("    -jarprefix <prefix>    Also create a JAR file named \"<prefix>-<platform>.jar\"");
@@ -750,6 +764,8 @@ public class Builder {
                 builder.outputName(args[++i]);
             } else if ("-cpp".equals(args[i]) || "-nocompile".equals(args[i])) {
                 builder.compile(false);
+            } else if ("-nodelete".equals(args[i])) {
+                builder.deleteJniFiles(false);
             } else if ("-header".equals(args[i])) {
                 builder.header(true);
             } else if ("-copylibs".equals(args[i])) {
