@@ -402,7 +402,7 @@ public class Pointer implements AutoCloseable {
     }
 
     /** Calls {@code deallocate()}. */
-    @Override public void close() throws Exception {
+    @Override public void close() {
         deallocate();
     }
 
