@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2015 Samuel Audet
+ * Copyright (C) 2011-2016 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -109,7 +109,7 @@ public class Pointer implements AutoCloseable {
      * @param deallocatorAddress the pointer to the native deallocation function
      * @see NativeDeallocator
      */
-    void init(long allocatedAddress, int allocatedCapacity, long ownerAddress, long deallocatorAddress) {
+    void init(long allocatedAddress, long allocatedCapacity, long ownerAddress, long deallocatorAddress) {
         address = allocatedAddress;
         position = 0;
         limit = allocatedCapacity;

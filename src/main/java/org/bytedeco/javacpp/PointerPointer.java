@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2014 Samuel Audet
+ * Copyright (C) 2011-2016 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@ import java.io.UnsupportedEncodingException;
  * All operations take into account the position and limit, when appropriate.
  * <p>
  * To support higher levels of indirection, we can create out of the Pointer
- * objects returned by {@link #get(int)} additional PointerPointer objects.
+ * objects returned by {@link #get(long)} additional PointerPointer objects.
  *
  * @author Samuel Audet
  */
@@ -144,13 +144,13 @@ public class PointerPointer<P extends Pointer> extends Pointer {
 
     /** @return {@code get(BytePointer.class, i).getString()}
      *  @see BytePointer#getString() */
-    public String getString(int i) {
+    public String getString(long i) {
         BytePointer p = (BytePointer)get((Class<P>)BytePointer.class, i);
         return p != null ? p.getString() : null;
     }
     /** @return {@code get(BytePointer.class, i).getString(charsetName)}
      *  @see BytePointer#getString(String) */
-    public String getString(int i, String charsetName) throws UnsupportedEncodingException {
+    public String getString(long i, String charsetName) throws UnsupportedEncodingException {
         BytePointer p = (BytePointer)get((Class<P>)BytePointer.class, i);
         return p != null ? p.getString(charsetName) : null;
     }
@@ -303,9 +303,9 @@ public class PointerPointer<P extends Pointer> extends Pointer {
     /** @return {@code get(cls, 0)} */
     public P get(Class<P> cls) { return get(cls, 0); }
     /** @return the i-th Pointer value of a native array */
-    public Pointer get(int i) { return get((Class<P>)Pointer.class, i); }
+    public Pointer get(long i) { return get((Class<P>)Pointer.class, i); }
     /** @return in the given class the i-th Pointer value of a native array */
-    public native P get(Class<P> cls, int i);
+    public native P get(Class<P> cls, long i);
     /** @return {@code put(0, p)} */
     public PointerPointer<P> put(Pointer p) { return put(0, p); }
     /**
@@ -315,5 +315,5 @@ public class PointerPointer<P extends Pointer> extends Pointer {
      * @param p the Pointer value to copy
      * @return this
      */
-    public native PointerPointer<P> put(int i, Pointer p);
+    public native PointerPointer<P> put(long i, Pointer p);
 }

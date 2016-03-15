@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2015 Samuel Audet
+ * Copyright (C) 2013-2016 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -2242,7 +2242,7 @@ public class Parser {
             declarations(ctx, declList2);
         }
         String modifiers = "public static ";
-        boolean implicitConstructor = true, defaultConstructor = false, intConstructor = false,
+        boolean implicitConstructor = true, defaultConstructor = false, longConstructor = false,
                 pointerConstructor = false, abstractClass = info != null && info.purify && !ctx.virtualize,
                 havePureConst = false, haveVariables = false;
         for (Declaration d : declList2) {
@@ -2250,7 +2250,7 @@ public class Parser {
                 implicitConstructor = false;
                 Declarator[] paramDcls = d.declarator.parameters.declarators;
                 defaultConstructor |= (paramDcls.length == 0 || (paramDcls.length == 1 && paramDcls[0].type.javaName.equals("void"))) && !d.inaccessible;
-                intConstructor |= paramDcls.length == 1 && paramDcls[0].type.javaName.equals("int") && !d.inaccessible;
+                longConstructor |= paramDcls.length == 1 && paramDcls[0].type.javaName.equals("long") && !d.inaccessible;
                 pointerConstructor |= paramDcls.length == 1 && paramDcls[0].type.javaName.equals("Pointer") && !d.inaccessible;
             }
             abstractClass |= d.abstractMember;
@@ -2279,13 +2279,13 @@ public class Parser {
             if (implicitConstructor && (!abstractClass || ctx.virtualize)) {
                 decl.text += "    /** Default native constructor. */\n" +
                              "    public " + name + "() { super((Pointer)null); allocate(); }\n" +
-                             "    /** Native array allocator. Access with {@link Pointer#position(int)}. */\n" +
+                             "    /** Native array allocator. Access with {@link Pointer#position(long)}. */\n" +
                              "    public " + name + "(long size) { super((Pointer)null); allocateArray(size); }\n" +
                              "    /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */\n" +
                              "    public " + name + "(Pointer p) { super(p); }\n" +
                              "    private native void allocate();\n" +
                              "    private native void allocateArray(long size);\n" +
-                             "    @Override public " + name + " position(int position) {\n" +
+                             "    @Override public " + name + " position(long position) {\n" +
                              "        return (" + name + ")super.position(position);\n" +
                              "    }\n";
             } else {
@@ -2293,11 +2293,11 @@ public class Parser {
                     decl.text += "    /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */\n" +
                                  "    public " + name + "(Pointer p) { super(p); }\n";
                 }
-                if (defaultConstructor && (!abstractClass || ctx.virtualize) && !intConstructor) {
-                    decl.text += "    /** Native array allocator. Access with {@link Pointer#position(int)}. */\n" +
+                if (defaultConstructor && (!abstractClass || ctx.virtualize) && !longConstructor) {
+                    decl.text += "    /** Native array allocator. Access with {@link Pointer#position(long)}. */\n" +
                                  "    public " + name + "(long size) { super((Pointer)null); allocateArray(size); }\n" +
                                  "    private native void allocateArray(long size);\n" +
-                                 "    @Override public " + name + " position(int position) {\n" +
+                                 "    @Override public " + name + " position(long position) {\n" +
                                  "        return (" + name + ")super.position(position);\n" +
                                  "    }\n";
                 }

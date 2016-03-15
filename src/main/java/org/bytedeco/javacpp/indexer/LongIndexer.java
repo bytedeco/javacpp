@@ -59,7 +59,7 @@ public abstract class LongIndexer extends Indexer {
             return new LongBufferIndexer(pointer.asBuffer(), sizes, strides);
         } else {
             final long position = pointer.position();
-            long[] array = new long[(int) (pointer.limit() - position)];
+            long[] array = new long[(int)Math.min(pointer.limit() - position, Integer.MAX_VALUE)];
             pointer.get(array);
             return new LongArrayIndexer(array, sizes, strides) {
                 @Override public void release() {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2015 Samuel Audet
+ * Copyright (C) 2011-2016 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -102,14 +102,14 @@ public class CharPointer extends Pointer {
     /** Returns the chars, assuming a null-terminated string if {@code limit <= position}. */
     public char[] getStringChars() {
         if (limit > position) {
-            char[] array = new char[(int) (limit - position)];
+            char[] array = new char[(int)Math.min(limit - position, Integer.MAX_VALUE)];
             get(array);
             return array;
         }
 
         // This may be kind of slow, and should be moved to a JNI function.
         char[] buffer = new char[16];
-        int i = 0, j = (int) position();
+        int i = 0, j = (int)Math.min(position(), Integer.MAX_VALUE);
         while ((buffer[i] = position(j).get()) != 0) {
             i++; j++;
             if (i >= buffer.length) {
@@ -153,7 +153,7 @@ public class CharPointer extends Pointer {
      * @param c the {@code char} value to copy
      * @return this
      */
-    public native CharPointer put(int i, char c);
+    public native CharPointer put(long i, char c);
 
     /** @return {@code get(array, 0, array.length)} */
     public CharPointer get(char[] array) { return get(array, 0, array.length); }

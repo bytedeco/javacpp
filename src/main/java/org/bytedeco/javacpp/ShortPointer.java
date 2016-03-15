@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2013 Samuel Audet
+ * Copyright (C) 2011-2016 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -102,7 +102,7 @@ public class ShortPointer extends Pointer {
      * @param s the {@code short} value to copy
      * @return this
      */
-    public native ShortPointer put(int i, short s);
+    public native ShortPointer put(long i, short s);
 
     /** @return {@code get(array, 0, array.length)} */
     public ShortPointer get(short[] array) { return get(array, 0, array.length); }

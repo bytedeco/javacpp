@@ -59,7 +59,7 @@ public abstract class CharIndexer extends Indexer {
             return new CharBufferIndexer(pointer.asBuffer(), sizes, strides);
         } else {
             final long position = pointer.position();
-            char[] array = new char[(int) (pointer.limit() - position)];
+            char[] array = new char[(int)Math.min(pointer.limit() - position, Integer.MAX_VALUE)];
             pointer.get(array);
             return new CharArrayIndexer(array, sizes, strides) {
                 @Override public void release() {

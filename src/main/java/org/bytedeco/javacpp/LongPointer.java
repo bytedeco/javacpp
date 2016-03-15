@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2013 Samuel Audet
+ * Copyright (C) 2011-2016 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -102,7 +102,7 @@ public class LongPointer extends Pointer {
      * @param l the {@code long long} value to copy
      * @return this
      */
-    public native LongPointer put(int i, long l);
+    public native LongPointer put(long i, long l);
 
     /** @return {@code get(array, 0, array.length)} */
     public LongPointer get(long[] array) { return get(array, 0, array.length); }

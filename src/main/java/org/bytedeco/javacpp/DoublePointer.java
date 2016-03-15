@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2013 Samuel Audet
+ * Copyright (C) 2011-2016 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -102,7 +102,7 @@ public class DoublePointer extends Pointer {
      * @param d the {@code double} value to copy
      * @return this
      */
-    public native DoublePointer put(int i, double d);
+    public native DoublePointer put(long i, double d);
 
     /** @return {@code get(array, 0, array.length)} */
     public DoublePointer get(double[] array) { return get(array, 0, array.length); }

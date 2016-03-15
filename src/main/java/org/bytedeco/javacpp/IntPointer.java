@@ -102,14 +102,14 @@ public class IntPointer extends Pointer {
     /** Returns the code points, assuming a null-terminated string if {@code limit <= position}. */
     public int[] getStringCodePoints() {
         if (limit > position) {
-            int[] array = new int[(int) (limit - position)];
+            int[] array = new int[(int)Math.min(limit - position, Integer.MAX_VALUE)];
             get(array);
             return array;
         }
 
         // This may be kind of slow, and should be moved to a JNI function.
         int[] buffer = new int[16];
-        int i = 0, j = (int) position();
+        int i = 0, j = (int)Math.min(position(), Integer.MAX_VALUE);
         while ((buffer[i] = position(j).get()) != 0) {
             i++; j++;
             if (i >= buffer.length) {
@@ -157,7 +157,7 @@ public class IntPointer extends Pointer {
      * @param j the {@code int} value to copy
      * @return this
      */
-    public native IntPointer put(int i, int j);
+    public native IntPointer put(long i, int j);
 
     /** @return {@code get(array, 0, array.length)} */
     public IntPointer get(int[] array) { return get(array, 0, array.length); }

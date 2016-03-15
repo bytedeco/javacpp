@@ -59,7 +59,7 @@ public abstract class ShortIndexer extends Indexer {
             return new ShortBufferIndexer(pointer.asBuffer(), sizes, strides);
         } else {
             final long position = pointer.position();
-            short[] array = new short[(int) (pointer.limit() - position)];
+            short[] array = new short[(int)Math.min(pointer.limit() - position, Integer.MAX_VALUE)];
             pointer.get(array);
             return new ShortArrayIndexer(array, sizes, strides) {
                 @Override public void release() {

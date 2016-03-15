@@ -1,4 +1,5 @@
 
+ * Lengthen the `position`, `limit`, and `capacity` fields of `Pointer` using `long`
  * Prevent creating text relocations for shared libraries on Android, which are rejected by recent versions of the SDK
  * Use the `outputDirectory` as the compiler's working directory ([pull #89](https://github.com/bytedeco/javacpp/issues/89))
  * Comment with first dimension of multidimensional array inside `@Cast` ([pull #87](https://github.com/bytedeco/javacpp/issues/87))

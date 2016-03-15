@@ -59,7 +59,7 @@ public abstract class UByteIndexer extends Indexer {
             return new UByteBufferIndexer(pointer.asBuffer(), sizes, strides);
         } else {
             final long position = pointer.position();
-            byte[] array = new byte[(int) (pointer.limit() - position)];
+            byte[] array = new byte[(int)Math.min(pointer.limit() - position, Integer.MAX_VALUE)];
             pointer.get(array);
             return new UByteArrayIndexer(array, sizes, strides) {
                 @Override public void release() {

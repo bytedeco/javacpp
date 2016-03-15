@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2013 Samuel Audet
+ * Copyright (C) 2011-2016 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -80,5 +80,5 @@ public class CLongPointer extends Pointer {
      * @param l the {@code long} value to copy
      * @return this
      */
-    public native CLongPointer put(int i, long l);
+    public native CLongPointer put(long i, long l);
 }
