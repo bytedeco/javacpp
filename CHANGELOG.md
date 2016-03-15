@@ -1,4 +1,11 @@
 
+ * Prevent creating text relocations for shared libraries on Android, which are rejected by recent versions of the SDK
+ * Use the `outputDirectory` as the compiler's working directory ([pull #89](https://github.com/bytedeco/javacpp/issues/89))
+ * Comment with first dimension of multidimensional array inside `@Cast` ([pull #87](https://github.com/bytedeco/javacpp/issues/87))
+ * Remove `throws Exception` from `Pointer.close()` since destructors do not typically throw exceptions ([pull #86](https://github.com/bytedeco/javacpp/issues/86))
+ * Add `-nodelete` flag to keep generated C++ files after compilation ([pull #85](https://github.com/bytedeco/javacpp/issues/85))
+ * Annotate functions originating from `cinclude` with `@NoException` ([pull #84](https://github.com/bytedeco/javacpp/issues/84))
+ * Call `JNI_ABORT` on release of `const` arrays ([pull #83](https://github.com/bytedeco/javacpp/issues/83))
  * Add support for C++11 `default` and `delete` on function declarations ([issue #80](https://github.com/bytedeco/javacpp/issues/80))
  * Add support for C++11 typed `enum`, with or without enumerator list ([issue #78](https://github.com/bytedeco/javacpp/issues/78))
  * Add missing space for `const` types when normalizing template arguments in `Parser` ([issue bytedeco/javacpp-presets#165](https://github.com/bytedeco/javacpp-presets/issues/165))
