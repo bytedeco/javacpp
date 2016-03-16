@@ -40,7 +40,7 @@ public class BoolPointer extends Pointer {
      *
      * @param size the number of {@code bool} elements to allocate
      */
-    public BoolPointer(int size) {
+    public BoolPointer(long size) {
         try {
             allocateArray(size);
         } catch (UnsatisfiedLinkError e) {
@@ -51,25 +51,26 @@ public class BoolPointer extends Pointer {
     public BoolPointer() { }
     /** @see Pointer#Pointer(Pointer) */
     public BoolPointer(Pointer p) { super(p); }
-    private native void allocateArray(int size);
+    private native void allocateArray(long size);
 
-    /** @see Pointer#position(int) */
-    @Override public BoolPointer position(int position) {
+    /** @see Pointer#position(long) */
+    @Override public BoolPointer position(long position) {
         return super.position(position);
     }
-    /** @see Pointer#limit(int) */
-    @Override public BoolPointer limit(int limit) {
+    /** @see Pointer#limit(long) */
+    @Override public BoolPointer limit(long limit) {
         return super.limit(limit);
     }
-    /** @see Pointer#capacity(int) */
-    @Override public BoolPointer capacity(int capacity) {
+    /** @see Pointer#capacity(long) */
+    @Override public BoolPointer capacity(long capacity) {
         return super.capacity(capacity);
     }
 
     /** @return {@code get(0)} */
     public boolean get() { return get(0); }
-    /** @return the i-th {@code bool} value of a native array */
-    @Cast("bool") public native boolean get(int i);
+    /** @return the i-th {@code bool} value of a native array
+     * @param i*/
+    @Cast("bool") public native boolean get(long i);
     /** @return {@code put(0, b)} */
     public BoolPointer put(boolean b) { return put(0, b); }
     /**
@@ -79,5 +80,5 @@ public class BoolPointer extends Pointer {
      * @param b the {@code bool} value to copy
      * @return this
      */
-    public native BoolPointer put(int i, boolean b);
+    public native BoolPointer put(long i, boolean b);
 }

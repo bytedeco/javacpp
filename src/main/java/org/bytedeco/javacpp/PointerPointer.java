@@ -113,7 +113,7 @@ public class PointerPointer<P extends Pointer> extends Pointer {
      *
      * @param size the number of {@code void*} elements to allocate
      */
-    public PointerPointer(int size) {
+    public PointerPointer(long size) {
         try {
             allocateArray(size);
         } catch (UnsatisfiedLinkError e) {
@@ -124,21 +124,21 @@ public class PointerPointer<P extends Pointer> extends Pointer {
     public PointerPointer() { }
     /** @see Pointer#Pointer(Pointer) */
     public PointerPointer(Pointer p) { super(p); }
-    private native void allocateArray(int size);
+    private native void allocateArray(long size);
 
     /** This is just to keep references to Pointer objects and prevent premature deallocation. */
     private P[] pointerArray;
 
-    /** @see Pointer#position(int) */
-    @Override public PointerPointer<P> position(int position) {
+    /** @see Pointer#position(long) */
+    @Override public PointerPointer<P> position(long position) {
         return super.position(position);
     }
-    /** @see Pointer#limit(int) */
-    @Override public PointerPointer<P> limit(int limit) {
+    /** @see Pointer#limit(long) */
+    @Override public PointerPointer<P> limit(long limit) {
         return super.limit(limit);
     }
-    /** @see Pointer#capacity(int) */
-    @Override public PointerPointer<P> capacity(int capacity) {
+    /** @see Pointer#capacity(long) */
+    @Override public PointerPointer<P> capacity(long capacity) {
         return super.capacity(capacity);
     }
 

@@ -41,7 +41,7 @@ public class CLongPointer extends Pointer {
      *
      * @param size the number of {@code long} elements to allocate
      */
-    public CLongPointer(int size) {
+    public CLongPointer(long size) {
         try {
             allocateArray(size);
         } catch (UnsatisfiedLinkError e) {
@@ -52,25 +52,25 @@ public class CLongPointer extends Pointer {
     public CLongPointer() { }
     /** @see Pointer#Pointer(Pointer) */
     public CLongPointer(Pointer p) { super(p); }
-    private native void allocateArray(int size);
+    private native void allocateArray(long size);
 
-    /** @see Pointer#position(int) */
-    @Override public CLongPointer position(int position) {
+    /** @see Pointer#position(long) */
+    @Override public CLongPointer position(long position) {
         return super.position(position);
     }
-    /** @see Pointer#limit(int) */
-    @Override public CLongPointer limit(int limit) {
+    /** @see Pointer#limit(long) */
+    @Override public CLongPointer limit(long limit) {
         return super.limit(limit);
     }
-    /** @see Pointer#capacity(int) */
-    @Override public CLongPointer capacity(int capacity) {
+    /** @see Pointer#capacity(long) */
+    @Override public CLongPointer capacity(long capacity) {
         return super.capacity(capacity);
     }
 
     /** @return {@code get(0)} */
     public long get() { return get(0); }
     /** @return the i-th {@code long} value of a native array */
-    @Cast("long") public native long get(int i);
+    @Cast("long") public native long get(long i);
     /** @return {@code put(0, l)} */
     public CLongPointer put(long l) { return put(0, l); }
     /**

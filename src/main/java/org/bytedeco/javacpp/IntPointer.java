@@ -38,7 +38,7 @@ public class IntPointer extends Pointer {
      * @see #putString(String)
      */
     public IntPointer(String s) {
-        this(s.length()+1);
+        this(s.length() + 1);
         putString(s);
     }
     /**
@@ -73,7 +73,7 @@ public class IntPointer extends Pointer {
      *
      * @param size the number of {@code int} elements to allocate
      */
-    public IntPointer(int size) {
+    public IntPointer(long size) {
         try {
             allocateArray(size);
         } catch (UnsatisfiedLinkError e) {
@@ -84,32 +84,32 @@ public class IntPointer extends Pointer {
     public IntPointer() { }
     /** @see Pointer#Pointer(Pointer) */
     public IntPointer(Pointer p) { super(p); }
-    private native void allocateArray(int size);
+    private native void allocateArray(long size);
 
-    /** @see Pointer#position(int) */
-    @Override public IntPointer position(int position) {
+    /** @see Pointer#position(long) */
+    @Override public IntPointer position(long position) {
         return super.position(position);
     }
-    /** @see Pointer#limit(int) */
-    @Override public IntPointer limit(int limit) {
+    /** @see Pointer#limit(long) */
+    @Override public IntPointer limit(long limit) {
         return super.limit(limit);
     }
-    /** @see Pointer#capacity(int) */
-    @Override public IntPointer capacity(int capacity) {
+    /** @see Pointer#capacity(long) */
+    @Override public IntPointer capacity(long capacity) {
         return super.capacity(capacity);
     }
 
     /** Returns the code points, assuming a null-terminated string if {@code limit <= position}. */
     public int[] getStringCodePoints() {
         if (limit > position) {
-            int[] array = new int[limit - position];
+            int[] array = new int[(int) (limit - position)];
             get(array);
             return array;
         }
 
         // This may be kind of slow, and should be moved to a JNI function.
         int[] buffer = new int[16];
-        int i = 0, j = position();
+        int i = 0, j = (int) position();
         while ((buffer[i] = position(j).get()) != 0) {
             i++; j++;
             if (i >= buffer.length) {
@@ -147,7 +147,7 @@ public class IntPointer extends Pointer {
     /** @return {@code get(0)} */
     public int get() { return get(0); }
     /** @return the i-th {@code int} value of a native array */
-    public native int get(int i);
+    public native int get(long i);
     /** @return {@code put(0, j)} */
     public IntPointer put(int j) { return put(0, j); }
     /**

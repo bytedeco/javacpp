@@ -63,7 +63,7 @@ public class FloatPointer extends Pointer {
      *
      * @param size the number of {@code float} elements to allocate
      */
-    public FloatPointer(int size) {
+    public FloatPointer(long size) {
         try {
             allocateArray(size);
         } catch (UnsatisfiedLinkError e) {
@@ -74,25 +74,25 @@ public class FloatPointer extends Pointer {
     public FloatPointer() { }
     /** @see Pointer#Pointer(Pointer) */
     public FloatPointer(Pointer p) { super(p); }
-    private native void allocateArray(int size);
+    private native void allocateArray(long size);
 
-    /** @see Pointer#position(int) */
-    @Override public FloatPointer position(int position) {
+    /** @see Pointer#position(long) */
+    @Override public FloatPointer position(long position) {
         return super.position(position);
     }
-    /** @see Pointer#position(int) */
-    @Override public FloatPointer limit(int limit) {
+    /** @see Pointer#position(long) */
+    @Override public FloatPointer limit(long limit) {
         return super.limit(limit);
     }
-    /** @see Pointer#capacity(int) */
-    @Override public FloatPointer capacity(int capacity) {
+    /** @see Pointer#capacity(long) */
+    @Override public FloatPointer capacity(long capacity) {
         return super.capacity(capacity);
     }
 
     /** @return {@code get(0)} */
     public float get() { return get(0); }
     /** @return the i-th {@code float} value of a native array */
-    public native float get(int i);
+    public native float get(long i);
     /** @return {@code put(0, f)} */
     public FloatPointer put(float f) { return put(0, f); }
     /**

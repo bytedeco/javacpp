@@ -58,8 +58,8 @@ public abstract class UShortIndexer extends Indexer {
         if (direct) {
             return new UShortBufferIndexer(pointer.asBuffer(), sizes, strides);
         } else {
-            final int position = pointer.position();
-            short[] array = new short[pointer.limit() - position];
+            final long position = pointer.position();
+            short[] array = new short[(int) (pointer.limit() - position)];
             pointer.get(array);
             return new UShortArrayIndexer(array, sizes, strides) {
                 @Override public void release() {

@@ -44,7 +44,7 @@ public class BytePointer extends Pointer {
      */
     public BytePointer(String s, String charsetName)
             throws UnsupportedEncodingException {
-        this(s.getBytes(charsetName).length+1);
+        this(s.getBytes(charsetName).length + 1);
         putString(s, charsetName);
     }
     /**
@@ -90,7 +90,7 @@ public class BytePointer extends Pointer {
      *
      * @param size the number of {@code signed char} elements to allocate
      */
-    public BytePointer(int size) {
+    public BytePointer(long size) {
         try {
             allocateArray(size);
         } catch (UnsatisfiedLinkError e) {
@@ -101,28 +101,28 @@ public class BytePointer extends Pointer {
     public BytePointer() { }
     /** @see Pointer#Pointer(Pointer) */
     public BytePointer(Pointer p) { super(p); }
-    private native void allocateArray(int size);
+    private native void allocateArray(long size);
 
-    /** @see Pointer#position(int) */
-    @Override public BytePointer position(int position) {
+    /** @see Pointer#position(long) */
+    @Override public BytePointer position(long position) {
         return super.position(position);
     }
-    /** @see Pointer#limit(int) */
-    @Override public BytePointer limit(int limit) {
+    /** @see Pointer#limit(long) */
+    @Override public BytePointer limit(long limit) {
         return super.limit(limit);
     }
-    /** @see Pointer#capacity(int) */
-    @Override public BytePointer capacity(int capacity) {
+    /** @see Pointer#capacity(long) */
+    @Override public BytePointer capacity(long capacity) {
         return super.capacity(capacity);
     }
 
     /** Returns the bytes, assuming a null-terminated string if {@code limit <= position}. */
     public byte[] getStringBytes() {
-        int size = limit - position;
+        long size = limit - position;
         if (size <= 0) {
             size = (int)strlen(this);
         }
-        byte[] array = new byte[size];
+        byte[] array = new byte[(int) size];
         get(array);
         return array;
     }
@@ -183,7 +183,7 @@ public class BytePointer extends Pointer {
     /** @return {@code get(0)} */
     public byte get() { return get(0); }
     /** @return the i-th {@code byte} value of a native array */
-    public native byte get(int i);
+    public native byte get(long i);
     /** @return {@code put(0, b)} */
     public BytePointer put(byte b) { return put(0, b); }
     /**
@@ -193,7 +193,7 @@ public class BytePointer extends Pointer {
      * @param b the {@code byte} value to copy
      * @return this
      */
-    public native BytePointer put(int i, byte b);
+    public native BytePointer put(long i, byte b);
 
     /** @return {@code get(array, 0, array.length)} */
     public BytePointer get(byte[] array) { return get(array, 0, array.length); }

@@ -58,8 +58,8 @@ public abstract class IntIndexer extends Indexer {
         if (direct) {
             return new IntBufferIndexer(pointer.asBuffer(), sizes, strides);
         } else {
-            final int position = pointer.position();
-            int[] array = new int[pointer.limit() - position];
+            final long position = pointer.position();
+            int[] array = new int[(int) (pointer.limit() - position)];
             pointer.get(array);
             return new IntArrayIndexer(array, sizes, strides) {
                 @Override public void release() {
