@@ -32,7 +32,7 @@ import java.nio.Buffer;
  * The latter ones feature a {@code direct} argument that, when set to {@code false},
  * instructs the method to create a large enough array, fill its content with the data
  * from the pointer, and return an array-backed indexer, with the {@link #release()}
- * method overridden to write back changes to the pointer. This double the memory
+ * method overridden to write back changes to the pointer. This doubles the memory
  * usage, but is the only way to get acceptable performance on some implementations,
  * such as Android. When {@code direct == true}, a buffer-backed indexer is returned.
  *

@@ -609,7 +609,7 @@ public class Parser {
             if (template < 0 && template2 >= 0) {
                 groupName = groupName.substring(0, template2);
             }
-            int namespace2 = groupName.lastIndexOf("::");
+            int namespace2 = groupName != null ? groupName.lastIndexOf("::") : -1;
             if (namespace < 0 && namespace2 >= 0) {
                 groupName = groupName.substring(namespace2 + 2);
             }
