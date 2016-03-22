@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2016 Samuel Audet
+ * Copyright (C) 2016 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -22,98 +22,104 @@
 
 package org.bytedeco.javacpp.indexer;
 
-import java.nio.Buffer;
-import java.nio.ShortBuffer;
+import org.bytedeco.javacpp.Pointer;
+import org.bytedeco.javacpp.ShortPointer;
 
 /**
- * An indexer for a {@link ShortBuffer}.
+ * An indexer for a {@link ShortPointer} using the {@link Raw} instance.
  *
  * @author Samuel Audet
  */
-public class ShortBufferIndexer extends ShortIndexer {
-    /** The backing buffer. */
-    protected ShortBuffer buffer;
+public class ShortRawIndexer extends ShortIndexer {
+    /** The instance for the raw memory interface. */
+    protected static final Raw RAW = Raw.getInstance();
+    /** The backing pointer. */
+    protected ShortPointer pointer;
+    /** Base address and number of elements accessible. */
+    final long base, size;
 
-    /** Calls {@code ShortBufferIndexer(buffer, { buffer.limit() }, { 1 })}. */
-    public ShortBufferIndexer(ShortBuffer buffer) {
-        this(buffer, new long[] { buffer.limit() }, new long[] { 1 });
+    /** Calls {@code ShortRawIndexer(pointer, { pointer.limit() - pointer.position() }, { 1 })}. */
+    public ShortRawIndexer(ShortPointer pointer) {
+        this(pointer, new long[] { pointer.limit() - pointer.position() }, new long[] { 1 });
     }
 
-    /** Constructor to set the {@link #buffer}, {@link #sizes} and {@link #strides}. */
-    public ShortBufferIndexer(ShortBuffer buffer, long[] sizes, long[] strides) {
+    /** Constructor to set the {@link #pointer}, {@link #sizes} and {@link #strides}. */
+    public ShortRawIndexer(ShortPointer pointer, long[] sizes, long[] strides) {
         super(sizes, strides);
-        this.buffer = buffer;
+        this.pointer = pointer;
+        base = pointer.address() + pointer.position() * VALUE_BYTES;
+        size = pointer.limit() - pointer.position();
     }
 
-    @Override public Buffer buffer() {
-        return buffer;
+    @Override public Pointer pointer() {
+        return pointer;
     }
 
     @Override public short get(long i) {
-        return buffer.get((int)i);
+        return RAW.getShort(base + checkIndex(i, size) * VALUE_BYTES);
     }
     @Override public ShortIndexer get(long i, short[] s, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            s[offset + n] = buffer.get((int)i * (int)strides[0] + n);
+            s[offset + n] = get(i * strides[0] + n);
         }
         return this;
     }
     @Override public short get(long i, long j) {
-        return buffer.get((int)i * (int)strides[0] + (int)j);
+        return get(i * strides[0] + j);
     }
     @Override public ShortIndexer get(long i, long j, short[] s, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            s[offset + n] = buffer.get((int)i * (int)strides[0] + (int)j * (int)strides[1] + n);
+            s[offset + n] = get(i * strides[0] + j * strides[1] + n);
         }
         return this;
     }
     @Override public short get(long i, long j, long k) {
-        return buffer.get((int)i * (int)strides[0] + (int)j * (int)strides[1] + (int)k);
+        return get(i * strides[0] + j * strides[1] + k);
     }
     @Override public short get(long... indices) {
-        return buffer.get((int)index(indices));
+        return get(index(indices));
     }
     @Override public ShortIndexer get(long[] indices, short[] s, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            s[offset + n] = buffer.get((int)index(indices) + n);
+            s[offset + n] = get(index(indices) + n);
         }
         return this;
     }
 
     @Override public ShortIndexer put(long i, short s) {
-        buffer.put((int)i, s);
+        RAW.putShort(base + checkIndex(i, size) * VALUE_BYTES, s);
         return this;
     }
     @Override public ShortIndexer put(long i, short[] s, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            buffer.put((int)i * (int)strides[0] + n, s[offset + n]);
+            put(i * strides[0] + n, s[offset + n]);
         }
         return this;
     }
     @Override public ShortIndexer put(long i, long j, short s) {
-        buffer.put((int)i * (int)strides[0] + (int)j, s);
+        put(i * strides[0] + j, s);
         return this;
     }
     @Override public ShortIndexer put(long i, long j, short[] s, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            buffer.put((int)i * (int)strides[0] + (int)j * (int)strides[1] + n, s[offset + n]);
+            put(i * strides[0] + j * strides[1] + n, s[offset + n]);
         }
         return this;
     }
     @Override public ShortIndexer put(long i, long j, long k, short s) {
-        buffer.put((int)i * (int)strides[0] + (int)j * (int)strides[1] + (int)k, s);
+        put(i * strides[0] + j * strides[1] + k, s);
         return this;
     }
     @Override public ShortIndexer put(long[] indices, short s) {
-        buffer.put((int)index(indices), s);
+        put(index(indices), s);
         return this;
     }
     @Override public ShortIndexer put(long[] indices, short[] s, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            buffer.put((int)index(indices) + n, s[offset + n]);
+            put(index(indices) + n, s[offset + n]);
         }
         return this;
     }
 
-    @Override public void release() { buffer = null; }
+    @Override public void release() { pointer = null; }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2015 Samuel Audet
+ * Copyright (C) 2011-2016 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -109,9 +109,9 @@ public class IntPointer extends Pointer {
 
         // This may be kind of slow, and should be moved to a JNI function.
         int[] buffer = new int[16];
-        int i = 0, j = (int)Math.min(position(), Integer.MAX_VALUE);
-        while ((buffer[i] = position(j).get()) != 0) {
-            i++; j++;
+        int i = 0;
+        while ((buffer[i] = get(i)) != 0) {
+            i++;
             if (i >= buffer.length) {
                 int[] newbuffer = new int[2*buffer.length];
                 System.arraycopy(buffer, 0, newbuffer, 0, buffer.length);

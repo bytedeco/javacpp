@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Samuel Audet
+ * Copyright (C) 2014-2016 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -31,20 +31,36 @@ import org.bytedeco.javacpp.ShortPointer;
  * @author Samuel Audet
  */
 public abstract class ShortIndexer extends Indexer {
-    protected ShortIndexer(int[] sizes, int[] strides) {
+    /** The number of bytes used to represent a short. */
+    public static final int VALUE_BYTES = 2;
+
+    protected ShortIndexer(long[] sizes, long[] strides) {
         super(sizes, strides);
     }
 
-    /** @return {@code new ShortArrayIndexer(array, sizes, strides)} */
-    public static ShortIndexer create(short[] array, int[] sizes, int[] strides) {
+    /** Returns {@code new ShortArrayIndexer(array)} */
+    public static ShortIndexer create(short[] array) {
+        return new ShortArrayIndexer(array);
+    }
+    /** Returns {@code new ShortBufferIndexer(buffer)} */
+    public static ShortIndexer create(ShortBuffer buffer) {
+        return new ShortBufferIndexer(buffer);
+    }
+    /** Returns {@code create(pointer, { pointer.limit() - pointer.position() }, { 1 }, true)} */
+    public static ShortIndexer create(ShortPointer pointer) {
+        return create(pointer, new long[] { pointer.limit() - pointer.position() }, new long[] { 1 });
+    }
+
+    /** Returns {@code new ShortArrayIndexer(array, sizes, strides)} */
+    public static ShortIndexer create(short[] array, long[] sizes, long[] strides) {
         return new ShortArrayIndexer(array, sizes, strides);
     }
-    /** @return {@code new ShortBufferIndexer(buffer, sizes, strides)} */
-    public static ShortIndexer create(ShortBuffer buffer, int[] sizes, int[] strides) {
+    /** Returns {@code new ShortBufferIndexer(buffer, sizes, strides)} */
+    public static ShortIndexer create(ShortBuffer buffer, long[] sizes, long[] strides) {
         return new ShortBufferIndexer(buffer, sizes, strides);
     }
-    /** @return {@code create(pointer, sizes, strides, true)} */
-    public static ShortIndexer create(ShortPointer pointer, int[] sizes, int[] strides) {
+    /** Returns {@code create(pointer, sizes, strides, true)} */
+    public static ShortIndexer create(ShortPointer pointer, long[] sizes, long[] strides) {
         return create(pointer, sizes, strides, true);
     }
     /**
@@ -52,11 +68,12 @@ public abstract class ShortIndexer extends Indexer {
      *
      * @param pointer data to access via a buffer or to copy to an array
      * @param direct {@code true} to use a direct buffer, see {@link Indexer} for details
-     * @return the new short array backed by a buffer or an array
+     * @return the new short indexer backed by the raw memory interface, a buffer, or an array
      */
-    public static ShortIndexer create(final ShortPointer pointer, int[] sizes, int[] strides, boolean direct) {
+    public static ShortIndexer create(final ShortPointer pointer, long[] sizes, long[] strides, boolean direct) {
         if (direct) {
-            return new ShortBufferIndexer(pointer.asBuffer(), sizes, strides);
+            return Raw.getInstance() != null ? new ShortRawIndexer(pointer, sizes, strides)
+                                             : new ShortBufferIndexer(pointer.asBuffer(), sizes, strides);
         } else {
             final long position = pointer.position();
             short[] array = new short[(int)Math.min(pointer.limit() - position, Integer.MAX_VALUE)];
@@ -70,48 +87,48 @@ public abstract class ShortIndexer extends Indexer {
         }
     }
 
-    /** @return {@code array/buffer[i]} */
-    public abstract short get(int i);
-    /** @return {@code this} where {@code s = array/buffer[i]} */
-    public ShortIndexer get(int i, short[] s) { return get(i, s, 0, s.length); }
-    /** @return {@code this} where {@code s[offset:offset + length] = array/buffer[i]} */
-    public abstract ShortIndexer get(int i, short[] s, int offset, int length);
-    /** @return {@code array/buffer[i * strides[0] + j]} */
-    public abstract short get(int i, int j);
-    /** @return {@code this} where {@code s = array/buffer[i * strides[0] + j]} */
-    public ShortIndexer get(int i, int j, short[] s) { return get(i, j, s, 0, s.length); }
-    /** @return {@code this} where {@code s[offset:offset + length] = array/buffer[i * strides[0] + j]} */
-    public abstract ShortIndexer get(int i, int j, short[] s, int offset, int length);
-    /** @return {@code array/buffer[i * strides[0] + j * strides[1] + k]} */
-    public abstract short get(int i, int j, int k);
-    /** @return {@code array/buffer[index(indices)]} */
-    public abstract short get(int ... indices);
-    /** @return {@code this} where {@code s = array/buffer[index(indices)]} */
-    public ShortIndexer get(int[] indices, short[] s) { return get(indices, s, 0, s.length); }
-    /** @return {@code this} where {@code s[offset:offset + length] = array/buffer[index(indices)]} */
-    public abstract ShortIndexer get(int[] indices, short[] s, int offset, int length);
+    /** Returns {@code array/buffer[i]} */
+    public abstract short get(long i);
+    /** Returns {@code this} where {@code s = array/buffer[i]} */
+    public ShortIndexer get(long i, short[] s) { return get(i, s, 0, s.length); }
+    /** Returns {@code this} where {@code s[offset:offset + length] = array/buffer[i]} */
+    public abstract ShortIndexer get(long i, short[] s, int offset, int length);
+    /** Returns {@code array/buffer[i * strides[0] + j]} */
+    public abstract short get(long i, long j);
+    /** Returns {@code this} where {@code s = array/buffer[i * strides[0] + j]} */
+    public ShortIndexer get(long i, long j, short[] s) { return get(i, j, s, 0, s.length); }
+    /** Returns {@code this} where {@code s[offset:offset + length] = array/buffer[i * strides[0] + j]} */
+    public abstract ShortIndexer get(long i, long j, short[] s, int offset, int length);
+    /** Returns {@code array/buffer[i * strides[0] + j * strides[1] + k]} */
+    public abstract short get(long i, long j, long k);
+    /** Returns {@code array/buffer[index(indices)]} */
+    public abstract short get(long... indices);
+    /** Returns {@code this} where {@code s = array/buffer[index(indices)]} */
+    public ShortIndexer get(long[] indices, short[] s) { return get(indices, s, 0, s.length); }
+    /** Returns {@code this} where {@code s[offset:offset + length] = array/buffer[index(indices)]} */
+    public abstract ShortIndexer get(long[] indices, short[] s, int offset, int length);
 
-    /** @return {@code this} where {@code array/buffer[i] = s} */
-    public abstract ShortIndexer put(int i, short s);
-    /** @return {@code this} where {@code array/buffer[i] = s} */
-    public ShortIndexer put(int i, short ... s) { return put(i, s, 0, s.length); }
-    /** @return {@code this} where {@code array/buffer[i] = s[offset:offset + length]} */
-    public abstract ShortIndexer put(int i, short[] s, int offset, int length);
-    /** @return {@code this} where {@code array/buffer[i * strides[0] + j] = s} */
-    public abstract ShortIndexer put(int i, int j, short s);
-    /** @return {@code this} where {@code array/buffer[i * strides[0] + j] = s} */
-    public ShortIndexer put(int i, int j, short ... s) { return put(i, j, s, 0, s.length); }
-    /** @return {@code this} where {@code array/buffer[i * strides[0] + j] = s[offset:offset + length]} */
-    public abstract ShortIndexer put(int i, int j, short[] s, int offset, int length);
-    /** @return {@code this} where {@code array/buffer[i * strides[0] + j * strides[1] + k] = s} */
-    public abstract ShortIndexer put(int i, int j, int k, short s);
-    /** @return {@code this} where {@code array/buffer[index(indices)] = s} */
-    public abstract ShortIndexer put(int[] indices, short s);
-    /** @return {@code this} where {@code array/buffer[index(indices)] = s} */
-    public ShortIndexer put(int[] indices, short ... s) { return put(indices, s, 0, s.length); }
-    /** @return {@code this} where {@code array/buffer[index(indices)] = s[offset:offset + length]} */
-    public abstract ShortIndexer put(int[] indices, short[] s, int offset, int length);
+    /** Returns {@code this} where {@code array/buffer[i] = s} */
+    public abstract ShortIndexer put(long i, short s);
+    /** Returns {@code this} where {@code array/buffer[i] = s} */
+    public ShortIndexer put(long i, short... s) { return put(i, s, 0, s.length); }
+    /** Returns {@code this} where {@code array/buffer[i] = s[offset:offset + length]} */
+    public abstract ShortIndexer put(long i, short[] s, int offset, int length);
+    /** Returns {@code this} where {@code array/buffer[i * strides[0] + j] = s} */
+    public abstract ShortIndexer put(long i, long j, short s);
+    /** Returns {@code this} where {@code array/buffer[i * strides[0] + j] = s} */
+    public ShortIndexer put(long i, long j, short... s) { return put(i, j, s, 0, s.length); }
+    /** Returns {@code this} where {@code array/buffer[i * strides[0] + j] = s[offset:offset + length]} */
+    public abstract ShortIndexer put(long i, long j, short[] s, int offset, int length);
+    /** Returns {@code this} where {@code array/buffer[i * strides[0] + j * strides[1] + k] = s} */
+    public abstract ShortIndexer put(long i, long j, long k, short s);
+    /** Returns {@code this} where {@code array/buffer[index(indices)] = s} */
+    public abstract ShortIndexer put(long[] indices, short s);
+    /** Returns {@code this} where {@code array/buffer[index(indices)] = s} */
+    public ShortIndexer put(long[] indices, short... s) { return put(indices, s, 0, s.length); }
+    /** Returns {@code this} where {@code array/buffer[index(indices)] = s[offset:offset + length]} */
+    public abstract ShortIndexer put(long[] indices, short[] s, int offset, int length);
 
-    @Override public double getDouble(int ... indices) { return get(indices); }
-    @Override public ShortIndexer putDouble(int[] indices, double s) { return put(indices, (short)s); }
+    @Override public double getDouble(long... indices) { return get(indices); }
+    @Override public ShortIndexer putDouble(long[] indices, double s) { return put(indices, (short)s); }
 }

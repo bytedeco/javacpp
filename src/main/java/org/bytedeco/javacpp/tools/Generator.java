@@ -1044,7 +1044,8 @@ public class Generator implements Closeable {
             }
             MethodInformation methodInfo = methodInfos[i];
             String nativeName = mangle(cls.getName()) + "_" + mangle(methods[i].getName());
-            String callbackName = "JavaCPP_" + nativeName + "_callback";
+            String callbackName = callbackAllocators[i] && methodInfo.parameterTypes.length > 0
+                    ? null : "JavaCPP_" + nativeName + "_callback";
             if (callbackAllocators[i] && functionMethod == null) {
                 logger.warn("No callback method call() or apply() has been not declared in \"" +
                         cls.getCanonicalName() + "\". No code will be generated for callback allocator.");
@@ -1702,7 +1703,7 @@ public class Generator implements Closeable {
                     String componentName = methodInfo.returnType.getComponentType().getName();
                     String componentNameUpperCase = Character.toUpperCase(componentName.charAt(0)) + componentName.substring(1);
                     out.println(indent + "if (rptr != NULL) {");
-                    out.println(indent + "    rarg = env->New" + componentNameUpperCase + "Array(rcapacity);");
+                    out.println(indent + "    rarg = env->New" + componentNameUpperCase + "Array(rcapacity < INT_MAX ? rcapacity : INT_MAX);");
                     out.println(indent + "    env->Set" + componentNameUpperCase + "ArrayRegion(rarg, 0, rcapacity < INT_MAX ? rcapacity : INT_MAX, (j" + componentName + "*)rptr);");
                     out.println(indent + "}");
                     if (adapterInfo != null) {
@@ -1880,7 +1881,7 @@ public class Generator implements Closeable {
                 functionList.add(fieldName);
             }
             memberList.add(member);
-        } else {
+        } else if (callbackName != null) {
             callbacks.index("static " + instanceTypeName + " " + callbackName + "_instance;");
             if (out2 != null) {
                 out2.println("JNIIMPORT " + returnConvention[0] + (returnConvention.length > 1 ?
@@ -2033,7 +2034,7 @@ public class Generator implements Closeable {
                         String componentType = callbackParameterTypes[j].getComponentType().getName();
                         String S = Character.toUpperCase(componentType.charAt(0)) + componentType.substring(1);
                         out.println("    if (ptr" + j + " != NULL) {");
-                        out.println("        obj" + j + " = env->New" + S + "Array(size"+ j + ");");
+                        out.println("        obj" + j + " = env->New" + S + "Array(size" + j + " < INT_MAX ? size" + j + " : INT_MAX);");
                         out.println("        env->Set" + S + "ArrayRegion(obj" + j + ", 0, size" + j + " < INT_MAX ? size" + j + " : INT_MAX, (j" + componentType + "*)ptr" + j + ");");
                         out.println("    }");
                         if (adapterInfo != null) {
@@ -2063,7 +2064,7 @@ public class Generator implements Closeable {
                     signature(methodInfo.method.getParameterTypes()) + ")" + signature(methodInfo.method.getReturnType()) + "\");");
             out.println("    }");
             out.println("    jmethodID mid = " + fieldName + ";");
-        } else {
+        } else if (callbackName != null) {
             out.println("    if (obj == NULL) {");
             out.println("        obj = JavaCPP_createPointer(env, " + jclasses.index(cls) + ");");
             out.println("        obj = obj == NULL ? NULL : env->NewGlobalRef(obj);");
@@ -2216,6 +2217,7 @@ public class Generator implements Closeable {
     void callbackAllocator(Class cls, String callbackName) {
         // XXX: Here, we should actually allocate new trampolines on the heap somehow...
         // For now it just bumps out from the global variable the last object that called this method
+        String[] typeName = cppTypeName(cls);
         String instanceTypeName = functionClassName(cls);
         out.println("    obj = env->NewWeakGlobalRef(obj);");
         out.println("    if (obj == NULL) {");
@@ -2224,11 +2226,13 @@ public class Generator implements Closeable {
         out.println("    }");
         out.println("    " + instanceTypeName + "* rptr = new (std::nothrow) " + instanceTypeName + ";");
         out.println("    if (rptr != NULL) {");
-        out.println("        rptr->ptr = &" + callbackName + ";");
+        out.println("        rptr->ptr = " + (callbackName == null ? "(" + typeName[0] + typeName[1] + ")jlong_to_ptr(arg0)" : "&" + callbackName) + ";");
         out.println("        rptr->obj = obj;");
         out.println("        JavaCPP_initPointer(env, obj, rptr, 1, rptr, &JavaCPP_" + mangle(cls.getName()) + "_deallocate);");
         deallocators.index(cls);
-        out.println("        " + callbackName + "_instance = *rptr;");
+        if (callbackName != null) {
+            out.println("        " + callbackName + "_instance = *rptr;");
+        }
         out.println("    }");
         out.println("}");
     }
@@ -2305,7 +2309,8 @@ public class Generator implements Closeable {
             }
             if (callbackAllocators != null && methodName.startsWith("allocate") &&
                     Modifier.isNative(modifiers) && returnType == void.class &&
-                    parameterTypes.length == 0) {
+                    (parameterTypes.length == 0 || (parameterTypes.length == 1 &&
+                    (parameterTypes[0] == int.class || parameterTypes[0] == long.class)))) {
                 // found a callback allocator method
                 callbackAllocators[i] = true;
             } else if (methodName.startsWith("call") || methodName.startsWith("apply")) {

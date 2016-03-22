@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Samuel Audet
+ * Copyright (C) 2014-2016 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -31,20 +31,36 @@ import org.bytedeco.javacpp.CharPointer;
  * @author Samuel Audet
  */
 public abstract class CharIndexer extends Indexer {
-    protected CharIndexer(int[] sizes, int[] strides) {
+    /** The number of bytes used to represent a char. */
+    public static final int VALUE_BYTES = 2;
+
+    protected CharIndexer(long[] sizes, long[] strides) {
         super(sizes, strides);
     }
 
-    /** @return {@code new CharArrayIndexer(array, sizes, strides)} */
-    public static CharIndexer create(char[] array, int[] sizes, int[] strides) {
+    /** Returns {@code new CharArrayIndexer(array)} */
+    public static CharIndexer create(char[] array) {
+        return new CharArrayIndexer(array);
+    }
+    /** Returns {@code new CharBufferIndexer(buffer)} */
+    public static CharIndexer create(CharBuffer buffer) {
+        return new CharBufferIndexer(buffer);
+    }
+    /** Returns {@code create(pointer, { pointer.limit() - pointer.position() }, { 1 }, true)} */
+    public static CharIndexer create(CharPointer pointer) {
+        return create(pointer, new long[] { pointer.limit() - pointer.position() }, new long[] { 1 });
+    }
+
+    /** Returns {@code new CharArrayIndexer(array, sizes, strides)} */
+    public static CharIndexer create(char[] array, long[] sizes, long[] strides) {
         return new CharArrayIndexer(array, sizes, strides);
     }
-    /** @return {@code new CharBufferIndexer(buffer, sizes, strides)} */
-    public static CharIndexer create(CharBuffer buffer, int[] sizes, int[] strides) {
+    /** Returns {@code new CharBufferIndexer(buffer, sizes, strides)} */
+    public static CharIndexer create(CharBuffer buffer, long[] sizes, long[] strides) {
         return new CharBufferIndexer(buffer, sizes, strides);
     }
-    /** @return {@code create(pointer, sizes, strides, true)} */
-    public static CharIndexer create(CharPointer pointer, int[] sizes, int[] strides) {
+    /** Returns {@code create(pointer, sizes, strides, true)} */
+    public static CharIndexer create(CharPointer pointer, long[] sizes, long[] strides) {
         return create(pointer, sizes, strides, true);
     }
     /**
@@ -52,11 +68,12 @@ public abstract class CharIndexer extends Indexer {
      *
      * @param pointer data to access via a buffer or to copy to an array
      * @param direct {@code true} to use a direct buffer, see {@link Indexer} for details
-     * @return the new char array backed by a buffer or an array
+     * @return the new char indexer backed by the raw memory interface, a buffer, or an array
      */
-    public static CharIndexer create(final CharPointer pointer, int[] sizes, int[] strides, boolean direct) {
+    public static CharIndexer create(final CharPointer pointer, long[] sizes, long[] strides, boolean direct) {
         if (direct) {
-            return new CharBufferIndexer(pointer.asBuffer(), sizes, strides);
+            return Raw.getInstance() != null ? new CharRawIndexer(pointer, sizes, strides)
+                                             : new CharBufferIndexer(pointer.asBuffer(), sizes, strides);
         } else {
             final long position = pointer.position();
             char[] array = new char[(int)Math.min(pointer.limit() - position, Integer.MAX_VALUE)];
@@ -70,48 +87,48 @@ public abstract class CharIndexer extends Indexer {
         }
     }
 
-    /** @return {@code array/buffer[i]} */
-    public abstract char get(int i);
-    /** @return {@code this} where {@code c = array/buffer[i]} */
-    public CharIndexer get(int i, char[] c) { return get(i, c, 0, c.length); }
-    /** @return {@code this} where {@code c[offset:offset + length] = array/buffer[i]} */
-    public abstract CharIndexer get(int i, char[] c, int offset, int length);
-    /** @return {@code array/buffer[i * strides[0] + j]} */
-    public abstract char get(int i, int j);
-    /** @return {@code this} where {@code c = array/buffer[i * strides[0] + j]} */
-    public CharIndexer get(int i, int j, char[] c) { return get(i, j, c, 0, c.length); }
-    /** @return {@code this} where {@code c[offset:offset + length] = array/buffer[i * strides[0] + j]} */
-    public abstract CharIndexer get(int i, int j, char[] c, int offset, int length);
-    /** @return {@code array/buffer[i * strides[0] + j * strides[1] + k]} */
-    public abstract char get(int i, int j, int k);
-    /** @return {@code array/buffer[index(indices)]} */
-    public abstract char get(int ... indices);
-    /** @return {@code this} where {@code c = array/buffer[index(indices)]} */
-    public CharIndexer get(int[] indices, char[] c) { return get(indices, c, 0, c.length); }
-    /** @return {@code this} where {@code c[offset:offset + length] = array/buffer[index(indices)]} */
-    public abstract CharIndexer get(int[] indices, char[] c, int offset, int length);
+    /** Returns {@code array/buffer[i]} */
+    public abstract char get(long i);
+    /** Returns {@code this} where {@code c = array/buffer[i]} */
+    public CharIndexer get(long i, char[] c) { return get(i, c, 0, c.length); }
+    /** Returns {@code this} where {@code c[offset:offset + length] = array/buffer[i]} */
+    public abstract CharIndexer get(long i, char[] c, int offset, int length);
+    /** Returns {@code array/buffer[i * strides[0] + j]} */
+    public abstract char get(long i, long j);
+    /** Returns {@code this} where {@code c = array/buffer[i * strides[0] + j]} */
+    public CharIndexer get(long i, long j, char[] c) { return get(i, j, c, 0, c.length); }
+    /** Returns {@code this} where {@code c[offset:offset + length] = array/buffer[i * strides[0] + j]} */
+    public abstract CharIndexer get(long i, long j, char[] c, int offset, int length);
+    /** Returns {@code array/buffer[i * strides[0] + j * strides[1] + k]} */
+    public abstract char get(long i, long j, long k);
+    /** Returns {@code array/buffer[index(indices)]} */
+    public abstract char get(long... indices);
+    /** Returns {@code this} where {@code c = array/buffer[index(indices)]} */
+    public CharIndexer get(long[] indices, char[] c) { return get(indices, c, 0, c.length); }
+    /** Returns {@code this} where {@code c[offset:offset + length] = array/buffer[index(indices)]} */
+    public abstract CharIndexer get(long[] indices, char[] c, int offset, int length);
 
-    /** @return {@code this} where {@code array/buffer[i] = c} */
-    public abstract CharIndexer put(int i, char c);
-    /** @return {@code this} where {@code array/buffer[i] = c} */
-    public CharIndexer put(int i, char ... c) { return put(i, c, 0, c.length); }
-    /** @return {@code this} where {@code array/buffer[i] = c[offset:offset + length]} */
-    public abstract CharIndexer put(int i, char[] c, int offset, int length);
-    /** @return {@code this} where {@code array/buffer[i * strides[0] + j] = c} */
-    public abstract CharIndexer put(int i, int j, char c);
-    /** @return {@code this} where {@code array/buffer[i * strides[0] + j] = c} */
-    public CharIndexer put(int i, int j, char ... c) { return put(i, j, c, 0, c.length); }
-    /** @return {@code this} where {@code array/buffer[i * strides[0] + j] = c[offset:offset + length]} */
-    public abstract CharIndexer put(int i, int j, char[] c, int offset, int length);
-    /** @return {@code this} where {@code array/buffer[i * strides[0] + j * strides[1] + k] = c} */
-    public abstract CharIndexer put(int i, int j, int k, char c);
-    /** @return {@code this} where {@code array/buffer[index(indices)] = c} */
-    public abstract CharIndexer put(int[] indices, char c);
-    /** @return {@code this} where {@code array/buffer[index(indices)] = c} */
-    public CharIndexer put(int[] indices, char ... c) { return put(indices, c, 0, c.length); }
-    /** @return {@code this} where {@code array/buffer[index(indices)] = c[offset:offset + length]} */
-    public abstract CharIndexer put(int[] indices, char[] c, int offset, int length);
+    /** Returns {@code this} where {@code array/buffer[i] = c} */
+    public abstract CharIndexer put(long i, char c);
+    /** Returns {@code this} where {@code array/buffer[i] = c} */
+    public CharIndexer put(long i, char... c) { return put(i, c, 0, c.length); }
+    /** Returns {@code this} where {@code array/buffer[i] = c[offset:offset + length]} */
+    public abstract CharIndexer put(long i, char[] c, int offset, int length);
+    /** Returns {@code this} where {@code array/buffer[i * strides[0] + j] = c} */
+    public abstract CharIndexer put(long i, long j, char c);
+    /** Returns {@code this} where {@code array/buffer[i * strides[0] + j] = c} */
+    public CharIndexer put(long i, long j, char... c) { return put(i, j, c, 0, c.length); }
+    /** Returns {@code this} where {@code array/buffer[i * strides[0] + j] = c[offset:offset + length]} */
+    public abstract CharIndexer put(long i, long j, char[] c, int offset, int length);
+    /** Returns {@code this} where {@code array/buffer[i * strides[0] + j * strides[1] + k] = c} */
+    public abstract CharIndexer put(long i, long j, long k, char c);
+    /** Returns {@code this} where {@code array/buffer[index(indices)] = c} */
+    public abstract CharIndexer put(long[] indices, char c);
+    /** Returns {@code this} where {@code array/buffer[index(indices)] = c} */
+    public CharIndexer put(long[] indices, char... c) { return put(indices, c, 0, c.length); }
+    /** Returns {@code this} where {@code array/buffer[index(indices)] = c[offset:offset + length]} */
+    public abstract CharIndexer put(long[] indices, char[] c, int offset, int length);
 
-    @Override public double getDouble(int ... indices) { return get(indices); }
-    @Override public CharIndexer putDouble(int[] indices, double c) { return put(indices, (char)c); }
+    @Override public double getDouble(long... indices) { return get(indices); }
+    @Override public CharIndexer putDouble(long[] indices, double c) { return put(indices, (char)c); }
 }

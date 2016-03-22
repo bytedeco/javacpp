@@ -109,9 +109,9 @@ public class CharPointer extends Pointer {
 
         // This may be kind of slow, and should be moved to a JNI function.
         char[] buffer = new char[16];
-        int i = 0, j = (int)Math.min(position(), Integer.MAX_VALUE);
-        while ((buffer[i] = position(j).get()) != 0) {
-            i++; j++;
+        int i = 0;
+        while ((buffer[i] = get(i)) != 0) {
+            i++;
             if (i >= buffer.length) {
                 char[] newbuffer = new char[2*buffer.length];
                 System.arraycopy(buffer, 0, newbuffer, 0, buffer.length);

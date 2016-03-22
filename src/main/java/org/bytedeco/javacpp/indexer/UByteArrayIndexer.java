@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Samuel Audet
+ * Copyright (C) 2015-2016 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -31,8 +31,13 @@ public class UByteArrayIndexer extends UByteIndexer {
     /** The backing array. */
     protected byte[] array;
 
+    /** Calls {@code UByteArrayIndexer(array, { array.length }, { 1 })}. */
+    public UByteArrayIndexer(byte[] array) {
+        this(array, new long[] { array.length }, new long[] { 1 });
+    }
+
     /** Constructor to set the {@link #array}, {@link #sizes} and {@link #strides}. */
-    public UByteArrayIndexer(byte[] array, int[] sizes, int[] strides) {
+    public UByteArrayIndexer(byte[] array, long[] sizes, long[] strides) {
         super(sizes, strides);
         this.array = array;
     }
@@ -41,68 +46,68 @@ public class UByteArrayIndexer extends UByteIndexer {
         return array;
     }
 
-    @Override public int get(int i) {
-        return array[i] & 0xFF;
+    @Override public int get(long i) {
+        return array[(int)i] & 0xFF;
     }
-    @Override public UByteIndexer get(int i, int[] b, int offset, int length) {
+    @Override public UByteIndexer get(long i, int[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            b[offset + n] = array[i * strides[0] + n] & 0xFF;
+            b[offset + n] = array[(int)i * (int)strides[0] + n] & 0xFF;
         }
         return this;
     }
-    @Override public int get(int i, int j) {
-        return array[i * strides[0] + j] & 0xFF;
+    @Override public int get(long i, long j) {
+        return array[(int)i * (int)strides[0] + (int)j] & 0xFF;
     }
-    @Override public UByteIndexer get(int i, int j, int[] b, int offset, int length) {
+    @Override public UByteIndexer get(long i, long j, int[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            b[offset + n] = array[i * strides[0] + j * strides[1] + n] & 0xFF;
+            b[offset + n] = array[(int)i * (int)strides[0] + (int)j * (int)strides[1] + n] & 0xFF;
         }
         return this;
     }
-    @Override public int get(int i, int j, int k) {
-        return array[i * strides[0] + j * strides[1] + k] & 0xFF;
+    @Override public int get(long i, long j, long k) {
+        return array[(int)i * (int)strides[0] + (int)j * (int)strides[1] + (int)k] & 0xFF;
     }
-    @Override public int get(int ... indices) {
-        return array[index(indices)] & 0xFF;
+    @Override public int get(long... indices) {
+        return array[(int)index(indices)] & 0xFF;
     }
-    @Override public UByteIndexer get(int[] indices, int[] b, int offset, int length) {
+    @Override public UByteIndexer get(long[] indices, int[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            b[offset + n] = array[index(indices) + n] & 0xFF;
+            b[offset + n] = array[(int)index(indices) + n] & 0xFF;
         }
         return this;
     }
 
-    @Override public UByteIndexer put(int i, int b) {
-        array[i] = (byte)b;
+    @Override public UByteIndexer put(long i, int b) {
+        array[(int)i] = (byte)b;
         return this;
     }
-    @Override public UByteIndexer put(int i, int[] b, int offset, int length) {
+    @Override public UByteIndexer put(long i, int[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            array[i * strides[0] + n] = (byte)b[offset + n];
+            array[(int)i * (int)strides[0] + n] = (byte)b[offset + n];
         }
         return this;
     }
-    @Override public UByteIndexer put(int i, int j, int b) {
-        array[i * strides[0] + j] = (byte)b;
+    @Override public UByteIndexer put(long i, long j, int b) {
+        array[(int)i * (int)strides[0] + (int)j] = (byte)b;
         return this;
     }
-    @Override public UByteIndexer put(int i, int j, int[] b, int offset, int length) {
+    @Override public UByteIndexer put(long i, long j, int[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            array[i * strides[0] + j * strides[1] + n] = (byte)b[offset + n];
+            array[(int)i * (int)strides[0] + (int)j * (int)strides[1] + n] = (byte)b[offset + n];
         }
         return this;
     }
-    @Override public UByteIndexer put(int i, int j, int k, int b) {
-        array[i * strides[0] + j * strides[1] + k] = (byte)b;
+    @Override public UByteIndexer put(long i, long j, long k, int b) {
+        array[(int)i * (int)strides[0] + (int)j * (int)strides[1] + (int)k] = (byte)b;
         return this;
     }
-    @Override public UByteIndexer put(int[] indices, int b) {
-        array[index(indices)] = (byte)b;
+    @Override public UByteIndexer put(long[] indices, int b) {
+        array[(int)index(indices)] = (byte)b;
         return this;
     }
-    @Override public UByteIndexer put(int[] indices, int[] b, int offset, int length) {
+    @Override public UByteIndexer put(long[] indices, int[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            array[index(indices) + n] = (byte)b[offset + n];
+            array[(int)index(indices) + n] = (byte)b[offset + n];
         }
         return this;
     }

@@ -1,4 +1,5 @@
 
+ * Enhance the `indexer` package with `long` indexing, initially via the `sun.misc.Unsafe`, for now
  * Lengthen the `position`, `limit`, and `capacity` fields of `Pointer` using `long`
  * Prevent creating text relocations for shared libraries on Android, which are rejected by recent versions of the SDK
  * Use the `outputDirectory` as the compiler's working directory ([pull #89](https://github.com/bytedeco/javacpp/issues/89))

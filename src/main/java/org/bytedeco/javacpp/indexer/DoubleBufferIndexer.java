@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Samuel Audet
+ * Copyright (C) 2014-2016 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -34,8 +34,13 @@ public class DoubleBufferIndexer extends DoubleIndexer {
     /** The backing buffer. */
     protected DoubleBuffer buffer;
 
+    /** Calls {@code DoubleBufferIndexer(buffer, { buffer.limit() }, { 1 })}. */
+    public DoubleBufferIndexer(DoubleBuffer buffer) {
+        this(buffer, new long[] { buffer.limit() }, new long[] { 1 });
+    }
+
     /** Constructor to set the {@link #buffer}, {@link #sizes} and {@link #strides}. */
-    public DoubleBufferIndexer(DoubleBuffer buffer, int[] sizes, int[] strides) {
+    public DoubleBufferIndexer(DoubleBuffer buffer, long[] sizes, long[] strides) {
         super(sizes, strides);
         this.buffer = buffer;
     }
@@ -44,68 +49,68 @@ public class DoubleBufferIndexer extends DoubleIndexer {
         return buffer;
     }
 
-    @Override public double get(int i) {
-        return buffer.get(i);
+    @Override public double get(long i) {
+        return buffer.get((int)i);
     }
-    @Override public DoubleIndexer get(int i, double[] d, int offset, int length) {
+    @Override public DoubleIndexer get(long i, double[] d, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            d[offset + n] = buffer.get(i * strides[0] + n);
+            d[offset + n] = buffer.get((int)i * (int)strides[0] + n);
         }
         return this;
     }
-    @Override public double get(int i, int j) {
-        return buffer.get(i * strides[0] + j);
+    @Override public double get(long i, long j) {
+        return buffer.get((int)i * (int)strides[0] + (int)j);
     }
-    @Override public DoubleIndexer get(int i, int j, double[] d, int offset, int length) {
+    @Override public DoubleIndexer get(long i, long j, double[] d, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            d[offset + n] = buffer.get(i * strides[0] + j * strides[1] + n);
+            d[offset + n] = buffer.get((int)i * (int)strides[0] + (int)j * (int)strides[1] + n);
         }
         return this;
     }
-    @Override public double get(int i, int j, int k) {
-        return buffer.get(i * strides[0] + j * strides[1] + k);
+    @Override public double get(long i, long j, long k) {
+        return buffer.get((int)i * (int)strides[0] + (int)j * (int)strides[1] + (int)k);
     }
-    @Override public double get(int ... indices) {
-        return buffer.get(index(indices));
+    @Override public double get(long... indices) {
+        return buffer.get((int)index(indices));
     }
-    @Override public DoubleIndexer get(int[] indices, double[] d, int offset, int length) {
+    @Override public DoubleIndexer get(long[] indices, double[] d, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            d[offset + n] = buffer.get(index(indices) + n);
+            d[offset + n] = buffer.get((int)index(indices) + n);
         }
         return this;
     }
 
-    @Override public DoubleIndexer put(int i, double d) {
-        buffer.put(i, d);
+    @Override public DoubleIndexer put(long i, double d) {
+        buffer.put((int)i, d);
         return this;
     }
-    @Override public DoubleIndexer put(int i, double[] d, int offset, int length) {
+    @Override public DoubleIndexer put(long i, double[] d, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            buffer.put(i * strides[0] + n, d[offset + n]);
+            buffer.put((int)i * (int)strides[0] + n, d[offset + n]);
         }
         return this;
     }
-    @Override public DoubleIndexer put(int i, int j, double d) {
-        buffer.put(i * strides[0] + j, d);
+    @Override public DoubleIndexer put(long i, long j, double d) {
+        buffer.put((int)i * (int)strides[0] + (int)j, d);
         return this;
     }
-    @Override public DoubleIndexer put(int i, int j, double[] d, int offset, int length) {
+    @Override public DoubleIndexer put(long i, long j, double[] d, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            buffer.put(i * strides[0] + j * strides[1] + n, d[offset + n]);
+            buffer.put((int)i * (int)strides[0] + (int)j * (int)strides[1] + n, d[offset + n]);
         }
         return this;
     }
-    @Override public DoubleIndexer put(int i, int j, int k, double d) {
-        buffer.put(i * strides[0] + j * strides[1] + k, d);
+    @Override public DoubleIndexer put(long i, long j, long k, double d) {
+        buffer.put((int)i * (int)strides[0] + (int)j * (int)strides[1] + (int)k, d);
         return this;
     }
-    @Override public DoubleIndexer put(int[] indices, double d) {
-        buffer.put(index(indices), d);
+    @Override public DoubleIndexer put(long[] indices, double d) {
+        buffer.put((int)index(indices), d);
         return this;
     }
-    @Override public DoubleIndexer put(int[] indices, double[] d, int offset, int length) {
+    @Override public DoubleIndexer put(long[] indices, double[] d, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            buffer.put(index(indices) + n, d[offset + n]);
+            buffer.put((int)index(indices) + n, d[offset + n]);
         }
         return this;
     }

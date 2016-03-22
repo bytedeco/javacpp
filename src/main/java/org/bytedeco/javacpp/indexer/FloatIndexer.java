@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Samuel Audet
+ * Copyright (C) 2014-2016 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -31,20 +31,36 @@ import org.bytedeco.javacpp.FloatPointer;
  * @author Samuel Audet
  */
 public abstract class FloatIndexer extends Indexer {
-    protected FloatIndexer(int[] sizes, int[] strides) {
+    /** The number of bytes used to represent a float. */
+    public static final int VALUE_BYTES = 4;
+
+    protected FloatIndexer(long[] sizes, long[] strides) {
         super(sizes, strides);
     }
 
-    /** @return {@code new FloatArrayIndexer(array, sizes, strides)} */
-    public static FloatIndexer create(float[] array, int[] sizes, int[] strides) {
+    /** Returns {@code new FloatArrayIndexer(array)} */
+    public static FloatIndexer create(float[] array) {
+        return new FloatArrayIndexer(array);
+    }
+    /** Returns {@code new FloatBufferIndexer(buffer)} */
+    public static FloatIndexer create(FloatBuffer buffer) {
+        return new FloatBufferIndexer(buffer);
+    }
+    /** Returns {@code create(pointer, { pointer.limit() - pointer.position() }, { 1 }, true)} */
+    public static FloatIndexer create(FloatPointer pointer) {
+        return create(pointer, new long[] { pointer.limit() - pointer.position() }, new long[] { 1 });
+    }
+
+    /** Returns {@code new FloatArrayIndexer(array, sizes, strides)} */
+    public static FloatIndexer create(float[] array, long[] sizes, long[] strides) {
         return new FloatArrayIndexer(array, sizes, strides);
     }
-    /** @return {@code new FloatBufferIndexer(buffer, sizes, strides)} */
-    public static FloatIndexer create(FloatBuffer buffer, int[] sizes, int[] strides) {
+    /** Returns {@code new FloatBufferIndexer(buffer, sizes, strides)} */
+    public static FloatIndexer create(FloatBuffer buffer, long[] sizes, long[] strides) {
         return new FloatBufferIndexer(buffer, sizes, strides);
     }
-    /** @return {@code create(pointer, sizes, strides, true)} */
-    public static FloatIndexer create(FloatPointer pointer, int[] sizes, int[] strides) {
+    /** Returns {@code create(pointer, sizes, strides, true)} */
+    public static FloatIndexer create(FloatPointer pointer, long[] sizes, long[] strides) {
         return create(pointer, sizes, strides, true);
     }
     /**
@@ -52,11 +68,12 @@ public abstract class FloatIndexer extends Indexer {
      *
      * @param pointer data to access via a buffer or to copy to an array
      * @param direct {@code true} to use a direct buffer, see {@link Indexer} for details
-     * @return the new float array backed by a buffer or an array
+     * @return the new float indexer backed by the raw memory interface, a buffer, or an array
      */
-    public static FloatIndexer create(final FloatPointer pointer, int[] sizes, int[] strides, boolean direct) {
+    public static FloatIndexer create(final FloatPointer pointer, long[] sizes, long[] strides, boolean direct) {
         if (direct) {
-            return new FloatBufferIndexer(pointer.asBuffer(), sizes, strides);
+            return Raw.getInstance() != null ? new FloatRawIndexer(pointer, sizes, strides)
+                                             : new FloatBufferIndexer(pointer.asBuffer(), sizes, strides);
         } else {
             final long position = pointer.position();
             float[] array = new float[(int)Math.min(pointer.limit() - position, Integer.MAX_VALUE)];
@@ -70,48 +87,48 @@ public abstract class FloatIndexer extends Indexer {
         }
     }
 
-    /** @return {@code array/buffer[i]} */
-    public abstract float get(int i);
-    /** @return {@code this} where {@code f = array/buffer[i]} */
-    public FloatIndexer get(int i, float[] f) { return get(i, f, 0, f.length); }
-    /** @return {@code this} where {@code f[offset:offset + length] = array/buffer[i]} */
-    public abstract FloatIndexer get(int i, float[] f, int offset, int length);
-    /** @return {@code array/buffer[i * strides[0] + j]} */
-    public abstract float get(int i, int j);
-    /** @return {@code this} where {@code f = array/buffer[i * strides[0] + j]} */
-    public FloatIndexer get(int i, int j, float[] f) { return get(i, j, f, 0, f.length); }
-    /** @return {@code this} where {@code f[offset:offset + length] = array/buffer[i * strides[0] + j]} */
-    public abstract FloatIndexer get(int i, int j, float[] f, int offset, int length);
-    /** @return {@code array/buffer[i * strides[0] + j * strides[1] + k]} */
-    public abstract float get(int i, int j, int k);
-    /** @return {@code array/buffer[index(indices)]} */
-    public abstract float get(int ... indices);
-    /** @return {@code this} where {@code f = array/buffer[index(indices)]} */
-    public FloatIndexer get(int[] indices, float[] f) { return get(indices, f, 0, f.length); }
-    /** @return {@code this} where {@code f[offset:offset + length] = array/buffer[index(indices)]} */
-    public abstract FloatIndexer get(int[] indices, float[] f, int offset, int length);
+    /** Returns {@code array/buffer[i]} */
+    public abstract float get(long i);
+    /** Returns {@code this} where {@code f = array/buffer[i]} */
+    public FloatIndexer get(long i, float[] f) { return get(i, f, 0, f.length); }
+    /** Returns {@code this} where {@code f[offset:offset + length] = array/buffer[i]} */
+    public abstract FloatIndexer get(long i, float[] f, int offset, int length);
+    /** Returns {@code array/buffer[i * strides[0] + j]} */
+    public abstract float get(long i, long j);
+    /** Returns {@code this} where {@code f = array/buffer[i * strides[0] + j]} */
+    public FloatIndexer get(long i, long j, float[] f) { return get(i, j, f, 0, f.length); }
+    /** Returns {@code this} where {@code f[offset:offset + length] = array/buffer[i * strides[0] + j]} */
+    public abstract FloatIndexer get(long i, long j, float[] f, int offset, int length);
+    /** Returns {@code array/buffer[i * strides[0] + j * strides[1] + k]} */
+    public abstract float get(long i, long j, long k);
+    /** Returns {@code array/buffer[index(indices)]} */
+    public abstract float get(long... indices);
+    /** Returns {@code this} where {@code f = array/buffer[index(indices)]} */
+    public FloatIndexer get(long[] indices, float[] f) { return get(indices, f, 0, f.length); }
+    /** Returns {@code this} where {@code f[offset:offset + length] = array/buffer[index(indices)]} */
+    public abstract FloatIndexer get(long[] indices, float[] f, int offset, int length);
 
-    /** @return {@code this} where {@code array/buffer[i] = f} */
-    public abstract FloatIndexer put(int i, float f);
-    /** @return {@code this} where {@code array/buffer[i] = f} */
-    public FloatIndexer put(int i, float ... f) { return put(i, f, 0, f.length); }
-    /** @return {@code this} where {@code array/buffer[i] = f[offset:offset + length]} */
-    public abstract FloatIndexer put(int i, float[] f, int offset, int length);
-    /** @return {@code this} where {@code array/buffer[i * strides[0] + j] = f} */
-    public abstract FloatIndexer put(int i, int j, float f);
-    /** @return {@code this} where {@code array/buffer[i * strides[0] + j] = f} */
-    public FloatIndexer put(int i, int j, float ... f) { return put(i, j, f, 0, f.length); }
-    /** @return {@code this} where {@code array/buffer[i * strides[0] + j] = f[offset:offset + length]} */
-    public abstract FloatIndexer put(int i, int j, float[] f, int offset, int length);
-    /** @return {@code this} where {@code array/buffer[i * strides[0] + j * strides[1] + k] = f} */
-    public abstract FloatIndexer put(int i, int j, int k, float f);
-    /** @return {@code this} where {@code array/buffer[index(indices)] = f} */
-    public abstract FloatIndexer put(int[] indices, float f);
-    /** @return {@code this} where {@code array/buffer[index(indices)] = f} */
-    public FloatIndexer put(int[] indices, float ... f) { return put(indices, f, 0, f.length); }
-    /** @return {@code this} where {@code array/buffer[index(indices)] = f[offset:offset + length]} */
-    public abstract FloatIndexer put(int[] indices, float[] f, int offset, int length);
+    /** Returns {@code this} where {@code array/buffer[i] = f} */
+    public abstract FloatIndexer put(long i, float f);
+    /** Returns {@code this} where {@code array/buffer[i] = f} */
+    public FloatIndexer put(long i, float... f) { return put(i, f, 0, f.length); }
+    /** Returns {@code this} where {@code array/buffer[i] = f[offset:offset + length]} */
+    public abstract FloatIndexer put(long i, float[] f, int offset, int length);
+    /** Returns {@code this} where {@code array/buffer[i * strides[0] + j] = f} */
+    public abstract FloatIndexer put(long i, long j, float f);
+    /** Returns {@code this} where {@code array/buffer[i * strides[0] + j] = f} */
+    public FloatIndexer put(long i, long j, float... f) { return put(i, j, f, 0, f.length); }
+    /** Returns {@code this} where {@code array/buffer[i * strides[0] + j] = f[offset:offset + length]} */
+    public abstract FloatIndexer put(long i, long j, float[] f, int offset, int length);
+    /** Returns {@code this} where {@code array/buffer[i * strides[0] + j * strides[1] + k] = f} */
+    public abstract FloatIndexer put(long i, long j, long k, float f);
+    /** Returns {@code this} where {@code array/buffer[index(indices)] = f} */
+    public abstract FloatIndexer put(long[] indices, float f);
+    /** Returns {@code this} where {@code array/buffer[index(indices)] = f} */
+    public FloatIndexer put(long[] indices, float... f) { return put(indices, f, 0, f.length); }
+    /** Returns {@code this} where {@code array/buffer[index(indices)] = f[offset:offset + length]} */
+    public abstract FloatIndexer put(long[] indices, float[] f, int offset, int length);
 
-    @Override public double getDouble(int ... indices) { return get(indices); }
-    @Override public FloatIndexer putDouble(int[] indices, double f) { return put(indices, (float)f); }
+    @Override public double getDouble(long... indices) { return get(indices); }
+    @Override public FloatIndexer putDouble(long[] indices, double f) { return put(indices, (float)f); }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Samuel Audet
+ * Copyright (C) 2015-2016 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -34,8 +34,13 @@ public class UShortBufferIndexer extends UShortIndexer {
     /** The backing buffer. */
     protected ShortBuffer buffer;
 
+    /** Calls {@code UShortBufferIndexer(buffer, { buffer.limit() }, { 1 })}. */
+    public UShortBufferIndexer(ShortBuffer buffer) {
+        this(buffer, new long[] { buffer.limit() }, new long[] { 1 });
+    }
+
     /** Constructor to set the {@link #buffer}, {@link #sizes} and {@link #strides}. */
-    public UShortBufferIndexer(ShortBuffer buffer, int[] sizes, int[] strides) {
+    public UShortBufferIndexer(ShortBuffer buffer, long[] sizes, long[] strides) {
         super(sizes, strides);
         this.buffer = buffer;
     }
@@ -44,68 +49,68 @@ public class UShortBufferIndexer extends UShortIndexer {
         return buffer;
     }
 
-    @Override public int get(int i) {
-        return buffer.get(i) & 0xFFFF;
+    @Override public int get(long i) {
+        return buffer.get((int)i) & 0xFFFF;
     }
-    @Override public UShortIndexer get(int i, int[] s, int offset, int length) {
+    @Override public UShortIndexer get(long i, int[] s, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            s[offset + n] = buffer.get(i * strides[0] + n) & 0xFFFF;
+            s[offset + n] = buffer.get((int)i * (int)strides[0] + n) & 0xFFFF;
         }
         return this;
     }
-    @Override public int get(int i, int j) {
-        return buffer.get(i * strides[0] + j) & 0xFFFF;
+    @Override public int get(long i, long j) {
+        return buffer.get((int)i * (int)strides[0] + (int)j) & 0xFFFF;
     }
-    @Override public UShortIndexer get(int i, int j, int[] s, int offset, int length) {
+    @Override public UShortIndexer get(long i, long j, int[] s, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            s[offset + n] = buffer.get(i * strides[0] + j * strides[1] + n) & 0xFFFF;
+            s[offset + n] = buffer.get((int)i * (int)strides[0] + (int)j * (int)strides[1] + n) & 0xFFFF;
         }
         return this;
     }
-    @Override public int get(int i, int j, int k) {
-        return buffer.get(i * strides[0] + j * strides[1] + k) & 0xFFFF;
+    @Override public int get(long i, long j, long k) {
+        return buffer.get((int)i * (int)strides[0] + (int)j * (int)strides[1] + (int)k) & 0xFFFF;
     }
-    @Override public int get(int ... indices) {
-        return buffer.get(index(indices)) & 0xFFFF;
+    @Override public int get(long... indices) {
+        return buffer.get((int)index(indices)) & 0xFFFF;
     }
-    @Override public UShortIndexer get(int[] indices, int[] s, int offset, int length) {
+    @Override public UShortIndexer get(long[] indices, int[] s, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            s[offset + n] = buffer.get(index(indices) + n) & 0xFFFF;
+            s[offset + n] = buffer.get((int)index(indices) + n) & 0xFFFF;
         }
         return this;
     }
 
-    @Override public UShortIndexer put(int i, int s) {
-        buffer.put(i, (short)s);
+    @Override public UShortIndexer put(long i, int s) {
+        buffer.put((int)i, (short)s);
         return this;
     }
-    @Override public UShortIndexer put(int i, int[] s, int offset, int length) {
+    @Override public UShortIndexer put(long i, int[] s, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            buffer.put(i * strides[0] + n, (short)s[offset + n]);
+            buffer.put((int)i * (int)strides[0] + n, (short)s[offset + n]);
         }
         return this;
     }
-    @Override public UShortIndexer put(int i, int j, int s) {
-        buffer.put(i * strides[0] + j, (short)s);
+    @Override public UShortIndexer put(long i, long j, int s) {
+        buffer.put((int)i * (int)strides[0] + (int)j, (short)s);
         return this;
     }
-    @Override public UShortIndexer put(int i, int j, int[] s, int offset, int length) {
+    @Override public UShortIndexer put(long i, long j, int[] s, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            buffer.put(i * strides[0] + j * strides[1] + n, (short)s[offset + n]);
+            buffer.put((int)i * (int)strides[0] + (int)j * (int)strides[1] + n, (short)s[offset + n]);
         }
         return this;
     }
-    @Override public UShortIndexer put(int i, int j, int k, int s) {
-        buffer.put(i * strides[0] + j * strides[1] + k, (short)s);
+    @Override public UShortIndexer put(long i, long j, long k, int s) {
+        buffer.put((int)i * (int)strides[0] + (int)j * (int)strides[1] + (int)k, (short)s);
         return this;
     }
-    @Override public UShortIndexer put(int[] indices, int s) {
-        buffer.put(index(indices), (short)s);
+    @Override public UShortIndexer put(long[] indices, int s) {
+        buffer.put((int)index(indices), (short)s);
         return this;
     }
-    @Override public UShortIndexer put(int[] indices, int[] s, int offset, int length) {
+    @Override public UShortIndexer put(long[] indices, int[] s, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            buffer.put(index(indices) + n, (short)s[offset + n]);
+            buffer.put((int)index(indices) + n, (short)s[offset + n]);
         }
         return this;
     }
