@@ -1032,7 +1032,7 @@ public class Parser {
                 if (originalName != null) {
                     functionType = Character.toUpperCase(originalName.charAt(0)) + originalName.substring(1);
                 }
-                if (info != null && info.pointerTypes.length > 0) {
+                if (info != null && info.pointerTypes != null && info.pointerTypes.length > 0) {
                     functionType = info.pointerTypes[0];
                 } else if (typedef) {
                     functionType = originalName;
@@ -1040,6 +1040,11 @@ public class Parser {
                     functionType += dcl.parameters.signature;
                 } else if (!type.javaName.equals("void")) {
                     functionType = type.javaName + "_" + functionType;
+                }
+                if (info != null && info.annotations != null) {
+                    for (String s : info.annotations) {
+                        definition.text += s + " ";
+                    }
                 }
                 definition.text += (tokens.get().match(Token.CONST, Token.CONSTEXPR) ? "@Const " : "") +
                         "public static class " + functionType + " extends FunctionPointer {\n" +

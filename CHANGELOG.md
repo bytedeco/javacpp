@@ -1,4 +1,6 @@
 
+ * Let `Parser` pick up `Info.annotations` in the case of function pointers as well
+ * Add `@Convention(extern=...)` value to have `Generator` produce `FunctionPointer` with other language linkage than "C"
  * Enhance the `indexer` package with `long` indexing, initially via the `sun.misc.Unsafe`, for now
  * Lengthen the `position`, `limit`, and `capacity` fields of `Pointer` using `long`
  * Prevent creating text relocations for shared libraries on Android, which are rejected by recent versions of the SDK

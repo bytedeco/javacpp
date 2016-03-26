@@ -1883,6 +1883,13 @@ public class Generator implements Closeable {
             memberList.add(member);
         } else if (callbackName != null) {
             callbacks.index("static " + instanceTypeName + " " + callbackName + "_instance;");
+            Convention convention = cls.getAnnotation(Convention.class);
+            if (convention != null && !convention.extern().equals("C")) {
+                out.println("extern \"" + convention.extern() + "\" {");
+                if (out2 != null) {
+                    out2.println("extern \"" + convention.extern() + "\" {");
+                }
+            }
             if (out2 != null) {
                 out2.println("JNIIMPORT " + returnConvention[0] + (returnConvention.length > 1 ?
                         returnConvention[1] : "") + callbackName + parameterDeclaration + ";");
@@ -1898,6 +1905,12 @@ public class Generator implements Closeable {
             }
             out.println(");");
             out.println("}");
+            if (convention != null && !convention.extern().equals("C")) {
+                out.println("}");
+                if (out2 != null) {
+                    out2.println("}");
+                }
+            }
 
             firstLine = returnConvention[0] + instanceTypeName + "::operator()" + parameterDeclaration + " {";
         }

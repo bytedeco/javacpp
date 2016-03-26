@@ -19,4 +19,5 @@ import org.bytedeco.javacpp.tools.Generator;
 @Target({ElementType.TYPE})
 public @interface Convention {
     String value();
+    String extern() default "C";
 }
