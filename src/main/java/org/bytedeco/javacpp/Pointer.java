@@ -219,16 +219,22 @@ public class Pointer implements AutoCloseable {
     /**
      * A subclass of {@link PhantomReference} that also acts as a linked
      * list to keep their references alive until they get garbage collected.
+     * Also keeps track of total allocated memory in bytes, to have it
+     * call {@link System#gc()} when that amount reaches {@link #maxBytes}.
      */
-    private static class DeallocatorReference extends PhantomReference<Pointer> {
+    static class DeallocatorReference extends PhantomReference<Pointer> {
         DeallocatorReference(Pointer p, Deallocator deallocator) {
             super(p, referenceQueue);
             this.deallocator = deallocator;
+            this.bytes = p.capacity * p.sizeof();
         }
 
         static volatile DeallocatorReference head = null;
         volatile DeallocatorReference prev = null, next = null;
         Deallocator deallocator;
+
+        static volatile long totalBytes = 0;
+        long bytes;
 
         final void add() {
             synchronized (DeallocatorReference.class) {
@@ -238,6 +244,7 @@ public class Pointer implements AutoCloseable {
                     next = head;
                     next.prev = head = this;
                 }
+                totalBytes += bytes;
             }
         }
 
@@ -255,6 +262,7 @@ public class Pointer implements AutoCloseable {
                     next.prev = prev;
                 }
                 prev = next = this;
+                totalBytes -= bytes;
             }
         }
 
@@ -279,9 +287,25 @@ public class Pointer implements AutoCloseable {
     /** The {@link ReferenceQueue} used by {@link DeallocatorReference}.
      * Initialized to null if the "org.bytedeco.javacpp.nopointergc" system property is "true". */
     private static final ReferenceQueue<Pointer> referenceQueue;
+
+    /** Maximum amount of memory registered with live deallocators before forcing call to {@link System#gc()}.
+     * Set via "org.bytedeco.javacpp.maxbytes" system property, defaults to {@link Runtime#maxMemory()}. */
+    static final long maxBytes;
+
     static {
         String s = System.getProperty("org.bytedeco.javacpp.nopointergc", "false").toLowerCase();
         referenceQueue = s.equals("true") || s.equals("t") || s.equals("") ? null : new ReferenceQueue<Pointer>();
+
+        long m = Runtime.getRuntime().maxMemory();
+        s = System.getProperty("org.bytedeco.javacpp.maxbytes");
+        if (s != null && s.length() > 0) {
+            try {
+                m = Long.parseLong(s);
+            } catch (NumberFormatException e) {
+                // keep default value set above
+            }
+        }
+        maxBytes = m;
     }
 
     /** Clears, deallocates, and removes all garbage collected objects from the {@link #referenceQueue}. */
@@ -393,6 +417,21 @@ public class Pointer implements AutoCloseable {
             DeallocatorReference r = deallocator instanceof DeallocatorReference ?
                     (DeallocatorReference)deallocator :
                     new DeallocatorReference(this, deallocator);
+            if (maxBytes > 0 && DeallocatorReference.totalBytes + r.bytes > maxBytes) {
+                // try to get some more memory back
+                System.gc();
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException ex) {
+                    // reset interrupt to be nice
+                    Thread.currentThread().interrupt();
+                }
+                deallocateReferences();
+            }
+            if (maxBytes > 0 && DeallocatorReference.totalBytes + r.bytes > maxBytes) {
+                deallocate();
+                throw new OutOfMemoryError("Cannot allocate " + (DeallocatorReference.totalBytes + r.bytes) + " bytes");
+            }
             if (logger.isDebugEnabled()) {
                 logger.debug("Registering " + this);
             }

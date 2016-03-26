@@ -1,4 +1,5 @@
 
+ * Add "org.bytedeco.javacpp.maxbytes" system property, forcing a call to `System.gc()` when this amount of memory tracked with deallocators is reached
  * Let `Parser` pick up `Info.annotations` in the case of function pointers as well
  * Add `@Convention(extern=...)` value to have `Generator` produce `FunctionPointer` with other language linkage than "C"
  * Enhance the `indexer` package with `long` indexing, initially via the `sun.misc.Unsafe`, for now

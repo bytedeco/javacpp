@@ -34,6 +34,7 @@ import org.bytedeco.javacpp.indexer.ShortIndexer;
 import org.bytedeco.javacpp.indexer.UByteIndexer;
 import org.bytedeco.javacpp.indexer.UShortIndexer;
 import org.bytedeco.javacpp.tools.Builder;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -52,6 +53,13 @@ public class IndexerTest {
         File[] outputFiles = builder.build();
         Loader.loadLibraries = true;
         Loader.load(c);
+
+        // work around OutOfMemoryError when testing long indexing
+        Pointer.DeallocatorReference.totalBytes -= 1L << 48;
+    }
+
+    @AfterClass public static void tearDownClass() throws Exception {
+        Pointer.DeallocatorReference.totalBytes += 1L << 48;
     }
 
     @Test public void testByteIndexer() {
@@ -111,17 +119,18 @@ public class IndexerTest {
 
         long longSize = 0x80000000L + 8192;
         final BytePointer longPointer = new BytePointer(longSize);
-        assertNotEquals(0, longPointer.address());
-        assertEquals(longSize, longPointer.capacity());
-        ByteIndexer longIndexer = ByteIndexer.create(longPointer);
-        assertEquals(longIndexer.pointer(), longPointer);
-        for (long i = 0; i < 8192; i++) {
-            longPointer.put(longSize - i - 1, (byte)i);
+        if (!longPointer.isNull()) {
+            assertEquals(longSize, longPointer.capacity());
+            ByteIndexer longIndexer = ByteIndexer.create(longPointer);
+            assertEquals(longIndexer.pointer(), longPointer);
+            for (long i = 0; i < 8192; i++) {
+                longPointer.put(longSize - i - 1, (byte)i);
+            }
+            for (long i = 0; i < 8192; i++) {
+                assertEquals(longIndexer.get(longSize - i - 1), (byte)i);
+            }
+            System.out.println("longIndexer[0x" + Long.toHexString(longSize - 8192) + "] = " + longIndexer.get(longSize - 8192));
         }
-        for (long i = 0; i < 8192; i++) {
-            assertEquals(longIndexer.get(longSize - i - 1), (byte)i);
-        }
-        System.out.println("longIndexer[0x" + Long.toHexString(longSize - 8192) + "] = " + longIndexer.get(longSize - 8192));
         System.out.println();
     }
 
@@ -182,17 +191,18 @@ public class IndexerTest {
 
         long longSize = 0x80000000L + 8192;
         final ShortPointer longPointer = new ShortPointer(longSize);
-        assertNotEquals(0, longPointer.address());
-        assertEquals(longSize, longPointer.capacity());
-        ShortIndexer longIndexer = ShortIndexer.create(longPointer);
-        assertEquals(longIndexer.pointer(), longPointer);
-        for (long i = 0; i < 8192; i++) {
-            longPointer.put(longSize - i - 1, (short)i);
+        if (!longPointer.isNull()) {
+            assertEquals(longSize, longPointer.capacity());
+            ShortIndexer longIndexer = ShortIndexer.create(longPointer);
+            assertEquals(longIndexer.pointer(), longPointer);
+            for (long i = 0; i < 8192; i++) {
+                longPointer.put(longSize - i - 1, (short)i);
+            }
+            for (long i = 0; i < 8192; i++) {
+                assertEquals(longIndexer.get(longSize - i - 1), (short)i);
+            }
+            System.out.println("longIndexer[0x" + Long.toHexString(longSize - 8192) + "] = " + longIndexer.get(longSize - 8192));
         }
-        for (long i = 0; i < 8192; i++) {
-            assertEquals(longIndexer.get(longSize - i - 1), (short)i);
-        }
-        System.out.println("longIndexer[0x" + Long.toHexString(longSize - 8192) + "] = " + longIndexer.get(longSize - 8192));
         System.out.println();
     }
 
@@ -253,17 +263,18 @@ public class IndexerTest {
 
         long longSize = 0x80000000L + 8192;
         final IntPointer longPointer = new IntPointer(longSize);
-        assertNotEquals(0, longPointer.address());
-        assertEquals(longSize, longPointer.capacity());
-        IntIndexer longIndexer = IntIndexer.create(longPointer);
-        assertEquals(longIndexer.pointer(), longPointer);
-        for (long i = 0; i < 8192; i++) {
-            longPointer.put(longSize - i - 1, (int)i);
+        if (!longPointer.isNull()) {
+            assertEquals(longSize, longPointer.capacity());
+            IntIndexer longIndexer = IntIndexer.create(longPointer);
+            assertEquals(longIndexer.pointer(), longPointer);
+            for (long i = 0; i < 8192; i++) {
+                longPointer.put(longSize - i - 1, (int)i);
+            }
+            for (long i = 0; i < 8192; i++) {
+                assertEquals((long)longIndexer.get(longSize - i - 1), (int)i);
+            }
+            System.out.println("longIndexer[0x" + Long.toHexString(longSize - 8192) + "] = " + longIndexer.get(longSize - 8192));
         }
-        for (long i = 0; i < 8192; i++) {
-            assertEquals((long)longIndexer.get(longSize - i - 1), (int)i);
-        }
-        System.out.println("longIndexer[0x" + Long.toHexString(longSize - 8192) + "] = " + longIndexer.get(longSize - 8192));
         System.out.println();
     }
 
@@ -324,17 +335,18 @@ public class IndexerTest {
 
         long longSize = 0x80000000L + 8192;
         final LongPointer longPointer = new LongPointer(longSize);
-        assertNotEquals(0, longPointer.address());
-        assertEquals(longSize, longPointer.capacity());
-        LongIndexer longIndexer = LongIndexer.create(longPointer);
-        assertEquals(longIndexer.pointer(), longPointer);
-        for (long i = 0; i < 8192; i++) {
-            longPointer.put(longSize - i - 1, i);
+        if (!longPointer.isNull()) {
+            assertEquals(longSize, longPointer.capacity());
+            LongIndexer longIndexer = LongIndexer.create(longPointer);
+            assertEquals(longIndexer.pointer(), longPointer);
+            for (long i = 0; i < 8192; i++) {
+                longPointer.put(longSize - i - 1, i);
+            }
+            for (long i = 0; i < 8192; i++) {
+                assertEquals(longIndexer.get(longSize - i - 1), i);
+            }
+            System.out.println("longIndexer[0x" + Long.toHexString(longSize - 8192) + "] = " + longIndexer.get(longSize - 8192));
         }
-        for (long i = 0; i < 8192; i++) {
-            assertEquals(longIndexer.get(longSize - i - 1), i);
-        }
-        System.out.println("longIndexer[0x" + Long.toHexString(longSize - 8192) + "] = " + longIndexer.get(longSize - 8192));
         System.out.println();
     }
 
@@ -395,17 +407,18 @@ public class IndexerTest {
 
         long longSize = 0x80000000L + 8192;
         final FloatPointer longPointer = new FloatPointer(longSize);
-        assertNotEquals(0, longPointer.address());
-        assertEquals(longSize, longPointer.capacity());
-        FloatIndexer longIndexer = FloatIndexer.create(longPointer);
-        assertEquals(longIndexer.pointer(), longPointer);
-        for (long i = 0; i < 8192; i++) {
-            longPointer.put(longSize - i - 1, i);
+        if (!longPointer.isNull()) {
+            assertEquals(longSize, longPointer.capacity());
+            FloatIndexer longIndexer = FloatIndexer.create(longPointer);
+            assertEquals(longIndexer.pointer(), longPointer);
+            for (long i = 0; i < 8192; i++) {
+                longPointer.put(longSize - i - 1, i);
+            }
+            for (long i = 0; i < 8192; i++) {
+                assertEquals((long)longIndexer.get(longSize - i - 1), i);
+            }
+            System.out.println("longIndexer[0x" + Long.toHexString(longSize - 8192) + "] = " + longIndexer.get(longSize - 8192));
         }
-        for (long i = 0; i < 8192; i++) {
-            assertEquals((long)longIndexer.get(longSize - i - 1), i);
-        }
-        System.out.println("longIndexer[0x" + Long.toHexString(longSize - 8192) + "] = " + longIndexer.get(longSize - 8192));
         System.out.println();
     }
 
@@ -466,17 +479,18 @@ public class IndexerTest {
 
         long longSize = 0x80000000L + 8192;
         final DoublePointer longPointer = new DoublePointer(longSize);
-        assertNotEquals(0, longPointer.address());
-        assertEquals(longSize, longPointer.capacity());
-        DoubleIndexer longIndexer = DoubleIndexer.create(longPointer);
-        assertEquals(longIndexer.pointer(), longPointer);
-        for (long i = 0; i < 8192; i++) {
-            longPointer.put(longSize - i - 1, i);
+        if (!longPointer.isNull()) {
+            assertEquals(longSize, longPointer.capacity());
+            DoubleIndexer longIndexer = DoubleIndexer.create(longPointer);
+            assertEquals(longIndexer.pointer(), longPointer);
+            for (long i = 0; i < 8192; i++) {
+                longPointer.put(longSize - i - 1, i);
+            }
+            for (long i = 0; i < 8192; i++) {
+                assertEquals((long)longIndexer.get(longSize - i - 1), i);
+            }
+            System.out.println("longIndexer[0x" + Long.toHexString(longSize - 8192) + "] = " + longIndexer.get(longSize - 8192));
         }
-        for (long i = 0; i < 8192; i++) {
-            assertEquals((long)longIndexer.get(longSize - i - 1), i);
-        }
-        System.out.println("longIndexer[0x" + Long.toHexString(longSize - 8192) + "] = " + longIndexer.get(longSize - 8192));
         System.out.println();
     }
 
@@ -537,17 +551,18 @@ public class IndexerTest {
 
         long longSize = 0x80000000L + 8192;
         final CharPointer longPointer = new CharPointer(longSize);
-        assertNotEquals(0, longPointer.address());
-        assertEquals(longSize, longPointer.capacity());
-        CharIndexer longIndexer = CharIndexer.create(longPointer);
-        assertEquals(longIndexer.pointer(), longPointer);
-        for (long i = 0; i < 8192; i++) {
-            longPointer.put(longSize - i - 1, (char)i);
+        if (!longPointer.isNull()) {
+            assertEquals(longSize, longPointer.capacity());
+            CharIndexer longIndexer = CharIndexer.create(longPointer);
+            assertEquals(longIndexer.pointer(), longPointer);
+            for (long i = 0; i < 8192; i++) {
+                longPointer.put(longSize - i - 1, (char)i);
+            }
+            for (long i = 0; i < 8192; i++) {
+                assertEquals((long)longIndexer.get(longSize - i - 1), (char)i);
+            }
+            System.out.println("longIndexer[0x" + Long.toHexString(longSize) + " - 8192] = " + (int)longIndexer.get(longSize - 8192));
         }
-        for (long i = 0; i < 8192; i++) {
-            assertEquals((long)longIndexer.get(longSize - i - 1), (char)i);
-        }
-        System.out.println("longIndexer[0x" + Long.toHexString(longSize) + " - 8192] = " + (int)longIndexer.get(longSize - 8192));
         System.out.println();
     }
 
@@ -608,17 +623,18 @@ public class IndexerTest {
 
         long longSize = 0x80000000L + 8192;
         final BytePointer longPointer = new BytePointer(longSize);
-        assertNotEquals(0, longPointer.address());
-        assertEquals(longSize, longPointer.capacity());
-        UByteIndexer longIndexer = UByteIndexer.create(longPointer);
-        assertEquals(longIndexer.pointer(), longPointer);
-        for (long i = 0; i < 8192; i++) {
-            longPointer.put(longSize - i - 1, (byte)i);
+        if (!longPointer.isNull()) {
+            assertEquals(longSize, longPointer.capacity());
+            UByteIndexer longIndexer = UByteIndexer.create(longPointer);
+            assertEquals(longIndexer.pointer(), longPointer);
+            for (long i = 0; i < 8192; i++) {
+                longPointer.put(longSize - i - 1, (byte)i);
+            }
+            for (long i = 0; i < 8192; i++) {
+                assertEquals(longIndexer.get(longSize - i - 1), i & 0xFF);
+            }
+            System.out.println("longIndexer[0x" + Long.toHexString(longSize - 8192) + "] = " + longIndexer.get(longSize - 8192));
         }
-        for (long i = 0; i < 8192; i++) {
-            assertEquals(longIndexer.get(longSize - i - 1), i & 0xFF);
-        }
-        System.out.println("longIndexer[0x" + Long.toHexString(longSize - 8192) + "] = " + longIndexer.get(longSize - 8192));
         System.out.println();
     }
 
@@ -679,17 +695,18 @@ public class IndexerTest {
 
         long longSize = 0x80000000L + 8192;
         final ShortPointer longPointer = new ShortPointer(longSize);
-        assertNotEquals(0, longPointer.address());
-        assertEquals(longSize, longPointer.capacity());
-        UShortIndexer longIndexer = UShortIndexer.create(longPointer);
-        assertEquals(longIndexer.pointer(), longPointer);
-        for (long i = 0; i < 8192; i++) {
-            longPointer.put(longSize - i - 1, (short)i);
+        if (!longPointer.isNull()) {
+            assertEquals(longSize, longPointer.capacity());
+            UShortIndexer longIndexer = UShortIndexer.create(longPointer);
+            assertEquals(longIndexer.pointer(), longPointer);
+            for (long i = 0; i < 8192; i++) {
+                longPointer.put(longSize - i - 1, (short)i);
+            }
+            for (long i = 0; i < 8192; i++) {
+                assertEquals(longIndexer.get(longSize - i - 1), i & 0xFFFF);
+            }
+            System.out.println("longIndexer[0x" + Long.toHexString(longSize - 8192) + "] = " + longIndexer.get(longSize - 8192));
         }
-        for (long i = 0; i < 8192; i++) {
-            assertEquals(longIndexer.get(longSize - i - 1), i & 0xFFFF);
-        }
-        System.out.println("longIndexer[0x" + Long.toHexString(longSize - 8192) + "] = " + longIndexer.get(longSize - 8192));
         System.out.println();
     }
 
