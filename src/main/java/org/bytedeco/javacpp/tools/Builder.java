@@ -214,14 +214,17 @@ public class Builder {
         command.addAll(compilerOptions);
 
         String output = properties.getProperty("platform.compiler.output");
-        if (output != null && output.length() > 0) {
-            command.addAll(Arrays.asList(output.split(" ")));
-        }
+        for (int i = 1; i < 2 || output != null; i++,
+                output = properties.getProperty("platform.compiler.output" + i)) {
+            if (output != null && output.length() > 0) {
+                command.addAll(Arrays.asList(output.split(" ")));
+            }
 
-        if (output == null || output.length() == 0 || output.endsWith(" ")) {
-            command.add(outputFilename);
-        } else {
-            command.add(command.remove(command.size() - 1) + outputFilename);
+            if (output == null || output.length() == 0 || output.endsWith(" ")) {
+                command.add(outputFilename);
+            } else {
+                command.add(command.remove(command.size() - 1) + outputFilename);
+            }
         }
 
         {
@@ -314,8 +317,8 @@ public class Builder {
         logger.info(text);
 
         ProcessBuilder pb = new ProcessBuilder(command);
-        // Use the library output path as the working directory so that
-        // intermediate build files from MSVC are dumped there
+        // Use the library output path as the working directory so that all
+        // build files, including intermediate ones from MSVC, are dumped there
         pb.directory(workingDirectory);
         if (environmentVariables != null) {
             pb.environment().putAll(environmentVariables);
@@ -372,9 +375,8 @@ public class Builder {
         if (generator.generate(sourceFilename, headerFilename, classPath, classes)) {
             generator.close();
             if (compile) {
-                String libraryFilename = outputPath.getPath() + File.separator + libraryName;
-                logger.info("Compiling " + libraryFilename);
-                int exitValue = compile(sourceFilename, libraryFilename, p, outputPath);
+                logger.info("Compiling " + outputPath.getPath() + File.separator + libraryName);
+                int exitValue = compile(sourceFilename, libraryName, p, outputPath);
                 if (exitValue == 0) {
                     if (deleteJniFiles) {
                         logger.info("Deleting " + sourceFilename);
@@ -382,7 +384,7 @@ public class Builder {
                     } else {
                         logger.info("Keeping " + sourceFilename);
                     }
-                    outputFile = new File(libraryFilename);
+                    outputFile = new File(outputPath, libraryName);
                 } else {
                     System.exit(exitValue);
                 }
