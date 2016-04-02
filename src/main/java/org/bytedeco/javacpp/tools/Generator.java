@@ -37,8 +37,10 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 import java.nio.ShortBuffer;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -960,6 +962,11 @@ public class Generator implements Closeable {
         allClasses.addAll(baseClasses);
         allClasses.addAll(Arrays.asList(classes));
 
+        boolean supportedPlatform = false;
+        for (Class<?> cls : classes) {
+            supportedPlatform |= checkPlatform(cls);
+        }
+
         boolean didSomethingUseful = false;
         for (Class<?> cls : allClasses) {
             try {
@@ -977,7 +984,7 @@ public class Generator implements Closeable {
             out2.println("#endif");
         }
 
-        return didSomethingUseful;
+        return supportedPlatform && didSomethingUseful;
     }
 
     boolean methods(Class<?> cls) {
@@ -1039,7 +1046,7 @@ public class Generator implements Closeable {
         Method functionMethod = functionMethod(cls, callbackAllocators);
         boolean firstCallback = true;
         for (int i = 0; i < methods.length; i++) {
-            if (!checkPlatform(methods[i].getAnnotation(Platform.class))) {
+            if (!checkPlatform(methods[i].getAnnotation(Platform.class), null)) {
                 continue;
             }
             MethodInformation methodInfo = methodInfos[i];
@@ -2251,41 +2258,66 @@ public class Generator implements Closeable {
     }
 
     boolean checkPlatform(Class<?> cls) {
+        // check in priority this class for platform information, before the enclosing class
+        Class<?> enclosingClass = Loader.getEnclosingClass(cls);
         while (!cls.isAnnotationPresent(org.bytedeco.javacpp.annotation.Properties.class)
                 && !cls.isAnnotationPresent(Platform.class) && cls.getSuperclass() != null) {
-            cls = cls.getSuperclass();
+            if (enclosingClass != null && cls.getSuperclass() == Object.class) {
+                cls = enclosingClass;
+                enclosingClass = null;
+            } else {
+                cls = cls.getSuperclass();
+            }
         }
+
         org.bytedeco.javacpp.annotation.Properties classProperties =
-            cls.getAnnotation(org.bytedeco.javacpp.annotation.Properties.class);
+                cls.getAnnotation(org.bytedeco.javacpp.annotation.Properties.class);
         if (classProperties != null) {
             Class[] classes = classProperties.inherit();
-            if (classes != null) {
+
+            // get default platform names, searching in inherited classes as well
+            String[] defaultNames = classProperties.names();
+            Deque<Class> queue = new ArrayDeque<Class>(Arrays.asList(classes));
+            while (queue.size() > 0 && (defaultNames == null || defaultNames.length == 0)) {
+                Class<?> c = queue.removeFirst();
+                org.bytedeco.javacpp.annotation.Properties p =
+                        c.getAnnotation(org.bytedeco.javacpp.annotation.Properties.class);
+                if (p != null) {
+                    defaultNames = p.names();
+                    queue.addAll(Arrays.asList(p.inherit()));
+                }
+            }
+
+            // check in priority the platforms inside our properties annotation, before inherited ones
+            Platform[] platforms = classProperties.value();
+            if (platforms != null) {
+                for (Platform p : platforms) {
+                    if (checkPlatform(p, defaultNames)) {
+                        return true;
+                    }
+                }
+            } else if (classes != null) {
                 for (Class c : classes) {
                     if (checkPlatform(c)) {
                         return true;
                     }
                 }
             }
-            Platform[] platforms = classProperties.value();
-            if (platforms != null) {
-                for (Platform p : platforms) {
-                    if (checkPlatform(p)) {
-                        return true;
-                    }
-                }
-            }
-        } else if (checkPlatform(cls.getAnnotation(Platform.class))) {
+        } else if (checkPlatform(cls.getAnnotation(Platform.class), null)) {
             return true;
         }
         return false;
     }
 
-    boolean checkPlatform(Platform platform) {
+    boolean checkPlatform(Platform platform, String[] defaultNames) {
         if (platform == null) {
             return true;
         }
+        if (defaultNames == null) {
+            defaultNames = new String[0];
+        }
         String platform2 = properties.getProperty("platform");
-        String[][] names = { platform.value(), platform.not() };
+        String[][] names = { platform.value().length > 0 ? platform.value() : defaultNames, platform.not() };
         boolean[] matches = { false, false };
         for (int i = 0; i < names.length; i++) {
             for (String s : names[i]) {

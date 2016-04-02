@@ -134,7 +134,9 @@ public class InfoMap extends HashMap<String,List<Info>> {
         .put(new Info("address").javaNames("_address"))
         .put(new Info("position").javaNames("_position"))
         .put(new Info("limit").javaNames("_limit"))
-        .put(new Info("capacity").javaNames("_capacity"));
+        .put(new Info("capacity").javaNames("_capacity"))
+        .put(new Info("fill").javaNames("_fill"))
+        .put(new Info("zero").javaNames("_zero"));
 
     String normalize(String name, boolean unconst, boolean untemplate) {
         if (name == null || name.length() == 0 || name.startsWith("basic/")) {

@@ -1,4 +1,5 @@
 
+ * Fix corner cases when checking for the platform in `Generator` and `Parser`
  * Link libraries with "-z noexecstack" on Linux as recommended by HotSpot ([pull #90](https://github.com/bytedeco/javacpp/issues/90))
  * Set the internal DT_SONAME field in libraries created for Android ([issue bytedeco/javacpp-presets#188](https://github.com/bytedeco/javacpp-presets/issues/188))
  * Add "org.bytedeco.javacpp.maxbytes" system property, forcing a call to `System.gc()` when this amount of memory tracked with deallocators is reached

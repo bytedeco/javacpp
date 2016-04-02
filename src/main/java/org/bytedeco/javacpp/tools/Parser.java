@@ -2815,7 +2815,7 @@ public class Parser {
             text += "\n";
         }
         text += "public class " + target.substring(n + 1) + " extends "
-             + (clsHelpers.size() > 0 ? clsHelpers.get(0) : cls.getCanonicalName()) + " {\n"
+             + (clsHelpers.size() > 0 && clsIncludes.size() > 0 ? clsHelpers.get(0) : cls.getCanonicalName()) + " {\n"
              + "    static { Loader.load(); }\n";
 
         String targetPath = target.replace('.', File.separatorChar);
@@ -2842,11 +2842,13 @@ public class Parser {
             }
         }
         declList = new DeclarationList(declList);
-        containers(context, declList);
-        for (String include : clsIncludes) {
-            if (allIncludes.contains(include)) {
-                boolean isCFile = cIncludes.contains(include);
-                parse(context, declList, includePaths, include, isCFile);
+        if (clsIncludes.size() > 0) {
+            containers(context, declList);
+            for (String include : clsIncludes) {
+                if (allIncludes.contains(include)) {
+                    boolean isCFile = cIncludes.contains(include);
+                    parse(context, declList, includePaths, include, isCFile);
+                }
             }
         }
 
