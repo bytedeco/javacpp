@@ -1,4 +1,5 @@
 
+ * Map `jint` to `int` and `jlong` to `long long` on Windows as well as all platforms with GCC (or Clang)
  * Fix corner cases when checking for the platform in `Generator` and `Parser`
  * Link libraries with "-z noexecstack" on Linux as recommended by HotSpot ([pull #90](https://github.com/bytedeco/javacpp/issues/90))
  * Set the internal DT_SONAME field in libraries created for Android ([issue bytedeco/javacpp-presets#188](https://github.com/bytedeco/javacpp-presets/issues/188))

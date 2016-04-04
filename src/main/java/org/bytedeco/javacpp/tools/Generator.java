@@ -226,17 +226,6 @@ public class Generator implements Closeable {
             out.println("#define " + s);
         }
         out.println();
-        out.println("#ifdef __APPLE__");
-        out.println("    #define _JAVASOFT_JNI_MD_H_");
-        out.println();
-        out.println("    #define JNIEXPORT __attribute__((visibility(\"default\")))");
-        out.println("    #define JNIIMPORT");
-        out.println("    #define JNICALL");
-        out.println();
-        out.println("    typedef int jint;");
-        out.println("    typedef long long jlong;");
-        out.println("    typedef signed char jbyte;");
-        out.println("#endif");
         out.println("#ifdef _WIN32");
         out.println("    #define _JAVASOFT_JNI_MD_H_");
         out.println();
@@ -247,11 +236,23 @@ public class Generator implements Closeable {
         out.println("    typedef int jint;");
         out.println("    typedef long long jlong;");
         out.println("    typedef signed char jbyte;");
+        out.println("#elif defined(__GNUC__)");
+        out.println("    #define _JAVASOFT_JNI_MD_H_");
+        out.println();
+        out.println("    #define JNIEXPORT __attribute__((visibility(\"default\")))");
+        out.println("    #define JNIIMPORT");
+        out.println("    #define JNICALL");
+        out.println();
+        out.println("    typedef int jint;");
+        out.println("    typedef long long jlong;");
+        out.println("    typedef signed char jbyte;");
         out.println("#endif");
+        out.println();
         out.println("#include <jni.h>");
         if (out2 != null) {
             out2.println("#include <jni.h>");
         }
+        out.println();
         out.println("#ifdef ANDROID");
         out.println("    #include <android/log.h>");
         out.println("#elif defined(__APPLE__) && defined(__OBJC__)");
