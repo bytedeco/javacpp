@@ -1,4 +1,5 @@
 
+ * Let users define `NATIVE_ALLOCATOR` and `NATIVE_DEALLOCATOR` macros to overload global `new` and `delete` operators
  * Map `jint` to `int` and `jlong` to `long long` on Windows as well as all platforms with GCC (or Clang)
  * Fix corner cases when checking for the platform in `Generator` and `Parser`
  * Link libraries with "-z noexecstack" on Linux as recommended by HotSpot ([pull #90](https://github.com/bytedeco/javacpp/issues/90))

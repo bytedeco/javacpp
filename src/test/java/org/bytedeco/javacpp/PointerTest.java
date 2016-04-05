@@ -40,7 +40,7 @@ import static org.junit.Assert.*;
  *
  * @author Samuel Audet
  */
-@Platform
+@Platform(define = {"NATIVE_ALLOCATOR malloc", "NATIVE_DEALLOCATOR free"})
 public class PointerTest {
 
     @BeforeClass public static void setUpClass() throws Exception {
