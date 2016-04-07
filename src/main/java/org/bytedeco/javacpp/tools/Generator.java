@@ -551,10 +551,10 @@ public class Generator implements Closeable {
             out.println("        this->owner = owner;");
             out.println("        vec.assign(ptr, ptr + size);");
             out.println("    }");
-            out.println("    static void deallocate(void* owner) { delete[] (P*)owner; }");
+            out.println("    static void deallocate(void* owner) { operator delete(owner); }");
             out.println("    operator P*() {");
             out.println("        if (vec.size() > size) {");
-            out.println("            ptr = new (std::nothrow) P[vec.size()];");
+            out.println("            ptr = (P*)(operator new(sizeof(P) * vec.size(), std::nothrow_t()));");
             out.println("        }");
             out.println("        if (ptr) {");
             out.println("            std::copy(vec.begin(), vec.end(), ptr);");
