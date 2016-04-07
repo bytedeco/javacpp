@@ -1,4 +1,5 @@
 
+ * Make `Parser` take into account Java keywords not reserved in C++, casting issues with `int64_t`, and `const` value types in basic containers
  * Let users define `NATIVE_ALLOCATOR` and `NATIVE_DEALLOCATOR` macros to overload global `new` and `delete` operators
  * Map `jint` to `int` and `jlong` to `long long` on Windows as well as all platforms with GCC (or Clang)
  * Fix corner cases when checking for the platform in `Generator` and `Parser`

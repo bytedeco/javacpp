@@ -66,9 +66,9 @@ public class InfoMap extends HashMap<String,List<Info>> {
         .put(new Info("uint32_t", "unsigned __int32", "unsigned int", "unsigned").cast()
             .valueTypes("int").pointerTypes("IntPointer", "IntBuffer", "int[]"))
 
-        .put(new Info("int64_t", "__int64", "jlong", "long long", "signed long long", "long long int", "signed long long int")
+        .put(new Info("jlong", "long long", "signed long long", "long long int", "signed long long int")
             .valueTypes("long").pointerTypes("LongPointer", "LongBuffer", "long[]"))
-        .put(new Info("uint64_t", "unsigned __int64", "unsigned long long", "unsigned long long int").cast()
+        .put(new Info("int64_t", "__int64", "uint64_t", "unsigned __int64", "unsigned long long", "unsigned long long int").cast()
             .valueTypes("long").pointerTypes("LongPointer", "LongBuffer", "long[]"))
 
         .put(new Info("long", "signed long", "long int", "signed long int")
@@ -88,6 +88,19 @@ public class InfoMap extends HashMap<String,List<Info>> {
         .put(new Info("boost::shared_ptr", "std::shared_ptr").annotations("@SharedPtr"))
         .put(new Info("std::string").annotations("@StdString").valueTypes("BytePointer", "String"))
         .put(new Info("std::vector").annotations("@StdVector"))
+
+        .put(new Info("abstract").javaNames("_abstract"))
+        .put(new Info("boolean").javaNames("_boolean"))
+        .put(new Info("byte").javaNames("_byte"))
+        .put(new Info("extends").javaNames("_extends"))
+        .put(new Info("finally").javaNames("_finally"))
+        .put(new Info("implements").javaNames("_implements"))
+        .put(new Info("import").javaNames("_import"))
+        .put(new Info("instanceof").javaNames("_instanceof"))
+        .put(new Info("native").javaNames("_native"))
+        .put(new Info("package").javaNames("_package"))
+        .put(new Info("synchronized").javaNames("_synchronized"))
+        .put(new Info("transient").javaNames("_transient"))
 
         .put(new Info("operator ->").javaNames("access"))
         .put(new Info("operator ()").javaNames("apply"))

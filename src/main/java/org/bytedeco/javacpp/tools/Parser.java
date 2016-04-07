@@ -148,22 +148,22 @@ public class Parser {
                     firstType = valueType.arguments[0];
                     secondType = valueType.arguments[1];
                 }
-                if (firstType != null && firstType.indirections == 0 && !firstType.value && (firstType.annotations == null || firstType.annotations.length() == 0)) {
-                    firstType.annotations = "@ByRef ";
+                if (firstType != null && (firstType.annotations == null || firstType.annotations.length() == 0)) {
+                    firstType.annotations = (firstType.constValue ? "@Const " : "") + (firstType.indirections == 0 && !firstType.value ? "@ByRef " : "");
                 }
-                if (secondType != null && secondType.indirections == 0 && !secondType.value && (secondType.annotations == null || secondType.annotations.length() == 0)) {
-                    secondType.annotations = "@ByRef ";
+                if (secondType != null && (secondType.annotations == null || secondType.annotations.length() == 0)) {
+                    secondType.annotations = (secondType.constValue ? "@Const " : "") + (secondType.indirections == 0 && !secondType.value ? "@ByRef " : "");
                 }
-                if (valueType != null && valueType.indirections == 0 && !valueType.value && (valueType.annotations == null || valueType.annotations.length() == 0)) {
-                    valueType.annotations = "@ByRef ";
+                if (valueType != null && (valueType.annotations == null || valueType.annotations.length() == 0)) {
+                    valueType.annotations = (valueType.constValue ? "@Const " : "") + (valueType.indirections == 0 && !valueType.value ? "@ByRef " : "");
                 }
                 Info valueInfo = infoMap.getFirst(valueType.cppName);
                 if (valueInfo != null && valueInfo.cast) {
                     String cast = valueType.cppName;
-                    if (valueType.constValue) {
+                    if (valueType.constValue && !cast.startsWith("const ")) {
                         cast = "const " + cast;
                     }
-                    if (valueType.constPointer) {
+                    if (valueType.constPointer && !cast.endsWith(" const")) {
                         cast = cast + " const";
                     }
                     if (valueType.indirections > 0) {
@@ -411,10 +411,10 @@ public class Parser {
                     type.cppName += separator;
                     Info info = infoMap.getFirst(t.cppName);
                     String s = info != null && info.cppTypes != null ? info.cppTypes[0] : t.cppName;
-                    if (t.constValue) {
+                    if (t.constValue && !s.startsWith("const ")) {
                         s = "const " + s;
                     }
-                    if (t.constPointer) {
+                    if (t.constPointer && !s.endsWith(" const")) {
                         s = s + " const";
                     }
                     for (int i = 0; i < t.indirections; i++) {
@@ -885,10 +885,10 @@ public class Parser {
                         precast = cast;
                     }
                     cast = type.cppName + "*";
-                    if (type.constValue) {
+                    if (type.constValue && !cast.startsWith("const ")) {
                         cast = "const " + cast;
                     }
-                    if (type.constPointer) {
+                    if (type.constPointer && !cast.endsWith(" const")) {
                         cast = cast + " const";
                     }
                     if (type.indirections > 0) {
@@ -958,7 +958,7 @@ public class Parser {
                 // consider as value type
                 cast = cast.substring(0, cast.length() - 1);
             }
-            if (type.constValue) {
+            if (type.constValue && !cast.startsWith("const ")) {
                 cast = "const " + cast;
             }
             if (precast != null) {
@@ -1614,7 +1614,7 @@ public class Parser {
                 decl.text += "public " + context.shorten(context.javaName) + dcl.parameters.list + " { super((Pointer)null); allocate" + params.names + "; }\n" +
                              "private native void allocate" + dcl.parameters.list + ";\n";
             } else {
-                decl.text += modifiers + type.annotations + type.javaName + " " + dcl.javaName + dcl.parameters.list + ";\n";
+                decl.text += modifiers + type.annotations + context.shorten(type.javaName) + " " + dcl.javaName + dcl.parameters.list + ";\n";
             }
             decl.signature = dcl.signature;
 
@@ -2014,7 +2014,22 @@ public class Parser {
             if (info == null || !info.skip) {
                 info = info != null ? new Info(info).cppNames(defName) : new Info(defName);
                 if (info.cppTypes == null) {
-                    info.cppTypes(typeName);
+                    String s = typeName;
+                    if ((dcl.type.constValue || dcl.indices > 0) && !s.startsWith("const ")) {
+                        s = "const " + s;
+                    }
+                    if (dcl.type.constPointer && !s.endsWith(" const")) {
+                        s = s + " const";
+                    }
+                    if (dcl.type.indirections > 0) {
+                        for (int i = 0; i < dcl.type.indirections; i++) {
+                            s += "*";
+                        }
+                    }
+                    if (dcl.type.reference) {
+                        s += "&";
+                    }
+                    info.cppTypes(s);
                 }
                 if (info.valueTypes == null && dcl.indirections > 0) {
                     info.valueTypes(info.pointerTypes != null ? info.pointerTypes : new String[] {typeName});
@@ -2164,7 +2179,8 @@ public class Parser {
             declList.add(decl);
             return true;
         } else if (info != null && info.pointerTypes != null && info.pointerTypes.length > 0) {
-            name = type.javaName = context.shorten(info.pointerTypes[0]);
+            type.javaName = info.pointerTypes[0];
+            name = context.shorten(type.javaName);
         } else if (info == null) {
             if (type.javaName.length() > 0 && context.javaName != null) {
                 type.javaName = context.javaName + "." + type.javaName;
@@ -2641,10 +2657,10 @@ public class Parser {
                         if (count < type.arguments.length) {
                             Type t = type.arguments[count++];
                             String s = t.cppName;
-                            if (t.constValue) {
+                            if (t.constValue && !s.startsWith("const ")) {
                                 s = "const " + s;
                             }
-                            if (t.constPointer) {
+                            if (t.constPointer && !s.endsWith(" const")) {
                                 s = s + " const";
                             }
                             if (t.indirections > 0) {
