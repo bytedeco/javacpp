@@ -68,7 +68,7 @@ public class Info {
     String[] javaNames = null;
     /** Additional Java annotations that should prefix the identifiers on output. */
     String[] annotations = null;
-    /** A list of C++ types that supply information missing from macros, templates, etc.
+    /** A list of C++ types to supply to or substitute from macros, templates, typedefs, etc.
      * By default, identifiers with missing type information are skipped, except for
      * variable-like macros for which the type is guessed based on the expression. */
     String[] cppTypes = null;

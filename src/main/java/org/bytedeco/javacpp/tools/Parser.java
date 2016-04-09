@@ -571,6 +571,32 @@ public class Parser {
             }
         }
 
+        if (info != null && info.cppTypes != null && info.cppTypes.length > 0) {
+            // use user defined type
+            type.cppName = info.cppTypes[0];
+        }
+
+        // remove const, * and & after user defined substitution for consistency
+        if (type.cppName.startsWith("const ")) {
+            type.constValue = true;
+            type.cppName = type.cppName.substring(6);
+        }
+        if (type.cppName.endsWith("*")) {
+            type.indirections++;
+            if (type.reference) {
+                type.constValue = false;
+            }
+            type.cppName = type.cppName.substring(0, type.cppName.length() - 1);
+        }
+        if (type.cppName.endsWith("&")) {
+            type.reference = true;
+            type.cppName = type.cppName.substring(0, type.cppName.length() - 1);
+        }
+        if (type.cppName.endsWith(" const")) {
+            type.constPointer = true;
+            type.cppName = type.cppName.substring(0, type.cppName.length() - 6);
+        }
+
         // produce some appropriate name for the peer Java class, relying on Info if available
         int namespace = type.cppName.lastIndexOf("::");
         int template = type.cppName.lastIndexOf('<');
@@ -2013,9 +2039,10 @@ public class Parser {
             Info info = infoMap.getFirst(typeName);
             if (info == null || !info.skip) {
                 info = info != null ? new Info(info).cppNames(defName) : new Info(defName);
-                if (info.cppTypes == null) {
+                if (info.cppTypes == null && info.annotations != null) {
+                    // set original C++ type for typedef of types we want to use with adapters
                     String s = typeName;
-                    if ((dcl.type.constValue || dcl.indices > 0) && !s.startsWith("const ")) {
+                    if (dcl.type.constValue && !s.startsWith("const ")) {
                         s = "const " + s;
                     }
                     if (dcl.type.constPointer && !s.endsWith(" const")) {
@@ -2029,7 +2056,7 @@ public class Parser {
                     if (dcl.type.reference) {
                         s += "&";
                     }
-                    info.cppTypes(s);
+                    info.cppNames(defName, s).cppTypes(s);
                 }
                 if (info.valueTypes == null && dcl.indirections > 0) {
                     info.valueTypes(info.pointerTypes != null ? info.pointerTypes : new String[] {typeName});
