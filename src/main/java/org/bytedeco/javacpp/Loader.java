@@ -152,14 +152,18 @@ public class Loader {
                 // give up and return defaults
             } finally {
                 try {
-                    is2.close();
+                    if (is2 != null) {
+                        is2.close();
+                    }
                 } catch (IOException ex) {
                     logger.error("Unable to close resource : " + ex.getMessage());
                 }
             }
         } finally {
             try {
-                is.close();
+                if (is != null) {
+                    is.close();
+                }
             } catch (IOException ex) {
                 logger.error("Unable to close resource : " + ex.getMessage());
             }
