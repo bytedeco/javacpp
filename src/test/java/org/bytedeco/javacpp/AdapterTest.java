@@ -73,7 +73,6 @@ public class AdapterTest {
         Class c = AdapterTest.class;
         Builder builder = new Builder().classesOrPackages(c.getName());
         File[] outputFiles = builder.build();
-        Loader.loadLibraries = true;
         Loader.load(c);
     }
 

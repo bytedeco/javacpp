@@ -51,7 +51,6 @@ public class IndexerTest {
         Class c = IndexerTest.class;
         Builder builder = new Builder().classesOrPackages(c.getName());
         File[] outputFiles = builder.build();
-        Loader.loadLibraries = true;
         Loader.load(c);
 
         // work around OutOfMemoryError when testing long indexing

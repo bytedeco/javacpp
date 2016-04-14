@@ -346,15 +346,10 @@ public class Loader {
         return file;
     }
 
-
-    /** Initialized to {@code System.getProperty("org.bytedeco.javacpp.cachedir", null)}. */
-    static final String CACHE_DIR_NAME = System.getProperty("org.bytedeco.javacpp.cachedir", null);
     /** User-specified cache directory set and returned by {@link #getCacheDir()}. */
     static File cacheDir = null;
     /** Temporary directory set and returned by {@link #getTempDir()}. */
     static File tempDir = null;
-    /** Flag set by the {@link Builder} to tell us not to try to load anything. */
-    static boolean loadLibraries = System.getProperty("org.bytedeco.javacpp.loadlibraries", "true").equals("true");
     /** Contains all the native libraries that we have loaded to avoid reloading them. */
     static Map<String,String> loadedLibraries = Collections.synchronizedMap(new HashMap<String,String>());
 
@@ -364,10 +359,13 @@ public class Loader {
      * @return {@link #cacheDir}
      */
     public static File getCacheDir() {
-        if (cacheDir == null && CACHE_DIR_NAME != null) {
-            File f = new File(CACHE_DIR_NAME);
-            if (f.exists() || f.mkdirs()) {
-                cacheDir = f;
+        if (cacheDir == null) {
+            String dirName = System.getProperty("org.bytedeco.javacpp.cachedir", null);
+            if (dirName != null) {
+                File f = new File(dirName);
+                if (f.exists() || f.mkdirs()) {
+                    cacheDir = f;
+                }
             }
         }
         return cacheDir;
@@ -395,9 +393,11 @@ public class Loader {
         return tempDir;
     }
 
-    /** @return {@link #loadLibraries} */
+    /** Returns {@code System.getProperty("org.bytedeco.javacpp.loadlibraries")}.
+     *  Flag set by the {@link Builder} to tell us not to try to load anything. */
     public static boolean isLoadLibraries() {
-        return loadLibraries;
+        String s = System.getProperty("org.bytedeco.javacpp.loadlibraries", "true").toLowerCase();
+        return s.equals("true") || s.equals("t") || s.equals("");
     }
 
     /**
@@ -420,7 +420,7 @@ public class Loader {
      * @throws UnsatisfiedLinkError on native library loading failure
      */
     public static String load(Class cls) {
-        if (!loadLibraries || cls == null) {
+        if (!isLoadLibraries() || cls == null) {
             return null;
         }
 
@@ -565,7 +565,7 @@ public class Loader {
      * @throws UnsatisfiedLinkError on failure
      */
     public static String loadLibrary(URL[] urls, String libnameversion) {
-        if (!loadLibraries) {
+        if (!isLoadLibraries()) {
             return null;
         }
 

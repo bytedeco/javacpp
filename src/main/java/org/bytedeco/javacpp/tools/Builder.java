@@ -710,6 +710,9 @@ public class Builder {
             }
             createJar(jarFile, outputDirectory == null ? classScanner.getClassLoader().getPaths() : null, files);
         }
+
+        // reset the load flag to let users load compiled libraries
+        System.setProperty("org.bytedeco.javacpp.loadlibraries", "true");
         return files;
     }
 
