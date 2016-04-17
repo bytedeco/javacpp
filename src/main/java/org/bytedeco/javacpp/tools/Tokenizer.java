@@ -105,6 +105,22 @@ class Tokenizer implements Closeable {
             token.value = buffer.toString();
             lastChar = c;
         } else if (Character.isDigit(c) || c == '.' || c == '-' ||  c == '+') {
+            if (c == '.') {
+                int c2 = readChar();
+                if (c2 == '.') {
+                    int c3 = readChar();
+                    if (c3 == '.') {
+                        token.type = Token.SYMBOL;
+                        token.value = "...";
+                        return token;
+                    } else {
+                        // but we lose c2... does it matter?
+                        lastChar = c3;
+                    }
+                } else {
+                    lastChar = c2;
+                }
+            }
             token.type = c == '.' ? Token.FLOAT : Token.INTEGER;
             buffer.append((char)c);
             int prevc = 0;

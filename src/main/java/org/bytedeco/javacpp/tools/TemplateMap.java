@@ -35,6 +35,7 @@ class TemplateMap extends LinkedHashMap<String,Type> {
     Type type = null;
     Declarator declarator = null;
     TemplateMap parent = null;
+    boolean variadic = false;
 
     String getName() {
         return type != null ? type.cppName : declarator != null ? declarator.cppName : null;

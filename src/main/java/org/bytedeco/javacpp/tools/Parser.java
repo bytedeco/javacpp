@@ -330,6 +330,10 @@ public class Parser {
         for (Token token = tokens.next(); !token.match(Token.EOF); token = tokens.next()) {
             if (token.match(Token.IDENTIFIER)) {
                 Token t = tokens.next();
+                if (t.match("...")) {
+                    map.variadic = true;
+                    t = tokens.next();
+                }
                 if (t.match(Token.IDENTIFIER)) {
                     String key = t.value;
                     map.put(key, map.get(key));
@@ -408,6 +412,10 @@ public class Parser {
                 type.cppName += "<";
                 String separator = "";
                 for (Type t : type.arguments) {
+                    if (t == null) {
+                        // skip over variadic templates
+                        continue;
+                    }
                     type.cppName += separator;
                     Info info = infoMap.getFirst(t.cppName);
                     String s = info != null && info.cppTypes != null ? info.cppTypes[0] : t.cppName;
@@ -501,8 +509,13 @@ public class Parser {
             type.attributes = attributes.toArray(new Attribute[attributes.size()]);
         }
         type.cppName = type.cppName.trim();
-        if ("...".equals(tokens.get().value)) {
+        if (tokens.get().match("...")) {
+            // skip over variable arguments
             tokens.next();
+            if (tokens.get().match(Token.IDENTIFIER)) {
+                // skip over template parameter packs as well
+                tokens.next();
+            }
             return null;
         } else if (type.operator) {
             for (Token token = tokens.get(); !token.match(Token.EOF, '('); token = tokens.next()) {
@@ -1365,7 +1378,7 @@ public class Parser {
             boolean hasDefault = !tokens.get().match(',', ')');
             Token defaultToken = null;
             String defaultValue = "";
-            if (hasDefault) {
+            if (dcl != null && hasDefault) {
                 defaultToken = tokens.get();
                 int count2 = 0;
                 for (token = tokens.next(), token.spacing = ""; !token.match(Token.EOF); token = tokens.next()) {

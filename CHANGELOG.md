@@ -1,4 +1,5 @@
 
+ * Fix `NullPointerException` in `Parser` on variadic templates ([issue #81](https://github.com/bytedeco/javacpp/issues/81))
  * Fix `Loader.load()` error when called right after `Builder.build()` within the same process
  * Lower Maven prerequisite in the `pom.xml` file to 3.0 ([issue #93](https://github.com/bytedeco/javacpp/issues/93))
  * Use `Info.cppTypes` for all `Parser` type substitutions, in addition to macros and templates ([issue bytedeco/javacpp-presets#192](https://github.com/bytedeco/javacpp-presets/issues/192))
