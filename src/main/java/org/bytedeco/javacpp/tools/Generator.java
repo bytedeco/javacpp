@@ -161,7 +161,7 @@ public class Generator implements Closeable {
     IndexedSet<Class> functions, deallocators, arrayDeallocators, jclasses;
     Map<Class,Set<String>> members, virtualFunctions, virtualMembers;
     Map<Method,MethodInformation> annotationCache;
-    boolean mayThrowExceptions, usesAdapters;
+    boolean mayThrowExceptions, usesAdapters, passesStrings;
 
     public boolean generate(String sourceFilename, String headerFilename,
             String classPath, Class<?> ... classes) throws FileNotFoundException {
@@ -183,16 +183,17 @@ public class Generator implements Closeable {
         annotationCache     = new HashMap<Method,MethodInformation>();
         mayThrowExceptions  = false;
         usesAdapters        = false;
+        passesStrings       = false;
         for (Class<?> cls : baseClasses) {
             jclasses.index(cls);
         }
-        if (classes(true, true, classPath, classes)) {
+        if (classes(true, true, true, classPath, classes)) {
             // second pass with a real writer
             out = new PrintWriter(sourceFilename);
             if (headerFilename != null) {
                 out2 = new PrintWriter(headerFilename);
             }
-            return classes(mayThrowExceptions, usesAdapters, classPath, classes);
+            return classes(mayThrowExceptions, usesAdapters, passesStrings, classPath, classes);
         } else {
             return false;
         }
@@ -207,7 +208,7 @@ public class Generator implements Closeable {
         }
     }
 
-    boolean classes(boolean handleExceptions, boolean defineAdapters, String classPath, Class<?> ... classes) {
+    boolean classes(boolean handleExceptions, boolean defineAdapters, boolean convertStrings, String classPath, Class<?> ... classes) {
         String version = Generator.class.getPackage().getImplementationVersion();
         if (version == null) {
             version = "unknown";
@@ -375,6 +376,8 @@ public class Generator implements Closeable {
         out.println("static jfieldID JavaCPP_ownerAddressFID = NULL;");
         out.println("static jmethodID JavaCPP_initMID = NULL;");
         out.println("static jmethodID JavaCPP_arrayMID = NULL;");
+        out.println("static jmethodID JavaCPP_stringMID = NULL;");
+        out.println("static jmethodID JavaCPP_getBytesMID = NULL;");
         out.println("static jmethodID JavaCPP_toStringMID = NULL;");
         out.println();
         out.println("static inline void JavaCPP_log(const char* fmt, ...) {");
@@ -483,6 +486,56 @@ public class Generator implements Closeable {
         out.println("    }");
         out.println("}");
         out.println();
+        if (handleExceptions || convertStrings) {
+            out.println("static JavaCPP_noinline jstring JavaCPP_createString(JNIEnv* env, const char* ptr) {");
+            out.println("    if (ptr == NULL) {");
+            out.println("        return NULL;");
+            out.println("    }");
+            out.println("#ifdef MODIFIED_UTF8_STRING");
+            out.println("    return env->NewStringUTF(ptr);");
+            out.println("#else");
+            out.println("    size_t length = strlen(ptr);");
+            out.println("    jbyteArray bytes = env->NewByteArray(length < INT_MAX ? length : INT_MAX);");
+            out.println("    env->SetByteArrayRegion(bytes, 0, length < INT_MAX ? length : INT_MAX, (signed char*)ptr);");
+            out.println("    return (jstring)env->NewObject(JavaCPP_getClass(env, " + jclasses.index(String.class) + "), JavaCPP_stringMID, bytes);");
+            out.println("#endif");
+            out.println("}");
+            out.println();
+        }
+        if (convertStrings) {
+            out.println("static JavaCPP_noinline const char* JavaCPP_getStringBytes(JNIEnv* env, jstring str) {");
+            out.println("    if (str == NULL) {");
+            out.println("        return NULL;");
+            out.println("    }");
+            out.println("#ifdef MODIFIED_UTF8_STRING");
+            out.println("    return env->GetStringUTFChars(str, NULL);");
+            out.println("#else");
+            out.println("    jbyteArray bytes = (jbyteArray)env->CallObjectMethod(str, JavaCPP_getBytesMID);");
+            out.println("    if (bytes == NULL || env->ExceptionCheck()) {");
+            out.println("        JavaCPP_log(\"Error getting bytes from string.\");");
+            out.println("        return NULL;");
+            out.println("    }");
+            out.println("    jsize length = env->GetArrayLength(bytes);");
+            out.println("    signed char* ptr = new (std::nothrow) signed char[length + 1];");
+            out.println("    if (ptr != NULL) {");
+            out.println("        env->GetByteArrayRegion(bytes, 0, length, ptr);");
+            out.println("        ptr[length] = 0;");
+            out.println("    }");
+            out.println("    return (const char*)ptr;");
+            out.println("#endif");
+            out.println("}");
+            out.println();
+            out.println("static JavaCPP_noinline void JavaCPP_releaseStringBytes(JNIEnv* env, jstring str, const char* ptr) {");
+            out.println("#ifdef MODIFIED_UTF8_STRING");
+            out.println("    if (str != NULL) {");
+            out.println("        env->ReleaseStringUTFChars(str, ptr);");
+            out.println("    }");
+            out.println("#else");
+            out.println("    delete[] ptr;");
+            out.println("#endif");
+            out.println("}");
+            out.println();
+        }
         out.println("class JavaCPP_hidden JavaCPP_exception : public std::exception {");
         out.println("public:");
         out.println("    JavaCPP_exception(const char* str) throw() {");
@@ -506,9 +559,9 @@ public class Generator implements Closeable {
             out.println("    try {");
             out.println("        throw;");
             out.println("    } catch (GENERIC_EXCEPTION_CLASS& e) {");
-            out.println("        str = env->NewStringUTF(e.what());");
+            out.println("        str = JavaCPP_createString(env, e.what());");
             out.println("    } catch (...) {");
-            out.println("        str = env->NewStringUTF(\"Unknown exception.\");");
+            out.println("        str = JavaCPP_createString(env, \"Unknown exception.\");");
             out.println("    }");
             out.println("    jmethodID mid = JavaCPP_getMethodID(env, i, \"<init>\", \"(Ljava/lang/String;)V\");");
             out.println("    if (mid == NULL) {");
@@ -945,6 +998,16 @@ public class Generator implements Closeable {
         out.println("    if (JavaCPP_arrayMID == NULL) {");
         out.println("        return JNI_ERR;");
         out.println("    }");
+        out.println("    JavaCPP_stringMID = JavaCPP_getMethodID(env, " +
+                jclasses.index(String.class) + ", \"<init>\", \"([B)V\");");
+        out.println("    if (JavaCPP_stringMID == NULL) {");
+        out.println("        return JNI_ERR;");
+        out.println("    }");
+        out.println("    JavaCPP_getBytesMID = JavaCPP_getMethodID(env, " +
+                jclasses.index(String.class) + ", \"getBytes\", \"()[B\");");
+        out.println("    if (JavaCPP_getBytesMID == NULL) {");
+        out.println("        return JNI_ERR;");
+        out.println("    }");
         out.println("    JavaCPP_toStringMID = JavaCPP_getMethodID(env, " +
                 jclasses.index(Object.class) + ", \"toString\", \"()Ljava/lang/String;\");");
         out.println("    if (JavaCPP_toStringMID == NULL) {");
@@ -1242,7 +1305,8 @@ public class Generator implements Closeable {
                         }
                     }
                 } else if (methodInfo.parameterTypes[j] == String.class) {
-                    out.println("arg" + j + " == NULL ? NULL : env->GetStringUTFChars(arg" + j + ", NULL);");
+                    passesStrings = true;
+                    out.println("JavaCPP_getStringBytes(env, arg" + j + ");");
                     if (adapterInfo != null || prevAdapterInfo != null) {
                         out.println("    jlong size" + j + " = 0;");
                         out.println("    void* owner" + j + " = (void*)ptr" + j + ";");
@@ -1722,8 +1786,9 @@ public class Generator implements Closeable {
                     out.println(indent + "    }");
                     out.println(indent + "}");
                 } else if (methodInfo.returnType == String.class) {
+                    passesStrings = true;
                     out.println(indent + "if (rptr != NULL) {");
-                    out.println(indent + "    rarg = env->NewStringUTF(rptr);");
+                    out.println(indent + "    rarg = JavaCPP_createString(env, rptr);");
                     out.println(indent + "}");
                 } else if (methodInfo.returnType.isArray() &&
                         methodInfo.returnType.getComponentType().isPrimitive()) {
@@ -1806,7 +1871,7 @@ public class Generator implements Closeable {
                             ", JavaCPP_addressFID, ptr_to_jlong(ptr" + j + "));");
                 }
             } else if (methodInfo.parameterTypes[j] == String.class) {
-                out.println("    if (arg" + j + " != NULL) env->ReleaseStringUTFChars(arg" + j + ", ptr" + j + ");");
+                out.println("    JavaCPP_releaseStringBytes(env, arg" + j + ", ptr" + j + ");");
             } else if (methodInfo.parameterTypes[j].isArray() &&
                     methodInfo.parameterTypes[j].getComponentType().isPrimitive()) {
                 for (int k = 0; adapterInfo != null && k < adapterInfo.argc; k++) {
@@ -2066,8 +2131,8 @@ public class Generator implements Closeable {
                         out.println("    }");
                         out.println("    args[" + j + "].l = obj" + j + ";");
                     } else if (callbackParameterTypes[j] == String.class) {
-                        out.println("    jstring obj" + j + " = (const char*)" + (adapterInfo != null ? "adapter" : "arg") + j +
-                                " == NULL ? NULL : env->NewStringUTF((const char*)" + (adapterInfo != null ? "adapter" : "arg") + j + ");");
+                        passesStrings = true;
+                        out.println("    jstring obj" + j + " = JavaCPP_createString(env, (const char*)" + (adapterInfo != null ? "adapter" : "arg") + j + ");");
                         out.println("    args[" + j + "].l = obj" + j + ";");
                     } else if (callbackParameterTypes[j].isArray() &&
                             callbackParameterTypes[j].getComponentType().isPrimitive()) {
@@ -2201,7 +2266,8 @@ public class Generator implements Closeable {
                     }
                 }
             } else if (callbackReturnType == String.class) {
-                out.println("    " + returnTypeName[0] + " rptr" + returnTypeName[1] + " = rarg == NULL ? NULL : env->GetStringUTFChars(rarg, NULL);");
+                passesStrings = true;
+                out.println("    " + returnTypeName[0] + " rptr" + returnTypeName[1] + " = JavaCPP_getStringBytes(env, rarg);");
                 if (returnAdapterInfo != null) {
                     out.println("    jlong rsize = 0;");
                     out.println("    void* rowner = (void*)rptr");
@@ -2221,9 +2287,9 @@ public class Generator implements Closeable {
         out.println("    if (exc != NULL) {");
         out.println("        jstring str = (jstring)env->CallObjectMethod(exc, JavaCPP_toStringMID);");
         out.println("        env->DeleteLocalRef(exc);");
-        out.println("        const char *msg = env->GetStringUTFChars(str, NULL);");
+        out.println("        const char *msg = JavaCPP_getStringBytes(env, str);");
         out.println("        JavaCPP_exception e(msg);");
-        out.println("        env->ReleaseStringUTFChars(str, msg);");
+        out.println("        JavaCPP_releaseStringBytes(env, str, msg);");
         out.println("        env->DeleteLocalRef(str);");
         out.println("        JavaCPP_detach(attached);");
         out.println("        throw e;");
