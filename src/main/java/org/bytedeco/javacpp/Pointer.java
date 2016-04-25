@@ -317,6 +317,16 @@ public class Pointer implements AutoCloseable {
         }
     }
 
+    /** Returns {@link #maxBytes}, the maximum amount of memory allowed to be tracked. */
+    public static long maxBytes() {
+        return maxBytes;
+    }
+
+    /** Returns {@link DeallocatorReference#totalBytes}, current amount of memory tracked by deallocators. */
+    public static long totalBytes() {
+        return DeallocatorReference.totalBytes;
+    }
+
     /** The native address of this Pointer, which can be an array. */
     protected long address = 0;
     /** The index of the element of a native array that should be accessed. */
@@ -430,7 +440,8 @@ public class Pointer implements AutoCloseable {
             }
             if (maxBytes > 0 && DeallocatorReference.totalBytes + r.bytes > maxBytes) {
                 deallocate();
-                throw new OutOfMemoryError("Cannot allocate " + (DeallocatorReference.totalBytes + r.bytes) + " bytes");
+                throw new OutOfMemoryError("Cannot allocate " + DeallocatorReference.totalBytes
+                                                              + " + " + r.bytes + " bytes (> Pointer.maxBytes)");
             }
             if (logger.isDebugEnabled()) {
                 logger.debug("Registering " + this);
