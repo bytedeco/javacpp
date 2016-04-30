@@ -1407,7 +1407,9 @@ public class Parser {
                             cppName += "::" + t.spacing + t;
                         }
                     }
-                    defaultValue += token.spacing + (cppName != null && cppName.length() > 0 ? cppName : token);
+		    if (!cppName.equals("\"\"")) {
+			    defaultValue += token.spacing + (cppName != null && cppName.length() > 0 ? cppName : token);
+		    }
                 }
                 for (String name : context.qualify(defaultValue)) {
                     if (infoMap.getFirst(name, false) != null) {
