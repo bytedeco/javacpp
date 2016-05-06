@@ -427,16 +427,19 @@ public class Pointer implements AutoCloseable {
             DeallocatorReference r = deallocator instanceof DeallocatorReference ?
                     (DeallocatorReference)deallocator :
                     new DeallocatorReference(this, deallocator);
-            if (maxBytes > 0 && DeallocatorReference.totalBytes + r.bytes > maxBytes) {
-                // try to get some more memory back
-                System.gc();
+            int count = 0;
+            while (count++ < 10 && maxBytes > 0 && DeallocatorReference.totalBytes + r.bytes > maxBytes) {
                 try {
+                    // try to get some more memory back
+                    System.gc();
                     Thread.sleep(100);
                 } catch (InterruptedException ex) {
                     // reset interrupt to be nice
                     Thread.currentThread().interrupt();
+                    break;
+                } finally {
+                    deallocateReferences();
                 }
-                deallocateReferences();
             }
             if (maxBytes > 0 && DeallocatorReference.totalBytes + r.bytes > maxBytes) {
                 deallocate();
