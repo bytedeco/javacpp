@@ -543,7 +543,7 @@ public class Builder {
     /** Sets the {@link #properties} field to the ones loaded from resources for the specified platform. */
     public Builder properties(String platform) {
         if (platform != null) {
-            properties = Loader.loadProperties(platform);
+            properties = Loader.loadProperties(platform, null);
         }
         return this;
     }
@@ -675,7 +675,7 @@ public class Builder {
 
                     File directory = f.getParentFile();
                     for (String s : preloads) {
-                        URL[] urls = Loader.findLibrary(null, p, s);
+                        URL[] urls = Loader.findLibrary(null, p, s, true);
                         File fi;
                         try {
                             fi = new File(urls[0].toURI());

@@ -1,4 +1,5 @@
 
+ * Add parameters to `Loader.load()` offering more flexibility over the platform properties and library paths
  * Treat all `String` with `Charset.defaultCharset()` (or define `MODIFIED_UTF8_STRING` for old behavior) ([issue #70](https://github.com/bytedeco/javacpp/issues/70))
  * Fix `NullPointerException` in `Parser` on variadic templates ([issue #81](https://github.com/bytedeco/javacpp/issues/81))
  * Fix `Loader.load()` error when called right after `Builder.build()` within the same process

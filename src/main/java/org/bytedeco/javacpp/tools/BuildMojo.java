@@ -34,6 +34,7 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
+import org.bytedeco.javacpp.Loader;
 
 /**
  * A Maven Mojo to call the {@link Builder} (C++ header file -> Java class -> C++ JNI -> native library).
@@ -209,6 +210,8 @@ public class BuildMojo extends AbstractMojo {
                     .environmentVariables(environmentVariables)
                     .compilerOptions(compilerOptions);
             Properties properties = builder.properties;
+            log.info("Detected platform \"" + Loader.getPlatform() + "\"");
+            log.info("Building for platform \"" + properties.get("platform") + "\"");
             String separator = properties.getProperty("platform.path.separator");
             for (String s : merge(includePaths, includePath)) {
                 String v = properties.getProperty("platform.includepath", "");
