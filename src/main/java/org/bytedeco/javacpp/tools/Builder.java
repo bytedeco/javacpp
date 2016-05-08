@@ -76,7 +76,7 @@ public class Builder {
      * @param properties the Properties containing the paths to update
      * @param header to request support for exporting callbacks via generated header file
      */
-    static void includeJavaPaths(ClassProperties properties, boolean header) {
+    void includeJavaPaths(ClassProperties properties, boolean header) {
         if (properties.getProperty("platform", "").startsWith("android")) {
             // Android includes its own jni.h file and doesn't have a jvm library
             return;
@@ -105,10 +105,13 @@ public class Builder {
                 return new File(dir, name).isDirectory();
             }
         };
-        File javaHome = new File(System.getProperty("java.home")).getParentFile();
+        File javaHome;
         try {
-            javaHome = javaHome.getCanonicalFile();
-        } catch (IOException e) { }
+            javaHome = new File(System.getProperty("java.home")).getParentFile().getCanonicalFile();
+        } catch (IOException | NullPointerException e) {
+            logger.warn("Could not include header files from java.home:" + e);
+            return;
+        }
         ArrayList<File> dirs = new ArrayList<File>(Arrays.asList(javaHome.listFiles(filter)));
         while (!dirs.isEmpty()) {
             File d = dirs.remove(dirs.size() - 1);
