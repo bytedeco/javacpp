@@ -50,6 +50,8 @@ public class PointerTest {
         Loader.load(c);
     }
 
+    static Object fieldReference;
+
     @Test public void testBytePointer() {
         System.out.println("BytePointer");
 
@@ -111,6 +113,7 @@ public class PointerTest {
         }
         assertTrue(Pointer.DeallocatorReference.totalBytes >= (chunks - 1) * chunkSize * byteSize);
         try {
+            fieldReference = pointers;
             new BytePointer(chunkSize);
             fail("OutOfMemoryError should have been thrown.");
         } catch (OutOfMemoryError e) { }
@@ -118,6 +121,7 @@ public class PointerTest {
             pointers[j] = null;
         }
         // make sure garbage collection runs
+        fieldReference = null;
         pointers[0] = new BytePointer(chunkSize);
         assertTrue(Pointer.DeallocatorReference.totalBytes < (chunks - 1) * chunkSize * byteSize);
         assertTrue(Pointer.DeallocatorReference.totalBytes >= chunkSize * byteSize);
@@ -185,6 +189,7 @@ public class PointerTest {
         }
         assertTrue(Pointer.DeallocatorReference.totalBytes >= (chunks - 1) * chunkSize * shortSize);
         try {
+            fieldReference = pointers;
             new ShortPointer(chunkSize);
             fail("OutOfMemoryError should have been thrown.");
         } catch (OutOfMemoryError e) { }
@@ -192,6 +197,7 @@ public class PointerTest {
             pointers[j] = null;
         }
         // make sure garbage collection runs
+        fieldReference = null;
         pointers[0] = new ShortPointer(chunkSize);
         assertTrue(Pointer.DeallocatorReference.totalBytes < (chunks - 1) * chunkSize * shortSize);
         assertTrue(Pointer.DeallocatorReference.totalBytes >= chunkSize * shortSize);
@@ -259,6 +265,7 @@ public class PointerTest {
         }
         assertTrue(Pointer.DeallocatorReference.totalBytes >= (chunks - 1) * chunkSize * intSize);
         try {
+            fieldReference = pointers;
             new IntPointer(chunkSize);
             fail("OutOfMemoryError should have been thrown.");
         } catch (OutOfMemoryError e) { }
@@ -266,6 +273,7 @@ public class PointerTest {
             pointers[j] = null;
         }
         // make sure garbage collection runs
+        fieldReference = null;
         pointers[0] = new IntPointer(chunkSize);
         assertTrue(Pointer.DeallocatorReference.totalBytes < (chunks - 1) * chunkSize * intSize);
         assertTrue(Pointer.DeallocatorReference.totalBytes >= chunkSize * intSize);
@@ -333,6 +341,7 @@ public class PointerTest {
         }
         assertTrue(Pointer.DeallocatorReference.totalBytes >= (chunks - 1) * chunkSize * longSize);
         try {
+            fieldReference = pointers;
             new LongPointer(chunkSize);
             fail("OutOfMemoryError should have been thrown.");
         } catch (OutOfMemoryError e) { }
@@ -340,6 +349,7 @@ public class PointerTest {
             pointers[j] = null;
         }
         // make sure garbage collection runs
+        fieldReference = null;
         pointers[0] = new LongPointer(chunkSize);
         assertTrue(Pointer.DeallocatorReference.totalBytes < (chunks - 1) * chunkSize * longSize);
         assertTrue(Pointer.DeallocatorReference.totalBytes >= chunkSize * longSize);
@@ -407,6 +417,7 @@ public class PointerTest {
         }
         assertTrue(Pointer.DeallocatorReference.totalBytes >= (chunks - 1) * chunkSize * floatSize);
         try {
+            fieldReference = pointers;
             new FloatPointer(chunkSize);
             fail("OutOfMemoryError should have been thrown.");
         } catch (OutOfMemoryError e) { }
@@ -414,6 +425,7 @@ public class PointerTest {
             pointers[j] = null;
         }
         // make sure garbage collection runs
+        fieldReference = null;
         pointers[0] = new FloatPointer(chunkSize);
         assertTrue(Pointer.DeallocatorReference.totalBytes < (chunks - 1) * chunkSize * floatSize);
         assertTrue(Pointer.DeallocatorReference.totalBytes >= chunkSize * floatSize);
@@ -481,6 +493,7 @@ public class PointerTest {
         }
         assertTrue(Pointer.DeallocatorReference.totalBytes >= (chunks - 1) * chunkSize * doubleSize);
         try {
+            fieldReference = pointers;
             new DoublePointer(chunkSize);
             fail("OutOfMemoryError should have been thrown.");
         } catch (OutOfMemoryError e) { }
@@ -488,6 +501,7 @@ public class PointerTest {
             pointers[j] = null;
         }
         // make sure garbage collection runs
+        fieldReference = null;
         pointers[0] = new DoublePointer(chunkSize);
         assertTrue(Pointer.DeallocatorReference.totalBytes < (chunks - 1) * chunkSize * doubleSize);
         assertTrue(Pointer.DeallocatorReference.totalBytes >= chunkSize * doubleSize);
@@ -555,6 +569,7 @@ public class PointerTest {
         }
         assertTrue(Pointer.DeallocatorReference.totalBytes >= (chunks - 1) * chunkSize * charSize);
         try {
+            fieldReference = pointers;
             new CharPointer(chunkSize);
             fail("OutOfMemoryError should have been thrown.");
         } catch (OutOfMemoryError e) { }
@@ -562,6 +577,7 @@ public class PointerTest {
             pointers[j] = null;
         }
         // make sure garbage collection runs
+        fieldReference = null;
         pointers[0] = new CharPointer(chunkSize);
         assertTrue(Pointer.DeallocatorReference.totalBytes < (chunks - 1) * chunkSize * charSize);
         assertTrue(Pointer.DeallocatorReference.totalBytes >= chunkSize * charSize);
