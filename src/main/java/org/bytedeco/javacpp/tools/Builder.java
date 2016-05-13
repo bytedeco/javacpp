@@ -116,7 +116,11 @@ public class Builder {
         while (!dirs.isEmpty()) {
             File d = dirs.remove(dirs.size() - 1);
             String dpath = d.getPath();
-            for (File f : d.listFiles(filter)) {
+            File[] files = d.listFiles(filter);
+            if (dpath == null || files == null) {
+                continue;
+            }
+            for (File f : files) {
                 try {
                     f = f.getCanonicalFile();
                 } catch (IOException e) { }
