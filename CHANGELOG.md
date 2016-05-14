@@ -1,4 +1,5 @@
 
+### May 15, 2016 version 1.2
  * Fix `NullPointerException` in `Builder` on invalid `java.home` system property or inaccessible directories
  * Add parameters to `Loader.load()` offering more flexibility over the platform properties and library paths
  * Treat all `String` with `Charset.defaultCharset()` (or define `MODIFIED_UTF8_STRING` for old behavior) ([issue #70](https://github.com/bytedeco/javacpp/issues/70))
