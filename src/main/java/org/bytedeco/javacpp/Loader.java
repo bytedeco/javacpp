@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2015 Samuel Audet
+ * Copyright (C) 2011-2016 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -300,16 +301,16 @@ public class Loader {
     /**
      * Extracts a resource into the specified directory and with the specified
      * prefix and suffix for the filename. If both prefix and suffix are {@code null},
-     * the original filename is used, so the directory must not be {@code null}.
+     * the original filename is used, so directoryOrFile must not be {@code null}.
      *
      * @param resourceURL the URL of the resource to extract
-     * @param directory the output directory ({@code null == System.getProperty("java.io.tmpdir")})
+     * @param directoryOrFile the output directory or file ({@code null == System.getProperty("java.io.tmpdir")})
      * @param prefix the prefix of the temporary filename to use
      * @param suffix the suffix of the temporary filename to use
      * @return the File object representing the extracted file
      * @throws IOException if fails to extract resource properly
      */
-    public static File extractResource(URL resourceURL, File directory,
+    public static File extractResource(URL resourceURL, File directoryOrFile,
             String prefix, String suffix) throws IOException {
         InputStream is = resourceURL != null ? resourceURL.openStream() : null;
         OutputStream os = null;
@@ -320,13 +321,17 @@ public class Loader {
         boolean fileExisted = false;
         try {
             if (prefix == null && suffix == null) {
-                if (directory == null) {
-                    directory = new File(System.getProperty("java.io.tmpdir"));
+                if (directoryOrFile == null) {
+                    directoryOrFile = new File(System.getProperty("java.io.tmpdir"));
                 }
-                file = new File(directory, new File(resourceURL.getPath()).getName());
+                if (directoryOrFile.isDirectory()) {
+                    file = new File(directoryOrFile, new File(resourceURL.getPath()).getName());
+                } else {
+                    file = directoryOrFile;
+                }
                 fileExisted = file.exists();
             } else {
-                file = File.createTempFile(prefix, suffix, directory);
+                file = File.createTempFile(prefix, suffix, directoryOrFile);
             }
             os = new FileOutputStream(file);
             byte[] buffer = new byte[1024];
@@ -508,13 +513,22 @@ public class Loader {
      * @param cls the Class whose package name and {@link ClassLoader} are used to extract from resources
      * @param properties contains the directories to scan for if we fail to extract the library from resources
      * @param libnameversion the name of the library + "@" + optional version tag
+     *                       + "#" + a second optional name used at extraction
      * @param pathsFirst search the paths first before bundled resources
      * @return URLs that point to potential locations of the library
      */
     public static URL[] findLibrary(Class cls, ClassProperties properties, String libnameversion, boolean pathsFirst) {
+        String[] split = libnameversion.split("#");
+        String libnameversion2 = libnameversion = split[0];
+        if (split.length > 1) {
+            libnameversion2 = split[1];
+        }
         String[] s = libnameversion.split("@");
+        String[] s2 = libnameversion2.split("@");
         String libname = s[0];
+        String libname2 = s2[0];
         String version = s.length > 1 ? s[s.length-1] : "";
+        String version2 = s2.length > 1 ? s2[s2.length-1] : "";
 
         // If we do not already have the native library file ...
         String filename = loadedLibraries.get(libnameversion);
@@ -527,21 +541,30 @@ public class Loader {
         }
 
         String subdir = properties.getProperty("platform") + '/';
-        String prefix = properties.getProperty("platform.library.prefix", "") + libname;
+        String prefix = properties.getProperty("platform.library.prefix", "");
         String suffix = properties.getProperty("platform.library.suffix", "");
         String[] styles = {
-            prefix + suffix + version, // Linux style
-            prefix + version + suffix, // Mac OS X style
-            prefix + suffix            // without version
+            prefix + libname + suffix + version, // Linux style
+            prefix + libname + version + suffix, // Mac OS X style
+            prefix + libname + suffix            // without version
+        };
+        String[] styles2 = {
+            prefix + libname2 + suffix + version2, // Linux style
+            prefix + libname2 + version2 + suffix, // Mac OS X style
+            prefix + libname2 + suffix             // without version
         };
 
         String[] suffixes = properties.get("platform.library.suffix").toArray(new String[0]);
         if (suffixes.length > 1) {
             styles = new String[3 * suffixes.length];
+            styles2 = new String[3 * suffixes.length];
             for (int i = 0; i < suffixes.length; i++) {
-                styles[3 * i    ] = prefix + suffixes[i] + version; // Linux style
-                styles[3 * i + 1] = prefix + version + suffixes[i]; // Mac OS X style
-                styles[3 * i + 2] = prefix + suffixes[i];           // without version
+                styles[3 * i    ] = prefix + libname + suffixes[i] + version; // Linux style
+                styles[3 * i + 1] = prefix + libname + version + suffixes[i]; // Mac OS X style
+                styles[3 * i + 2] = prefix + libname + suffixes[i];           // without version
+                styles2[3 * i    ] = prefix + libname2 + suffixes[i] + version2; // Linux style
+                styles2[3 * i + 1] = prefix + libname2 + version2 + suffixes[i]; // Mac OS X style
+                styles2[3 * i + 2] = prefix + libname2 + suffixes[i];            // without version
             }
         }
 
@@ -557,6 +580,13 @@ public class Loader {
             // ... then find it from in our resources ...
             URL u = cls.getResource(subdir + styles[i]);
             if (u != null) {
+                if (!styles[i].equals(styles2[i])) {
+                    try {
+                        u = new URL(u + "#" + styles2[i]);
+                    } catch (MalformedURLException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
                 urls.add(u);
             }
         }
@@ -567,8 +597,12 @@ public class Loader {
                 File file = new File(path, styles[i]);
                 if (file.exists()) {
                     try {
-                        urls.add(k++, file.toURI().toURL());
-                    } catch (IOException ex) {
+                        URL u = file.toURI().toURL();
+                        if (!styles[i].equals(styles2[i])) {
+                            u = new URL(u + "#" + styles2[i]);
+                        }
+                        urls.add(k++, u);
+                    } catch (MalformedURLException ex) {
                         throw new RuntimeException(ex);
                     }
                 }
@@ -583,6 +617,7 @@ public class Loader {
      *
      * @param urls the URLs to try loading the library from
      * @param libnameversion the name of the library + "@" + optional version tag
+     *                       + "#" + a second optional name used at extraction
      * @return the full path of the file loaded, or the library name if unknown
      *         (but {@code if (!isLoadLibraries) { return null; }})
      * @throws UnsatisfiedLinkError on failure
@@ -602,9 +637,13 @@ public class Loader {
         UnsatisfiedLinkError loadError = null;
         try {
             for (URL url : urls) {
-                File file;
+                String name = new File(url.getPath()).getName();
+                if (url.getRef() != null) {
+                    name = url.getRef();
+                }
+                File file = new File(getCacheDir() != null ? getCacheDir() : getTempDir(), name);
                 // ... then check if it has not already been extracted, and if not ...
-                if (!(file = new File(getCacheDir() != null ? getCacheDir() : getTempDir(), new File(url.getPath()).getName())).exists()) {
+                if (!file.exists()) {
                     if (tempFile != null && tempFile.exists()) {
                         tempFile.deleteOnExit();
                     }
@@ -612,10 +651,9 @@ public class Loader {
                     if (logger.isDebugEnabled()) {
                         logger.debug("Extracting " + url);
                     }
-                    if (getCacheDir() != null) {
-                        file = extractResource(url, getCacheDir(), null, null);
-                    } else {
-                        file = tempFile = extractResource(url, getTempDir(), null, null);
+                    extractResource(url, file, null, null);
+                    if (getCacheDir() == null) {
+                        tempFile = file;
                     }
                 } else while (System.currentTimeMillis() - file.lastModified() < 1000) {
                     // ... else wait until the file is at least 1 second old ...
@@ -646,7 +684,7 @@ public class Loader {
                 }
             }
             // ... or as last resort, try to load it via the system.
-            String libname = libnameversion.split("@")[0];
+            String libname = libnameversion.split("#")[0].split("@")[0];
             if (logger.isDebugEnabled()) {
                 logger.debug("Loading library " + libname);
             }

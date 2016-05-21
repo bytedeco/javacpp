@@ -1,4 +1,5 @@
 
+ * Add the ability the specify, after a `#` character, the output filename of libraries extracted by `Loader.load()`
  * Consider `FunctionPointer` annotated with empty `@Namespace` as non-member function pointers ([issue #99](https://github.com/bytedeco/javacpp/issues/99))
 
 ### May 15, 2016 version 1.2
