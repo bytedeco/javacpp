@@ -2959,6 +2959,10 @@ public class Generator implements Closeable {
         String callingConvention = convention == null ? "" : convention.value() + " ";
         // for virtual functions, the namespace is managed by the enclosing class
         Namespace namespace = FunctionPointer.class.isAssignableFrom(type) ? type.getAnnotation(Namespace.class) : null;
+        if (namespace != null && namespace.value().length() == 0) {
+            // user reset of the namespace
+            namespace = null;
+        }
         String spaceName = namespace == null ? "" : namespace.value();
         if (spaceName.length() > 0 && !spaceName.endsWith("::")) {
             spaceName += "::";

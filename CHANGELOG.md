@@ -1,4 +1,6 @@
 
+ * Consider `FunctionPointer` annotated with empty `@Namespace` as non-member function pointers ([issue #99](https://github.com/bytedeco/javacpp/issues/99))
+
 ### May 15, 2016 version 1.2
  * Fix `NullPointerException` in `Builder` on invalid `java.home` system property or inaccessible directories
  * Add parameters to `Loader.load()` offering more flexibility over the platform properties and library paths
