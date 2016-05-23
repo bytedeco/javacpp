@@ -93,6 +93,9 @@ public class BytePointer extends Pointer {
     public BytePointer(long size) {
         try {
             allocateArray(size);
+            if (size > 0 && address == 0) {
+                throw new OutOfMemoryError("Cannot allocate new BytePointer(" + size + ")");
+            }
         } catch (UnsatisfiedLinkError e) {
             throw new RuntimeException("No native JavaCPP library in memory. (Has Loader.load() been called?)", e);
         }

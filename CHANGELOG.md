@@ -1,4 +1,5 @@
 
+ * Throw `OutOfMemoryError` on `allocateArray()` for `Pointer` of primitive types with `size > 0 && address == 0`
  * Add the ability the specify, after a `#` character, the output filename of libraries extracted by `Loader.load()`
  * Consider `FunctionPointer` annotated with empty `@Namespace` as non-member function pointers ([issue #99](https://github.com/bytedeco/javacpp/issues/99))
 
