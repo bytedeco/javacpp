@@ -129,6 +129,9 @@ public class Loader {
      * @return the Properties from resources
      */
     public static Properties loadProperties(String name, String defaults) {
+        if (defaults == null) {
+            defaults = "generic";
+        }
         Properties p = new Properties();
         p.put("platform", name);
         p.put("platform.path.separator", File.pathSeparator);
