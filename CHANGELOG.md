@@ -1,4 +1,5 @@
 
+ * Fix `Loader` crashing on Android ([issue bytedeco/javacv#412](https://github.com/bytedeco/javacv/issues/412))
  * Fix `NullPointerException` on "generic" platforms
  * Throw `OutOfMemoryError` on `allocateArray()` for `Pointer` of primitive types with `size > 0 && address == 0`
  * Add the ability the specify, after a `#` character, the output filename of libraries extracted by `Loader.load()`

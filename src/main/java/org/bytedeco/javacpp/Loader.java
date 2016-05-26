@@ -640,31 +640,38 @@ public class Loader {
         UnsatisfiedLinkError loadError = null;
         try {
             for (URL url : urls) {
-                String name = new File(url.getPath()).getName();
-                if (url.getRef() != null) {
-                    name = url.getRef();
-                }
-                File file = new File(getCacheDir() != null ? getCacheDir() : getTempDir(), name);
-                // ... then check if it has not already been extracted, and if not ...
-                if (!file.exists()) {
-                    if (tempFile != null && tempFile.exists()) {
-                        tempFile.deleteOnExit();
+                File file;
+                try {
+                    // ... and if the URL is not already a file without fragments, etc ...
+                    file = new File(url.toURI());
+                } catch (Exception e) {
+                    String name = new File(url.getPath()).getName();
+                    if (url.getRef() != null) {
+                        // ... get the URL fragment to let users rename library files ...
+                        name = url.getRef();
                     }
-                    // ... then extract it from our resources ...
-                    if (logger.isDebugEnabled()) {
-                        logger.debug("Extracting " + url);
-                    }
-                    extractResource(url, file, null, null);
-                    if (getCacheDir() == null) {
-                        tempFile = file;
-                    }
-                } else while (System.currentTimeMillis() - file.lastModified() < 1000) {
-                    // ... else wait until the file is at least 1 second old ...
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException ex) {
-                        // ... reset interrupt to be nice ...
-                        Thread.currentThread().interrupt();
+                    // ... then check if it has not already been extracted, and if not ...
+                    file = new File(getCacheDir() != null ? getCacheDir() : getTempDir(), name);
+                    if (!file.exists()) {
+                        if (tempFile != null && tempFile.exists()) {
+                            tempFile.deleteOnExit();
+                        }
+                        // ... then extract it from our resources ...
+                        if (logger.isDebugEnabled()) {
+                            logger.debug("Extracting " + url);
+                        }
+                        extractResource(url, file, null, null);
+                        if (getCacheDir() == null) {
+                            tempFile = file;
+                        }
+                    } else while (System.currentTimeMillis() - file.lastModified() < 1000) {
+                        // ... else wait until the file is at least 1 second old ...
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException ex) {
+                            // ... reset interrupt to be nice ...
+                            Thread.currentThread().interrupt();
+                        }
                     }
                 }
                 if (file != null && file.exists()) {
