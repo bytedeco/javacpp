@@ -16,8 +16,8 @@ Please feel free to ask questions on [the mailing list](http://groups.google.com
 
 Downloads
 ---------
- * JavaCPP 1.2 binary archive  [javacpp-1.2-bin.zip](http://search.maven.org/remotecontent?filepath=org/bytedeco/javacpp/1.2/javacpp-1.2-bin.zip) (293 KB)
- * JavaCPP 1.2 source archive  [javacpp-1.2-src.zip](http://search.maven.org/remotecontent?filepath=org/bytedeco/javacpp/1.2/javacpp-1.2-src.zip) (276 KB)
+ * JavaCPP 1.2.1 binary archive  [javacpp-1.2.1-bin.zip](http://search.maven.org/remotecontent?filepath=org/bytedeco/javacpp/1.2.1/javacpp-1.2.1-bin.zip) (296 KB)
+ * JavaCPP 1.2.1 source archive  [javacpp-1.2.1-src.zip](http://search.maven.org/remotecontent?filepath=org/bytedeco/javacpp/1.2.1/javacpp-1.2.1-src.zip) (277 KB)
 
 We can also have everything downloaded and installed automatically with:
 
@@ -26,7 +26,7 @@ We can also have everything downloaded and installed automatically with:
   <dependency>
     <groupId>org.bytedeco</groupId>
     <artifactId>javacpp</artifactId>
-    <version>1.2</version>
+    <version>1.2.1</version>
   </dependency>
 ```
 
@@ -36,7 +36,7 @@ We can also have everything downloaded and installed automatically with:
     mavenCentral()
   }
   dependencies {
-    compile group: 'org.bytedeco', name: 'javacpp', version: '1.2'
+    compile group: 'org.bytedeco', name: 'javacpp', version: '1.2.1'
   }
 ```
 
@@ -44,7 +44,7 @@ We can also have everything downloaded and installed automatically with:
 ```scala
   classpathTypes += "maven-plugin"
 
-  libraryDependencies += "org.bytedeco" % "javacpp" % "1.2"
+  libraryDependencies += "org.bytedeco" % "javacpp" % "1.2.1"
 ```
 
 Another option available for Scala users is [sbt-javacpp](https://github.com/bytedeco/sbt-javacpp).

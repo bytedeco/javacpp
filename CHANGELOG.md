@@ -1,4 +1,5 @@
 
+### May 26, 2016 version 1.2.1
  * Fix `Loader` crashing on Android ([issue bytedeco/javacv#412](https://github.com/bytedeco/javacv/issues/412))
  * Fix `NullPointerException` on "generic" platforms
  * Throw `OutOfMemoryError` on `allocateArray()` for `Pointer` of primitive types with `size > 0 && address == 0`
