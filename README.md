@@ -16,8 +16,8 @@ Please feel free to ask questions on [the mailing list](http://groups.google.com
 
 Downloads
 ---------
- * JavaCPP 1.1 binary archive  [javacpp-1.1-bin.zip](http://search.maven.org/remotecontent?filepath=org/bytedeco/javacpp/1.1/javacpp-1.1-bin.zip) (255 KB)
- * JavaCPP 1.1 source archive  [javacpp-1.1-src.zip](http://search.maven.org/remotecontent?filepath=org/bytedeco/javacpp/1.1/javacpp-1.1-src.zip) (242 KB)
+ * JavaCPP 1.2.1 binary archive  [javacpp-1.2.1-bin.zip](http://search.maven.org/remotecontent?filepath=org/bytedeco/javacpp/1.2.1/javacpp-1.2.1-bin.zip) (296 KB)
+ * JavaCPP 1.2.1 source archive  [javacpp-1.2.1-src.zip](http://search.maven.org/remotecontent?filepath=org/bytedeco/javacpp/1.2.1/javacpp-1.2.1-src.zip) (277 KB)
 
 We can also have everything downloaded and installed automatically with:
 
@@ -26,7 +26,7 @@ We can also have everything downloaded and installed automatically with:
   <dependency>
     <groupId>org.bytedeco</groupId>
     <artifactId>javacpp</artifactId>
-    <version>1.1</version>
+    <version>1.2.1</version>
   </dependency>
 ```
 
@@ -36,15 +36,18 @@ We can also have everything downloaded and installed automatically with:
     mavenCentral()
   }
   dependencies {
-    compile group: 'org.bytedeco', name: 'javacpp', version: '1.1'
+    compile group: 'org.bytedeco', name: 'javacpp', version: '1.2.1'
   }
 ```
 
  * sbt (inside the `build.sbt` file)
 ```scala
   classpathTypes += "maven-plugin"
-  libraryDependencies += "org.bytedeco" % "javacpp" % "1.1"
+
+  libraryDependencies += "org.bytedeco" % "javacpp" % "1.2.1"
 ```
+
+Another option available for Scala users is [sbt-javacpp](https://github.com/bytedeco/sbt-javacpp).
 
 
 Required Software
@@ -315,7 +318,7 @@ Since functions also have pointers, we can use `FunctionPointer` instances accor
 ```bash
 $ javac -cp javacpp.jar Foo.java
 $ java -jar javacpp.jar Foo -header
-$ g++ -I/usr/lib/jvm/java/include/ -I/usr/lib/jvm/java/include/linux/ linux-x86_64/libjniFoo.so foo.cpp -o foo
+$ g++ -I/usr/lib/jvm/java/include/ -I/usr/lib/jvm/java/include/linux/ foo.cpp linux-x86_64/libjniFoo.so -o foo
 $ ./foo
 java.lang.Exception: bar 42
 ```
@@ -405,7 +408,7 @@ $ java -jar libs/javacpp.jar -classpath bin/ -classpath bin/classes/ \
 > -properties <android-arm|android-x86> -Dplatform.root=/path/to/android-ndk/ \
 > -Dplatform.compiler=/path/to/<arm-linux-androideabi-g++|i686-linux-android-g++> -d libs/<armeabi|x86>/
 ```
-To make everything automatic, we may also insert that command into the `build.xml` file. Alternatively, for integration with Android Studio, we can use the [Maven plugin](http://bytedeco.org/javacpp/apidocs/org/bytedeco/javacpp/tools/BuildMojo.html) with the [build system based on Gradle](http://tools.android.com/tech-docs/new-build-system/user-guide).
+To make everything automatic, we may also insert that command into the `build.xml` file. Alternatively, for integration with Android Studio, we might be able to use the [Maven plugin](http://bytedeco.org/javacpp/apidocs/org/bytedeco/javacpp/tools/BuildMojo.html) with the [build system based on Gradle](http://tools.android.com/tech-docs/new-build-system/user-guide).
 
 
 Similarly for RoboVM, assuming that the compiled classes are in the `classes` subdirectory:

@@ -66,6 +66,9 @@ public class FloatPointer extends Pointer {
     public FloatPointer(long size) {
         try {
             allocateArray(size);
+            if (size > 0 && address == 0) {
+                throw new OutOfMemoryError("Cannot allocate new FloatPointer(" + size + ")");
+            }
         } catch (UnsatisfiedLinkError e) {
             throw new RuntimeException("No native JavaCPP library in memory. (Has Loader.load() been called?)", e);
         }

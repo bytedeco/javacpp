@@ -1,4 +1,14 @@
 
+### May 26, 2016 version 1.2.1
+ * Fix `Loader` crashing on Android ([issue bytedeco/javacv#412](https://github.com/bytedeco/javacv/issues/412))
+ * Fix `NullPointerException` on "generic" platforms
+ * Throw `OutOfMemoryError` on `allocateArray()` for `Pointer` of primitive types with `size > 0 && address == 0`
+ * Add the ability the specify, after a `#` character, the output filename of libraries extracted by `Loader.load()`
+ * Consider `FunctionPointer` annotated with empty `@Namespace` as non-member function pointers ([issue #99](https://github.com/bytedeco/javacpp/issues/99))
+
+### May 15, 2016 version 1.2
+ * Fix `NullPointerException` in `Builder` on invalid `java.home` system property or inaccessible directories
+ * Add parameters to `Loader.load()` offering more flexibility over the platform properties and library paths
  * Treat all `String` with `Charset.defaultCharset()` (or define `MODIFIED_UTF8_STRING` for old behavior) ([issue #70](https://github.com/bytedeco/javacpp/issues/70))
  * Fix `NullPointerException` in `Parser` on variadic templates ([issue #81](https://github.com/bytedeco/javacpp/issues/81))
  * Fix `Loader.load()` error when called right after `Builder.build()` within the same process

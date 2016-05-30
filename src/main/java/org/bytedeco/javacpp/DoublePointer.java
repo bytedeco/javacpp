@@ -66,6 +66,9 @@ public class DoublePointer extends Pointer {
     public DoublePointer(long size) {
         try {
             allocateArray(size);
+            if (size > 0 && address == 0) {
+                throw new OutOfMemoryError("Cannot allocate new DoublePointer(" + size + ")");
+            }
         } catch (UnsatisfiedLinkError e) {
             throw new RuntimeException("No native JavaCPP library in memory. (Has Loader.load() been called?)", e);
         }

@@ -76,7 +76,7 @@ public class Builder {
      * @param properties the Properties containing the paths to update
      * @param header to request support for exporting callbacks via generated header file
      */
-    static void includeJavaPaths(ClassProperties properties, boolean header) {
+    void includeJavaPaths(ClassProperties properties, boolean header) {
         if (properties.getProperty("platform", "").startsWith("android")) {
             // Android includes its own jni.h file and doesn't have a jvm library
             return;
@@ -105,15 +105,22 @@ public class Builder {
                 return new File(dir, name).isDirectory();
             }
         };
-        File javaHome = new File(System.getProperty("java.home")).getParentFile();
+        File javaHome;
         try {
-            javaHome = javaHome.getCanonicalFile();
-        } catch (IOException e) { }
+            javaHome = new File(System.getProperty("java.home")).getParentFile().getCanonicalFile();
+        } catch (IOException | NullPointerException e) {
+            logger.warn("Could not include header files from java.home:" + e);
+            return;
+        }
         ArrayList<File> dirs = new ArrayList<File>(Arrays.asList(javaHome.listFiles(filter)));
         while (!dirs.isEmpty()) {
             File d = dirs.remove(dirs.size() - 1);
             String dpath = d.getPath();
-            for (File f : d.listFiles(filter)) {
+            File[] files = d.listFiles(filter);
+            if (dpath == null || files == null) {
+                continue;
+            }
+            for (File f : files) {
                 try {
                     f = f.getCanonicalFile();
                 } catch (IOException e) { }
@@ -543,7 +550,7 @@ public class Builder {
     /** Sets the {@link #properties} field to the ones loaded from resources for the specified platform. */
     public Builder properties(String platform) {
         if (platform != null) {
-            properties = Loader.loadProperties(platform);
+            properties = Loader.loadProperties(platform, null);
         }
         return this;
     }
@@ -675,7 +682,7 @@ public class Builder {
 
                     File directory = f.getParentFile();
                     for (String s : preloads) {
-                        URL[] urls = Loader.findLibrary(null, p, s);
+                        URL[] urls = Loader.findLibrary(null, p, s, true);
                         File fi;
                         try {
                             fi = new File(urls[0].toURI());

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2015 Samuel Audet
+ * Copyright (C) 2011-2016 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -28,9 +28,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -108,22 +110,28 @@ public class Loader {
     /**
      * Loads the {@link Properties} associated with the default {@link #getPlatform()}.
      *
-     * @see #loadProperties(String)
+     * @return {@code loadProperties(getPlatform(), null)}
+     * @see #loadProperties(String, String)
      */
     public static Properties loadProperties() {
         String name = getPlatform();
         if (platformProperties != null && name.equals(platformProperties.getProperty("platform"))) {
             return platformProperties;
         }
-        return platformProperties = loadProperties(name);
+        return platformProperties = loadProperties(name, null);
     }
     /**
      * Loads from resources the default {@link Properties} of the specified platform name.
+     * The resource must be at {@code "org/bytedeco/javacpp/properties/" + name + ".properties"}.
      *
      * @param name the platform name
+     * @param defaults the fallback platform name (null == "generic")
      * @return the Properties from resources
      */
-    public static Properties loadProperties(String name) {
+    public static Properties loadProperties(String name, String defaults) {
+        if (defaults == null) {
+            defaults = "generic";
+        }
         Properties p = new Properties();
         p.put("platform", name);
         p.put("platform.path.separator", File.pathSeparator);
@@ -140,7 +148,7 @@ public class Loader {
                 p.load(is);
             }
         } catch (Exception e) {
-            name = "properties/generic.properties";
+            name = "properties/" + defaults + ".properties";
             InputStream is2 = Loader.class.getResourceAsStream(name);
             try {
                 try {
@@ -296,16 +304,16 @@ public class Loader {
     /**
      * Extracts a resource into the specified directory and with the specified
      * prefix and suffix for the filename. If both prefix and suffix are {@code null},
-     * the original filename is used, so the directory must not be {@code null}.
+     * the original filename is used, so directoryOrFile must not be {@code null}.
      *
      * @param resourceURL the URL of the resource to extract
-     * @param directory the output directory ({@code null == System.getProperty("java.io.tmpdir")})
+     * @param directoryOrFile the output directory or file ({@code null == System.getProperty("java.io.tmpdir")})
      * @param prefix the prefix of the temporary filename to use
      * @param suffix the suffix of the temporary filename to use
      * @return the File object representing the extracted file
      * @throws IOException if fails to extract resource properly
      */
-    public static File extractResource(URL resourceURL, File directory,
+    public static File extractResource(URL resourceURL, File directoryOrFile,
             String prefix, String suffix) throws IOException {
         InputStream is = resourceURL != null ? resourceURL.openStream() : null;
         OutputStream os = null;
@@ -316,13 +324,17 @@ public class Loader {
         boolean fileExisted = false;
         try {
             if (prefix == null && suffix == null) {
-                if (directory == null) {
-                    directory = new File(System.getProperty("java.io.tmpdir"));
+                if (directoryOrFile == null) {
+                    directoryOrFile = new File(System.getProperty("java.io.tmpdir"));
                 }
-                file = new File(directory, new File(resourceURL.getPath()).getName());
+                if (directoryOrFile.isDirectory()) {
+                    file = new File(directoryOrFile, new File(resourceURL.getPath()).getName());
+                } else {
+                    file = directoryOrFile;
+                }
                 fileExisted = file.exists();
             } else {
-                file = File.createTempFile(prefix, suffix, directory);
+                file = File.createTempFile(prefix, suffix, directoryOrFile);
             }
             os = new FileOutputStream(file);
             byte[] buffer = new byte[1024];
@@ -400,33 +412,47 @@ public class Loader {
         return s.equals("true") || s.equals("t") || s.equals("");
     }
 
+    /** Returns {@code load(getCallerClass(2), loadProperties(), false)}. */
+    public static String load() {
+        return load(getCallerClass(2), loadProperties(), false);
+    }
     /**
      * Loads native libraries associated with the {@link Class} of the caller.
-     * @return {@code load(getCallerClass(2)) }
+     *
+     * @param pathsFirst search the paths first before bundled resources
+     * @return {@code load(getCallerClass(2), loadProperties(), pathsFirst) }
      * @see #getCallerClass(int)
-     * @see #load(Class)
+     * @see #load(Class, Properties, boolean)
      */
-    public static String load() {
+    public static String load(boolean pathsFirst) {
         Class cls = getCallerClass(2);
-        return load(cls);
+        return load(cls, loadProperties(), pathsFirst);
+    }
+    /** Returns {@code load(cls, loadProperties(), false)}. */
+    public static String load(Class cls) {
+        return load(cls, loadProperties(), false);
     }
     /**
      * Loads native libraries associated with the given {@link Class}.
      *
      * @param cls the Class to get native library information from
+     * @param properties the platform Properties to inherit
+     * @param pathsFirst search the paths first before bundled resources
      * @return the full path to the main file loaded, or the library name if unknown
-     *         (but {@code if (!loadLibraries || cls == null) { return null; }})
+     *         (but {@code if (!isLoadLibraries() || cls == null) { return null; }})
      * @throws NoClassDefFoundError on Class initialization failure
      * @throws UnsatisfiedLinkError on native library loading failure
+     * @see #findLibrary(Class, ClassProperties, String, boolean)
+     * @see #loadLibrary(URL[], String)
      */
-    public static String load(Class cls) {
+    public static String load(Class cls, Properties properties, boolean pathsFirst) {
         if (!isLoadLibraries() || cls == null) {
             return null;
         }
 
         // Find the top enclosing class, to match the library filename
         cls = getEnclosingClass(cls);
-        ClassProperties p = loadProperties(cls, loadProperties(), true);
+        ClassProperties p = loadProperties(cls, properties, true);
 
         // Force initialization of all the target classes in case they need it
         List<String> targets = p.get("target");
@@ -461,7 +487,7 @@ public class Loader {
         UnsatisfiedLinkError preloadError = null;
         for (String preload : preloads) {
             try {
-                URL[] urls = findLibrary(cls, p, preload);
+                URL[] urls = findLibrary(cls, p, preload, pathsFirst);
                 loadLibrary(urls, preload);
             } catch (UnsatisfiedLinkError e) {
                 preloadError = e;
@@ -470,7 +496,7 @@ public class Loader {
 
         try {
             String library = p.getProperty("platform.library");
-            URL[] urls = findLibrary(cls, p, library);
+            URL[] urls = findLibrary(cls, p, library, pathsFirst);
             return loadLibrary(urls, library);
         } catch (UnsatisfiedLinkError e) {
             if (preloadError != null && e.getCause() == null) {
@@ -481,19 +507,31 @@ public class Loader {
     }
 
     /**
-     * Finds where the library may be extracted and loaded among the {@link Class}
-     * resources. But in case that fails, also searches the paths found in the
-     * "platform.preloadpath" and "platform.linkpath" properties.
+     * Finds from where the library may be extracted and loaded among the {@link Class}
+     * resources. But in case that fails, and depending on the value of {@code pathsFirst},
+     * either as a fallback or in priority over bundled resources, also searches the paths
+     * found in the "platform.preloadpath" and "platform.linkpath" class properties as well as
+     * the "java.library.path" system property, in that order.
      *
      * @param cls the Class whose package name and {@link ClassLoader} are used to extract from resources
      * @param properties contains the directories to scan for if we fail to extract the library from resources
      * @param libnameversion the name of the library + "@" + optional version tag
+     *                       + "#" + a second optional name used at extraction
+     * @param pathsFirst search the paths first before bundled resources
      * @return URLs that point to potential locations of the library
      */
-    public static URL[] findLibrary(Class cls, ClassProperties properties, String libnameversion) {
+    public static URL[] findLibrary(Class cls, ClassProperties properties, String libnameversion, boolean pathsFirst) {
+        String[] split = libnameversion.split("#");
+        String libnameversion2 = libnameversion = split[0];
+        if (split.length > 1) {
+            libnameversion2 = split[1];
+        }
         String[] s = libnameversion.split("@");
+        String[] s2 = libnameversion2.split("@");
         String libname = s[0];
+        String libname2 = s2[0];
         String version = s.length > 1 ? s[s.length-1] : "";
+        String version2 = s2.length > 1 ? s2[s2.length-1] : "";
 
         // If we do not already have the native library file ...
         String filename = loadedLibraries.get(libnameversion);
@@ -506,52 +544,74 @@ public class Loader {
         }
 
         String subdir = properties.getProperty("platform") + '/';
-        String prefix = properties.getProperty("platform.library.prefix", "") + libname;
+        String prefix = properties.getProperty("platform.library.prefix", "");
         String suffix = properties.getProperty("platform.library.suffix", "");
         String[] styles = {
-            prefix + suffix + version, // Linux style
-            prefix + version + suffix, // Mac OS X style
-            prefix + suffix            // without version
+            prefix + libname + suffix + version, // Linux style
+            prefix + libname + version + suffix, // Mac OS X style
+            prefix + libname + suffix            // without version
+        };
+        String[] styles2 = {
+            prefix + libname2 + suffix + version2, // Linux style
+            prefix + libname2 + version2 + suffix, // Mac OS X style
+            prefix + libname2 + suffix             // without version
         };
 
         String[] suffixes = properties.get("platform.library.suffix").toArray(new String[0]);
         if (suffixes.length > 1) {
             styles = new String[3 * suffixes.length];
+            styles2 = new String[3 * suffixes.length];
             for (int i = 0; i < suffixes.length; i++) {
-                styles[3 * i    ] = prefix + suffixes[i] + version; // Linux style
-                styles[3 * i + 1] = prefix + version + suffixes[i]; // Mac OS X style
-                styles[3 * i + 2] = prefix + suffixes[i];           // without version
+                styles[3 * i    ] = prefix + libname + suffixes[i] + version; // Linux style
+                styles[3 * i + 1] = prefix + libname + version + suffixes[i]; // Mac OS X style
+                styles[3 * i + 2] = prefix + libname + suffixes[i];           // without version
+                styles2[3 * i    ] = prefix + libname2 + suffixes[i] + version2; // Linux style
+                styles2[3 * i + 1] = prefix + libname2 + version2 + suffixes[i]; // Mac OS X style
+                styles2[3 * i + 2] = prefix + libname2 + suffixes[i];            // without version
             }
         }
 
-        int k = 0;
         List<String> paths = new ArrayList<String>();
         paths.addAll(properties.get("platform.preloadpath"));
         paths.addAll(properties.get("platform.linkpath"));
-        URL[] urls = new URL[styles.length * (1 + paths.size())];
+        String libpath = System.getProperty("java.library.path", "");
+        if (libpath.length() > 0) {
+            paths.addAll(Arrays.asList(libpath.split(File.pathSeparator)));
+        }
+        ArrayList<URL> urls = new ArrayList<URL>(styles.length * (1 + paths.size()));
         for (int i = 0; cls != null && i < styles.length; i++) {
             // ... then find it from in our resources ...
             URL u = cls.getResource(subdir + styles[i]);
             if (u != null) {
-                urls[k++] = u;
+                if (!styles[i].equals(styles2[i])) {
+                    try {
+                        u = new URL(u + "#" + styles2[i]);
+                    } catch (MalformedURLException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+                urls.add(u);
             }
         }
-        // ... and in case of bad resources, search the paths as well.
+        // ... and in case of bad resources search the paths last, or first on user request.
+        int k = pathsFirst ? 0 : urls.size();
         for (int i = 0; paths.size() > 0 && i < styles.length; i++) {
             for (String path : paths) {
                 File file = new File(path, styles[i]);
                 if (file.exists()) {
                     try {
-                        urls[k++] = file.toURI().toURL();
-                    } catch (IOException ex) {
+                        URL u = file.toURI().toURL();
+                        if (!styles[i].equals(styles2[i])) {
+                            u = new URL(u + "#" + styles2[i]);
+                        }
+                        urls.add(k++, u);
+                    } catch (MalformedURLException ex) {
                         throw new RuntimeException(ex);
                     }
                 }
             }
         }
-        URL[] newurls = new URL[k];
-        System.arraycopy(urls, 0, newurls, 0, k);
-        return newurls;
+        return urls.toArray(new URL[urls.size()]);
     }
 
     /**
@@ -560,8 +620,9 @@ public class Loader {
      *
      * @param urls the URLs to try loading the library from
      * @param libnameversion the name of the library + "@" + optional version tag
+     *                       + "#" + a second optional name used at extraction
      * @return the full path of the file loaded, or the library name if unknown
-     *         (but {@code if (!loadLibraries) { return null; }})
+     *         (but {@code if (!isLoadLibraries) { return null; }})
      * @throws UnsatisfiedLinkError on failure
      */
     public static String loadLibrary(URL[] urls, String libnameversion) {
@@ -581,11 +642,17 @@ public class Loader {
             for (URL url : urls) {
                 File file;
                 try {
-                    // ... if the URL is not already a file ...
+                    // ... and if the URL is not already a file without fragments, etc ...
                     file = new File(url.toURI());
                 } catch (Exception e) {
+                    String name = new File(url.getPath()).getName();
+                    if (url.getRef() != null) {
+                        // ... get the URL fragment to let users rename library files ...
+                        name = url.getRef();
+                    }
                     // ... then check if it has not already been extracted, and if not ...
-                    if (!(file = new File(getCacheDir() != null ? getCacheDir() : getTempDir(), new File(url.getPath()).getName())).exists()) {
+                    file = new File(getCacheDir() != null ? getCacheDir() : getTempDir(), name);
+                    if (!file.exists()) {
                         if (tempFile != null && tempFile.exists()) {
                             tempFile.deleteOnExit();
                         }
@@ -593,10 +660,9 @@ public class Loader {
                         if (logger.isDebugEnabled()) {
                             logger.debug("Extracting " + url);
                         }
-                        if (getCacheDir() != null) {
-                            file = extractResource(url, getCacheDir(), null, null);
-                        } else {
-                            file = tempFile = extractResource(url, getTempDir(), null, null);
+                        extractResource(url, file, null, null);
+                        if (getCacheDir() == null) {
+                            tempFile = file;
                         }
                     } else while (System.currentTimeMillis() - file.lastModified() < 1000) {
                         // ... else wait until the file is at least 1 second old ...
@@ -628,7 +694,7 @@ public class Loader {
                 }
             }
             // ... or as last resort, try to load it via the system.
-            String libname = libnameversion.split("@")[0];
+            String libname = libnameversion.split("#")[0].split("@")[0];
             if (logger.isDebugEnabled()) {
                 logger.debug("Loading library " + libname);
             }
