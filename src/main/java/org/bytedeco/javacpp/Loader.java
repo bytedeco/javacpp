@@ -29,8 +29,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -640,11 +641,31 @@ public class Loader {
         UnsatisfiedLinkError loadError = null;
         try {
             for (URL url : urls) {
+                URI uri = url.toURI();
                 File file;
                 try {
                     // ... and if the URL is not already a file without fragments, etc ...
-                    file = new File(url.toURI());
-                } catch (Exception e) {
+                    file = new File(uri);
+                } catch (Exception exc) {
+                    try {
+                        file = new File(uri.getPath());
+                        if (file.exists()) {
+                            // ... else preload it as some libraries do not like being renamed ...
+                            filename = file.getAbsolutePath();
+                            if (logger.isDebugEnabled()) {
+                                logger.debug("Preloading " + filename);
+                            }
+                            try {
+                                System.load(filename);
+                            } catch (UnsatisfiedLinkError e) {
+                                if (logger.isDebugEnabled()) {
+                                    logger.debug("Failed to preload " + filename + ": " + e);
+                                }
+                            }
+                        }
+                    } catch (Exception exc2) {
+                        /// ... or give up and ...
+                    }
                     String name = new File(url.getPath()).getName();
                     if (url.getRef() != null) {
                         // ... get the URL fragment to let users rename library files ...
@@ -710,7 +731,7 @@ public class Loader {
                 logger.debug("Failed to load for " + libnameversion + ": " + e);
             }
             throw e;
-        } catch (IOException ex) {
+        } catch (IOException | URISyntaxException ex) {
             loadedLibraries.remove(libnameversion);
             if (loadError != null && ex.getCause() == null) {
                 ex.initCause(loadError);

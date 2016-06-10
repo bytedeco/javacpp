@@ -1,10 +1,13 @@
 
- * Make sure `JavaCPP_getStringBytes()` is defined to handle exception messages when using callbacks
+ * Fix `IndexerTest` potentially failing with `OutOfMemoryError` ([issue bytedeco/javacpp-presets#234](https://github.com/bytedeco/javacpp-presets/issues/234))
+ * Preload libraries to work around some cases when they refuse to load once renamed ([issue deeplearning4j/libnd4j#235](https://github.com/deeplearning4j/libnd4j/issues/235))
+ * Fix compilation error on some `linux-ppc64le` platforms ([issue deeplearning4j/libnd4j#232](https://github.com/deeplearning4j/libnd4j/issues/232))
+ * Make sure `Generator` defines `JavaCPP_getStringBytes()` to handle exception messages when using callbacks
 
 ### May 26, 2016 version 1.2.1
  * Fix `Loader` crashing on Android ([issue bytedeco/javacv#412](https://github.com/bytedeco/javacv/issues/412))
  * Fix `NullPointerException` on "generic" platforms
- * Throw `OutOfMemoryError` on `allocateArray()` for `Pointer` of primitive types with `size > 0 && address == 0`
+ * Throw `OutOfMemoryError` on `allocateArray()` for `Pointer` of primitive types with `size > 0 && address == 0` ([issue deeplearning4j/nd4j#960](https://github.com/deeplearning4j/nd4j/issues/960))
  * Add the ability the specify, after a `#` character, the output filename of libraries extracted by `Loader.load()`
  * Consider `FunctionPointer` annotated with empty `@Namespace` as non-member function pointers ([issue #99](https://github.com/bytedeco/javacpp/issues/99))
 
