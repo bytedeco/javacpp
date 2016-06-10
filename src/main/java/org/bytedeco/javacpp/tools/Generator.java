@@ -2284,6 +2284,7 @@ public class Generator implements Closeable {
             }
         }
 
+        passesStrings = true;
         out.println("    if (exc != NULL) {");
         out.println("        jstring str = (jstring)env->CallObjectMethod(exc, JavaCPP_toStringMID);");
         out.println("        env->DeleteLocalRef(exc);");

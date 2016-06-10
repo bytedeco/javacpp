@@ -1,4 +1,6 @@
 
+ * Make sure `JavaCPP_getStringBytes()` is defined to handle exception messages when using callbacks
+
 ### May 26, 2016 version 1.2.1
  * Fix `Loader` crashing on Android ([issue bytedeco/javacv#412](https://github.com/bytedeco/javacv/issues/412))
  * Fix `NullPointerException` on "generic" platforms
