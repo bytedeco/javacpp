@@ -404,7 +404,7 @@ public class Parser {
     Type type(Context context) throws ParserException {
         Type type = new Type();
         List<Attribute> attributes = new ArrayList<Attribute>();
-        for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.next()) {
+        for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.get()) {
             if (token.match("::")) {
                 type.cppName += token;
             } else if (token.match('<')) {
@@ -459,6 +459,7 @@ public class Parser {
             } else if (token.match(Token.OPERATOR)) {
                 if (type.cppName.length() == 0) {
                     type.operator = true;
+                    tokens.next();
                     continue;
                 } else if (type.cppName.endsWith("::")) {
                     type.operator = true;
@@ -473,6 +474,7 @@ public class Parser {
                 type.virtual = true;
             } else if (token.match(Token.ENUM, Token.EXPLICIT, Token.EXTERN, Token.INLINE, Token.CLASS, Token.INTERFACE, Token.__INTERFACE,
                                    Token.NAMESPACE, Token.STRUCT, Token.UNION, Token.TYPEDEF, Token.TYPENAME, Token.USING)) {
+                token = tokens.next();
                 continue;
             } else if (token.match((Object[])infoMap.getFirst("basic/types").cppTypes) && (type.cppName.length() == 0 || type.simple)) {
                 type.cppName += token.value + " ";
@@ -481,9 +483,9 @@ public class Parser {
                 int backIndex = tokens.index;
                 Attribute attr = attribute();
                 if (attr != null && attr.annotation) {
-                    tokens.index--;
                     type.annotations += attr.javaName;
                     attributes.add(attr);
+                    continue;
                 } else {
                     tokens.index = backIndex;
                     if (type.cppName.length() == 0 || type.cppName.endsWith("::") || type.cppName.endsWith("~")) {
@@ -504,6 +506,7 @@ public class Parser {
                 }
                 break;
             }
+            tokens.next();
         }
         if (attributes.size() > 0) {
             type.attributes = attributes.toArray(new Attribute[attributes.size()]);
@@ -1650,7 +1653,7 @@ public class Parser {
                 decl.text += "@Namespace(\"" + context.namespace + "\") ";
             }
             if (type.constructor && params != null) {
-                decl.text += "public " + context.shorten(context.javaName) + dcl.parameters.list + " { super((Pointer)null); allocate" + params.names + "; }\n" +
+                decl.text += "public " + type.annotations + context.shorten(context.javaName) + dcl.parameters.list + " { super((Pointer)null); allocate" + params.names + "; }\n" +
                              "private native void allocate" + dcl.parameters.list + ";\n";
             } else {
                 decl.text += modifiers + type.annotations + context.shorten(type.javaName) + " " + dcl.javaName + dcl.parameters.list + ";\n";

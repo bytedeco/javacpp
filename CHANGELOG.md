@@ -1,4 +1,5 @@
 
+ * Fix potential `ParserException` on comments found after annotations before function declarations
  * Fix `IndexerTest` potentially failing with `OutOfMemoryError` ([issue bytedeco/javacpp-presets#234](https://github.com/bytedeco/javacpp-presets/issues/234))
  * Preload libraries to work around some cases when they refuse to load once renamed ([issue deeplearning4j/libnd4j#235](https://github.com/deeplearning4j/libnd4j/issues/235))
  * Fix compilation error on some `linux-ppc64le` platforms ([issue deeplearning4j/libnd4j#232](https://github.com/deeplearning4j/libnd4j/issues/232))
