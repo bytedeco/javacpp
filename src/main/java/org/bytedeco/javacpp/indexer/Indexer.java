@@ -104,6 +104,14 @@ public abstract class Indexer implements AutoCloseable {
         return index;
     }
 
+    /** The associated (optional) {@link Indexable}. */
+    protected Indexable indexable;
+
+    /** Returns {@link #indexable}. */
+    public Indexable indexable() { return indexable; }
+    /** Sets {@link #indexable} and returns this. */
+    public Indexer indexable(Indexable indexable) { this.indexable = indexable; return this; }
+
     /** Returns the backing array, or {@code null} if none */
     public Object array() { return null; }
     /** Returns the backing buffer, or {@code null} if none */
