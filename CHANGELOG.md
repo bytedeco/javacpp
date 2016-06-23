@@ -1,4 +1,5 @@
 
+ * Prevent Android system libraries from getting copied or extracted
  * Insert in `Indexer` an `indexable` field optionally set by the user for convenience
  * Fix potential `ParserException` on comments found after annotations before function declarations
  * Fix `IndexerTest` potentially failing with `OutOfMemoryError` ([issue bytedeco/javacpp-presets#234](https://github.com/bytedeco/javacpp-presets/issues/234))

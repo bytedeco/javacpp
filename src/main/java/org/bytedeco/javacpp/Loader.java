@@ -517,11 +517,14 @@ public class Loader {
      * @param cls the Class whose package name and {@link ClassLoader} are used to extract from resources
      * @param properties contains the directories to scan for if we fail to extract the library from resources
      * @param libnameversion the name of the library + "@" + optional version tag
-     *                       + "#" + a second optional name used at extraction
+     *                       + "#" + a second optional name used at extraction (or empty to prevent it)
      * @param pathsFirst search the paths first before bundled resources
      * @return URLs that point to potential locations of the library
      */
     public static URL[] findLibrary(Class cls, ClassProperties properties, String libnameversion, boolean pathsFirst) {
+        if (libnameversion.trim().endsWith("#")) {
+            return new URL[0];
+        }
         String[] split = libnameversion.split("#");
         String libnameversion2 = libnameversion = split[0];
         if (split.length > 1) {

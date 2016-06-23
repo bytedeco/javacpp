@@ -260,7 +260,7 @@ public class Builder {
             String x = properties.getProperty("platform.link.suffix", "");
             int i = command.size(); // to inverse order and satisfy typical compilers
             for (String s : properties.get("platform.link")) {
-                String[] libnameversion = s.split("@");
+                String[] libnameversion = s.split("#")[0].split("@");
                 if (libnameversion.length == 3 && libnameversion[1].length() == 0) {
                     // Only use the version number when the user gave us a double @
                     s = libnameversion[0] + libnameversion[2];
