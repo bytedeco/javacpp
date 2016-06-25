@@ -1,4 +1,5 @@
 
+ * Fix Javadoc links for externally referenced classes
  * Prevent Android system libraries from getting copied or extracted
  * Insert in `Indexer` an `indexable` field optionally set by the user for convenience
  * Fix potential `ParserException` on comments found after annotations before function declarations
