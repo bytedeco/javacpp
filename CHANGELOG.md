@@ -1,4 +1,5 @@
 
+ * Deallocate native memory in a dedicated thread to reduce lock contention ([issue #103](https://github.com/bytedeco/javacpp/issues/103))
  * Fix Javadoc links for externally referenced classes
  * Prevent Android system libraries from getting copied or extracted
  * Insert in `Indexer` an `indexable` field optionally set by the user for convenience

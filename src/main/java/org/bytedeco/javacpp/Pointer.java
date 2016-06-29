@@ -288,13 +288,38 @@ public class Pointer implements AutoCloseable {
      * Initialized to null if the "org.bytedeco.javacpp.nopointergc" system property is "true". */
     private static final ReferenceQueue<Pointer> referenceQueue;
 
+    static final Thread deallocatorThread;
+
     /** Maximum amount of memory registered with live deallocators before forcing call to {@link System#gc()}.
      * Set via "org.bytedeco.javacpp.maxbytes" system property, defaults to {@link Runtime#maxMemory()}. */
     static final long maxBytes;
 
     static {
         String s = System.getProperty("org.bytedeco.javacpp.nopointergc", "false").toLowerCase();
-        referenceQueue = s.equals("true") || s.equals("t") || s.equals("") ? null : new ReferenceQueue<Pointer>();
+        if (s.equals("true") || s.equals("t") || s.equals("")) {
+            referenceQueue = null;
+            deallocatorThread = null;
+        } else {
+            referenceQueue =  new ReferenceQueue<Pointer>();
+            deallocatorThread = new Thread(new Runnable() {
+                @Override public void run() {
+                    try {
+                        while (true) {
+                            DeallocatorReference r = (DeallocatorReference)referenceQueue.remove();
+                            r.clear();
+                            r.remove();
+                        }
+                    } catch (InterruptedException ex) {
+                        // reset interrupt to be nice
+                        Thread.currentThread().interrupt();
+                    }
+                }
+            });
+            deallocatorThread.setName("JavaCPP Deallocator");
+            deallocatorThread.setPriority(Thread.MAX_PRIORITY);
+            deallocatorThread.setDaemon(true);
+            deallocatorThread.start();
+        }
 
         long m = Runtime.getRuntime().maxMemory();
         s = System.getProperty("org.bytedeco.javacpp.maxbytes");
@@ -421,7 +446,6 @@ public class Pointer implements AutoCloseable {
             this.deallocator.deallocate();
             this.deallocator = null;
         }
-        deallocateReferences();
         if (deallocator != null && !deallocator.equals(null)) {
             this.deallocator = deallocator;
             DeallocatorReference r = deallocator instanceof DeallocatorReference ?
@@ -437,8 +461,6 @@ public class Pointer implements AutoCloseable {
                     // reset interrupt to be nice
                     Thread.currentThread().interrupt();
                     break;
-                } finally {
-                    deallocateReferences();
                 }
             }
             if (maxBytes > 0 && DeallocatorReference.totalBytes + r.bytes > maxBytes) {
