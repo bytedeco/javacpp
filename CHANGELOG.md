@@ -1,4 +1,5 @@
 
+ * Add "org.bytedeco.javacpp.maxretries" system property, the number times to call `System.gc()` before giving up (defaults to 10)
  * Deallocate native memory in a dedicated thread to reduce lock contention ([issue #103](https://github.com/bytedeco/javacpp/issues/103))
  * Fix Javadoc links for externally referenced classes
  * Prevent Android system libraries from getting copied or extracted
