@@ -36,7 +36,7 @@ public class ShortBufferIndexer extends ShortIndexer {
 
     /** Calls {@code ShortBufferIndexer(buffer, { buffer.limit() }, { 1 })}. */
     public ShortBufferIndexer(ShortBuffer buffer) {
-        this(buffer, new long[] { buffer.limit() }, new long[] { 1 });
+        this(buffer, new long[] { buffer.limit() }, ONE_STRIDE);
     }
 
     /** Constructor to set the {@link #buffer}, {@link #sizes} and {@link #strides}. */

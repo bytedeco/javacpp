@@ -49,6 +49,8 @@ public abstract class Indexer implements AutoCloseable {
         release();
     }
 
+    protected static final long[] ONE_STRIDE = { 1 };
+
     /**
      * The number of elements in each dimension.
      * These values are not typically used by the indexer.

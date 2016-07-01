@@ -40,7 +40,7 @@ public class IntRawIndexer extends IntIndexer {
 
     /** Calls {@code IntRawIndexer(pointer, { pointer.limit() - pointer.position() }, { 1 })}. */
     public IntRawIndexer(IntPointer pointer) {
-        this(pointer, new long[] { pointer.limit() - pointer.position() }, new long[] { 1 });
+        this(pointer, new long[] { pointer.limit() - pointer.position() }, ONE_STRIDE);
     }
 
     /** Constructor to set the {@link #pointer}, {@link #sizes} and {@link #strides}. */

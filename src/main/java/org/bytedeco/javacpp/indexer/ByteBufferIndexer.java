@@ -36,7 +36,7 @@ public class ByteBufferIndexer extends ByteIndexer {
 
     /** Calls {@code ByteBufferIndexer(buffer, { buffer.limit() }, { 1 })}. */
     public ByteBufferIndexer(ByteBuffer buffer) {
-        this(buffer, new long[] { buffer.limit() }, new long[] { 1 });
+        this(buffer, new long[] { buffer.limit() }, ONE_STRIDE);
     }
 
     /** Constructor to set the {@link #buffer}, {@link #sizes} and {@link #strides}. */

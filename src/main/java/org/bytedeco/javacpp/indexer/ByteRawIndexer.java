@@ -40,7 +40,7 @@ public class ByteRawIndexer extends ByteIndexer {
 
     /** Calls {@code ByteRawIndexer(pointer, { pointer.limit() - pointer.position() }, { 1 })}. */
     public ByteRawIndexer(BytePointer pointer) {
-        this(pointer, new long[] { pointer.limit() - pointer.position() }, new long[] { 1 });
+        this(pointer, new long[] { pointer.limit() - pointer.position() }, ONE_STRIDE);
     }
 
     /** Constructor to set the {@link #pointer}, {@link #sizes} and {@link #strides}. */
