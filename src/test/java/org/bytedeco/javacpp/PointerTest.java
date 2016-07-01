@@ -43,11 +43,9 @@ import static org.junit.Assert.*;
 @Platform(define = {"NATIVE_ALLOCATOR malloc", "NATIVE_DEALLOCATOR free"})
 public class PointerTest {
 
-    static long maxBytes = Runtime.getRuntime().maxMemory() - 1;
+    static long maxBytes = 1000000000;
 
     @BeforeClass public static void setUpClass() throws Exception {
-        System.setProperty("org.bytedeco.javacpp.maxbytes", Long.toString(maxBytes));
-        System.setProperty("org.bytedeco.javacpp.maxretries", "3");
         Class c = PointerTest.class;
         Builder builder = new Builder().classesOrPackages(c.getName());
         File[] outputFiles = builder.build();

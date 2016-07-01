@@ -120,6 +120,22 @@
         </configuration>
       </plugin>
       <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>2.19.1</version>
+        <configuration>
+          <systemProperties>
+            <property>
+              <name>org.bytedeco.javacpp.maxbytes</name>
+              <value>1000000000</value>
+            </property>
+            <property>
+              <name>org.bytedeco.javacpp.maxretries</name>
+              <value>3</value>
+            </property>
+          </systemProperties>
+        </configuration>
+      </plugin>
+      <plugin>
         <artifactId>maven-jar-plugin</artifactId>
         <version>2.6</version>
         <configuration>
