@@ -1,4 +1,5 @@
 
+### July 8, 2016 version 1.2.2
  * Prevent creating unnecessary garbage when using `Indexer` on simple arrays with a stride of 1 ([issue deeplearning4j/nd4j#1063](https://github.com/deeplearning4j/nd4j/issues/1063))
  * Add "org.bytedeco.javacpp.maxretries" system property, the number times to call `System.gc()` before giving up (defaults to 10)
  * Deallocate native memory in a dedicated thread to reduce lock contention ([issue #103](https://github.com/bytedeco/javacpp/issues/103))
