@@ -356,16 +356,23 @@ public class Builder {
             try {
                 String resourceName = '/' + classes[classes.length - 1].getName().replace('.', '/')  + ".class";
                 String resourceURL = classes[classes.length - 1].getResource(resourceName).toString();
-                File packageDir = new File(uri = new URI(resourceURL.substring(0, resourceURL.lastIndexOf('/') + 1)));
+                uri = new URI(resourceURL.substring(0, resourceURL.lastIndexOf('/') + 1));
+                boolean isFile = "file".equals(uri.getScheme());
+                String classPath = classScanner.getClassLoader().getPaths()[0];
+                // If our class is not a file, use first path of the user class loader as base for our output path
+                File packageDir = isFile ? new File(uri)
+                                         : new File(classPath, resourceName.substring(0, resourceName.lastIndexOf('/') + 1));
+                // Output to the library path inside of the class path, if provided by the user
+                uri = new URI(resourceURL.substring(0, resourceURL.length() - resourceName.length() + 1));
                 File targetDir = libraryPath.length() > 0
-                        ? new File(uri = new URI(resourceURL.substring(0, resourceURL.length() - resourceName.length() + 1)))
+                        ? (isFile ? new File(uri) : new File(classPath))
                         : new File(packageDir, platform);
                 outputPath = new File(targetDir, libraryPath);
                 sourcePrefix = new File(packageDir, outputName).getPath();
             } catch (URISyntaxException e) {
                 throw new RuntimeException(e);
             } catch (IllegalArgumentException e) {
-                throw new RuntimeException(e + ": " + uri);
+                throw new RuntimeException("URI: " + uri, e);
             }
         }
         if (!outputPath.exists()) {

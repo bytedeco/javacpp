@@ -1044,7 +1044,7 @@ public class Generator implements Closeable {
         out.println("}");
         out.println();
 
-        List<Class> allClasses = new ArrayList<Class>();
+        LinkedHashSet<Class> allClasses = new LinkedHashSet<Class>();
         allClasses.addAll(baseClasses);
         allClasses.addAll(Arrays.asList(classes));
 
