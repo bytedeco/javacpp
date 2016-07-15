@@ -1,4 +1,5 @@
 
+ * Parse properly custom `enum` types, found after the ':' token in C++11
  * Output compiled libraries to user specified class path by default for input classes inside JAR files, etc
  * Add `HalfIndexer` to access `short` arrays as half-precision floating point numbers
 

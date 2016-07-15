@@ -2452,12 +2452,12 @@ public class Parser {
             token = tokens.next();
         }
         if (token.match(':')) {
-            cppType = tokens.next().value;
-            Info info = infoMap.getFirst(cppType);
-            if (info != null && info.valueTypes != null && info.valueTypes.length > 0) {
-                javaType = info.valueTypes[0];
-            }
             token = tokens.next();
+            Type type = type(context);
+            cppType = type.cppName;
+            javaType = type.javaName;
+            enumPrefix = "public static final " + javaType;
+            token = tokens.get();
         }
         if (!typedef && token.match(';')) {
             // skip for loop
