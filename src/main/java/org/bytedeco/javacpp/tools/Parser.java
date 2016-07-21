@@ -2764,7 +2764,7 @@ public class Parser {
         }
         if (file == null && includePath != null) {
             for (String path : includePath) {
-                File f = new File(path, filename);
+                File f = new File(path, filename).getCanonicalFile();
                 if (f.exists()) {
                     file = f;
                     break;
@@ -2911,6 +2911,10 @@ public class Parser {
             }
         }
 
+        File targetDir = targetFile.getParentFile();
+        if (targetDir != null) {
+            targetDir.mkdirs();
+        }
         final String newline = lineSeparator != null ? lineSeparator : "\n";
         try (Writer out = new FileWriter(targetFile) {
                  @Override public Writer append(CharSequence text) throws IOException {
