@@ -1,4 +1,7 @@
 
+ * Include new `platform.compiler.debug` options inside the default properties file ([pull #90](https://github.com/bytedeco/javacpp/issues/90))
+ * Always use the `platform.compiler.default` options unless `@Platform(compiler="!default", ...)` is specified
+ * Move optimization options from `platform.compiler.output` to `platform.compiler.default`, allowing users to override
  * Create all missing directories in the path to the target file of `Parser`
  * Parse properly custom `enum` types, found after the ':' token in C++11
  * Output compiled libraries to user specified class path by default for input classes inside JAR files, etc

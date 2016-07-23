@@ -201,9 +201,9 @@ public class Builder {
 
         command.add(sourceFilename);
 
-        Collection<String> allOptions = properties.get("platform.compiler.*");
-        if (allOptions.isEmpty()) {
-            allOptions.add("default");
+        List<String> allOptions = properties.get("platform.compiler.*");
+        if (!allOptions.contains("!default") && !allOptions.contains("default")) {
+            allOptions.add(0, "default");
         }
         for (String s : allOptions) {
             if (s == null || s.length() == 0) {
@@ -213,7 +213,7 @@ public class Builder {
             String options = properties.getProperty(p);
             if (options != null && options.length() > 0) {
                 command.addAll(Arrays.asList(options.split(" ")));
-            } else if (!"default".equals(s)) {
+            } else if (!"!default".equals(s) && !"default".equals(s)) {
                 logger.warn("Could not get the property named \"" + p + "\"");
             }
         }
