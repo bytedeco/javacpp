@@ -1,4 +1,5 @@
 
+ * Change the packaging type to `jar` since `maven-plugin` causes issues with sbt and Ivy ([issue #113](https://github.com/bytedeco/javacpp/issues/113))
  * Include new `platform.compiler.debug` options inside the default properties file ([pull #90](https://github.com/bytedeco/javacpp/issues/90))
  * Always use the `platform.compiler.default` options unless `@Platform(compiler="!default", ...)` is specified
  * Move optimization options from `platform.compiler.output` to `platform.compiler.default`, allowing users to override

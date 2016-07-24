@@ -5,7 +5,6 @@
   <groupId>org.bytedeco</groupId>
   <artifactId>javacpp</artifactId>
   <version>1.2.2</version>
-  <packaging>maven-plugin</packaging>
 
   <name>JavaCPP</name>
   <description>The missing bridge between Java and native C++</description>
@@ -104,10 +103,18 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-plugin-plugin</artifactId>
         <version>3.4</version>
+        <configuration>
+          <packagingTypes>
+            <packagingType>jar</packagingType>
+          </packagingTypes>
+        </configuration>
         <executions>
           <execution>
             <id>default-descriptor</id>
             <phase>process-classes</phase>
+            <goals>
+              <goal>descriptor</goal>
+            </goals>
           </execution>
         </executions>
       </plugin>
