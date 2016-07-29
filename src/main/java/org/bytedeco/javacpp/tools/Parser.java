@@ -766,6 +766,7 @@ public class Parser {
         dcl.cppName = "";
         Info groupInfo = null;
         Declaration definition = new Declaration();
+        boolean fieldPointer = false;
         if (tokens.get().match('(') || (typedef && tokens.get(1).match('('))) {
             // probably a function pointer declaration
             if (tokens.get().match('(')) {
@@ -803,7 +804,29 @@ public class Parser {
             }
         } else if (tokens.get().match(Token.IDENTIFIER)) {
             for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.next()) {
-                if (token.match("::")) {
+                if (dcl.cppName.length() > 0 && token.match('*')) {
+                    // a data member pointer or something
+                    dcl.cppName = dcl.cppName.substring(0, dcl.cppName.length() - 2);
+                    for (String name : context.qualify(dcl.cppName)) {
+                        if ((groupInfo = infoMap.getFirst(name, false)) != null) {
+                            dcl.cppName = name;
+                            break;
+                        } else if (infoMap.getFirst(name) != null) {
+                            dcl.cppName = name;
+                        }
+                    }
+                    definition.text += "@Namespace(\"" + dcl.cppName + "\") ";
+
+                    for (token = tokens.get(); !token.match(Token.EOF); token = tokens.next()) {
+                        if (token.match('*')) {
+                            indirections2++;
+                        } else {
+                            break;
+                        }
+                    }
+                    dcl.cppName = token.match(Token.IDENTIFIER) ? token.toString() : "";
+                    fieldPointer = groupInfo != null;
+                } else if (token.match("::")) {
                     dcl.cppName += token;
                 } else if (token.match(Token.OPERATOR)) {
                     dcl.operator = true;
@@ -1024,7 +1047,7 @@ public class Parser {
         }
 
         // pick the Java name from the InfoMap if appropriate
-        String originalName = dcl.javaName;
+        String originalName = fieldPointer ? groupInfo.pointerTypes[0] : dcl.javaName;
         if (attr == null && defaultName == null && info != null && info.javaNames != null && info.javaNames.length > 0
                 && (dcl.operator || !info.cppNames[0].contains("<") || (context.templateMap != null && context.templateMap.type == null))) {
             dcl.javaName = info.javaNames[0];
@@ -1039,9 +1062,11 @@ public class Parser {
         // deal with function parameters and function pointers
         dcl.type = type;
         dcl.signature = dcl.javaName;
-        if (dcl.parameters != null) {
-            dcl.infoNumber = Math.max(dcl.infoNumber, dcl.parameters.infoNumber);
-            if (indirections2 == 0 && !typedef) {
+        if (dcl.parameters != null || fieldPointer) {
+            if (dcl.parameters != null) {
+                dcl.infoNumber = Math.max(dcl.infoNumber, dcl.parameters.infoNumber);
+            }
+            if (dcl.parameters != null && indirections2 == 0 && !typedef) {
                 dcl.signature += dcl.parameters.signature;
             } else {
                 String cppType = "";
@@ -1056,16 +1081,18 @@ public class Parser {
                 }
                 cppType += " (*)(";
                 String separator = "";
-                for (Declarator d : dcl.parameters.declarators) {
-                    if (d != null) {
-                        cppType += separator + d.type.cppName;
-                        for (int i = 0; i < d.indirections; i++) {
-                            cppType += "*";
+                if (dcl.parameters != null) {
+                    for (Declarator d : dcl.parameters.declarators) {
+                        if (d != null) {
+                            cppType += separator + d.type.cppName;
+                            for (int i = 0; i < d.indirections; i++) {
+                                cppType += "*";
+                            }
+                            if (d.reference) {
+                                cppType += "&";
+                            }
+                            separator = ", ";
                         }
-                        if (d.reference) {
-                            cppType += "&";
-                        }
-                        separator = ", ";
                     }
                 }
                 info = infoMap.getFirst(cppType += ")");
@@ -1078,10 +1105,10 @@ public class Parser {
                     functionType = info.pointerTypes[0];
                 } else if (typedef) {
                     functionType = originalName;
-                } else if (dcl.parameters.signature.length() > 0) {
+                } else if (dcl.parameters != null && dcl.parameters.signature.length() > 0) {
                     functionType += dcl.parameters.signature;
                 } else if (!type.javaName.equals("void")) {
-                    functionType = type.javaName + "_" + functionType;
+                    functionType = Character.toUpperCase(type.javaName.charAt(0)) + type.javaName.substring(1) + "_" + functionType;
                 }
                 if (info != null && info.annotations != null) {
                     for (String s : info.annotations) {
@@ -1095,16 +1122,26 @@ public class Parser {
                         "    public    " + functionType + "(Pointer p) { super(p); }\n" +
                     (groupInfo != null ? "" :
                         "    protected " + functionType + "() { allocate(); }\n" +
-                        "    private native void allocate();\n") +
+                        "    private native void allocate();\n");
+                if (fieldPointer) {
+                    definition.text +=
+                        "    public native " + type.annotations + type.javaName + " get(" + groupInfo.pointerTypes[0] + " o);\n" +
+                        "    public native " + functionType + " put(" + groupInfo.pointerTypes[0] + " o, " + type.annotations + type.javaName + " v);\n" +
+                        "}\n";
+                } else {
+                    definition.text +=
                         "    public native " + type.annotations + type.javaName + " call" +
                     (groupInfo != null ? "(" + groupInfo.pointerTypes[0] + " o" + (dcl.parameters.list.charAt(1) == ')' ?
                             ")" : ", " + dcl.parameters.list.substring(1)) : dcl.parameters.list) + ";\n" +
                         "}\n";
+                }
                 definition.signature = functionType;
                 definition.declarator = new Declarator();
                 definition.declarator.parameters = dcl.parameters;
                 dcl.definition = definition;
-                dcl.parameters = null;
+                if (!fieldPointer) {
+                    dcl.parameters = null;
+                }
                 type.annotations = "";
                 type.javaName = functionType;
             }
@@ -1732,7 +1769,7 @@ public class Parser {
             decl = new Declaration();
             tokens.index = backIndex;
             dcl = declarator(context, null, -1, false, n, false, true);
-            if (dcl == null) {
+            if (dcl == null || dcl.cppName == null) {
                 break;
             }
             decl.declarator = dcl;
