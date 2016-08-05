@@ -1447,7 +1447,9 @@ public class Parser {
                             cppName += "::" + t.spacing + t;
                         }
                     }
-                    defaultValue += token.spacing + (cppName != null && cppName.length() > 0 ? cppName : token);
+		    if (!cppName.equals("\"\"")) {
+			    defaultValue += token.spacing + (cppName != null && cppName.length() > 0 ? cppName : token);
+		    }
                 }
                 for (String name : context.qualify(defaultValue)) {
                     if (infoMap.getFirst(name, false) != null) {
@@ -1466,7 +1468,8 @@ public class Parser {
                 }
                 if (n >= 0) {
                     s = s.substring(0, n + 6) + "(nullValue = \""
-                            + defaultValue.replaceAll("\n(\\s*)", "\"\n$1 + \"") + "\")" + s.substring(n + 6);
+                            + defaultValue.replaceAll("\n(\\s*)", "\"\n$1 + \"") + "\")" 
+						.replaceAll("\"","\\\\\"") + "\")" + s.substring(n + 6);
                 }
                 dcl.type.annotations = s;
             }
