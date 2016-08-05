@@ -914,7 +914,7 @@ public class Parser {
         if (tokens.get().match(':')) {
             // ignore bitfields
             type.annotations += "@NoOffset ";
-            tokens.next().expect(Token.INTEGER);
+            tokens.next().expect(Token.INTEGER, Token.IDENTIFIER);
             tokens.next().expect(',', ';');
         }
 

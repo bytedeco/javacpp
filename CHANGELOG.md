@@ -1,4 +1,5 @@
 
+ * Let `Parser` accept identifiers in addition to integer literals for bit fields ([issue #118](https://github.com/bytedeco/javacpp/issues/118))
  * Fix `Loader.load()` not renaming a library when previously loaded under a different name
 
 ### August 1, 2016 version 1.2.3
