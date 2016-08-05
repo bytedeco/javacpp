@@ -1,4 +1,6 @@
 
+ * Fix `Loader.load()` not renaming a library when previously loaded under a different name
+
 ### August 1, 2016 version 1.2.3
  * Add support for data member pointers as pseudo-`FunctionPointer` ([issue #114](https://github.com/bytedeco/javacpp/issues/114))
  * Change the packaging type to `jar` since `maven-plugin` causes issues with sbt and Ivy ([issue #113](https://github.com/bytedeco/javacpp/issues/113))
