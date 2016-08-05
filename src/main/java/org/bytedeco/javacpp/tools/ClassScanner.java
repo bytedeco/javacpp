@@ -59,6 +59,10 @@ class ClassScanner {
             className = className.substring(0, className.length()-6);
         }
         Class c = Class.forName(className, false, loader);
+        addClass(c);
+    }
+
+    public void addClass(Class c) {
         if (!classes.contains(c)) {
             classes.add(c);
         }

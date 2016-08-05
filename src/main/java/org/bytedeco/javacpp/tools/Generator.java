@@ -768,7 +768,9 @@ public class Generator implements Closeable {
             String instanceTypeName = functionClassName(c);
             out.println("struct JavaCPP_hidden " + instanceTypeName + " {");
             out.println("    " + instanceTypeName + "() : ptr(NULL), obj(NULL) { }");
-            out.println("    " + returnConvention[0] + "operator()" + parameterDeclaration + ";");
+            if (parameterDeclaration != null && parameterDeclaration.length() > 0) {
+                out.println("    " + returnConvention[0] + "operator()" + parameterDeclaration + ";");
+            }
             out.println("    " + typeName[0] + "ptr" + typeName[1] + ";");
             out.println("    jobject obj; static jmethodID mid;");
             out.println("};");
@@ -1044,7 +1046,7 @@ public class Generator implements Closeable {
         out.println("}");
         out.println();
 
-        List<Class> allClasses = new ArrayList<Class>();
+        LinkedHashSet<Class> allClasses = new LinkedHashSet<Class>();
         allClasses.addAll(baseClasses);
         allClasses.addAll(Arrays.asList(classes));
 
@@ -1129,7 +1131,7 @@ public class Generator implements Closeable {
             c = c.getSuperclass();
         }
         boolean[] callbackAllocators = new boolean[methods.length];
-        Method functionMethod = functionMethod(cls, callbackAllocators);
+        Method[] functionMethods = functionMethods(cls, callbackAllocators);
         boolean firstCallback = true;
         for (int i = 0; i < methods.length; i++) {
             if (!checkPlatform(methods[i].getAnnotation(Platform.class), null)) {
@@ -1139,19 +1141,24 @@ public class Generator implements Closeable {
             String nativeName = mangle(cls.getName()) + "_" + mangle(methods[i].getName());
             String callbackName = callbackAllocators[i] && methodInfo.parameterTypes.length > 0
                     ? null : "JavaCPP_" + nativeName + "_callback";
-            if (callbackAllocators[i] && functionMethod == null) {
+            if (callbackAllocators[i] && functionMethods == null) {
                 logger.warn("No callback method call() or apply() has been not declared in \"" +
                         cls.getCanonicalName() + "\". No code will be generated for callback allocator.");
                 continue;
-            } else if (callbackAllocators[i] || (methods[i].equals(functionMethod) && !Modifier.isNative(methods[i].getModifiers()))) {
-                functions.index(cls);
-                Name name = methods[i].getAnnotation(Name.class);
-                if (name != null && name.value().length > 0 && name.value()[0].length() > 0) {
-                    callbackName = name.value()[0];
+            } else if (functionMethods != null) {
+                for (Method functionMethod : functionMethods) {
+                    if (functionMethod != null && (callbackAllocators[i])
+                            || (methods[i].equals(functionMethod) && !Modifier.isNative(methods[i].getModifiers()))) {
+                        functions.index(cls);
+                        Name name = methods[i].getAnnotation(Name.class);
+                        if (name != null && name.value().length > 0 && name.value()[0].length() > 0) {
+                            callbackName = name.value()[0];
+                        }
+                        callback(cls, functionMethod, callbackName, firstCallback, null);
+                        firstCallback = false;
+                        didSomething = true;
+                    }
                 }
-                callback(cls, functionMethod, callbackName, firstCallback, null);
-                firstCallback = false;
-                didSomething = true;
             }
 
             if ((Modifier.isNative(methods[i].getModifiers()) || Modifier.isAbstract(methods[i].getModifiers()))
@@ -1487,8 +1494,9 @@ public class Generator implements Closeable {
             out.println(indent + "    (*deallocatorAddress)(allocatedAddress);");
             out.println(indent + "}");
             return; // nothing else should be appended here for deallocator
-        } else if (methodInfo.valueGetter || methodInfo.valueSetter ||
-                methodInfo.memberGetter || methodInfo.memberSetter) {
+        } else if (!FunctionPointer.class.isAssignableFrom(methodInfo.cls) &&
+               (methodInfo.valueGetter || methodInfo.valueSetter ||
+                methodInfo.memberGetter || methodInfo.memberSetter)) {
             boolean wantsPointer = false;
             int k = methodInfo.parameterTypes.length-1;
             if ((methodInfo.valueSetter || methodInfo.memberSetter) &&
@@ -1541,6 +1549,11 @@ public class Generator implements Closeable {
                 if (methodInfo.cls.isAnnotationPresent(Namespace.class)) {
                     out.print("(ptr0->*(ptr->ptr))");
                     skipParameters = 1;
+                    if (methodInfo.valueGetter || methodInfo.valueSetter) {
+                        // this is get/put for a field pointer, not a real function
+                        prefix = methodInfo.valueGetter ? "" : " = ";
+                        suffix = "";
+                    }
                 } else {
                     out.print("(*ptr->ptr)");
                 }
@@ -2428,12 +2441,12 @@ public class Generator implements Closeable {
         return name != null ? name.value()[0] : "JavaCPP_" + mangle(cls.getName());
     }
 
-    static Method functionMethod(Class<?> cls, boolean[] callbackAllocators) {
+    static Method[] functionMethods(Class<?> cls, boolean[] callbackAllocators) {
         if (!FunctionPointer.class.isAssignableFrom(cls)) {
             return null;
         }
         Method[] methods = cls.getDeclaredMethods();
-        Method functionMethod = null;
+        Method[] functionMethods = new Method[3];
         for (int i = 0; i < methods.length; i++) {
             String methodName = methods[i].getName();
             int modifiers = methods[i].getModifiers();
@@ -2450,10 +2463,15 @@ public class Generator implements Closeable {
                 callbackAllocators[i] = true;
             } else if (methodName.startsWith("call") || methodName.startsWith("apply")) {
                 // found a function caller method and/or callback method
-                functionMethod = methods[i];
+                functionMethods[0] = methods[i];
+            } else if (methodName.startsWith("get")) {
+                functionMethods[1] = methods[i];
+            } else if (methodName.startsWith("put")) {
+                functionMethods[2] = methods[i];
             }
         }
-        return functionMethod;
+        return (functionMethods[0] != null || functionMethods[1] != null || functionMethods[2] != null) ?
+                functionMethods : null;
     }
 
     MethodInformation methodInformation(Method method) {
@@ -2642,6 +2660,12 @@ public class Generator implements Closeable {
                 info.dim = info.parameterTypes.length;
             } else if (info.memberSetter || info.valueSetter) {
                 info.dim = info.parameterTypes.length-1;
+            }
+            if ((info.valueGetter || info.valueSetter)
+                    && FunctionPointer.class.isAssignableFrom(info.cls)
+                    && info.cls.isAnnotationPresent(Namespace.class)) {
+                // a member pointer where the first argument is the object
+                info.dim--;
             }
         }
 
@@ -2937,9 +2961,10 @@ public class Generator implements Closeable {
         } else if (type.isPrimitive()) {
             prefix = type.getName();
         } else if (FunctionPointer.class.isAssignableFrom(type)) {
-            Method functionMethod = functionMethod(type, null);
-            if (functionMethod != null) {
-                return cppFunctionTypeName(functionMethod);
+            Method[] functionMethods = functionMethods(type, null);
+            String[] prefixSuffix = cppFunctionTypeName(functionMethods);
+            if (prefixSuffix != null) {
+                return prefixSuffix;
             }
         } else {
             String scopedType = cppScopeName(type);
@@ -2953,7 +2978,19 @@ public class Generator implements Closeable {
         return new String[] { prefix, suffix };
     }
 
-    String[] cppFunctionTypeName(Method functionMethod) {
+    String[] cppFunctionTypeName(Method... functionMethods) {
+        Method functionMethod = null;
+        if (functionMethods != null) {
+            for (Method m : functionMethods) {
+                if (m != null) {
+                    functionMethod = m;
+                    break;
+                }
+            }
+        }
+        if (functionMethod == null) {
+            return null;
+        }
         String prefix, suffix;
         Class<?> type = functionMethod.getDeclaringClass();
         Convention convention = type.getAnnotation(Convention.class);
@@ -2980,25 +3017,29 @@ public class Generator implements Closeable {
             prefix = returnTypeName[0] + returnTypeName[1];
         }
         prefix += " (" + callingConvention + spaceName + "*";
-        suffix = ")(";
-        if (FunctionPointer.class.isAssignableFrom(type) && namespace != null
-                && (parameterTypes.length == 0 || !Pointer.class.isAssignableFrom(parameterTypes[0]))) {
-            logger.warn("First parameter of caller method call() or apply() for member function pointer " +
-                    type.getCanonicalName() + " is not a Pointer. Compilation will most likely fail.");
-        }
-        for (int j = namespace == null ? 0 : 1; j < parameterTypes.length; j++) {
-            String[] paramTypeName = cppAnnotationTypeName(parameterTypes[j], parameterAnnotations[j]);
-            AdapterInformation paramAdapterInfo = adapterInformation(false, valueTypeName(paramTypeName), parameterAnnotations[j]);
-            if (paramAdapterInfo != null && paramAdapterInfo.cast.length() > 0) {
-                suffix += paramAdapterInfo.cast + " arg" + j;
-            } else {
-                suffix += paramTypeName[0] + " arg" + j + paramTypeName[1];
+        suffix = ")";
+        if (functionMethod == functionMethods[0]) {
+            // this is a real function, not get/put for a field pointer
+            suffix += "(";
+            if (FunctionPointer.class.isAssignableFrom(type) && namespace != null
+                    && (parameterTypes.length == 0 || !Pointer.class.isAssignableFrom(parameterTypes[0]))) {
+                logger.warn("First parameter of caller method call() or apply() for member function pointer " +
+                        type.getCanonicalName() + " is not a Pointer. Compilation will most likely fail.");
             }
-            if (j < parameterTypes.length - 1) {
-                suffix += ", ";
+            for (int j = namespace == null ? 0 : 1; j < parameterTypes.length; j++) {
+                String[] paramTypeName = cppAnnotationTypeName(parameterTypes[j], parameterAnnotations[j]);
+                AdapterInformation paramAdapterInfo = adapterInformation(false, valueTypeName(paramTypeName), parameterAnnotations[j]);
+                if (paramAdapterInfo != null && paramAdapterInfo.cast.length() > 0) {
+                    suffix += paramAdapterInfo.cast + " arg" + j;
+                } else {
+                    suffix += paramTypeName[0] + " arg" + j + paramTypeName[1];
+                }
+                if (j < parameterTypes.length - 1) {
+                    suffix += ", ";
+                }
             }
+            suffix += ")";
         }
-        suffix += ")";
         if (type.isAnnotationPresent(Const.class)) {
             suffix += " const";
         }

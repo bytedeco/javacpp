@@ -22,29 +22,29 @@
 
 package org.bytedeco.javacpp.indexer;
 
-import org.bytedeco.javacpp.DoublePointer;
 import org.bytedeco.javacpp.Pointer;
+import org.bytedeco.javacpp.ShortPointer;
 
 /**
- * An indexer for a {@link DoublePointer} using the {@link Raw} instance.
+ * An indexer for a {@link ShortPointer} using the {@link Raw} instance, treated as half-precision float.
  *
  * @author Samuel Audet
  */
-public class DoubleRawIndexer extends DoubleIndexer {
+public class HalfRawIndexer extends HalfIndexer {
     /** The instance for the raw memory interface. */
     protected static final Raw RAW = Raw.getInstance();
     /** The backing pointer. */
-    protected DoublePointer pointer;
+    protected ShortPointer pointer;
     /** Base address and number of elements accessible. */
     final long base, size;
 
-    /** Calls {@code DoubleRawIndexer(pointer, { pointer.limit() - pointer.position() }, { 1 })}. */
-    public DoubleRawIndexer(DoublePointer pointer) {
+    /** Calls {@code HalfRawIndexer(pointer, { pointer.limit() - pointer.position() }, { 1 })}. */
+    public HalfRawIndexer(ShortPointer pointer) {
         this(pointer, new long[] { pointer.limit() - pointer.position() }, ONE_STRIDE);
     }
 
     /** Constructor to set the {@link #pointer}, {@link #sizes} and {@link #strides}. */
-    public DoubleRawIndexer(DoublePointer pointer, long[] sizes, long[] strides) {
+    public HalfRawIndexer(ShortPointer pointer, long[] sizes, long[] strides) {
         super(sizes, strides);
         this.pointer = pointer;
         base = pointer.address() + pointer.position() * VALUE_BYTES;
@@ -55,68 +55,68 @@ public class DoubleRawIndexer extends DoubleIndexer {
         return pointer;
     }
 
-    @Override public double get(long i) {
-        return RAW.getDouble(base + checkIndex(i, size) * VALUE_BYTES);
+    @Override public float get(long i) {
+        return toFloat(RAW.getShort(base + checkIndex(i, size) * VALUE_BYTES));
     }
-    @Override public DoubleIndexer get(long i, double[] d, int offset, int length) {
+    @Override public HalfIndexer get(long i, float[] h, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            d[offset + n] = get(i * strides[0] + n);
+            h[offset + n] = get(i * strides[0] + n);
         }
         return this;
     }
-    @Override public double get(long i, long j) {
+    @Override public float get(long i, long j) {
         return get(i * strides[0] + j);
     }
-    @Override public DoubleIndexer get(long i, long j, double[] d, int offset, int length) {
+    @Override public HalfIndexer get(long i, long j, float[] h, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            d[offset + n] = get(i * strides[0] + j * strides[1] + n);
+            h[offset + n] = get(i * strides[0] + j * strides[1] + n);
         }
         return this;
     }
-    @Override public double get(long i, long j, long k) {
+    @Override public float get(long i, long j, long k) {
         return get(i * strides[0] + j * strides[1] + k);
     }
-    @Override public double get(long... indices) {
+    @Override public float get(long... indices) {
         return get(index(indices));
     }
-    @Override public DoubleIndexer get(long[] indices, double[] d, int offset, int length) {
+    @Override public HalfIndexer get(long[] indices, float[] h, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            d[offset + n] = get(index(indices) + n);
+            h[offset + n] = get(index(indices) + n);
         }
         return this;
     }
 
-    @Override public DoubleIndexer put(long i, double d) {
-        RAW.putDouble(base + checkIndex(i, size) * VALUE_BYTES, d);
+    @Override public HalfIndexer put(long i, float h) {
+        RAW.putShort(base + checkIndex(i, size) * VALUE_BYTES, (short)fromFloat(h));
         return this;
     }
-    @Override public DoubleIndexer put(long i, double[] d, int offset, int length) {
+    @Override public HalfIndexer put(long i, float[] h, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            put(i * strides[0] + n, d[offset + n]);
+            put(i * strides[0] + n, h[offset + n]);
         }
         return this;
     }
-    @Override public DoubleIndexer put(long i, long j, double d) {
-        put(i * strides[0] + j, d);
+    @Override public HalfIndexer put(long i, long j, float h) {
+        put(i * strides[0] + j, h);
         return this;
     }
-    @Override public DoubleIndexer put(long i, long j, double[] d, int offset, int length) {
+    @Override public HalfIndexer put(long i, long j, float[] h, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            put(i * strides[0] + j * strides[1] + n, d[offset + n]);
+            put(i * strides[0] + j * strides[1] + n, h[offset + n]);
         }
         return this;
     }
-    @Override public DoubleIndexer put(long i, long j, long k, double d) {
-        put(i * strides[0] + j * strides[1] + k, d);
+    @Override public HalfIndexer put(long i, long j, long k, float h) {
+        put(i * strides[0] + j * strides[1] + k, h);
         return this;
     }
-    @Override public DoubleIndexer put(long[] indices, double d) {
-        put(index(indices), d);
+    @Override public HalfIndexer put(long[] indices, float h) {
+        put(index(indices), h);
         return this;
     }
-    @Override public DoubleIndexer put(long[] indices, double[] d, int offset, int length) {
+    @Override public HalfIndexer put(long[] indices, float[] h, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            put(index(indices) + n, d[offset + n]);
+            put(index(indices) + n, h[offset + n]);
         }
         return this;
     }

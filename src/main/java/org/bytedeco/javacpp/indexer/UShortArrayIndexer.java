@@ -33,7 +33,7 @@ public class UShortArrayIndexer extends UShortIndexer {
 
     /** Calls {@code UShortArrayIndexer(array, { array.length }, { 1 })}. */
     public UShortArrayIndexer(short[] array) {
-        this(array, new long[] { array.length }, new long[] { 1 });
+        this(array, new long[] { array.length }, ONE_STRIDE);
     }
 
     /** Constructor to set the {@link #array}, {@link #sizes} and {@link #strides}. */

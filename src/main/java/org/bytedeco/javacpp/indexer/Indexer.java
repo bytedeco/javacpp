@@ -49,6 +49,8 @@ public abstract class Indexer implements AutoCloseable {
         release();
     }
 
+    protected static final long[] ONE_STRIDE = { 1 };
+
     /**
      * The number of elements in each dimension.
      * These values are not typically used by the indexer.
@@ -103,6 +105,14 @@ public abstract class Indexer implements AutoCloseable {
         }
         return index;
     }
+
+    /** The associated (optional) {@link Indexable}. */
+    protected Indexable indexable;
+
+    /** Returns {@link #indexable}. */
+    public Indexable indexable() { return indexable; }
+    /** Sets {@link #indexable} and returns this. */
+    public Indexer indexable(Indexable indexable) { this.indexable = indexable; return this; }
 
     /** Returns the backing array, or {@code null} if none */
     public Object array() { return null; }

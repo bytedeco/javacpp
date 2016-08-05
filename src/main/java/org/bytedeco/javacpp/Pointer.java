@@ -30,6 +30,7 @@ import java.lang.reflect.Modifier;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import org.bytedeco.javacpp.annotation.Platform;
 import org.bytedeco.javacpp.tools.Generator;
 import org.bytedeco.javacpp.tools.Logger;
 
@@ -58,6 +59,7 @@ import org.bytedeco.javacpp.tools.Logger;
  *
  * @author Samuel Audet
  */
+@Platform
 public class Pointer implements AutoCloseable {
     /** Default constructor that does nothing. */
     public Pointer() {}
@@ -288,13 +290,43 @@ public class Pointer implements AutoCloseable {
      * Initialized to null if the "org.bytedeco.javacpp.nopointergc" system property is "true". */
     private static final ReferenceQueue<Pointer> referenceQueue;
 
+    static final Thread deallocatorThread;
+
     /** Maximum amount of memory registered with live deallocators before forcing call to {@link System#gc()}.
      * Set via "org.bytedeco.javacpp.maxbytes" system property, defaults to {@link Runtime#maxMemory()}. */
     static final long maxBytes;
 
+    /** Maximum number of times to call {@link System#gc()} before giving up with {@link OutOfMemoryError}.
+     * Set via "org.bytedeco.javacpp.maxretries" system property, defaults to 10, where each retry is followed
+     * by a call to {@code Thread.sleep(100)}. */
+    static final int maxRetries;
+
     static {
         String s = System.getProperty("org.bytedeco.javacpp.nopointergc", "false").toLowerCase();
-        referenceQueue = s.equals("true") || s.equals("t") || s.equals("") ? null : new ReferenceQueue<Pointer>();
+        if (s.equals("true") || s.equals("t") || s.equals("")) {
+            referenceQueue = null;
+            deallocatorThread = null;
+        } else {
+            referenceQueue =  new ReferenceQueue<Pointer>();
+            deallocatorThread = new Thread(new Runnable() {
+                @Override public void run() {
+                    try {
+                        while (true) {
+                            DeallocatorReference r = (DeallocatorReference)referenceQueue.remove();
+                            r.clear();
+                            r.remove();
+                        }
+                    } catch (InterruptedException ex) {
+                        // reset interrupt to be nice
+                        Thread.currentThread().interrupt();
+                    }
+                }
+            });
+            deallocatorThread.setName("JavaCPP Deallocator");
+            deallocatorThread.setPriority(Thread.MAX_PRIORITY);
+            deallocatorThread.setDaemon(true);
+            deallocatorThread.start();
+        }
 
         long m = Runtime.getRuntime().maxMemory();
         s = System.getProperty("org.bytedeco.javacpp.maxbytes");
@@ -306,6 +338,17 @@ public class Pointer implements AutoCloseable {
             }
         }
         maxBytes = m;
+
+        int n = 10;
+        s = System.getProperty("org.bytedeco.javacpp.maxretries");
+        if (s != null && s.length() > 0) {
+            try {
+                n = Integer.parseInt(s);
+            } catch (NumberFormatException e) {
+                // keep default value set above
+            }
+        }
+        maxRetries = n;
     }
 
     /** Clears, deallocates, and removes all garbage collected objects from the {@link #referenceQueue}. */
@@ -421,14 +464,13 @@ public class Pointer implements AutoCloseable {
             this.deallocator.deallocate();
             this.deallocator = null;
         }
-        deallocateReferences();
         if (deallocator != null && !deallocator.equals(null)) {
             this.deallocator = deallocator;
             DeallocatorReference r = deallocator instanceof DeallocatorReference ?
                     (DeallocatorReference)deallocator :
                     new DeallocatorReference(this, deallocator);
             int count = 0;
-            while (count++ < 10 && maxBytes > 0 && DeallocatorReference.totalBytes + r.bytes > maxBytes) {
+            while (count++ < maxRetries && maxBytes > 0 && DeallocatorReference.totalBytes + r.bytes > maxBytes) {
                 try {
                     // try to get some more memory back
                     System.gc();
@@ -437,8 +479,6 @@ public class Pointer implements AutoCloseable {
                     // reset interrupt to be nice
                     Thread.currentThread().interrupt();
                     break;
-                } finally {
-                    deallocateReferences();
                 }
             }
             if (maxBytes > 0 && DeallocatorReference.totalBytes + r.bytes > maxBytes) {
@@ -609,7 +649,8 @@ public class Pointer implements AutoCloseable {
     /**
      * Checks for equality with argument. Defines obj to be equal if {@code
      *     (obj == null && this.address == 0) ||
-     *     (obj.address == this.address && obj.position == this.position)}.
+     *     (obj.address == this.address && obj.position == this.position)},
+     * and the classes are the same, unless one of them in Pointer itself.
      *
      * @param obj the object to compare this Pointer to
      * @return true if obj is equal
@@ -619,7 +660,9 @@ public class Pointer implements AutoCloseable {
             return true;
         } else if (obj == null) {
             return isNull();
-        } else if (obj.getClass() != getClass()) {
+        } else if (obj.getClass() != getClass()
+                && obj.getClass() != Pointer.class
+                && getClass() != Pointer.class) {
             return false;
         } else {
             Pointer other = (Pointer)obj;

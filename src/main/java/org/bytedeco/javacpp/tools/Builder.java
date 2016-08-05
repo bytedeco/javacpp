@@ -201,9 +201,9 @@ public class Builder {
 
         command.add(sourceFilename);
 
-        Collection<String> allOptions = properties.get("platform.compiler.*");
-        if (allOptions.isEmpty()) {
-            allOptions.add("default");
+        List<String> allOptions = properties.get("platform.compiler.*");
+        if (!allOptions.contains("!default") && !allOptions.contains("default")) {
+            allOptions.add(0, "default");
         }
         for (String s : allOptions) {
             if (s == null || s.length() == 0) {
@@ -213,7 +213,7 @@ public class Builder {
             String options = properties.getProperty(p);
             if (options != null && options.length() > 0) {
                 command.addAll(Arrays.asList(options.split(" ")));
-            } else if (!"default".equals(s)) {
+            } else if (!"!default".equals(s) && !"default".equals(s)) {
                 logger.warn("Could not get the property named \"" + p + "\"");
             }
         }
@@ -260,7 +260,7 @@ public class Builder {
             String x = properties.getProperty("platform.link.suffix", "");
             int i = command.size(); // to inverse order and satisfy typical compilers
             for (String s : properties.get("platform.link")) {
-                String[] libnameversion = s.split("@");
+                String[] libnameversion = s.split("#")[0].split("@");
                 if (libnameversion.length == 3 && libnameversion[1].length() == 0) {
                     // Only use the version number when the user gave us a double @
                     s = libnameversion[0] + libnameversion[2];
@@ -356,16 +356,23 @@ public class Builder {
             try {
                 String resourceName = '/' + classes[classes.length - 1].getName().replace('.', '/')  + ".class";
                 String resourceURL = classes[classes.length - 1].getResource(resourceName).toString();
-                File packageDir = new File(uri = new URI(resourceURL.substring(0, resourceURL.lastIndexOf('/') + 1)));
+                uri = new URI(resourceURL.substring(0, resourceURL.lastIndexOf('/') + 1));
+                boolean isFile = "file".equals(uri.getScheme());
+                String classPath = classScanner.getClassLoader().getPaths()[0];
+                // If our class is not a file, use first path of the user class loader as base for our output path
+                File packageDir = isFile ? new File(uri)
+                                         : new File(classPath, resourceName.substring(0, resourceName.lastIndexOf('/') + 1));
+                // Output to the library path inside of the class path, if provided by the user
+                uri = new URI(resourceURL.substring(0, resourceURL.length() - resourceName.length() + 1));
                 File targetDir = libraryPath.length() > 0
-                        ? new File(uri = new URI(resourceURL.substring(0, resourceURL.length() - resourceName.length() + 1)))
+                        ? (isFile ? new File(uri) : new File(classPath))
                         : new File(packageDir, platform);
                 outputPath = new File(targetDir, libraryPath);
                 sourcePrefix = new File(packageDir, outputName).getPath();
             } catch (URISyntaxException e) {
                 throw new RuntimeException(e);
             } catch (IllegalArgumentException e) {
-                throw new RuntimeException(e + ": " + uri);
+                throw new RuntimeException("URI: " + uri, e);
             }
         }
         if (!outputPath.exists()) {

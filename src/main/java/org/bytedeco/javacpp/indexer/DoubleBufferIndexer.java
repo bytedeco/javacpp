@@ -36,7 +36,7 @@ public class DoubleBufferIndexer extends DoubleIndexer {
 
     /** Calls {@code DoubleBufferIndexer(buffer, { buffer.limit() }, { 1 })}. */
     public DoubleBufferIndexer(DoubleBuffer buffer) {
-        this(buffer, new long[] { buffer.limit() }, new long[] { 1 });
+        this(buffer, new long[] { buffer.limit() }, ONE_STRIDE);
     }
 
     /** Constructor to set the {@link #buffer}, {@link #sizes} and {@link #strides}. */

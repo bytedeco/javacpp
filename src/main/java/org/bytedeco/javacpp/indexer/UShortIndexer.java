@@ -48,7 +48,7 @@ public abstract class UShortIndexer extends Indexer {
     }
     /** Returns {@code create(pointer, { pointer.limit() - pointer.position() }, { 1 }, true)} */
     public static UShortIndexer create(ShortPointer pointer) {
-        return create(pointer, new long[] { pointer.limit() - pointer.position() }, new long[] { 1 });
+        return create(pointer, new long[] { pointer.limit() - pointer.position() }, ONE_STRIDE);
     }
 
     /** Returns {@code new ShortArrayIndexer(array, sizes, strides)} */

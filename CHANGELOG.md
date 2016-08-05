@@ -1,4 +1,25 @@
 
+ * Let `Parser` accept identifiers in addition to integer literals for bit fields ([issue #118](https://github.com/bytedeco/javacpp/issues/118))
+ * Fix `Loader.load()` not renaming a library when previously loaded under a different name
+
+### August 1, 2016 version 1.2.3
+ * Add support for data member pointers as pseudo-`FunctionPointer` ([issue #114](https://github.com/bytedeco/javacpp/issues/114))
+ * Change the packaging type to `jar` since `maven-plugin` causes issues with sbt and Ivy ([issue #113](https://github.com/bytedeco/javacpp/issues/113))
+ * Include new `platform.compiler.debug` options inside the default properties file ([pull #90](https://github.com/bytedeco/javacpp/issues/90))
+ * Always use the `platform.compiler.default` options unless `@Platform(compiler="!default", ...)` is specified
+ * Move optimization options from `platform.compiler.output` to `platform.compiler.default`, allowing users to override
+ * Create all missing directories in the path to the target file of `Parser`
+ * Parse properly custom `enum` types, found after the ':' token in C++11
+ * Output compiled libraries to user specified class path by default for input classes inside JAR files, etc
+ * Add `HalfIndexer` to access `short` arrays as half-precision floating point numbers
+
+### July 8, 2016 version 1.2.2
+ * Prevent creating unnecessary garbage when using `Indexer` on simple arrays with a stride of 1 ([issue deeplearning4j/nd4j#1063](https://github.com/deeplearning4j/nd4j/issues/1063))
+ * Add "org.bytedeco.javacpp.maxretries" system property, the number times to call `System.gc()` before giving up (defaults to 10)
+ * Deallocate native memory in a dedicated thread to reduce lock contention ([issue #103](https://github.com/bytedeco/javacpp/issues/103))
+ * Fix Javadoc links for externally referenced classes
+ * Prevent Android system libraries from getting copied or extracted
+ * Insert in `Indexer` an `indexable` field optionally set by the user for convenience
  * Fix potential `ParserException` on comments found after annotations before function declarations
  * Fix `IndexerTest` potentially failing with `OutOfMemoryError` ([issue bytedeco/javacpp-presets#234](https://github.com/bytedeco/javacpp-presets/issues/234))
  * Preload libraries to work around some cases when they refuse to load once renamed ([issue deeplearning4j/libnd4j#235](https://github.com/deeplearning4j/libnd4j/issues/235))

@@ -43,6 +43,8 @@ import static org.junit.Assert.*;
 @Platform(define = {"NATIVE_ALLOCATOR malloc", "NATIVE_DEALLOCATOR free"})
 public class PointerTest {
 
+    static long maxBytes = 1000000000;
+
     @BeforeClass public static void setUpClass() throws Exception {
         Class c = PointerTest.class;
         Builder builder = new Builder().classesOrPackages(c.getName());
@@ -51,6 +53,15 @@ public class PointerTest {
     }
 
     static Object fieldReference;
+
+    @Test public void testPointer() {
+        System.out.println("Pointer");
+        assertEquals(maxBytes, Pointer.maxBytes);
+        assertEquals(3, Pointer.maxRetries);
+        assertTrue(new Pointer().equals(null));
+        Pointer p = new Pointer() { { address = 0xDEADBEEF; }};
+        assertEquals(p, new Pointer(p));
+    }
 
     @Test public void testBytePointer() {
         System.out.println("BytePointer");
@@ -104,7 +115,7 @@ public class PointerTest {
             }
         }
 
-        assertEquals(Pointer.maxBytes, Runtime.getRuntime().maxMemory());
+        assertEquals(maxBytes, Pointer.maxBytes);
         int chunks = 10;
         BytePointer[] pointers = new BytePointer[chunks];
         long chunkSize = Pointer.maxBytes / byteSize / chunks;
@@ -180,7 +191,7 @@ public class PointerTest {
             }
         }
 
-        assertEquals(Pointer.maxBytes, Runtime.getRuntime().maxMemory());
+        assertEquals(maxBytes, Pointer.maxBytes);
         int chunks = 10;
         ShortPointer[] pointers = new ShortPointer[chunks];
         long chunkSize = Pointer.maxBytes / shortSize / chunks;
@@ -256,7 +267,7 @@ public class PointerTest {
             }
         }
 
-        assertEquals(Pointer.maxBytes, Runtime.getRuntime().maxMemory());
+        assertEquals(maxBytes, Pointer.maxBytes);
         int chunks = 10;
         IntPointer[] pointers = new IntPointer[chunks];
         long chunkSize = Pointer.maxBytes / intSize / chunks;
@@ -332,7 +343,7 @@ public class PointerTest {
             }
         }
 
-        assertEquals(Pointer.maxBytes, Runtime.getRuntime().maxMemory());
+        assertEquals(maxBytes, Pointer.maxBytes);
         int chunks = 10;
         LongPointer[] pointers = new LongPointer[chunks];
         long chunkSize = Pointer.maxBytes / longSize / chunks;
@@ -408,7 +419,7 @@ public class PointerTest {
             }
         }
 
-        assertEquals(Pointer.maxBytes, Runtime.getRuntime().maxMemory());
+        assertEquals(maxBytes, Pointer.maxBytes);
         int chunks = 10;
         FloatPointer[] pointers = new FloatPointer[chunks];
         long chunkSize = Pointer.maxBytes / floatSize / chunks;
@@ -484,7 +495,7 @@ public class PointerTest {
             }
         }
 
-        assertEquals(Pointer.maxBytes, Runtime.getRuntime().maxMemory());
+        assertEquals(maxBytes, Pointer.maxBytes);
         int chunks = 10;
         DoublePointer[] pointers = new DoublePointer[chunks];
         long chunkSize = Pointer.maxBytes / doubleSize / chunks;
@@ -560,7 +571,7 @@ public class PointerTest {
             }
         }
 
-        assertEquals(Pointer.maxBytes, Runtime.getRuntime().maxMemory());
+        assertEquals(maxBytes, Pointer.maxBytes);
         int chunks = 10;
         CharPointer[] pointers = new CharPointer[chunks];
         long chunkSize = Pointer.maxBytes / charSize / chunks;

@@ -48,7 +48,7 @@ public abstract class UByteIndexer extends Indexer {
     }
     /** Returns {@code create(pointer, { pointer.limit() - pointer.position() }, { 1 }, true)} */
     public static UByteIndexer create(BytePointer pointer) {
-        return create(pointer, new long[] { pointer.limit() - pointer.position() }, new long[] { 1 });
+        return create(pointer, new long[] { pointer.limit() - pointer.position() }, ONE_STRIDE);
     }
 
     /** Returns {@code new ByteArrayIndexer(array, sizes, strides)} */

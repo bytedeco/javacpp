@@ -33,7 +33,7 @@ public class IntArrayIndexer extends IntIndexer {
 
     /** Calls {@code IntArrayIndexer(array, { array.length }, { 1 })}. */
     public IntArrayIndexer(int[] array) {
-        this(array, new long[] { array.length }, new long[] { 1 });
+        this(array, new long[] { array.length }, ONE_STRIDE);
     }
 
     /** Constructor to set the {@link #array}, {@link #sizes} and {@link #strides}. */
