@@ -41,6 +41,7 @@ public interface Indexable {
      * @param direct a hint for the implementation, leaving the choice up to the user, since
      *               buffers are slower than arrays on Android, but not with OpenJDK, for example
      * @return a concrete {@link Indexer}
+     * @throws NullPointerException when there is no data
      */
     <I extends Indexer> I createIndexer(boolean direct);
 }
