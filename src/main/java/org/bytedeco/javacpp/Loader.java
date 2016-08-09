@@ -23,15 +23,21 @@
 package org.bytedeco.javacpp;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.net.JarURLConnection;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -42,7 +48,9 @@ import java.util.Properties;
 import java.util.WeakHashMap;
 import org.bytedeco.javacpp.annotation.Platform;
 import org.bytedeco.javacpp.tools.Builder;
+import org.bytedeco.javacpp.tools.Coordinates;
 import org.bytedeco.javacpp.tools.Logger;
+import org.bytedeco.javacpp.tools.Repository;
 
 /**
  * The Loader contains functionality to load native libraries, but also has a bit
@@ -361,8 +369,8 @@ public class Loader {
 
     /** User-specified cache directory set and returned by {@link #getCacheDir()}. */
     static File cacheDir = null;
-    /** Temporary directory set and returned by {@link #getTempDir()}. */
-    static File tempDir = null;
+    /** JavaCPP repository */
+    static Repository repository = null;
     /** Contains all the native libraries that we have loaded to avoid reloading them. */
     static Map<String,String> loadedLibraries = Collections.synchronizedMap(new HashMap<String,String>());
 
@@ -385,25 +393,21 @@ public class Loader {
     }
 
     /**
-     * Creates a unique name for {@link #tempDir} out of
-     * {@code System.getProperty("java.io.tmpdir")} and {@code System.nanoTime()}.
+     * Creates and returns the repository in which native libraries are stored.
      *
-     * @return {@link #tempDir}
+     * @return {@link #repository}
      */
-    public static File getTempDir() {
-        if (tempDir == null) {
-            File tmpdir = new File(System.getProperty("java.io.tmpdir"));
-            File f;
-            for (int i = 0; i < 1000; i++) {
-                f = new File(tmpdir, "javacpp" + System.nanoTime());
-                if (f.mkdir()) {
-                    tempDir = f;
-                    tempDir.deleteOnExit();
-                    break;
-                }
-            }
+    public static Repository get() {
+        if (repository == null) {
+            Path root;
+            File cache = getCacheDir();
+            if (cache != null)
+                root = cache.toPath();
+            else
+                root = Paths.get(System.getProperty("user.home"));
+            repository = new Repository(root);
         }
-        return tempDir;
+        return repository;
     }
 
     /** Returns {@code System.getProperty("org.bytedeco.javacpp.loadlibraries")}.
@@ -433,6 +437,7 @@ public class Loader {
     public static String load(Class cls) {
         return load(cls, loadProperties(), false);
     }
+
     /**
      * Loads native libraries associated with the given {@link Class}.
      *
@@ -443,8 +448,8 @@ public class Loader {
      *         (but {@code if (!isLoadLibraries() || cls == null) { return null; }})
      * @throws NoClassDefFoundError on Class initialization failure
      * @throws UnsatisfiedLinkError on native library loading failure
-     * @see #findLibrary(Class, ClassProperties, String, boolean)
-     * @see #loadLibrary(URL[], String)
+     * @see #findLibrary(Class, ClassProperties, String, boolean, Coordinates)
+     * @see #loadLibrary(URL[], String, Coordinates)
      */
     public static String load(Class cls, Properties properties, boolean pathsFirst) {
         if (!isLoadLibraries() || cls == null) {
@@ -454,6 +459,15 @@ public class Loader {
         // Find the top enclosing class, to match the library filename
         cls = getEnclosingClass(cls);
         ClassProperties p = loadProperties(cls, properties, true);
+
+        // Get library coordinates if available
+        Coordinates coordinates = null;
+        if (cls.isAnnotationPresent(org.bytedeco.javacpp.annotation.Coordinates.class)) {
+            org.bytedeco.javacpp.annotation.Coordinates c =
+                    (org.bytedeco.javacpp.annotation.Coordinates)
+                cls.getAnnotation(org.bytedeco.javacpp.annotation.Coordinates.class);
+            coordinates = new Coordinates(c.group(), c.id(), c.version());
+        }
 
         // Force initialization of all the target classes in case they need it
         List<String> targets = p.get("target");
@@ -488,8 +502,8 @@ public class Loader {
         UnsatisfiedLinkError preloadError = null;
         for (String preload : preloads) {
             try {
-                URL[] urls = findLibrary(cls, p, preload, pathsFirst);
-                loadLibrary(urls, preload);
+                URL[] urls = findLibrary(cls, p, preload, pathsFirst, coordinates);
+                loadLibrary(urls, preload, coordinates);
             } catch (UnsatisfiedLinkError e) {
                 preloadError = e;
             }
@@ -497,8 +511,8 @@ public class Loader {
 
         try {
             String library = p.getProperty("platform.library");
-            URL[] urls = findLibrary(cls, p, library, pathsFirst);
-            return loadLibrary(urls, library);
+            URL[] urls = findLibrary(cls, p, library, pathsFirst, coordinates);
+            return loadLibrary(urls, library, coordinates);
         } catch (UnsatisfiedLinkError e) {
             if (preloadError != null && e.getCause() == null) {
                 e.initCause(preloadError);
@@ -519,9 +533,11 @@ public class Loader {
      * @param libnameversion the name of the library + "@" + optional version tag
      *                       + "#" + a second optional name used at extraction (or empty to prevent it)
      * @param pathsFirst search the paths first before bundled resources
+     * @param coordinates maven coordinates
      * @return URLs that point to potential locations of the library
      */
-    public static URL[] findLibrary(Class cls, ClassProperties properties, String libnameversion, boolean pathsFirst) {
+    public static URL[] findLibrary(Class cls, ClassProperties properties, String libnameversion,
+                                    boolean pathsFirst, Coordinates coordinates) {
         if (libnameversion.trim().endsWith("#")) {
             return new URL[0];
         }
@@ -629,7 +645,7 @@ public class Loader {
      *         (but {@code if (!isLoadLibraries) { return null; }})
      * @throws UnsatisfiedLinkError on failure
      */
-    public static String loadLibrary(URL[] urls, String libnameversion) {
+    public static String loadLibrary(URL[] urls, String libnameversion, Coordinates coordinates) {
         if (!isLoadLibraries()) {
             return null;
         }
@@ -674,46 +690,35 @@ public class Loader {
                         // ... get the URL fragment to let users rename library files ...
                         name = url.getRef();
                     }
-                    // ... then check if it has not already been extracted, and if not ...
-                    file = new File(getCacheDir() != null ? getCacheDir() : getTempDir(), name);
-                    if (!file.exists()) {
-                        if (tempFile != null && tempFile.exists()) {
-                            tempFile.deleteOnExit();
-                        }
-                        // ... then extract it from our resources ...
-                        if (logger.isDebugEnabled()) {
-                            logger.debug("Extracting " + url);
-                        }
-                        extractResource(url, file, null, null);
-                        if (getCacheDir() == null) {
-                            tempFile = file;
-                        }
-                    } else while (System.currentTimeMillis() - file.lastModified() < 1000) {
-                        // ... else wait until the file is at least 1 second old ...
-                        try {
-                            Thread.sleep(1000);
-                        } catch (InterruptedException ex) {
-                            // ... reset interrupt to be nice ...
-                            Thread.currentThread().interrupt();
-                        }
-                    }
+
+                    // ... then get it from repo ...
+
+                    JarURLConnection c = (JarURLConnection) url.openConnection();
+                    Path jar = Paths.get(c.getJarFileURL().getFile());
+
+                    // For legacy jars without coordinates, use a hash to get consistent
+                    // and unique file name
+                    if (coordinates == null)
+                        coordinates = new Coordinates(md5(jar), "id", "version");
+
+                    Path repo = repository.getPath(new Coordinates(coordinates, getPlatform(), jar));
+                    file = new File(repo.toFile(), name);
                 }
-                if (file != null && file.exists()) {
-                    filename = file.getAbsolutePath();
-                    try {
-                        // ... and load it!
-                        if (logger.isDebugEnabled()) {
-                            logger.debug("Loading " + filename);
-                        }
-                        loadedLibraries.put(libnameversion, filename);
-                        System.load(filename);
-                        return filename;
-                    } catch (UnsatisfiedLinkError e) {
-                        loadError = e;
-                        loadedLibraries.remove(libnameversion);
-                        if (logger.isDebugEnabled()) {
-                            logger.debug("Failed to load " + filename + ": " + e);
-                        }
+
+                filename = file.getAbsolutePath();
+                try {
+                    // ... and load it!
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("Loading " + filename);
+                    }
+                    loadedLibraries.put(libnameversion, filename);
+                    System.load(filename);
+                    return filename;
+                } catch (UnsatisfiedLinkError e) {
+                    loadError = e;
+                    loadedLibraries.remove(libnameversion);
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("Failed to load " + filename + ": " + e);
                     }
                 }
             }
@@ -745,58 +750,29 @@ public class Loader {
                 logger.debug("Failed to extract for " + libnameversion + ": " + e);
             }
             throw e;
-        } finally {
-            if (tempFile != null && tempFile.exists()) {
-                tempFile.deleteOnExit();
+        }
+    }
+
+    private static String md5(Path jar) throws IOException {
+        byte[] hash;
+        try (InputStream is = new FileInputStream(jar.toFile())) {
+            MessageDigest md5;
+            try {
+                md5 = MessageDigest.getInstance("MD5");
+            } catch (NoSuchAlgorithmException ex) {
+                throw new RuntimeException(ex);
             }
-            // But under Windows, it won't get deleted!
+            byte[] buf = new byte[4096];
+            int pos;
+            while ((pos = is.read(buf)) > 0)
+                md5.update(buf, 0, pos);
+            hash = md5.digest();
         }
+        StringBuilder hex = new StringBuilder(hash.length * 2);
+        for (byte b : hash)
+            hex.append(String.format("%02x", b & 0xff));
+        return hex.toString();
     }
-
-    // So, let's use a shutdown hook...
-    static {
-        if (getPlatform().startsWith("windows")) {
-            Runtime.getRuntime().addShutdownHook(new Thread() {
-                @Override public void run() {
-                    if (tempDir == null) {
-                        return;
-                    }
-                    try {
-                        // ... to launch a separate process ...
-                        List<String> command = new ArrayList<String>();
-                        command.add(System.getProperty("java.home") + "/bin/java");
-                        command.add("-classpath");
-                        command.add((new File(Loader.class.getProtectionDomain().getCodeSource().getLocation().toURI())).toString());
-                        command.add(Loader.class.getName());
-                        command.add(tempDir.getAbsolutePath());
-                        new ProcessBuilder(command).start();
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    } catch (URISyntaxException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-            });
-        }
-    }
-
-    // ... that makes sure to delete all our files.
-    public static void main(String[] args) throws InterruptedException {
-        File tmpdir = new File(System.getProperty("java.io.tmpdir"));
-        File tempDir = new File(args[0]);
-        if (!tmpdir.equals(tempDir.getParentFile()) ||
-                !tempDir.getName().startsWith("javacpp")) {
-            // Someone is trying to break us ... ?
-            return;
-        }
-        for (File file : tempDir.listFiles()) {
-            while (file.exists() && !file.delete()) {
-                Thread.sleep(100);
-            }
-        }
-        tempDir.delete();
-    }
-
 
     /**
      * Contains {@code offsetof()} and {@code sizeof()} values of native types
