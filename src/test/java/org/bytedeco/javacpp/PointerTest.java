@@ -29,6 +29,9 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 import java.nio.ShortBuffer;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import org.bytedeco.javacpp.annotation.Platform;
 import org.bytedeco.javacpp.tools.Builder;
 import org.junit.BeforeClass;
@@ -593,6 +596,32 @@ public class PointerTest {
         assertTrue(Pointer.DeallocatorReference.totalBytes < (chunks - 1) * chunkSize * charSize);
         assertTrue(Pointer.DeallocatorReference.totalBytes >= chunkSize * charSize);
         System.out.println(Pointer.DeallocatorReference.totalBytes + " " + chunkSize * charSize);
+    }
+
+    @Test public void testDeallocator() throws InterruptedException {
+        System.out.println("Deallocator");
+
+        final boolean[] failed = { false };
+        ExecutorService pool = Executors.newFixedThreadPool(24);
+        for (int i = 0; i < 24; i++) {
+            pool.execute(new Runnable() {
+                @Override public void run() {
+                    try {
+                        for (int i = 0; i < 2000; i++) {
+                            new BytePointer(2000000);
+                        }
+                    } catch (OutOfMemoryError e) {
+                        failed[0] = true;
+                        fail(e.getMessage());
+                    }
+                }
+            });
+        }
+        pool.shutdown();
+        pool.awaitTermination(1, TimeUnit.MINUTES);
+        if (failed[0]) {
+            fail("OutOfMemoryError should not have been thrown.");
+        }
     }
 
 }

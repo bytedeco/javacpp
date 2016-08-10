@@ -30,6 +30,7 @@ import java.lang.reflect.Modifier;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.bytedeco.javacpp.annotation.Platform;
 import org.bytedeco.javacpp.tools.Generator;
 import org.bytedeco.javacpp.tools.Logger;
@@ -292,6 +293,8 @@ public class Pointer implements AutoCloseable {
 
     static final Thread deallocatorThread;
 
+    static final AtomicInteger lowMemoryCount = new AtomicInteger(0);
+
     /** Maximum amount of memory registered with live deallocators before forcing call to {@link System#gc()}.
      * Set via "org.bytedeco.javacpp.maxbytes" system property, defaults to {@link Runtime#maxMemory()}. */
     static final long maxBytes;
@@ -469,22 +472,35 @@ public class Pointer implements AutoCloseable {
             DeallocatorReference r = deallocator instanceof DeallocatorReference ?
                     (DeallocatorReference)deallocator :
                     new DeallocatorReference(this, deallocator);
-            int count = 0;
-            while (count++ < maxRetries && maxBytes > 0 && DeallocatorReference.totalBytes + r.bytes > maxBytes) {
-                try {
-                    // try to get some more memory back
-                    System.gc();
-                    Thread.sleep(100);
-                } catch (InterruptedException ex) {
-                    // reset interrupt to be nice
-                    Thread.currentThread().interrupt();
-                    break;
+            boolean lowMemory = false;
+            try {
+                if (maxBytes > 0 && DeallocatorReference.totalBytes + r.bytes > maxBytes) {
+                    lowMemory = true;
+                    lowMemoryCount.incrementAndGet();
                 }
-            }
-            if (maxBytes > 0 && DeallocatorReference.totalBytes + r.bytes > maxBytes) {
-                deallocate();
-                throw new OutOfMemoryError("Cannot allocate " + DeallocatorReference.totalBytes
-                                                              + " + " + r.bytes + " bytes (> Pointer.maxBytes)");
+                if (lowMemoryCount.get() > 0) {
+                    // synchronize allocation across threads when low on memory
+                    synchronized (lowMemoryCount) {
+                        int count = 0;
+                        while (count++ < maxRetries && DeallocatorReference.totalBytes + r.bytes > maxBytes) {
+                            // try to get some more memory back
+                            System.gc();
+                            Thread.sleep(100);
+                        }
+                        if (count >= maxRetries && DeallocatorReference.totalBytes + r.bytes > maxBytes) {
+                            deallocate();
+                            throw new OutOfMemoryError("Cannot allocate " + DeallocatorReference.totalBytes
+                                                                          + " + " + r.bytes + " bytes (> Pointer.maxBytes)");
+                        }
+                    }
+                }
+            } catch (InterruptedException ex) {
+                // reset interrupt to be nice
+                Thread.currentThread().interrupt();
+            } finally {
+                if (lowMemory) {
+                    lowMemoryCount.decrementAndGet();
+                }
             }
             if (logger.isDebugEnabled()) {
                 logger.debug("Registering " + this);
