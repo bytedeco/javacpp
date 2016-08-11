@@ -1466,8 +1466,7 @@ public class Parser {
                 }
                 if (n >= 0) {
                     s = s.substring(0, n + 6) + "(nullValue = \""
-                            + defaultValue.replaceAll("\n(\\s*)", "\"\n$1 + \"")
-                                          .replaceAll("\"", "\\\\\"") + "\")" + s.substring(n + 6);
+                            + defaultValue.replaceAll("\"", "\\\\\"").replaceAll("\n(\\s*)", "\"\n$1 + \"") + "\")" + s.substring(n + 6);
                 }
                 dcl.type.annotations = s;
             }
