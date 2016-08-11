@@ -2178,7 +2178,7 @@ public class Parser {
             return false;
         }
 
-        tokens.next().expect(Token.IDENTIFIER, '{');
+        tokens.next().expect(Token.IDENTIFIER, '{', "::");
         if (!tokens.get().match('{') && tokens.get(1).match(Token.IDENTIFIER)
                 && (typedef || !tokens.get(2).match(';'))) {
             tokens.next();
