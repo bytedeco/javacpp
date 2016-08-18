@@ -22,6 +22,7 @@
 
 package org.bytedeco.javacpp.tools;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -56,7 +57,14 @@ public class Repository {
                 .resolve(coordinates.id)
                 .resolve(coordinates.version)
                 .resolve(coordinates.classifier);
-        if (!Files.exists(dst)) {
+        boolean exists = Files.exists(dst);
+        boolean changed = false;
+        if (exists) {
+            long src_time = coordinates.jar.toFile().lastModified();
+            long dst_time = dst.toFile().lastModified();
+            changed = src_time > dst_time;
+        }
+        if (!exists || changed) {
             try {
                 final URI uri = URI.create("jar:file:" + coordinates.jar.toUri().getPath());
                 FileSystem jar = null;
