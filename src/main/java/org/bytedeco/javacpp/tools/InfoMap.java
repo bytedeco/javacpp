@@ -86,6 +86,7 @@ public class InfoMap extends HashMap<String,List<Info>> {
         .put(new Info("wchar_t", "WCHAR").cast().valueTypes("char").pointerTypes("CharPointer"))
         .put(new Info("const char").valueTypes("byte").pointerTypes("@Cast(\"const char*\") BytePointer", "String"))
         .put(new Info("boost::shared_ptr", "std::shared_ptr").annotations("@SharedPtr"))
+        .put(new Info("boost::movelib::unique_ptr", "std::unique_ptr").annotations("@UniquePtr"))
         .put(new Info("std::string").annotations("@StdString").valueTypes("BytePointer", "String"))
         .put(new Info("std::vector").annotations("@StdVector"))
 

@@ -48,6 +48,24 @@ std::shared_ptr<SharedData> fetchSharedData() {
     return s;
 }
 
+struct UniqueData {
+    int data;
+    UniqueData(int data) : data(data) { }
+};
+
+void createUniqueData(std::unique_ptr<UniqueData> *u) {
+    u->reset(new UniqueData(42));
+}
+
+std::unique_ptr<UniqueData> uniqueData(new UniqueData(13));
+void storeUniqueData(const std::unique_ptr<UniqueData>* u) {
+    uniqueData->data = (*u)->data;
+}
+
+const std::unique_ptr<UniqueData>* fetchUniqueData() {
+    return &uniqueData;
+}
+
 std::vector<int> testStdVectorByVal(std::vector<int> v) {
     return v;
 }

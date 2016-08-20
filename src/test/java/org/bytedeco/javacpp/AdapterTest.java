@@ -24,10 +24,12 @@ package org.bytedeco.javacpp;
 import java.io.File;
 import java.nio.IntBuffer;
 import org.bytedeco.javacpp.annotation.Cast;
+import org.bytedeco.javacpp.annotation.Const;
 import org.bytedeco.javacpp.annotation.Platform;
 import org.bytedeco.javacpp.annotation.SharedPtr;
 import org.bytedeco.javacpp.annotation.StdString;
 import org.bytedeco.javacpp.annotation.StdVector;
+import org.bytedeco.javacpp.annotation.UniquePtr;
 import org.bytedeco.javacpp.tools.Builder;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -38,7 +40,7 @@ import static org.junit.Assert.*;
  *
  * @author Samuel Audet
  */
-@Platform(compiler="cpp11", define="SHARED_PTR_NAMESPACE std", include="AdapterTest.h")
+@Platform(compiler = "cpp11", define = {"SHARED_PTR_NAMESPACE std", "UNIQUE_PTR_NAMESPACE std"}, include = "AdapterTest.h")
 public class AdapterTest {
 
     static native @StdString String testStdString(@StdString String str);
@@ -52,6 +54,7 @@ public class AdapterTest {
     static native IntPointer testIntString(IntPointer str);
 
     static class SharedData extends Pointer {
+        SharedData(Pointer p) { super(p); }
         SharedData(int data) { allocate(data); }
         native void allocate(int data);
 
@@ -61,6 +64,18 @@ public class AdapterTest {
     static native @SharedPtr SharedData createSharedData();
     static native void storeSharedData(@SharedPtr SharedData s);
     static native @SharedPtr SharedData fetchSharedData();
+
+    static class UniqueData extends Pointer {
+        UniqueData(Pointer p) { super(p); }
+        UniqueData(int data) { allocate(data); }
+        native void allocate(int data);
+
+        native int data(); native UniqueData data(int data);
+    }
+
+    static native void createUniqueData(@UniquePtr UniqueData u);
+    static native void storeUniqueData(@Const @UniquePtr UniqueData u);
+    static native @Const @UniquePtr UniqueData fetchUniqueData();
 
     static native int constructorCount(); static native void constructorCount(int c);
     static native int destructorCount(); static native void destructorCount(int c);
@@ -151,6 +166,23 @@ public class AdapterTest {
 
         assertEquals(1, constructorCount());
         assertEquals(1, destructorCount());
+        System.gc();
+    }
+
+    @Test public void testUniquePtr() {
+        System.out.println("UniquePtr");
+
+        UniqueData uniqueData = fetchUniqueData();
+        assertEquals(13, uniqueData.data());
+
+        uniqueData = new UniqueData(null);
+        createUniqueData(uniqueData);
+        assertEquals(42, uniqueData.data());
+
+        storeUniqueData(uniqueData);
+
+        uniqueData = fetchUniqueData();
+        assertEquals(42, uniqueData.data());
         System.gc();
     }
 

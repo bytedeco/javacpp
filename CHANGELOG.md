@@ -1,4 +1,5 @@
 
+ * Add `UniquePtrAdapter` and corresponding `@UniquePtr` annotation to support `unique_ptr` containers ([issue bytedeco/javacpp-presets#266](https://github.com/bytedeco/javacpp-presets/issues/266))
  * Fix `Parser` not expecting `friend class` declarations that start with `::` ([pull #122](https://github.com/bytedeco/javacpp/issues/122))
  * Synchronize memory allocation in `Pointer` to avoid `OutOfMemoryError` when low on memory
  * Make it clear that `Indexable.createIndexer()` can throw a `NullPointerException` ([issue bytedeco/javacv#437](https://github.com/bytedeco/javacv/issues/437))
