@@ -1,6 +1,6 @@
 
  * Fix `Parser` not expecting `friend class` declarations that start with `::` ([pull #122](https://github.com/bytedeco/javacpp/issues/122))
- * Synchronize memory allocation in `Pointer` when low on memory to avoid `OutOfMemoryError`
+ * Synchronize memory allocation in `Pointer` to avoid `OutOfMemoryError` when low on memory
  * Make it clear that `Indexable.createIndexer()` can throw a `NullPointerException` ([issue bytedeco/javacv#437](https://github.com/bytedeco/javacv/issues/437))
  * Escape quotes when parsing default value for the `nullValue` of `@ByRef` or `@ByVal` ([pull #119](https://github.com/bytedeco/javacpp/issues/119))
  * Let `Parser` accept identifiers in addition to integer literals for bit fields ([issue #118](https://github.com/bytedeco/javacpp/issues/118))
