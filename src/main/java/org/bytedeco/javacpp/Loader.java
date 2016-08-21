@@ -34,6 +34,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
@@ -394,10 +395,8 @@ public class Loader {
 
     /**
      * Creates and returns the repository in which native libraries are stored.
-     *
-     * @return {@link #repository}
      */
-    public static Repository get() {
+    private static Repository getRepository() {
         if (repository == null) {
             Path root;
             File cache = getCacheDir();
@@ -656,7 +655,6 @@ public class Loader {
             return filename;
         }
 
-        File tempFile = null;
         UnsatisfiedLinkError loadError = null;
         try {
             for (URL url : urls) {
@@ -696,12 +694,16 @@ public class Loader {
                     JarURLConnection c = (JarURLConnection) url.openConnection();
                     Path jar = Paths.get(c.getJarFileURL().getFile());
 
-                    // For legacy jars without coordinates, use a hash to get consistent
-                    // and unique file name
+                    // For legacy jars without coordinates
                     if (coordinates == null)
-                        coordinates = new Coordinates(md5(jar), "id", "version");
+                        coordinates = new Coordinates(
+                            "legacy",
+                            jar.getFileName().toString(),
+                            Long.toString(Files.size(jar)) + "-" +
+                            Long.toString(jar.toFile().lastModified()));
 
-                    Path repo = repository.getPath(new Coordinates(coordinates, getPlatform(), jar));
+                    Path repo = getRepository().getPath(
+                        new Coordinates(coordinates, getPlatform(), jar));
                     file = new File(repo.toFile(), name);
                 }
 
@@ -751,27 +753,6 @@ public class Loader {
             }
             throw e;
         }
-    }
-
-    private static String md5(Path jar) throws IOException {
-        byte[] hash;
-        try (InputStream is = new FileInputStream(jar.toFile())) {
-            MessageDigest md5;
-            try {
-                md5 = MessageDigest.getInstance("MD5");
-            } catch (NoSuchAlgorithmException ex) {
-                throw new RuntimeException(ex);
-            }
-            byte[] buf = new byte[4096];
-            int pos;
-            while ((pos = is.read(buf)) > 0)
-                md5.update(buf, 0, pos);
-            hash = md5.digest();
-        }
-        StringBuilder hex = new StringBuilder(hash.length * 2);
-        for (byte b : hash)
-            hex.append(String.format("%02x", b & 0xff));
-        return hex.toString();
     }
 
     /**
