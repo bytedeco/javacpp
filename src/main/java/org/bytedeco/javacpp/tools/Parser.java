@@ -2812,7 +2812,7 @@ public class Parser {
             file = new File(filename);
         }
         Info info = infoMap.getFirst(file.getName());
-        if (info != null && info.skip) {
+        if (info != null && info.skip && info.linePatterns == null) {
             return;
         } else if (!file.exists()) {
             throw new FileNotFoundException("Could not parse \"" + file + "\": File does not exist");
@@ -2823,6 +2823,9 @@ public class Parser {
         token.value = "\n// Parsed from " + include + "\n\n";
         tokenList.add(token);
         Tokenizer tokenizer = new Tokenizer(file);
+        if (info != null && info.linePatterns != null) {
+            tokenizer.filterLines(info.linePatterns, info.skip);
+        }
         while (!(token = tokenizer.nextToken()).isEmpty()) {
             if (token.type == -1) {
                 token.type = Token.COMMENT;

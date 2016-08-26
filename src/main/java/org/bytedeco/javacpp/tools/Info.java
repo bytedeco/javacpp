@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2015 Samuel Audet
+ * Copyright (C) 2014-2016 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -40,7 +40,7 @@ import org.bytedeco.javacpp.annotation.Virtual;
  */
 public class Info {
     public Info() { }
-    public Info(String ... cppNames) { this.cppNames = cppNames; }
+    public Info(String... cppNames) { this.cppNames = cppNames; }
     public Info(Info i) {
         cppNames = i.cppNames != null ? i.cppNames.clone() : null;
         javaNames = i.javaNames != null ? i.javaNames.clone() : null;
@@ -60,7 +60,7 @@ public class Info {
         javaText = i.javaText;
     }
 
-    /** A list of C++ identifiers or expressions to which this info is to be bound.
+    /** A list of C++ identifiers, expressions, or header filenames to which this info is to be bound.
      * Usually set via the constructor parameter of {@link #Info(String...)}. */
     String[] cppNames = null;
     /** The Java identifiers to output corresponding to the C++ identifiers of {@link #cppNames}.
@@ -78,6 +78,9 @@ public class Info {
     /** A list of (usually) {@link Pointer} Java subclasses to be used to map C++ pointer types.
      * By default, the names of the C++ types {@link #cppNames} are used. */
     String[] pointerTypes = null;
+    /** A list of regular expressions (start1, end1, start2, end2, ...) that are matched against lines
+     * in header files, where only the ones in between each pair are parsed (or not if {@link #skip} is true). */
+    String[] linePatterns = null;
     /** Annotates Java identifiers with @{@link Cast} containing C++ identifier names {@link #cppNames}. */
     boolean cast = false;
     /** Indicates expressions of conditional macro groups to parse, or templates to specialize. */
@@ -87,7 +90,7 @@ public class Info {
     boolean flatten = false;
     /** Attempts to translate naively the statements of variable-like macros to Java. */
     boolean translate = false;
-    /** Skips entirely all the code associated with the C++ identifiers.
+    /** Skips entirely all the code associated with the C++ identifiers, expressions, or header filenames.
      * Unless more {@link Info} is provided... */
     boolean skip = false;
     /** Forces a class to be treated as if it were abstract. */
@@ -101,12 +104,13 @@ public class Info {
     /** Outputs the given code, instead of the result parsed from the declaration of C++ identifiers. */
     String javaText = null;
 
-    public Info cppNames(String ... cppNames) { this.cppNames = cppNames; return this; }
-    public Info javaNames(String ... javaNames) { this.javaNames = javaNames; return this; }
-    public Info annotations(String ... annotations) { this.annotations = annotations; return this; }
-    public Info cppTypes(String ... cppTypes) { this.cppTypes = cppTypes; return this; }
-    public Info valueTypes(String ... valueTypes) { this.valueTypes = valueTypes; return this; }
-    public Info pointerTypes(String ... pointerTypes) { this.pointerTypes = pointerTypes; return this; }
+    public Info cppNames(String... cppNames) { this.cppNames = cppNames; return this; }
+    public Info javaNames(String... javaNames) { this.javaNames = javaNames; return this; }
+    public Info annotations(String... annotations) { this.annotations = annotations; return this; }
+    public Info cppTypes(String... cppTypes) { this.cppTypes = cppTypes; return this; }
+    public Info valueTypes(String... valueTypes) { this.valueTypes = valueTypes; return this; }
+    public Info pointerTypes(String... pointerTypes) { this.pointerTypes = pointerTypes; return this; }
+    public Info linePatterns(String... linePatterns) { this.linePatterns = linePatterns; return this; }
     public Info cast() { this.cast = true; return this;  }
     public Info cast(boolean cast) { this.cast = cast; return this;  }
     public Info define() { this.define = true; return this; }

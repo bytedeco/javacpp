@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2015 Samuel Audet
+ * Copyright (C) 2014-2016 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -46,6 +46,39 @@ class Tokenizer implements Closeable {
     Tokenizer(File file) throws FileNotFoundException {
         this.file = file;
         this.reader = new BufferedReader(new FileReader(file));
+    }
+
+    public void filterLines(String[] patterns, boolean skip) throws IOException {
+        if (patterns == null) {
+            return;
+        }
+        StringBuilder lines = new StringBuilder();
+        BufferedReader lineReader = reader instanceof BufferedReader ?
+                (BufferedReader)reader : new BufferedReader(reader);
+        String line;
+        while ((line = lineReader.readLine()) != null) {
+            int i = 0;
+            while (i < patterns.length && !line.matches(patterns[i])) {
+                i += 2;
+            }
+            if (i < patterns.length) {
+                if (!skip) {
+                    lines.append(line + "\n");
+                }
+                while (i + 1 < patterns.length && (line = lineReader.readLine()) != null) {
+                    if (!skip) {
+                        lines.append(line + "\n");
+                    }
+                    if (line.matches(patterns[i + 1])) {
+                        break;
+                    }
+                }
+            } else if (skip) {
+                lines.append(line + "\n");
+            }
+        }
+        reader.close();
+        reader = new StringReader(lines.toString());
     }
 
     File file = null;
