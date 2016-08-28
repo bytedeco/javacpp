@@ -46,7 +46,7 @@ import static org.junit.Assert.*;
 @Platform(define = {"NATIVE_ALLOCATOR malloc", "NATIVE_DEALLOCATOR free"})
 public class PointerTest {
 
-    static long maxBytes = 1000000000;
+    static long maxBytes = 1024 * 1024 * 1024; /* 1g */
 
     @BeforeClass public static void setUpClass() throws Exception {
         Class c = PointerTest.class;

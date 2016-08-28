@@ -30,6 +30,7 @@ import java.lang.reflect.Modifier;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import org.bytedeco.javacpp.annotation.Name;
 import org.bytedeco.javacpp.annotation.Platform;
 import org.bytedeco.javacpp.tools.Generator;
 import org.bytedeco.javacpp.tools.Logger;
@@ -318,10 +319,34 @@ public class Pointer implements AutoCloseable {
      * Set via "org.bytedeco.javacpp.maxbytes" system property, defaults to {@link Runtime#maxMemory()}. */
     static final long maxBytes;
 
+    /** Maximum amount of memory reported by {@link #physicalBytes()} before forcing call to {@link System#gc()}.
+     * Set via "org.bytedeco.javacpp.maxphysicalbytes" system property, defaults to {@code 2 * Runtime.maxMemory()}. */
+    static final long maxPhysicalBytes;
+
     /** Maximum number of times to call {@link System#gc()} before giving up with {@link OutOfMemoryError}.
      * Set via "org.bytedeco.javacpp.maxretries" system property, defaults to 10, where each retry is followed
      * by a call to {@code Thread.sleep(100)}. */
     static final int maxRetries;
+
+    static long parseBytes(String string) throws NumberFormatException {
+        int i = 0;
+        while (i < string.length()) {
+            if (!Character.isDigit(string.charAt(i))) {
+                break;
+            }
+            i++;
+        }
+        long size = Long.parseLong(string.substring(0, i));
+        switch (string.substring(i).toLowerCase()) {
+            case "t": case "tb": size *= 1024; /* no break */
+            case "g": case "gb": size *= 1024; /* no break */
+            case "m": case "mb": size *= 1024; /* no break */
+            case "k": case "kb": size *= 1024; /* no break */
+            case "": break;
+            default: throw new NumberFormatException("Cannot parse into bytes: " + string);
+        }
+        return size;
+    }
 
     static {
         String s = System.getProperty("org.bytedeco.javacpp.nopointergc", "false").toLowerCase();
@@ -337,12 +362,23 @@ public class Pointer implements AutoCloseable {
         s = System.getProperty("org.bytedeco.javacpp.maxbytes");
         if (s != null && s.length() > 0) {
             try {
-                m = Long.parseLong(s);
+                m = parseBytes(s);
             } catch (NumberFormatException e) {
-                // keep default value set above
+                throw new RuntimeException(e);
             }
         }
         maxBytes = m;
+
+        m = 2 * Runtime.getRuntime().maxMemory();
+        s = System.getProperty("org.bytedeco.javacpp.maxphysicalbytes");
+        if (s != null && s.length() > 0) {
+            try {
+                m = parseBytes(s);
+            } catch (NumberFormatException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        maxPhysicalBytes = m;
 
         int n = 10;
         s = System.getProperty("org.bytedeco.javacpp.maxretries");
@@ -350,7 +386,7 @@ public class Pointer implements AutoCloseable {
             try {
                 n = Integer.parseInt(s);
             } catch (NumberFormatException e) {
-                // keep default value set above
+                throw new RuntimeException(e);
             }
         }
         maxRetries = n;
@@ -374,6 +410,10 @@ public class Pointer implements AutoCloseable {
     public static long totalBytes() {
         return DeallocatorReference.totalBytes;
     }
+
+    /** Returns the amount of physical memory currently used by the whole process, or 0 if unknown.
+     * Also known as "resident set size" (Linux, Mac OS X, etc) or "working set size" (Windows). */
+    @Name("JavaCPP_physicalBytes") public static native long physicalBytes();
 
     /** The native address of this Pointer, which can be an array. */
     protected long address = 0;
@@ -476,7 +516,9 @@ public class Pointer implements AutoCloseable {
                     new DeallocatorReference(this, deallocator);
             synchronized (DeallocatorThread.class) {
                 int count = 0;
-                while (count++ < maxRetries && maxBytes > 0 && DeallocatorReference.totalBytes + r.bytes > maxBytes) {
+                long lastPhysicalBytes = 0;
+                while (count++ < maxRetries && ((maxBytes > 0 && DeallocatorReference.totalBytes + r.bytes > maxBytes)
+                                     || (maxPhysicalBytes > 0 && (lastPhysicalBytes = physicalBytes()) > maxPhysicalBytes))) {
                     try {
                         // try to get some more memory back
                         System.gc();
@@ -491,6 +533,10 @@ public class Pointer implements AutoCloseable {
                     deallocate();
                     throw new OutOfMemoryError("Cannot allocate " + DeallocatorReference.totalBytes
                                                                   + " + " + r.bytes + " bytes (> Pointer.maxBytes)");
+                } else if (maxPhysicalBytes > 0 && lastPhysicalBytes > maxPhysicalBytes) {
+                    deallocate();
+                    throw new OutOfMemoryError("Physical memory usage is too high ("
+                                               + lastPhysicalBytes + " > Pointer.maxPhysicalBytes)");
                 }
                 if (logger.isDebugEnabled()) {
                     logger.debug("Registering " + this);

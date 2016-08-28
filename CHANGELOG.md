@@ -1,4 +1,6 @@
 
+ * Add "org.bytedeco.javacpp.maxphysicalbytes" system property to force calls to `System.gc()` based on `Pointer.physicalBytes()`
+ * Allow strings ending with "t", "g", "m", etc to specify the number of bytes in system properties ([issue #125](https://github.com/bytedeco/javacpp/issues/125))
  * Add `Info.linePatterns` to limit the lines from header files that the `Parser` has to process
  * Introduce "platform.compiler.hardfpu" option inside `android-arm.properties` to target `armeabi-v7a-hard`
  * Add `UniquePtrAdapter` and corresponding `@UniquePtr` annotation to support `unique_ptr` containers ([issue bytedeco/javacpp-presets#266](https://github.com/bytedeco/javacpp-presets/issues/266))

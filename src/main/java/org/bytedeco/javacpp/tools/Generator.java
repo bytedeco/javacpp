@@ -253,13 +253,25 @@ public class Generator implements Closeable {
             out2.println("#include <jni.h>");
         }
         out.println();
-        out.println("#ifdef ANDROID");
+        out.println("#ifdef __ANDROID__");
         out.println("    #include <android/log.h>");
         out.println("#elif defined(__APPLE__) && defined(__OBJC__)");
         out.println("    #include <TargetConditionals.h>");
         out.println("    #include <Foundation/Foundation.h>");
         out.println("#endif");
-        out.println("#if defined(ANDROID) || TARGET_OS_IPHONE");
+        out.println();
+        out.println("#ifdef __linux__");
+        out.println("    #include <unistd.h>");
+        out.println("#elif defined(__APPLE__)");
+        out.println("    #include <mach/mach_init.h>");
+        out.println("    #include <mach/task.h>");
+        out.println("#elif defined(_WIN32)");
+        out.println("    #define NOMINMAX");
+        out.println("    #include <windows.h>");
+        out.println("    #include <psapi.h>");
+        out.println("#endif");
+        out.println();
+        out.println("#if defined(__ANDROID__) || TARGET_OS_IPHONE");
         out.println("    #define NewWeakGlobalRef(obj) NewGlobalRef(obj)");
         out.println("    #define DeleteWeakGlobalRef(obj) DeleteGlobalRef(obj)");
         out.println("#endif");
@@ -382,7 +394,7 @@ public class Generator implements Closeable {
         out.println("static inline void JavaCPP_log(const char* fmt, ...) {");
         out.println("    va_list ap;");
         out.println("    va_start(ap, fmt);");
-        out.println("#ifdef ANDROID");
+        out.println("#ifdef __ANDROID__");
         out.println("    __android_log_vprint(ANDROID_LOG_ERROR, \"javacpp\", fmt, ap);");
         out.println("#elif defined(__APPLE__) && defined(__OBJC__)");
         out.println("    NSLogv([NSString stringWithUTF8String:fmt], ap);");
@@ -391,6 +403,30 @@ public class Generator implements Closeable {
         out.println("    fprintf(stderr, \"\\n\");");
         out.println("#endif");
         out.println("    va_end(ap);");
+        out.println("}");
+        out.println();
+        out.println("static inline jlong JavaCPP_physicalBytes() {");
+        out.println("    jlong size = 0;");
+        out.println("#ifdef __linux__");
+        out.println("    FILE *file = fopen(\"/proc/self/statm\", \"r\");");
+        out.println("    if (file != NULL) {");
+        out.println("        long long virtual_size = 0, resident_size = 0;");
+        out.println("        fscanf(file, \"%lld %lld\", &virtual_size, &resident_size);");
+        out.println("        fclose(file);");
+        out.println("        size = (jlong)(resident_size * getpagesize());");
+        out.println("    }");
+        out.println("#elif defined(__APPLE__)");
+        out.println("    task_basic_info info = {};");
+        out.println("    mach_msg_type_number_t count = TASK_BASIC_INFO_COUNT;");
+        out.println("    task_info(current_task(), TASK_BASIC_INFO, (task_info_t)&info, &count);");
+        out.println("    size = (jlong)info.resident_size;");
+        out.println("#elif defined(_WIN32)");
+        out.println("    PROCESS_MEMORY_COUNTERS counters;");
+        out.println("    if (GetProcessMemoryInfo(GetCurrentProcess(), &counters, sizeof(counters))) {");
+        out.println("        size = (jlong)counters.WorkingSetSize;");
+        out.println("    }");
+        out.println("#endif");
+        out.println("    return size;");
         out.println("}");
         out.println();
         out.println("static JavaCPP_noinline jclass JavaCPP_getClass(JNIEnv* env, int i) {");
@@ -465,11 +501,11 @@ public class Generator implements Closeable {
         out.println("    }");
         out.println("}");
         out.println();
-        out.println("static JavaCPP_noinline void JavaCPP_initPointer(JNIEnv* env, jobject obj, const void* ptr, long long size, void* owner, void (*deallocator)(void*)) {");
+        out.println("static JavaCPP_noinline void JavaCPP_initPointer(JNIEnv* env, jobject obj, const void* ptr, jlong size, void* owner, void (*deallocator)(void*)) {");
         out.println("    if (deallocator != NULL) {");
         out.println("        jvalue args[4];");
         out.println("        args[0].j = ptr_to_jlong(ptr);");
-        out.println("        args[1].j = (jlong)size;");
+        out.println("        args[1].j = size;");
         out.println("        args[2].j = ptr_to_jlong(owner);");
         out.println("        args[3].j = ptr_to_jlong(deallocator);");
         out.println("        if (JavaCPP_haveNonvirtual) {");
@@ -757,7 +793,7 @@ public class Generator implements Closeable {
             out.println("    JavaVM *vm = JavaCPP_vm;");
             out.println("    if (vm == NULL) {");
             if (out2 != null) {
-                out.println("#if !defined(ANDROID) && !TARGET_OS_IPHONE");
+                out.println("#if !defined(__ANDROID__) && !TARGET_OS_IPHONE");
                 out.println("        int size = 1;");
                 out.println("        if (JNI_GetCreatedJavaVMs(&vm, 1, &size) != JNI_OK || size == 0) {");
                 out.println("#endif");
@@ -766,7 +802,7 @@ public class Generator implements Closeable {
             out.println("            *env = NULL;");
             out.println("            return false;");
             if (out2 != null) {
-                out.println("#if !defined(ANDROID) && !TARGET_OS_IPHONE");
+                out.println("#if !defined(__ANDROID__) && !TARGET_OS_IPHONE");
                 out.println("        }");
                 out.println("#endif");
             }
@@ -874,7 +910,7 @@ public class Generator implements Closeable {
             out2.println("JNIIMPORT int JavaCPP_init(int argc, const char *argv[]);");
             out.println();
             out.println("JNIEXPORT int JavaCPP_init(int argc, const char *argv[]) {");
-            out.println("#if defined(ANDROID) || TARGET_OS_IPHONE");
+            out.println("#if defined(__ANDROID__) || TARGET_OS_IPHONE");
             out.println("    return JNI_OK;");
             out.println("#else");
             out.println("    if (JavaCPP_vm != NULL) {");
@@ -1057,7 +1093,7 @@ public class Generator implements Closeable {
             out2.println("JNIIMPORT int JavaCPP_uninit();");
             out2.println();
             out.println("JNIEXPORT int JavaCPP_uninit() {");
-            out.println("#if defined(ANDROID) || TARGET_OS_IPHONE");
+            out.println("#if defined(__ANDROID__) || TARGET_OS_IPHONE");
             out.println("    return JNI_OK;");
             out.println("#else");
             out.println("    JavaVM *vm = JavaCPP_vm;");
