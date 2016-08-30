@@ -411,6 +411,11 @@ public class Pointer implements AutoCloseable {
         return DeallocatorReference.totalBytes;
     }
 
+    /** Returns {@link #maxPhysicalBytes}, the maximum amount of physical memory that should be used. */
+    public static long maxPhysicalBytes() {
+        return maxPhysicalBytes;
+    }
+
     /** Returns the amount of physical memory currently used by the whole process, or 0 if unknown.
      * Also known as "resident set size" (Linux, Mac OS X, etc) or "working set size" (Windows). */
     @Name("JavaCPP_physicalBytes") public static native long physicalBytes();
@@ -517,16 +522,20 @@ public class Pointer implements AutoCloseable {
             synchronized (DeallocatorThread.class) {
                 int count = 0;
                 long lastPhysicalBytes = 0;
-                while (count++ < maxRetries && ((maxBytes > 0 && DeallocatorReference.totalBytes + r.bytes > maxBytes)
-                                     || (maxPhysicalBytes > 0 && (lastPhysicalBytes = physicalBytes()) > maxPhysicalBytes))) {
-                    try {
+                try {
+                    while (count++ < maxRetries && ((maxBytes > 0 && DeallocatorReference.totalBytes + r.bytes > maxBytes)
+                                         || (maxPhysicalBytes > 0 && (lastPhysicalBytes = physicalBytes()) > maxPhysicalBytes))) {
                         // try to get some more memory back
                         System.gc();
                         Thread.sleep(100);
-                    } catch (InterruptedException ex) {
-                        // reset interrupt to be nice
-                        Thread.currentThread().interrupt();
-                        break;
+                    }
+                } catch (InterruptedException ex) {
+                    // reset interrupt to be nice
+                    Thread.currentThread().interrupt();
+                } catch (UnsatisfiedLinkError e) {
+                    // old binaries with physicalBytes() missing -> ignore for backward compatibility
+                    if (logger.isDebugEnabled()) {
+                        logger.debug(e.getMessage());
                     }
                 }
                 if (maxBytes > 0 && DeallocatorReference.totalBytes + r.bytes > maxBytes) {
