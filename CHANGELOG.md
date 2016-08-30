@@ -1,4 +1,5 @@
 
+ * Fix `Parser` not accepting namespace aliases with `::` tokens in them ([issue bytedeco/javacpp-presets#265](https://github.com/bytedeco/javacpp-presets/issues/265))
  * Add "org.bytedeco.javacpp.maxphysicalbytes" system property to force calls to `System.gc()` based on `Pointer.physicalBytes()`
  * Allow strings ending with "t", "g", "m", etc to specify the number of bytes in system properties ([issue #125](https://github.com/bytedeco/javacpp/issues/125))
  * Add `Info.linePatterns` to limit the lines from header files that the `Parser` has to process

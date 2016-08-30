@@ -2649,9 +2649,10 @@ public class Parser {
         }
         if (tokens.get().match('=')) {
             // deal with namespace aliases
-            String realName = tokens.next().expect(Token.IDENTIFIER).value;
-            context.namespaceMap.put(name, realName);
-            tokens.next().expect(';');
+            tokens.next();
+            Type type = type(context);
+            context.namespaceMap.put(name, type.cppName);
+            tokens.get().expect(';');
             tokens.next();
             return true;
         }
