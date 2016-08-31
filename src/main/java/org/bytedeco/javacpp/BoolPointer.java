@@ -44,10 +44,15 @@ public class BoolPointer extends Pointer {
         try {
             allocateArray(size);
             if (size > 0 && address == 0) {
-                throw new OutOfMemoryError("Cannot allocate new BoolPointer(" + size + ")");
+                throw new OutOfMemoryError("Native allocator returned address == 0");
             }
         } catch (UnsatisfiedLinkError e) {
             throw new RuntimeException("No native JavaCPP library in memory. (Has Loader.load() been called?)", e);
+        } catch (OutOfMemoryError e) {
+            OutOfMemoryError e2 = new OutOfMemoryError("Cannot allocate new BoolPointer(" + size + "), "
+                    + "totalBytes = " + totalBytes() + ", physicalBytes = " + physicalBytes());
+            e2.initCause(e);
+            throw e2;
         }
     }
     /** @see Pointer#Pointer() */
