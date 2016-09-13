@@ -64,6 +64,10 @@ public class PointerTest {
         assertTrue(new Pointer().equals(null));
         Pointer p = new Pointer() { { address = 0xDEADBEEF; }};
         assertEquals(p, new Pointer(p));
+
+        long physicalBytes = Pointer.physicalBytes();
+        System.out.println(physicalBytes);
+        assertTrue(physicalBytes > 0);
     }
 
     @Test public void testBytePointer() {

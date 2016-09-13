@@ -411,9 +411,10 @@ public class Generator implements Closeable {
         out.println("    FILE *file = fopen(\"/proc/self/statm\", \"r\");");
         out.println("    if (file != NULL) {");
         out.println("        long long virtual_size = 0, resident_size = 0;");
-        out.println("        fscanf(file, \"%lld %lld\", &virtual_size, &resident_size);");
+        out.println("        if (fscanf(file, \"%lld %lld\", &virtual_size, &resident_size) == 2) {");
+        out.println("            size = (jlong)(resident_size * getpagesize());");
+        out.println("        }");
         out.println("        fclose(file);");
-        out.println("        size = (jlong)(resident_size * getpagesize());");
         out.println("    }");
         out.println("#elif defined(__APPLE__)");
         out.println("    task_basic_info info = {};");
