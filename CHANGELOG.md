@@ -1,4 +1,6 @@
 
+ * Add `std::forward_list`, `std::priority_queue`, `std::unordered_map`, and `std::unordered_set` to the list of "basic/containers" in `InfoMap` ([issue bytedeco/javacpp-presets#266](https://github.com/bytedeco/javacpp-presets/issues/266))
+ * Work around `linux-armhf` not being properly detected with OpenJDK ([issue #105](https://github.com/bytedeco/javacpp/issues/105))
  * Fix `Parser` not accepting namespace aliases with `::` tokens in them ([issue bytedeco/javacpp-presets#265](https://github.com/bytedeco/javacpp-presets/issues/265))
  * Add "org.bytedeco.javacpp.maxphysicalbytes" system property to force calls to `System.gc()` based on `Pointer.physicalBytes()`
  * Allow strings ending with "t", "g", "m", etc to specify the number of bytes in system properties ([issue #125](https://github.com/bytedeco/javacpp/issues/125))
