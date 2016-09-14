@@ -2616,14 +2616,6 @@ public class Generator implements Closeable {
                 info.overloaded = true;
                 canBeMemberGetter = canBeGetter;
                 canBeMemberSetter = canBeSetter;
-                for (int j = skipParameters; j < info.parameterTypes.length; j++) {
-                    if (info.parameterTypes[j] != int.class && info.parameterTypes[j] != long.class) {
-                        canBeMemberGetter = false;
-                        if (j < info.parameterTypes.length - 1) {
-                            canBeMemberSetter = false;
-                        }
-                    }
-                }
             } else {
                 continue;
             }
@@ -2660,6 +2652,18 @@ public class Generator implements Closeable {
                 pairedMethod = method2;
                 valueSetter  = canBeValueSetter;
                 memberSetter = canBeMemberSetter;
+            }
+
+            if (memberGetter || memberSetter) {
+                for (int j = skipParameters; j < info.parameterTypes.length; j++) {
+                    if (!method.isAnnotationPresent(Index.class) && (pairedMethod == null || !pairedMethod.isAnnotationPresent(Index.class))
+                            && info.parameterTypes[j] != int.class && info.parameterTypes[j] != long.class) {
+                        memberGetter = false;
+                        if (j < info.parameterTypes.length - 1) {
+                            memberSetter = false;
+                        }
+                    }
+                }
             }
         }
 

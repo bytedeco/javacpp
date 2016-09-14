@@ -49,6 +49,7 @@ class Token implements Comparable<Token> {
 
     static final Token
             EOF       = new Token(),
+            AUTO      = new Token(IDENTIFIER, "auto"),
             CONST     = new Token(IDENTIFIER, "const"),
             CONSTEXPR = new Token(IDENTIFIER, "constexpr"),
             DEFAULT   = new Token(IDENTIFIER, "default"),
@@ -68,6 +69,7 @@ class Token implements Comparable<Token> {
             CLASS     = new Token(IDENTIFIER, "class"),
             INTERFACE = new Token(IDENTIFIER, "interface"),
             __INTERFACE = new Token(IDENTIFIER, "__interface"),
+            MUTABLE   = new Token(IDENTIFIER, "mutable"),
             STRUCT    = new Token(IDENTIFIER, "struct"),
             UNION     = new Token(IDENTIFIER, "union"),
             TEMPLATE  = new Token(IDENTIFIER, "template"),
@@ -81,7 +83,10 @@ class Token implements Comparable<Token> {
             PRIVATE   = new Token(IDENTIFIER, "private"),
             PROTECTED = new Token(IDENTIFIER, "protected"),
             PUBLIC    = new Token(IDENTIFIER, "public"),
-            VIRTUAL   = new Token(IDENTIFIER, "virtual");
+            REGISTER  = new Token(IDENTIFIER, "register"),
+            THREAD_LOCAL = new Token(IDENTIFIER, "thread_local"),
+            VIRTUAL   = new Token(IDENTIFIER, "virtual"),
+            VOLATILE  = new Token(IDENTIFIER, "volatile");
 
     File file = null;
     int lineNumber = 0, type = -1;

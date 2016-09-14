@@ -185,7 +185,7 @@ public class Parser {
                         + "    static { Loader.load(); }\n"
                         + "    /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */\n"
                         + "    public " + containerType.javaName + "(Pointer p) { super(p); }\n";
-                if (firstType != null && secondType != null) {
+                if ((dim == 0 || containerType.arguments.length == 1) && firstType != null && secondType != null) {
                     String[] firstNames = firstType.javaNames != null ? firstType.javaNames : new String[] {firstType.javaName};
                     String[] secondNames = secondType.javaNames != null ? secondType.javaNames : new String[] {secondType.javaName};
                     String brackets = arrayBrackets + (dim > 0 ? "[]" : "");
@@ -260,7 +260,7 @@ public class Parser {
                     }
                 }
 
-                if (firstType != null && secondType != null) {
+                if ((dim == 0 || containerType.arguments.length == 1) && firstType != null && secondType != null) {
                     String[] firstNames = firstType.javaNames != null ? firstType.javaNames : new String[] {firstType.javaName};
                     String[] secondNames = secondType.javaNames != null ? secondType.javaNames : new String[] {secondType.javaName};
                     String brackets = arrayBrackets + (dim > 0 ? "[]" : "");
@@ -472,8 +472,9 @@ public class Parser {
                 type.friend = true;
             } else if (token.match(Token.VIRTUAL)) {
                 type.virtual = true;
-            } else if (token.match(Token.ENUM, Token.EXPLICIT, Token.EXTERN, Token.INLINE, Token.CLASS, Token.INTERFACE, Token.__INTERFACE,
-                                   Token.NAMESPACE, Token.STRUCT, Token.UNION, Token.TYPEDEF, Token.TYPENAME, Token.USING)) {
+            } else if (token.match(Token.AUTO, Token.ENUM, Token.EXPLICIT, Token.EXTERN, Token.INLINE, Token.CLASS, Token.INTERFACE,
+                                   Token.__INTERFACE, Token.MUTABLE, Token.NAMESPACE, Token.STRUCT, Token.UNION, Token.TYPEDEF,
+                                   Token.TYPENAME, Token.USING, Token.REGISTER, Token.THREAD_LOCAL, Token.VOLATILE)) {
                 token = tokens.next();
                 continue;
             } else if (token.match((Object[])infoMap.getFirst("basic/types").cppTypes) && (type.cppName.length() == 0 || type.simple)) {
