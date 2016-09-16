@@ -1,4 +1,5 @@
 
+### September 16, 2016 version 1.2.4
  * Insure `Parser` properly ignores the `auto`, `mutable`, `register`, `thread_local`, and `volatile` C++ keywords for storage classes
  * Fix `Generator` and `Parser` for types like `std::unordered_map<std::string,std::pair<int,int> >` ([issue bytedeco/javacpp-presets#266](https://github.com/bytedeco/javacpp-presets/issues/266))
  * Add `std::forward_list`, `std::priority_queue`, `std::unordered_map`, and `std::unordered_set` to the list of "basic/containers" in `InfoMap`

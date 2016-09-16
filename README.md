@@ -17,8 +17,8 @@ Please feel free to ask questions on [the mailing list](http://groups.google.com
 
 Downloads
 ---------
- * JavaCPP 1.2.3 binary archive  [javacpp-1.2.3-bin.zip](http://search.maven.org/remotecontent?filepath=org/bytedeco/javacpp/1.2.3/javacpp-1.2.3-bin.zip) (308 KB)
- * JavaCPP 1.2.3 source archive  [javacpp-1.2.3-src.zip](http://search.maven.org/remotecontent?filepath=org/bytedeco/javacpp/1.2.3/javacpp-1.2.3-src.zip) (288 KB)
+ * JavaCPP 1.2.4 binary archive  [javacpp-1.2.4-bin.zip](http://search.maven.org/remotecontent?filepath=org/bytedeco/javacpp/1.2.4/javacpp-1.2.4-bin.zip) (314 KB)
+ * JavaCPP 1.2.4 source archive  [javacpp-1.2.4-src.zip](http://search.maven.org/remotecontent?filepath=org/bytedeco/javacpp/1.2.4/javacpp-1.2.4-src.zip) (293 KB)
 
 We can also have everything downloaded and installed automatically with:
 
@@ -27,7 +27,7 @@ We can also have everything downloaded and installed automatically with:
   <dependency>
     <groupId>org.bytedeco</groupId>
     <artifactId>javacpp</artifactId>
-    <version>1.2.3</version>
+    <version>1.2.4</version>
   </dependency>
 ```
 
@@ -37,13 +37,13 @@ We can also have everything downloaded and installed automatically with:
     mavenCentral()
   }
   dependencies {
-    compile group: 'org.bytedeco', name: 'javacpp', version: '1.2.3'
+    compile group: 'org.bytedeco', name: 'javacpp', version: '1.2.4'
   }
 ```
 
  * sbt (inside the `build.sbt` file)
 ```scala
-  libraryDependencies += "org.bytedeco" % "javacpp" % "1.2.3"
+  libraryDependencies += "org.bytedeco" % "javacpp" % "1.2.4"
 ```
 
 Another option available for Scala users is [sbt-javacpp](https://github.com/bytedeco/sbt-javacpp).
