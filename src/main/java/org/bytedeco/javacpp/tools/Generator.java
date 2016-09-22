@@ -23,6 +23,7 @@
 package org.bytedeco.javacpp.tools;
 
 import java.io.Closeable;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.io.Writer;
@@ -188,9 +189,19 @@ public class Generator implements Closeable {
         }
         if (classes(true, true, true, classPath, classes)) {
             // second pass with a real writer
-            out = new PrintWriter(sourceFilename);
+            File sourceFile = new File(sourceFilename);
+            File sourceDir = sourceFile.getParentFile();
+            if (sourceDir != null) {
+                sourceDir.mkdirs();
+            }
+            out = new PrintWriter(sourceFile);
             if (headerFilename != null) {
-                out2 = new PrintWriter(headerFilename);
+                File headerFile = new File(headerFilename);
+                File headerDir = headerFile.getParentFile();
+                if (headerDir != null) {
+                    headerDir.mkdirs();
+                }
+                out2 = new PrintWriter(headerFile);
             }
             return classes(mayThrowExceptions, usesAdapters, passesStrings, classPath, classes);
         } else {

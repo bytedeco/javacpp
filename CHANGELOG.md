@@ -1,4 +1,6 @@
 
+ * Create all missing directories in the paths to the source files created by `Generator`
+
 ### September 16, 2016 version 1.2.4
  * Insure `Parser` properly ignores the `auto`, `mutable`, `register`, `thread_local`, and `volatile` C++ keywords for storage classes
  * Fix `Generator` and `Parser` for types like `std::unordered_map<std::string,std::pair<int,int> >` ([issue bytedeco/javacpp-presets#266](https://github.com/bytedeco/javacpp-presets/issues/266))
