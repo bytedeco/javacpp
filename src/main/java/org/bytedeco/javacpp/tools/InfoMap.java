@@ -46,6 +46,7 @@ public class InfoMap extends HashMap<String,List<Info>> {
                                                    "std::priority_queue", "std::unordered_map", "std::unordered_set"))
         .put(new Info("basic/types").cppTypes("signed", "unsigned", "char", "short", "int", "long", "bool", "float", "double"))
 
+        .put(new Info("__COUNTER__").cppText("#define __COUNTER__ 0"))
         .put(new Info(" __attribute__", "__declspec").annotations().skip())
         .put(new Info("void").valueTypes("void").pointerTypes("Pointer"))
         .put(new Info("std::nullptr_t").valueTypes("Pointer").pointerTypes("PointerPointer"))
@@ -160,7 +161,8 @@ public class InfoMap extends HashMap<String,List<Info>> {
         boolean foundConst = false, simpleType = true;
         Token[] tokens = new Tokenizer(name).tokenize();
         int n = tokens.length;
-        String[] basicTypes = getFirst("basic/types").cppTypes;
+        Info info = getFirst("basic/types");
+        String[] basicTypes = info != null ? info.cppTypes : new String[0];
         Arrays.sort(basicTypes);
         for (int i = 0; i < n; i++) {
             if (tokens[i].match(Token.CONST, Token.CONSTEXPR)) {
@@ -206,6 +208,10 @@ public class InfoMap extends HashMap<String,List<Info>> {
             name = name.substring(name.indexOf("const") + 5);
         }
         return name.trim();
+    }
+
+    @Override public boolean containsKey(Object key) {
+        return super.containsKey(key) || (parent != null && parent.containsKey(key));
     }
 
     public List<Info> get(String cppName) {

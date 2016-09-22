@@ -1,9 +1,10 @@
 
+ * Properly expand the special predefined `__COUNTER__` macro ([pull bytedeco/javacpp-presets#266](https://github.com/bytedeco/javacpp-presets/pull/266))
  * Create all missing directories in the paths to the source files created by `Generator`
 
 ### September 16, 2016 version 1.2.4
  * Insure `Parser` properly ignores the `auto`, `mutable`, `register`, `thread_local`, and `volatile` C++ keywords for storage classes
- * Fix `Generator` and `Parser` for types like `std::unordered_map<std::string,std::pair<int,int> >` ([issue bytedeco/javacpp-presets#266](https://github.com/bytedeco/javacpp-presets/issues/266))
+ * Fix `Generator` and `Parser` for types like `std::unordered_map<std::string,std::pair<int,int> >` ([pull bytedeco/javacpp-presets#266](https://github.com/bytedeco/javacpp-presets/pull/266))
  * Add `std::forward_list`, `std::priority_queue`, `std::unordered_map`, and `std::unordered_set` to the list of "basic/containers" in `InfoMap`
  * Work around `linux-armhf` not being properly detected with OpenJDK ([issue #105](https://github.com/bytedeco/javacpp/issues/105))
  * Fix `Parser` not accepting namespace aliases with `::` tokens in them ([issue bytedeco/javacpp-presets#265](https://github.com/bytedeco/javacpp-presets/issues/265))
@@ -11,7 +12,7 @@
  * Allow strings ending with "t", "g", "m", etc to specify the number of bytes in system properties ([issue #125](https://github.com/bytedeco/javacpp/issues/125))
  * Add `Info.linePatterns` to limit the lines from header files that the `Parser` has to process
  * Introduce "platform.compiler.hardfpu" option inside `android-arm.properties` to target `armeabi-v7a-hard`
- * Add `UniquePtrAdapter` and corresponding `@UniquePtr` annotation to support `unique_ptr` containers ([issue bytedeco/javacpp-presets#266](https://github.com/bytedeco/javacpp-presets/issues/266))
+ * Add `UniquePtrAdapter` and corresponding `@UniquePtr` annotation to support `unique_ptr` containers ([pull bytedeco/javacpp-presets#266](https://github.com/bytedeco/javacpp-presets/pull/266))
  * Fix `Parser` not expecting `friend class` declarations that start with `::` ([pull #122](https://github.com/bytedeco/javacpp/issues/122))
  * Synchronize memory allocation in `Pointer` to avoid `OutOfMemoryError` when low on memory
  * Make it clear that `Indexable.createIndexer()` can throw a `NullPointerException` ([issue bytedeco/javacv#437](https://github.com/bytedeco/javacv/issues/437))

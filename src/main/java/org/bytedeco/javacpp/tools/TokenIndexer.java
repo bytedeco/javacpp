@@ -48,6 +48,8 @@ class TokenIndexer {
     int index = 0;
     /** Whether the file came from the C-include path */
     final boolean isCFile;
+    /** Counter for the special predefined {@code __COUNTER__} macro. */
+    int counter = 0;
 
     Token[] filter(Token[] array, int index) {
         if (index + 1 < array.length && array[index].match('#') &&
@@ -153,6 +155,9 @@ class TokenIndexer {
                     List<String> params = new ArrayList<String>();
                     List<Token>[] args = null;
                     Token token = tokenizer.nextToken();
+                    if (info.cppNames[0].equals("__COUNTER__")) {
+                        token.value = Integer.toString(counter++);
+                    }
                     // pick up the parameters and arguments of the macro if it has any
                     String name = array[index].value;
                     if (token.match('(')) {
