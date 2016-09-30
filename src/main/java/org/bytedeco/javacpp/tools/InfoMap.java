@@ -159,6 +159,7 @@ public class InfoMap extends HashMap<String,List<Info>> {
             return name;
         }
         boolean foundConst = false, simpleType = true;
+        String prefix = null;
         Token[] tokens = new Tokenizer(name).tokenize();
         int n = tokens.length;
         Info info = getFirst("basic/types");
@@ -167,6 +168,12 @@ public class InfoMap extends HashMap<String,List<Info>> {
         for (int i = 0; i < n; i++) {
             if (tokens[i].match(Token.CONST, Token.CONSTEXPR)) {
                 foundConst = true;
+                for (int j = i + 1; j < n; j++) {
+                    tokens[j - 1] = tokens[j];
+                }
+                i--; n--;
+            } else if (tokens[i].match(Token.CLASS, Token.STRUCT, Token.UNION)) {
+                prefix = tokens[i].value;
                 for (int j = i + 1; j < n; j++) {
                     tokens[j - 1] = tokens[j];
                 }
@@ -206,6 +213,9 @@ public class InfoMap extends HashMap<String,List<Info>> {
         }
         if (unconst && foundConst) {
             name = name.substring(name.indexOf("const") + 5);
+        }
+        if (prefix != null) {
+            name = name.substring(name.indexOf(prefix) + prefix.length());
         }
         return name.trim();
     }

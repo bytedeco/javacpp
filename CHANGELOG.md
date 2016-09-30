@@ -1,4 +1,5 @@
 
+ * Allow C++ types to be prefixed by `class`, `struct`, or `union` to work around name clashes ([pull bytedeco/javacpp-presets#266](https://github.com/bytedeco/javacpp-presets/pull/266))
  * Properly expand the special predefined `__COUNTER__` macro ([pull bytedeco/javacpp-presets#266](https://github.com/bytedeco/javacpp-presets/pull/266))
  * Create all missing directories in the paths to the source files created by `Generator`
 
@@ -13,17 +14,17 @@
  * Add `Info.linePatterns` to limit the lines from header files that the `Parser` has to process
  * Introduce "platform.compiler.hardfpu" option inside `android-arm.properties` to target `armeabi-v7a-hard`
  * Add `UniquePtrAdapter` and corresponding `@UniquePtr` annotation to support `unique_ptr` containers ([pull bytedeco/javacpp-presets#266](https://github.com/bytedeco/javacpp-presets/pull/266))
- * Fix `Parser` not expecting `friend class` declarations that start with `::` ([pull #122](https://github.com/bytedeco/javacpp/issues/122))
+ * Fix `Parser` not expecting `friend class` declarations that start with `::` ([pull #122](https://github.com/bytedeco/javacpp/pull/122))
  * Synchronize memory allocation in `Pointer` to avoid `OutOfMemoryError` when low on memory
  * Make it clear that `Indexable.createIndexer()` can throw a `NullPointerException` ([issue bytedeco/javacv#437](https://github.com/bytedeco/javacv/issues/437))
- * Escape quotes when parsing default value for the `nullValue` of `@ByRef` or `@ByVal` ([pull #119](https://github.com/bytedeco/javacpp/issues/119))
+ * Escape quotes when parsing default value for the `nullValue` of `@ByRef` or `@ByVal` ([pull #119](https://github.com/bytedeco/javacpp/pull/119))
  * Let `Parser` accept identifiers in addition to integer literals for bit fields ([issue #118](https://github.com/bytedeco/javacpp/issues/118))
  * Fix `Loader.load()` not renaming a library when previously loaded under a different name
 
 ### August 1, 2016 version 1.2.3
  * Add support for data member pointers as pseudo-`FunctionPointer` ([issue #114](https://github.com/bytedeco/javacpp/issues/114))
  * Change the packaging type to `jar` since `maven-plugin` causes issues with sbt and Ivy ([issue #113](https://github.com/bytedeco/javacpp/issues/113))
- * Include new `platform.compiler.debug` options inside the default properties file ([pull #90](https://github.com/bytedeco/javacpp/issues/90))
+ * Include new `platform.compiler.debug` options inside the default properties file ([pull #90](https://github.com/bytedeco/javacpp/pull/90))
  * Always use the `platform.compiler.default` options unless `@Platform(compiler="!default", ...)` is specified
  * Move optimization options from `platform.compiler.output` to `platform.compiler.default`, allowing users to override
  * Create all missing directories in the path to the target file of `Parser`
@@ -63,7 +64,7 @@
  * Let users define `NATIVE_ALLOCATOR` and `NATIVE_DEALLOCATOR` macros to overload global `new` and `delete` operators
  * Map `jint` to `int` and `jlong` to `long long` on Windows as well as all platforms with GCC (or Clang)
  * Fix corner cases when checking for the platform in `Generator` and `Parser`
- * Link libraries with "-z noexecstack" on Linux as recommended by HotSpot ([pull #90](https://github.com/bytedeco/javacpp/issues/90))
+ * Link libraries with "-z noexecstack" on Linux as recommended by HotSpot ([pull #90](https://github.com/bytedeco/javacpp/pull/90))
  * Set the internal DT_SONAME field in libraries created for Android ([issue bytedeco/javacpp-presets#188](https://github.com/bytedeco/javacpp-presets/issues/188))
  * Add "org.bytedeco.javacpp.maxbytes" system property, forcing a call to `System.gc()` when this amount of memory tracked with deallocators is reached
  * Let `Parser` pick up `Info.annotations` in the case of function pointers as well
@@ -71,12 +72,12 @@
  * Enhance the `indexer` package with `long` indexing, initially via the `sun.misc.Unsafe`, for now
  * Lengthen the `position`, `limit`, and `capacity` fields of `Pointer` using `long`
  * Prevent creating text relocations for shared libraries on Android, which are rejected by recent versions of the SDK
- * Use the `outputDirectory` as the compiler's working directory ([pull #89](https://github.com/bytedeco/javacpp/issues/89))
- * Comment with first dimension of multidimensional array inside `@Cast` ([pull #87](https://github.com/bytedeco/javacpp/issues/87))
- * Remove `throws Exception` from `Pointer.close()` since destructors do not typically throw exceptions ([pull #86](https://github.com/bytedeco/javacpp/issues/86))
- * Add `-nodelete` flag to keep generated C++ files after compilation ([pull #85](https://github.com/bytedeco/javacpp/issues/85))
- * Annotate functions originating from `cinclude` with `@NoException` ([pull #84](https://github.com/bytedeco/javacpp/issues/84))
- * Call `JNI_ABORT` on release of `const` arrays ([pull #83](https://github.com/bytedeco/javacpp/issues/83))
+ * Use the `outputDirectory` as the compiler's working directory ([pull #89](https://github.com/bytedeco/javacpp/pull/89))
+ * Comment with first dimension of multidimensional array inside `@Cast` ([pull #87](https://github.com/bytedeco/javacpp/pull/87))
+ * Remove `throws Exception` from `Pointer.close()` since destructors do not typically throw exceptions ([pull #86](https://github.com/bytedeco/javacpp/pull/86))
+ * Add `-nodelete` flag to keep generated C++ files after compilation ([pull #85](https://github.com/bytedeco/javacpp/pull/85))
+ * Annotate functions originating from `cinclude` with `@NoException` ([pull #84](https://github.com/bytedeco/javacpp/pull/84))
+ * Call `JNI_ABORT` on release of `const` arrays ([pull #83](https://github.com/bytedeco/javacpp/pull/83))
  * Add support for C++11 `default` and `delete` on function declarations ([issue #80](https://github.com/bytedeco/javacpp/issues/80))
  * Add support for C++11 typed `enum`, with or without enumerator list ([issue #78](https://github.com/bytedeco/javacpp/issues/78))
  * Add missing space for `const` types when normalizing template arguments in `Parser` ([issue bytedeco/javacpp-presets#165](https://github.com/bytedeco/javacpp-presets/issues/165))

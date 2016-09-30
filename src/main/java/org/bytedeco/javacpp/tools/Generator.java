@@ -3178,7 +3178,8 @@ public class Generator implements Closeable {
                 }
                 spaceName += s;
             }
-            if (scopeName.length() > 0 && !spaceName.endsWith("::")) {
+            if (scopeName.length() > 0 && !scopeName.startsWith("class ") && !scopeName.startsWith("struct ")
+                    && !scopeName.startsWith("union ") && !spaceName.endsWith("::")) {
                 spaceName += "::";
             }
             scopeName = spaceName + scopeName;
