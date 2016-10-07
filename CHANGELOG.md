@@ -1,4 +1,5 @@
 
+ * Fix `Parser` incorrectly skipping over some template function declarations
  * Allow C++ types to be prefixed by `class`, `struct`, or `union` to work around name clashes ([pull bytedeco/javacpp-presets#266](https://github.com/bytedeco/javacpp-presets/pull/266))
  * Properly expand the special predefined `__COUNTER__` macro ([pull bytedeco/javacpp-presets#266](https://github.com/bytedeco/javacpp-presets/pull/266))
  * Create all missing directories in the paths to the source files created by `Generator`

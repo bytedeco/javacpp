@@ -1590,7 +1590,20 @@ public class Parser {
         if (localName.startsWith(context.namespace + "::")) {
             localName = dcl.cppName.substring(context.namespace.length() + 2);
         }
-        if (type.friend || (context.javaName == null && localName.contains("::")) || (info != null && info.skip)) {
+        int localNamespace = 0;
+        int templateCount = 0;
+        for (int i = 0; i < localName.length(); i++) {
+            int c = localName.charAt(i);
+            if (c == '<') {
+                templateCount++;
+            } else if (c == '>') {
+                templateCount--;
+            } else if (templateCount == 0 && localName.substring(i).startsWith("::")) {
+                localNamespace = i;
+                break;
+            }
+        }
+        if (type.friend || (context.javaName == null && localNamespace > 0) || (info != null && info.skip)) {
             // this is a friend declaration, or a member function definition or specialization, skip over
             for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.get()) {
                 if (attribute() == null) {
