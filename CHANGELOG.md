@@ -1,4 +1,5 @@
 
+ * Make sure default values placed in `nullValue` by the `Parser` have the right type ([issue bytedeco/javacv#518](https://github.com/bytedeco/javacv/issues/518))
  * Accelerate call to `Pointer.physicalBytes()` on Linux ([issue #133](https://github.com/bytedeco/javacpp/issues/133))
  * Fix `Parser` incorrectly skipping over some template function declarations
  * Allow C++ types to be prefixed by `class`, `struct`, or `union` to work around name clashes ([pull bytedeco/javacpp-presets#266](https://github.com/bytedeco/javacpp-presets/pull/266))

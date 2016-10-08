@@ -1466,8 +1466,11 @@ public class Parser {
                     n = s.indexOf("@ByRef ");
                 }
                 if (n >= 0) {
-                    s = s.substring(0, n + 6) + "(nullValue = \""
-                            + defaultValue.replaceAll("\"", "\\\\\"").replaceAll("\n(\\s*)", "\"\n$1 + \"") + "\")" + s.substring(n + 6);
+                    if (!defaultValue.startsWith(dcl.type.cppName)) {
+                        defaultValue = dcl.type.cppName + "(" + defaultValue + ")";
+                    }
+                    defaultValue = defaultValue.replaceAll("\"", "\\\\\"").replaceAll("\n(\\s*)", "\"\n$1 + \"");
+                    s = s.substring(0, n + 6) + "(nullValue = \"" + defaultValue + "\")" + s.substring(n + 6);
                 }
                 dcl.type.annotations = s;
             }
@@ -1480,7 +1483,7 @@ public class Parser {
                 params.infoNumber = Math.max(params.infoNumber, dcl.infoNumber);
                 params.list += (count > 1 ? "," : "") + spacing + dcl.type.annotations + dcl.type.javaName + " " + dcl.javaName;
                 lastVarargs = params.list.indexOf("...", n);
-                if (hasDefault) {
+                if (hasDefault && !dcl.type.annotations.contains("(nullValue = ")) {
                     // output default argument as a comment
                     params.list += "/*" + defaultToken + defaultValue + "*/";
                 }
