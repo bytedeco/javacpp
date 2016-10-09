@@ -1819,7 +1819,8 @@ public class Parser {
                     decl.text += metadcl.indices == 0
                             ? "@Name(\"" + metadcl.cppName + "." + shortName + "\") "
                             : "@Name({\"" + metadcl.cppName + "\", \"." + shortName + "\"}) ";
-                    javaName = metadcl.javaName + "_" + dcl.javaName;
+                    dcl.type.annotations = dcl.type.annotations.replaceAll("@Name\\(.*\\) ", "");
+                    javaName = metadcl.javaName + "_" + shortName;
                 }
                 if (dcl.type.constValue) {
                     decl.text += "@MemberGetter ";
@@ -1860,7 +1861,8 @@ public class Parser {
                     decl.text += metadcl.indices == 0
                             ? "@Name(\"" + metadcl.cppName + "." + shortName + "\") "
                             : "@Name({\"" + metadcl.cppName + "\", \"." + shortName + "\"}) ";
-                    javaName = metadcl.javaName + "_" + dcl.javaName;
+                    dcl.type.annotations = dcl.type.annotations.replaceAll("@Name\\(.*\\) ", "");
+                    javaName = metadcl.javaName + "_" + shortName;
                 }
                 decl.text += "@MemberGetter " + modifiers + dcl.type.annotations.replace("@ByVal ", "@ByRef ")
                           + dcl.type.javaName + " " + javaName + "(" + indices + ");\n";
@@ -2256,6 +2258,8 @@ public class Parser {
                     if (dcl == null) {
                         break;
                     } else {
+                        // declares variable, treat as anonymous
+                        anonymous = true;
                         variables.add(dcl);
                     }
                 }
@@ -2339,9 +2343,14 @@ public class Parser {
             tokens.next();
         }
 
-        if (!anonymous) {
+        if (type.cppName.length() > 0) {
+            // name of the typedef type
             ctx.namespace = type.cppName;
+            // used to match constructors
             ctx.cppName = originalName;
+        }
+        if (!anonymous) {
+            // used for setter methods
             ctx.javaName = type.javaName;
         }
         if (info != null && info.virtualize) {

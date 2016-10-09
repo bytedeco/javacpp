@@ -1,4 +1,5 @@
 
+ * Fix `Parser` handling of `class`, `struct`, or `union` types with variables declared in the same statement
  * Add missing `platform.link` to `psapi` required by some versions of Visual Studio ([issue bytedeco/javacpp-presets#298](https://github.com/bytedeco/javacpp-presets/issues/298))
  * Make sure default values placed in `nullValue` by the `Parser` have the right type ([issue bytedeco/javacv#518](https://github.com/bytedeco/javacv/issues/518))
  * Accelerate call to `Pointer.physicalBytes()` on Linux ([issue #133](https://github.com/bytedeco/javacpp/issues/133))
