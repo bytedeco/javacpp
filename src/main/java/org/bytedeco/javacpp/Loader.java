@@ -28,10 +28,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.net.JarURLConnection;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -40,6 +42,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.WeakHashMap;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import org.bytedeco.javacpp.annotation.Platform;
 import org.bytedeco.javacpp.tools.Builder;
 import org.bytedeco.javacpp.tools.Logger;
@@ -282,6 +286,84 @@ public class Loader {
     }
 
     /**
+     * Extracts a resource using the {@link ClassLoader} of the caller class,
+     * and returns the cached {@link File}.
+     *
+     * @param name the name of the resource passed to {@link Class#getResource(String)}
+     * @see #cacheResource(Class, String)
+     */
+    public static File cacheResource(String name) throws IOException {
+        Class cls = getCallerClass(2);
+        return cacheResource(cls, name);
+    }
+    /**
+     * Extracts a resource using the {@link ClassLoader} of the specified {@link Class},
+     * and returns the cached {@link File}.
+     *
+     * @param cls the Class from which to load resources
+     * @param name the name of the resource passed to {@link Class#getResource(String)}
+     * @see #cacheResource(URL)
+     */
+    public static File cacheResource(Class cls, String name) throws IOException {
+        return cacheResource(cls.getResource(name));
+    }
+    /**
+     * Extracts a resource, if the size or last modified timestamp differs from what is in cache,
+     * and returns the cached {@link File}.
+     *
+     * @param resourceURL the URL of the resource to extract and cache
+     * @return the File object representing the extracted file from the cache
+     * @throws IOException if fails to extract resource properly
+     * @see #extractResource(URL, File, String, String)
+     * @see #cacheDir
+     */
+    public static File cacheResource(URL resourceURL) throws IOException {
+        // Find appropriate subdirectory in cache for the resource ...
+        File urlFile = new File(resourceURL.getPath());
+        String name = urlFile.getName();
+        long size, timestamp;
+        String cacheSubdir = getCacheDir() + File.separator;
+        URLConnection urlConnection = resourceURL.openConnection();
+        if (urlConnection instanceof JarURLConnection) {
+            JarFile jarFile = ((JarURLConnection)urlConnection).getJarFile();
+            JarEntry jarEntry = ((JarURLConnection)urlConnection).getJarEntry();
+            File jarFileFile = new File(jarFile.getName());
+            File jarEntryFile = new File(jarEntry.getName());
+            size = jarEntry.getSize();
+            timestamp = jarEntry.getTime();
+            cacheSubdir += jarFileFile.getName() + File.separator + jarEntryFile.getParent();
+        } else {
+            size = urlFile.length();
+            timestamp = urlFile.lastModified();
+            cacheSubdir += name;
+        }
+        if (resourceURL.getRef() != null) {
+            // ... get the URL fragment to let users rename library files ...
+            name = resourceURL.getRef();
+        }
+        // ... then check if it has not already been extracted, and if not ...
+        File file = new File(cacheSubdir, name);
+        if (!file.exists() || file.length() != size || file.lastModified() != timestamp) {
+            // ... then extract it from our resources ...
+            if (logger.isDebugEnabled()) {
+                logger.debug("Extracting " + resourceURL);
+            }
+            extractResource(resourceURL, file, null, null);
+            file.setLastModified(timestamp);
+        } else while (System.currentTimeMillis() - file.lastModified() >= 0
+                   && System.currentTimeMillis() - file.lastModified() < 1000) {
+            // ... else wait until the file is at least 1 second old ...
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException ex) {
+                // ... and reset interrupt to be nice.
+                Thread.currentThread().interrupt();
+            }
+        }
+        return file;
+    }
+
+    /**
      * Extracts by name a resource using the {@link ClassLoader} of the caller.
      *
      * @param name the name of the resource passed to {@link Class#getResource(String)}
@@ -329,10 +411,16 @@ public class Loader {
                 if (directoryOrFile == null) {
                     directoryOrFile = new File(System.getProperty("java.io.tmpdir"));
                 }
+                File directory;
                 if (directoryOrFile.isDirectory()) {
+                    directory = directoryOrFile;
                     file = new File(directoryOrFile, new File(resourceURL.getPath()).getName());
                 } else {
+                    directory = directoryOrFile.getParentFile();
                     file = directoryOrFile;
+                }
+                if (directory != null) {
+                    directory.mkdirs();
                 }
                 fileExisted = file.exists();
             } else {
@@ -367,14 +455,10 @@ public class Loader {
     /** Contains all the native libraries that we have loaded to avoid reloading them. */
     static Map<String,String> loadedLibraries = Collections.synchronizedMap(new HashMap<String,String>());
 
-    /**
-     * Creates and returns {@code System.getProperty("org.bytedeco.javacpp.cachedir")}, or null when not set.
-     *
-     * @return {@link #cacheDir}
-     */
+    /** Creates and returns {@code System.getProperty("org.bytedeco.javacpp.cachedir")} or {@code ~/.javacpp/cache/} when not set. */
     public static File getCacheDir() {
         if (cacheDir == null) {
-            String dirName = System.getProperty("org.bytedeco.javacpp.cachedir", null);
+            String dirName = System.getProperty("org.bytedeco.javacpp.cachedir", System.getProperty("user.home") + "/.javacpp/cache/");
             if (dirName != null) {
                 File f = new File(dirName);
                 if (f.exists() || f.mkdirs()) {
@@ -641,7 +725,6 @@ public class Loader {
             return filename;
         }
 
-        File tempFile = null;
         UnsatisfiedLinkError loadError = null;
         try {
             for (URL url : urls) {
@@ -670,34 +753,8 @@ public class Loader {
                     } catch (Exception exc2) {
                         /// ... or give up and ...
                     }
-                    String name = new File(url.getPath()).getName();
-                    if (url.getRef() != null) {
-                        // ... get the URL fragment to let users rename library files ...
-                        name = url.getRef();
-                    }
-                    // ... then check if it has not already been extracted, and if not ...
-                    file = new File(getCacheDir() != null ? getCacheDir() : getTempDir(), name);
-                    if (!file.exists()) {
-                        if (tempFile != null && tempFile.exists()) {
-                            tempFile.deleteOnExit();
-                        }
-                        // ... then extract it from our resources ...
-                        if (logger.isDebugEnabled()) {
-                            logger.debug("Extracting " + url);
-                        }
-                        extractResource(url, file, null, null);
-                        if (getCacheDir() == null) {
-                            tempFile = file;
-                        }
-                    } else while (System.currentTimeMillis() - file.lastModified() < 1000) {
-                        // ... else wait until the file is at least 1 second old ...
-                        try {
-                            Thread.sleep(1000);
-                        } catch (InterruptedException ex) {
-                            // ... reset interrupt to be nice ...
-                            Thread.currentThread().interrupt();
-                        }
-                    }
+                    // ... extract it from resources into the cache, if necessary ...
+                    file = cacheResource(url);
                 }
                 if (file != null && file.exists()) {
                     filename = file.getAbsolutePath();
@@ -746,58 +803,8 @@ public class Loader {
                 logger.debug("Failed to extract for " + libnameversion + ": " + e);
             }
             throw e;
-        } finally {
-            if (tempFile != null && tempFile.exists()) {
-                tempFile.deleteOnExit();
-            }
-            // But under Windows, it won't get deleted!
         }
     }
-
-    // So, let's use a shutdown hook...
-    static {
-        if (getPlatform().startsWith("windows")) {
-            Runtime.getRuntime().addShutdownHook(new Thread() {
-                @Override public void run() {
-                    if (tempDir == null) {
-                        return;
-                    }
-                    try {
-                        // ... to launch a separate process ...
-                        List<String> command = new ArrayList<String>();
-                        command.add(System.getProperty("java.home") + "/bin/java");
-                        command.add("-classpath");
-                        command.add((new File(Loader.class.getProtectionDomain().getCodeSource().getLocation().toURI())).toString());
-                        command.add(Loader.class.getName());
-                        command.add(tempDir.getAbsolutePath());
-                        new ProcessBuilder(command).start();
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    } catch (URISyntaxException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-            });
-        }
-    }
-
-    // ... that makes sure to delete all our files.
-    public static void main(String[] args) throws InterruptedException {
-        File tmpdir = new File(System.getProperty("java.io.tmpdir"));
-        File tempDir = new File(args[0]);
-        if (!tmpdir.equals(tempDir.getParentFile()) ||
-                !tempDir.getName().startsWith("javacpp")) {
-            // Someone is trying to break us ... ?
-            return;
-        }
-        for (File file : tempDir.listFiles()) {
-            while (file.exists() && !file.delete()) {
-                Thread.sleep(100);
-            }
-        }
-        tempDir.delete();
-    }
-
 
     /**
      * Contains {@code offsetof()} and {@code sizeof()} values of native types
