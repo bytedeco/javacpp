@@ -1707,8 +1707,8 @@ public class Parser {
                 decl.text += "@Namespace(\"" + context.namespace + "\") ";
             }
             if (type.constructor && params != null) {
-                decl.text += "public " + type.annotations + context.shorten(context.javaName) + dcl.parameters.list + " { super((Pointer)null); allocate" + params.names + "; }\n" +
-                             "private native void allocate" + dcl.parameters.list + ";\n";
+                decl.text += "public " + context.shorten(context.javaName) + dcl.parameters.list + " { super((Pointer)null); allocate" + params.names + "; }\n" +
+                             "private native " + type.annotations + "void allocate" + dcl.parameters.list + ";\n";
             } else {
                 decl.text += modifiers + type.annotations + context.shorten(type.javaName) + " " + dcl.javaName + dcl.parameters.list + ";\n";
             }
