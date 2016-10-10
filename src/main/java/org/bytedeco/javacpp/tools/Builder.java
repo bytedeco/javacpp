@@ -56,7 +56,8 @@ import org.bytedeco.javacpp.Loader;
 public class Builder {
 
     /**
-     * Calls {@link Parser#parse(File, String[], Class)} after creating an instance of the Class.
+     * Calls {@link Parser#parse(File, String[], Class, Coordinates)} after creating an
+     * instance of the Class.
      *
      * @param classPath an array of paths to try to load header files from
      * @param cls The class annotated with {@link org.bytedeco.javacpp.annotation.Properties}
@@ -66,7 +67,7 @@ public class Builder {
      * @throws ParserException on C/C++ header file parsing error
      */
     File parse(String[] classPath, Class cls) throws IOException, ParserException {
-        return new Parser(logger, properties).parse(outputDirectory, classPath, cls);
+        return new Parser(logger, properties).parse(outputDirectory, classPath, cls, coordinates);
     }
 
     /**
@@ -503,6 +504,8 @@ public class Builder {
     Map<String,String> environmentVariables = null;
     /** Contains additional command line options from the user for the native compiler. */
     Collection<String> compilerOptions = null;
+    /** Coordinates of the library. */
+    Coordinates coordinates = null;
 
     /** Splits argument with {@link File#pathSeparator} and appends result to paths of the {@link #classScanner}. */
     public Builder classPaths(String classPaths) {
@@ -629,6 +632,11 @@ public class Builder {
         }
         return this;
     }
+    /** Sets the library coordinates. */
+    public Builder coordinates(Coordinates coordinates) {
+        this.coordinates = coordinates;
+        return this;
+    }
 
     /**
      * Starts the build process and returns an array of {@link File} produced.
@@ -689,7 +697,7 @@ public class Builder {
 
                     File directory = f.getParentFile();
                     for (String s : preloads) {
-                        URL[] urls = Loader.findLibrary(null, p, s, true);
+                        URL[] urls = Loader.findLibrary(null, p, s, true, coordinates);
                         File fi;
                         try {
                             fi = new File(urls[0].toURI());
@@ -757,6 +765,7 @@ public class Builder {
         System.out.println("    -jarprefix <prefix>    Also create a JAR file named \"<prefix>-<platform>.jar\"");
         System.out.println("    -properties <resource> Load all properties from resource");
         System.out.println("    -propertyfile <file>   Load all properties from file");
+        System.out.println("    -coordinates <value>   Library identifier (group:id:version).");
         System.out.println("    -D<property>=<value>   Set property to value");
         System.out.println("    -Xcompiler <option>    Pass option directly to compiler");
         System.out.println();
@@ -795,6 +804,9 @@ public class Builder {
                 builder.properties(args[++i]);
             } else if ("-propertyfile".equals(args[i])) {
                 builder.propertyFile(args[++i]);
+            } else if ("-coordinates".equals(args[i])) {
+                String[] parts = args[++i].split(":");
+                builder.coordinates(new Coordinates(parts[0], parts[1], parts[2]));
             } else if (args[i].startsWith("-D")) {
                 builder.property(args[i]);
             } else if ("-Xcompiler".equals(args[i])) {
