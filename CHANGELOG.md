@@ -1,4 +1,5 @@
 
+ * Make sure `Parser` exhausts all combinations of method parameter types even with duplicates ([issue bytedeco/javacv#518](https://github.com/bytedeco/javacv/issues/518))
  * Make `Loader` cache libraries (in `~/.javacpp/cache/` by default) instead of using temporary files ([pull #120](https://github.com/bytedeco/javacpp/pull/120))
  * Have `Parser` annotate the `allocate()` functions and not the actual constructors ([issue bytedeco/javacpp-presets#297](https://github.com/bytedeco/javacpp-presets/issues/297))
  * Fix `Parser` handling of `class`, `struct`, or `union` types with variables declared in the same statement

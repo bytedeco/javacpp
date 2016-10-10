@@ -1741,7 +1741,7 @@ public class Parser {
                 if (type.virtual && context.virtualize) {
                     break;
                 }
-            } else if (found && n / 2 > 0 && n % 2 == 0) {
+            } else if (found && n / 2 > 0 && n % 2 == 0 && n / 2 > Math.max(dcl.infoNumber, dcl.parameters.infoNumber)) {
                 break;
             }
             prevDcl.add(dcl);
