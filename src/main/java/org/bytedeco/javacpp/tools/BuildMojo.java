@@ -194,8 +194,15 @@ public class BuildMojo extends AbstractMojo {
                 @Override public void warn (String s) { log.warn(s);  }
                 @Override public void error(String s) { log.error(s); }
             };
+
+            Coordinates coordinates = new Coordinates(
+                project.getGroupId(),
+                project.getArtifactId(),
+                project.getVersion()
+            );
             Builder builder = new Builder(logger)
                     .classPaths(classPaths)
+                    .includePath(includePath)
                     .outputDirectory(outputDirectory)
                     .outputName(outputName)
                     .compile(compile)
@@ -208,10 +215,12 @@ public class BuildMojo extends AbstractMojo {
                     .properties(propertyKeysAndValues)
                     .classesOrPackages(classOrPackageNames)
                     .environmentVariables(environmentVariables)
-                    .compilerOptions(compilerOptions);
+                    .compilerOptions(compilerOptions)
+                    .coordinates(coordinates);
             Properties properties = builder.properties;
             log.info("Detected platform \"" + Loader.getPlatform() + "\"");
             log.info("Building for platform \"" + properties.get("platform") + "\"");
+            log.info("Coordinates for builder: " + coordinates.canonical());
             String separator = properties.getProperty("platform.path.separator");
             for (String s : merge(includePaths, includePath)) {
                 String v = properties.getProperty("platform.includepath", "");
