@@ -1735,11 +1735,19 @@ public class Generator implements Closeable {
                 if (cast.length() > 0 && !cast.startsWith("(") && !cast.endsWith(")")) {
                     cast = "(" + cast + ")";
                 }
-                out.print(cast + "adapter" + j);
+                String cast2 = adapterInfo.cast2.trim();
+                if (cast2.length() > 0 && !cast2.startsWith("(") && !cast2.endsWith(")")) {
+                    cast2 = "(" + cast2 + ")";
+                }
+                out.print(cast + cast2 + "adapter" + j);
                 j += adapterInfo.argc - 1;
             } else if (FunctionPointer.class.isAssignableFrom(methodInfo.parameterTypes[j])
                     && !(passBy instanceof ByVal || passBy instanceof ByRef)) {
-                out.print(cast + "(ptr" + j + " == NULL ? NULL : " + (passBy instanceof ByPtrPtr ? "&ptr" : "ptr") + j + "->ptr)");
+                if (passBy instanceof ByPtrRef) {
+                    out.print(cast + "(ptr" + j + "->ptr)");
+                } else {
+                    out.print(cast + "(ptr" + j + " == NULL ? NULL : " + (passBy instanceof ByPtrPtr ? "&ptr" : "ptr") + j + "->ptr)");
+                }
             } else if (passBy instanceof ByVal || (passBy instanceof ByRef &&
                     methodInfo.parameterTypes[j] != String.class)) {
                 String nullValue = passBy instanceof ByVal ? ((ByVal)passBy).nullValue()
@@ -2808,7 +2816,7 @@ public class Generator implements Closeable {
     AdapterInformation adapterInformation(boolean out, String valueTypeName, Annotation ... annotations) {
         AdapterInformation adapterInfo = null;
         boolean constant = false;
-        String cast = "";
+        String cast = "", cast2 = "";
         for (Annotation a : annotations) {
             Adapter adapter = a instanceof Adapter ? (Adapter)a : a.annotationType().getAnnotation(Adapter.class);
             if (adapter != null) {
@@ -2840,6 +2848,9 @@ public class Generator implements Closeable {
                             if (c.value().length > 1) {
                                 cast += c.value()[1];
                             }
+                            if (c.value().length > 2) {
+                                cast2 = c.value()[2];
+                            }
                         }
                     } catch (Exception ex) { 
                         logger.warn("Could not invoke the value() method on annotation \"" + a + "\": " + ex);
@@ -2855,10 +2866,14 @@ public class Generator implements Closeable {
                 if (c.value().length > 1) {
                     cast = c.value()[1];
                 }
+                if (c.value().length > 2) {
+                    cast2 = c.value()[2];
+                }
             }
         }
         if (adapterInfo != null) {
             adapterInfo.cast = cast;
+            adapterInfo.cast2 = cast2;
             adapterInfo.constant = constant;
         }
         return out && constant ? null : adapterInfo;

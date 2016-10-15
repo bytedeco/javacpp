@@ -102,6 +102,7 @@ public class InfoMap extends HashMap<String,List<Info>> {
         .put(new Info("instanceof").javaNames("_instanceof"))
         .put(new Info("native").javaNames("_native"))
         .put(new Info("package").javaNames("_package"))
+        .put(new Info("super").javaNames("_super"))
         .put(new Info("synchronized").javaNames("_synchronized"))
         .put(new Info("transient").javaNames("_transient"))
 
@@ -143,6 +144,11 @@ public class InfoMap extends HashMap<String,List<Info>> {
         .put(new Info("operator >>=").javaNames("shiftRightPut"))
         .put(new Info("operator new").javaNames("_new"))
         .put(new Info("operator delete").javaNames("_delete"))
+
+        .put(new Info("getClass").javaNames("_getClass"))
+        .put(new Info("notify").javaNames("_notify"))
+        .put(new Info("notifyAll").javaNames("_notifyAll"))
+        .put(new Info("wait").javaNames("_wait"))
 
         .put(new Info("allocate").javaNames("_allocate"))
         .put(new Info("close").javaNames("_close"))

@@ -992,7 +992,11 @@ public class Parser {
             if (dcl.indirections == 0 && !dcl.reference) {
                 type.annotations += "@ByVal ";
             } else if (dcl.indirections == 0 && dcl.reference) {
-                type.annotations += "@ByRef ";
+                if (type.javaName.contains("@ByPtrPtr ")) {
+                    type.javaName = type.javaName.replace("@ByPtrPtr ", "@ByPtrRef ");
+                } else {
+                    type.annotations += "@ByRef ";
+                }
             } else if (dcl.indirections == 1 && dcl.reference) {
                 type.annotations += "@ByPtrRef ";
             } else if (dcl.indirections == 2 && !dcl.reference && infoNumber >= 0) {
@@ -1140,6 +1144,7 @@ public class Parser {
                 definition.declarator = new Declarator();
                 definition.declarator.parameters = dcl.parameters;
                 dcl.definition = definition;
+                dcl.indirections = indirections2;
                 if (!fieldPointer) {
                     dcl.parameters = null;
                 }
@@ -1567,27 +1572,46 @@ public class Parser {
             dcl.cppName = context.namespace + "::" + dcl.cppName;
         }
         Info info = null;
+        String fullname = dcl.cppName, fullname2 = dcl.cppName;
         if (dcl.parameters != null) {
-            String name = dcl.cppName + "(", separator = "";
+            fullname += "(";
+            fullname2 += "(";
+            String separator = "";
             for (Declarator d : dcl.parameters.declarators) {
                 if (d != null) {
-                    name += separator + d.type.cppName;
-                    for (int i = 0; i < d.indirections; i++) {
-                        name += "*";
+                    String s = d.type.cppName;
+                    String s2 = d.type.cppName;
+                    if (d.type.constValue && !s.startsWith("const ")) {
+                        s = "const " + s;
+                    }
+                    if (d.type.constPointer && !s.endsWith(" const")) {
+                        s = s + " const";
+                    }
+                    if (d.indirections > 0) {
+                        for (int i = 0; i < d.indirections; i++) {
+                            s += "*";
+                            s2 += "*";
+                        }
                     }
                     if (d.reference) {
-                        name += "&";
+                        s += "&";
+                        s2 += "&";
                     }
+                    fullname += separator + s;
+                    fullname2 += separator + s2;
                     separator = ", ";
                 }
             }
-            info = infoMap.getFirst(name += ")");
-            if (info == null && !type.constructor && !type.destructor && !type.operator) {
-                infoMap.put(new Info(name));
+            info = infoMap.getFirst(fullname += ")");
+            if (info == null) {
+                info = infoMap.getFirst(fullname2 += ")");
             }
         }
         if (info == null) {
             info = infoMap.getFirst(dcl.cppName);
+            if (!type.constructor && !type.destructor && !type.operator) {
+                infoMap.put(info != null ? new Info(info).cppNames(fullname) : new Info(fullname));
+            }
         }
         String localName = dcl.cppName;
         if (localName.startsWith(context.namespace + "::")) {
@@ -2001,7 +2025,7 @@ public class Parser {
                             type = "double"; cat = ""; break;
                         } else if (token.match(Token.INTEGER) && token.value.endsWith("L")) {
                             type = "long"; cat = ""; break;
-                        } else if ((prevToken.match(Token.IDENTIFIER, '>') && token.match('(')) || token.match('{', '}')) {
+                        } else if ((prevToken.match(Token.IDENTIFIER, '>') && token.match(Token.IDENTIFIER, '(')) || token.match('{', '}')) {
                             translate = false;
                         }
                         prevToken = token;
@@ -2077,24 +2101,28 @@ public class Parser {
         tokens.next();
 
         String typeName = dcl.type.cppName, defName = dcl.cppName;
-        if (context.namespace != null) {
+        int namespace = defName.lastIndexOf("::");
+        if (context.namespace != null && namespace < 0) {
             defName = context.namespace + "::" + defName;
         }
+        Info info = infoMap.getFirst(defName);
         if (dcl.definition != null) {
             // a function pointer or something
             decl = dcl.definition;
             if (dcl.javaName.length() > 0 && context.javaName != null) {
                 dcl.javaName = context.javaName + "." + dcl.javaName;
             }
-            infoMap.put(new Info(defName).valueTypes(dcl.javaName)
-                    .pointerTypes((dcl.indirections > 0 ? "@ByPtrPtr " : "") + dcl.javaName));
+            if (info == null || !info.skip) {
+                info = info != null ? new Info(info).cppNames(defName) : new Info(defName);
+                infoMap.put(info.valueTypes(dcl.javaName)
+                        .pointerTypes((dcl.indirections > 0 ? "@ByPtrPtr " : "") + dcl.javaName));
+            }
         } else if (typeName.equals("void")) {
             // some opaque data type
-            Info info = infoMap.getFirst(defName);
             if (info == null || !info.skip) {
                 if (dcl.indirections > 0) {
                     decl.text += "@Namespace @Name(\"void\") ";
-                    info = info != null ? new Info(info) : new Info(defName);
+                    info = info != null ? new Info(info).cppNames(defName) : new Info(defName);
                     infoMap.put(info.valueTypes(dcl.javaName).pointerTypes("@ByPtrPtr " + dcl.javaName));
                 } else if (context.namespace != null && context.javaName == null) {
                     decl.text += "@Namespace(\"" + context.namespace + "\") ";
@@ -2108,7 +2136,7 @@ public class Parser {
             }
         } else {
             // point back to original type
-            Info info = infoMap.getFirst(typeName);
+            info = infoMap.getFirst(typeName);
             if (info == null || !info.skip) {
                 info = info != null ? new Info(info).cppNames(defName) : new Info(defName);
                 if (info.cppTypes == null && info.annotations != null) {
@@ -2143,6 +2171,9 @@ public class Parser {
             }
         }
 
+        if (info != null && info.javaText != null) {
+            decl.text = info.javaText;
+        }
         String comment = commentAfter();
         decl.text = comment + decl.text;
         declList.spacing = spacing;

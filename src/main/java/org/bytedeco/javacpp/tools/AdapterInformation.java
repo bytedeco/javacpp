@@ -29,6 +29,6 @@ package org.bytedeco.javacpp.tools;
 class AdapterInformation {
     String name;
     int argc;
-    String cast;
+    String cast, cast2;
     boolean constant;
 }
