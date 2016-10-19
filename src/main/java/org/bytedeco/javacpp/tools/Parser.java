@@ -2675,12 +2675,12 @@ public class Parser {
                 enumSpacing = enumSpacing.substring(newline + 1);
             }
             decl.text += enumSpacing + enumerators + token.expect(';').spacing + ";";
+            if (longenum) {
+                decl.text = decl.text.replace(" " + javaType, " long");
+                cppType = "long long";
+                javaType = "long";
+            }
             if (name.length() > 0) {
-                if (longenum) {
-                    decl.text = decl.text.replace(" " + javaType, " long");
-                    cppType = "long long";
-                    javaType = "long";
-                }
                 Info info2 = infoMap.getFirst(cppType);
                 infoMap.put(new Info(info2).cast().cppNames(name));
             }
