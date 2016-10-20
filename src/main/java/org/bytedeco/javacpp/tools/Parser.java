@@ -1402,6 +1402,7 @@ public class Parser {
     }
 
     Parameters parameters(Context context, int infoNumber, boolean useDefaults) throws ParserException {
+        int backIndex = tokens.index;
         if (!tokens.get().match('(')) {
             return null;
         }
@@ -1474,8 +1475,16 @@ public class Parser {
                     if (!defaultValue.startsWith(dcl.type.cppName)) {
                         defaultValue = dcl.type.cppName + "(" + defaultValue + ")";
                     }
-                    defaultValue = defaultValue.replaceAll("\"", "\\\\\"").replaceAll("\n(\\s*)", "\"\n$1 + \"");
-                    s = s.substring(0, n + 6) + "(nullValue = \"" + defaultValue + "\")" + s.substring(n + 6);
+                    Info info = infoMap.getFirst(defaultValue);
+                    if (info != null && info.skip) {
+                        if (useDefaults) {
+                            tokens.index = backIndex;
+                            return parameters(context, infoNumber, false);
+                        }
+                    } else {
+                        defaultValue = defaultValue.replaceAll("\"", "\\\\\"").replaceAll("\n(\\s*)", "\"\n$1 + \"");
+                        s = s.substring(0, n + 6) + "(nullValue = \"" + defaultValue + "\")" + s.substring(n + 6);
+                    }
                 }
                 dcl.type.annotations = s;
             }
@@ -2237,7 +2246,7 @@ public class Parser {
         Declaration decl = new Declaration();
         decl.text = type.annotations;
         String name = type.javaName;
-        boolean anonymous = !typedef && type.cppName.length() == 0, derivedClass = false;
+        boolean anonymous = !typedef && type.cppName.length() == 0, derivedClass = false, skipBase = false;
         if (type.cppName.length() > 0 && tokens.get().match(':')) {
             derivedClass = true;
             for (Token token = tokens.next(); !token.match(Token.EOF); token = tokens.next()) {
@@ -2249,6 +2258,10 @@ public class Parser {
                     tokens.next();
                 }
                 Type t = type(context);
+                Info info = infoMap.getFirst(t.cppName);
+                if (info != null && info.skip) {
+                    skipBase = true;
+                }
                 if (accessible) {
                     baseClasses.add(t);
                 }
@@ -2306,7 +2319,7 @@ public class Parser {
             originalName = context.namespace + "::" + originalName;
         }
         Info info = infoMap.getFirst(type.cppName);
-        if (info != null && info.skip) {
+        if (((info == null || info.base == null) && skipBase) || (info != null && info.skip)) {
             decl.text = "";
             declList.add(decl);
             return true;

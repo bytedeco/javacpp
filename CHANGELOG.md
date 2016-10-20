@@ -1,4 +1,5 @@
 
+ * Enhance `Parser` to let users skip the default values of arguments, as well as classes when one base class is skipped
  * Fix `Parser` not properly mapping the type of `long` anonymous enums
  * Take into account `const` on function parameters when looking up in `InfoMap`, and fix some incorrectly translated macros into variables
  * Add to `InfoMap.defaults` more names that are reserved in Java, but not in C++
