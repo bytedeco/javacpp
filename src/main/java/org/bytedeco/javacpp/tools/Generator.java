@@ -2560,9 +2560,9 @@ public class Generator implements Closeable {
             } else if (methodName.startsWith("call") || methodName.startsWith("apply")) {
                 // found a function caller method and/or callback method
                 functionMethods[0] = methods[i];
-            } else if (methodName.startsWith("get")) {
+            } else if (methodName.startsWith("get") && Modifier.isNative(modifiers)) {
                 functionMethods[1] = methods[i];
-            } else if (methodName.startsWith("put")) {
+            } else if (methodName.startsWith("put") && Modifier.isNative(modifiers)) {
                 functionMethods[2] = methods[i];
             }
         }
