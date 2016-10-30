@@ -407,6 +407,15 @@ public class Parser {
         for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.get()) {
             if (token.match("::")) {
                 type.cppName += token;
+            } else if (token.match(Token.DECLTYPE)) {
+                type.cppName += token.toString() + tokens.next().expect('(');
+                int count = 0;
+                for (token = tokens.next(); !token.match(')', Token.EOF); token = tokens.next()) {
+                    type.cppName += token;
+                }
+                type.cppName += token;
+                tokens.next();
+                break;
             } else if (token.match('<')) {
                 type.arguments = templateArguments(context);
                 type.cppName += "<";
@@ -2829,7 +2838,8 @@ public class Parser {
                     tokens.index = startIndex;
                 }
 
-                if (!macro(ctx, declList) && !extern(ctx, declList) && !namespace(ctx, declList)
+                if (!tokens.get().match(';')
+                        && !macro(ctx, declList) && !extern(ctx, declList) && !namespace(ctx, declList)
                         && !enumeration(ctx, declList) && !group(ctx, declList) && !typedef(ctx, declList)
                         && !using(ctx, declList) && !function(ctx, declList) && !variable(ctx, declList)) {
                     spacing = tokens.get().spacing;

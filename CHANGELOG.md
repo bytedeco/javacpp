@@ -1,4 +1,5 @@
 
+ * Add support for `decltype()` declarations ([issue #135](https://github.com/bytedeco/javacpp/issues/135))
  * Fix `Generator` when a `FunctionPointer` contains methods that start with "get" or "put" ([issue #137](https://github.com/bytedeco/javacpp/issues/137))
  * Enhance `Parser` to let users skip the default values of arguments, as well as classes when one base class is skipped
  * Fix `Parser` not properly mapping the type of `long` anonymous enums
