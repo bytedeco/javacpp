@@ -800,9 +800,11 @@ public class Generator implements Closeable {
         }
         if (!functions.isEmpty() || !virtualFunctions.isEmpty()) {
             out.println("static JavaCPP_noinline void JavaCPP_detach(bool detach) {");
+            out.println("#ifndef NO_JNI_DETACH_THREAD");
             out.println("    if (detach && JavaCPP_vm->DetachCurrentThread() != JNI_OK) {");
             out.println("        JavaCPP_log(\"Could not detach the JavaVM from the current thread.\");");
             out.println("    }");
+            out.println("#endif");
             out.println("}");
             out.println();
             out.println("static JavaCPP_noinline bool JavaCPP_getEnv(JNIEnv** env) {");

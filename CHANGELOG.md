@@ -1,4 +1,6 @@
 
+ * Allow users to define `NO_JNI_DETACH_THREAD` to prevent callbacks from reinitializing threads ([issue #143](https://github.com/bytedeco/javacpp/issues/143))
+
 ### November 13, 2016 version 1.2.5
  * Add support for `decltype()` declarations to the `Parser` ([issue #135](https://github.com/bytedeco/javacpp/issues/135))
  * Fix `Generator` when a `FunctionPointer` contains methods that start with "get" or "put" ([issue #137](https://github.com/bytedeco/javacpp/issues/137))
