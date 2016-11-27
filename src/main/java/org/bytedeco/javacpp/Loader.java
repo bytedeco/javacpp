@@ -611,12 +611,12 @@ public class Loader {
             return new URL[0];
         }
         String[] split = libnameversion.split("#");
-        String libnameversion2 = libnameversion = split[0];
+        String libnameversion2 = split[0];
         if (split.length > 1) {
             libnameversion2 = split[1];
         }
-        String[] s = libnameversion.split("@");
-        String[] s2 = libnameversion2.split("@");
+        String[] s = split[0].split("@");
+        String[] s2 = (split.length > 1 ? split[1] : split[0]).split("@");
         String libname = s[0];
         String libname2 = s2[0];
         String version = s.length > 1 ? s[s.length-1] : "";
@@ -718,9 +718,14 @@ public class Loader {
         if (!isLoadLibraries()) {
             return null;
         }
+        String[] split = libnameversion.split("#");
+        String libnameversion2 = split[0];
+        if (split.length > 1) {
+            libnameversion2 = split[1];
+        }
 
         // If we do not already have the native library file ...
-        String filename = loadedLibraries.get(libnameversion);
+        String filename = loadedLibraries.get(libnameversion2);
         if (filename != null) {
             return filename;
         }
@@ -763,12 +768,12 @@ public class Loader {
                         if (logger.isDebugEnabled()) {
                             logger.debug("Loading " + filename);
                         }
-                        loadedLibraries.put(libnameversion, filename);
+                        loadedLibraries.put(libnameversion2, filename);
                         System.load(filename);
                         return filename;
                     } catch (UnsatisfiedLinkError e) {
                         loadError = e;
-                        loadedLibraries.remove(libnameversion);
+                        loadedLibraries.remove(libnameversion2);
                         if (logger.isDebugEnabled()) {
                             logger.debug("Failed to load " + filename + ": " + e);
                         }
@@ -780,11 +785,11 @@ public class Loader {
             if (logger.isDebugEnabled()) {
                 logger.debug("Loading library " + libname);
             }
-            loadedLibraries.put(libnameversion, libname);
+            loadedLibraries.put(libnameversion2, libname);
             System.loadLibrary(libname);
             return libname;
         } catch (UnsatisfiedLinkError e) {
-            loadedLibraries.remove(libnameversion);
+            loadedLibraries.remove(libnameversion2);
             if (loadError != null && e.getCause() == null) {
                 e.initCause(loadError);
             }
@@ -793,7 +798,7 @@ public class Loader {
             }
             throw e;
         } catch (IOException | URISyntaxException ex) {
-            loadedLibraries.remove(libnameversion);
+            loadedLibraries.remove(libnameversion2);
             if (loadError != null && ex.getCause() == null) {
                 ex.initCause(loadError);
             }
