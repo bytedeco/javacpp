@@ -34,6 +34,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -307,22 +310,28 @@ public class Loader {
     public static File cacheResource(Class cls, String name) throws IOException {
         return cacheResource(cls.getResource(name));
     }
+    /** Returns {@code cacheResource(resourceUrl, null)} */
+    public static File cacheResource(URL resourceURL) throws IOException {
+        return cacheResource(resourceURL, null);
+    }
     /**
      * Extracts a resource, if the size or last modified timestamp differs from what is in cache,
-     * and returns the cached {@link File}.
+     * and returns the cached {@link File}. If target is not null, creates instead a symbolic link
+     * where the resource would have been extracted.
      *
      * @param resourceURL the URL of the resource to extract and cache
+     * @param target of the symbolic link to create (must be null to have the resource actually extracted)
      * @return the File object representing the extracted file from the cache
      * @throws IOException if fails to extract resource properly
      * @see #extractResource(URL, File, String, String)
      * @see #cacheDir
      */
-    public static File cacheResource(URL resourceURL) throws IOException {
+    public static File cacheResource(URL resourceURL, String target) throws IOException {
         // Find appropriate subdirectory in cache for the resource ...
         File urlFile = new File(resourceURL.getPath());
         String name = urlFile.getName();
         long size, timestamp;
-        String cacheSubdir = getCacheDir() + File.separator;
+        File cacheSubdir = getCacheDir().getCanonicalFile();
         URLConnection urlConnection = resourceURL.openConnection();
         if (urlConnection instanceof JarURLConnection) {
             JarFile jarFile = ((JarURLConnection)urlConnection).getJarFile();
@@ -331,11 +340,11 @@ public class Loader {
             File jarEntryFile = new File(jarEntry.getName());
             size = jarEntry.getSize();
             timestamp = jarEntry.getTime();
-            cacheSubdir += jarFileFile.getName() + File.separator + jarEntryFile.getParent();
+            cacheSubdir = new File(cacheSubdir, jarFileFile.getName() + File.separator + jarEntryFile.getParent());
         } else {
             size = urlFile.length();
             timestamp = urlFile.lastModified();
-            cacheSubdir += name;
+            cacheSubdir = new File(cacheSubdir, name);
         }
         if (resourceURL.getRef() != null) {
             // ... get the URL fragment to let users rename library files ...
@@ -343,11 +352,29 @@ public class Loader {
         }
         // ... then check if it has not already been extracted, and if not ...
         File file = new File(cacheSubdir, name);
-        if (!file.exists() || file.length() != size || file.lastModified() != timestamp) {
+        if (target != null && target.length() > 0) {
+            // ... create symbolic link to already extracted library or ...
+            try {
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Creating symbolic link to " + target);
+                }
+                Path path = file.toPath(), targetPath = Paths.get(target);
+                if ((!file.exists() || !Files.isSymbolicLink(path))
+                        && targetPath.isAbsolute() && !targetPath.equals(path)) {
+                    file.delete();
+                    Files.createSymbolicLink(path, targetPath);
+                }
+            } catch (IOException e) {
+                // ... (probably an unsupported operation on Windows, but DLLs never need links) ...
+                return null;
+            }
+        } else if (!file.exists() || file.length() != size || file.lastModified() != timestamp
+                    || !cacheSubdir.equals(file.getCanonicalFile().getParentFile())) {
             // ... then extract it from our resources ...
             if (logger.isDebugEnabled()) {
                 logger.debug("Extracting " + resourceURL);
             }
+            file.delete();
             extractResource(resourceURL, file, null, null);
             file.setLastModified(timestamp);
         } else while (System.currentTimeMillis() - file.lastModified() >= 0
@@ -611,10 +638,6 @@ public class Loader {
             return new URL[0];
         }
         String[] split = libnameversion.split("#");
-        String libnameversion2 = split[0];
-        if (split.length > 1) {
-            libnameversion2 = split[1];
-        }
         String[] s = split[0].split("@");
         String[] s2 = (split.length > 1 ? split[1] : split[0]).split("@");
         String libname = s[0];
@@ -623,15 +646,6 @@ public class Loader {
         String version2 = s2.length > 1 ? s2[s2.length-1] : "";
 
         // If we do not already have the native library file ...
-        String filename = loadedLibraries.get(libnameversion2);
-        if (filename != null) {
-            try {
-                return new URL[] { new File(filename).toURI().toURL() };
-            } catch (IOException ex) {
-                return new URL[] { };
-            }
-        }
-
         String subdir = properties.getProperty("platform") + '/';
         String prefix = properties.getProperty("platform.library.prefix", "");
         String suffix = properties.getProperty("platform.library.suffix", "");
@@ -726,10 +740,6 @@ public class Loader {
 
         // If we do not already have the native library file ...
         String filename = loadedLibraries.get(libnameversion2);
-        if (filename != null) {
-            return filename;
-        }
-
         UnsatisfiedLinkError loadError = null;
         try {
             for (URL url : urls) {
@@ -743,15 +753,15 @@ public class Loader {
                         file = new File(uri.getPath());
                         if (file.exists()) {
                             // ... else preload it as some libraries do not like being renamed ...
-                            filename = file.getAbsolutePath();
+                            String filename2 = file.getAbsolutePath();
                             if (logger.isDebugEnabled()) {
-                                logger.debug("Preloading " + filename);
+                                logger.debug("Preloading " + filename2);
                             }
                             try {
-                                System.load(filename);
+                                System.load(filename2);
                             } catch (UnsatisfiedLinkError e) {
                                 if (logger.isDebugEnabled()) {
-                                    logger.debug("Failed to preload " + filename + ": " + e);
+                                    logger.debug("Failed to preload " + filename2 + ": " + e);
                                 }
                             }
                         }
@@ -759,23 +769,25 @@ public class Loader {
                         /// ... or give up and ...
                     }
                     // ... extract it from resources into the cache, if necessary ...
-                    file = cacheResource(url);
+                    file = cacheResource(url, filename);
                 }
-                if (file != null && file.exists()) {
-                    filename = file.getAbsolutePath();
+                if (filename != null) {
+                    return filename;
+                } else if (file != null && file.exists()) {
+                    String filename2 = file.getAbsolutePath();
                     try {
                         // ... and load it!
                         if (logger.isDebugEnabled()) {
-                            logger.debug("Loading " + filename);
+                            logger.debug("Loading " + filename2);
                         }
-                        loadedLibraries.put(libnameversion2, filename);
-                        System.load(filename);
-                        return filename;
+                        loadedLibraries.put(libnameversion2, filename2);
+                        System.load(filename2);
+                        return filename2;
                     } catch (UnsatisfiedLinkError e) {
                         loadError = e;
                         loadedLibraries.remove(libnameversion2);
                         if (logger.isDebugEnabled()) {
-                            logger.debug("Failed to load " + filename + ": " + e);
+                            logger.debug("Failed to load " + filename2 + ": " + e);
                         }
                     }
                 }
