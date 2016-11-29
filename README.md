@@ -17,8 +17,8 @@ Please feel free to ask questions on [the mailing list](http://groups.google.com
 
 Downloads
 ---------
- * JavaCPP 1.2.6 binary archive  [javacpp-1.2.6-bin.zip](http://search.maven.org/remotecontent?filepath=org/bytedeco/javacpp/1.2.6/javacpp-1.2.6-bin.zip) (316 KB)
- * JavaCPP 1.2.6 source archive  [javacpp-1.2.6-src.zip](http://search.maven.org/remotecontent?filepath=org/bytedeco/javacpp/1.2.6/javacpp-1.2.6-src.zip) (295 KB)
+ * JavaCPP 1.2.7 binary archive  [javacpp-1.2.7-bin.zip](http://search.maven.org/remotecontent?filepath=org/bytedeco/javacpp/1.2.7/javacpp-1.2.7-bin.zip) (316 KB)
+ * JavaCPP 1.2.7 source archive  [javacpp-1.2.7-src.zip](http://search.maven.org/remotecontent?filepath=org/bytedeco/javacpp/1.2.7/javacpp-1.2.7-src.zip) (295 KB)
 
 We can also have everything downloaded and installed automatically with:
 
@@ -27,7 +27,7 @@ We can also have everything downloaded and installed automatically with:
   <dependency>
     <groupId>org.bytedeco</groupId>
     <artifactId>javacpp</artifactId>
-    <version>1.2.6</version>
+    <version>1.2.7</version>
   </dependency>
 ```
 
@@ -37,13 +37,13 @@ We can also have everything downloaded and installed automatically with:
     mavenCentral()
   }
   dependencies {
-    compile group: 'org.bytedeco', name: 'javacpp', version: '1.2.6'
+    compile group: 'org.bytedeco', name: 'javacpp', version: '1.2.7'
   }
 ```
 
  * sbt (inside the `build.sbt` file)
 ```scala
-  libraryDependencies += "org.bytedeco" % "javacpp" % "1.2.6"
+  libraryDependencies += "org.bytedeco" % "javacpp" % "1.2.7"
 ```
 
 Another option available for Scala users is [sbt-javacpp](https://github.com/bytedeco/sbt-javacpp).

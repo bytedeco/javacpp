@@ -1,4 +1,7 @@
 
+### November 29, 2016 version 1.2.7
+ * Fix `Loader` errors that could occur due to recent changes
+
 ### November 28, 2016 version 1.2.6
  * Improve `Loader` handling of duplicate libraries found in different JAR files using symbolic links (useful for MKL, etc)
  * Prevent `Loader` from overwriting previously extracted and renamed libraries ([issue deeplearning4j/nd4j#1460](https://github.com/deeplearning4j/nd4j/issues/1460))

@@ -792,14 +792,18 @@ public class Loader {
                     }
                 }
             }
-            // ... or as last resort, try to load it via the system.
-            String libname = libnameversion.split("#")[0].split("@")[0];
-            if (logger.isDebugEnabled()) {
-                logger.debug("Loading library " + libname);
+            if (filename != null) {
+                return filename;
+            } else {
+                // ... or as last resort, try to load it via the system.
+                String libname = libnameversion.split("#")[0].split("@")[0];
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Loading library " + libname);
+                }
+                loadedLibraries.put(libnameversion2, libname);
+                System.loadLibrary(libname);
+                return libname;
             }
-            loadedLibraries.put(libnameversion2, libname);
-            System.loadLibrary(libname);
-            return libname;
         } catch (UnsatisfiedLinkError e) {
             loadedLibraries.remove(libnameversion2);
             if (loadError != null && e.getCause() == null) {
