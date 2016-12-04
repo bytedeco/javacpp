@@ -328,6 +328,20 @@ public class Pointer implements AutoCloseable {
      * by a call to {@code Thread.sleep(100)}. */
     static final int maxRetries;
 
+    static String formatBytes(long bytes) {
+        if (bytes < 1024) {
+            return bytes + "";
+        } else if ((bytes /= 1024) < 1024) {
+            return bytes + "K";
+        } else if ((bytes /= 1024) < 1024) {
+            return bytes + "M";
+        } else if ((bytes /= 1024) < 1024) {
+            return bytes + "G";
+        } else {
+            return (bytes / 1024) + "T";
+        }
+    }
+
     static long parseBytes(String string) throws NumberFormatException {
         int i = 0;
         while (i < string.length()) {
@@ -337,7 +351,7 @@ public class Pointer implements AutoCloseable {
             i++;
         }
         long size = Long.parseLong(string.substring(0, i));
-        switch (string.substring(i).toLowerCase()) {
+        switch (string.substring(i).trim().toLowerCase()) {
             case "t": case "tb": size *= 1024; /* no break */
             case "g": case "gb": size *= 1024; /* no break */
             case "m": case "mb": size *= 1024; /* no break */
@@ -540,12 +554,12 @@ public class Pointer implements AutoCloseable {
                 }
                 if (maxBytes > 0 && DeallocatorReference.totalBytes + r.bytes > maxBytes) {
                     deallocate();
-                    throw new OutOfMemoryError("Cannot allocate " + DeallocatorReference.totalBytes
-                                                                  + " + " + r.bytes + " bytes (> Pointer.maxBytes)");
+                    throw new OutOfMemoryError("Too much memory has already been allocated: totalBytes = "
+                            + formatBytes(DeallocatorReference.totalBytes) + " + " + formatBytes(r.bytes) + " > maxBytes = " + formatBytes(maxBytes));
                 } else if (maxPhysicalBytes > 0 && lastPhysicalBytes > maxPhysicalBytes) {
                     deallocate();
-                    throw new OutOfMemoryError("Physical memory usage is too high ("
-                                               + lastPhysicalBytes + " > Pointer.maxPhysicalBytes)");
+                    throw new OutOfMemoryError("Physical memory usage is too high: physicalBytes = "
+                            + formatBytes(lastPhysicalBytes) + " > maxPhysicalBytes = " + formatBytes(maxPhysicalBytes));
                 }
                 if (logger.isDebugEnabled()) {
                     logger.debug("Registering " + this);
@@ -656,6 +670,11 @@ public class Pointer implements AutoCloseable {
     public Buffer asBuffer() {
         return asByteBuffer();
     }
+
+    public static native Pointer malloc(long size);
+    public static native Pointer calloc(long n, long size);
+    public static native Pointer realloc(Pointer p, long size);
+    public static native void free(Pointer p);
 
     public static native Pointer memchr(Pointer p, int ch, long size);
     public static native int memcmp(Pointer p1, Pointer p2, long size);

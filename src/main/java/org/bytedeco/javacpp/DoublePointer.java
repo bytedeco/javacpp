@@ -72,8 +72,8 @@ public class DoublePointer extends Pointer {
         } catch (UnsatisfiedLinkError e) {
             throw new RuntimeException("No native JavaCPP library in memory. (Has Loader.load() been called?)", e);
         } catch (OutOfMemoryError e) {
-            OutOfMemoryError e2 = new OutOfMemoryError("Cannot allocate new DoublePointer(" + size + "), "
-                    + "totalBytes = " + totalBytes() + ", physicalBytes = " + physicalBytes());
+            OutOfMemoryError e2 = new OutOfMemoryError("Cannot allocate new DoublePointer(" + size + "): "
+                    + "totalBytes = " + formatBytes(totalBytes()) + ", physicalBytes = " + formatBytes(physicalBytes()));
             e2.initCause(e);
             throw e2;
         }
