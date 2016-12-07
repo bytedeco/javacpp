@@ -1,4 +1,5 @@
 
+### December 7, 2016 version 1.3
  * Print memory sizes in a human-readable format with `Pointer.formatBytes()`
  * Map standard `malloc()`, `calloc()`, `realloc()`, and `free()` functions ([issue #136](https://github.com/bytedeco/javacpp/issues/136))
 

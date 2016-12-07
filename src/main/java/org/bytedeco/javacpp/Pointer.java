@@ -554,7 +554,7 @@ public class Pointer implements AutoCloseable {
                 }
                 if (maxBytes > 0 && DeallocatorReference.totalBytes + r.bytes > maxBytes) {
                     deallocate();
-                    throw new OutOfMemoryError("Too much memory has already been allocated: totalBytes = "
+                    throw new OutOfMemoryError("Failed to allocate memory within limits: totalBytes = "
                             + formatBytes(DeallocatorReference.totalBytes) + " + " + formatBytes(r.bytes) + " > maxBytes = " + formatBytes(maxBytes));
                 } else if (maxPhysicalBytes > 0 && lastPhysicalBytes > maxPhysicalBytes) {
                     deallocate();
