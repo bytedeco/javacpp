@@ -1286,8 +1286,8 @@ public class Generator implements Closeable {
             if (callbackAllocators[i]) {
                 callbackAllocator(cls, callbackName);
                 continue;
-            } else if (!Modifier.isStatic(methodInfo.modifiers) && !methodInfo.allocator &&
-                    !methodInfo.arrayAllocator && !methodInfo.deallocator) {
+            } else if (!Modifier.isStatic(methodInfo.modifiers) && Pointer.class.isAssignableFrom(cls)
+                    && !methodInfo.allocator && !methodInfo.arrayAllocator && !methodInfo.deallocator) {
                 // get our "this" pointer
                 String[] typeName = cppTypeName(cls);
                 if ("void*".equals(typeName[0]) && !cls.isAnnotationPresent(Opaque.class)) {
@@ -1617,7 +1617,7 @@ public class Generator implements Closeable {
                 prefix = methodInfo.valueGetter || methodInfo.memberGetter ? "" : " = ";
                 suffix = "";
             }
-            if (Modifier.isStatic(methodInfo.modifiers)) {
+            if (Modifier.isStatic(methodInfo.modifiers) || !Pointer.class.isAssignableFrom(methodInfo.cls)) {
                 out.print(cppScopeName(methodInfo));
             } else if (methodInfo.memberGetter || methodInfo.memberSetter) {
                 if (index) {
@@ -1666,7 +1666,7 @@ public class Generator implements Closeable {
                         suffix = "]";
                     }
                 }
-            } else if (Modifier.isStatic(methodInfo.modifiers)) {
+            } else if (Modifier.isStatic(methodInfo.modifiers) || !Pointer.class.isAssignableFrom(methodInfo.cls)) {
                 out.print(cppScopeName(methodInfo));
             } else {
                 String name = methodInfo.memberName[0];

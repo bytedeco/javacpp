@@ -1006,18 +1006,21 @@ public class Parser {
                 } else {
                     type.annotations += "@ByRef ";
                 }
-            } else if (dcl.indirections == 1 && dcl.reference) {
+            } else if (!type.javaName.contains("@ByPtrRef ") && dcl.indirections == 1 && dcl.reference) {
                 type.annotations += "@ByPtrRef ";
-            } else if (dcl.indirections == 2 && !dcl.reference && infoNumber >= 0) {
+            } else if (!type.javaName.contains("@ByPtrPtr ") && dcl.indirections == 2 && !dcl.reference
+                    && (infoNumber >= 0 || type.javaName.equals("PointerPointer"))) {
                 type.annotations += "@ByPtrPtr ";
                 needCast |= type.cppName.equals("void");
             } else if (dcl.indirections >= 2) {
                 dcl.infoNumber += infoLength;
                 needCast = true;
-                type.javaName = "PointerPointer";
-                if (dcl.reference) {
+                if (type.javaName.contains("@ByPtrRef ") || dcl.reference) {
                     type.annotations += "@ByRef ";
+                } else if (type.javaName.contains("@ByPtrPtr ") || dcl.indirections >= 3) {
+                    type.annotations += "@ByPtrPtr ";
                 }
+                type.javaName = "PointerPointer";
             }
 
             if (!needCast && !type.javaName.contains("@Cast")) {

@@ -40,6 +40,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -354,18 +355,21 @@ public class Loader {
         File file = new File(cacheSubdir, name);
         if (target != null && target.length() > 0) {
             // ... create symbolic link to already extracted library or ...
+            Path path = file.toPath(), targetPath = Paths.get(target);
             try {
-                if (logger.isDebugEnabled()) {
-                    logger.debug("Creating symbolic link to " + target);
-                }
-                Path path = file.toPath(), targetPath = Paths.get(target);
-                if ((!file.exists() || !Files.isSymbolicLink(path))
+                if ((!file.exists() || !Files.isSymbolicLink(path) || !Files.readSymbolicLink(path).equals(targetPath))
                         && targetPath.isAbsolute() && !targetPath.equals(path)) {
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("Creating symbolic link " + path);
+                    }
                     file.delete();
                     Files.createSymbolicLink(path, targetPath);
                 }
-            } catch (IOException e) {
+            } catch (IOException | UnsupportedOperationException e) {
                 // ... (probably an unsupported operation on Windows, but DLLs never need links) ...
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Failed to create symbolic link " + path + ": " + e);
+                }
                 return null;
             }
         } else if (!file.exists() || file.length() != size || file.lastModified() != timestamp
@@ -426,7 +430,37 @@ public class Loader {
      */
     public static File extractResource(URL resourceURL, File directoryOrFile,
             String prefix, String suffix) throws IOException {
-        InputStream is = resourceURL != null ? resourceURL.openStream() : null;
+        URLConnection urlConnection = resourceURL != null ? resourceURL.openConnection() : null;
+        if (urlConnection instanceof JarURLConnection) {
+            JarFile jarFile = ((JarURLConnection)urlConnection).getJarFile();
+            JarEntry jarEntry = ((JarURLConnection)urlConnection).getJarEntry();
+            String jarFileName = jarFile.getName();
+            String jarEntryName = jarEntry.getName();
+            if (!jarEntryName.endsWith("/")) {
+                jarEntryName += "/";
+            }
+            if (jarEntry.isDirectory() || jarFile.getJarEntry(jarEntryName) != null) {
+                // Extract all files in directory of JAR file
+                Enumeration<JarEntry> entries = jarFile.entries();
+                while (entries.hasMoreElements()) {
+                    JarEntry entry = entries.nextElement();
+                    String entryName = entry.getName();
+                    if (entryName.startsWith(jarEntryName)) {
+                        File file = new File(directoryOrFile, entryName.substring(jarEntryName.length()));
+                        if (entry.isDirectory()) {
+                            file.mkdirs();
+                        } else {
+                            String s = resourceURL.toString();
+                            URL u = new URL(s.substring(0, s.indexOf("!/") + 2) + entryName);
+                            file = extractResource(u, file, prefix, suffix);
+                        }
+                        file.setLastModified(entry.getTime());
+                    }
+                }
+                return directoryOrFile;
+            }
+        }
+        InputStream is = urlConnection != null ? urlConnection.getInputStream() : null;
         OutputStream os = null;
         if (is == null) {
             return null;
@@ -483,15 +517,23 @@ public class Loader {
     static Map<String,String> loadedLibraries = Collections.synchronizedMap(new HashMap<String,String>());
 
     /** Creates and returns {@code System.getProperty("org.bytedeco.javacpp.cachedir")} or {@code ~/.javacpp/cache/} when not set. */
-    public static File getCacheDir() {
+    public static File getCacheDir() throws IOException {
         if (cacheDir == null) {
-            String dirName = System.getProperty("org.bytedeco.javacpp.cachedir", System.getProperty("user.home") + "/.javacpp/cache/");
-            if (dirName != null) {
-                File f = new File(dirName);
-                if (f.exists() || f.mkdirs()) {
-                    cacheDir = f;
+            String[] dirNames = {System.getProperty("org.bytedeco.javacpp.cachedir"),
+                                 System.getProperty("user.home") + "/.javacpp/cache/",
+                                 System.getProperty("java.io.tmpdir") + "/.javacpp-" + System.getProperty("user.name") + "/cache/"};
+            for (String dirName : dirNames) {
+                if (dirName != null) {
+                    File f = new File(dirName);
+                    if (f.exists() || f.mkdirs()) {
+                        cacheDir = f;
+                        break;
+                    }
                 }
             }
+        }
+        if (cacheDir == null) {
+            throw new IOException("Could not create the cache: Set the \"org.bytedeco.javacpp.cachedir\" system property.");
         }
         return cacheDir;
     }
@@ -593,6 +635,13 @@ public class Loader {
             }
         }
 
+        String cacheDir = null;
+        try {
+            cacheDir = getCacheDir().getCanonicalPath();
+        } catch (IOException e) {
+            // no cache dir, no worries
+        }
+
         // Preload native libraries desired by our class
         List<String> preloads = new ArrayList<String>();
         preloads.addAll(p.get("platform.preload"));
@@ -601,7 +650,10 @@ public class Loader {
         for (String preload : preloads) {
             try {
                 URL[] urls = findLibrary(cls, p, preload, pathsFirst);
-                loadLibrary(urls, preload);
+                String filename = loadLibrary(urls, preload);
+                if (cacheDir != null && filename.startsWith(cacheDir)) {
+                    createLibraryLink(filename, p, preload);
+                }
             } catch (UnsatisfiedLinkError e) {
                 preloadError = e;
             }
@@ -610,7 +662,11 @@ public class Loader {
         try {
             String library = p.getProperty("platform.library");
             URL[] urls = findLibrary(cls, p, library, pathsFirst);
-            return loadLibrary(urls, library);
+            String filename = loadLibrary(urls, library);
+            if (cacheDir != null && filename.startsWith(cacheDir)) {
+                createLibraryLink(filename, p, library);
+            }
+            return filename;
         } catch (UnsatisfiedLinkError e) {
             if (preloadError != null && e.getCause() == null) {
                 e.initCause(preloadError);
@@ -825,6 +881,59 @@ public class Loader {
             }
             throw e;
         }
+    }
+
+    /**
+     * Creates a version-less symbolic link to a library file, if needed.
+     *
+     * @param filename of the probably versioned library
+     * @param properties of the class associated with the library
+     * @param libnameversion the library name and version as with {@link #loadLibrary(URL[], String)}
+     * @return the version-less filename (or null on failure), a symbolic link only if needed
+     */
+    public static String createLibraryLink(String filename, ClassProperties properties, String libnameversion) {
+        File file = new File(filename);
+        String parent = file.getParent(), name = file.getName(), link = null;
+
+        String[] split = libnameversion.split("#");
+        String[] s = (split.length > 1 ? split[1] : split[0]).split("@");
+        String libname = s[0];
+        String version = s.length > 1 ? s[s.length-1] : "";
+
+        if (version.length() == 0) {
+            return filename;
+        }
+        for (String suffix : properties.get("platform.library.suffix")) {
+            int n = name.lastIndexOf(suffix);
+            int n2 = name.lastIndexOf(version);
+            if (n > 0 && n2 > 0) {
+                link = name.substring(0, n < n2 ? n : n2) + suffix;
+                break;
+            }
+        }
+        if (link != null && link.length() > 0 && !link.equals(name)) {
+            File linkFile = new File(parent, link);
+            Path linkPath = linkFile.toPath();
+            Path targetPath = Paths.get(name);
+            try {
+                if ((!linkFile.exists() || !Files.isSymbolicLink(linkPath) || !Files.readSymbolicLink(linkPath).equals(targetPath))
+                        && !targetPath.isAbsolute() && !targetPath.equals(linkPath)) {
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("Creating symbolic link " + linkPath);
+                    }
+                    linkFile.delete();
+                    Files.createSymbolicLink(linkPath, targetPath);
+                }
+                filename = linkFile.toString();
+            } catch (IOException | UnsupportedOperationException e) {
+                // ... (probably an unsupported operation on Windows, but DLLs never need links) ...
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Failed to create symbolic link " + linkPath + ": " + e);
+                }
+                return null;
+            }
+        }
+        return filename;
     }
 
     /**
