@@ -1,4 +1,6 @@
 
+ * Fix broken `outputDirectory` property and corresponding `-d` command line option ([issue #153](https://github.com/bytedeco/javacpp/issues/153))
+ * Add `Loader.extractResources()` and `cacheResources()` methods to extract or cache all resources with given name
  * Fix potential issues with `Parser` repeating the `@ByPtrPtr` or `@ByPtrRef` annotations on parameters
  * To support Scala singleton objects better, consider as `static` methods from objects that are not `Pointer`
  * Allow `Loader.extractResource()` and `cacheResource()` to extract or cache all files from a directory in a JAR file

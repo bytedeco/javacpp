@@ -311,6 +311,35 @@ public class Loader {
     public static File cacheResource(Class cls, String name) throws IOException {
         return cacheResource(cls.getResource(name));
     }
+
+    /**
+     * Extracts resources using the {@link ClassLoader} of the caller class,
+     * and returns the cached {@link File} objects.
+     *
+     * @param name of the resources passed to {@link #findResources(Class, String)}
+     * @see #cacheResources(Class, String)
+     */
+    public static File[] cacheResources(String name) throws IOException {
+        Class cls = getCallerClass(2);
+        return cacheResources(cls, name);
+    }
+    /**
+     * Extracts resources using the {@link ClassLoader} of the specified {@link Class},
+     * and returns the cached {@link File} objects.
+     *
+     * @param cls the Class from which to load resources
+     * @param name of the resources passed to {@link #findResources(Class, String)}
+     * @see #cacheResource(URL)
+     */
+    public static File[] cacheResources(Class cls, String name) throws IOException {
+        URL[] urls = findResources(cls, name);
+        File[] files = new File[urls.length];
+        for (int i = 0; i < urls.length; i++) {
+            files[i] = cacheResource(urls[i]);
+        }
+        return files;
+    }
+
     /** Returns {@code cacheResource(resourceUrl, null)} */
     public static File cacheResource(URL resourceURL) throws IOException {
         return cacheResource(resourceURL, null);
@@ -416,6 +445,35 @@ public class Loader {
             String prefix, String suffix) throws IOException {
         return extractResource(cls.getResource(name), directory, prefix, suffix);
     }
+
+    /**
+     * Extracts by name resources using the {@link ClassLoader} of the caller.
+     *
+     * @param name of the resources passed to {@link #findResources(Class, String)}
+     * @see #extractResources(Class, String, File, String, String)
+     */
+    public static File[] extractResources(String name, File directory,
+            String prefix, String suffix) throws IOException {
+        Class cls = getCallerClass(2);
+        return extractResources(cls, name, directory, prefix, suffix);
+    }
+    /**
+     * Extracts by name resources using the {@link ClassLoader} of the specified {@link Class}.
+     *
+     * @param cls the Class from which to load resources
+     * @param name of the resources passed to {@link #findResources(Class, String)}
+     * @see #extractResource(URL, File, String, String)
+     */
+    public static File[] extractResources(Class cls, String name, File directory,
+            String prefix, String suffix) throws IOException {
+        URL[] urls = findResources(cls, name);
+        File[] files = new File[urls.length];
+        for (int i = 0; i < urls.length; i++) {
+            files[i] = extractResource(urls[i], directory, prefix, suffix);
+        }
+        return files;
+    }
+
     /**
      * Extracts a resource into the specified directory and with the specified
      * prefix and suffix for the filename. If both prefix and suffix are {@code null},
@@ -507,6 +565,33 @@ public class Loader {
             }
         }
         return file;
+    }
+
+    /**
+     * Finds by name resources using the {@link ClassLoader} of the specified {@link Class}.
+     * Names not prefixed with '/' are considered relative to the Class.
+     *
+     * @param cls the Class from whose ClassLoader to load resources
+     * @param name of the resources passed to {@link ClassLoader#getResources(String)}
+     * @return URLs to the resources
+     * @throws IOException
+     */
+    public static URL[] findResources(Class cls, String name) throws IOException {
+        if (!name.startsWith("/")) {
+            String s = cls.getName().replace('.', '/');
+            int n = s.lastIndexOf('/');
+            if (n >= 0) {
+                name = s.substring(0, n + 1) + name;
+            }
+        } else {
+            name = name.substring(1);
+        }
+        Enumeration<URL> urls = cls.getClassLoader().getResources(name);
+        ArrayList<URL> array = new ArrayList<URL>();
+        while (urls.hasMoreElements()) {
+            array.add(urls.nextElement());
+        }
+        return array.toArray(new URL[array.size()]);
     }
 
     /** User-specified cache directory set and returned by {@link #getCacheDir()}. */

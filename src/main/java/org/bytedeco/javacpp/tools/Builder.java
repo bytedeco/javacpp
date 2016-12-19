@@ -344,7 +344,7 @@ public class Builder {
      * @throws InterruptedException
      */
     File generateAndCompile(Class[] classes, String outputName) throws IOException, InterruptedException {
-        File outputFile = null, outputPath = outputDirectory;
+        File outputFile = null, outputPath = outputDirectory != null ? outputDirectory.getCanonicalFile() : null;
         ClassProperties p = Loader.loadProperties(classes, properties, true);
         String platform     = p.getProperty("platform");
         String sourcePrefix = new File(outputPath, outputName).getPath();
