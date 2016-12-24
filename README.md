@@ -17,8 +17,8 @@ Please feel free to ask questions on [the mailing list](http://groups.google.com
 
 Downloads
 ---------
- * JavaCPP 1.3 binary archive  [javacpp-1.3-bin.zip](http://search.maven.org/remotecontent?filepath=org/bytedeco/javacpp/1.3/javacpp-1.3-bin.zip) (319 KB)
- * JavaCPP 1.3 source archive  [javacpp-1.3-src.zip](http://search.maven.org/remotecontent?filepath=org/bytedeco/javacpp/1.3/javacpp-1.3-src.zip) (295 KB)
+ * JavaCPP 1.3.1 binary archive  [javacpp-1.3.1-bin.zip](http://search.maven.org/remotecontent?filepath=org/bytedeco/javacpp/1.3.1/javacpp-1.3.1-bin.zip) (321 KB)
+ * JavaCPP 1.3.1 source archive  [javacpp-1.3.1-src.zip](http://search.maven.org/remotecontent?filepath=org/bytedeco/javacpp/1.3.1/javacpp-1.3.1-src.zip) (297 KB)
 
 We can also have everything downloaded and installed automatically with:
 
@@ -27,20 +27,20 @@ We can also have everything downloaded and installed automatically with:
   <dependency>
     <groupId>org.bytedeco</groupId>
     <artifactId>javacpp</artifactId>
-    <version>1.3</version>
+    <version>1.3.1</version>
   </dependency>
 ```
 
  * Gradle (inside the `build.gradle` file)
 ```groovy
   dependencies {
-    compile group: 'org.bytedeco', name: 'javacpp', version: '1.3'
+    compile group: 'org.bytedeco', name: 'javacpp', version: '1.3.1'
   }
 ```
 
  * sbt (inside the `build.sbt` file)
 ```scala
-  libraryDependencies += "org.bytedeco" % "javacpp" % "1.3"
+  libraryDependencies += "org.bytedeco" % "javacpp" % "1.3.1"
 ```
 
 Another option available for Scala users is [sbt-javacpp](https://github.com/bytedeco/sbt-javacpp).
