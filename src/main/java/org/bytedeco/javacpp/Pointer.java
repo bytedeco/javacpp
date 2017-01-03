@@ -645,15 +645,12 @@ public class Pointer implements AutoCloseable {
         if (limit > 0 && limit < position) {
             throw new IllegalArgumentException("limit < position: (" + limit + " < " + position + ")");
         }
-        int valueSize = sizeof();
-        long arrayPosition = position;
-        long arrayLimit = limit;
-        position = valueSize * arrayPosition;
-        limit = valueSize * (arrayLimit <= 0 ? arrayPosition + 1 : arrayLimit);
-        ByteBuffer b = asDirectBuffer().order(ByteOrder.nativeOrder());
-        position = arrayPosition;
-        limit = arrayLimit;
-        return b;
+        int size = sizeof();
+        Pointer p = new Pointer();
+        p.address = address;
+        return p.position(size * position)
+                .limit(size * (limit <= 0 ? position + 1 : limit))
+                .asDirectBuffer().order(ByteOrder.nativeOrder());
     }
     /**
      * Same as {@link #asByteBuffer()}, but can be overridden to return subclasses of Buffer.

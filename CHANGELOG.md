@@ -1,4 +1,6 @@
 
+ * Make `Pointer.asBuffer()` thread-safe ([issue #155](https://github.com/bytedeco/javacpp/issues/155))
+
 ### December 24, 2016 version 1.3.1
  * Fix broken `outputDirectory` property and corresponding `-d` command line option ([issue #153](https://github.com/bytedeco/javacpp/issues/153))
  * Add `Loader.extractResources()` and `cacheResources()` methods to extract or cache all resources with given name
