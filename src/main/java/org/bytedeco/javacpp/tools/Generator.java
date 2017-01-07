@@ -2066,8 +2066,18 @@ public class Generator implements Closeable {
                 if (functionList == null) {
                     virtualFunctions.put(cls, functionList = new LinkedHashSet<String>());
                 }
-                member += "using " + valueTypeName + "::" + methodInfo.memberName[0] + ";\n    "
-                       +  "virtual " + returnConvention[0] + (returnConvention.length > 1 ? returnConvention[1] : "")
+                String usingLine = "using " + valueTypeName + "::" + methodInfo.memberName[0] + ";";
+                boolean needUsing = true;
+                for (String s : memberList) {
+                    if (s.split("\n", 2)[0].equals(member + usingLine)) {
+                        needUsing = false;
+                        break;
+                    }
+                }
+                if (needUsing) {
+                    member += usingLine + "\n    ";
+                }
+                member += "virtual " + returnConvention[0] + (returnConvention.length > 1 ? returnConvention[1] : "")
                        +  methodInfo.memberName[0] + parameterDeclaration + ";\n    "
                        +  returnConvention[0] + "super_" + methodInfo.memberName[0] + nonconstParamDeclaration + " { ";
                 if (methodInfo.method.getAnnotation(Virtual.class).value()) {
