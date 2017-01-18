@@ -358,7 +358,12 @@ public class Loader {
      */
     public static File cacheResource(URL resourceURL, String target) throws IOException {
         // Find appropriate subdirectory in cache for the resource ...
-        File urlFile = new File(resourceURL.getPath());
+        File urlFile;
+        try {
+            urlFile = new File(new URI(resourceURL.toString().split("#")[0]));
+        } catch (IllegalArgumentException | URISyntaxException e) {
+            urlFile = new File(resourceURL.getPath());
+        }
         String name = urlFile.getName();
         long size, timestamp;
         File cacheSubdir = getCacheDir().getCanonicalFile();
@@ -533,7 +538,11 @@ public class Loader {
                 File directory;
                 if (directoryOrFile.isDirectory()) {
                     directory = directoryOrFile;
-                    file = new File(directoryOrFile, new File(resourceURL.getPath()).getName());
+                    try {
+                        file = new File(directoryOrFile, new File(new URI(resourceURL.toString().split("#")[0])).getName());
+                    } catch (IllegalArgumentException | URISyntaxException ex) {
+                        file = new File(directoryOrFile, new File(resourceURL.getPath()).getName());
+                    }
                 } else {
                     directory = directoryOrFile.getParentFile();
                     file = directoryOrFile;
@@ -891,7 +900,11 @@ public class Loader {
                     file = new File(uri);
                 } catch (Exception exc) {
                     try {
-                        file = new File(uri.getPath());
+                        try {
+                            file = new File(new URI(uri.toString().split("#")[0]));
+                        } catch (IllegalArgumentException | URISyntaxException e) {
+                            file = new File(uri.getPath());
+                        }
                         if (file.exists()) {
                             // ... else preload it as some libraries do not like being renamed ...
                             String filename2 = file.getAbsolutePath();

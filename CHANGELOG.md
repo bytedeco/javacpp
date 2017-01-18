@@ -1,4 +1,6 @@
 
+ * Avoid `Loader` issues with spaces, etc in paths to library files ([issue deeplearning4j/nd4j#1564](https://github.com/deeplearning4j/nd4j/issues/1564))
+ * Prevent `Generator` from creating duplicate `using` statements ([pull #158](https://github.com/bytedeco/javacpp/pull/158))
  * Make `Pointer.asBuffer()` thread-safe ([issue #155](https://github.com/bytedeco/javacpp/issues/155))
 
 ### December 24, 2016 version 1.3.1
