@@ -48,6 +48,7 @@ import java.util.Properties;
 import java.util.WeakHashMap;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import org.bytedeco.javacpp.annotation.Name;
 import org.bytedeco.javacpp.annotation.Platform;
 import org.bytedeco.javacpp.tools.Builder;
 import org.bytedeco.javacpp.tools.Logger;
@@ -1097,4 +1098,13 @@ public class Loader {
         // Should we synchronize that?
         return memberOffsets.get(type).get("sizeof");
     }
+
+
+    /** Returns the number of processors configured according to the operating system, or 0 if unknown.
+     * This value can be greater than {@link Runtime#availableProcessors()} and {@link #totalCores()}. */
+    @Name("JavaCPP_totalProcessors") public static native int totalProcessors();
+
+    /** Returns the number of CPU cores installed according to the operating system, or 0 if unknown.
+     * For SMT-capable systems, this value may be less than {@link #totalProcessors()}. */
+    @Name("JavaCPP_totalCores") public static native int totalCores();
 }

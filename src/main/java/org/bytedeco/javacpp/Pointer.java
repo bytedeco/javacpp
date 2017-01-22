@@ -434,6 +434,13 @@ public class Pointer implements AutoCloseable {
      * Also known as "resident set size" (Linux, Mac OS X, etc) or "working set size" (Windows). */
     @Name("JavaCPP_physicalBytes") public static synchronized native long physicalBytes();
 
+    /** Returns the amount of physical memory installed according to the operating system, or 0 if unknown.
+     * It should not be possible for {@link #physicalBytes()} to go over this value. */
+    @Name("JavaCPP_totalPhysicalBytes") public static native long totalPhysicalBytes();
+
+    /** Returns the amount of physical memory that is free according to the operating system, or 0 if unknown. */
+    @Name("JavaCPP_availablePhysicalBytes") public static native long availablePhysicalBytes();
+
     /** The native address of this Pointer, which can be an array. */
     protected long address = 0;
     /** The index of the element of a native array that should be accessed. */

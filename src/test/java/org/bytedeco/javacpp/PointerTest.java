@@ -49,10 +49,19 @@ public class PointerTest {
     static long maxBytes = 1024 * 1024 * 1024; /* 1g */
 
     @BeforeClass public static void setUpClass() throws Exception {
+        System.out.println("Builder");
         Class c = PointerTest.class;
         Builder builder = new Builder().classesOrPackages(c.getName());
         File[] outputFiles = builder.build();
+
+        System.out.println("Loader");
         Loader.load(c);
+
+        int totalProcessors = Loader.totalProcessors();
+        int totalCores = Loader.totalCores();
+        System.out.println(totalProcessors + " " + totalCores);
+        assertTrue(totalProcessors > 0 && totalProcessors >= Runtime.getRuntime().availableProcessors());
+        assertTrue(totalCores > 0 && totalCores <= totalProcessors);
     }
 
     static Object fieldReference;
@@ -66,8 +75,14 @@ public class PointerTest {
         assertEquals(p, new Pointer(p));
 
         long physicalBytes = Pointer.physicalBytes();
+        long totalPhysicalBytes = Pointer.totalPhysicalBytes();
+        long availablePhysicalBytes = Pointer.availablePhysicalBytes();
         System.out.println(physicalBytes);
+        System.out.println(totalPhysicalBytes);
+        System.out.println(availablePhysicalBytes);
         assertTrue(physicalBytes > 0);
+        assertTrue(totalPhysicalBytes > 0 && physicalBytes < totalPhysicalBytes);
+        assertTrue(availablePhysicalBytes > 0 && availablePhysicalBytes < totalPhysicalBytes);
 
         p = Pointer.malloc(1000);
         assertTrue(!p.isNull());

@@ -85,9 +85,12 @@ public class AdapterTest {
     static native @StdVector int[] testStdVectorByPtr(@StdVector int[] v);
 
     @BeforeClass public static void setUpClass() throws Exception {
+        System.out.println("Builder");
         Class c = AdapterTest.class;
         Builder builder = new Builder().classesOrPackages(c.getName());
         File[] outputFiles = builder.build();
+
+        System.out.println("Loader");
         Loader.load(c);
     }
 

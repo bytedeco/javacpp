@@ -49,9 +49,12 @@ import static org.junit.Assert.*;
 public class IndexerTest {
 
     @BeforeClass public static void setUpClass() throws Exception {
+        System.out.println("Builder");
         Class c = IndexerTest.class;
         Builder builder = new Builder().classesOrPackages(c.getName());
         File[] outputFiles = builder.build();
+
+        System.out.println("Loader");
         Loader.load(c);
 
         // work around OutOfMemoryError when testing long indexing
