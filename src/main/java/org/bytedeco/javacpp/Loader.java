@@ -1104,7 +1104,11 @@ public class Loader {
      * This value can be greater than {@link Runtime#availableProcessors()} and {@link #totalCores()}. */
     @Name("JavaCPP_totalProcessors") public static native int totalProcessors();
 
-    /** Returns the number of CPU cores installed according to the operating system, or 0 if unknown.
+    /** Returns the number of CPU cores usable according to the operating system, or 0 if unknown.
      * For SMT-capable systems, this value may be less than {@link #totalProcessors()}. */
     @Name("JavaCPP_totalCores") public static native int totalCores();
+
+    /** Returns the number of CPU chips installed according to the operating system, or 0 if unknown.
+     * For multi-core processors, this value may be less than {@link #totalCores()}. */
+    @Name("JavaCPP_totalChips") public static native int totalChips();
 }

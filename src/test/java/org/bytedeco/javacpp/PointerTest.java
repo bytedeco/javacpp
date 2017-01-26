@@ -59,9 +59,11 @@ public class PointerTest {
 
         int totalProcessors = Loader.totalProcessors();
         int totalCores = Loader.totalCores();
-        System.out.println(totalProcessors + " " + totalCores);
+        int totalChips = Loader.totalChips();
+        System.out.println(totalProcessors + " " + totalCores + " " + totalChips);
         assertTrue(totalProcessors > 0 && totalProcessors >= Runtime.getRuntime().availableProcessors());
         assertTrue(totalCores > 0 && totalCores <= totalProcessors);
+        assertTrue(totalChips > 0 && totalChips <= totalCores);
     }
 
     static Object fieldReference;
