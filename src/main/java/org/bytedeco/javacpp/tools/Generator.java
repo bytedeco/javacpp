@@ -512,7 +512,7 @@ public class Generator implements Closeable {
         out.println("static inline jint JavaCPP_totalProcessors() {");
         out.println("    jint total = 0;");
         out.println("#ifdef __linux__");
-        out.println("    total = get_nprocs_conf();");
+        out.println("    total = sysconf(_SC_NPROCESSORS_CONF);");
         out.println("#elif defined(__APPLE__)");
         out.println("    size_t length = sizeof(total);");
         out.println("    sysctlbyname(\"hw.logicalcpu_max\", &total, &length, NULL, 0);");
@@ -527,7 +527,7 @@ public class Generator implements Closeable {
         out.println("static inline jint JavaCPP_totalCores() {");
         out.println("    jint total = 0;");
         out.println("#ifdef __linux__");
-        out.println("    const int n = get_nprocs_conf();");
+        out.println("    const int n = sysconf(_SC_NPROCESSORS_CONF);");
         out.println("    int pids[n], cids[n];");
         out.println("    for (int i = 0; i < n; i++) {");
         out.println("        int fd = 0, pid = 0, cid = 0;");
@@ -586,7 +586,7 @@ public class Generator implements Closeable {
         out.println("static inline jint JavaCPP_totalChips() {");
         out.println("    jint total = 0;");
         out.println("#ifdef __linux__");
-        out.println("    const int n = get_nprocs_conf();");
+        out.println("    const int n = sysconf(_SC_NPROCESSORS_CONF);");
         out.println("    int pids[n];");
         out.println("    for (int i = 0; i < n; i++) {");
         out.println("        int fd = 0, pid = 0;");
