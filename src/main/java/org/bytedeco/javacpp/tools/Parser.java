@@ -154,6 +154,9 @@ public class Parser {
                 if (secondType != null && (secondType.annotations == null || secondType.annotations.length() == 0)) {
                     secondType.annotations = (secondType.constValue ? "@Const " : "") + (secondType.indirections == 0 && !secondType.value ? "@ByRef " : "");
                 }
+                if (indexType != null && (indexType.annotations == null || indexType.annotations.length() == 0)) {
+                    indexType.annotations = (indexType.constValue ? "@Const " : "") + (indexType.indirections == 0 && !indexType.value ? "@ByRef " : "");
+                }
                 if (valueType != null && (valueType.annotations == null || valueType.annotations.length() == 0)) {
                     valueType.annotations = (valueType.constValue ? "@Const " : "") + (valueType.indirections == 0 && !valueType.value ? "@ByRef " : "");
                 }
@@ -244,6 +247,9 @@ public class Parser {
                         decl.text += "    @ValueSetter @Index public native " + containerType.javaName + " put(" + params + separator + valueType.annotations + valueType.javaNames[i] + " value);\n";
                     }
                     if (containerType.arguments.length > 1 && containerType.arguments[1].javaName.length() > 0) {
+                        if (!indexType.annotations.contains("@Const") && !indexType.annotations.contains("@Cast") && !indexType.value) {
+                            indexType.annotations += "@Const ";
+                        }
                         decl.text += "\n"
                                   +  "    public native @ByVal Iterator begin();\n"
                                   +  "    public native @ByVal Iterator end();\n"
@@ -1287,6 +1293,9 @@ public class Parser {
         for (Token token = tokens.get(); token.match(Token.COMMENT); token = tokens.next()) {
             String s = token.value;
             if (s.startsWith("/**") || s.startsWith("/*!") || s.startsWith("///") || s.startsWith("//!")) {
+                if (s.startsWith("//") && s.contains("*/") && s.indexOf("*/") < s.length() - 2) {
+                    s = s.replace("*/", "* /");
+                }
                 if (s.length() > 3 && s.charAt(3) == '<') {
                     continue;
                 } else if (s.length() >= 3 && (s.startsWith("///") || s.startsWith("//!"))
