@@ -1,4 +1,5 @@
 
+ * Let `Pointer` log debug messages when forced to call `System.gc()`
  * Fix `Parser` handling of `std::map` and of documentation comments containing the "*/" sequence
  * Add portable and efficient `totalPhysicalBytes()`, `availablePhysicalBytes()`, `totalProcessors()`, `totalCores()`, `totalChips()` methods
  * Avoid `Loader` issues with spaces, etc in paths to library files ([issue deeplearning4j/nd4j#1564](https://github.com/deeplearning4j/nd4j/issues/1564))

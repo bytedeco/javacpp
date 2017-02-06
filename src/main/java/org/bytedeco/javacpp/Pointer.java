@@ -546,6 +546,9 @@ public class Pointer implements AutoCloseable {
                 try {
                     while (count++ < maxRetries && ((maxBytes > 0 && DeallocatorReference.totalBytes + r.bytes > maxBytes)
                                          || (maxPhysicalBytes > 0 && (lastPhysicalBytes = physicalBytes()) > maxPhysicalBytes))) {
+                        if (logger.isDebugEnabled()) {
+                            logger.debug("Calling System.gc() in " + this);
+                        }
                         // try to get some more memory back
                         System.gc();
                         Thread.sleep(100);
