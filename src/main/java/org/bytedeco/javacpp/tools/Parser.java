@@ -1131,7 +1131,12 @@ public class Parser {
                 } else if (dcl.parameters != null && dcl.parameters.signature.length() > 0) {
                     functionType += dcl.parameters.signature;
                 } else if (!type.javaName.equals("void")) {
-                    functionType = Character.toUpperCase(type.javaName.charAt(0)) + type.javaName.substring(1) + "_" + functionType;
+                    String s = type.javaName.trim();
+                    int n = s.lastIndexOf(' ');
+                    if (n > 0) {
+                        s = s.substring(n + 1);
+                    }
+                    functionType = Character.toUpperCase(s.charAt(0)) + s.substring(1) + "_" + functionType;
                 }
                 if (info != null && info.annotations != null) {
                     for (String s : info.annotations) {

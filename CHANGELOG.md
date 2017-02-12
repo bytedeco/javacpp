@@ -1,4 +1,5 @@
 
+ * Make `Parser` strip return type annotations when naming `FunctionPointer` ([issue #162](https://github.com/bytedeco/javacpp/issues/162))
  * Let `Pointer` log debug messages when forced to call `System.gc()`
  * Fix `Parser` handling of `std::map` and of documentation comments containing the "*/" sequence
  * Add portable and efficient `totalPhysicalBytes()`, `availablePhysicalBytes()`, `totalProcessors()`, `totalCores()`, `totalChips()` methods
