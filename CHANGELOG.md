@@ -1,4 +1,5 @@
 
+ * Prevent `Loader` from loading system libraries, which causes problems on Android 7.x ([issue bytedeco/javacv#617](https://github.com/bytedeco/javacv/issues/617))
  * Make `Parser` strip return type annotations when naming `FunctionPointer` ([issue #162](https://github.com/bytedeco/javacpp/issues/162))
  * Let `Pointer` log debug messages when forced to call `System.gc()`
  * Fix `Parser` handling of `std::map` and of documentation comments containing the "*/" sequence

@@ -746,7 +746,7 @@ public class Loader {
             try {
                 URL[] urls = findLibrary(cls, p, preload, pathsFirst);
                 String filename = loadLibrary(urls, preload);
-                if (cacheDir != null && filename.startsWith(cacheDir)) {
+                if (cacheDir != null && filename != null && filename.startsWith(cacheDir)) {
                     createLibraryLink(filename, p, preload);
                 }
             } catch (UnsatisfiedLinkError e) {
@@ -758,7 +758,7 @@ public class Loader {
             String library = p.getProperty("platform.library");
             URL[] urls = findLibrary(cls, p, library, pathsFirst);
             String filename = loadLibrary(urls, library);
-            if (cacheDir != null && filename.startsWith(cacheDir)) {
+            if (cacheDir != null && filename != null && filename.startsWith(cacheDir)) {
                 createLibraryLink(filename, p, library);
             }
             return filename;
@@ -949,7 +949,7 @@ public class Loader {
             }
             if (filename != null) {
                 return filename;
-            } else {
+            } else if (!libnameversion.trim().endsWith("#")) {
                 // ... or as last resort, try to load it via the system.
                 String libname = libnameversion.split("#")[0].split("@")[0];
                 if (logger.isDebugEnabled()) {
@@ -958,6 +958,9 @@ public class Loader {
                 loadedLibraries.put(libnameversion2, libname);
                 System.loadLibrary(libname);
                 return libname;
+            } else {
+                // But do not load when tagged as a system library
+                return null;
             }
         } catch (UnsatisfiedLinkError e) {
             loadedLibraries.remove(libnameversion2);
