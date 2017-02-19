@@ -932,7 +932,7 @@ public class Generator implements Closeable {
             out.println("        this->sharedPtr = owner != NULL && owner != ptr ? *(S*)owner : S((T*)ptr);");
             out.println("    }");
             out.println("    static void deallocate(void* owner) { delete (S*)owner; }");
-            out.println("    operator T*() {");
+            out.println("    operator typename SHARED_PTR_NAMESPACE::remove_const<T>::type*() {");
             out.println("        ptr = sharedPtr.get();");
             out.println("        if (owner == NULL || owner == ptr) {");
             out.println("            owner = new S(sharedPtr);");
@@ -967,7 +967,7 @@ public class Generator implements Closeable {
             out.println("        this->uniquePtr = owner != NULL && owner != ptr ? *(U*)owner : U((T*)ptr);");
             out.println("    }");
             out.println("    static void deallocate(void* owner) { delete (U*)owner; }");
-            out.println("    operator T*() {");
+            out.println("    operator typename UNIQUE_PTR_NAMESPACE::remove_const<T>::type*() {");
             out.println("        ptr = uniquePtr.get();");
             out.println("        if (owner == NULL || owner == ptr) {");
             out.println("            owner = new U(UNIQUE_PTR_NAMESPACE::move(uniquePtr));");
