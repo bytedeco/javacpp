@@ -1,4 +1,5 @@
 
+ * Prevent `Pointer` from copying array data from NIO buffers that are also direct ([issue bytedeco/javacpp-presets#380](https://github.com/bytedeco/javacpp-presets/issues/380))
  * Fix `SharedPtrAdapter` and `UniquePtrAdapter` of the `Generator` for `const` types ([issue #166](https://github.com/bytedeco/javacpp/issues/166))
  * Prevent `Loader` from loading system libraries, which causes problems on Android 7.x ([issue bytedeco/javacv#617](https://github.com/bytedeco/javacv/issues/617))
  * Make `Parser` strip return type annotations when naming `FunctionPointer` ([issue #162](https://github.com/bytedeco/javacpp/issues/162))

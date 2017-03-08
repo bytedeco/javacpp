@@ -50,7 +50,7 @@ public class ShortPointer extends Pointer {
      */
     public ShortPointer(ShortBuffer buffer) {
         super(buffer);
-        if (buffer != null && buffer.hasArray()) {
+        if (buffer != null && !buffer.isDirect() && buffer.hasArray()) {
             short[] array = buffer.array();
             allocateArray(array.length - buffer.arrayOffset());
             put(array, buffer.arrayOffset(), array.length - buffer.arrayOffset());

@@ -60,7 +60,7 @@ public class IntPointer extends Pointer {
      */
     public IntPointer(IntBuffer buffer) {
         super(buffer);
-        if (buffer != null && buffer.hasArray()) {
+        if (buffer != null && !buffer.isDirect() && buffer.hasArray()) {
             int[] array = buffer.array();
             allocateArray(array.length - buffer.arrayOffset());
             put(array, buffer.arrayOffset(), array.length - buffer.arrayOffset());

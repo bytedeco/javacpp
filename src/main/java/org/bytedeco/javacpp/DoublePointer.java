@@ -50,7 +50,7 @@ public class DoublePointer extends Pointer {
      */
     public DoublePointer(DoubleBuffer buffer) {
         super(buffer);
-        if (buffer != null && buffer.hasArray()) {
+        if (buffer != null && !buffer.isDirect() && buffer.hasArray()) {
             double[] array = buffer.array();
             allocateArray(array.length - buffer.arrayOffset());
             put(array, buffer.arrayOffset(), array.length - buffer.arrayOffset());

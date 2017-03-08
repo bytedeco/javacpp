@@ -50,7 +50,7 @@ public class FloatPointer extends Pointer {
      */
     public FloatPointer(FloatBuffer buffer) {
         super(buffer);
-        if (buffer != null && buffer.hasArray()) {
+        if (buffer != null && !buffer.isDirect() && buffer.hasArray()) {
             float[] array = buffer.array();
             allocateArray(array.length - buffer.arrayOffset());
             put(array, buffer.arrayOffset(), array.length - buffer.arrayOffset());

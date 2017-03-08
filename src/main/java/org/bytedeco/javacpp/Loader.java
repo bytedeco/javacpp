@@ -561,8 +561,6 @@ public class Loader {
             while ((length = is.read(buffer)) != -1) {
                 os.write(buffer, 0, length);
             }
-            is.close();
-            os.close();
         } catch (IOException e) {
             if (file != null && !fileExisted) {
                 file.delete();

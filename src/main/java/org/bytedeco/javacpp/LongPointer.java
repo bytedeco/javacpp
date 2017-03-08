@@ -50,7 +50,7 @@ public class LongPointer extends Pointer {
      */
     public LongPointer(LongBuffer buffer) {
         super(buffer);
-        if (buffer != null && buffer.hasArray()) {
+        if (buffer != null && !buffer.isDirect() && buffer.hasArray()) {
             long[] array = buffer.array();
             allocateArray(array.length - buffer.arrayOffset());
             put(array, buffer.arrayOffset(), array.length - buffer.arrayOffset());
