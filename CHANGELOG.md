@@ -1,4 +1,5 @@
 
+ * Add new "org.bytedeco.javacpp.cachedir.nosubdir" system property to restore old behavior ([issue #167](https://github.com/bytedeco/javacpp/issues/167))
  * Prevent `Pointer` from copying array data from NIO buffers that are also direct ([issue bytedeco/javacpp-presets#380](https://github.com/bytedeco/javacpp-presets/issues/380))
  * Fix `SharedPtrAdapter` and `UniquePtrAdapter` of the `Generator` for `const` types ([issue #166](https://github.com/bytedeco/javacpp/issues/166))
  * Prevent `Loader` from loading system libraries, which causes problems on Android 7.x ([issue bytedeco/javacv#617](https://github.com/bytedeco/javacv/issues/617))

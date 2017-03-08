@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2016 Samuel Audet
+ * Copyright (C) 2011-2017 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -368,6 +368,8 @@ public class Loader {
         String name = urlFile.getName();
         long size, timestamp;
         File cacheSubdir = getCacheDir().getCanonicalFile();
+        String s = System.getProperty("org.bytedeco.javacpp.cachedir.nosubdir", "false").toLowerCase();
+        boolean noSubdir = s.equals("true") || s.equals("t") || s.equals("");
         URLConnection urlConnection = resourceURL.openConnection();
         if (urlConnection instanceof JarURLConnection) {
             JarFile jarFile = ((JarURLConnection)urlConnection).getJarFile();
@@ -376,11 +378,15 @@ public class Loader {
             File jarEntryFile = new File(jarEntry.getName());
             size = jarEntry.getSize();
             timestamp = jarEntry.getTime();
-            cacheSubdir = new File(cacheSubdir, jarFileFile.getName() + File.separator + jarEntryFile.getParent());
+            if (!noSubdir) {
+                cacheSubdir = new File(cacheSubdir, jarFileFile.getName() + File.separator + jarEntryFile.getParent());
+            }
         } else {
             size = urlFile.length();
             timestamp = urlFile.lastModified();
-            cacheSubdir = new File(cacheSubdir, name);
+            if (!noSubdir) {
+                cacheSubdir = new File(cacheSubdir, name);
+            }
         }
         if (resourceURL.getRef() != null) {
             // ... get the URL fragment to let users rename library files ...
