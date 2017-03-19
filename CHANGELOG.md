@@ -1,4 +1,6 @@
 
+ * Add a `BuildMojo.buildCommand` parameter that lets users execute arbitrary system commands easily with `ProcessBuilder`
+
 ### March 11, 2017 version 1.3.2
  * Add new "org.bytedeco.javacpp.cachedir.nosubdir" system property to restore old behavior ([issue #167](https://github.com/bytedeco/javacpp/issues/167))
  * Prevent `Pointer` from copying array data from NIO buffers that are also direct ([issue bytedeco/javacpp-presets#380](https://github.com/bytedeco/javacpp-presets/issues/380))

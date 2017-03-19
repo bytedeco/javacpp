@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2016 Arnaud Nauwynck, Samuel Audet
+ * Copyright (C) 2012-2017 Arnaud Nauwynck, Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -126,6 +126,14 @@ public class BuildMojo extends AbstractMojo {
     @Parameter(property = "javacpp.classOrPackageNames")
     String[] classOrPackageNames = null;
 
+    /** Execute a build command instead of JavaCPP itself, and return. */
+    @Parameter(property = "javacpp.buildCommand")
+    String[] buildCommand = null;
+
+    /** Set the working directory of the build subprocess. */
+    @Parameter(property = "javacpp.workingDirectory")
+    File workingDirectory = null;
+
     /** Add environment variables to the compiler subprocess. */
     @Parameter(property = "javacpp.environmentVariables")
     Map<String,String> environmentVariables = null;
@@ -175,6 +183,8 @@ public class BuildMojo extends AbstractMojo {
                 log.debug("propertyKeysAndValues: " + propertyKeysAndValues);
                 log.debug("classOrPackageName: " + classOrPackageName);
                 log.debug("classOrPackageNames: " + Arrays.deepToString(classOrPackageNames));
+                log.debug("buildCommand: " + Arrays.deepToString(buildCommand));
+                log.debug("workingDirectory: " + workingDirectory);
                 log.debug("environmentVariables: " + environmentVariables);
                 log.debug("compilerOptions: " + Arrays.deepToString(compilerOptions));
                 log.debug("skip: " + skip);
@@ -207,6 +217,8 @@ public class BuildMojo extends AbstractMojo {
                     .propertyFile(propertyFile)
                     .properties(propertyKeysAndValues)
                     .classesOrPackages(classOrPackageNames)
+                    .buildCommand(buildCommand)
+                    .workingDirectory(workingDirectory)
                     .environmentVariables(environmentVariables)
                     .compilerOptions(compilerOptions);
             Properties properties = builder.properties;

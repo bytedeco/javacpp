@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2016 Samuel Audet
+ * Copyright (C) 2011-2017 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -499,6 +499,10 @@ public class Builder {
     Properties properties = null;
     /** The instance of the {@link ClassScanner} that fills up a {@link Collection} of {@link Class} objects to process. */
     ClassScanner classScanner = null;
+    /** A system command for {@link ProcessBuilder} to execute for the build, instead of JavaCPP itself. */
+    String[] buildCommand = null;
+    /** User specified working directory to execute build subprocesses under. */
+    File workingDirectory = null;
     /** User specified environment variables to pass to the native compiler. */
     Map<String,String> environmentVariables = null;
     /** Contains additional command line options from the user for the native compiler. */
@@ -617,6 +621,21 @@ public class Builder {
         }
         return this;
     }
+    /** Sets the {@link #buildCommand} field to the argument. */
+    public Builder buildCommand(String[] buildCommand) {
+        this.buildCommand = buildCommand;
+        return this;
+    }
+    /** Sets the {@link #workingDirectory} field to the argument. */
+    public Builder workingDirectory(String workingDirectory) {
+        workingDirectory(workingDirectory == null ? null : new File(workingDirectory));
+        return this;
+    }
+    /** Sets the {@link #workingDirectory} field to the argument. */
+    public Builder workingDirectory(File workingDirectory) {
+        this.workingDirectory = workingDirectory;
+        return this;
+    }
     /** Sets the {@link #environmentVariables} field to the argument. */
     public Builder environmentVariables(Map<String,String> environmentVariables) {
         this.environmentVariables = environmentVariables;
@@ -639,6 +658,18 @@ public class Builder {
      * @throws ParserException
      */
     public File[] build() throws IOException, InterruptedException, ParserException {
+        if (buildCommand != null && buildCommand.length > 0) {
+            ProcessBuilder pb = new ProcessBuilder(buildCommand);
+            if (workingDirectory != null) {
+                pb.directory(workingDirectory);
+            }
+            if (environmentVariables != null) {
+                pb.environment().putAll(environmentVariables);
+            }
+            pb.inheritIO().start().waitFor();
+            return null;
+        }
+
         if (classScanner.getClasses().isEmpty()) {
             return null;
         }
@@ -740,7 +771,7 @@ public class Builder {
         }
         System.out.println(
             "JavaCPP version " + version + "\n" +
-            "Copyright (C) 2011-2016 Samuel Audet <samuel.audet@gmail.com>\n" +
+            "Copyright (C) 2011-2017 Samuel Audet <samuel.audet@gmail.com>\n" +
             "Project site: https://github.com/bytedeco/javacpp");
         System.out.println();
         System.out.println("Usage: java -jar javacpp.jar [options] [class or package (suffixed with .* or .**)]");
