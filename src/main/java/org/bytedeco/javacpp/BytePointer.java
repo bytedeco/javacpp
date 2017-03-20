@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2016 Samuel Audet
+ * Copyright (C) 2011-2017 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -23,8 +23,11 @@
 package org.bytedeco.javacpp;
 
 import java.io.UnsupportedEncodingException;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import org.bytedeco.javacpp.annotation.Cast;
+import org.bytedeco.javacpp.annotation.ValueGetter;
+import org.bytedeco.javacpp.annotation.ValueSetter;
 
 /**
  * The peer class to native pointers and arrays of {@code signed char}, including strings.
@@ -230,6 +233,78 @@ public class BytePointer extends Pointer {
     @Override public final ByteBuffer asBuffer() {
         return asByteBuffer();
     }
+
+    /** Returns {@code getShort(0)}. */
+    public short getShort() { return getShort(0); }
+    /** Returns the {@code short} value at the i-th {@code byte} in the native array. */
+    @ValueGetter @Cast("short") public native short getShort(long i);
+    /** Returns {@code putShort(0, s)}. */
+    public BytePointer putShort(short s) { return putShort(0, s); }
+    /** Sets the {@code short} value at the i-th {@code byte} in the native array. */
+    @ValueSetter @Cast("short") public native BytePointer putShort(long i, short s);
+
+    /** Returns {@code getInt(0)}. */
+    public int getInt() { return getInt(0); }
+    /** Returns the {@code int} value at the i-th {@code byte} in the native array. */
+    @ValueGetter @Cast("int") public native int getInt(long i);
+    /** Returns {@code putInt(0, s)}. */
+    public BytePointer putInt(int j) { return putInt(0, j); }
+    /** Sets the {@code int} value at the i-th {@code byte} in the native array. */
+    @ValueSetter @Cast("int") public native BytePointer putInt(long i, int j);
+
+    /** Returns {@code getLong(0)}. */
+    public long getLong() { return getLong(0); }
+    /** Returns the {@code long} value at the i-th {@code byte} in the native array. */
+    @ValueGetter @Cast("long long") public native long getLong(long i);
+    /** Returns {@code putLong(0, s)}. */
+    public BytePointer putLong(long j) { return putLong(0, j); }
+    /** Sets the {@code long} value at the i-th {@code byte} in the native array. */
+    @ValueSetter @Cast("long long") public native BytePointer putLong(long i, long j);
+
+    /** Returns {@code getFloat(0)}. */
+    public float getFloat() { return getFloat(0); }
+    /** Returns the {@code float} value at the i-th {@code byte} in the native array. */
+    @ValueGetter @Cast("float") public native float getFloat(long i);
+    /** Returns {@code putFloat(0, s)}. */
+    public BytePointer putFloat(float f) { return putFloat(0, f); }
+    /** Sets the {@code float} value at the i-th {@code byte} in the native array. */
+    @ValueSetter @Cast("float") public native BytePointer putFloat(long i, float f);
+
+    /** Returns {@code getDouble(0)}. */
+    public double getDouble() { return getDouble(0); }
+    /** Returns the {@code double} value at the i-th {@code byte} in the native array. */
+    @ValueGetter @Cast("double") public native double getDouble(long i);
+    /** Returns {@code putDouble(0, s)}. */
+    public BytePointer putDouble(double d) { return putDouble(0, d); }
+    /** Sets the {@code double} value at the i-th {@code byte} in the native array. */
+    @ValueSetter @Cast("double") public native BytePointer putDouble(long i, double d);
+
+    /** Returns {@code getBool(0)}. */
+    public boolean getBool() { return getBool(0); }
+    /** Returns the {@code bool} value at the i-th {@code byte} in the native array. */
+    @ValueGetter @Cast("bool") public native boolean getBool(long i);
+    /** Returns {@code putBool(0, s)}. */
+    public BytePointer putBool(boolean b) { return putBool(0, b); }
+    /** Sets the {@code bool} value at the i-th {@code byte} in the native array. */
+    @ValueSetter @Cast("bool") public native BytePointer putBool(long i, boolean b);
+
+    /** Returns {@code getChar(0)}. */
+    public char getChar() { return getChar(0); }
+    /** Returns the {@code char} value at the i-th {@code byte} in the native array. */
+    @ValueGetter @Cast("short") public native char getChar(long i);
+    /** Returns {@code putChar(0, s)}. */
+    public BytePointer putChar(char c) { return putChar(0, c); }
+    /** Sets the {@code char} value at the i-th {@code byte} in the native array. */
+    @ValueSetter @Cast("short") public native BytePointer putChar(long i, char c);
+
+    /** Returns {@code getPointer(0)}. */
+    public Pointer getPointer() { return getPointer(0); }
+    /** Returns the {@code Pointer} value at the i-th {@code byte} in the native array. */
+    @ValueGetter @Cast("void*") public native Pointer getPointer(long i);
+    /** Returns {@code putPointer(0, s)}. */
+    public BytePointer putPointer(Pointer p) { return putPointer(0, p); }
+    /** Sets the {@code Pointer} value at the i-th {@code byte} in the native array. */
+    @ValueSetter @Cast("void*") public native BytePointer putPointer(long i, Pointer p);
 
     public static native @Cast("char*") BytePointer strcat(@Cast("char*") BytePointer dst, @Cast("char*") BytePointer src);
     public static native @Cast("char*") BytePointer strchr(@Cast("char*") BytePointer str, int ch);

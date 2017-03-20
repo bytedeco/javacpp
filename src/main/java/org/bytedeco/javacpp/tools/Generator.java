@@ -1815,6 +1815,11 @@ public class Generator implements Closeable {
                     out.print("ptr->" + methodInfo.memberName[0]);
                 }
             } else { // methodInfo.valueGetter || methodInfo.valueSetter
+                String cast = cast(methodInfo.returnType, methodInfo.annotations);
+                if (!index && cast.length() > 0) {
+                    // make sure to cast the returned pointer and not the value
+                    out.print("*(" + cast.substring(1, cast.length() - 1) + "*)&");
+                }
                 out.print(index ? "(*ptr)" : methodInfo.dim > 0 || wantsPointer ? "ptr" : "*ptr");
             }
         } else if (methodInfo.bufferGetter) {

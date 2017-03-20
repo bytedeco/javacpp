@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Samuel Audet
+ * Copyright (C) 2016-2017 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@ package org.bytedeco.javacpp;
 
 import java.io.File;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.CharBuffer;
 import java.nio.DoubleBuffer;
 import java.nio.FloatBuffer;
@@ -116,6 +117,27 @@ public class PointerTest {
             pointer.position(i).put(array[i]);
             assertEquals(array[i], pointer.position(i).get());
         }
+
+        short shortValue = 0x0102;
+        int intValue = 0x01020304;
+        long longValue = 0x0102030405060708L;
+        if (ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN) {
+            shortValue = Short.reverseBytes(shortValue);
+            intValue = Integer.reverseBytes(intValue);
+            longValue = Long.reverseBytes(longValue);
+        }
+        float floatValue = Float.intBitsToFloat(intValue);
+        double doubleValue = Double.longBitsToDouble(longValue);
+        pointer.position(0);
+        assertEquals(shortValue, pointer.getShort(1));
+        assertEquals(intValue, pointer.getInt(1));
+        assertEquals(longValue, pointer.getLong(1));
+        assertEquals(floatValue, pointer.getFloat(1), 0.0);
+        assertEquals(doubleValue, pointer.getDouble(1), 0.0);
+        assertEquals(false, pointer.getBool(0));
+        assertEquals(true, pointer.getBool(1));
+        assertEquals(shortValue, pointer.getChar(1));
+        assertEquals(pointer.sizeof() == 4 ? intValue : longValue, pointer.getPointer(1).address);
 
         byte[] array2 = new byte[array.length];
         pointer.position(0).get(array2);

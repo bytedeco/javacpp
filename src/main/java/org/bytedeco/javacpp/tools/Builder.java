@@ -400,7 +400,7 @@ public class Builder {
                     }
                     outputFile = new File(outputPath, libraryName);
                 } else {
-                    System.exit(exitValue);
+                    throw new RuntimeException("Process exited with an error: " + exitValue);
                 }
             } else {
                 outputFile = new File(sourceFilename);
@@ -666,7 +666,10 @@ public class Builder {
             if (environmentVariables != null) {
                 pb.environment().putAll(environmentVariables);
             }
-            pb.inheritIO().start().waitFor();
+            int exitValue = pb.inheritIO().start().waitFor();
+            if (exitValue != 0) {
+                throw new RuntimeException("Process exited with an error: " + exitValue);
+            }
             return null;
         }
 
