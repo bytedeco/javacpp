@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2016 Samuel Audet
+ * Copyright (C) 2014-2017 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -22,12 +22,19 @@
 
 package org.bytedeco.javacpp.indexer;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+
 /**
  * An indexer for a {@code byte[]} array.
  *
  * @author Samuel Audet
  */
 public class ByteArrayIndexer extends ByteIndexer {
+    /** The instance for the raw memory interface. */
+    protected static final Raw RAW = Raw.getInstance();
+    /** The wrapping buffer. */
+    protected ByteBuffer buffer;
     /** The backing array. */
     protected byte[] array;
 
@@ -108,6 +115,109 @@ public class ByteArrayIndexer extends ByteIndexer {
     @Override public ByteIndexer put(long[] indices, byte[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
             array[(int)index(indices) + n] = b[offset + n];
+        }
+        return this;
+    }
+
+    ByteBuffer getBuffer() {
+        if (buffer == null) {
+            buffer = ByteBuffer.wrap(array).order(ByteOrder.nativeOrder());
+        }
+        return buffer;
+    }
+
+    @Override public short getShort(long i) {
+        if (RAW != null) {
+            return RAW.getShort(array, checkIndex(i, array.length - 1));
+        } else {
+            return getBuffer().getShort((int)i);
+        }
+    }
+    @Override public ByteIndexer putShort(long i, short s) {
+        if (RAW != null) {
+            RAW.putShort(array, checkIndex(i, array.length - 1), s);
+        } else {
+            getBuffer().putShort((int)i, s);
+        }
+        return this;
+    }
+
+    @Override public int getInt(long i) {
+        if (RAW != null) {
+            return RAW.getInt(array, checkIndex(i, array.length - 3));
+        } else {
+            return getBuffer().getInt((int)i);
+        }
+    }
+    @Override public ByteIndexer putInt(long i, int j) {
+        if (RAW != null) {
+            RAW.putInt(array, checkIndex(i, array.length - 3), j);
+        } else {
+            getBuffer().putInt((int)i, j);
+        }
+        return this;
+    }
+
+    @Override public long getLong(long i) {
+        if (RAW != null) {
+            return RAW.getLong(array, checkIndex(i, array.length - 7));
+        } else {
+            return getBuffer().getLong((int)i);
+        }
+    }
+    @Override public ByteIndexer putLong(long i, long j) {
+        if (RAW != null) {
+            RAW.putLong(array, checkIndex(i, array.length - 7), j);
+        } else {
+            getBuffer().putLong((int)i, j);
+        }
+        return this;
+    }
+
+    @Override public float getFloat(long i) {
+        if (RAW != null) {
+            return RAW.getFloat(array, checkIndex(i, array.length - 3));
+        } else {
+            return getBuffer().getFloat((int)i);
+        }
+    }
+    @Override public ByteIndexer putFloat(long i, float f) {
+        if (RAW != null) {
+            RAW.putFloat(array, checkIndex(i, array.length - 3), f);
+        } else {
+            getBuffer().putFloat((int)i, f);
+        }
+        return this;
+    }
+
+    @Override public double getDouble(long i) {
+        if (RAW != null) {
+            return RAW.getDouble(array, checkIndex(i, array.length - 7));
+        } else {
+            return getBuffer().getDouble((int)i);
+        }
+    }
+    @Override public ByteIndexer putDouble(long i, double d) {
+        if (RAW != null) {
+            RAW.putDouble(array, checkIndex(i, array.length - 7), d);
+        } else {
+            getBuffer().putDouble((int)i, d);
+        }
+        return this;
+    }
+
+    @Override public char getChar(long i) {
+        if (RAW != null) {
+            return RAW.getChar(array, checkIndex(i, array.length - 1));
+        } else {
+            return getBuffer().getChar((int)i);
+        }
+    }
+    @Override public ByteIndexer putChar(long i, char c) {
+        if (RAW != null) {
+            RAW.putChar(array, checkIndex(i, array.length - 1), c);
+        } else {
+            getBuffer().putChar((int)i, c);
         }
         return this;
     }

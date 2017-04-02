@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2016 Samuel Audet
+ * Copyright (C) 2014-2017 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -128,6 +128,36 @@ public abstract class ByteIndexer extends Indexer {
     public ByteIndexer put(long[] indices, byte... b) { return put(indices, b, 0, b.length); }
     /** Returns {@code this} where {@code array/buffer[index(indices)] = b[offset:offset + length]} */
     public abstract ByteIndexer put(long[] indices, byte[] b, int offset, int length);
+
+    /** Returns the {@code short} value at {@code array/buffer[i]} */
+    public abstract short getShort(long i);
+    /** Sets the {@code short} value at {@code array/buffer[i]} */
+    public abstract ByteIndexer putShort(long i, short s);
+
+    /** Returns the {@code int} value at {@code array/buffer[i]} */
+    public abstract int getInt(long i);
+    /** Sets the {@code int} value at {@code array/buffer[i]} */
+    public abstract ByteIndexer putInt(long i, int j);
+
+    /** Returns the {@code long} value at {@code array/buffer[i]} */
+    public abstract long getLong(long i);
+    /** Sets the {@code long} value at {@code array/buffer[i]} */
+    public abstract ByteIndexer putLong(long i, long j);
+
+    /** Returns the {@code float} value at {@code array/buffer[i]} */
+    public abstract float getFloat(long i);
+    /** Sets the {@code float} value at {@code array/buffer[i]} */
+    public abstract ByteIndexer putFloat(long i, float f);
+
+    /** Returns the {@code double} value at {@code array/buffer[i]} */
+    public abstract double getDouble(long i);
+    /** Sets the {@code double} value at {@code array/buffer[i]} */
+    public abstract ByteIndexer putDouble(long i, double d);
+
+    /** Returns the {@code char} value at {@code array/buffer[i]} */
+    public abstract char getChar(long i);
+    /** Sets the {@code char} value at {@code array/buffer[i]} */
+    public abstract ByteIndexer putChar(long i, char c);
 
     @Override public double getDouble(long... indices) { return get(indices); }
     @Override public ByteIndexer putDouble(long[] indices, double b) { return put(indices, (byte)b); }

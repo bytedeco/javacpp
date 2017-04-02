@@ -22,6 +22,7 @@
 package org.bytedeco.javacpp;
 
 import java.io.File;
+import java.nio.ByteOrder;
 
 import org.bytedeco.javacpp.annotation.Platform;
 import org.bytedeco.javacpp.indexer.ByteIndexer;
@@ -109,6 +110,24 @@ public class IndexerTest {
             fail("IndexOutOfBoundsException should have been thrown.");
         } catch (IndexOutOfBoundsException e) { }
 
+        short shortValue = 0x0203;
+        int intValue = 0x02030405;
+        long longValue = 0x0203040506070809L;
+        if (ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN) {
+            shortValue = Short.reverseBytes(shortValue);
+            intValue = Integer.reverseBytes(intValue);
+            longValue = Long.reverseBytes(longValue);
+        }
+        float floatValue = Float.intBitsToFloat(intValue);
+        double doubleValue = Double.longBitsToDouble(longValue);
+
+        assertEquals(shortValue, arrayIndexer.getShort(1));
+        assertEquals(intValue, arrayIndexer.getInt(1));
+        assertEquals(longValue, arrayIndexer.getLong(1));
+        assertEquals(floatValue, arrayIndexer.getFloat(1), 0.0);
+        assertEquals(doubleValue, arrayIndexer.getDouble(1), 0.0);
+        assertEquals(shortValue, arrayIndexer.getChar(1));
+
         System.out.println("arrayIndexer" + arrayIndexer);
         System.out.println("directIndexer" + directIndexer);
         for (int i = 0; i < size; i++) {
@@ -118,6 +137,14 @@ public class IndexerTest {
         for (int i = 0; i < size; i++) {
             assertEquals(i + 1, ptr.position(i).get() & 0xFF);
         }
+
+        assertEquals(shortValue, directIndexer.getShort(1));
+        assertEquals(intValue, directIndexer.getInt(1));
+        assertEquals(longValue, directIndexer.getLong(1));
+        assertEquals(floatValue, directIndexer.getFloat(1), 0.0);
+        assertEquals(doubleValue, directIndexer.getDouble(1), 0.0);
+        assertEquals((char)shortValue, directIndexer.getChar(1));
+
         System.gc();
 
         try {

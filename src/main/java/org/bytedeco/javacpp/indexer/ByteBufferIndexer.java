@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2016 Samuel Audet
+ * Copyright (C) 2014-2017 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -112,6 +112,54 @@ public class ByteBufferIndexer extends ByteIndexer {
         for (int n = 0; n < length; n++) {
             buffer.put((int)index(indices) + n, b[offset + n]);
         }
+        return this;
+    }
+
+    @Override public short getShort(long i) {
+        return buffer.getShort((int)i);
+    }
+    @Override public ByteIndexer putShort(long i, short s) {
+        buffer.putShort((int)i, s);
+        return this;
+    }
+
+    @Override public int getInt(long i) {
+        return buffer.getInt((int)i);
+    }
+    @Override public ByteIndexer putInt(long i, int j) {
+        buffer.putInt((int)i, j);
+        return this;
+    }
+
+    @Override public long getLong(long i) {
+        return buffer.getLong((int)i);
+    }
+    @Override public ByteIndexer putLong(long i, long j) {
+        buffer.putLong((int)i, j);
+        return this;
+    }
+
+    @Override public float getFloat(long i) {
+        return buffer.getFloat((int)i);
+    }
+    @Override public ByteIndexer putFloat(long i, float f) {
+        buffer.putFloat((int)i, f);
+        return this;
+    }
+
+    @Override public double getDouble(long i) {
+        return buffer.getDouble((int)i);
+    }
+    @Override public ByteIndexer putDouble(long i, double d) {
+        buffer.putDouble((int)i, d);
+        return this;
+    }
+
+    @Override public char getChar(long i) {
+        return buffer.getChar((int)i);
+    }
+    @Override public ByteIndexer putChar(long i, char c) {
+        buffer.putChar((int)i, c);
         return this;
     }
 

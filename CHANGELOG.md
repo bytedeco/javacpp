@@ -1,5 +1,5 @@
 
- * Provide `BytePointer` with value getters and setters for primitive types other than `byte` to facilitate unaligned memory accesses
+ * Provide `ByteIndexer` and `BytePointer` with value getters and setters for primitive types other than `byte` to facilitate unaligned memory accesses
  * Add a `BuildMojo.buildCommand` parameter that lets users execute arbitrary system commands easily with `ProcessBuilder`
 
 ### March 11, 2017 version 1.3.2
