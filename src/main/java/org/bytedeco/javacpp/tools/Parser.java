@@ -2379,8 +2379,12 @@ public class Parser {
         }
         decl.signature = type.javaName;
         tokens.index = startIndex;
-        if (name.length() > 0 && tokens.get().match(';')) {
+        if (name.length() > 0 && (tokens.get().match(';') || tokens.get(2).match(';'))) {
             // incomplete type (forward or friend declaration)
+            if (!tokens.get().match(';')) {
+                tokens.next();
+                tokens.next();
+            }
             tokens.next();
             if (friend) {
                 decl.text = "";
