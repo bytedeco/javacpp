@@ -260,7 +260,7 @@ public class Loader {
     public static Class getCallerClass(int i) {
         Class[] classContext = null;
         try {
-            new SecurityManager() {
+            classContext = new SecurityManager() {
                 @Override public Class[] getClassContext() {
                     return super.getClassContext();
                 }
