@@ -1,4 +1,6 @@
 
+ * Fix potential formatting issues with `OutOfMemoryError` thrown from `Pointer`
+ * Fix `Loader.getCallerClass()` ([pull #175](https://github.com/bytedeco/javacpp/pull/175))
  * Fix `Parser` not considering empty `class`, `struct`, or `union` declarations as opaque forward declarations
  * Provide `ByteIndexer` and `BytePointer` with value getters and setters for primitive types other than `byte` to facilitate unaligned memory accesses
  * Add a `BuildMojo.buildCommand` parameter that lets users execute arbitrary system commands easily with `ProcessBuilder`

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2016 Samuel Audet
+ * Copyright (C) 2011-2017 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -329,16 +329,16 @@ public class Pointer implements AutoCloseable {
     static final int maxRetries;
 
     static String formatBytes(long bytes) {
-        if (bytes < 1024) {
+        if (bytes < 1024L) {
             return bytes + "";
-        } else if ((bytes /= 1024) < 1024) {
+        } else if ((bytes /= 1024L) < 1024L) {
             return bytes + "K";
-        } else if ((bytes /= 1024) < 1024) {
+        } else if ((bytes /= 1024L) < 1024L) {
             return bytes + "M";
-        } else if ((bytes /= 1024) < 1024) {
+        } else if ((bytes /= 1024L) < 1024L) {
             return bytes + "G";
         } else {
-            return (bytes / 1024) + "T";
+            return (bytes / 1024L) + "T";
         }
     }
 
@@ -352,10 +352,10 @@ public class Pointer implements AutoCloseable {
         }
         long size = Long.parseLong(string.substring(0, i));
         switch (string.substring(i).trim().toLowerCase()) {
-            case "t": case "tb": size *= 1024; /* no break */
-            case "g": case "gb": size *= 1024; /* no break */
-            case "m": case "mb": size *= 1024; /* no break */
-            case "k": case "kb": size *= 1024; /* no break */
+            case "t": case "tb": size *= 1024L; /* no break */
+            case "g": case "gb": size *= 1024L; /* no break */
+            case "m": case "mb": size *= 1024L; /* no break */
+            case "k": case "kb": size *= 1024L; /* no break */
             case "": break;
             default: throw new NumberFormatException("Cannot parse into bytes: " + string);
         }
