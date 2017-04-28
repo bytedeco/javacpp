@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2014 Samuel Audet
+ * Copyright (C) 2011-2017 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -57,11 +57,12 @@ public class ClassProperties extends HashMap<String,List<String>> {
             if (v == null || v.length() == 0) {
                 continue;
             }
-            if (k.equals("platform.includepath") || k.equals("platform.include") ||
-                    k.equals("platform.linkpath") || k.equals("platform.link") ||
-                    k.equals("platform.preloadpath") || k.equals("platform.preload") ||
-                    k.equals("platform.frameworkpath") || k.equals("platform.framework") ||
-                    k.equals("platform.library.suffix")) {
+            if (k.equals("platform.includepath") || k.equals("platform.includeresource") || k.equals("platform.include")
+                || k.equals("platform.linkpath") || k.equals("platform.linkresource") || k.equals("platform.link")
+                || k.equals("platform.preloadpath") || k.equals("platform.preload")
+                || k.equals("platform.resourcepath") || k.equals("platform.resource")
+                || k.equals("platform.frameworkpath") || k.equals("platform.framework")
+                || k.equals("platform.library.suffix")) {
                 addAll(k, v.split(pathSeparator));
             } else {
                 setProperty(k, v);
@@ -176,8 +177,8 @@ public class ClassProperties extends HashMap<String,List<String>> {
             platforms = classProperties.value();
         }
 
-        String[] pragma = {}, define = {}, include = {}, cinclude = {}, includepath = {}, compiler = {},
-                 linkpath = {}, link = {}, frameworkpath = {}, framework = {}, preloadpath = {}, preload = {};
+        String[] pragma = {}, define = {}, include = {}, cinclude = {}, includepath = {}, includeresource = {}, compiler = {},
+                 linkpath = {}, linkresource = {}, link = {}, frameworkpath = {}, framework = {}, preloadpath = {}, preload = {}, resourcepath = {}, resource = {};
         String library = "jni" + c.getSimpleName();
         for (Platform p : platforms != null ? platforms : new Platform[0]) {
             String[][] names = { p.value().length > 0 ? p.value() : defaultNames, p.not() };
@@ -196,14 +197,42 @@ public class ClassProperties extends HashMap<String,List<String>> {
                 if (p.include()    .length > 0) { include     = p.include();     }
                 if (p.cinclude()   .length > 0) { cinclude    = p.cinclude();    }
                 if (p.includepath().length > 0) { includepath = p.includepath(); }
+                if (p.includeresource().length > 0) { includeresource = p.includeresource(); }
                 if (p.compiler()   .length > 0) { compiler    = p.compiler();    }
                 if (p.linkpath()   .length > 0) { linkpath    = p.linkpath();    }
+                if (p.linkresource()   .length > 0) { linkresource    = p.linkresource();    }
                 if (p.link()       .length > 0) { link        = p.link();        }
                 if (p.frameworkpath().length > 0) { frameworkpath = p.frameworkpath(); }
                 if (p.framework()  .length > 0) { framework   = p.framework();   }
                 if (p.preloadpath().length > 0) { preloadpath = p.preloadpath(); }
                 if (p.preload()    .length > 0) { preload     = p.preload();     }
+                if (p.resourcepath().length > 0) { resourcepath = p.resourcepath(); }
+                if (p.resource()    .length > 0) { resource     = p.resource();     }
                 if (p.library().length() > 0)   { library     = p.library();     }
+            }
+        }
+        for (int i = 0; i < includeresource.length; i++) {
+            // turn resources into absolute names
+            String name = includeresource[i];
+            if (!name.startsWith("/")) {
+                String s = cls.getName().replace('.', '/');
+                int n = s.lastIndexOf('/');
+                if (n >= 0) {
+                    name = s.substring(0, n + 1) + name;
+                }
+                includeresource[i] = "/" + name;
+            }
+        }
+        for (int i = 0; i < linkresource.length; i++) {
+            // turn resources into absolute names
+            String name = linkresource[i];
+            if (!name.startsWith("/")) {
+                String s = cls.getName().replace('.', '/');
+                int n = s.lastIndexOf('/');
+                if (n >= 0) {
+                    name = s.substring(0, n + 1) + name;
+                }
+                linkresource[i] = "/" + name;
             }
         }
         addAll("platform.pragma", pragma);
@@ -211,13 +240,17 @@ public class ClassProperties extends HashMap<String,List<String>> {
         addAll("platform.include", include);
         addAll("platform.cinclude", cinclude);
         addAll("platform.includepath", includepath);
+        addAll("platform.includeresource", includeresource);
         addAll("platform.compiler.*", compiler);
         addAll("platform.linkpath", linkpath);
+        addAll("platform.linkresource", linkresource);
         addAll("platform.link", link);
         addAll("platform.frameworkpath", frameworkpath);
         addAll("platform.framework", framework);
         addAll("platform.preloadpath", preloadpath);
         addAll("platform.preload", preload);
+        addAll("platform.resourcepath", resourcepath);
+        addAll("platform.resource", resource);
         setProperty("platform.library", library);
 
         if (platforms != null && platforms.length > 0) {

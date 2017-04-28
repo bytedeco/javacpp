@@ -3033,6 +3033,11 @@ public class Parser {
             }
         }
         List<String> paths = allProperties.get("platform.includepath");
+        for (String s : allProperties.get("platform.includeresource")) {
+            for (File f : Loader.cacheResources(s)) {
+                paths.add(f.getCanonicalPath());
+            }
+        }
         String[] includePaths = paths.toArray(new String[paths.size() + includePath.length]);
         System.arraycopy(includePath, 0, includePaths, paths.size(), includePath.length);
         DeclarationList declList = new DeclarationList();

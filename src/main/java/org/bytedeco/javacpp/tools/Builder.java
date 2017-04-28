@@ -31,9 +31,20 @@ import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.DirectoryNotEmptyException;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.FileVisitOption;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -197,6 +208,17 @@ public class Builder {
                     }
                 }
             }
+            for (String s : properties.get("platform.includeresource")) {
+                for (File f : Loader.cacheResources(s)) {
+                    if (f.isDirectory()) {
+                        if (p.endsWith(" ")) {
+                            command.add(p.trim()); command.add(f.getCanonicalPath());
+                        } else {
+                            command.add(p + f.getCanonicalPath());
+                        }
+                    }
+                }
+            }
         }
 
         command.add(sourceFilename);
@@ -249,6 +271,24 @@ public class Builder {
                             command.add(p2.trim()); command.add(s);
                         } else {
                             command.add(p2 + s);
+                        }
+                    }
+                }
+            }
+            for (String s : properties.get("platform.linkresource")) {
+                for (File f : Loader.cacheResources(s)) {
+                    if (f.isDirectory()) {
+                        if (p.endsWith(" ")) {
+                            command.add(p.trim()); command.add(f.getCanonicalPath());
+                        } else {
+                            command.add(p + f.getCanonicalPath());
+                        }
+                        if (p2 != null) {
+                            if (p2.endsWith(" ")) {
+                                command.add(p2.trim()); command.add(f.getCanonicalPath());
+                            } else {
+                                command.add(p2 + f.getCanonicalPath());
+                            }
                         }
                     }
                 }
@@ -495,6 +535,8 @@ public class Builder {
     boolean header = false;
     /** If true, also copies to the output directory dependent shared libraries (link and preload). */
     boolean copyLibs = false;
+    /** If true, also copies to the output directory resources listed in properties. */
+    boolean copyResources = false;
     /** Accumulates the various properties loaded from resources, files, command line options, etc. */
     Properties properties = null;
     /** The instance of the {@link ClassScanner} that fills up a {@link Collection} of {@link Class} objects to process. */
@@ -546,6 +588,11 @@ public class Builder {
     /** Sets the {@link #copyLibs} field to the argument. */
     public Builder copyLibs(boolean copyLibs) {
         this.copyLibs = copyLibs;
+        return this;
+    }
+    /** Sets the {@link #copyResources} field to the argument. */
+    public Builder copyResources(boolean copyResources) {
+        this.copyResources = copyResources;
         return this;
     }
     /** Sets the {@link #outputName} field to the argument. */
@@ -746,6 +793,46 @@ public class Builder {
                         }
                     }
                 }
+                if (copyResources) {
+                    // Do not copy resources from inherit properties ...
+                    ClassProperties p = Loader.loadProperties(classArray, properties, false);
+                    List<String> resources = p.get("platform.resource");
+                    // ... but we should use all the inherited paths!
+                    p = Loader.loadProperties(classArray, properties, true);
+                    List<String> paths =  p.get("platform.resourcepath");
+
+                    Path directory = f.getParentFile().toPath();
+                    for (String resource : resources) {
+                        final Path target = directory.resolve(resource);
+                        if (!Files.exists(target)) {
+                            Files.createDirectories(target);
+                        }
+                        for (String path : paths) {
+                            final Path source = Paths.get(path, resource);
+                            if (Files.exists(source)) {
+                                logger.info("Copying " + source);
+                                Files.walkFileTree(source, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new SimpleFileVisitor<Path>() {
+                                    @Override public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                                        Path targetdir = target.resolve(source.relativize(dir));
+                                        try {
+                                            Files.copy(dir, targetdir, StandardCopyOption.REPLACE_EXISTING);
+                                        } catch (DirectoryNotEmptyException | FileAlreadyExistsException e) {
+                                             if (!Files.isDirectory(targetdir)) {
+                                                 throw e;
+                                             }
+                                        }
+                                        return FileVisitResult.CONTINUE;
+                                    }
+                                    @Override public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                                        Files.copy(file, target.resolve(source.relativize(file)), StandardCopyOption.REPLACE_EXISTING);
+                                        return FileVisitResult.CONTINUE;
+                                    }
+                                });
+                                break;
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -788,6 +875,7 @@ public class Builder {
         System.out.println("    -nodelete              Do not delete generated C++ JNI files after compilation");
         System.out.println("    -header                Generate header file with declarations of callbacks functions");
         System.out.println("    -copylibs              Copy to output directory dependent libraries (link and preload)");
+        System.out.println("    -copyresources         Copy to output directory resources listed in properties");
         System.out.println("    -jarprefix <prefix>    Also create a JAR file named \"<prefix>-<platform>.jar\"");
         System.out.println("    -properties <resource> Load all properties from resource");
         System.out.println("    -propertyfile <file>   Load all properties from file");
@@ -823,6 +911,8 @@ public class Builder {
                 builder.header(true);
             } else if ("-copylibs".equals(args[i])) {
                 builder.copyLibs(true);
+            } else if ("-copyresources".equals(args[i])) {
+                builder.copyResources(true);
             } else if ("-jarprefix".equals(args[i])) {
                 builder.jarPrefix(args[++i]);
             } else if ("-properties".equals(args[i])) {

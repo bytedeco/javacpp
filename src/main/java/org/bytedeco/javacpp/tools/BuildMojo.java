@@ -62,6 +62,14 @@ public class BuildMojo extends AbstractMojo {
     @Parameter(property = "javacpp.includePaths")
     String[] includePaths = null;
 
+    /** Add the path to the "platform.includeresource" property. */
+    @Parameter(property = "javacpp.includeResource")
+    String includeResource = null;
+
+    /** Add the paths to the "platform.includeresource" property. */
+    @Parameter(property = "javacpp.includeResources")
+    String[] includeResources = null;
+
     /** Add the path to the "platform.linkpath" property. */
     @Parameter(property = "javacpp.linkPath")
     String linkPath = null;
@@ -70,6 +78,14 @@ public class BuildMojo extends AbstractMojo {
     @Parameter(property = "javacpp.linkPaths")
     String[] linkPaths = null;
 
+    /** Add the path to the "platform.linkresource" property. */
+    @Parameter(property = "javacpp.linkResource")
+    String linkResource = null;
+
+    /** Add the paths to the "platform.linkresource" property. */
+    @Parameter(property = "javacpp.linkResources")
+    String[] linkResources = null;
+
     /** Add the path to the "platform.preloadpath" property. */
     @Parameter(property = "javacpp.preloadPath")
     String preloadPath = null;
@@ -77,6 +93,14 @@ public class BuildMojo extends AbstractMojo {
     /** Add the paths to the "platform.preloadpath" property. */
     @Parameter(property = "javacpp.preloadPaths")
     String[] preloadPaths = null;
+
+    /** Add the path to the "platform.resourcepath" property. */
+    @Parameter(property = "javacpp.resourcePath")
+    String resourcePath = null;
+
+    /** Add the paths to the "platform.resourcepath" property. */
+    @Parameter(property = "javacpp.resourcePaths")
+    String[] resourcePaths = null;
 
     /** Output all generated files to outputDirectory. */
     @Parameter(property = "javacpp.outputDirectory")
@@ -101,6 +125,10 @@ public class BuildMojo extends AbstractMojo {
     /** Copy to output directory dependent libraries (link and preload). */
     @Parameter(property = "javacpp.copyLibs", defaultValue = "false")
     boolean copyLibs = false;
+
+    /** Copy to output directory resources listed in properties. */
+    @Parameter(property = "javacpp.copyResources", defaultValue = "false")
+    boolean copyResources = false;
 
     /** Also create a JAR file named {@code <jarPrefix>-<platform>.jar}. */
     @Parameter(property = "javacpp.jarPrefix")
@@ -167,16 +195,23 @@ public class BuildMojo extends AbstractMojo {
                 log.debug("classPaths: " + Arrays.deepToString(classPaths));
                 log.debug("includePath: " + includePath);
                 log.debug("includePaths: " + Arrays.deepToString(includePaths));
+                log.debug("includeResource: " + includeResource);
+                log.debug("includeResources: " + Arrays.deepToString(includeResources));
                 log.debug("linkPath: " + linkPath);
                 log.debug("linkPaths: " + Arrays.deepToString(linkPaths));
+                log.debug("linkResource: " + linkResource);
+                log.debug("linkResources: " + Arrays.deepToString(linkResources));
                 log.debug("preloadPath: " + preloadPath);
                 log.debug("preloadPaths: " + Arrays.deepToString(preloadPaths));
+                log.debug("resourcePath: " + resourcePath);
+                log.debug("resourcePaths: " + Arrays.deepToString(resourcePaths));
                 log.debug("outputDirectory: " + outputDirectory);
                 log.debug("outputName: " + outputName);
                 log.debug("compile: " + compile);
                 log.debug("deleteJniFiles: " + deleteJniFiles);
                 log.debug("header: " + header);
                 log.debug("copyLibs: " + copyLibs);
+                log.debug("copyResources: " + copyResources);
                 log.debug("jarPrefix: " + jarPrefix);
                 log.debug("properties: " + properties);
                 log.debug("propertyFile: " + propertyFile);
@@ -212,6 +247,7 @@ public class BuildMojo extends AbstractMojo {
                     .deleteJniFiles(deleteJniFiles)
                     .header(header)
                     .copyLibs(copyLibs)
+                    .copyResources(copyResources)
                     .jarPrefix(jarPrefix)
                     .properties(properties)
                     .propertyFile(propertyFile)
@@ -230,14 +266,29 @@ public class BuildMojo extends AbstractMojo {
                 properties.setProperty("platform.includepath",
                         v.length() == 0 || v.endsWith(separator) ? v + s : v + separator + s);
             }
+            for (String s : merge(includeResources, includeResource)) {
+                String v = properties.getProperty("platform.includeresource", "");
+                properties.setProperty("platform.includeresource",
+                        v.length() == 0 || v.endsWith(separator) ? v + s : v + separator + s);
+            }
             for (String s : merge(linkPaths, linkPath)) {
                 String v = properties.getProperty("platform.linkpath", "");
                 properties.setProperty("platform.linkpath",
                         v.length() == 0 || v.endsWith(separator) ? v + s : v + separator + s);
             }
+            for (String s : merge(linkResources, linkResource)) {
+                String v = properties.getProperty("platform.linkresource", "");
+                properties.setProperty("platform.linkresource",
+                        v.length() == 0 || v.endsWith(separator) ? v + s : v + separator + s);
+            }
             for (String s : merge(preloadPaths, preloadPath)) {
                 String v = properties.getProperty("platform.preloadpath", "");
                 properties.setProperty("platform.preloadpath",
+                        v.length() == 0 || v.endsWith(separator) ? v + s : v + separator + s);
+            }
+            for (String s : merge(resourcePaths, resourcePath)) {
+                String v = properties.getProperty("platform.resourcepath", "");
+                properties.setProperty("platform.resourcepath",
                         v.length() == 0 || v.endsWith(separator) ? v + s : v + separator + s);
             }
             Properties projectProperties = project.getProperties();

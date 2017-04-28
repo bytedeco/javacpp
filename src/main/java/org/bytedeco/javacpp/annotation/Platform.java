@@ -57,6 +57,8 @@ public @interface Platform {
     String[] cinclude()    default {};
     /** A list of include paths passed to the native compiler. */
     String[] includepath() default {};
+    /** A list of include resources passed to the native compiler. */
+    String[] includeresource() default {};
     /** A list of options applied for the native compiler. The options here refer to
      *  property names. The actual command line options of the native compiler are the
      *  values of these properties, which need to be defined elsewhere. On an empty
@@ -64,6 +66,8 @@ public @interface Platform {
     String[] compiler()    default {};
     /** A list of library paths passed to the native compiler for use at link time. */
     String[] linkpath()    default {};
+    /** A list of library resources passed to the native compiler for use at link time. */
+    String[] linkresource() default {};
     /** A list of libraries the native compiler should link with. */
     String[] link()        default {};
     /** A list of framework paths passed to the native compiler for use at link time. */
@@ -76,6 +80,10 @@ public @interface Platform {
     /** A list of libraries, in addition to {@link #link()}, that should be
      *  extracted and preloaded, if possible. */
     String[] preload()     default {};
+    /** A list of paths from which to copy resources from the {@link #resource()} list. */
+    String[] resourcepath() default {};
+    /** A list of resources, either files or directories, that can be copied and extracted. */
+    String[] resource()     default {};
     /** The native JNI library associated with this class that {@link Builder} should
      *  try to build and {@link Loader} should try to load. If left empty, this value
      *  defaults to "jni" + the name that {@link Class#getSimpleName()} returns. */
