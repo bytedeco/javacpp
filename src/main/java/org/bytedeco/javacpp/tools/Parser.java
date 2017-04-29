@@ -1168,11 +1168,21 @@ public class Parser {
                 definition.declarator.parameters = dcl.parameters;
                 dcl.definition = definition;
                 dcl.indirections = indirections2;
+                if (pointerAsArray && dcl.indirections > 1) {
+                    // treat second indirection as an array
+                    dims[dcl.indices++] = -1;
+                    dcl.indirections--;
+                }
                 if (!fieldPointer) {
                     dcl.parameters = null;
                 }
-                type.annotations = "";
-                type.javaName = functionType;
+                if (dcl.indirections > 1) {
+                    type.annotations = "@Cast(\"void**\") ";
+                    type.javaName = "PointerPointer";
+                } else {
+                    type.annotations = "";
+                    type.javaName = functionType;
+                }
             }
         }
 
