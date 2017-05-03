@@ -259,34 +259,17 @@ public class Loader {
      * @return the Class found from the calling context, or {@code null} if not found
      */
     public static Class getCallerClass(int i) {
-        Class[] classContext = null;
         try {
-            classContext = new SecurityManager() {
-                @Override public Class[] getClassContext() {
-                    return super.getClassContext();
-                }
-            }.getClassContext();
-        } catch (NoSuchMethodError e) {
-            logger.error("No definition of this method : " + e.getMessage());
-        }
-        if (classContext != null) {
-            for (int j = 0; j < classContext.length; j++) {
-                if (classContext[j] == Loader.class) {
-                    return classContext[i+j];
+            StackTraceElement[] classNames = Thread.currentThread().getStackTrace();
+            for (int j = 0; j < classNames.length; j++) {
+                if (Class.forName(classNames[j].getClassName()) == Loader.class) {
+                    return Class.forName(classNames[i+j].getClassName());
                 }
             }
-        } else {
-            // SecurityManager.getClassContext() returns null on Android 4.0
-            try {
-                StackTraceElement[] classNames = Thread.currentThread().getStackTrace();
-                for (int j = 0; j < classNames.length; j++) {
-                    if (Class.forName(classNames[j].getClassName()) == Loader.class) {
-                        return Class.forName(classNames[i+j].getClassName());
-                    }
-                }
-            } catch (ClassNotFoundException e) {
-                logger.error("No definition for the class found : " + e.getMessage());
-            }
+        } catch (ClassNotFoundException e) {
+            logger.error("No definition for the class found : " + e.getMessage());
+        } catch (SecurityException e) {
+            logger.debug("Not permitted to look at stack: " + e.getMessage());
         }
         return null;
     }
