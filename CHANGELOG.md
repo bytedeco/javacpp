@@ -1,4 +1,5 @@
 
+ * Prevent `Parser` from outputting setters for `const` member pointers
  * Add support for arrays of function pointers
  * Let users bundle arbitrary resources, have them extracted in cache, and used as `include` or `link` paths ([pull #43](https://github.com/bytedeco/javacpp/pull/43))
  * Fix potential formatting issues with `OutOfMemoryError` thrown from `Pointer`

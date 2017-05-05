@@ -1891,19 +1891,19 @@ public class Parser {
                     dcl.type.annotations = dcl.type.annotations.replaceAll("@Name\\(.*\\) ", "");
                     javaName = metadcl.javaName + "_" + shortName;
                 }
-                if (dcl.type.constValue) {
+                if (dcl.type.constValue || dcl.constPointer) {
                     decl.text += "@MemberGetter ";
                 }
                 decl.text += modifiers + dcl.type.annotations.replace("@ByVal ", "@ByRef ")
                           + dcl.type.javaName + " " + javaName + "(" + indices + ");";
-                if (!dcl.type.constValue) {
+                if (!dcl.type.constValue && !dcl.constPointer) {
                     if (indices.length() > 0) {
                         indices += ", ";
                     }
                     decl.text += " " + modifiers + setterType + javaName + "(" + indices + dcl.type.javaName + " " + javaName + ");";
                 }
                 decl.text += "\n";
-                if (dcl.type.constValue && dcl.type.staticMember && indices.length() == 0) {
+                if ((dcl.type.constValue || dcl.constPointer) && dcl.type.staticMember && indices.length() == 0) {
                     String rawType = dcl.type.javaName.substring(dcl.type.javaName.lastIndexOf(' ') + 1);
                     if ("byte".equals(rawType) || "short".equals(rawType) || "int".equals(rawType) || "long".equals(rawType)
                             || "float".equals(rawType) || "double".equals(rawType) || "char".equals(rawType) || "boolean".equals(rawType)) {
