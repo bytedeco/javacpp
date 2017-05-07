@@ -70,6 +70,22 @@ public class BuildMojo extends AbstractMojo {
     @Parameter(property = "javacpp.includeResources")
     String[] includeResources = null;
 
+    /** Add the path to the "platform.buildpath" property. */
+    @Parameter(property = "javacpp.buildPath")
+    String buildPath = null;
+
+    /** Add the paths to the "platform.buildpath" property. */
+    @Parameter(property = "javacpp.buildPaths")
+    String[] buildPaths = null;
+
+    /** Add the path to the "platform.buildresource" property. */
+    @Parameter(property = "javacpp.buildResource")
+    String buildResource = null;
+
+    /** Add the paths to the "platform.buildresource" property. */
+    @Parameter(property = "javacpp.buildResources")
+    String[] buildResources = null;
+
     /** Add the path to the "platform.linkpath" property. */
     @Parameter(property = "javacpp.linkPath")
     String linkPath = null;
@@ -193,6 +209,10 @@ public class BuildMojo extends AbstractMojo {
             if (log.isDebugEnabled()) {
                 log.debug("classPath: " + classPath);
                 log.debug("classPaths: " + Arrays.deepToString(classPaths));
+                log.debug("buildPath: " + buildPath);
+                log.debug("buildPaths: " + Arrays.deepToString(buildPaths));
+                log.debug("buildResource: " + buildResource);
+                log.debug("buildResources: " + Arrays.deepToString(buildResources));
                 log.debug("includePath: " + includePath);
                 log.debug("includePaths: " + Arrays.deepToString(includePaths));
                 log.debug("includeResource: " + includeResource);
@@ -261,6 +281,16 @@ public class BuildMojo extends AbstractMojo {
             log.info("Detected platform \"" + Loader.getPlatform() + "\"");
             log.info("Building for platform \"" + properties.get("platform") + "\"");
             String separator = properties.getProperty("platform.path.separator");
+            for (String s : merge(buildPaths, buildPath)) {
+                String v = properties.getProperty("platform.buildpath", "");
+                properties.setProperty("platform.buildpath",
+                        v.length() == 0 || v.endsWith(separator) ? v + s : v + separator + s);
+            }
+            for (String s : merge(buildResources, buildResource)) {
+                String v = properties.getProperty("platform.buildresource", "");
+                properties.setProperty("platform.buildresource",
+                        v.length() == 0 || v.endsWith(separator) ? v + s : v + separator + s);
+            }
             for (String s : merge(includePaths, includePath)) {
                 String v = properties.getProperty("platform.includepath", "");
                 properties.setProperty("platform.includepath",

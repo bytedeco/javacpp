@@ -592,6 +592,9 @@ public class Loader {
      * @throws IOException
      */
     public static URL[] findResources(Class cls, String name) throws IOException {
+        while (name.contains("//")) {
+            name = name.replace("//", "/");
+        }
         if (!name.startsWith("/")) {
             String s = cls.getName().replace('.', '/');
             int n = s.lastIndexOf('/');

@@ -713,6 +713,23 @@ public class Builder {
             if (environmentVariables != null) {
                 pb.environment().putAll(environmentVariables);
             }
+            String paths = properties.getProperty("platform.buildpath", "");
+            String resources = properties.getProperty("platform.buildresource", "");
+            String separator = properties.getProperty("platform.path.separator");
+            if (paths.length() > 0 || resources.length() > 0) {
+                for (String s : resources.split(separator)) {
+                    for (File f : Loader.cacheResources(s)) {
+                        if (paths.length() > 0 && !paths.endsWith(separator)) {
+                            paths += separator;
+                        }
+                        paths += f.getCanonicalPath();
+                    }
+                }
+                if (paths.length() > 0) {
+                    pb.environment().put("BUILD_PATH", paths);
+                    pb.environment().put("PATH_SEPARATOR", separator);
+                }
+            }
             int exitValue = pb.inheritIO().start().waitFor();
             if (exitValue != 0) {
                 throw new RuntimeException("Process exited with an error: " + exitValue);
@@ -828,7 +845,6 @@ public class Builder {
                                         return FileVisitResult.CONTINUE;
                                     }
                                 });
-                                break;
                             }
                         }
                     }
