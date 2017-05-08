@@ -727,7 +727,7 @@ public class Builder {
                 }
                 if (paths.length() > 0) {
                     pb.environment().put("BUILD_PATH", paths);
-                    pb.environment().put("PATH_SEPARATOR", separator);
+                    pb.environment().put("BUILD_PATH_SEPARATOR", separator);
                 }
             }
             int exitValue = pb.inheritIO().start().waitFor();
