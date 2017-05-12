@@ -2576,8 +2576,10 @@ public class Parser {
             tokens.index = backIndex;
             return false;
         }
+        boolean enumClass = false;
         String enumType = "enum";
         if (tokens.get(1).match(Token.CLASS, Token.STRUCT)) {
+            enumClass = true;
             enumType += " " + tokens.next();
         }
         if (typedef && !tokens.get(1).match('{') && tokens.get(2).match(Token.IDENTIFIER)) {
@@ -2626,6 +2628,9 @@ public class Parser {
             Token enumerator = tokens.get();
             String cppName = enumerator.value;
             String javaName = cppName;
+            if (enumClass) {
+                cppName = name + "::" + cppName;
+            }
             if (context.namespace != null) {
                 cppName = context.namespace + "::" + cppName;
             }

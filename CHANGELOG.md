@@ -1,4 +1,5 @@
 
+ * Make it possible to rename enumerators of C++ `enum class` ([issue #180](https://github.com/bytedeco/javacpp/issues/180))
  * Make the arbitrary resources available to process executed with `Builder.buildCommand` via the `BUILD_PATH` environment variable
  * Prevent `Parser` from outputting setters for `const` member pointers
  * Add support for arrays of function pointers
