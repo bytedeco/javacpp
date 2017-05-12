@@ -1,11 +1,12 @@
 
+ * Fix issue with `Loader.getCallerClass()` when a `SecurityManager` cannot be created ([issue #176](https://github.com/bytedeco/javacpp/issues/176))
  * Make it possible to rename enumerators of C++ `enum class` ([issue #180](https://github.com/bytedeco/javacpp/issues/180))
  * Make the arbitrary resources available to process executed with `Builder.buildCommand` via the `BUILD_PATH` environment variable
  * Prevent `Parser` from outputting setters for `const` member pointers
  * Add support for arrays of function pointers
  * Let users bundle arbitrary resources, have them extracted in cache, and used as `include` or `link` paths ([pull #43](https://github.com/bytedeco/javacpp/pull/43))
  * Fix potential formatting issues with `OutOfMemoryError` thrown from `Pointer`
- * Fix `Loader.getCallerClass()` ([pull #175](https://github.com/bytedeco/javacpp/pull/175))
+ * Fix `Loader.getCallerClass()` not using the output from the `SecurityManager` ([pull #175](https://github.com/bytedeco/javacpp/pull/175))
  * Fix `Parser` not considering empty `class`, `struct`, or `union` declarations as opaque forward declarations
  * Provide `ByteIndexer` and `BytePointer` with value getters and setters for primitive types other than `byte` to facilitate unaligned memory accesses
  * Add a `BuildMojo.buildCommand` parameter that lets users execute arbitrary system commands easily with `ProcessBuilder`

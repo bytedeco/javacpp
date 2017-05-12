@@ -266,8 +266,8 @@ public class Loader {
                     return super.getClassContext();
                 }
             }.getClassContext();
-        } catch (NoSuchMethodError e) {
-            logger.error("No definition of this method : " + e.getMessage());
+        } catch (NoSuchMethodError | SecurityException e) {
+            logger.warn("Could not create an instance of SecurityManager: " + e.getMessage());
         }
         if (classContext != null) {
             for (int j = 0; j < classContext.length; j++) {
