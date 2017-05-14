@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2016 Samuel Audet
+ * Copyright (C) 2013-2017 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -451,7 +451,9 @@ public class Parser {
                 }
                 type.cppName += type.cppName.endsWith(">") ? " >" : ">";
             } else if (token.match(Token.CONST, Token.CONSTEXPR)) {
-                if (type.cppName.length() == 0) {
+                int template = type.cppName.lastIndexOf('<');
+                String simpleName = template >= 0 ? type.cppName.substring(0, template) : type.cppName;
+                if (!simpleName.trim().contains(" ") || type.simple) {
                     type.constValue = true;
                 } else {
                     type.constPointer = true;
@@ -1003,8 +1005,8 @@ public class Parser {
             needCast |= info.cast && !type.cppName.equals(type.javaName);
         }
 
-        if (!valueType) {
-            if (dcl.indirections == 0 && !dcl.reference) {
+        if (!valueType || context.virtualize) {
+            if (!valueType && dcl.indirections == 0 && !dcl.reference) {
                 type.annotations += "@ByVal ";
             } else if (dcl.indirections == 0 && dcl.reference) {
                 if (type.javaName.contains("@ByPtrPtr ")) {
@@ -1389,7 +1391,8 @@ public class Parser {
     }
 
     Attribute attribute() throws ParserException {
-        if (!tokens.get().match(Token.IDENTIFIER)) {
+        // attributes might have arguments that start with '(', but not '<'
+        if (!tokens.get().match(Token.IDENTIFIER) || tokens.get(1).match('<')) {
             return null;
         }
         Attribute attr = new Attribute();
@@ -1554,6 +1557,12 @@ public class Parser {
             if (tokens.get().expect(',', ')').match(',')) {
                 tokens.next();
             }
+        }
+        if (dcls.size() == 1 && (dcls.get(0) == null || dcls.get(0).type == null
+                || dcls.get(0).type.cppName == null || dcls.get(0).type.cppName.length() == 0)) {
+            // this looks more like a variable initialization
+            tokens.index = backIndex;
+            return null;
         }
         params.declarators = dcls.toArray(new Declarator[dcls.size()]);
         return params;
@@ -1828,7 +1837,7 @@ public class Parser {
         Declaration decl = new Declaration();
         String cppName = dcl.cppName;
         String javaName = dcl.javaName;
-        if (javaName == null || !tokens.get().match('[', '=', ',', ':', ';')) {
+        if (javaName == null || !tokens.get().match('(', '[', '=', ',', ':', ';')) {
             tokens.index = backIndex;
             return false;
         } else if (!dcl.type.staticMember && context.javaName != null) {
@@ -2138,11 +2147,22 @@ public class Parser {
 
     boolean typedef(Context context, DeclarationList declList) throws ParserException {
         String spacing = tokens.get().spacing;
-        if (!tokens.get().match(Token.TYPEDEF)) {
+        // the "using" token can also act as a "typedef"
+        String usingDefName = tokens.get().match(Token.USING) && tokens.get(1).match(Token.IDENTIFIER)
+                && tokens.get(2).match('=') ? tokens.get(1).value : null;
+        if (!tokens.get().match(Token.TYPEDEF) && usingDefName == null) {
             return false;
         }
         Declaration decl = new Declaration();
+        if (usingDefName != null) {
+            tokens.next().expect(Token.IDENTIFIER);
+            tokens.next().expect('=');
+            tokens.next();
+        }
         Declarator dcl = declarator(context, null, 0, false, 0, true, false);
+        if (usingDefName != null) {
+            dcl.cppName = usingDefName;
+        }
         tokens.next();
 
         String typeName = dcl.type.cppName, defName = dcl.cppName;
@@ -2210,7 +2230,14 @@ public class Parser {
                     info.pointerTypes(typeName);
                 }
                 if (info.annotations == null) {
-                    info.cast(!dcl.cppName.equals(info.pointerTypes[0]));
+                    if (dcl.type.annotations != null && dcl.type.annotations.length() > 0
+                            && !dcl.type.annotations.startsWith("@ByVal ")
+                            && !dcl.type.annotations.startsWith("@Cast(")
+                            && !dcl.type.annotations.startsWith("@Const ")) {
+                        info.annotations(dcl.type.annotations.trim());
+                    } else {
+                        info.cast(!dcl.cppName.equals(info.pointerTypes[0]));
+                    }
                 }
                 infoMap.put(info);
             }

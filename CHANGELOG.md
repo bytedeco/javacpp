@@ -1,4 +1,8 @@
 
+ * Fix `Parser` incorrectly recognizing values as pointers when `const` is placed after type ([issue #173](https://github.com/bytedeco/javacpp/issues/173))
+ * Add `Parser` support for C++11 `using` declarations that act as `typedef` ([issue #169](https://github.com/bytedeco/javacpp/issues/169))
+ * Let `Parser` accept variables initialized with parentheses ([issue #179](https://github.com/bytedeco/javacpp/issues/179))
+ * Fix `Parser` confusion between attributes and namespace-less templates ([issue #181](https://github.com/bytedeco/javacpp/issues/181))
  * Fix issue with `Loader.getCallerClass()` when a `SecurityManager` cannot be created ([issue #176](https://github.com/bytedeco/javacpp/issues/176))
  * Make it possible to rename enumerators of C++ `enum class` ([issue #180](https://github.com/bytedeco/javacpp/issues/180))
  * Make the arbitrary resources available to process executed with `Builder.buildCommand` via the `BUILD_PATH` environment variable

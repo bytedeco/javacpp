@@ -3213,10 +3213,10 @@ public class Generator implements Closeable {
                 }
                 typeName = cppTypeName(type);
                 boolean[] b = ((Const)a).value();
-                if (b.length > 1 && b[1]) {
+                if (b.length > 1 && b[1] && !typeName[0].endsWith(" const *")) {
                     typeName[0] = valueTypeName(typeName) + " const *";
                 }
-                if (b.length > 0 && b[0]) {
+                if (b.length > 0 && b[0] && !typeName[0].startsWith("const ")) {
                     typeName[0] = "const " + typeName[0];
                 }
                 Annotation by = by(annotations);
