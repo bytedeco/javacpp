@@ -1853,6 +1853,10 @@ public class Parser {
         if (info != null && info.skip) {
             decl.text = spacing;
             declList.add(decl);
+            while (!tokens.get().match(Token.EOF, ';')) {
+                tokens.next();
+            }
+            tokens.next();
             return true;
         } else if (info == null) {
             Info info2 = infoMap.getFirst(dcl.cppName);
