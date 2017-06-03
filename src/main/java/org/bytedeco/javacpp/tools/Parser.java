@@ -908,7 +908,7 @@ public class Parser {
                     dimCast += "[" + dims[i] + "]";
                 }
             }
-            
+
             if (!dimCast.isEmpty()) {
                 if (dims[0] != -1) {
                     // Annotate with the first dimension's value
@@ -2998,17 +2998,17 @@ public class Parser {
     public File parse(File outputDirectory, String[] classPath, Class cls) throws IOException, ParserException {
         ClassProperties allProperties = Loader.loadProperties(cls, properties, true);
         ClassProperties clsProperties = Loader.loadProperties(cls, properties, false);
-        
+
         // Capture c-includes from "class" and "all" properties
         List<String> cIncludes = new ArrayList<>();
         cIncludes.addAll(clsProperties.get("platform.cinclude"));
         cIncludes.addAll(allProperties.get("platform.cinclude"));
-        
+
         // Capture class includes
         List<String> clsIncludes = new ArrayList<String>();
         clsIncludes.addAll(clsProperties.get("platform.include"));
         clsIncludes.addAll(clsProperties.get("platform.cinclude"));
-        
+
         // Capture all includes
         List<String> allIncludes = new ArrayList<String>();
         allIncludes.addAll(allProperties.get("platform.include"));
@@ -3102,6 +3102,11 @@ public class Parser {
                     parse(context, declList, includePaths, include, isCFile);
                 }
             }
+        }
+
+        if (declList.size() == 0) {
+            logger.info("Nothing targeted for " + targetFile);
+            return null;
         }
 
         File targetDir = targetFile.getParentFile();

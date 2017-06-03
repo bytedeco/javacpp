@@ -1,4 +1,5 @@
 
+ * Prevent `Parser` from overwriting target classes when nothing was parsed
  * Fix `Parser` error on member variables with initializers plus `Info.skip()` ([issue #179](https://github.com/bytedeco/javacpp/issues/179))
  * Fix `Parser` incorrectly recognizing values as pointers when `const` is placed after type ([issue #173](https://github.com/bytedeco/javacpp/issues/173))
  * Add `Parser` support for C++11 `using` declarations that act as `typedef` ([issue #169](https://github.com/bytedeco/javacpp/issues/169))
