@@ -34,6 +34,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -414,24 +416,23 @@ public class Loader {
                 }
                 return null;
             }
-        } else if (!file.exists() || file.length() != size || file.lastModified() != timestamp
+        } else {
+            // ... add lock to avoid two JVMs access cacheDir simultaneously ...
+            File lockFile = new File(getCacheDir(), "cache.dir.lock");
+            FileChannel lockChannel = new FileOutputStream(lockFile).getChannel();
+            FileLock lock = lockChannel.lock();
+            if (!file.exists() || file.length() != size || file.lastModified() != timestamp
                     || !cacheSubdir.equals(file.getCanonicalFile().getParentFile())) {
-            // ... then extract it from our resources ...
-            if (logger.isDebugEnabled()) {
-                logger.debug("Extracting " + resourceURL);
+                // ... then extract it from our resources ...
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Extracting " + resourceURL);
+                }
+                file.delete();
+                extractResource(resourceURL, file, null, null);
+                file.setLastModified(timestamp);
             }
-            file.delete();
-            extractResource(resourceURL, file, null, null);
-            file.setLastModified(timestamp);
-        } else while (System.currentTimeMillis() - file.lastModified() >= 0
-                   && System.currentTimeMillis() - file.lastModified() < 1000) {
-            // ... else wait until the file is at least 1 second old ...
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException ex) {
-                // ... and reset interrupt to be nice.
-                Thread.currentThread().interrupt();
-            }
+            lock.release();
+            lockChannel.close();
         }
         return file;
     }
