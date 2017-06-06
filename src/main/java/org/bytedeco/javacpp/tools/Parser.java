@@ -90,9 +90,19 @@ public class Parser {
         int namespace = text.lastIndexOf("::");
         if (namespace >= 0) {
             Info info2 = infoMap.getFirst(text.substring(0, namespace));
-            text = text.substring(namespace + 2);
+            String localName = text.substring(namespace + 2);
             if (info2 != null && info2.pointerTypes != null) {
-                text = info2.pointerTypes[0] + "." + text;
+                text = info2.pointerTypes[0] + "." + localName;
+            } else if (localName.length() > 0 && Character.isJavaIdentifierStart(localName.charAt(0))) {
+                for (char c : localName.toCharArray()) {
+                    if (!Character.isJavaIdentifierPart(c)) {
+                        localName = null;
+                        break;
+                    }
+                }
+                if (localName != null) {
+                    text = localName;
+                }
             }
         }
         return text;
