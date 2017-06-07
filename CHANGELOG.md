@@ -1,4 +1,5 @@
 
+ * Fix potential compile errors with Android caused by superfluous `typedef` from `Generator` ([issue #186](https://github.com/bytedeco/javacpp/issues/186))
  * Fix `Parser` translation of strings containing the "::" subsequence ([issue #184](https://github.com/bytedeco/javacpp/issues/184))
  * Prevent `Parser` from overwriting target classes when nothing was parsed
  * Fix `Parser` error on member variables with initializers plus `Info.skip()` ([issue #179](https://github.com/bytedeco/javacpp/issues/179))

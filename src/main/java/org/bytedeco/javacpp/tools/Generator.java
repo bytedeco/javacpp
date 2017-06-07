@@ -248,7 +248,7 @@ public class Generator implements Closeable {
         out.println("    typedef int jint;");
         out.println("    typedef long long jlong;");
         out.println("    typedef signed char jbyte;");
-        out.println("#elif defined(__GNUC__)");
+        out.println("#elif defined(__GNUC__) && !defined(__ANDROID__)");
         out.println("    #define _JAVASOFT_JNI_MD_H_");
         out.println();
         out.println("    #define JNIEXPORT __attribute__((visibility(\"default\")))");
@@ -572,7 +572,7 @@ public class Generator implements Closeable {
         out.println("    }");
         out.println("    if (success) {");
         out.println("        length /= sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION);");
-        out.println("        for (int i = 0; i < length; i++) {");
+        out.println("        for (DWORD i = 0; i < length; i++) {");
         out.println("            if (info[i].Relationship == RelationProcessorCore) {");
         out.println("                total++;");
         out.println("            }");
@@ -623,7 +623,7 @@ public class Generator implements Closeable {
         out.println("    }");
         out.println("    if (success) {");
         out.println("        length /= sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION);");
-        out.println("        for (int i = 0; i < length; i++) {");
+        out.println("        for (DWORD i = 0; i < length; i++) {");
         out.println("            if (info[i].Relationship == RelationProcessorPackage) {");
         out.println("                total++;");
         out.println("            }");
