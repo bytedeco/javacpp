@@ -370,7 +370,8 @@ public class Loader {
         }
         String name = urlFile.getName();
         long size, timestamp;
-        File cacheSubdir = getCacheDir().getCanonicalFile();
+        File cacheDir = getCacheDir();
+        File cacheSubdir = cacheDir.getCanonicalFile();
         String s = System.getProperty("org.bytedeco.javacpp.cachedir.nosubdir", "false").toLowerCase();
         boolean noSubdir = s.equals("true") || s.equals("t") || s.equals("");
         URLConnection urlConnection = resourceURL.openConnection();
@@ -395,7 +396,6 @@ public class Loader {
             // ... get the URL fragment to let users rename library files ...
             name = resourceURL.getRef();
         }
-        // ... then check if it has not already been extracted, and if not ...
         File file = new File(cacheSubdir, name);
         if (target != null && target.length() > 0) {
             // ... create symbolic link to already extracted library or ...
@@ -417,22 +417,30 @@ public class Loader {
                 return null;
             }
         } else {
-            // ... add lock to avoid two JVMs access cacheDir simultaneously ...
-            File lockFile = new File(getCacheDir(), "cache.dir.lock");
-            FileChannel lockChannel = new FileOutputStream(lockFile).getChannel();
-            FileLock lock = lockChannel.lock();
+            // ... check if it has not already been extracted, and if not ...
             if (!file.exists() || file.length() != size || file.lastModified() != timestamp
                     || !cacheSubdir.equals(file.getCanonicalFile().getParentFile())) {
-                // ... then extract it from our resources ...
+                // ... add lock to avoid two JVMs access cacheDir simultaneously and ...
                 if (logger.isDebugEnabled()) {
-                    logger.debug("Extracting " + resourceURL);
+                    logger.debug("Locking " + cacheDir);
                 }
-                file.delete();
-                extractResource(resourceURL, file, null, null);
-                file.setLastModified(timestamp);
+                File lockFile = new File(cacheDir, ".lock");
+                FileChannel lockChannel = new FileOutputStream(lockFile).getChannel();
+                FileLock lock = lockChannel.lock();
+                // ... check if other JVM has extracted it before this JVM get the lock ...
+                if (!file.exists() || file.length() != size || file.lastModified() != timestamp
+                        || !cacheSubdir.equals(file.getCanonicalFile().getParentFile())) {
+                    // ... extract it from our resources ...
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("Extracting " + resourceURL);
+                    }
+                    file.delete();
+                    extractResource(resourceURL, file, null, null);
+                    file.setLastModified(timestamp);
+                }
+                lock.release();
+                lockChannel.close();
             }
-            lock.release();
-            lockChannel.close();
         }
         return file;
     }
