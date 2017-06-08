@@ -34,6 +34,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -368,7 +370,8 @@ public class Loader {
         }
         String name = urlFile.getName();
         long size, timestamp;
-        File cacheSubdir = getCacheDir().getCanonicalFile();
+        File cacheDir = getCacheDir();
+        File cacheSubdir = cacheDir.getCanonicalFile();
         String s = System.getProperty("org.bytedeco.javacpp.cachedir.nosubdir", "false").toLowerCase();
         boolean noSubdir = s.equals("true") || s.equals("t") || s.equals("");
         URLConnection urlConnection = resourceURL.openConnection();
@@ -393,7 +396,6 @@ public class Loader {
             // ... get the URL fragment to let users rename library files ...
             name = resourceURL.getRef();
         }
-        // ... then check if it has not already been extracted, and if not ...
         File file = new File(cacheSubdir, name);
         if (target != null && target.length() > 0) {
             // ... create symbolic link to already extracted library or ...
@@ -414,23 +416,30 @@ public class Loader {
                 }
                 return null;
             }
-        } else if (!file.exists() || file.length() != size || file.lastModified() != timestamp
+        } else {
+            // ... check if it has not already been extracted, and if not ...
+            if (!file.exists() || file.length() != size || file.lastModified() != timestamp
                     || !cacheSubdir.equals(file.getCanonicalFile().getParentFile())) {
-            // ... then extract it from our resources ...
-            if (logger.isDebugEnabled()) {
-                logger.debug("Extracting " + resourceURL);
-            }
-            file.delete();
-            extractResource(resourceURL, file, null, null);
-            file.setLastModified(timestamp);
-        } else while (System.currentTimeMillis() - file.lastModified() >= 0
-                   && System.currentTimeMillis() - file.lastModified() < 1000) {
-            // ... else wait until the file is at least 1 second old ...
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException ex) {
-                // ... and reset interrupt to be nice.
-                Thread.currentThread().interrupt();
+                // ... add lock to avoid two JVMs access cacheDir simultaneously and ...
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Locking " + cacheDir);
+                }
+                File lockFile = new File(cacheDir, ".lock");
+                FileChannel lockChannel = new FileOutputStream(lockFile).getChannel();
+                FileLock lock = lockChannel.lock();
+                // ... check if other JVM has extracted it before this JVM get the lock ...
+                if (!file.exists() || file.length() != size || file.lastModified() != timestamp
+                        || !cacheSubdir.equals(file.getCanonicalFile().getParentFile())) {
+                    // ... extract it from our resources ...
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("Extracting " + resourceURL);
+                    }
+                    file.delete();
+                    extractResource(resourceURL, file, null, null);
+                    file.setLastModified(timestamp);
+                }
+                lock.release();
+                lockChannel.close();
             }
         }
         return file;
