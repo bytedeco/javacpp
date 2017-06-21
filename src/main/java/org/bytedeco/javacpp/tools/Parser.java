@@ -24,7 +24,6 @@ package org.bytedeco.javacpp.tools;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
@@ -64,16 +63,18 @@ import org.bytedeco.javacpp.Loader;
 public class Parser {
 
     public Parser(Logger logger, Properties properties) {
-        this(logger, properties, null);
+        this(logger, properties, null, null);
     }
-    public Parser(Logger logger, Properties properties, String lineSeparator) {
+    public Parser(Logger logger, Properties properties, String encoding, String lineSeparator) {
         this.logger = logger;
         this.properties = properties;
+        this.encoding = encoding;
         this.lineSeparator = lineSeparator;
     }
     Parser(Parser p, String text) {
         this.logger = p.logger;
         this.properties = p.properties;
+        this.encoding = p.encoding;
         this.infoMap = p.infoMap;
         this.tokens = new TokenIndexer(infoMap, new Tokenizer(text).tokenize(), false);
         this.lineSeparator = p.lineSeparator;
@@ -81,6 +82,7 @@ public class Parser {
 
     final Logger logger;
     final Properties properties;
+    final String encoding;
     InfoMap infoMap = null;
     InfoMap leafInfoMap = null;
     TokenIndexer tokens = null;
@@ -2980,7 +2982,7 @@ public class Parser {
         token.type = Token.COMMENT;
         token.value = "\n// Parsed from " + include + "\n\n";
         tokenList.add(token);
-        Tokenizer tokenizer = new Tokenizer(file);
+        Tokenizer tokenizer = new Tokenizer(file, encoding);
         if (info != null && info.linePatterns != null) {
             tokenizer.filterLines(info.linePatterns, info.skip);
         }
@@ -3123,12 +3125,8 @@ public class Parser {
         if (targetDir != null) {
             targetDir.mkdirs();
         }
-        final String newline = lineSeparator != null ? lineSeparator : "\n";
-        try (Writer out = new FileWriter(targetFile) {
-                 @Override public Writer append(CharSequence text) throws IOException {
-                     return super.append(((String)text).replace("\n", newline).replace("\\u", "\\u005Cu"));
-                 }
-             }) {
+        try (Writer out = encoding != null ? new EncodingFileWriter(targetFile, encoding, lineSeparator)
+                                           : new EncodingFileWriter(targetFile, lineSeparator)) {
             out.append(text);
             for (Info info : infoList) {
                 if (info.javaText != null && !info.javaText.startsWith("import")) {

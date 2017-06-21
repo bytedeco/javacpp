@@ -25,9 +25,9 @@ package org.bytedeco.javacpp.tools;
 import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -43,9 +43,13 @@ class Tokenizer implements Closeable {
     Tokenizer(String string) {
         this.reader = new StringReader(string);
     }
-    Tokenizer(File file) throws FileNotFoundException {
+    Tokenizer(File file) throws IOException {
+        this(file, null);
+    }
+    Tokenizer(File file, String encoding) throws IOException {
         this.file = file;
-        this.reader = new BufferedReader(new FileReader(file));
+        FileInputStream fis = new FileInputStream(file);
+        this.reader = new BufferedReader(encoding != null ? new InputStreamReader(fis, encoding) : new InputStreamReader(fis));
     }
 
     public void filterLines(String[] patterns, boolean skip) throws IOException {

@@ -77,7 +77,7 @@ public class Builder {
      * @throws ParserException on C/C++ header file parsing error
      */
     File parse(String[] classPath, Class cls) throws IOException, ParserException {
-        return new Parser(logger, properties).parse(outputDirectory, classPath, cls);
+        return new Parser(logger, properties, encoding, null).parse(outputDirectory, classPath, cls);
     }
 
     /**
@@ -418,7 +418,7 @@ public class Builder {
         if (!outputPath.exists()) {
             outputPath.mkdirs();
         }
-        Generator generator = new Generator(logger, p);
+        Generator generator = new Generator(logger, p, encoding);
         String sourceFilename = sourcePrefix + sourceSuffix;
         String headerFilename = header ? sourcePrefix + ".h" : null;
         String classPath = System.getProperty("java.class.path");
@@ -519,6 +519,8 @@ public class Builder {
 
     /** Logger where to send debug, info, warning, and error messages. */
     final Logger logger;
+    /** The name of the character encoding used for input files as well as output files. */
+    String encoding = null;
     /** The directory where the generated files and compiled shared libraries get written to.
      *  By default they are placed in the same directory as the {@code .class} file. */
     File outputDirectory = null;
@@ -558,6 +560,11 @@ public class Builder {
     /** Appends argument to the paths of the {@link #classScanner}. */
     public Builder classPaths(String ... classPaths) {
         classScanner.getClassLoader().addPaths(classPaths);
+        return this;
+    }
+    /** Sets the {@link #encoding} field to the argument. */
+    public Builder encoding(String encoding) {
+        this.encoding = encoding;
         return this;
     }
     /** Sets the {@link #outputDirectory} field to the argument. */
@@ -885,6 +892,7 @@ public class Builder {
         System.out.println("where options include:");
         System.out.println();
         System.out.println("    -classpath <path>      Load user classes from path");
+        System.out.println("    -encoding <name>       Character encoding used for input and output files");
         System.out.println("    -d <directory>         Output all generated files to directory");
         System.out.println("    -o <name>              Output everything in a file named after given name");
         System.out.println("    -nocompile             Do not compile or delete the generated source files");
@@ -915,6 +923,8 @@ public class Builder {
                 System.exit(0);
             } else if ("-classpath".equals(args[i]) || "-cp".equals(args[i]) || "-lib".equals(args[i])) {
                 builder.classPaths(args[++i]);
+            } else if ("-encoding".equals(args[i])) {
+                builder.encoding(args[++i]);
             } else if ("-d".equals(args[i])) {
                 builder.outputDirectory(args[++i]);
             } else if ("-o".equals(args[i])) {

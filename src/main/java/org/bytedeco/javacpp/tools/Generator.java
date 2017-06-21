@@ -24,7 +24,7 @@ package org.bytedeco.javacpp.tools;
 
 import java.io.Closeable;
 import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.lang.annotation.Annotation;
@@ -134,8 +134,12 @@ import org.bytedeco.javacpp.annotation.Virtual;
 public class Generator implements Closeable {
 
     public Generator(Logger logger, ClassProperties properties) {
+        this(logger, properties, null);
+    }
+    public Generator(Logger logger, ClassProperties properties, String encoding) {
         this.logger = logger;
         this.properties = properties;
+        this.encoding = encoding;
     }
 
     static final String JNI_VERSION = "JNI_VERSION_1_4";
@@ -157,6 +161,7 @@ public class Generator implements Closeable {
 
     final Logger logger;
     final ClassProperties properties;
+    final String encoding;
     PrintWriter out, out2;
     IndexedSet<String> callbacks;
     IndexedSet<Class> functions, deallocators, arrayDeallocators, jclasses;
@@ -165,7 +170,7 @@ public class Generator implements Closeable {
     boolean mayThrowExceptions, usesAdapters, passesStrings;
 
     public boolean generate(String sourceFilename, String headerFilename,
-            String classPath, Class<?> ... classes) throws FileNotFoundException {
+            String classPath, Class<?> ... classes) throws IOException {
         // first pass using a null writer to fill up the IndexedSet objects
         out = new PrintWriter(new Writer() {
             @Override public void write(char[] cbuf, int off, int len) { }
@@ -195,14 +200,14 @@ public class Generator implements Closeable {
             if (sourceDir != null) {
                 sourceDir.mkdirs();
             }
-            out = new PrintWriter(sourceFile);
+            out = encoding != null ? new PrintWriter(sourceFile, encoding) : new PrintWriter(sourceFile);
             if (headerFilename != null) {
                 File headerFile = new File(headerFilename);
                 File headerDir = headerFile.getParentFile();
                 if (headerDir != null) {
                     headerDir.mkdirs();
                 }
-                out2 = new PrintWriter(headerFile);
+                out2 = encoding != null ? new PrintWriter(headerFile, encoding) : new PrintWriter(headerFile);
             }
             return classes(mayThrowExceptions, usesAdapters, passesStrings, classPath, classes);
         } else {

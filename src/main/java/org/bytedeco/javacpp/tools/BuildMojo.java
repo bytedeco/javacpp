@@ -118,6 +118,10 @@ public class BuildMojo extends AbstractMojo {
     @Parameter(property = "javacpp.resourcePaths")
     String[] resourcePaths = null;
 
+    /** Specify the character encoding used for input and output. */
+    @Parameter(property = "javacpp.encoding")
+    String encoding = null;
+
     /** Output all generated files to outputDirectory. */
     @Parameter(property = "javacpp.outputDirectory")
     File outputDirectory = null;
@@ -225,6 +229,7 @@ public class BuildMojo extends AbstractMojo {
                 log.debug("preloadPaths: " + Arrays.deepToString(preloadPaths));
                 log.debug("resourcePath: " + resourcePath);
                 log.debug("resourcePaths: " + Arrays.deepToString(resourcePaths));
+                log.debug("encoding: " + encoding);
                 log.debug("outputDirectory: " + outputDirectory);
                 log.debug("outputName: " + outputName);
                 log.debug("compile: " + compile);
@@ -261,6 +266,7 @@ public class BuildMojo extends AbstractMojo {
             };
             Builder builder = new Builder(logger)
                     .classPaths(classPaths)
+                    .encoding(encoding)
                     .outputDirectory(outputDirectory)
                     .outputName(outputName)
                     .compile(compile)

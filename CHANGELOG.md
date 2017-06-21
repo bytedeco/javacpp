@@ -1,4 +1,6 @@
 
+ * Add `Builder.encoding` option to let users specify I/O character set name ([issue bytedeco/javacpp-presets#195](https://github.com/bytedeco/javacpp-presets/issues/195))
+ * Prevent race condition that could occur in `Loader.cacheResource()` ([pull #188](https://github.com/bytedeco/javacpp/pull/188))
  * Fix potential compile errors with Android caused by superfluous `typedef` from `Generator` ([issue #186](https://github.com/bytedeco/javacpp/issues/186))
  * Fix `Parser` translation of strings containing the "::" subsequence ([issue #184](https://github.com/bytedeco/javacpp/issues/184))
  * Prevent `Parser` from overwriting target classes when nothing was parsed
