@@ -824,7 +824,7 @@ public class Parser {
                     dcl.cppName = "";
                 } else if (token.match('[')) {
                     Token n = tokens.get(1);
-                    dims[dcl.indices++] = n.match(Token.INTEGER) ? Integer.parseInt(n.value) : -1;
+                    dims[dcl.indices++] = n.match(Token.INTEGER) ? Integer.decode(n.value) : -1;
                 } else if (token.match('(', ')')) {
                     break;
                 }
@@ -899,7 +899,7 @@ public class Parser {
             if (!bracket && token.match('[')) {
                 bracket = true;
                 Token n = tokens.get(1);
-                dims[dcl.indices++] = n.match(Token.INTEGER) ? Integer.parseInt(n.value) : -1;
+                dims[dcl.indices++] = n.match(Token.INTEGER) ? Integer.decode(n.value) : -1;
             } else if (!bracket) {
                 break;
             } else if (bracket && token.match(']')) {

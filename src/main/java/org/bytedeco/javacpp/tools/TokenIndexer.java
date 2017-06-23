@@ -107,7 +107,7 @@ class TokenIndexer {
                         if (info != null) {
                             define = keyword.match(Token.IFNDEF) ? !info.define : info.define;
                         } else try {
-                            define = Integer.parseInt(value.trim()) != 0;
+                            define = Integer.decode(value.trim()) != 0;
                         } catch (NumberFormatException e) {
                             /* default define */
                         }
