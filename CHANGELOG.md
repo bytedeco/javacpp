@@ -1,5 +1,6 @@
 
- * Use `Integer.decode()` instead of `parseInt()` on integer literals and support hexadecimal as well as octal numbers
+ * Make public the `Pointer.formatBytes()` and `Pointer.parseBytes()` static methods
+ * Use `Integer.decode()` instead of `parseInt()` on integer literals to support hexadecimal and octal numbers
  * Add `Builder.encoding` option to let users specify I/O character set name ([issue bytedeco/javacpp-presets#195](https://github.com/bytedeco/javacpp-presets/issues/195))
  * Prevent race condition that could occur in `Loader.cacheResource()` ([pull #188](https://github.com/bytedeco/javacpp/pull/188))
  * Fix potential compile errors with Android caused by superfluous `typedef` from `Generator` ([issue #186](https://github.com/bytedeco/javacpp/issues/186))

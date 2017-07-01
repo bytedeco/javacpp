@@ -328,7 +328,7 @@ public class Pointer implements AutoCloseable {
      * by a call to {@code Thread.sleep(100)}. */
     static final int maxRetries;
 
-    static String formatBytes(long bytes) {
+    public static String formatBytes(long bytes) {
         if (bytes < 1024L) {
             return bytes + "";
         } else if ((bytes /= 1024L) < 1024L) {
@@ -342,7 +342,7 @@ public class Pointer implements AutoCloseable {
         }
     }
 
-    static long parseBytes(String string) throws NumberFormatException {
+    public static long parseBytes(String string) throws NumberFormatException {
         int i = 0;
         while (i < string.length()) {
             if (!Character.isDigit(string.charAt(i))) {
