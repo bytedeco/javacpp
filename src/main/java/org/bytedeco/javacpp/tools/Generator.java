@@ -278,6 +278,7 @@ public class Generator implements Closeable {
         out.println("#endif");
         out.println();
         out.println("#ifdef __linux__");
+        out.println("    #include <malloc.h>");
         out.println("    #include <sys/types.h>");
         out.println("    #include <sys/stat.h>");
         out.println("    #include <sys/sysinfo.h>");
@@ -428,6 +429,14 @@ public class Generator implements Closeable {
         out.println("    fprintf(stderr, \"\\n\");");
         out.println("#endif");
         out.println("    va_end(ap);");
+        out.println("}");
+        out.println();
+        out.println("static inline jboolean JavaCPP_trimMemory() {");
+        out.println("#if defined(__linux__) && !defined(__ANDROID__)");
+        out.println("    return (jboolean)malloc_trim(0);");
+        out.println("#else");
+        out.println("    return 0;");
+        out.println("#endif");
         out.println("}");
         out.println();
         out.println("static inline jlong JavaCPP_physicalBytes() {");

@@ -325,7 +325,7 @@ public class Pointer implements AutoCloseable {
 
     /** Maximum number of times to call {@link System#gc()} before giving up with {@link OutOfMemoryError}.
      * Set via "org.bytedeco.javacpp.maxretries" system property, defaults to 10, where each retry is followed
-     * by a call to {@code Thread.sleep(100)}. */
+     * by a call to {@code Thread.sleep(100)} and {@code Pointer.trimMemory()}. */
     static final int maxRetries;
 
     public static String formatBytes(long bytes) {
@@ -429,6 +429,9 @@ public class Pointer implements AutoCloseable {
     public static long maxPhysicalBytes() {
         return maxPhysicalBytes;
     }
+
+    /** Makes sure to return freed memory to the system, as required by Linux, at least. */
+    @Name("JavaCPP_trimMemory") private static native boolean trimMemory();
 
     /** Returns the amount of physical memory currently used by the whole process, or 0 if unknown.
      * Also known as "resident set size" (Linux, Mac OS X, etc) or "working set size" (Windows). */
@@ -547,17 +550,18 @@ public class Pointer implements AutoCloseable {
                     while (count++ < maxRetries && ((maxBytes > 0 && DeallocatorReference.totalBytes + r.bytes > maxBytes)
                                          || (maxPhysicalBytes > 0 && (lastPhysicalBytes = physicalBytes()) > maxPhysicalBytes))) {
                         if (logger.isDebugEnabled()) {
-                            logger.debug("Calling System.gc() in " + this);
+                            logger.debug("Calling System.gc() and Pointer.trimMemory() in " + this);
                         }
                         // try to get some more memory back
                         System.gc();
                         Thread.sleep(100);
+                        trimMemory();
                     }
                 } catch (InterruptedException ex) {
                     // reset interrupt to be nice
                     Thread.currentThread().interrupt();
                 } catch (UnsatisfiedLinkError e) {
-                    // old binaries with physicalBytes() missing -> ignore for backward compatibility
+                    // old binaries with physicalBytes() or trimMemory() missing -> ignore for backward compatibility
                     if (logger.isDebugEnabled()) {
                         logger.debug(e.getMessage());
                     }
