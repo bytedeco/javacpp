@@ -1,4 +1,5 @@
 
+### July 25, 2017 version 1.3.3
  * Call `malloc_trim(0)` after `System.gc()` on Linux to make sure memory gets released ([issue bytedeco/javacpp-presets#423](https://github.com/bytedeco/javacpp-presets/issues/423))
  * Make public the `Pointer.formatBytes()` and `Pointer.parseBytes()` static methods
  * Use `Integer.decode()` instead of `parseInt()` on integer literals to support hexadecimal and octal numbers
