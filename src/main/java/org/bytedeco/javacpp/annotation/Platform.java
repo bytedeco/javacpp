@@ -84,6 +84,9 @@ public @interface Platform {
     String[] resourcepath() default {};
     /** A list of resources, either files or directories, that can be copied and extracted. */
     String[] resource()     default {};
+    /** The platform extensions to attempt to load for this library. The names here are
+     *  appended to the platform name and looked up in the class path. */
+    String[] extensions()  default {};
     /** The native JNI library associated with this class that {@link Builder} should
      *  try to build and {@link Loader} should try to load. If left empty, this value
      *  defaults to "jni" + the name that {@link Class#getSimpleName()} returns. */

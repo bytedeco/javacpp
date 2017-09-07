@@ -62,7 +62,7 @@ public class ClassProperties extends HashMap<String,List<String>> {
                 || k.equals("platform.preloadpath") || k.equals("platform.preload")
                 || k.equals("platform.resourcepath") || k.equals("platform.resource")
                 || k.equals("platform.frameworkpath") || k.equals("platform.framework")
-                || k.equals("platform.library.suffix")) {
+                || k.equals("platform.library.suffix") || k.equals("platform.extensions")) {
                 addAll(k, v.split(pathSeparator));
             } else {
                 setProperty(k, v);
@@ -178,7 +178,8 @@ public class ClassProperties extends HashMap<String,List<String>> {
         }
 
         String[] pragma = {}, define = {}, include = {}, cinclude = {}, includepath = {}, includeresource = {}, compiler = {},
-                 linkpath = {}, linkresource = {}, link = {}, frameworkpath = {}, framework = {}, preloadpath = {}, preload = {}, resourcepath = {}, resource = {};
+                 linkpath = {}, linkresource = {}, link = {}, frameworkpath = {}, framework = {}, preloadpath = {}, preload = {},
+                 resourcepath = {}, resource = {}, extensions = {};
         String library = "jni" + c.getSimpleName();
         for (Platform p : platforms != null ? platforms : new Platform[0]) {
             String[][] names = { p.value().length > 0 ? p.value() : defaultNames, p.not() };
@@ -208,6 +209,7 @@ public class ClassProperties extends HashMap<String,List<String>> {
                 if (p.preload()    .length > 0) { preload     = p.preload();     }
                 if (p.resourcepath().length > 0) { resourcepath = p.resourcepath(); }
                 if (p.resource()    .length > 0) { resource     = p.resource();     }
+                if (p.extensions()  .length > 0) { extensions  = p.extensions();    }
                 if (p.library().length() > 0)   { library     = p.library();     }
             }
         }
@@ -251,6 +253,7 @@ public class ClassProperties extends HashMap<String,List<String>> {
         addAll("platform.preload", preload);
         addAll("platform.resourcepath", resourcepath);
         addAll("platform.resource", resource);
+        addAll("platform.extensions", extensions);
         setProperty("platform.library", library);
 
         if (platforms != null && platforms.length > 0) {

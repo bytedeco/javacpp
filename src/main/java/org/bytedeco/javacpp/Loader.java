@@ -818,7 +818,8 @@ public class Loader {
         String version2 = s2.length > 1 ? s2[s2.length-1] : "";
 
         // If we do not already have the native library file ...
-        String subdir = properties.getProperty("platform") + '/';
+        String platform = properties.getProperty("platform");
+        String[] extensions = properties.get("platform.extensions").toArray(new String[0]);
         String prefix = properties.getProperty("platform.library.prefix", "");
         String suffix = properties.getProperty("platform.library.suffix", "");
         String[] styles = {
@@ -856,16 +857,19 @@ public class Loader {
         ArrayList<URL> urls = new ArrayList<URL>(styles.length * (1 + paths.size()));
         for (int i = 0; cls != null && i < styles.length; i++) {
             // ... then find it from in our resources ...
-            URL u = cls.getResource(subdir + styles[i]);
-            if (u != null) {
-                if (!styles[i].equals(styles2[i])) {
-                    try {
-                        u = new URL(u + "#" + styles2[i]);
-                    } catch (MalformedURLException e) {
-                        throw new RuntimeException(e);
+            for (String extension : Arrays.copyOf(extensions, extensions.length + 1)) {
+                String subdir = platform + (extension == null ? "" : extension) + "/";
+                URL u = cls.getResource(subdir + styles[i]);
+                if (u != null) {
+                    if (!styles[i].equals(styles2[i])) {
+                        try {
+                            u = new URL(u + "#" + styles2[i]);
+                        } catch (MalformedURLException e) {
+                            throw new RuntimeException(e);
+                        }
                     }
+                    urls.add(u);
                 }
-                urls.add(u);
             }
         }
         // ... and in case of bad resources search the paths last, or first on user request.
@@ -1023,7 +1027,7 @@ public class Loader {
         String libname = s[0];
         String version = s.length > 1 ? s[s.length-1] : "";
 
-        if (version.length() == 0) {
+        if (version.length() == 0 || !name.contains(libname)) {
             return filename;
         }
         for (String suffix : properties.get("platform.library.suffix")) {

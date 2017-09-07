@@ -406,7 +406,7 @@ public class Builder {
                 uri = new URI(resourceURL.substring(0, resourceURL.length() - resourceName.length() + 1));
                 File targetDir = libraryPath.length() > 0
                         ? (isFile ? new File(uri) : new File(classPath))
-                        : new File(packageDir, platform);
+                        : new File(packageDir, platform + (extension != null ? extension : ""));
                 outputPath = new File(targetDir, libraryPath);
                 sourcePrefix = new File(packageDir, outputName).getPath();
             } catch (URISyntaxException e) {
@@ -539,6 +539,8 @@ public class Builder {
     boolean copyLibs = false;
     /** If true, also copies to the output directory resources listed in properties. */
     boolean copyResources = false;
+    /** The name of the platform extension to build for, appended to the platform name. */
+    String extension = null;
     /** Accumulates the various properties loaded from resources, files, command line options, etc. */
     Properties properties = null;
     /** The instance of the {@link ClassScanner} that fills up a {@link Collection} of {@link Class} objects to process. */
@@ -600,6 +602,11 @@ public class Builder {
     /** Sets the {@link #copyResources} field to the argument. */
     public Builder copyResources(boolean copyResources) {
         this.copyResources = copyResources;
+        return this;
+    }
+    /** Sets the {@link #extension} field to the argument. */
+    public Builder extension(String extension) {
+        this.extension = extension;
         return this;
     }
     /** Sets the {@link #outputName} field to the argument. */
@@ -724,12 +731,40 @@ public class Builder {
             String resources = properties.getProperty("platform.buildresource", "");
             String separator = properties.getProperty("platform.path.separator");
             if (paths.length() > 0 || resources.length() > 0) {
+
+                // Get all native libraries for classes on the class path.
+                List<String> libs = new ArrayList<String>();
+                ClassProperties libProperties = null;
+                for (Class c : classScanner.getClasses()) {
+                    if (Loader.getEnclosingClass(c) != c) {
+                        continue;
+                    }
+                    libProperties = Loader.loadProperties(c, properties, true);
+                    if (!libProperties.isLoaded()) {
+                        logger.warn("Could not load platform properties for " + c);
+                        continue;
+                    }
+                    libs.addAll(libProperties.get("platform.preload"));
+                    libs.addAll(libProperties.get("platform.link"));
+                }
+
+                // Extract the required resources.
                 for (String s : resources.split(separator)) {
                     for (File f : Loader.cacheResources(s)) {
                         if (paths.length() > 0 && !paths.endsWith(separator)) {
                             paths += separator;
                         }
                         paths += f.getCanonicalPath();
+
+                        // Also create symbolic links for native libraries found there.
+                        File[] files = f.listFiles();
+                        if (files != null) {
+                            for (File file : files) {
+                                for (String lib : libs) {
+                                    Loader.createLibraryLink(file.getAbsolutePath(), libProperties, lib);
+                                }
+                            }
+                        }
                     }
                 }
                 if (paths.length() > 0) {
@@ -900,6 +935,7 @@ public class Builder {
         System.out.println("    -header                Generate header file with declarations of callbacks functions");
         System.out.println("    -copylibs              Copy to output directory dependent libraries (link and preload)");
         System.out.println("    -copyresources         Copy to output directory resources listed in properties");
+        System.out.println("    -extension <name>      Build for the given extension by appending to the platform name");
         System.out.println("    -jarprefix <prefix>    Also create a JAR file named \"<prefix>-<platform>.jar\"");
         System.out.println("    -properties <resource> Load all properties from resource");
         System.out.println("    -propertyfile <file>   Load all properties from file");
@@ -939,6 +975,8 @@ public class Builder {
                 builder.copyLibs(true);
             } else if ("-copyresources".equals(args[i])) {
                 builder.copyResources(true);
+            } else if ("-extension".equals(args[i])) {
+                builder.extension(args[++i]);
             } else if ("-jarprefix".equals(args[i])) {
                 builder.jarPrefix(args[++i]);
             } else if ("-properties".equals(args[i])) {

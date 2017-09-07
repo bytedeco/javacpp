@@ -150,6 +150,10 @@ public class BuildMojo extends AbstractMojo {
     @Parameter(property = "javacpp.copyResources", defaultValue = "false")
     boolean copyResources = false;
 
+    /** Build for the given extension by appending to the platform name. */
+    @Parameter(property = "javacpp.extension")
+    String extension = null;
+
     /** Also create a JAR file named {@code <jarPrefix>-<platform>.jar}. */
     @Parameter(property = "javacpp.jarPrefix")
     String jarPrefix = null;
@@ -237,6 +241,7 @@ public class BuildMojo extends AbstractMojo {
                 log.debug("header: " + header);
                 log.debug("copyLibs: " + copyLibs);
                 log.debug("copyResources: " + copyResources);
+                log.debug("extension: " + extension);
                 log.debug("jarPrefix: " + jarPrefix);
                 log.debug("properties: " + properties);
                 log.debug("propertyFile: " + propertyFile);
@@ -274,6 +279,7 @@ public class BuildMojo extends AbstractMojo {
                     .header(header)
                     .copyLibs(copyLibs)
                     .copyResources(copyResources)
+                    .extension(extension)
                     .jarPrefix(jarPrefix)
                     .properties(properties)
                     .propertyFile(propertyFile)

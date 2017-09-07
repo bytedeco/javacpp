@@ -1,4 +1,8 @@
 
+ * Call `Loader.createLibraryLink()` when executing the user specified `Builder.buildCommand` as well
+ * Introduce new `platform.extensions` property to manage more than one set of binaries per platform
+ * Catch `SecurityException` in `Loader.getCacheDir()` ([pull #198](https://github.com/bytedeco/javacpp/pull/198))
+
 ### July 25, 2017 version 1.3.3
  * Call `malloc_trim(0)` after `System.gc()` on Linux to make sure memory gets released ([issue bytedeco/javacpp-presets#423](https://github.com/bytedeco/javacpp-presets/issues/423))
  * Make public the `Pointer.formatBytes()` and `Pointer.parseBytes()` static methods
