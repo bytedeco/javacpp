@@ -3037,6 +3037,15 @@ public class Generator implements Closeable {
         boolean constant = false;
         String cast = "", cast2 = "";
         for (Annotation a : annotations) {
+            // allow overriding template type for const, etc
+            if (a instanceof Cast) {
+                Cast c = ((Cast)a);
+                if (c.value().length > 0 && c.value()[0].length() > 0) {
+                    valueTypeName = constValueTypeName(c.value()[0]);
+                }
+            }
+        }
+        for (Annotation a : annotations) {
             Adapter adapter = a instanceof Adapter ? (Adapter)a : a.annotationType().getAnnotation(Adapter.class);
             if (adapter != null) {
                 adapterInfo = new AdapterInformation();

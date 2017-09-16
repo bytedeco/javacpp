@@ -420,6 +420,10 @@ public class Parser {
     }
 
     Type type(Context context) throws ParserException {
+        return type(context, false);
+    }
+
+    Type type(Context context, boolean definition) throws ParserException {
         Type type = new Type();
         List<Attribute> attributes = new ArrayList<Attribute>();
         for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.get()) {
@@ -606,14 +610,19 @@ public class Parser {
             type.cppName = type.cppName.substring(0, type.cppName.length() - 6);
         }
 
-        // guess the fully qualified C++ type with what's available in the InfoMap
         Info info = null;
-        for (String name : context.qualify(type.cppName)) {
-            if ((info = infoMap.getFirst(name, false)) != null) {
-                type.cppName = name;
-                break;
-            } else if (infoMap.getFirst(name) != null) {
-                type.cppName = name;
+        String[] names = context.qualify(type.cppName);
+        if (definition && names.length > 0) {
+            info = infoMap.getFirst(type.cppName = names[0], false);
+        } else {
+            // guess the fully qualified C++ type with what's available in the InfoMap
+            for (String name : names) {
+                if ((info = infoMap.getFirst(name, false)) != null) {
+                    type.cppName = name;
+                    break;
+                } else if (infoMap.getFirst(name) != null) {
+                    type.cppName = name;
+                }
             }
         }
 
@@ -2320,7 +2329,7 @@ public class Parser {
                 && (typedef || !tokens.get(2).match(';'))) {
             tokens.next();
         }
-        Type type = type(context);
+        Type type = type(context, true);
         List<Type> baseClasses = new ArrayList<Type>();
         Declaration decl = new Declaration();
         decl.text = type.annotations;

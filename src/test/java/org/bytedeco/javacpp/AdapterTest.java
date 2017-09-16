@@ -83,6 +83,7 @@ public class AdapterTest {
     static native @StdVector IntPointer testStdVectorByVal(@StdVector IntPointer v);
     static native @StdVector IntPointer testStdVectorByRef(@StdVector IntBuffer v);
     static native @StdVector int[] testStdVectorByPtr(@StdVector int[] v);
+    static native @Cast("const char**") @StdVector PointerPointer testStdVectorConstPointer(@Cast("const char**") @StdVector PointerPointer v);
 
     @BeforeClass public static void setUpClass() throws Exception {
         System.out.println("Builder");
@@ -194,15 +195,18 @@ public class AdapterTest {
         int[] arr = {5, 7, 13, 37, 42};
         IntPointer ptr = new IntPointer(arr);
         IntBuffer buf = ptr.asBuffer();
+        PointerPointer ptrptr = new PointerPointer(ptr, ptr, ptr, ptr, ptr);
 
         IntPointer ptr2 = testStdVectorByVal(ptr);
         IntBuffer buf2 = testStdVectorByRef(buf).asBuffer();
         int[] arr2 = testStdVectorByPtr(arr);
+        PointerPointer ptrptr2 = testStdVectorConstPointer(ptrptr);
 
         for (int i = 0; i < arr.length; i++) {
             assertEquals(ptr.get(i), ptr2.get(i));
             assertEquals(buf.get(i), buf2.get(i));
             assertEquals(arr[i], arr2[i]);
+            assertEquals(ptrptr.get(i), ptrptr2.get(i));
         }
         System.gc();
     }

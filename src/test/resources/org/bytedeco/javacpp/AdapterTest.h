@@ -77,3 +77,8 @@ const std::vector<int>& testStdVectorByRef(std::vector<int>& v) {
 std::vector<int>* testStdVectorByPtr(std::vector<int>* v) {
     return v;
 }
+
+std::vector<const char*> testStdVectorConstPointer(std::vector<const char*> v) {
+    return v;
+}
+

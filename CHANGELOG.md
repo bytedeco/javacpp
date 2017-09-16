@@ -1,4 +1,6 @@
 
+ * Fix `Parser` incorrectly resolving type definitions with classes of the same name in parent namespaces
+ * Fix `Generator` compile errors for `const` template types of `@Adapter` classes using the `@Cast` annotation
  * Call `Loader.createLibraryLink()` when executing the user specified `Builder.buildCommand` as well
  * Introduce new `platform.extensions` property to manage more than one set of binaries per platform
  * Catch `SecurityException` in `Loader.getCacheDir()` ([pull #198](https://github.com/bytedeco/javacpp/pull/198))
