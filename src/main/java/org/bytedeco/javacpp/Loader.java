@@ -417,6 +417,26 @@ public class Loader {
                 return null;
             }
         } else {
+            if (urlFile.exists() && !urlFile.getName().equals(name)) {
+                // ... try to create a symbolic link instead, if we can, as required by some libraries ...
+                Path path = file.toPath(), urlPath = urlFile.toPath();
+                try {
+                    if ((!file.exists() || !Files.isSymbolicLink(path) || !Files.readSymbolicLink(path).equals(urlPath))
+                            && urlPath.isAbsolute() && !urlPath.equals(path)) {
+                        if (logger.isDebugEnabled()) {
+                            logger.debug("Creating symbolic link " + path + " to " + urlPath);
+                        }
+                        file.delete();
+                        Files.createSymbolicLink(path, urlPath);
+                    }
+                    return file;
+                } catch (IOException | UnsupportedOperationException e) {
+                    // ... (let's try to copy the file instead, such as on Windows) ...
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("Could not create symbolic link " + path + ": " + e);
+                    }
+                }
+            }
             // ... check if it has not already been extracted, and if not ...
             if (!file.exists() || file.length() != size || file.lastModified() != timestamp
                     || !cacheSubdir.equals(file.getCanonicalFile().getParentFile())) {

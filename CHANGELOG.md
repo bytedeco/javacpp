@@ -1,4 +1,5 @@
 
+ * Try to use symbolic links in `Loader.load()` for output filenames specified with the `#` character (useful for libraries like MKL)
  * Fix `Parser` incorrectly resolving type definitions with classes of the same name in parent namespaces
  * Fix `Generator` compile errors for `const` template types of `@Adapter` classes using the `@Cast` annotation
  * Call `Loader.createLibraryLink()` when executing the user specified `Builder.buildCommand` as well
