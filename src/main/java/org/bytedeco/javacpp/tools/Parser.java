@@ -3043,14 +3043,22 @@ public class Parser {
         infoMap = new InfoMap();
         for (Class c : allInherited) {
             try {
-                ((InfoMapper)c.newInstance()).map(infoMap);
+                InfoMapper infoMapper = ((InfoMapper)c.newInstance());
+                if (infoMapper instanceof BuildEnabled) {
+                    ((BuildEnabled)infoMapper).init(logger, properties, encoding);
+                }
+                infoMapper.map(infoMap);
             } catch (ClassCastException |  InstantiationException | IllegalAccessException e) {
                 // fail silently as if the interface wasn't implemented
             }
         }
         leafInfoMap = new InfoMap();
         try {
-            ((InfoMapper)cls.newInstance()).map(leafInfoMap);
+            InfoMapper infoMapper = ((InfoMapper)cls.newInstance());
+            if (infoMapper instanceof BuildEnabled) {
+                ((BuildEnabled)infoMapper).init(logger, properties, encoding);
+            }
+            infoMapper.map(leafInfoMap);
         } catch (ClassCastException |  InstantiationException | IllegalAccessException e) {
             // fail silently as if the interface wasn't implemented
         }
