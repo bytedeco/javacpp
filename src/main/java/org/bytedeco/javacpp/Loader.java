@@ -1159,4 +1159,8 @@ public class Loader {
     /** Returns the number of CPU chips installed according to the operating system, or 0 if unknown.
      * For multi-core processors, this value may be less than {@link #totalCores()}. */
     @Name("JavaCPP_totalChips") public static native int totalChips();
+
+    /** Returns the address found under the given name in the "dynamic symbol tables" (Linux, Mac OS X, etc)
+     * or the "export tables" (Windows) of all libraries loaded, or null if not found. */
+    @Name("JavaCPP_addressof") public static native Pointer addressof(String symbol);
 }

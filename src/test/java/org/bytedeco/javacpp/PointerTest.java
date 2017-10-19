@@ -49,6 +49,15 @@ public class PointerTest {
 
     static long maxBytes = 1024 * 1024 * 1024; /* 1g */
 
+    static class TestFunction extends FunctionPointer {
+        public TestFunction(Pointer p) { super(p); }
+        public TestFunction() { allocate(); }
+        private native void allocate();
+        public native int call(String s);
+        public native Pointer get();
+        public native TestFunction put(Pointer address);
+    }
+
     @BeforeClass public static void setUpClass() throws Exception {
         System.out.println("Builder");
         Class c = PointerTest.class;
@@ -57,6 +66,12 @@ public class PointerTest {
 
         System.out.println("Loader");
         Loader.load(c);
+
+        Pointer address = Loader.addressof("strlen");
+        assertNotNull(address);
+        TestFunction function = new TestFunction().put(address);
+        assertEquals(address, function.get());
+        assertEquals(5, function.call("12345"));
 
         int totalProcessors = Loader.totalProcessors();
         int totalCores = Loader.totalCores();

@@ -1,4 +1,5 @@
 
+ * Add `Loader.addressof()` to access native symbols, usable via optional `ValueGetter/ValueSetter` in `FunctionPointer`
  * Add `BuildEnabled` interface to allow `InfoMapper` classes to participate in the build
  * Try to use symbolic links in `Loader.load()` for output filenames specified with the `#` character (useful for libraries like MKL)
  * Fix `Parser` incorrectly resolving type definitions with classes of the same name in parent namespaces

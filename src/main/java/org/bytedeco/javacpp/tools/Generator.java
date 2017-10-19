@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2016 Samuel Audet
+ * Copyright (C) 2011-2017 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -284,6 +284,7 @@ public class Generator implements Closeable {
         out.println("    #include <sys/sysinfo.h>");
         out.println("    #include <fcntl.h>");
         out.println("    #include <unistd.h>");
+        out.println("    #include <dlfcn.h>");
         out.println("#elif defined(__APPLE__)");
         out.println("    #include <sys/types.h>");
         out.println("    #include <sys/sysctl.h>");
@@ -291,6 +292,7 @@ public class Generator implements Closeable {
         out.println("    #include <mach/mach_host.h>");
         out.println("    #include <mach/task.h>");
         out.println("    #include <unistd.h>");
+        out.println("    #include <dlfcn.h>");
         out.println("#elif defined(_WIN32)");
         out.println("    #define NOMINMAX");
         out.println("    #include <windows.h>");
@@ -584,7 +586,7 @@ public class Generator implements Closeable {
         out.println("        info = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION*)realloc(info, length);");
         out.println("        success = GetLogicalProcessorInformation(info, &length);");
         out.println("    }");
-        out.println("    if (success) {");
+        out.println("    if (success && info != NULL) {");
         out.println("        length /= sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION);");
         out.println("        for (DWORD i = 0; i < length; i++) {");
         out.println("            if (info[i].Relationship == RelationProcessorCore) {");
@@ -635,7 +637,7 @@ public class Generator implements Closeable {
         out.println("        info = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION*)realloc(info, length);");
         out.println("        success = GetLogicalProcessorInformation(info, &length);");
         out.println("    }");
-        out.println("    if (success) {");
+        out.println("    if (success && info != NULL) {");
         out.println("        length /= sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION);");
         out.println("        for (DWORD i = 0; i < length; i++) {");
         out.println("            if (info[i].Relationship == RelationProcessorPackage) {");
@@ -646,6 +648,33 @@ public class Generator implements Closeable {
         out.println("    free(info);");
         out.println("#endif");
         out.println("    return total;");
+        out.println("}");
+        out.println();
+        out.println("static inline void* JavaCPP_addressof(const char* name) {");
+        out.println("    void *address = NULL;");
+        out.println("#if defined(__linux__) || defined(__APPLE__)");
+        out.println("    address = dlsym(RTLD_DEFAULT, name);");
+        out.println("#elif defined(_WIN32)");
+        out.println("    HANDLE process = GetCurrentProcess();");
+        out.println("    HMODULE *modules = NULL;");
+        out.println("    DWORD length = 0, needed = 0;");
+        out.println("    BOOL success = EnumProcessModules(process, modules, length, &needed);");
+        out.println("    while (success && needed > length) {");
+        out.println("        modules = (HMODULE*)realloc(modules, length = needed);");
+        out.println("        success = EnumProcessModules(process, modules, length, &needed);");
+        out.println("    }");
+        out.println("    if (success && modules != NULL) {");
+        out.println("        length = needed / sizeof(HMODULE);");
+        out.println("        for (DWORD i = 0; i < length; i++) {");
+        out.println("            address = (void*)GetProcAddress(modules[i], name);");
+        out.println("            if (address != NULL) {");
+        out.println("                break;");
+        out.println("            }");
+        out.println("        }");
+        out.println("    }");
+        out.println("    free(modules);");
+        out.println("#endif");
+        out.println("    return address;");
         out.println("}");
         out.println();
         out.println("static JavaCPP_noinline jclass JavaCPP_getClass(JNIEnv* env, int i) {");
@@ -1170,7 +1199,7 @@ public class Generator implements Closeable {
             out.print("            { ");
             Set<String> m = members.get(classIterator.next());
             Iterator<String> memberIterator = m == null ? null : m.iterator();
-            if (memberIterator == null) {
+            if (memberIterator == null || !memberIterator.hasNext()) {
                 out.print("NULL");
             } else while (memberIterator.hasNext()) {
                 out.print("\"" + memberIterator.next() + "\"");
@@ -1191,7 +1220,7 @@ public class Generator implements Closeable {
             Class c = classIterator.next();
             Set<String> m = members.get(c);
             Iterator<String> memberIterator = m == null ? null : m.iterator();
-            if (memberIterator == null) {
+            if (memberIterator == null || !memberIterator.hasNext()) {
                 out.print("-1");
             } else while (memberIterator.hasNext()) {
                 String[] typeName = cppTypeName(c);
@@ -1692,6 +1721,11 @@ public class Generator implements Closeable {
             String cast = cast(methodInfo.returnType, methodInfo.annotations);
             String[] typeName = methodInfo.returnRaw ? new String[] { "" }
                     : cppCastTypeName(methodInfo.returnType, methodInfo.annotations);
+            if (FunctionPointer.class.isAssignableFrom(methodInfo.cls)
+                    && !methodInfo.cls.isAnnotationPresent(Namespace.class)
+                    && methodInfo.valueGetter) {
+                typeName = cppTypeName(methodInfo.cls);
+            }
             if (methodInfo.valueSetter || methodInfo.memberSetter || methodInfo.noReturnGetter) {
                 out.println("    jobject rarg = obj;");
             } else if (methodInfo.returnType.isPrimitive()) {
@@ -1852,7 +1886,13 @@ public class Generator implements Closeable {
                         suffix = "";
                     }
                 } else {
-                    out.print("(*ptr->ptr)");
+                    if (methodInfo.valueGetter || methodInfo.valueSetter) {
+                        out.print("ptr->ptr");
+                        prefix = methodInfo.valueGetter ? "" : " = ";
+                        suffix = "";
+                    } else {
+                        out.print("(*ptr->ptr)");
+                    }
                 }
             } else if (methodInfo.allocator) {
                 String[] typeName = cppTypeName(methodInfo.cls);
@@ -1934,6 +1974,12 @@ public class Generator implements Closeable {
             AdapterInformation adapterInfo = methodInfo.parameterRaw[j] ? null
                     : adapterInformation(false, methodInfo, j);
 
+            if (FunctionPointer.class.isAssignableFrom(methodInfo.cls)
+                    && !methodInfo.cls.isAnnotationPresent(Namespace.class)
+                    && methodInfo.valueSetter) {
+                String[] typeName = cppTypeName(methodInfo.cls);
+                cast = "(" + typeName[0] + typeName[1] + ")";
+            }
             if (("(void*)".equals(cast) || "(void *)".equals(cast)) &&
                     methodInfo.parameterTypes[j] == long.class) {
                 out.print("jlong_to_ptr(arg" + j + ")");
@@ -2779,9 +2825,9 @@ public class Generator implements Closeable {
             } else if (methodName.startsWith("call") || methodName.startsWith("apply")) {
                 // found a function caller method and/or callback method
                 functionMethods[0] = methods[i];
-            } else if (methodName.startsWith("get") && Modifier.isNative(modifiers)) {
+            } else if (methodName.startsWith("get") && Modifier.isNative(modifiers) && cls.isAnnotationPresent(Namespace.class)) {
                 functionMethods[1] = methods[i];
-            } else if (methodName.startsWith("put") && Modifier.isNative(modifiers)) {
+            } else if (methodName.startsWith("put") && Modifier.isNative(modifiers) && cls.isAnnotationPresent(Namespace.class)) {
                 functionMethods[2] = methods[i];
             }
         }
