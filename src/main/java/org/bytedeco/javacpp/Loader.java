@@ -369,6 +369,7 @@ public class Loader {
             urlFile = new File(resourceURL.getPath());
         }
         String name = urlFile.getName();
+        boolean reference = false;
         long size, timestamp;
         File cacheDir = getCacheDir();
         File cacheSubdir = cacheDir.getCanonicalFile();
@@ -389,14 +390,18 @@ public class Loader {
             size = urlFile.length();
             timestamp = urlFile.lastModified();
             if (!noSubdir) {
-                cacheSubdir = new File(cacheSubdir, name);
+                cacheSubdir = new File(cacheSubdir, urlFile.getParentFile().getName());
             }
         }
         if (resourceURL.getRef() != null) {
             // ... get the URL fragment to let users rename library files ...
             name = resourceURL.getRef();
+            reference = true;
         }
         File file = new File(cacheSubdir, name);
+        File lockFile = new File(cacheDir, ".lock");
+        FileChannel lockChannel = null;
+        FileLock lock = null;
         if (target != null && target.length() > 0) {
             // ... create symbolic link to already extracted library or ...
             Path path = file.toPath(), targetPath = Paths.get(target);
@@ -404,10 +409,23 @@ public class Loader {
                 if ((!file.exists() || !Files.isSymbolicLink(path) || !Files.readSymbolicLink(path).equals(targetPath))
                         && targetPath.isAbsolute() && !targetPath.equals(path)) {
                     if (logger.isDebugEnabled()) {
-                        logger.debug("Creating symbolic link " + path);
+                        logger.debug("Locking " + cacheDir + " to create symbolic link");
                     }
-                    file.delete();
-                    Files.createSymbolicLink(path, targetPath);
+                    lockChannel = new FileOutputStream(lockFile).getChannel();
+                    lock = lockChannel.lock();
+                    if ((!file.exists() || !Files.isSymbolicLink(path) || !Files.readSymbolicLink(path).equals(targetPath))
+                            && targetPath.isAbsolute() && !targetPath.equals(path)) {
+                        if (logger.isDebugEnabled()) {
+                            logger.debug("Creating symbolic link " + path + " to " + targetPath);
+                        }
+                        try {
+                            file.getParentFile().mkdirs();
+                            Files.createSymbolicLink(path, targetPath);
+                        } catch (java.nio.file.FileAlreadyExistsException e) {
+                            file.delete();
+                            Files.createSymbolicLink(path, targetPath);
+                        }
+                    }
                 }
             } catch (IOException | UnsupportedOperationException e) {
                 // ... (probably an unsupported operation on Windows, but DLLs never need links) ...
@@ -415,19 +433,39 @@ public class Loader {
                     logger.debug("Failed to create symbolic link " + path + ": " + e);
                 }
                 return null;
+            } finally {
+                if (lock != null) {
+                    lock.release();
+                }
+                if (lockChannel != null) {
+                    lockChannel.close();
+                }
             }
         } else {
-            if (urlFile.exists() && !urlFile.getName().equals(name)) {
-                // ... try to create a symbolic link instead, if we can, as required by some libraries ...
+            if (urlFile.exists() && reference) {
+                // ... try to create a symbolic link to the existing file, if we can, ...
                 Path path = file.toPath(), urlPath = urlFile.toPath();
                 try {
                     if ((!file.exists() || !Files.isSymbolicLink(path) || !Files.readSymbolicLink(path).equals(urlPath))
                             && urlPath.isAbsolute() && !urlPath.equals(path)) {
                         if (logger.isDebugEnabled()) {
-                            logger.debug("Creating symbolic link " + path + " to " + urlPath);
+                            logger.debug("Locking " + cacheDir + " to create symbolic link");
                         }
-                        file.delete();
-                        Files.createSymbolicLink(path, urlPath);
+                        lockChannel = new FileOutputStream(lockFile).getChannel();
+                        lock = lockChannel.lock();
+                        if ((!file.exists() || !Files.isSymbolicLink(path) || !Files.readSymbolicLink(path).equals(urlPath))
+                                && urlPath.isAbsolute() && !urlPath.equals(path)) {
+                            if (logger.isDebugEnabled()) {
+                                logger.debug("Creating symbolic link " + path + " to " + urlPath);
+                            }
+                            try {
+                                file.getParentFile().mkdirs();
+                                Files.createSymbolicLink(path, urlPath);
+                            } catch (java.nio.file.FileAlreadyExistsException e) {
+                                file.delete();
+                                Files.createSymbolicLink(path, urlPath);
+                            }
+                        }
                     }
                     return file;
                 } catch (IOException | UnsupportedOperationException e) {
@@ -435,31 +473,44 @@ public class Loader {
                     if (logger.isDebugEnabled()) {
                         logger.debug("Could not create symbolic link " + path + ": " + e);
                     }
+                } finally {
+                    if (lock != null) {
+                        lock.release();
+                    }
+                    if (lockChannel != null) {
+                        lockChannel.close();
+                    }
                 }
             }
             // ... check if it has not already been extracted, and if not ...
             if (!file.exists() || file.length() != size || file.lastModified() != timestamp
                     || !cacheSubdir.equals(file.getCanonicalFile().getParentFile())) {
                 // ... add lock to avoid two JVMs access cacheDir simultaneously and ...
-                if (logger.isDebugEnabled()) {
-                    logger.debug("Locking " + cacheDir);
-                }
-                File lockFile = new File(cacheDir, ".lock");
-                FileChannel lockChannel = new FileOutputStream(lockFile).getChannel();
-                FileLock lock = lockChannel.lock();
-                // ... check if other JVM has extracted it before this JVM get the lock ...
-                if (!file.exists() || file.length() != size || file.lastModified() != timestamp
-                        || !cacheSubdir.equals(file.getCanonicalFile().getParentFile())) {
-                    // ... extract it from our resources ...
+                try {
                     if (logger.isDebugEnabled()) {
-                        logger.debug("Extracting " + resourceURL);
+                        logger.debug("Locking " + cacheDir + " before extracting");
                     }
-                    file.delete();
-                    extractResource(resourceURL, file, null, null);
-                    file.setLastModified(timestamp);
+                    lockChannel = new FileOutputStream(lockFile).getChannel();
+                    lock = lockChannel.lock();
+                    // ... check if other JVM has extracted it before this JVM get the lock ...
+                    if (!file.exists() || file.length() != size || file.lastModified() != timestamp
+                            || !cacheSubdir.equals(file.getCanonicalFile().getParentFile())) {
+                        // ... extract it from our resources ...
+                        if (logger.isDebugEnabled()) {
+                            logger.debug("Extracting " + resourceURL);
+                        }
+                        file.delete();
+                        extractResource(resourceURL, file, null, null);
+                        file.setLastModified(timestamp);
+                    }
+                } finally {
+                    if (lock != null) {
+                        lock.release();
+                    }
+                    if (lockChannel != null) {
+                        lockChannel.close();
+                    }
                 }
-                lock.release();
-                lockChannel.close();
             }
         }
         return file;
@@ -830,8 +881,9 @@ public class Loader {
             return new URL[0];
         }
         String[] split = libnameversion.split("#");
+        boolean reference = split.length > 1;
         String[] s = split[0].split("@");
-        String[] s2 = (split.length > 1 ? split[1] : split[0]).split("@");
+        String[] s2 = (reference ? split[1] : split[0]).split("@");
         String libname = s[0];
         String libname2 = s2[0];
         String version = s.length > 1 ? s[s.length-1] : "";
@@ -881,14 +933,16 @@ public class Loader {
                 String subdir = platform + (extension == null ? "" : extension) + "/";
                 URL u = cls.getResource(subdir + styles[i]);
                 if (u != null) {
-                    if (!styles[i].equals(styles2[i])) {
+                    if (reference) {
                         try {
                             u = new URL(u + "#" + styles2[i]);
                         } catch (MalformedURLException e) {
                             throw new RuntimeException(e);
                         }
                     }
-                    urls.add(u);
+                    if (!urls.contains(u)) {
+                        urls.add(u);
+                    }
                 }
             }
         }
@@ -900,10 +954,12 @@ public class Loader {
                 if (file.exists()) {
                     try {
                         URL u = file.toURI().toURL();
-                        if (!styles[i].equals(styles2[i])) {
+                        if (reference) {
                             u = new URL(u + "#" + styles2[i]);
                         }
-                        urls.add(k++, u);
+                        if (!urls.contains(u)) {
+                            urls.add(k++, u);
+                        }
                     } catch (MalformedURLException ex) {
                         throw new RuntimeException(ex);
                     }

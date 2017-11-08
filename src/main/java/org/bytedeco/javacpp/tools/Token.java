@@ -64,6 +64,7 @@ class Token implements Comparable<Token> {
             ENUM      = new Token(IDENTIFIER, "enum"),
             EXPLICIT  = new Token(IDENTIFIER, "explicit"),
             EXTERN    = new Token(IDENTIFIER, "extern"),
+            FINAL     = new Token(IDENTIFIER, "final"),
             FRIEND    = new Token(IDENTIFIER, "friend"),
             INLINE    = new Token(IDENTIFIER, "inline"),
             STATIC    = new Token(IDENTIFIER, "static"),

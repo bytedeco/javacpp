@@ -505,9 +505,9 @@ public class Parser {
                 type.friend = true;
             } else if (token.match(Token.VIRTUAL)) {
                 type.virtual = true;
-            } else if (token.match(Token.AUTO, Token.ENUM, Token.EXPLICIT, Token.EXTERN, Token.INLINE, Token.CLASS, Token.INTERFACE,
-                                   Token.__INTERFACE, Token.MUTABLE, Token.NAMESPACE, Token.STRUCT, Token.UNION, Token.TYPEDEF,
-                                   Token.TYPENAME, Token.USING, Token.REGISTER, Token.THREAD_LOCAL, Token.VOLATILE)) {
+            } else if (token.match(Token.AUTO, Token.ENUM, Token.EXPLICIT, Token.EXTERN, Token.INLINE, Token.CLASS, Token.FINAL,
+                                   Token.INTERFACE, Token.__INTERFACE, Token.MUTABLE, Token.NAMESPACE, Token.STRUCT, Token.UNION,
+                                   Token.TYPEDEF, Token.TYPENAME, Token.USING, Token.REGISTER, Token.THREAD_LOCAL, Token.VOLATILE)) {
                 token = tokens.next();
                 continue;
             } else if (token.match((Object[])infoMap.getFirst("basic/types").cppTypes) && (type.cppName.length() == 0 || type.simple)) {
@@ -527,7 +527,7 @@ public class Parser {
                     } else {
                         Info info = infoMap.getFirst(tokens.get(1).value);
                         if ((info != null && info.annotations != null) ||
-                                !tokens.get(1).match('*', '&', Token.IDENTIFIER, Token.CONST, Token.CONSTEXPR)) {
+                                !tokens.get(1).match('*', '&', Token.IDENTIFIER, Token.CONST, Token.CONSTEXPR, Token.FINAL)) {
                             // we probably reached a variable or function name identifier
                             break;
                         }
@@ -2326,6 +2326,7 @@ public class Parser {
 
         tokens.next().expect(Token.IDENTIFIER, '{', "::");
         if (!tokens.get().match('{') && tokens.get(1).match(Token.IDENTIFIER)
+                && !tokens.get(1).match(Token.FINAL)
                 && (typedef || !tokens.get(2).match(';'))) {
             tokens.next();
         }
