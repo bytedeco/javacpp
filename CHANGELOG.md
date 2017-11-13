@@ -1,4 +1,5 @@
 
+ * Fix a few issues with `Parser`, including missing `PointerPointer` member setters ([issue bytedeco/javacpp-presets#478](https://github.com/bytedeco/javacpp-presets/issues/478))
  * Fix potential race conditions and various issues with `Loader` that could prevent libraries like MKL from working properly
  * Add `Loader.addressof()` to access native symbols, usable via optional `ValueGetter/ValueSetter` in `FunctionPointer`
  * Add `BuildEnabled` interface to allow `InfoMapper` classes to participate in the build

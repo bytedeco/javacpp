@@ -291,7 +291,8 @@ public class BuildMojo extends AbstractMojo {
                     .compilerOptions(compilerOptions);
             Properties properties = builder.properties;
             log.info("Detected platform \"" + Loader.getPlatform() + "\"");
-            log.info("Building for platform \"" + properties.get("platform") + "\"");
+            log.info("Building for platform \"" + properties.get("platform") + "\""
+                    + (extension != null && extension.length() > 0 ? " with extension \"" + extension + "\"" : ""));
             String separator = properties.getProperty("platform.path.separator");
             for (String s : merge(buildPaths, buildPath)) {
                 String v = properties.getProperty("platform.buildpath", "");
