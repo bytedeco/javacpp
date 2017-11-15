@@ -351,6 +351,7 @@ public class Generator implements Closeable {
         out.println("    #define JavaCPP_hidden");
         out.println("#endif");
         out.println();
+        List exclude = properties.get("platform.exclude");
         List[] include = { properties.get("platform.include"),
                            properties.get("platform.cinclude") };
         for (int i = 0; i < include.length; i++) {
@@ -364,6 +365,9 @@ public class Generator implements Closeable {
                     }
                 }
                 for (String s : (List<String>)include[i]) {
+                    if (exclude.contains(s)) {
+                        continue;
+                    }
                     String line = "#include ";
                     if (!s.startsWith("<") && !s.startsWith("\"")) {
                         line += '"';

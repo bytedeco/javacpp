@@ -50,6 +50,9 @@ public @interface Platform {
     /** A list of macros to {@code #define} at the top of the generated code,
      *  before {@link #include()} and {@link #cinclude()} header files. */
     String[] define()      default {};
+    /** A list of C/C++ header files that should not be included in the generated code,
+     *  even when they are inherited from an include list. */
+    String[] exclude()     default {};
     /** A list of C++ header files to include at the top of the generated code. */
     String[] include()     default {};
     /** A list of C header files to include at the top of the generated code. The

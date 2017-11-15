@@ -107,6 +107,14 @@ public class Parser {
                 }
             }
         }
+        int castStart = text.lastIndexOf('(');
+        int castEnd = text.indexOf(')', castStart);
+        if (castStart >= 0 && castStart < castEnd) {
+            Info info2 = infoMap.getFirst(text.substring(castStart + 1, castEnd));
+            if (info2 != null && info2.valueTypes != null && info2.valueTypes.length > 0) {
+                text = text.substring(0, castStart + 1) + info2.valueTypes[0] + text.substring(castEnd);
+            }
+        }
         return text;
     }
 
@@ -403,7 +411,7 @@ public class Parser {
                         count--;
                     }
                     type.cppName += token;
-                    if (token.match(Token.CONST)) {
+                    if (token.match(Token.CONST, Token.__CONST)) {
                         type.cppName += " ";
                     }
                 }
@@ -466,7 +474,7 @@ public class Parser {
                     separator = ",";
                 }
                 type.cppName += type.cppName.endsWith(">") ? " >" : ">";
-            } else if (token.match(Token.CONST, Token.CONSTEXPR)) {
+            } else if (token.match(Token.CONST, Token.__CONST, Token.CONSTEXPR)) {
                 int template = type.cppName.lastIndexOf('<');
                 String simpleName = template >= 0 ? type.cppName.substring(0, template) : type.cppName;
                 if (!simpleName.trim().contains(" ") || type.simple) {
@@ -527,7 +535,7 @@ public class Parser {
                     } else {
                         Info info = infoMap.getFirst(tokens.get(1).value);
                         if ((info != null && info.annotations != null) ||
-                                !tokens.get(1).match('*', '&', Token.IDENTIFIER, Token.CONST, Token.CONSTEXPR, Token.FINAL)) {
+                                !tokens.get(1).match('*', '&', Token.IDENTIFIER, Token.CONST, Token.__CONST, Token.CONSTEXPR, Token.FINAL)) {
                             // we probably reached a variable or function name identifier
                             break;
                         }
@@ -753,7 +761,7 @@ public class Parser {
                 dcl.reference = true;
             } else if (token.match("&&")) {
                 // rvalue reference... ignore?
-            } else if (token.match(Token.CONST, Token.CONSTEXPR)) {
+            } else if (token.match(Token.CONST, Token.__CONST, Token.CONSTEXPR)) {
                 dcl.constPointer = true;
             } else {
                 break;
@@ -806,14 +814,25 @@ public class Parser {
         Info groupInfo = null;
         Declaration definition = new Declaration();
         boolean fieldPointer = false;
+        Attribute convention = null;
         if (tokens.get().match('(') || (typedef && tokens.get(1).match('('))) {
             // probably a function pointer declaration
             if (tokens.get().match('(')) {
                 tokens.next();
             }
-            for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.next()) {
+            for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.get()) {
                 if (token.match(Token.IDENTIFIER, "::")) {
-                    dcl.cppName += token;
+                    int backIndex2 = tokens.index;
+                    Attribute attr2 = attribute();
+                    if (attr2 != null && attr2.annotation) {
+                        type.annotations += attr2.javaName;
+                        attributes.add(attr2);
+                        convention = attr2;
+                        continue;
+                    } else {
+                        tokens.index = backIndex2;
+                        dcl.cppName += token;
+                    }
                 } else if (token.match('*')) {
                     indirections2++;
                     if (dcl.cppName.endsWith("::")) {
@@ -827,16 +846,21 @@ public class Parser {
                             }
                         }
                         definition.text += "@Namespace(\"" + dcl.cppName + "\") ";
-                    } else if (dcl.cppName.length() > 0) {
-                        definition.text += "@Convention(\"" + dcl.cppName + "\") ";
+                    } else if (convention != null || dcl.cppName.length() > 0) {
+                        definition.text += "@Convention(\"" + (convention != null ? convention.cppName : dcl.cppName) + "\") ";
                     }
                     dcl.cppName = "";
                 } else if (token.match('[')) {
                     Token n = tokens.get(1);
-                    dims[dcl.indices++] = n.match(Token.INTEGER) ? Integer.decode(n.value) : -1;
+                    try {
+                        dims[dcl.indices++] = n.match(Token.INTEGER) ? Integer.decode(n.value) : -1;
+                    } catch (NumberFormatException e) {
+                        dims[dcl.indices++] = -1;
+                    }
                 } else if (token.match('(', ')')) {
                     break;
                 }
+                tokens.next();
             }
             if (tokens.get().match(')')) {
                 tokens.next();
@@ -908,7 +932,11 @@ public class Parser {
             if (!bracket && token.match('[')) {
                 bracket = true;
                 Token n = tokens.get(1);
-                dims[dcl.indices++] = n.match(Token.INTEGER) ? Integer.decode(n.value) : -1;
+                try {
+                    dims[dcl.indices++] = n.match(Token.INTEGER) ? Integer.decode(n.value) : -1;
+                } catch (NumberFormatException e) {
+                    dims[dcl.indices++] = -1;
+                }
             } else if (!bracket) {
                 break;
             } else if (bracket && token.match(']')) {
@@ -959,6 +987,13 @@ public class Parser {
 
         // if this is a function pointer, get parameters
         dcl.parameters = parameters(context, infoNumber, useDefaults);
+        if (type.cppName.equals("void") && indirections2 == 1 && !typedef && tokens.get(1).match('(')) {
+            // weird non-ANSI function declaration
+            tokens.next().expect('(');
+            tokens.next().expect(Token.IDENTIFIER);
+            type(context); // ignore?
+            indirections2 = 0;
+        }
 
         int infoLength = 1;
         boolean valueType = false, needCast = arrayAsPointer && dcl.indices > 1, implicitConst = false;
@@ -1166,7 +1201,7 @@ public class Parser {
                         definition.text += s + " ";
                     }
                 }
-                definition.text += (tokens.get().match(Token.CONST, Token.CONSTEXPR) ? "@Const " : "") +
+                definition.text += (tokens.get().match(Token.CONST, Token.__CONST, Token.CONSTEXPR) ? "@Const " : "") +
                         "public static class " + functionType + " extends FunctionPointer {\n" +
                         "    static { Loader.load(); }\n" +
                         "    /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */\n" +
@@ -1200,8 +1235,8 @@ public class Parser {
                     dcl.parameters = null;
                 }
                 if (dcl.indirections > 1) {
-                    type.constValue = true; // TODO: provide correct cast to allow setters
-                    type.annotations = "@Cast(\"void**\") ";
+                    int n = cppType.indexOf('(');
+                    type.annotations = "@Cast(\"" + cppType.substring(0, n + 1) + "*" + cppType.substring(n + 1) + "\") ";
                     type.javaName = "PointerPointer";
                 } else {
                     type.annotations = "";
@@ -1772,7 +1807,7 @@ public class Parser {
 
             // check for const and pure virtual functions, ignoring the body if present
             for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.get()) {
-                decl.constMember |= token.match(Token.CONST, Token.CONSTEXPR);
+                decl.constMember |= token.match(Token.CONST, Token.__CONST, Token.CONSTEXPR);
                 if (attribute() == null) {
                     break;
                 }
@@ -2101,8 +2136,8 @@ public class Parser {
                         }
                         prevDcl.add(dcl);
                     }
-                } else if (info == null || (info.cppText == null &&
-                        (info.cppTypes == null || info.cppTypes.length == 1))) {
+                } else if (lastIndex > beginIndex + 1 && (info == null || (info.cppText == null &&
+                        (info.cppTypes == null || info.cppTypes.length == 1)))) {
                     // declare as a static final variable
                     String value = "";
                     String type = "int";
@@ -2142,6 +2177,11 @@ public class Parser {
                         }
                         value = translate(value);
                     } else {
+                        if (info != null && info.annotations != null) {
+                            for (String s : info.annotations) {
+                                decl.text += s + " ";
+                            }
+                        }
                         decl.text += "public static native @MemberGetter " + type + " " + macroName + "();\n";
                         value = " " + macroName + "()";
                     }
@@ -2326,8 +2366,9 @@ public class Parser {
         boolean typedef = tokens.get().match(Token.TYPEDEF) || tokens.get(1).match(Token.TYPEDEF);
         boolean foundGroup = false, friend = false;
         Context ctx = new Context(context);
+        Token[] prefixes = {Token.CLASS, Token.INTERFACE, Token.__INTERFACE, Token.STRUCT, Token.UNION};
         for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.next()) {
-            if (token.match(Token.CLASS, Token.INTERFACE, Token.__INTERFACE, Token.STRUCT, Token.UNION)) {
+            if (token.match(prefixes)) {
                 foundGroup = true;
                 ctx.inaccessible = token.match(Token.CLASS);
                 break;
@@ -2476,9 +2517,12 @@ public class Parser {
             }
             String fullName = context.namespace != null ? context.namespace + "::" + name : name;
             String cppName = type.cppName;
-            if (info != null && info.cppNames[0].startsWith("struct ")) {
-                // make it possible to force resolution with a "struct" prefix
-                cppName = "struct " + cppName;
+            for (Token prefix : prefixes) {
+                if (info != null && info.cppNames[0].startsWith(prefix.value + " ")) {
+                    // make it possible to force resolution with a prefix
+                    cppName = prefix.value + " " + cppName;
+                    break;
+                }
             }
             if (!fullName.equals(cppName)) {
                 decl.text += "@Name(\"" + (context.javaName == null || namespace < 0 ? cppName : cppName.substring(namespace + 2)) + "\") ";
@@ -2550,9 +2594,12 @@ public class Parser {
         if (!anonymous) {
             String fullName = context.namespace != null ? context.namespace + "::" + name : name;
             String cppName = type.cppName;
-            if (info != null && info.cppNames[0].startsWith("struct ")) {
-                // make it possible to force resolution with a "struct" prefix
-                cppName = "struct " + cppName;
+            for (Token prefix : prefixes) {
+                if (info != null && info.cppNames[0].startsWith(prefix.value + " ")) {
+                    // make it possible to force resolution with a prefix
+                    cppName = prefix.value + " " + cppName;
+                    break;
+                }
             }
             if (!fullName.equals(cppName)) {
                 decl.text += "@Name(\"" + cppName + "\") ";
@@ -2878,7 +2925,7 @@ public class Parser {
         }
         String spacing = tokens.get().spacing;
         Declaration decl = new Declaration();
-        tokens.next().expect("\"C\"");
+        tokens.next().expect("\"C\"", "\"C++\"");
         if (!tokens.next().match('{')) {
             tokens.get().spacing = spacing;
             declList.add(decl);

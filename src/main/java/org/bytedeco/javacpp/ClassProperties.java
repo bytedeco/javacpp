@@ -177,7 +177,7 @@ public class ClassProperties extends HashMap<String,List<String>> {
             platforms = classProperties.value();
         }
 
-        String[] pragma = {}, define = {}, include = {}, cinclude = {}, includepath = {}, includeresource = {}, compiler = {},
+        String[] pragma = {}, define = {}, exclude = {}, include = {}, cinclude = {}, includepath = {}, includeresource = {}, compiler = {},
                  linkpath = {}, linkresource = {}, link = {}, frameworkpath = {}, framework = {}, preloadpath = {}, preload = {},
                  resourcepath = {}, resource = {}, extensions = {};
         String library = "jni" + c.getSimpleName();
@@ -195,6 +195,7 @@ public class ClassProperties extends HashMap<String,List<String>> {
             if ((names[0].length == 0 || matches[0]) && (names[1].length == 0 || !matches[1])) {
                 if (p.pragma()     .length > 0) { pragma      = p.pragma();      }
                 if (p.define()     .length > 0) { define      = p.define();      }
+                if (p.exclude()    .length > 0) { exclude     = p.exclude();    }
                 if (p.include()    .length > 0) { include     = p.include();     }
                 if (p.cinclude()   .length > 0) { cinclude    = p.cinclude();    }
                 if (p.includepath().length > 0) { includepath = p.includepath(); }
@@ -239,6 +240,7 @@ public class ClassProperties extends HashMap<String,List<String>> {
         }
         addAll("platform.pragma", pragma);
         addAll("platform.define", define);
+        addAll("platform.exclude", exclude);
         addAll("platform.include", include);
         addAll("platform.cinclude", cinclude);
         addAll("platform.includepath", includepath);
