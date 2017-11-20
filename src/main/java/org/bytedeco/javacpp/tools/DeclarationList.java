@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Samuel Audet
+ * Copyright (C) 2014-2017 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -62,6 +62,8 @@ class DeclarationList extends ArrayList<Declaration> {
     @Override public boolean add(Declaration decl) {
         boolean add = true;
         if (templateMap != null && !templateMap.full() && (decl.type != null || decl.declarator != null)) {
+            // method templates cannot be declared in Java, but make sure to make their
+            // info available on request (when Info.javaNames is set) to be able to create instances
             if (infoIterator == null) {
                 Type type = templateMap.type = decl.type;
                 Declarator dcl = templateMap.declarator = decl.declarator;
@@ -76,6 +78,7 @@ class DeclarationList extends ArrayList<Declaration> {
             }
             add = false;
         } else if (decl.declarator != null && decl.declarator.type != null) {
+            // honor to skip over declarations when tagged as such
             Info info = infoMap.getFirst(decl.declarator.type.cppName);
             if (info != null && info.skip && info.valueTypes == null && info.pointerTypes == null) {
                 add = false;
@@ -95,6 +98,7 @@ class DeclarationList extends ArrayList<Declaration> {
             return false;
         }
 
+        // place all definitions prior to the declaractions that need them
         List<Declaration> stack = new ArrayList<Declaration>();
         ListIterator<Declaration> it = stack.listIterator();
         it.add(decl); it.previous();
@@ -127,7 +131,7 @@ class DeclarationList extends ArrayList<Declaration> {
             boolean found = false;
             while (it.hasNext()) {
                 Declaration d = it.next();
-                if (d.signature.length() > 0 && d.signature.equals(decl.signature)) {
+                if (d != null && d.signature != null && d.signature.length() > 0 && d.signature.equals(decl.signature)) {
                     if ((d.constMember && !decl.constMember) || (d.inaccessible && !decl.inaccessible) || (d.incomplete && !decl.incomplete)) {
                         // add preferably non-const accessible complete versions of functions and types
                         it.remove();

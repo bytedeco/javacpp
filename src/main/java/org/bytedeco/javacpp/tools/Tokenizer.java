@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2016 Samuel Audet
+ * Copyright (C) 2014-2017 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -37,11 +37,16 @@ import java.util.ArrayList;
  * @author Samuel Audet
  */
 class Tokenizer implements Closeable {
-    Tokenizer(Reader reader) {
+    Tokenizer(Reader reader, File file, int lineNumber) {
         this.reader = reader;
+        this.file = file;
+        this.lineNumber = lineNumber;
     }
-    Tokenizer(String string) {
-        this.reader = new StringReader(string);
+    Tokenizer(String text, File file, int lineNumber) {
+        this.text = text;
+        this.reader = new StringReader(text);
+        this.file = file;
+        this.lineNumber = lineNumber;
     }
     Tokenizer(File file) throws IOException {
         this(file, null);
@@ -86,6 +91,7 @@ class Tokenizer implements Closeable {
     }
 
     File file = null;
+    String text = null;
     Reader reader = null;
     String lineSeparator = null;
     int lastChar = -1, lineNumber = 1;
@@ -103,7 +109,10 @@ class Tokenizer implements Closeable {
         }
         int c = reader.read();
         if (c == '\r' || c == '\n') {
-            lineNumber++;
+            if (text == null) {
+                // assume text is associated with a single line of file
+                lineNumber++;
+            }
             int c2 = c == '\r' ? reader.read() : -1;
             if (lineSeparator == null) {
                 lineSeparator = c == '\r' && c2 == '\n' ? "\r\n" :
@@ -129,6 +138,7 @@ class Tokenizer implements Closeable {
             }
         }
         token.file = file;
+        token.text = text;
         token.lineNumber = lineNumber;
         token.spacing = buffer.toString();
 

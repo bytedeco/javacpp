@@ -76,7 +76,8 @@ public class Parser {
         this.properties = p.properties;
         this.encoding = p.encoding;
         this.infoMap = p.infoMap;
-        this.tokens = new TokenIndexer(infoMap, new Tokenizer(text).tokenize(), false);
+        Token t = p.tokens != null ? p.tokens.get() : Token.EOF;
+        this.tokens = new TokenIndexer(infoMap, new Tokenizer(text, t.file, t.lineNumber).tokenize(), false);
         this.lineSeparator = p.lineSeparator;
     }
 
@@ -787,7 +788,8 @@ public class Parser {
         attr = null;
         tokens.index = backIndex;
         for (Attribute a : attributes) {
-            if (a.arguments.length() > 0 && Character.isJavaIdentifierStart(a.arguments.charAt(0))) {
+            if (a.javaName != null && a.javaName.contains("@Name ")
+                    && a.arguments.length() > 0 && Character.isJavaIdentifierStart(a.arguments.charAt(0))) {
                 attr = a;
                 for (char c : a.arguments.toCharArray()) {
                     if (!Character.isJavaIdentifierPart(c)) {
@@ -797,6 +799,7 @@ public class Parser {
                 }
             }
             if (attr != null) {
+                type.annotations = type.annotations.replace("@Name ", ""); // gets added back below
                 break;
             }
         }
@@ -983,6 +986,9 @@ public class Parser {
             type.annotations += "@NoOffset ";
             tokens.next().expect(Token.INTEGER, Token.IDENTIFIER);
             tokens.next().expect(',', ';');
+            if (dcl.cppName == null) {
+                dcl.cppName = "";
+            }
         }
 
         // if this is a function pointer, get parameters
@@ -993,6 +999,13 @@ public class Parser {
             tokens.next().expect(Token.IDENTIFIER);
             type(context); // ignore?
             indirections2 = 0;
+        } else if (indirections2 == 1 && !typedef && tokens.get(1).match('[')) {
+            // weird template function returning an array
+            tokens.next().expect('[');
+            tokens.next().expect(Token.IDENTIFIER);
+            tokens.next().expect(']');
+            dcl.indirections++;
+            indirections2--;
         }
 
         int infoLength = 1;
@@ -2176,6 +2189,15 @@ public class Parser {
                             value += token.spacing + token + (tokens.index + 1 < lastIndex ? cat : "");
                         }
                         value = translate(value);
+                        if (type.equals("int")) {
+                            if (value.contains("(String)")) {
+                                type = "String";
+                            } else if (value.contains("(float)") || value.contains("(double)")) {
+                                type = "double";
+                            } else if (value.contains("(long)")) {
+                                type = "long";
+                            }
+                        }
                     } else {
                         if (info != null && info.annotations != null) {
                             for (String s : info.annotations) {
@@ -2237,103 +2259,114 @@ public class Parser {
             tokens.next().expect('=');
             tokens.next();
         }
-        Declarator dcl = declarator(context, null, 0, false, 0, true, false);
-        if (usingDefName != null) {
-            dcl.cppName = usingDefName;
-        }
-        if (attribute() == null) {
-            tokens.next();
-        }
+        int backIndex = tokens.index;
+        for (int n = 0; n < Integer.MAX_VALUE; n++) {
+            decl = new Declaration();
+            tokens.index = backIndex;
+            Declarator dcl = declarator(context, null, 0, false, n, true, false);
+            if (dcl == null) {
+                break;
+            }
+            if (usingDefName != null) {
+                dcl.cppName = usingDefName;
+            }
+            if (attribute() == null) {
+                tokens.next();
+            }
 
-        String typeName = dcl.type.cppName, defName = dcl.cppName;
-        if (defName == null) {
-            dcl.cppName = defName = typeName;
-        }
-        int namespace = defName.lastIndexOf("::");
-        if (context.namespace != null && namespace < 0) {
-            defName = context.namespace + "::" + defName;
-        }
-        Info info = infoMap.getFirst(defName);
-        if (dcl.definition != null) {
-            // a function pointer or something
-            decl = dcl.definition;
-            if (dcl.javaName.length() > 0 && context.javaName != null) {
-                dcl.javaName = context.javaName + "." + dcl.javaName;
+            String typeName = dcl.type.cppName, defName = dcl.cppName;
+            if (defName == null) {
+                dcl.cppName = defName = typeName;
             }
-            if (info == null || !info.skip) {
-                info = info != null ? new Info(info).cppNames(defName) : new Info(defName);
-                infoMap.put(info.valueTypes(dcl.javaName)
-                        .pointerTypes((dcl.indirections > 0 ? "@ByPtrPtr " : "") + dcl.javaName));
+            if (dcl.javaName == null) {
+                dcl.javaName = dcl.cppName;
             }
-        } else if (typeName.equals("void")) {
-            // some opaque data type
-            if (info == null || !info.skip) {
-                if (dcl.indirections > 0) {
-                    decl.text += "@Namespace @Name(\"void\") ";
-                    info = info != null ? new Info(info).cppNames(defName) : new Info(defName);
-                    infoMap.put(info.valueTypes(dcl.javaName).pointerTypes("@ByPtrPtr " + dcl.javaName));
-                } else if (context.namespace != null && context.javaName == null) {
-                    decl.text += "@Namespace(\"" + context.namespace + "\") ";
+            int namespace = defName.lastIndexOf("::");
+            if (context.namespace != null && namespace < 0) {
+                defName = context.namespace + "::" + defName;
+            }
+            Info info = infoMap.getFirst(defName);
+            if (dcl.definition != null) {
+                // a function pointer or something
+                decl = dcl.definition;
+                if (dcl.javaName.length() > 0 && context.javaName != null) {
+                    dcl.javaName = context.javaName + "." + dcl.javaName;
                 }
-                decl.text += "@Opaque public static class " + dcl.javaName + " extends Pointer {\n" +
-                             "    /** Empty constructor. Calls {@code super((Pointer)null)}. */\n" +
-                             "    public " + dcl.javaName + "() { super((Pointer)null); }\n" +
-                             "    /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */\n" +
-                             "    public " + dcl.javaName + "(Pointer p) { super(p); }\n" +
-                             "}";
-            }
-        } else {
-            // point back to original type
-            info = infoMap.getFirst(typeName);
-            if (info == null || !info.skip) {
-                info = info != null ? new Info(info).cppNames(defName) : new Info(defName);
-                if (info.cppTypes == null && info.annotations != null) {
-                    // set original C++ type for typedef of types we want to use with adapters
-                    String s = typeName;
-                    if (dcl.type.constValue && !s.startsWith("const ")) {
-                        s = "const " + s;
+                if (info == null || !info.skip) {
+                    info = info != null ? new Info(info).cppNames(defName) : new Info(defName);
+                    infoMap.put(info.valueTypes(dcl.javaName)
+                            .pointerTypes((dcl.indirections > 0 ? "@ByPtrPtr " : "") + dcl.javaName));
+                }
+            } else if (typeName.equals("void")) {
+                // some opaque data type
+                if (info == null || !info.skip) {
+                    if (dcl.indirections > 0) {
+                        decl.text += "@Namespace @Name(\"void\") ";
+                        info = info != null ? new Info(info).cppNames(defName) : new Info(defName);
+                        infoMap.put(info.valueTypes(dcl.javaName).pointerTypes("@ByPtrPtr " + dcl.javaName));
+                    } else if (context.namespace != null && context.javaName == null) {
+                        decl.text += "@Namespace(\"" + context.namespace + "\") ";
                     }
-                    if (dcl.type.constPointer && !s.endsWith(" const")) {
-                        s = s + " const";
+                    decl.text += "@Opaque public static class " + dcl.javaName + " extends Pointer {\n" +
+                                 "    /** Empty constructor. Calls {@code super((Pointer)null)}. */\n" +
+                                 "    public " + dcl.javaName + "() { super((Pointer)null); }\n" +
+                                 "    /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */\n" +
+                                 "    public " + dcl.javaName + "(Pointer p) { super(p); }\n" +
+                                 "}";
+                }
+            } else {
+                // point back to original type
+                info = infoMap.getFirst(typeName);
+                if (info == null || !info.skip) {
+                    info = info != null ? new Info(info).cppNames(defName) : new Info(defName);
+                    if (info.cppTypes == null && info.annotations != null) {
+                        // set original C++ type for typedef of types we want to use with adapters
+                        String s = typeName;
+                        if (dcl.type.constValue && !s.startsWith("const ")) {
+                            s = "const " + s;
+                        }
+                        if (dcl.type.constPointer && !s.endsWith(" const")) {
+                            s = s + " const";
+                        }
+                        if (dcl.type.indirections > 0) {
+                            for (int i = 0; i < dcl.type.indirections; i++) {
+                                s += "*";
+                            }
+                        }
+                        if (dcl.type.reference) {
+                            s += "&";
+                        }
+                        info.cppNames(defName, s).cppTypes(s);
                     }
-                    if (dcl.type.indirections > 0) {
-                        for (int i = 0; i < dcl.type.indirections; i++) {
-                            s += "*";
+                    if (info.valueTypes == null && dcl.indirections > 0) {
+                        info.valueTypes(info.pointerTypes != null ? info.pointerTypes : new String[] {typeName});
+                        info.pointerTypes("PointerPointer");
+                    } else if (info.pointerTypes == null) {
+                        info.pointerTypes(typeName);
+                    }
+                    if (info.annotations == null) {
+                        if (dcl.type.annotations != null && dcl.type.annotations.length() > 0
+                                && !dcl.type.annotations.startsWith("@ByVal ")
+                                && !dcl.type.annotations.startsWith("@Cast(")
+                                && !dcl.type.annotations.startsWith("@Const ")) {
+                            info.annotations(dcl.type.annotations.trim());
+                        } else {
+                            info.cast(!dcl.cppName.equals(info.pointerTypes[0]));
                         }
                     }
-                    if (dcl.type.reference) {
-                        s += "&";
-                    }
-                    info.cppNames(defName, s).cppTypes(s);
+                    infoMap.put(info);
                 }
-                if (info.valueTypes == null && dcl.indirections > 0) {
-                    info.valueTypes(info.pointerTypes != null ? info.pointerTypes : new String[] {typeName});
-                    info.pointerTypes("PointerPointer");
-                } else if (info.pointerTypes == null) {
-                    info.pointerTypes(typeName);
-                }
-                if (info.annotations == null) {
-                    if (dcl.type.annotations != null && dcl.type.annotations.length() > 0
-                            && !dcl.type.annotations.startsWith("@ByVal ")
-                            && !dcl.type.annotations.startsWith("@Cast(")
-                            && !dcl.type.annotations.startsWith("@Const ")) {
-                        info.annotations(dcl.type.annotations.trim());
-                    } else {
-                        info.cast(!dcl.cppName.equals(info.pointerTypes[0]));
-                    }
-                }
-                infoMap.put(info);
             }
-        }
 
-        if (info != null && info.javaText != null) {
-            decl.text = info.javaText;
+            if (info != null && info.javaText != null) {
+                decl.text = info.javaText;
+            }
+            String comment = commentAfter();
+            decl.text = comment + decl.text;
+            declList.spacing = spacing;
+            declList.add(decl);
+            declList.spacing = null;
         }
-        String comment = commentAfter();
-        decl.text = comment + decl.text;
-        declList.spacing = spacing;
-        declList.add(decl);
-        declList.spacing = null;
         return true;
     }
 
@@ -2433,15 +2466,26 @@ public class Parser {
         String originalName = type.cppName;
         if (body() != null && !tokens.get().match(';')) {
             if (typedef) {
-                for (Token prevToken = null, token = tokens.get(); !token.match(Token.EOF); prevToken = token, token = tokens.next()) {
-                    if (token.match(';')) {
-                        decl.text += token.spacing;
-                        break;
-                    } else if ((prevToken == null || prevToken.match('}', ',')) && token.match(Token.IDENTIFIER)) {
-                        // use typedef name, unless it's something weird like a pointer
-                        name = type.javaName = type.cppName = token.value;
+                Token token = tokens.get();
+                while (!token.match(';', Token.EOF)) {
+                    int indirections = 0;
+                    while (token.match('*')) {
+                        indirections++;
+                        token = tokens.next();
                     }
+                    if (token.match(Token.IDENTIFIER)) {
+                        String name2 = token.value;
+                        // use typedef name, unless it's something weird like a pointer
+                        if (indirections > 0) {
+                            infoMap.put(new Info(name2).cast().valueTypes(name).pointerTypes("PointerPointer"));
+                        } else {
+                            name = type.javaName = type.cppName = token.value;
+                            infoMap.put(new Info(name2).cast().pointerTypes(name));
+                        }
+                    }
+                    token = tokens.next();
                 }
+                decl.text += token.spacing;
             } else {
                 int index = tokens.index - 1;
                 for (int n = 0; n < Integer.MAX_VALUE; n++) {
@@ -2842,15 +2886,34 @@ public class Parser {
             }
             count++;
         }
+        if (longenum) {
+            enumerators = enumerators.replace(" " + javaType, " long");
+            cppType = "long long";
+            javaType = "long";
+        }
         String comment = commentBefore();
         Declaration decl = new Declaration();
         token = tokens.get();
-        if (!token.match(';')) {
-            token = tokens.next();
-        }
-        if (token.match(Token.IDENTIFIER)) {
-            // XXX: If !typedef, this is a variable declaration with anonymous type
-            name = token.value;
+        while (!token.match(';', Token.EOF)) {
+            // deal with typedefs
+            int indirections = 0;
+            while (token.match('*')) {
+                indirections++;
+                token = tokens.next();
+            }
+            if (token.match(Token.IDENTIFIER)) {
+                // XXX: If !typedef, this is a variable declaration with anonymous type
+                String name2 = token.value;
+                if (name == null || name.length() == 0) {
+                    name = name2;
+                }
+                Info info2 = infoMap.getFirst(cppType);
+                if (indirections > 0) {
+                    infoMap.put(new Info(info2).cast().cppNames(name2).valueTypes(info2.pointerTypes).pointerTypes("PointerPointer"));
+                } else {
+                    infoMap.put(new Info(info2).cast().cppNames(name2));
+                }
+            }
             token = tokens.next();
         }
         if (context.namespace != null) {
@@ -2866,11 +2929,6 @@ public class Parser {
                 enumSpacing = enumSpacing.substring(newline + 1);
             }
             decl.text += enumSpacing + enumerators + token.expect(';').spacing + ";";
-            if (longenum) {
-                decl.text = decl.text.replace(" " + javaType, " long");
-                cppType = "long long";
-                javaType = "long";
-            }
             if (name.length() > 0) {
                 Info info2 = infoMap.getFirst(cppType);
                 infoMap.put(new Info(info2).cast().cppNames(name));
@@ -3015,7 +3073,9 @@ public class Parser {
                     if (attribute() != null) {
                         tokens.get().spacing = spacing;
                     } else {
-                        throw new ParserException(token.file + ":" + token.lineNumber + ": Could not parse declaration at '" + token + "'");
+                        throw new ParserException(token.file + ":" + token.lineNumber + ":"
+                                + (token.text != null ? "\"" + token.text + "\": " : "")
+                                + "Could not parse declaration at '" + token + "'");
                     }
                 }
                 while (tokens.get().match(';') && !tokens.get().match(Token.EOF)) {
@@ -3025,7 +3085,7 @@ public class Parser {
         }
 
         // for comments at the end without declarations
-        String comment = commentBefore();
+        String comment = commentBefore() + (tokens.get().match(Token.EOF) ? tokens.get().spacing : "");
         Declaration decl = new Declaration();
         if (comment != null && comment.length() > 0) {
             decl.text = comment;
@@ -3086,9 +3146,10 @@ public class Parser {
             lineSeparator = tokenizer.lineSeparator;
         }
         tokenizer.close();
-        token = new Token();
-        token.type = Token.COMMENT;
+        token = new Token(Token.EOF);
         token.spacing = "\n";
+        token.file = file;
+        token.lineNumber = tokenList.get(tokenList.size() - 1).lineNumber;
         tokenList.add(token);
         tokens = new TokenIndexer(infoMap, tokenList.toArray(new Token[tokenList.size()]), isCFile);
         declarations(context, declList);

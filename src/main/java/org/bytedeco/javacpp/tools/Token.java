@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Samuel Audet
+ * Copyright (C) 2014-2017 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -33,6 +33,7 @@ class Token implements Comparable<Token> {
     Token(int type, String value) { this.type = type; this.value = value; }
     Token(Token t) {
         file = t.file;
+        text = t.text;
         lineNumber = t.lineNumber;
         type = t.type;
         spacing = t.spacing;
@@ -92,6 +93,7 @@ class Token implements Comparable<Token> {
             VOLATILE  = new Token(IDENTIFIER, "volatile");
 
     File file = null;
+    String text = null;
     int lineNumber = 0, type = -1;
     String spacing = "", value = "";
 
@@ -105,7 +107,9 @@ class Token implements Comparable<Token> {
 
     Token expect(Object ... tokens) throws ParserException {
         if (!match(tokens)) {
-            throw new ParserException(file + ":" + lineNumber + ": Unexpected token '" + toString() + "'");
+            throw new ParserException(file + ":" + lineNumber + ":"
+                    + (text != null ? "\"" + text + "\": " : "")
+                    + "Unexpected token '" + toString() + "'");
         }
         return this;
     }

@@ -1,4 +1,8 @@
 
+ * Add support for `JNI_OnLoad_libname()` naming scheme for iOS via new `platform.library.static=true` property
+ * Improve the clarity of error messages on `Parser` failures
+ * Fix `Parser` issues with multiple `typedef` declarations in a single statement
+ * Require `Info.annotations("@Name")` to pick up alternate names from attributes
  * Add `@Platform(exclude=...)` annotation value to remove header files from inherited `@Platform(include=...`
  * Fix a few issues with `Parser`, including missing `PointerPointer` member setters ([issue bytedeco/javacpp-presets#478](https://github.com/bytedeco/javacpp-presets/issues/478))
  * Fix potential race conditions and various issues with `Loader` that could prevent libraries like MKL from working properly

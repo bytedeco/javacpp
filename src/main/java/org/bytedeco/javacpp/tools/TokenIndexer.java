@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2015 Samuel Audet
+ * Copyright (C) 2014-2017 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -141,7 +141,7 @@ class TokenIndexer {
             Info info = infoMap.getFirst(array[index].value);
             if (info != null && info.cppText != null) {
                 try {
-                    Tokenizer tokenizer = new Tokenizer(info.cppText);
+                    Tokenizer tokenizer = new Tokenizer(info.cppText, array[index].file, array[index].lineNumber);
                     if (!tokenizer.nextToken().match('#')
                             || !tokenizer.nextToken().match(Token.DEFINE)
                             || !tokenizer.nextToken().match(info.cppNames[0])) {
@@ -279,11 +279,13 @@ class TokenIndexer {
     /** Returns {@code array[index + i]}. After preprocessing if {@code raw == false}. */
     Token get(int i) {
         int k = raw ? index + i : preprocess(index, i);
-        return k < array.length ? array[k] : Token.EOF;
+        return k < array.length ? array[k]
+                : array[array.length - 1].match(Token.EOF) ? array[array.length - 1] : Token.EOF;
     }
     /** Increments {@code index} and returns {@code array[index]}. After preprocessing if {@code raw == false}. */
     Token next() {
         index = raw ? index + 1 : preprocess(index, 1);
-        return index < array.length ? array[index] : Token.EOF;
+        return index < array.length ? array[index]
+                : array[array.length - 1].match(Token.EOF) ? array[array.length - 1] : Token.EOF;
     }
 }

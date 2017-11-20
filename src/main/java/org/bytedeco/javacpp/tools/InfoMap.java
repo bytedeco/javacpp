@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2015 Samuel Audet
+ * Copyright (C) 2014-2017 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -166,7 +166,7 @@ public class InfoMap extends HashMap<String,List<Info>> {
         }
         boolean foundConst = false, simpleType = true;
         String prefix = null;
-        Token[] tokens = new Tokenizer(name).tokenize();
+        Token[] tokens = new Tokenizer(name, null, 0).tokenize();
         int n = tokens.length;
         Info info = getFirst("basic/types");
         String[] basicTypes = info != null ? info.cppTypes : new String[0];

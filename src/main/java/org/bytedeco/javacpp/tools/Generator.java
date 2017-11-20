@@ -351,6 +351,13 @@ public class Generator implements Closeable {
         out.println("    #define JavaCPP_hidden");
         out.println("#endif");
         out.println();
+
+        String loadSuffix = "";
+        String p = properties.getProperty("platform.library.static", "false").toLowerCase();
+        if (p.equals("true") || p.equals("t") || p.equals("")) {
+            loadSuffix = "_" + properties.getProperty("platform.library");
+        }
+
         List exclude = properties.get("platform.exclude");
         List[] include = { properties.get("platform.include"),
                            properties.get("platform.cinclude") };
@@ -1075,7 +1082,7 @@ public class Generator implements Closeable {
             out.println("        attached = true;");
             out.println("    }");
             out.println("    if (JavaCPP_vm == NULL) {");
-            out.println("        if (JNI_OnLoad(vm, NULL) < 0) {");
+            out.println("        if (JNI_OnLoad" + loadSuffix + "(vm, NULL) < 0) {");
             out.println("            JavaCPP_detach(attached);");
             out.println("            *env = NULL;");
             out.println("            return false;");
@@ -1161,9 +1168,9 @@ public class Generator implements Closeable {
             out2.println("#ifdef __cplusplus");
             out2.println("extern \"C\" {");
             out2.println("#endif");
-            out2.println("JNIIMPORT int JavaCPP_init(int argc, const char *argv[]);");
+            out2.println("JNIIMPORT int JavaCPP_init" + loadSuffix + "(int argc, const char *argv[]);");
             out.println();
-            out.println("JNIEXPORT int JavaCPP_init(int argc, const char *argv[]) {");
+            out.println("JNIEXPORT int JavaCPP_init" + loadSuffix + "(int argc, const char *argv[]) {");
             out.println("#if defined(__ANDROID__) || TARGET_OS_IPHONE");
             out.println("    return JNI_OK;");
             out.println("#else");
@@ -1180,15 +1187,15 @@ public class Generator implements Closeable {
             out.println("        options[i].optionString = (char*)argv[i - 1];");
             out.println("    }");
             out.println("    JavaVMInitArgs vm_args = { " + JNI_VERSION + ", nOptions, options };");
-            out.println("    return (err = JNI_CreateJavaVM(&vm, (void**)&env, &vm_args)) == JNI_OK && vm != NULL && (err = JNI_OnLoad(vm, NULL)) >= 0 ? JNI_OK : err;");
+            out.println("    return (err = JNI_CreateJavaVM(&vm, (void**)&env, &vm_args)) == JNI_OK && vm != NULL && (err = JNI_OnLoad" + loadSuffix + "(vm, NULL)) >= 0 ? JNI_OK : err;");
             out.println("#endif");
             out.println("}");
         }
         out.println(); // XXX: JNI_OnLoad() should ideally be protected by some mutex
-        out.println("JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved) {");
+        out.println("JNIEXPORT jint JNICALL JNI_OnLoad" + loadSuffix + "(JavaVM* vm, void* reserved) {");
         out.println("    JNIEnv* env;");
         out.println("    if (vm->GetEnv((void**)&env, " + JNI_VERSION + ") != JNI_OK) {");
-        out.println("        JavaCPP_log(\"Could not get JNIEnv for " + JNI_VERSION + " inside JNI_OnLoad().\");");
+        out.println("        JavaCPP_log(\"Could not get JNIEnv for " + JNI_VERSION + " inside JNI_OnLoad" + loadSuffix + "().\");");
         out.println("        return JNI_ERR;");
         out.println("    }");
         out.println("    if (JavaCPP_vm == vm) {");
@@ -1344,23 +1351,23 @@ public class Generator implements Closeable {
         out.println("}");
         out.println();
         if (out2 != null) {
-            out2.println("JNIIMPORT int JavaCPP_uninit();");
+            out2.println("JNIIMPORT int JavaCPP_uninit" + loadSuffix + "();");
             out2.println();
-            out.println("JNIEXPORT int JavaCPP_uninit() {");
+            out.println("JNIEXPORT int JavaCPP_uninit" + loadSuffix + "() {");
             out.println("#if defined(__ANDROID__) || TARGET_OS_IPHONE");
             out.println("    return JNI_OK;");
             out.println("#else");
             out.println("    JavaVM *vm = JavaCPP_vm;");
-            out.println("    JNI_OnUnload(JavaCPP_vm, NULL);");
+            out.println("    JNI_OnUnload" + loadSuffix + "(JavaCPP_vm, NULL);");
             out.println("    return vm->DestroyJavaVM();");
             out.println("#endif");
             out.println("}");
         }
         out.println();
-        out.println("JNIEXPORT void JNICALL JNI_OnUnload(JavaVM* vm, void* reserved) {");
+        out.println("JNIEXPORT void JNICALL JNI_OnUnload" + loadSuffix + "(JavaVM* vm, void* reserved) {");
         out.println("    JNIEnv* env;");
         out.println("    if (vm->GetEnv((void**)&env, " + JNI_VERSION + ") != JNI_OK) {");
-        out.println("        JavaCPP_log(\"Could not get JNIEnv for " + JNI_VERSION + " inside JNI_OnUnLoad().\");");
+        out.println("        JavaCPP_log(\"Could not get JNIEnv for " + JNI_VERSION + " inside JNI_OnUnLoad" + loadSuffix + "().\");");
         out.println("        return;");
         out.println("    }");
         out.println("    for (int i = 0; i < " + jclasses.size() + "; i++) {");
