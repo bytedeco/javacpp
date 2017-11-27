@@ -173,8 +173,8 @@ class Tokenizer implements Closeable {
             int prevc = 0;
             boolean exp = false, large = false, unsigned = false, hex = false;
             while ((c = readChar()) != -1 && (Character.isDigit(c) || c == '.' || c == '-' || c == '+' ||
-                   (c >= 'a' && c <= 'f') || c == 'l' || c == 'u' || c == 'x' ||
-                   (c >= 'A' && c <= 'F') || c == 'L' || c == 'U' || c == 'X')) {
+                   (c >= 'a' && c <= 'f') || c == 'i' || c == 'l' || c == 'u' || c == 'x' ||
+                   (c >= 'A' && c <= 'F') || c == 'I' || c == 'L' || c == 'U' || c == 'X')) {
                 switch (c) {
                     case '.': token.type = Token.FLOAT;  break;
                     case 'e': case 'E': exp      = true; break;
@@ -193,8 +193,17 @@ class Tokenizer implements Closeable {
             if (token.type == Token.INTEGER && !large) {
                 try {
                     long high = Long.decode(buffer.toString()) >> 32;
-                    large = high != 0 && high != 0xFFFFFFFF;
-                } catch (NumberFormatException e) { /* not an integer? */ }
+                    large = high != 0 && high != -1;
+                } catch (NumberFormatException e) {
+                    // set as large, for things like 0x8000000000000000L
+                    if (buffer.length() >= 16) {
+                        large = true;
+                    }
+                }
+            }
+            if (buffer.toString().endsWith("i64")) {
+                buffer.setLength(buffer.length() - 3);
+                large = true;
             }
             if (token.type == Token.INTEGER && (large || (unsigned && !hex))) {
                 buffer.append('L');

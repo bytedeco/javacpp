@@ -512,11 +512,13 @@ public class Parser {
                 }
             } else if (token.match(Token.FRIEND)) {
                 type.friend = true;
+            } else if (token.match(Token.TYPEDEF)) {
+                type.typedef = true;
             } else if (token.match(Token.VIRTUAL)) {
                 type.virtual = true;
             } else if (token.match(Token.AUTO, Token.ENUM, Token.EXPLICIT, Token.EXTERN, Token.INLINE, Token.CLASS, Token.FINAL,
                                    Token.INTERFACE, Token.__INTERFACE, Token.MUTABLE, Token.NAMESPACE, Token.STRUCT, Token.UNION,
-                                   Token.TYPEDEF, Token.TYPENAME, Token.USING, Token.REGISTER, Token.THREAD_LOCAL, Token.VOLATILE)) {
+                                   Token.TYPENAME, Token.USING, Token.REGISTER, Token.THREAD_LOCAL, Token.VOLATILE)) {
                 token = tokens.next();
                 continue;
             } else if (token.match((Object[])infoMap.getFirst("basic/types").cppTypes) && (type.cppName.length() == 0 || type.simple)) {
@@ -721,6 +723,7 @@ public class Parser {
         if (type == null) {
             return null;
         }
+        typedef |= type.typedef;
 
         // pick the requested identifier out of the statement in the case of multiple variable declaractions
         int count = 0, number = 0;
@@ -818,6 +821,12 @@ public class Parser {
         Declaration definition = new Declaration();
         boolean fieldPointer = false;
         Attribute convention = null;
+        for (Attribute a : attributes) {
+            if (a.annotation && a.javaName.length() == 0 && a.arguments.length() == 0) {
+                // we may have a calling convention for function pointers
+                convention = a;
+            }
+        }
         if (tokens.get().match('(') || (typedef && tokens.get(1).match('('))) {
             // probably a function pointer declaration
             if (tokens.get().match('(')) {
@@ -851,6 +860,7 @@ public class Parser {
                         definition.text += "@Namespace(\"" + dcl.cppName + "\") ";
                     } else if (convention != null || dcl.cppName.length() > 0) {
                         definition.text += "@Convention(\"" + (convention != null ? convention.cppName : dcl.cppName) + "\") ";
+                        convention = null;
                     }
                     dcl.cppName = "";
                 } else if (token.match('[')) {
@@ -1163,6 +1173,9 @@ public class Parser {
             if (dcl.parameters != null && indirections2 == 0 && !typedef) {
                 dcl.signature += dcl.parameters.signature;
             } else {
+                if (convention != null) {
+                    definition.text += "@Convention(\"" + convention.cppName + "\") ";
+                }
                 String cppType = "";
                 if (dcl.type != null) {
                     cppType += dcl.type.cppName;
@@ -1493,6 +1506,7 @@ public class Parser {
     }
 
     String body() throws ParserException {
+        String text = "";
         if (!tokens.get().match('{')) {
             return null;
         }
@@ -1505,9 +1519,12 @@ public class Parser {
             } else if (token.match('}')) {
                 count--;
             }
+            if (count > 0) {
+                text += token.spacing + token;
+            }
         }
         tokens.raw = false;
-        return "";
+        return text;
     }
 
     Parameters parameters(Context context, int infoNumber, boolean useDefaults) throws ParserException {
@@ -1920,7 +1937,7 @@ public class Parser {
             cppName = context.namespace + "::" + cppName;
         }
         Info info = infoMap.getFirst(cppName);
-        if (info != null && info.skip) {
+        if (dcl.cppName.length() == 0 || (info != null && info.skip)) {
             decl.text = spacing;
             declList.add(decl);
             while (!tokens.get().match(Token.EOF, ';')) {
@@ -2144,6 +2161,7 @@ public class Parser {
                         }
                         if (!found) {
                             decl.text += "public static native " + dcl.type.annotations + dcl.type.javaName + " " + macroName + dcl.parameters.list + ";\n";
+                            decl.signature = dcl.signature;
                         } else if (found && n > 0) {
                             break;
                         }
@@ -2153,6 +2171,7 @@ public class Parser {
                         (info.cppTypes == null || info.cppTypes.length == 1)))) {
                     // declare as a static final variable
                     String value = "";
+                    String cppType = "int";
                     String type = "int";
                     String cat = "";
                     tokens.index = beginIndex + 1;
@@ -2160,20 +2179,29 @@ public class Parser {
                     boolean translate = true;
                     for (Token token = tokens.get(); tokens.index < lastIndex; token = tokens.next()) {
                         if (token.match(Token.STRING)) {
-                            type = "String"; cat = " + "; break;
+                            cppType = "const char*"; type = "String"; cat = " + "; break;
                         } else if (token.match(Token.FLOAT)) {
-                            type = "double"; cat = ""; break;
+                            cppType = "double"; type = "double"; cat = ""; break;
                         } else if (token.match(Token.INTEGER) && token.value.endsWith("L")) {
-                            type = "long"; cat = ""; break;
+                            cppType = "long long"; type = "long"; cat = ""; break;
                         } else if ((prevToken.match(Token.IDENTIFIER, '>') && token.match(Token.IDENTIFIER, '(')) || token.match('{', '}')) {
                             translate = false;
+                        } else if (token.match(Token.IDENTIFIER)) {
+                            // get types for the values of the macro
+                            Info info2 = infoMap.getFirst(token.value);
+                            if (info == null && info2 != null && info2.cppTypes != null) {
+                                info = info2;
+                            }
                         }
                         prevToken = token;
                     }
                     if (info != null) {
-                        if (info.cppTypes != null) {
+                        if (info.cppTypes != null && info.cppTypes.length > 0) {
                             Declarator dcl = new Parser(this, info.cppTypes[0]).declarator(context, null, -1, false, 0, false, true);
-                            type = dcl.type.annotations + dcl.type.javaName;
+                            if (!dcl.type.javaName.equals("int")) {
+                                cppType = dcl.type.cppName;
+                                type = dcl.type.annotations + (info.pointerTypes != null ? info.pointerTypes[0] : dcl.type.javaName);;
+                            }
                         }
                         for (int i = 0; i < info.cppNames.length; i++) {
                             if (macroName.equals(info.cppNames[i]) && info.javaNames != null) {
@@ -2186,16 +2214,34 @@ public class Parser {
                     tokens.index = beginIndex + 1;
                     if (translate) {
                         for (Token token = tokens.get(); tokens.index < lastIndex; token = tokens.next()) {
-                            value += token.spacing + token + (tokens.index + 1 < lastIndex ? cat : "");
+                            value += token.spacing;
+                            if (type.equals("String") && token.match("L")) {
+                                // strip unnecessary prefixes from strings
+                                continue;
+                            }
+                            value += token + (tokens.index + 1 < lastIndex && token.value.trim().length() > 0 ? cat : "");
                         }
                         value = translate(value);
                         if (type.equals("int")) {
                             if (value.contains("(String)")) {
-                                type = "String";
+                                cppType = "const char*"; type = "String";
                             } else if (value.contains("(float)") || value.contains("(double)")) {
-                                type = "double";
+                                cppType = "double"; type = "double";
                             } else if (value.contains("(long)")) {
-                                type = "long";
+                                cppType = "long long"; type = "long";
+                            } else {
+                                try {
+                                    String trimmedValue = value.trim();
+                                    long longValue = Long.parseLong(trimmedValue);
+                                    if (longValue > Integer.MAX_VALUE && (longValue >>> 32) == 0) {
+                                        // probably some unsigned value, so let's just cast to int
+                                        value = value.substring(0, value.length() - trimmedValue.length()) + "(int)" + trimmedValue + "L";
+                                    } else if (longValue > Integer.MAX_VALUE || longValue < Integer.MIN_VALUE) {
+                                        cppType = "long long"; type = "long"; value += "L";
+                                    }
+                                } catch (NumberFormatException e) {
+                                    // leave as int?
+                                }
                             }
                         }
                     } else {
@@ -2215,6 +2261,10 @@ public class Parser {
                         decl.text += "public static final " + type + " " + macroName + " =" + value + ";\n";
                     }
                     decl.signature = macroName;
+                    if (info == null || !Arrays.asList(info.cppNames).contains(macroName)) {
+                        // save the C++ type (and Java type via pointerTypes) to propagate to other macros referencing this one
+                        infoMap.put(new Info(macroName).define(true).cppTypes(cppType).pointerTypes(type).translate(translate));
+                    }
                 }
                 if (info != null && info.javaText != null) {
                     decl.text = info.javaText;
@@ -2457,14 +2507,16 @@ public class Parser {
                 tokens.next();
             }
         }
-        if (!tokens.get().match('{', ';')) {
+        if (!tokens.get().match('{', ',', ';')) {
             tokens.index = backIndex;
             return false;
         }
         int startIndex = tokens.index;
         List<Declarator> variables = new ArrayList<Declarator>();
         String originalName = type.cppName;
-        if (body() != null && !tokens.get().match(';')) {
+        String body = body();
+        boolean hasBody = body != null && body.length() > 0;
+        if (!tokens.get().match(';')) {
             if (typedef) {
                 Token token = tokens.get();
                 while (!token.match(';', Token.EOF)) {
@@ -2475,11 +2527,13 @@ public class Parser {
                     }
                     if (token.match(Token.IDENTIFIER)) {
                         String name2 = token.value;
-                        // use typedef name, unless it's something weird like a pointer
+                        // use first typedef name, unless it's something weird like a pointer
                         if (indirections > 0) {
                             infoMap.put(new Info(name2).cast().valueTypes(name).pointerTypes("PointerPointer"));
                         } else {
-                            name = type.javaName = type.cppName = token.value;
+                            if (type.cppName.equals(originalName)) {
+                                name = type.javaName = type.cppName = token.value;
+                            }
                             infoMap.put(new Info(name2).cast().pointerTypes(name));
                         }
                     }
@@ -2545,7 +2599,7 @@ public class Parser {
         }
         decl.signature = type.javaName;
         tokens.index = startIndex;
-        if (name.length() > 0 && (tokens.get().match(';') || tokens.get(2).match(';'))) {
+        if (name.length() > 0 && !hasBody) {
             // incomplete type (forward or friend declaration)
             if (!tokens.get().match(';')) {
                 tokens.next();

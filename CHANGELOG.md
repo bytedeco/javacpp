@@ -1,4 +1,6 @@
 
+ * Move `sizeof()` and `offsetof()` data to global variables to prevent `StackOverflowError` in `JNI_OnLoad()` ([issue bytedeco/javacpp-presets#331](https://github.com/bytedeco/javacpp-presets/issues/331))
+ * Propagate within `Parser` type information from macros to other macros referencing them
  * Add support for `JNI_OnLoad_libname()` naming scheme for iOS via new `platform.library.static=true` property
  * Improve the clarity of error messages on `Parser` failures
  * Fix `Parser` issues with multiple `typedef` declarations in a single statement

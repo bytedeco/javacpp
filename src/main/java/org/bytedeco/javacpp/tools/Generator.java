@@ -1162,6 +1162,68 @@ public class Generator implements Closeable {
             out.println("static void " + name + "_deallocateArray(void* p) { delete[] (" + typeName[0] + typeName[1] + ")p; }");
         }
         out.println();
+        out.println("static const char* JavaCPP_members[" + jclasses.size() + "][" + maxMemberSize + "] = {");
+        classIterator = jclasses.iterator();
+        while (classIterator.hasNext()) {
+            out.print("        { ");
+            Set<String> m = members.get(classIterator.next());
+            Iterator<String> memberIterator = m == null ? null : m.iterator();
+            if (memberIterator == null || !memberIterator.hasNext()) {
+                out.print("NULL");
+            } else while (memberIterator.hasNext()) {
+                out.print("\"" + memberIterator.next() + "\"");
+                if (memberIterator.hasNext()) {
+                    out.print(", ");
+                }
+            }
+            out.print(" }");
+            if (classIterator.hasNext()) {
+                out.println(",");
+            }
+        }
+        out.println(" };");
+        out.println("static int JavaCPP_offsets[" + jclasses.size() + "][" + maxMemberSize + "] = {");
+        classIterator = jclasses.iterator();
+        while (classIterator.hasNext()) {
+            out.print("        { ");
+            Class c = classIterator.next();
+            Set<String> m = members.get(c);
+            Iterator<String> memberIterator = m == null ? null : m.iterator();
+            if (memberIterator == null || !memberIterator.hasNext()) {
+                out.print("-1");
+            } else while (memberIterator.hasNext()) {
+                String[] typeName = cppTypeName(c);
+                String valueTypeName = valueTypeName(typeName);
+                String memberName = memberIterator.next();
+                if ("sizeof".equals(memberName)) {
+                    if ("void".equals(valueTypeName)) {
+                        valueTypeName = "void*";
+                    }
+                    out.print("sizeof(" + valueTypeName + ")");
+                } else {
+                    out.print("offsetof(" + valueTypeName  + ", " + memberName + ")");
+                }
+                if (memberIterator.hasNext()) {
+                    out.print(", ");
+                }
+            }
+            out.print(" }");
+            if (classIterator.hasNext()) {
+                out.println(",");
+            }
+        }
+        out.println(" };");
+        out.print("static int JavaCPP_memberOffsetSizes[" + jclasses.size() + "] = { ");
+        classIterator = jclasses.iterator();
+        while (classIterator.hasNext()) {
+            Set<String> m = members.get(classIterator.next());
+            out.print(m == null ? 1 : m.size());
+            if (classIterator.hasNext()) {
+                out.print(", ");
+            }
+        }
+        out.println(" };");
+        out.println();
         out.println("extern \"C\" {");
         if (out2 != null) {
             out2.println();
@@ -1204,79 +1266,18 @@ public class Generator implements Closeable {
         out.println("    JavaCPP_vm = vm;");
         out.println("    JavaCPP_haveAllocObject = env->functions->AllocObject != NULL;");
         out.println("    JavaCPP_haveNonvirtual = env->functions->CallNonvirtualVoidMethodA != NULL;");
-        out.println("    const char* members[" + jclasses.size() + "][" + maxMemberSize + "] = {");
-        classIterator = jclasses.iterator();
-        while (classIterator.hasNext()) {
-            out.print("            { ");
-            Set<String> m = members.get(classIterator.next());
-            Iterator<String> memberIterator = m == null ? null : m.iterator();
-            if (memberIterator == null || !memberIterator.hasNext()) {
-                out.print("NULL");
-            } else while (memberIterator.hasNext()) {
-                out.print("\"" + memberIterator.next() + "\"");
-                if (memberIterator.hasNext()) {
-                    out.print(", ");
-                }
-            }
-            out.print(" }");
-            if (classIterator.hasNext()) {
-                out.println(",");
-            }
-        }
-        out.println(" };");
-        out.println("    int offsets[" + jclasses.size() + "][" + maxMemberSize + "] = {");
-        classIterator = jclasses.iterator();
-        while (classIterator.hasNext()) {
-            out.print("            { ");
-            Class c = classIterator.next();
-            Set<String> m = members.get(c);
-            Iterator<String> memberIterator = m == null ? null : m.iterator();
-            if (memberIterator == null || !memberIterator.hasNext()) {
-                out.print("-1");
-            } else while (memberIterator.hasNext()) {
-                String[] typeName = cppTypeName(c);
-                String valueTypeName = valueTypeName(typeName);
-                String memberName = memberIterator.next();
-                if ("sizeof".equals(memberName)) {
-                    if ("void".equals(valueTypeName)) {
-                        valueTypeName = "void*";
-                    }
-                    out.print("sizeof(" + valueTypeName + ")");
-                } else {
-                    out.print("offsetof(" + valueTypeName  + ", " + memberName + ")");
-                }
-                if (memberIterator.hasNext()) {
-                    out.print(", ");
-                }
-            }
-            out.print(" }");
-            if (classIterator.hasNext()) {
-                out.println(",");
-            }
-        }
-        out.println(" };");
-        out.print("    int memberOffsetSizes[" + jclasses.size() + "] = { ");
-        classIterator = jclasses.iterator();
-        while (classIterator.hasNext()) {
-            Set<String> m = members.get(classIterator.next());
-            out.print(m == null ? 1 : m.size());
-            if (classIterator.hasNext()) {
-                out.print(", ");
-            }
-        }
-        out.println(" };");
         out.println("    jmethodID putMemberOffsetMID = JavaCPP_getStaticMethodID(env, " +
                 jclasses.index(Loader.class) + ", \"putMemberOffset\", \"(Ljava/lang/String;Ljava/lang/String;I)Ljava/lang/Class;\");");
         out.println("    if (putMemberOffsetMID == NULL) {");
         out.println("        return JNI_ERR;");
         out.println("    }");
         out.println("    for (int i = 0; i < " + jclasses.size() + " && !env->ExceptionCheck(); i++) {");
-        out.println("        for (int j = 0; j < memberOffsetSizes[i] && !env->ExceptionCheck(); j++) {");
+        out.println("        for (int j = 0; j < JavaCPP_memberOffsetSizes[i] && !env->ExceptionCheck(); j++) {");
         out.println("            if (env->PushLocalFrame(3) == 0) {");
         out.println("                jvalue args[3];");
         out.println("                args[0].l = env->NewStringUTF(JavaCPP_classNames[i]);");
-        out.println("                args[1].l = members[i][j] == NULL ? NULL : env->NewStringUTF(members[i][j]);");
-        out.println("                args[2].i = offsets[i][j];");
+        out.println("                args[1].l = JavaCPP_members[i][j] == NULL ? NULL : env->NewStringUTF(JavaCPP_members[i][j]);");
+        out.println("                args[2].i = JavaCPP_offsets[i][j];");
         out.println("                jclass cls = (jclass)env->CallStaticObjectMethodA(JavaCPP_getClass(env, " +
                 jclasses.index(Loader.class) + "), putMemberOffsetMID, args);");
         out.println("                if (cls == NULL || env->ExceptionCheck()) {");
