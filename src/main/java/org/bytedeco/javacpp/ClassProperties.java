@@ -258,6 +258,14 @@ public class ClassProperties extends HashMap<String,List<String>> {
         addAll("platform.extensions", extensions);
         setProperty("platform.library", library);
 
+        try {
+            if (LoadEnabled.class.isAssignableFrom(c)) {
+                ((LoadEnabled)c.newInstance()).init(this);
+            }
+        } catch (ClassCastException | InstantiationException | IllegalAccessException e) {
+            // fail silently as if the interface wasn't implemented
+        }
+
         if (platforms != null && platforms.length > 0) {
             loaded = true;
         }

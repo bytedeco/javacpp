@@ -1,4 +1,5 @@
 
+ * Add `LoadEnabled` interface to allow classes to modify their `ClassProperties` at runtime
  * Move `sizeof()` and `offsetof()` data to global variables to prevent `StackOverflowError` in `JNI_OnLoad()` ([issue bytedeco/javacpp-presets#331](https://github.com/bytedeco/javacpp-presets/issues/331))
  * Propagate within `Parser` type information from macros to other macros referencing them
  * Add support for `JNI_OnLoad_libname()` naming scheme for iOS via new `platform.library.static=true` property

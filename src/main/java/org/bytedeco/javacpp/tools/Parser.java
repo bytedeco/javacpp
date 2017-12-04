@@ -1924,6 +1924,12 @@ public class Parser {
         Declaration decl = new Declaration();
         String cppName = dcl.cppName;
         String javaName = dcl.javaName;
+
+        Attribute attr = attribute();
+        if (attr != null && attr.annotation) {
+            dcl.type.annotations += attr.javaName;
+        }
+
         if (cppName == null || javaName == null || !tokens.get().match('(', '[', '=', ',', ':', ';')) {
             tokens.index = backIndex;
             return false;
@@ -2349,7 +2355,7 @@ public class Parser {
                 }
             } else if (typeName.equals("void")) {
                 // some opaque data type
-                if (info == null || !info.skip) {
+                if ((info == null || !info.skip) && !dcl.javaName.equals("Pointer")) {
                     if (dcl.indirections > 0) {
                         decl.text += "@Namespace @Name(\"void\") ";
                         info = info != null ? new Info(info).cppNames(defName) : new Info(defName);
@@ -2612,6 +2618,9 @@ public class Parser {
                 return true;
             } else if (info != null && info.base != null) {
                 base.javaName = info.base;
+            }
+            if (name.equals("Pointer")) {
+                return true;
             }
             String fullName = context.namespace != null ? context.namespace + "::" + name : name;
             String cppName = type.cppName;

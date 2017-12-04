@@ -22,6 +22,8 @@
 package org.bytedeco.javacpp;
 
 import java.io.File;
+import java.util.Properties;
+import org.bytedeco.javacpp.LoadEnabled;
 import org.bytedeco.javacpp.annotation.Platform;
 import org.bytedeco.javacpp.tools.Builder;
 import org.junit.Test;
@@ -33,7 +35,13 @@ import static org.junit.Assert.*;
  * @author Samuel Audet
  */
 @Platform(extensions = {"ext1", "ext2"})
-public class BuilderTest {
+public class BuilderTest implements LoadEnabled {
+
+    static int initCount = 0;
+
+    @Override public void init(ClassProperties properties) {
+        initCount++;
+    }
 
     @Test public void testExtensions() throws Exception {
         System.out.println("Builder");
@@ -54,6 +62,8 @@ public class BuilderTest {
         System.out.println("Loader");
         Loader.load(c);
         assertTrue(Loader.loadedLibraries.get("jniBuilderTest").contains("ext1"));
+
+        assertTrue(initCount >= 4);
     }
 
 }
