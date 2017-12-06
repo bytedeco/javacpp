@@ -1049,6 +1049,11 @@ public class Generator implements Closeable {
             out.println("#endif");
             out.println("}");
             out.println();
+            if (!loadSuffix.isEmpty()) {
+                out.println("extern \"C\" {");
+                out.println("JNIEXPORT jint JNICALL JNI_OnLoad" + loadSuffix + "(JavaVM* vm, void* reserved);");
+                out.println("}");
+            }
             out.println("static JavaCPP_noinline bool JavaCPP_getEnv(JNIEnv** env) {");
             out.println("    bool attached = false;");
             out.println("    JavaVM *vm = JavaCPP_vm;");
