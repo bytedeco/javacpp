@@ -642,6 +642,7 @@ public class Loader {
             } else {
                 file = File.createTempFile(prefix, suffix, directoryOrFile);
             }
+            file.delete();
             os = new FileOutputStream(file);
             byte[] buffer = new byte[1024];
             int length;

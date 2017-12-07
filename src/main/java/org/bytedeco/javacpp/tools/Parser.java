@@ -2919,10 +2919,7 @@ public class Parser {
                     }
                 }
             }
-            enumerators += separator + extraText + enumPrefix + comment;
-            separator = ",";
-            enumPrefix = "";
-            extraText = "";
+            String text = separator + extraText + enumPrefix + comment;
             comment = commentAfter();
             if (comment.length() == 0 && tokens.get().match(',')) {
                 tokens.next();
@@ -2930,24 +2927,31 @@ public class Parser {
             }
             String spacing = enumerator.spacing;
             if (comment.length() > 0) {
-                enumerators += spacing + comment;
+                text += spacing + comment;
                 int newline = spacing.lastIndexOf('\n');
                 if (newline >= 0) {
                     spacing = spacing.substring(newline + 1);
                 }
             }
-            if (spacing.length() == 0 && !enumerators.endsWith(",")) {
+            if (spacing.length() == 0 && !text.endsWith(",")) {
                 spacing = " ";
             }
-            enumerators += spacing + javaName + spacing2 + "=" + countPrefix;
+            text += spacing + javaName + spacing2 + "=" + countPrefix;
             if (countPrefix.trim().length() > 0) {
                 if (count > 0) {
-                    enumerators += " + " + count;
+                    text += " + " + count;
                 }
             } else {
-                enumerators += count;
+                text += count;
             }
             count++;
+
+            if (info == null || !info.skip) {
+                enumerators += text;
+                separator = ",";
+                enumPrefix = "";
+                extraText = "";
+            }
         }
         if (longenum) {
             enumerators = enumerators.replace(" " + javaType, " long");
