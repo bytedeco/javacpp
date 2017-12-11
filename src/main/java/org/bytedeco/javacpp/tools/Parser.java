@@ -154,6 +154,9 @@ public class Parser {
                         || containerName.startsWith("std::bitset")) {
                     valueType.javaName = "boolean";
                     resizable = false;
+                } else if (containerName.endsWith("set")) {
+                    indexType = null;
+                    resizable = false;
                 }
                 while (valueType.cppName.startsWith(containerName)
                         && leafInfoMap.get(valueType.cppName, false).size() == 0) {
@@ -232,7 +235,7 @@ public class Parser {
                 for (int i = 0; i < dim; i++) {
                     String indexAnnotation = i > 0 ? ("@Index" + (i > 1 ? "(" + i + ") " : " " )) : "";
                     String indices = "", separator = "";
-                    for (int j = 0; j < i; j++) {
+                    for (int j = 0; indexType != null && j < i; j++) {
                         indices += separator + indexType.annotations + indexType.javaName + " " + (char)('i' + j);
                         separator = ", ";
                     }
@@ -242,7 +245,7 @@ public class Parser {
                 }
 
                 String params = "", separator = "";
-                for (int i = 0; i < dim; i++) {
+                for (int i = 0; indexType != null && i < dim; i++) {
                     params += separator + indexType.annotations + indexType.javaName + " " + (char)('i' + i);
                     separator = ", ";
                 }
@@ -261,14 +264,16 @@ public class Parser {
                         decl.text += "    @MemberSetter @Index public native " + containerType.javaName + " second(" + params + separator + secondType.annotations + secondType.javaNames[i] + " second);\n";
                     }
                 } else {
-                    decl.text += "\n"
-                              +  "    @Index public native " + valueType.annotations + valueType.javaName + " get(" + params + ");\n"
-                              +  "    public native " + containerType.javaName + " put(" + params + separator + valueType.javaName + " value);\n";
-                    for (int i = 1; valueType.javaNames != null && i < valueType.javaNames.length; i++) {
-                        decl.text += "    @ValueSetter @Index public native " + containerType.javaName + " put(" + params + separator + valueType.annotations + valueType.javaNames[i] + " value);\n";
+                    if (indexType != null) {
+                        decl.text += "\n"
+                                  +  "    @Index public native " + valueType.annotations + valueType.javaName + " get(" + params + ");\n"
+                                  +  "    public native " + containerType.javaName + " put(" + params + separator + valueType.javaName + " value);\n";
+                        for (int i = 1; valueType.javaNames != null && i < valueType.javaNames.length; i++) {
+                            decl.text += "    @ValueSetter @Index public native " + containerType.javaName + " put(" + params + separator + valueType.annotations + valueType.javaNames[i] + " value);\n";
+                        }
                     }
-                    if (containerType.arguments.length > 1 && containerType.arguments[1].javaName.length() > 0) {
-                        if (!indexType.annotations.contains("@Const") && !indexType.annotations.contains("@Cast") && !indexType.value) {
+                    if (dim == 1 && containerType.arguments.length >= 1 && containerType.arguments[containerType.arguments.length - 1].javaName.length() > 0) {
+                        if (indexType != null && !indexType.annotations.contains("@Const") && !indexType.annotations.contains("@Cast") && !indexType.value) {
                             indexType.annotations += "@Const ";
                         }
                         decl.text += "\n"
@@ -280,9 +285,11 @@ public class Parser {
 
                                   +  "        public native @Name(\"operator++\") @ByRef Iterator increment();\n"
                                   +  "        public native @Name(\"operator==\") boolean equals(@ByRef Iterator it);\n"
-                                  +  "        public native @Name(\"operator*().first\") @MemberGetter " + indexType.annotations + indexType.javaName + " first();\n"
-                                  +  "        public native @Name(\"operator*().second\") @MemberGetter " + valueType.annotations + valueType.javaName + " second();\n"
-//                                  +  "        public native @Name(\"operator*\") " + valueType.annotations + valueType.javaName + " get();\n"
+                                  +  (containerType.arguments.length > 1 ?
+                                         "        public native @Name(\"operator*().first\") @MemberGetter " + indexType.annotations + indexType.javaName + " first();\n"
+                                       + "        public native @Name(\"operator*().second\") @MemberGetter " + valueType.annotations + valueType.javaName + " second();\n"
+                                  :
+                                         "        public native @Name(\"operator*\") " + valueType.annotations + valueType.javaName + " get();\n")
                                   +  "    }\n";
                     }
                 }
@@ -510,6 +517,8 @@ public class Parser {
                 } else {
                     break;
                 }
+            } else if (token.match(Token.USING)) {
+                type.using = true;
             } else if (token.match(Token.FRIEND)) {
                 type.friend = true;
             } else if (token.match(Token.TYPEDEF)) {
@@ -518,7 +527,7 @@ public class Parser {
                 type.virtual = true;
             } else if (token.match(Token.AUTO, Token.ENUM, Token.EXPLICIT, Token.EXTERN, Token.INLINE, Token.CLASS, Token.FINAL,
                                    Token.INTERFACE, Token.__INTERFACE, Token.MUTABLE, Token.NAMESPACE, Token.STRUCT, Token.UNION,
-                                   Token.TYPENAME, Token.USING, Token.REGISTER, Token.THREAD_LOCAL, Token.VOLATILE)) {
+                                   Token.TYPENAME, Token.REGISTER, Token.THREAD_LOCAL, Token.VOLATILE)) {
                 token = tokens.next();
                 continue;
             } else if (token.match((Object[])infoMap.getFirst("basic/types").cppTypes) && (type.cppName.length() == 0 || type.simple)) {
@@ -2441,6 +2450,12 @@ public class Parser {
         if (dcl.definition != null) {
             decl = dcl.definition;
         }
+        Info info = infoMap.getFirst(dcl.type.cppName);
+        if (info != null && info.javaText != null) {
+            // inherit constructors
+            decl.text = info.javaText;
+            decl.declarator = dcl;
+        }
         String comment = commentAfter();
         decl.text = comment + decl.text;
         declList.spacing = spacing;
@@ -2679,12 +2694,23 @@ public class Parser {
             ctx.variable = var;
             declarations(ctx, declList2);
         }
-        String modifiers = "public static ";
+        String modifiers = "public static ", constructors = "";
         boolean implicitConstructor = true, defaultConstructor = false, longConstructor = false,
                 pointerConstructor = false, abstractClass = info != null && info.purify && !ctx.virtualize,
                 havePureConst = false, haveVariables = false;
         for (Declaration d : declList2) {
-            if (d.declarator != null && d.declarator.type != null && d.declarator.type.constructor) {
+            if (d.declarator != null && d.declarator.type != null && d.declarator.type.using && decl.text != null) {
+                // inheriting constructors
+                implicitConstructor = false;
+                defaultConstructor = false;
+                longConstructor = true;
+                pointerConstructor = true;
+                String baseType = d.declarator.type.cppName;
+                baseType = baseType.substring(0, baseType.lastIndexOf("::"));
+                Info info2 = infoMap.getFirst(baseType);
+                constructors = d.text.replace(info2.pointerTypes[0], name);
+                d.text = "";
+            } else if (d.declarator != null && d.declarator.type != null && d.declarator.type.constructor) {
                 implicitConstructor = false;
                 Declarator[] paramDcls = d.declarator.parameters.declarators;
                 defaultConstructor |= (paramDcls.length == 0 || (paramDcls.length == 1 && paramDcls[0].type.javaName.equals("void"))) && !d.inaccessible;
@@ -2723,7 +2749,7 @@ public class Parser {
                          "    static { Loader.load(); }\n";
 
             if (implicitConstructor && (!abstractClass || ctx.virtualize)) {
-                decl.text += "    /** Default native constructor. */\n" +
+                constructors += "    /** Default native constructor. */\n" +
                              "    public " + name + "() { super((Pointer)null); allocate(); }\n" +
                              "    /** Native array allocator. Access with {@link Pointer#position(long)}. */\n" +
                              "    public " + name + "(long size) { super((Pointer)null); allocateArray(size); }\n" +
@@ -2736,11 +2762,11 @@ public class Parser {
                              "    }\n";
             } else {
                 if (!pointerConstructor) {
-                    decl.text += "    /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */\n" +
+                    constructors += "    /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */\n" +
                                  "    public " + name + "(Pointer p) { super(p); }\n";
                 }
                 if (defaultConstructor && (!abstractClass || ctx.virtualize) && !longConstructor) {
-                    decl.text += "    /** Native array allocator. Access with {@link Pointer#position(long)}. */\n" +
+                    constructors += "    /** Native array allocator. Access with {@link Pointer#position(long)}. */\n" +
                                  "    public " + name + "(long size) { super((Pointer)null); allocateArray(size); }\n" +
                                  "    private native void allocateArray(long size);\n" +
                                  "    @Override public " + name + " position(long position) {\n" +
@@ -2748,6 +2774,7 @@ public class Parser {
                                  "    }\n";
                 }
             }
+            decl.text += constructors;
             declList.spacing = spacing;
             decl.text = declList.rescan(decl.text + casts + "\n");
             declList.spacing = null;
@@ -2772,7 +2799,24 @@ public class Parser {
         for (Declaration d : declList2) {
             if (!d.inaccessible && (d.declarator == null || d.declarator.type == null || !d.declarator.type.constructor || !abstractClass)) {
                 decl.text += d.text;
+                if (d.declarator != null && d.declarator.type != null && d.declarator.type.constructor) {
+                    constructors += d.text;
+                }
             }
+        }
+        String constructorName = originalName;
+        int template2 = constructorName.lastIndexOf('<');
+        if (template2 >= 0) {
+            constructorName = constructorName.substring(0, template2);
+        }
+        int namespace2 = constructorName.lastIndexOf("::");
+        if (namespace2 >= 0) {
+            constructorName = constructorName.substring(namespace2 + 2);
+        }
+        Info constructorInfo = infoMap.getFirst(type.cppName + "::" + constructorName);
+        if (constructorInfo == null) {
+            // save constructors to be able inherit them with C++11 "using" statements
+            infoMap.put(new Info(type.cppName + "::" + constructorName).javaText(constructors));
         }
         if (!anonymous) {
             decl.text += tokens.get().spacing + '}';
