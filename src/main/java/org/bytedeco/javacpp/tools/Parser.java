@@ -223,6 +223,9 @@ public class Parser {
                     }
                 } else if (resizable && firstType == null && secondType == null) {
                     for (String javaName : valueType.javaNames != null ? valueType.javaNames : new String[] {valueType.javaName}) {
+                        if (dim < 2 && !javaName.equals("int") && !javaName.equals("long")) {
+                            decl.text += "    public " + containerType.javaName + "(" + javaName + " value) { this(1); put(0, value); }\n";
+                        }
                         decl.text += "    public " + containerType.javaName + "(" + javaName + arrayBrackets + " ... array) { this(array.length); put(array); }\n";
                     }
                 }
@@ -325,8 +328,15 @@ public class Parser {
                     }
                 } else if (resizable && firstType == null && secondType == null) {
                     for (String javaName : valueType.javaNames != null ? valueType.javaNames : new String[] {valueType.javaName}) {
-                        decl.text += "\n"
-                                  +  "    public " + containerType.javaName + " put(" + javaName + arrayBrackets + " ... array) {\n";
+                        decl.text += "\n";
+                        if (dim < 2 && !javaName.equals("int") && !javaName.equals("long")) {
+                            decl.text += "    public " + containerType.javaName + " put(" + javaName + " value) {\n"
+                                      +  "        if (size() != 1) { resize(1); }\n"
+                                      +  "        put(0, value);\n"
+                                      +  "        return this;\n"
+                                      +  "    }\n";
+                        }
+                        decl.text += "    public " + containerType.javaName + " put(" + javaName + arrayBrackets + " ... array) {\n";
                         String indent = "        ", indices = "", args = "";
                         separator = "";
                         for (int i = 0; i < dim; i++) {
