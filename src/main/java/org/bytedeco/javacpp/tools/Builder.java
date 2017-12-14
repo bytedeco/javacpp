@@ -174,7 +174,7 @@ public class Builder {
      * @throws IOException
      * @throws InterruptedException
      */
-    int compile(String sourceFilename, String outputFilename, ClassProperties properties, File workingDirectory)
+    int compile(String[] sourceFilenames, String outputFilename, ClassProperties properties, File workingDirectory)
             throws IOException, InterruptedException {
         ArrayList<String> command = new ArrayList<String>();
 
@@ -221,7 +221,9 @@ public class Builder {
             }
         }
 
-        command.add(sourceFilename);
+        for (String sourceFilename : sourceFilenames) {
+            command.add(sourceFilename);
+        }
 
         List<String> allOptions = properties.get("platform.compiler.*");
         if (!allOptions.contains("!default") && !allOptions.contains("default")) {
@@ -383,14 +385,15 @@ public class Builder {
      * @throws IOException
      * @throws InterruptedException
      */
-    File generateAndCompile(Class[] classes, String outputName) throws IOException, InterruptedException {
-        File outputFile = null, outputPath = outputDirectory != null ? outputDirectory.getCanonicalFile() : null;
+    File[] generateAndCompile(Class[] classes, String outputName, boolean first, boolean last) throws IOException, InterruptedException {
+        File outputPath = outputDirectory != null ? outputDirectory.getCanonicalFile() : null;
         ClassProperties p = Loader.loadProperties(classes, properties, true);
         String platform     = p.getProperty("platform");
-        String sourcePrefix = new File(outputPath, outputName).getPath();
+        String sourcePrefix = outputPath != null ? outputPath.getPath() + File.separator : "";
         String sourceSuffix = p.getProperty("platform.source.suffix", ".cpp");
         String libraryPath  = p.getProperty("platform.library.path", "");
-        String libraryName  = p.getProperty("platform.library.prefix", "") + outputName + p.getProperty("platform.library.suffix", "");
+        String libraryPrefix  = p.getProperty("platform.library.prefix", "") ;
+        String librarySuffix  = p.getProperty("platform.library.suffix", "");
         if (outputPath == null) {
             URI uri = null;
             try {
@@ -408,7 +411,7 @@ public class Builder {
                         ? (isFile ? new File(uri) : new File(classPath))
                         : new File(packageDir, platform + (extension != null ? extension : ""));
                 outputPath = new File(targetDir, libraryPath);
-                sourcePrefix = new File(packageDir, outputName).getPath();
+                sourcePrefix = packageDir.getPath() + File.separator;
             } catch (URISyntaxException e) {
                 throw new RuntimeException(e);
             } catch (IllegalArgumentException e) {
@@ -419,36 +422,77 @@ public class Builder {
             outputPath.mkdirs();
         }
         Generator generator = new Generator(logger, p, encoding);
-        String sourceFilename = sourcePrefix + sourceSuffix;
-        String headerFilename = header ? sourcePrefix + ".h" : null;
+        String[] sourceFilenames = {sourcePrefix + "jnijavacpp" + sourceSuffix,
+                                    sourcePrefix + outputName + sourceSuffix};
+        String[] headerFilenames = {null, header ? sourcePrefix + outputName +  ".h" : null};
+        String[] loadSuffixes = {"_jnijavacpp", null};
+        String[] baseLoadSuffixes = {null, "_jnijavacpp"};
         String classPath = System.getProperty("java.class.path");
         for (String s : classScanner.getClassLoader().getPaths()) {
             classPath += File.pathSeparator + s;
         }
-        logger.info("Generating " + sourceFilename);
-        if (generator.generate(sourceFilename, headerFilename, classPath, classes)) {
-            generator.close();
+        String[] classPaths = {null, classPath};
+        Class[][] classesArray = {null, classes};
+        String[] libraryNames  = {libraryPrefix + "jnijavacpp" + librarySuffix,
+                                  libraryPrefix + outputName + librarySuffix};
+        File[] outputFiles = null;
+
+        boolean generated = true;
+        for (int i = 0; i < sourceFilenames.length; i++) {
+            if (i == 0 && !first) {
+                continue;
+            }
+            logger.info("Generating " + sourceFilenames[i]);
+            if (!generator.generate(sourceFilenames[i], headerFilenames[i],
+                    loadSuffixes[i], baseLoadSuffixes[i], classPaths[i], classesArray[i])) {
+                logger.info("Nothing generated for " + sourceFilenames[i]);
+                generated = false;
+                break;
+            }
+        }
+        if (generated) {
             if (compile) {
-                logger.info("Compiling " + outputPath.getPath() + File.separator + libraryName);
-                int exitValue = compile(sourceFilename, libraryName, p, outputPath);
-                if (exitValue == 0) {
-                    if (deleteJniFiles) {
-                        logger.info("Deleting " + sourceFilename);
-                        new File(sourceFilename).delete();
-                    } else {
-                        logger.info("Keeping " + sourceFilename);
+                int exitValue = 0;
+                String s = properties.getProperty("platform.library.static", "false").toLowerCase();
+                if (s.equals("true") || s.equals("t") || s.equals("")) {
+                    outputFiles = new File[sourceFilenames.length];
+                    for (int i = 0; exitValue == 0 && i < sourceFilenames.length; i++) {
+                        if (i == 0 && !first) {
+                            continue;
+                        }
+                        logger.info("Compiling " + outputPath.getPath() + File.separator + libraryNames[i]);
+                        exitValue = compile(new String[] {sourceFilenames[i]}, libraryNames[i], p, outputPath);
+                        outputFiles[i] = new File(outputPath, libraryNames[i]);
                     }
-                    outputFile = new File(outputPath, libraryName);
+                } else {
+                    String libraryName = libraryNames[libraryNames.length - 1];
+                    logger.info("Compiling " + outputPath.getPath() + File.separator + libraryName);
+                    exitValue = compile(sourceFilenames, libraryName, p, outputPath);
+                    outputFiles = new File[] {new File(outputPath, libraryName)};
+                }
+                if (exitValue == 0) {
+                    for (int i = 0; i < sourceFilenames.length; i++) {
+                        if (i == 0 && !last) {
+                            continue;
+                        }
+                        if (deleteJniFiles) {
+                            logger.info("Deleting " + sourceFilenames[i]);
+                            new File(sourceFilenames[i]).delete();
+                        } else {
+                            logger.info("Keeping " + sourceFilenames[i]);
+                        }
+                    }
                 } else {
                     throw new RuntimeException("Process exited with an error: " + exitValue);
                 }
             } else {
-                outputFile = new File(sourceFilename);
+                outputFiles = new File[sourceFilenames.length];
+                for (int i = 0; i < sourceFilenames.length; i++) {
+                    outputFiles[i] = new File(sourceFilenames[i]);
+                }
             }
-        } else {
-            logger.info("Nothing generated for " + sourceFilename);
         }
-        return outputFile;
+        return outputFiles;
     }
 
     /**
@@ -812,12 +856,13 @@ public class Builder {
             }
             classList.addAll(p.getEffectiveClasses());
         }
+        int count = 0;
         for (String libraryName : map.keySet()) {
             LinkedHashSet<Class> classSet = map.get(libraryName);
             Class[] classArray = classSet.toArray(new Class[classSet.size()]);
-            File f = generateAndCompile(classArray, libraryName);
-            if (f != null) {
-                outputFiles.add(f);
+            File[] files = generateAndCompile(classArray, libraryName, count == 0, count == map.size() - 1);
+            if (files != null && files.length > 0) {
+                outputFiles.addAll(Arrays.asList(files));
                 if (copyLibs) {
                     // Do not copy library files from inherit properties ...
                     ClassProperties p = Loader.loadProperties(classArray, properties, false);
@@ -827,7 +872,7 @@ public class Builder {
                     // ... but we should use all the inherited paths!
                     p = Loader.loadProperties(classArray, properties, true);
 
-                    File directory = f.getParentFile();
+                    File directory = files[0].getParentFile();
                     for (String s : preloads) {
                         URL[] urls = Loader.findLibrary(null, p, s, true);
                         File fi;
@@ -860,7 +905,7 @@ public class Builder {
                     p = Loader.loadProperties(classArray, properties, true);
                     List<String> paths =  p.get("platform.resourcepath");
 
-                    Path directory = f.getParentFile().toPath();
+                    Path directory = files[0].getParentFile().toPath();
                     for (String resource : resources) {
                         final Path target = directory.resolve(resource);
                         if (!Files.exists(target)) {
@@ -892,6 +937,7 @@ public class Builder {
                     }
                 }
             }
+            count++;
         }
 
         File[] files = outputFiles.toArray(new File[outputFiles.size()]);

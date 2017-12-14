@@ -131,7 +131,7 @@ import org.bytedeco.javacpp.annotation.Virtual;
  *
  * @author Samuel Audet
  */
-public class Generator implements Closeable {
+public class Generator {
 
     public Generator(Logger logger, ClassProperties properties) {
         this(logger, properties, null);
@@ -169,62 +169,65 @@ public class Generator implements Closeable {
     Map<Method,MethodInformation> annotationCache;
     boolean mayThrowExceptions, usesAdapters, passesStrings;
 
-    public boolean generate(String sourceFilename, String headerFilename,
-            String classPath, Class<?> ... classes) throws IOException {
-        // first pass using a null writer to fill up the IndexedSet objects
-        out = new PrintWriter(new Writer() {
-            @Override public void write(char[] cbuf, int off, int len) { }
-            @Override public void flush() { }
-            @Override public void close() { }
-        });
-        out2 = null;
-        callbacks           = new IndexedSet<String>();
-        functions           = new IndexedSet<Class>();
-        deallocators        = new IndexedSet<Class>();
-        arrayDeallocators   = new IndexedSet<Class>();
-        jclasses            = new IndexedSet<Class>();
-        members             = new HashMap<Class,Set<String>>();
-        virtualFunctions    = new HashMap<Class,Set<String>>();
-        virtualMembers      = new HashMap<Class,Set<String>>();
-        annotationCache     = new HashMap<Method,MethodInformation>();
-        mayThrowExceptions  = false;
-        usesAdapters        = false;
-        passesStrings       = false;
-        for (Class<?> cls : baseClasses) {
-            jclasses.index(cls);
-        }
-        if (classes(true, true, true, classPath, classes)) {
-            // second pass with a real writer
-            File sourceFile = new File(sourceFilename);
-            File sourceDir = sourceFile.getParentFile();
-            if (sourceDir != null) {
-                sourceDir.mkdirs();
-            }
-            out = encoding != null ? new PrintWriter(sourceFile, encoding) : new PrintWriter(sourceFile);
-            if (headerFilename != null) {
-                File headerFile = new File(headerFilename);
-                File headerDir = headerFile.getParentFile();
-                if (headerDir != null) {
-                    headerDir.mkdirs();
+    public boolean generate(String sourceFilename, String headerFilename, String loadSuffix,
+            String baseLoadSuffix, String classPath, Class<?> ... classes) throws IOException {
+        try {
+            // first pass using a null writer to fill up the IndexedSet objects
+            out = new PrintWriter(new Writer() {
+                @Override public void write(char[] cbuf, int off, int len) { }
+                @Override public void flush() { }
+                @Override public void close() { }
+            });
+            out2 = null;
+            callbacks           = new IndexedSet<String>();
+            functions           = new IndexedSet<Class>();
+            deallocators        = new IndexedSet<Class>();
+            arrayDeallocators   = new IndexedSet<Class>();
+            jclasses            = new IndexedSet<Class>();
+            members             = new HashMap<Class,Set<String>>();
+            virtualFunctions    = new HashMap<Class,Set<String>>();
+            virtualMembers      = new HashMap<Class,Set<String>>();
+            annotationCache     = new HashMap<Method,MethodInformation>();
+            mayThrowExceptions  = false;
+            usesAdapters        = false;
+            passesStrings       = false;
+            if (baseLoadSuffix == null || baseLoadSuffix.isEmpty()) {
+                for (Class<?> cls : baseClasses) {
+                    jclasses.index(cls);
                 }
-                out2 = encoding != null ? new PrintWriter(headerFile, encoding) : new PrintWriter(headerFile);
             }
-            return classes(mayThrowExceptions, usesAdapters, passesStrings, classPath, classes);
-        } else {
-            return false;
+            if (classes(true, true, true, loadSuffix, baseLoadSuffix, classPath, classes)) {
+                // second pass with a real writer
+                File sourceFile = new File(sourceFilename);
+                File sourceDir = sourceFile.getParentFile();
+                if (sourceDir != null) {
+                    sourceDir.mkdirs();
+                }
+                out = encoding != null ? new PrintWriter(sourceFile, encoding) : new PrintWriter(sourceFile);
+                if (headerFilename != null) {
+                    File headerFile = new File(headerFilename);
+                    File headerDir = headerFile.getParentFile();
+                    if (headerDir != null) {
+                        headerDir.mkdirs();
+                    }
+                    out2 = encoding != null ? new PrintWriter(headerFile, encoding) : new PrintWriter(headerFile);
+                }
+                return classes(mayThrowExceptions, usesAdapters, passesStrings, loadSuffix, baseLoadSuffix, classPath, classes);
+            } else {
+                return false;
+            }
+        } finally {
+            if (out != null) {
+                out.close();
+            }
+            if (out2 != null) {
+                out2.close();
+            }
         }
     }
 
-    public void close() {
-        if (out != null) {
-            out.close();
-        }
-        if (out2 != null) {
-            out2.close();
-        }
-    }
-
-    boolean classes(boolean handleExceptions, boolean defineAdapters, boolean convertStrings, String classPath, Class<?> ... classes) {
+    boolean classes(boolean handleExceptions, boolean defineAdapters, boolean convertStrings,
+            String loadSuffix, String baseLoadSuffix, String classPath, Class<?> ... classes) {
         String version = Generator.class.getPackage().getImplementationVersion();
         if (version == null) {
             version = "unknown";
@@ -315,27 +318,29 @@ public class Generator implements Closeable {
         out.println("#include <exception>");
         out.println("#include <memory>");
         out.println("#include <new>");
-        out.println();
-        out.println("#if defined(NATIVE_ALLOCATOR) && defined(NATIVE_DEALLOCATOR)");
-        out.println("    void* operator new(std::size_t size, const std::nothrow_t&) throw() {");
-        out.println("        return NATIVE_ALLOCATOR(size);");
-        out.println("    }");
-        out.println("    void* operator new[](std::size_t size, const std::nothrow_t&) throw() {");
-        out.println("        return NATIVE_ALLOCATOR(size);");
-        out.println("    }");
-        out.println("    void* operator new(std::size_t size) throw(std::bad_alloc) {");
-        out.println("        return NATIVE_ALLOCATOR(size);");
-        out.println("    }");
-        out.println("    void* operator new[](std::size_t size) throw(std::bad_alloc) {");
-        out.println("        return NATIVE_ALLOCATOR(size);");
-        out.println("    }");
-        out.println("    void operator delete(void* ptr) throw() {");
-        out.println("        NATIVE_DEALLOCATOR(ptr);");
-        out.println("    }");
-        out.println("    void operator delete[](void* ptr) throw() {");
-        out.println("        NATIVE_DEALLOCATOR(ptr);");
-        out.println("    }");
-        out.println("#endif");
+        if (baseLoadSuffix == null || baseLoadSuffix.isEmpty()) {
+            out.println();
+            out.println("#if defined(NATIVE_ALLOCATOR) && defined(NATIVE_DEALLOCATOR)");
+            out.println("    void* operator new(std::size_t size, const std::nothrow_t&) throw() {");
+            out.println("        return NATIVE_ALLOCATOR(size);");
+            out.println("    }");
+            out.println("    void* operator new[](std::size_t size, const std::nothrow_t&) throw() {");
+            out.println("        return NATIVE_ALLOCATOR(size);");
+            out.println("    }");
+            out.println("    void* operator new(std::size_t size) throw(std::bad_alloc) {");
+            out.println("        return NATIVE_ALLOCATOR(size);");
+            out.println("    }");
+            out.println("    void* operator new[](std::size_t size) throw(std::bad_alloc) {");
+            out.println("        return NATIVE_ALLOCATOR(size);");
+            out.println("    }");
+            out.println("    void operator delete(void* ptr) throw() {");
+            out.println("        NATIVE_DEALLOCATOR(ptr);");
+            out.println("    }");
+            out.println("    void operator delete[](void* ptr) throw() {");
+            out.println("        NATIVE_DEALLOCATOR(ptr);");
+            out.println("    }");
+            out.println("#endif");
+        }
         out.println();
         out.println("#define jlong_to_ptr(a) ((void*)(uintptr_t)(a))");
         out.println("#define ptr_to_jlong(a) ((jlong)(uintptr_t)(a))");
@@ -344,59 +349,63 @@ public class Generator implements Closeable {
         out.println("    #define JavaCPP_noinline __declspec(noinline)");
         out.println("    #define JavaCPP_hidden /* hidden by default */");
         out.println("#elif defined(__GNUC__)");
-        out.println("    #define JavaCPP_noinline __attribute__((noinline))");
-        out.println("    #define JavaCPP_hidden   __attribute__((visibility(\"hidden\")))");
+        out.println("    #define JavaCPP_noinline __attribute__((noinline)) __attribute__ ((unused))");
+        out.println("    #define JavaCPP_hidden   __attribute__((visibility(\"hidden\"))) __attribute__ ((unused))");
         out.println("#else");
         out.println("    #define JavaCPP_noinline");
         out.println("    #define JavaCPP_hidden");
         out.println("#endif");
         out.println();
 
-        String loadSuffix = "";
-        String p = properties.getProperty("platform.library.static", "false").toLowerCase();
-        if (p.equals("true") || p.equals("t") || p.equals("")) {
-            loadSuffix = "_" + properties.getProperty("platform.library");
+        if (loadSuffix == null) {
+            loadSuffix = "";
+            String p = properties.getProperty("platform.library.static", "false").toLowerCase();
+            if (p.equals("true") || p.equals("t") || p.equals("")) {
+                loadSuffix = "_" + properties.getProperty("platform.library");
+            }
         }
 
-        List exclude = properties.get("platform.exclude");
-        List[] include = { properties.get("platform.include"),
-                           properties.get("platform.cinclude") };
-        for (int i = 0; i < include.length; i++) {
-            if (include[i] != null && include[i].size() > 0) {
-                if (i == 1) {
-                    out.println("extern \"C\" {");
-                    if (out2 != null) {
-                        out2.println("#ifdef __cplusplus");
-                        out2.println("extern \"C\" {");
-                        out2.println("#endif");
+        if (classes != null) {
+            List exclude = properties.get("platform.exclude");
+            List[] include = { properties.get("platform.include"),
+                               properties.get("platform.cinclude") };
+            for (int i = 0; i < include.length; i++) {
+                if (include[i] != null && include[i].size() > 0) {
+                    if (i == 1) {
+                        out.println("extern \"C\" {");
+                        if (out2 != null) {
+                            out2.println("#ifdef __cplusplus");
+                            out2.println("extern \"C\" {");
+                            out2.println("#endif");
+                        }
                     }
+                    for (String s : (List<String>)include[i]) {
+                        if (exclude.contains(s)) {
+                            continue;
+                        }
+                        String line = "#include ";
+                        if (!s.startsWith("<") && !s.startsWith("\"")) {
+                            line += '"';
+                        }
+                        line += s;
+                        if (!s.endsWith(">") && !s.endsWith("\"")) {
+                            line += '"';
+                        }
+                        out.println(line);
+                        if (out2 != null) {
+                            out2.println(line);
+                        }
+                    }
+                    if (i == 1) {
+                        out.println("}");
+                        if (out2 != null) {
+                            out2.println("#ifdef __cplusplus");
+                            out2.println("}");
+                            out2.println("#endif");
+                        }
+                    }
+                    out.println();
                 }
-                for (String s : (List<String>)include[i]) {
-                    if (exclude.contains(s)) {
-                        continue;
-                    }
-                    String line = "#include ";
-                    if (!s.startsWith("<") && !s.startsWith("\"")) {
-                        line += '"';
-                    }
-                    line += s;
-                    if (!s.endsWith(">") && !s.endsWith("\"")) {
-                        line += '"';
-                    }
-                    out.println(line);
-                    if (out2 != null) {
-                        out2.println(line);
-                    }
-                }
-                if (i == 1) {
-                    out.println("}");
-                    if (out2 != null) {
-                        out2.println("#ifdef __cplusplus");
-                        out2.println("}");
-                        out2.println("#endif");
-                    }
-                }
-                out.println();
             }
         }
         out.println("static JavaVM* JavaCPP_vm = NULL;");
@@ -444,250 +453,252 @@ public class Generator implements Closeable {
         out.println("    va_end(ap);");
         out.println("}");
         out.println();
-        out.println("static inline jboolean JavaCPP_trimMemory() {");
-        out.println("#if defined(__linux__) && !defined(__ANDROID__)");
-        out.println("    return (jboolean)malloc_trim(0);");
-        out.println("#else");
-        out.println("    return 0;");
-        out.println("#endif");
-        out.println("}");
-        out.println();
-        out.println("static inline jlong JavaCPP_physicalBytes() {");
-        out.println("    jlong size = 0;");
-        out.println("#ifdef __linux__");
-        out.println("    static int fd = open(\"/proc/self/statm\", O_RDONLY, 0);");
-        out.println("    if (fd >= 0) {");
-        out.println("        char line[256];");
-        out.println("        char* s;");
-        out.println("        int n;");
-        out.println("        lseek(fd, 0, SEEK_SET);");
-        out.println("        if ((n = read(fd, line, sizeof(line))) > 0 && (s = (char*)memchr(line, ' ', n)) != NULL) {");
-        out.println("            size = (jlong)(atoll(s + 1) * getpagesize());");
-        out.println("        }");
-        out.println("        // no close(fd);");
-        out.println("    }");
-        out.println("#elif defined(__APPLE__)");
-        out.println("    task_basic_info info;");
-        out.println("    mach_msg_type_number_t count = TASK_BASIC_INFO_COUNT;");
-        out.println("    if (task_info(current_task(), TASK_BASIC_INFO, (task_info_t)&info, &count) == KERN_SUCCESS) {");
-        out.println("        size = (jlong)info.resident_size;");
-        out.println("    }");
-        out.println("#elif defined(_WIN32)");
-        out.println("    PROCESS_MEMORY_COUNTERS counters;");
-        out.println("    if (GetProcessMemoryInfo(GetCurrentProcess(), &counters, sizeof(counters))) {");
-        out.println("        size = (jlong)counters.WorkingSetSize;");
-        out.println("    }");
-        out.println("#endif");
-        out.println("    return size;");
-        out.println("}");
-        out.println();
-        out.println("static inline jlong JavaCPP_totalPhysicalBytes() {");
-        out.println("    jlong size = 0;");
-        out.println("#ifdef __linux__");
-        out.println("    struct sysinfo info;");
-        out.println("    if (sysinfo(&info) == 0) {");
-        out.println("        size = info.totalram;");
-        out.println("    }");
-        out.println("#elif defined(__APPLE__)");
-        out.println("    size_t length = sizeof(size);");
-        out.println("    sysctlbyname(\"hw.memsize\", &size, &length, NULL, 0);");
-        out.println("#elif defined(_WIN32)");
-        out.println("    MEMORYSTATUSEX status;");
-        out.println("    status.dwLength = sizeof(status);");
-        out.println("    if (GlobalMemoryStatusEx(&status)) {");
-        out.println("        size = status.ullTotalPhys;");
-        out.println("    }");
-        out.println("#endif");
-        out.println("    return size;");
-        out.println("}");
-        out.println();
-        out.println("static inline jlong JavaCPP_availablePhysicalBytes() {");
-        out.println("    jlong size = 0;");
-        out.println("#ifdef __linux__");
-        out.println("    int fd = open(\"/proc/meminfo\", O_RDONLY, 0);");
-        out.println("    if (fd >= 0) {");
-        out.println("        char temp[4096];");
-        out.println("        char *s;");
-        out.println("        int n;");
-        out.println("        if ((n = read(fd, temp, sizeof(temp))) > 0 && (s = (char*)memmem(temp, n, \"MemAvailable:\", 13)) != NULL) {");
-        out.println("            size = (jlong)(atoll(s + 13) * 1024);");
-        out.println("        }");
-        out.println("        close(fd);");
-        out.println("    }");
-        out.println("    if (size == 0) {");
-        out.println("        struct sysinfo info;");
-        out.println("        if (sysinfo(&info) == 0) {");
-        out.println("            size = info.freeram;");
-        out.println("        }");
-        out.println("    }");
-        out.println("#elif defined(__APPLE__)");
-        out.println("    vm_statistics_data_t info;");
-        out.println("    mach_msg_type_number_t count = HOST_VM_INFO_COUNT;");
-        out.println("    if (host_statistics(mach_host_self(), HOST_VM_INFO, (host_info_t)&info, &count) == KERN_SUCCESS) {");
-        out.println("        size = (jlong)info.free_count * getpagesize();");
-        out.println("    }");
-        out.println("#elif defined(_WIN32)");
-        out.println("    MEMORYSTATUSEX status;");
-        out.println("    status.dwLength = sizeof(status);");
-        out.println("    if (GlobalMemoryStatusEx(&status)) {");
-        out.println("        size = status.ullAvailPhys;");
-        out.println("    }");
-        out.println("#endif");
-        out.println("    return size;");
-        out.println("}");
-        out.println();
-        out.println("static inline jint JavaCPP_totalProcessors() {");
-        out.println("    jint total = 0;");
-        out.println("#ifdef __linux__");
-        out.println("    total = sysconf(_SC_NPROCESSORS_CONF);");
-        out.println("#elif defined(__APPLE__)");
-        out.println("    size_t length = sizeof(total);");
-        out.println("    sysctlbyname(\"hw.logicalcpu_max\", &total, &length, NULL, 0);");
-        out.println("#elif defined(_WIN32)");
-        out.println("    SYSTEM_INFO info;");
-        out.println("    GetSystemInfo(&info);");
-        out.println("    total = info.dwNumberOfProcessors;");
-        out.println("#endif");
-        out.println("    return total;");
-        out.println("}");
-        out.println();
-        out.println("static inline jint JavaCPP_totalCores() {");
-        out.println("    jint total = 0;");
-        out.println("#ifdef __linux__");
-        out.println("    const int n = sysconf(_SC_NPROCESSORS_CONF);");
-        out.println("    int pids[n], cids[n];");
-        out.println("    for (int i = 0; i < n; i++) {");
-        out.println("        int fd = 0, pid = 0, cid = 0;");
-        out.println("        char temp[256];");
-        out.println("        sprintf(temp, \"/sys/devices/system/cpu/cpu%d/topology/physical_package_id\", i);");
-        out.println("        if ((fd = open(temp, O_RDONLY, 0)) >= 0) {");
-        out.println("            if (read(fd, temp, sizeof(temp)) > 0) {");
-        out.println("                pid = atoi(temp);");
-        out.println("            }");
-        out.println("            close(fd);");
-        out.println("        }");
-        out.println("        sprintf(temp, \"/sys/devices/system/cpu/cpu%d/topology/core_id\", i);");
-        out.println("        if ((fd = open(temp, O_RDONLY, 0)) >= 0) {");
-        out.println("            if (read(fd, temp, sizeof(temp)) > 0) {");
-        out.println("                cid = atoi(temp);");
-        out.println("            }");
-        out.println("            close(fd);");
-        out.println("        }");
-        out.println("        bool found = false;");
-        out.println("        for (int j = 0; j < total; j++) {");
-        out.println("            if (pids[j] == pid && cids[j] == cid) {");
-        out.println("                found = true;");
-        out.println("                break;");
-        out.println("            }");
-        out.println("        }");
-        out.println("        if (!found) {");
-        out.println("            pids[total] = pid;");
-        out.println("            cids[total] = cid;");
-        out.println("            total++;");
-        out.println("        }");
-        out.println("    }");
-        out.println("#elif defined(__APPLE__)");
-        out.println("    size_t length = sizeof(total);");
-        out.println("    sysctlbyname(\"hw.physicalcpu_max\", &total, &length, NULL, 0);");
-        out.println("#elif defined(_WIN32)");
-        out.println("    SYSTEM_LOGICAL_PROCESSOR_INFORMATION *info = NULL;");
-        out.println("    DWORD length = 0;");
-        out.println("    BOOL success = GetLogicalProcessorInformation(info, &length);");
-        out.println("    while (!success && GetLastError() == ERROR_INSUFFICIENT_BUFFER) {");
-        out.println("        info = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION*)realloc(info, length);");
-        out.println("        success = GetLogicalProcessorInformation(info, &length);");
-        out.println("    }");
-        out.println("    if (success && info != NULL) {");
-        out.println("        length /= sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION);");
-        out.println("        for (DWORD i = 0; i < length; i++) {");
-        out.println("            if (info[i].Relationship == RelationProcessorCore) {");
-        out.println("                total++;");
-        out.println("            }");
-        out.println("        }");
-        out.println("    }");
-        out.println("    free(info);");
-        out.println("#endif");
-        out.println("    return total;");
-        out.println("}");
-        out.println();
-        out.println("static inline jint JavaCPP_totalChips() {");
-        out.println("    jint total = 0;");
-        out.println("#ifdef __linux__");
-        out.println("    const int n = sysconf(_SC_NPROCESSORS_CONF);");
-        out.println("    int pids[n];");
-        out.println("    for (int i = 0; i < n; i++) {");
-        out.println("        int fd = 0, pid = 0;");
-        out.println("        char temp[256];");
-        out.println("        sprintf(temp, \"/sys/devices/system/cpu/cpu%d/topology/physical_package_id\", i);");
-        out.println("        if ((fd = open(temp, O_RDONLY, 0)) >= 0) {");
-        out.println("            if (read(fd, temp, sizeof(temp)) > 0) {");
-        out.println("                pid = atoi(temp);");
-        out.println("            }");
-        out.println("            close(fd);");
-        out.println("        }");
-        out.println("        bool found = false;");
-        out.println("        for (int j = 0; j < total; j++) {");
-        out.println("            if (pids[j] == pid) {");
-        out.println("                found = true;");
-        out.println("                break;");
-        out.println("            }");
-        out.println("        }");
-        out.println("        if (!found) {");
-        out.println("            pids[total] = pid;");
-        out.println("            total++;");
-        out.println("        }");
-        out.println("    }");
-        out.println("#elif defined(__APPLE__)");
-        out.println("    size_t length = sizeof(total);");
-        out.println("    sysctlbyname(\"hw.packages\", &total, &length, NULL, 0);");
-        out.println("#elif defined(_WIN32)");
-        out.println("    SYSTEM_LOGICAL_PROCESSOR_INFORMATION *info = NULL;");
-        out.println("    DWORD length = 0;");
-        out.println("    BOOL success = GetLogicalProcessorInformation(info, &length);");
-        out.println("    while (!success && GetLastError() == ERROR_INSUFFICIENT_BUFFER) {");
-        out.println("        info = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION*)realloc(info, length);");
-        out.println("        success = GetLogicalProcessorInformation(info, &length);");
-        out.println("    }");
-        out.println("    if (success && info != NULL) {");
-        out.println("        length /= sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION);");
-        out.println("        for (DWORD i = 0; i < length; i++) {");
-        out.println("            if (info[i].Relationship == RelationProcessorPackage) {");
-        out.println("                total++;");
-        out.println("            }");
-        out.println("        }");
-        out.println("    }");
-        out.println("    free(info);");
-        out.println("#endif");
-        out.println("    return total;");
-        out.println("}");
-        out.println();
-        out.println("static inline void* JavaCPP_addressof(const char* name) {");
-        out.println("    void *address = NULL;");
-        out.println("#if defined(__linux__) || defined(__APPLE__)");
-        out.println("    address = dlsym(RTLD_DEFAULT, name);");
-        out.println("#elif defined(_WIN32)");
-        out.println("    HANDLE process = GetCurrentProcess();");
-        out.println("    HMODULE *modules = NULL;");
-        out.println("    DWORD length = 0, needed = 0;");
-        out.println("    BOOL success = EnumProcessModules(process, modules, length, &needed);");
-        out.println("    while (success && needed > length) {");
-        out.println("        modules = (HMODULE*)realloc(modules, length = needed);");
-        out.println("        success = EnumProcessModules(process, modules, length, &needed);");
-        out.println("    }");
-        out.println("    if (success && modules != NULL) {");
-        out.println("        length = needed / sizeof(HMODULE);");
-        out.println("        for (DWORD i = 0; i < length; i++) {");
-        out.println("            address = (void*)GetProcAddress(modules[i], name);");
-        out.println("            if (address != NULL) {");
-        out.println("                break;");
-        out.println("            }");
-        out.println("        }");
-        out.println("    }");
-        out.println("    free(modules);");
-        out.println("#endif");
-        out.println("    return address;");
-        out.println("}");
-        out.println();
+        if (baseLoadSuffix == null || baseLoadSuffix.isEmpty()) {
+            out.println("static inline jboolean JavaCPP_trimMemory() {");
+            out.println("#if defined(__linux__) && !defined(__ANDROID__)");
+            out.println("    return (jboolean)malloc_trim(0);");
+            out.println("#else");
+            out.println("    return 0;");
+            out.println("#endif");
+            out.println("}");
+            out.println();
+            out.println("static inline jlong JavaCPP_physicalBytes() {");
+            out.println("    jlong size = 0;");
+            out.println("#ifdef __linux__");
+            out.println("    static int fd = open(\"/proc/self/statm\", O_RDONLY, 0);");
+            out.println("    if (fd >= 0) {");
+            out.println("        char line[256];");
+            out.println("        char* s;");
+            out.println("        int n;");
+            out.println("        lseek(fd, 0, SEEK_SET);");
+            out.println("        if ((n = read(fd, line, sizeof(line))) > 0 && (s = (char*)memchr(line, ' ', n)) != NULL) {");
+            out.println("            size = (jlong)(atoll(s + 1) * getpagesize());");
+            out.println("        }");
+            out.println("        // no close(fd);");
+            out.println("    }");
+            out.println("#elif defined(__APPLE__)");
+            out.println("    task_basic_info info;");
+            out.println("    mach_msg_type_number_t count = TASK_BASIC_INFO_COUNT;");
+            out.println("    if (task_info(current_task(), TASK_BASIC_INFO, (task_info_t)&info, &count) == KERN_SUCCESS) {");
+            out.println("        size = (jlong)info.resident_size;");
+            out.println("    }");
+            out.println("#elif defined(_WIN32)");
+            out.println("    PROCESS_MEMORY_COUNTERS counters;");
+            out.println("    if (GetProcessMemoryInfo(GetCurrentProcess(), &counters, sizeof(counters))) {");
+            out.println("        size = (jlong)counters.WorkingSetSize;");
+            out.println("    }");
+            out.println("#endif");
+            out.println("    return size;");
+            out.println("}");
+            out.println();
+            out.println("static inline jlong JavaCPP_totalPhysicalBytes() {");
+            out.println("    jlong size = 0;");
+            out.println("#ifdef __linux__");
+            out.println("    struct sysinfo info;");
+            out.println("    if (sysinfo(&info) == 0) {");
+            out.println("        size = info.totalram;");
+            out.println("    }");
+            out.println("#elif defined(__APPLE__)");
+            out.println("    size_t length = sizeof(size);");
+            out.println("    sysctlbyname(\"hw.memsize\", &size, &length, NULL, 0);");
+            out.println("#elif defined(_WIN32)");
+            out.println("    MEMORYSTATUSEX status;");
+            out.println("    status.dwLength = sizeof(status);");
+            out.println("    if (GlobalMemoryStatusEx(&status)) {");
+            out.println("        size = status.ullTotalPhys;");
+            out.println("    }");
+            out.println("#endif");
+            out.println("    return size;");
+            out.println("}");
+            out.println();
+            out.println("static inline jlong JavaCPP_availablePhysicalBytes() {");
+            out.println("    jlong size = 0;");
+            out.println("#ifdef __linux__");
+            out.println("    int fd = open(\"/proc/meminfo\", O_RDONLY, 0);");
+            out.println("    if (fd >= 0) {");
+            out.println("        char temp[4096];");
+            out.println("        char *s;");
+            out.println("        int n;");
+            out.println("        if ((n = read(fd, temp, sizeof(temp))) > 0 && (s = (char*)memmem(temp, n, \"MemAvailable:\", 13)) != NULL) {");
+            out.println("            size = (jlong)(atoll(s + 13) * 1024);");
+            out.println("        }");
+            out.println("        close(fd);");
+            out.println("    }");
+            out.println("    if (size == 0) {");
+            out.println("        struct sysinfo info;");
+            out.println("        if (sysinfo(&info) == 0) {");
+            out.println("            size = info.freeram;");
+            out.println("        }");
+            out.println("    }");
+            out.println("#elif defined(__APPLE__)");
+            out.println("    vm_statistics_data_t info;");
+            out.println("    mach_msg_type_number_t count = HOST_VM_INFO_COUNT;");
+            out.println("    if (host_statistics(mach_host_self(), HOST_VM_INFO, (host_info_t)&info, &count) == KERN_SUCCESS) {");
+            out.println("        size = (jlong)info.free_count * getpagesize();");
+            out.println("    }");
+            out.println("#elif defined(_WIN32)");
+            out.println("    MEMORYSTATUSEX status;");
+            out.println("    status.dwLength = sizeof(status);");
+            out.println("    if (GlobalMemoryStatusEx(&status)) {");
+            out.println("        size = status.ullAvailPhys;");
+            out.println("    }");
+            out.println("#endif");
+            out.println("    return size;");
+            out.println("}");
+            out.println();
+            out.println("static inline jint JavaCPP_totalProcessors() {");
+            out.println("    jint total = 0;");
+            out.println("#ifdef __linux__");
+            out.println("    total = sysconf(_SC_NPROCESSORS_CONF);");
+            out.println("#elif defined(__APPLE__)");
+            out.println("    size_t length = sizeof(total);");
+            out.println("    sysctlbyname(\"hw.logicalcpu_max\", &total, &length, NULL, 0);");
+            out.println("#elif defined(_WIN32)");
+            out.println("    SYSTEM_INFO info;");
+            out.println("    GetSystemInfo(&info);");
+            out.println("    total = info.dwNumberOfProcessors;");
+            out.println("#endif");
+            out.println("    return total;");
+            out.println("}");
+            out.println();
+            out.println("static inline jint JavaCPP_totalCores() {");
+            out.println("    jint total = 0;");
+            out.println("#ifdef __linux__");
+            out.println("    const int n = sysconf(_SC_NPROCESSORS_CONF);");
+            out.println("    int pids[n], cids[n];");
+            out.println("    for (int i = 0; i < n; i++) {");
+            out.println("        int fd = 0, pid = 0, cid = 0;");
+            out.println("        char temp[256];");
+            out.println("        sprintf(temp, \"/sys/devices/system/cpu/cpu%d/topology/physical_package_id\", i);");
+            out.println("        if ((fd = open(temp, O_RDONLY, 0)) >= 0) {");
+            out.println("            if (read(fd, temp, sizeof(temp)) > 0) {");
+            out.println("                pid = atoi(temp);");
+            out.println("            }");
+            out.println("            close(fd);");
+            out.println("        }");
+            out.println("        sprintf(temp, \"/sys/devices/system/cpu/cpu%d/topology/core_id\", i);");
+            out.println("        if ((fd = open(temp, O_RDONLY, 0)) >= 0) {");
+            out.println("            if (read(fd, temp, sizeof(temp)) > 0) {");
+            out.println("                cid = atoi(temp);");
+            out.println("            }");
+            out.println("            close(fd);");
+            out.println("        }");
+            out.println("        bool found = false;");
+            out.println("        for (int j = 0; j < total; j++) {");
+            out.println("            if (pids[j] == pid && cids[j] == cid) {");
+            out.println("                found = true;");
+            out.println("                break;");
+            out.println("            }");
+            out.println("        }");
+            out.println("        if (!found) {");
+            out.println("            pids[total] = pid;");
+            out.println("            cids[total] = cid;");
+            out.println("            total++;");
+            out.println("        }");
+            out.println("    }");
+            out.println("#elif defined(__APPLE__)");
+            out.println("    size_t length = sizeof(total);");
+            out.println("    sysctlbyname(\"hw.physicalcpu_max\", &total, &length, NULL, 0);");
+            out.println("#elif defined(_WIN32)");
+            out.println("    SYSTEM_LOGICAL_PROCESSOR_INFORMATION *info = NULL;");
+            out.println("    DWORD length = 0;");
+            out.println("    BOOL success = GetLogicalProcessorInformation(info, &length);");
+            out.println("    while (!success && GetLastError() == ERROR_INSUFFICIENT_BUFFER) {");
+            out.println("        info = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION*)realloc(info, length);");
+            out.println("        success = GetLogicalProcessorInformation(info, &length);");
+            out.println("    }");
+            out.println("    if (success && info != NULL) {");
+            out.println("        length /= sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION);");
+            out.println("        for (DWORD i = 0; i < length; i++) {");
+            out.println("            if (info[i].Relationship == RelationProcessorCore) {");
+            out.println("                total++;");
+            out.println("            }");
+            out.println("        }");
+            out.println("    }");
+            out.println("    free(info);");
+            out.println("#endif");
+            out.println("    return total;");
+            out.println("}");
+            out.println();
+            out.println("static inline jint JavaCPP_totalChips() {");
+            out.println("    jint total = 0;");
+            out.println("#ifdef __linux__");
+            out.println("    const int n = sysconf(_SC_NPROCESSORS_CONF);");
+            out.println("    int pids[n];");
+            out.println("    for (int i = 0; i < n; i++) {");
+            out.println("        int fd = 0, pid = 0;");
+            out.println("        char temp[256];");
+            out.println("        sprintf(temp, \"/sys/devices/system/cpu/cpu%d/topology/physical_package_id\", i);");
+            out.println("        if ((fd = open(temp, O_RDONLY, 0)) >= 0) {");
+            out.println("            if (read(fd, temp, sizeof(temp)) > 0) {");
+            out.println("                pid = atoi(temp);");
+            out.println("            }");
+            out.println("            close(fd);");
+            out.println("        }");
+            out.println("        bool found = false;");
+            out.println("        for (int j = 0; j < total; j++) {");
+            out.println("            if (pids[j] == pid) {");
+            out.println("                found = true;");
+            out.println("                break;");
+            out.println("            }");
+            out.println("        }");
+            out.println("        if (!found) {");
+            out.println("            pids[total] = pid;");
+            out.println("            total++;");
+            out.println("        }");
+            out.println("    }");
+            out.println("#elif defined(__APPLE__)");
+            out.println("    size_t length = sizeof(total);");
+            out.println("    sysctlbyname(\"hw.packages\", &total, &length, NULL, 0);");
+            out.println("#elif defined(_WIN32)");
+            out.println("    SYSTEM_LOGICAL_PROCESSOR_INFORMATION *info = NULL;");
+            out.println("    DWORD length = 0;");
+            out.println("    BOOL success = GetLogicalProcessorInformation(info, &length);");
+            out.println("    while (!success && GetLastError() == ERROR_INSUFFICIENT_BUFFER) {");
+            out.println("        info = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION*)realloc(info, length);");
+            out.println("        success = GetLogicalProcessorInformation(info, &length);");
+            out.println("    }");
+            out.println("    if (success && info != NULL) {");
+            out.println("        length /= sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION);");
+            out.println("        for (DWORD i = 0; i < length; i++) {");
+            out.println("            if (info[i].Relationship == RelationProcessorPackage) {");
+            out.println("                total++;");
+            out.println("            }");
+            out.println("        }");
+            out.println("    }");
+            out.println("    free(info);");
+            out.println("#endif");
+            out.println("    return total;");
+            out.println("}");
+            out.println();
+            out.println("static inline void* JavaCPP_addressof(const char* name) {");
+            out.println("    void *address = NULL;");
+            out.println("#if defined(__linux__) || defined(__APPLE__)");
+            out.println("    address = dlsym(RTLD_DEFAULT, name);");
+            out.println("#elif defined(_WIN32)");
+            out.println("    HANDLE process = GetCurrentProcess();");
+            out.println("    HMODULE *modules = NULL;");
+            out.println("    DWORD length = 0, needed = 0;");
+            out.println("    BOOL success = EnumProcessModules(process, modules, length, &needed);");
+            out.println("    while (success && needed > length) {");
+            out.println("        modules = (HMODULE*)realloc(modules, length = needed);");
+            out.println("        success = EnumProcessModules(process, modules, length, &needed);");
+            out.println("    }");
+            out.println("    if (success && modules != NULL) {");
+            out.println("        length = needed / sizeof(HMODULE);");
+            out.println("        for (DWORD i = 0; i < length; i++) {");
+            out.println("            address = (void*)GetProcAddress(modules[i], name);");
+            out.println("            if (address != NULL) {");
+            out.println("                break;");
+            out.println("            }");
+            out.println("        }");
+            out.println("    }");
+            out.println("    free(modules);");
+            out.println("#endif");
+            out.println("    return address;");
+            out.println("}");
+            out.println();
+        }
         out.println("static JavaCPP_noinline jclass JavaCPP_getClass(JNIEnv* env, int i) {");
         out.println("    if (JavaCPP_classes[i] == NULL && env->PushLocalFrame(1) == 0) {");
         out.println("        jclass cls = env->FindClass(JavaCPP_classNames[i]);");
@@ -1167,7 +1178,7 @@ public class Generator implements Closeable {
             out.println("static void " + name + "_deallocateArray(void* p) { delete[] (" + typeName[0] + typeName[1] + ")p; }");
         }
         out.println();
-        out.println("static const char* JavaCPP_members[" + jclasses.size() + "][" + maxMemberSize + "] = {");
+        out.println("static const char* JavaCPP_members[" + jclasses.size() + "][" + maxMemberSize + 1 + "] = {");
         classIterator = jclasses.iterator();
         while (classIterator.hasNext()) {
             out.print("        { ");
@@ -1187,7 +1198,7 @@ public class Generator implements Closeable {
             }
         }
         out.println(" };");
-        out.println("static int JavaCPP_offsets[" + jclasses.size() + "][" + maxMemberSize + "] = {");
+        out.println("static int JavaCPP_offsets[" + jclasses.size() + "][" + maxMemberSize + 1 + "] = {");
         classIterator = jclasses.iterator();
         while (classIterator.hasNext()) {
             out.print("        { ");
@@ -1258,8 +1269,18 @@ public class Generator implements Closeable {
             out.println("#endif");
             out.println("}");
         }
+        if (baseLoadSuffix != null && !baseLoadSuffix.isEmpty()) {
+            out.println();
+            out.println("JNIEXPORT jint JNICALL JNI_OnLoad" + baseLoadSuffix + "(JavaVM* vm, void* reserved);");
+            out.println("JNIEXPORT void JNICALL JNI_OnUnload" + baseLoadSuffix + "(JavaVM* vm, void* reserved);");
+        }
         out.println(); // XXX: JNI_OnLoad() should ideally be protected by some mutex
         out.println("JNIEXPORT jint JNICALL JNI_OnLoad" + loadSuffix + "(JavaVM* vm, void* reserved) {");
+        if (baseLoadSuffix != null && !baseLoadSuffix.isEmpty()) {
+            out.println("    if (JNI_OnLoad" + baseLoadSuffix + "(vm, reserved) == JNI_ERR) {");
+            out.println("        return JNI_ERR;");
+            out.println("    }");
+        }
         out.println("    JNIEnv* env;");
         out.println("    if (vm->GetEnv((void**)&env, " + JNI_VERSION + ") != JNI_OK) {");
         out.println("        JavaCPP_log(\"Could not get JNIEnv for " + JNI_VERSION + " inside JNI_OnLoad" + loadSuffix + "().\");");
@@ -1380,17 +1401,26 @@ public class Generator implements Closeable {
         out.println("        env->DeleteWeakGlobalRef((jweak)JavaCPP_classes[i]);");
         out.println("        JavaCPP_classes[i] = NULL;");
         out.println("    }");
+        if (baseLoadSuffix != null && !baseLoadSuffix.isEmpty()) {
+            out.println("    JNI_OnUnload" + baseLoadSuffix + "(vm, reserved);");
+        }
         out.println("    JavaCPP_vm = NULL;");
         out.println("}");
         out.println();
 
-        LinkedHashSet<Class> allClasses = new LinkedHashSet<Class>();
-        allClasses.addAll(baseClasses);
-        allClasses.addAll(Arrays.asList(classes));
-
         boolean supportedPlatform = false;
-        for (Class<?> cls : classes) {
-            supportedPlatform |= checkPlatform(cls);
+        LinkedHashSet<Class> allClasses = new LinkedHashSet<Class>();
+        if (baseLoadSuffix == null || baseLoadSuffix.isEmpty()) {
+            supportedPlatform = true;
+            allClasses.addAll(baseClasses);
+        }
+
+        if (classes != null) {
+            allClasses.addAll(Arrays.asList(classes));
+
+            for (Class<?> cls : classes) {
+                supportedPlatform |= checkPlatform(cls);
+            }
         }
 
         boolean didSomethingUseful = false;
@@ -1410,7 +1440,7 @@ public class Generator implements Closeable {
             out2.println("#endif");
         }
 
-        return supportedPlatform && didSomethingUseful;
+        return supportedPlatform;
     }
 
     boolean methods(Class<?> cls) {
