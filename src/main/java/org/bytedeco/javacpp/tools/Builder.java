@@ -221,8 +221,8 @@ public class Builder {
             }
         }
 
-        for (String sourceFilename : sourceFilenames) {
-            command.add(sourceFilename);
+        for (int i = sourceFilenames.length - 1; i >= 0; i--) {
+            command.add(sourceFilenames[i]);
         }
 
         List<String> allOptions = properties.get("platform.compiler.*");
@@ -388,7 +388,8 @@ public class Builder {
     File[] generateAndCompile(Class[] classes, String outputName, boolean first, boolean last) throws IOException, InterruptedException {
         File outputPath = outputDirectory != null ? outputDirectory.getCanonicalFile() : null;
         ClassProperties p = Loader.loadProperties(classes, properties, true);
-        String platform     = p.getProperty("platform");
+        String platform     = properties.getProperty("platform");
+        String extension    = properties.getProperty("platform.extension");
         String sourcePrefix = outputPath != null ? outputPath.getPath() + File.separator : "";
         String sourceSuffix = p.getProperty("platform.source.suffix", ".cpp");
         String libraryPath  = p.getProperty("platform.library.path", "");
@@ -421,7 +422,7 @@ public class Builder {
         if (!outputPath.exists()) {
             outputPath.mkdirs();
         }
-        Generator generator = new Generator(logger, p, encoding);
+        Generator generator = new Generator(logger, properties, encoding);
         String[] sourceFilenames = {sourcePrefix + "jnijavacpp" + sourceSuffix,
                                     sourcePrefix + outputName + sourceSuffix};
         String[] headerFilenames = {null, header ? sourcePrefix + outputName +  ".h" : null};
@@ -471,7 +472,7 @@ public class Builder {
                     outputFiles = new File[] {new File(outputPath, libraryName)};
                 }
                 if (exitValue == 0) {
-                    for (int i = 0; i < sourceFilenames.length; i++) {
+                    for (int i = sourceFilenames.length - 1; i >= 0; i--) {
                         if (i == 0 && !last) {
                             continue;
                         }
@@ -583,8 +584,6 @@ public class Builder {
     boolean copyLibs = false;
     /** If true, also copies to the output directory resources listed in properties. */
     boolean copyResources = false;
-    /** The name of the platform extension to build for, appended to the platform name. */
-    String extension = null;
     /** Accumulates the various properties loaded from resources, files, command line options, etc. */
     Properties properties = null;
     /** The instance of the {@link ClassScanner} that fills up a {@link Collection} of {@link Class} objects to process. */
@@ -646,11 +645,6 @@ public class Builder {
     /** Sets the {@link #copyResources} field to the argument. */
     public Builder copyResources(boolean copyResources) {
         this.copyResources = copyResources;
-        return this;
-    }
-    /** Sets the {@link #extension} field to the argument. */
-    public Builder extension(String extension) {
-        this.extension = extension;
         return this;
     }
     /** Sets the {@link #outputName} field to the argument. */
@@ -764,7 +758,11 @@ public class Builder {
      */
     public File[] build() throws IOException, InterruptedException, ParserException {
         if (buildCommand != null && buildCommand.length > 0) {
-            ProcessBuilder pb = new ProcessBuilder(buildCommand);
+            ArrayList<String> command = new ArrayList<String>(buildCommand.length);
+            for (String arg : buildCommand) {
+                command.add(arg != null ? arg : "");
+            }
+            ProcessBuilder pb = new ProcessBuilder(command);
             if (workingDirectory != null) {
                 pb.directory(workingDirectory);
             }
@@ -837,6 +835,13 @@ public class Builder {
             if (!p.isLoaded()) {
                 logger.warn("Could not load platform properties for " + c);
                 continue;
+            }
+            try {
+                if (Arrays.asList(c.getInterfaces()).contains(BuildEnabled.class)) {
+                    ((BuildEnabled)c.newInstance()).init(logger, properties, encoding);
+                }
+            } catch (ClassCastException | InstantiationException | IllegalAccessException e) {
+                // fail silently as if the interface wasn't implemented
             }
             String target = p.getProperty("target");
             if (target != null && !c.getName().equals(target)) {
@@ -942,7 +947,7 @@ public class Builder {
 
         File[] files = outputFiles.toArray(new File[outputFiles.size()]);
         if (jarPrefix != null && files.length > 0) {
-            File jarFile = new File(jarPrefix + "-" + properties.get("platform") + ".jar");
+            File jarFile = new File(jarPrefix + "-" + properties.getProperty("platform") + properties.getProperty("platform.extension", "") + ".jar");
             File d = jarFile.getParentFile();
             if (d != null && !d.exists()) {
                 d.mkdir();
@@ -981,7 +986,6 @@ public class Builder {
         System.out.println("    -header                Generate header file with declarations of callbacks functions");
         System.out.println("    -copylibs              Copy to output directory dependent libraries (link and preload)");
         System.out.println("    -copyresources         Copy to output directory resources listed in properties");
-        System.out.println("    -extension <name>      Build for the given extension by appending to the platform name");
         System.out.println("    -jarprefix <prefix>    Also create a JAR file named \"<prefix>-<platform>.jar\"");
         System.out.println("    -properties <resource> Load all properties from resource");
         System.out.println("    -propertyfile <file>   Load all properties from file");
@@ -1021,8 +1025,6 @@ public class Builder {
                 builder.copyLibs(true);
             } else if ("-copyresources".equals(args[i])) {
                 builder.copyResources(true);
-            } else if ("-extension".equals(args[i])) {
-                builder.extension(args[++i]);
             } else if ("-jarprefix".equals(args[i])) {
                 builder.jarPrefix(args[++i]);
             } else if ("-properties".equals(args[i])) {

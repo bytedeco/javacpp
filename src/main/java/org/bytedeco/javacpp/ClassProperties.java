@@ -44,6 +44,7 @@ public class ClassProperties extends HashMap<String,List<String>> {
     public ClassProperties() { }
     public ClassProperties(Properties properties) {
         platform      = properties.getProperty("platform");
+        platformExtension = properties.getProperty("platform.extension", "");
         platformRoot  = properties.getProperty("platform.root");
         pathSeparator = properties.getProperty("platform.path.separator");
         if (platformRoot == null || platformRoot.length() == 0) {
@@ -62,7 +63,7 @@ public class ClassProperties extends HashMap<String,List<String>> {
                 || k.equals("platform.preloadpath") || k.equals("platform.preload")
                 || k.equals("platform.resourcepath") || k.equals("platform.resource")
                 || k.equals("platform.frameworkpath") || k.equals("platform.framework")
-                || k.equals("platform.library.suffix") || k.equals("platform.extensions")) {
+                || k.equals("platform.library.suffix") || k.equals("platform.extension")) {
                 addAll(k, v.split(pathSeparator));
             } else {
                 setProperty(k, v);
@@ -71,7 +72,7 @@ public class ClassProperties extends HashMap<String,List<String>> {
     }
 
     String[] defaultNames = {};
-    String platform, platformRoot, pathSeparator;
+    String platform, platformExtension, platformRoot, pathSeparator;
     List<Class> inheritedClasses = null;
     List<Class> effectiveClasses = null;
     boolean loaded = false;
@@ -179,7 +180,7 @@ public class ClassProperties extends HashMap<String,List<String>> {
 
         String[] pragma = {}, define = {}, exclude = {}, include = {}, cinclude = {}, includepath = {}, includeresource = {}, compiler = {},
                  linkpath = {}, linkresource = {}, link = {}, frameworkpath = {}, framework = {}, preloadpath = {}, preload = {},
-                 resourcepath = {}, resource = {}, extensions = {};
+                 resourcepath = {}, resource = {}, extension = {};
         String library = "jni" + c.getSimpleName();
         for (Platform p : platforms != null ? platforms : new Platform[0]) {
             String[][] names = { p.value().length > 0 ? p.value() : defaultNames, p.not() };
@@ -193,9 +194,20 @@ public class ClassProperties extends HashMap<String,List<String>> {
                 }
             }
             if ((names[0].length == 0 || matches[0]) && (names[1].length == 0 || !matches[1])) {
+                // when no extensions are given by user, but we are in library loading mode, try to load extensions anyway
+                boolean match = p.extension().length == 0 || (Loader.isLoadLibraries() && platformExtension.length() == 0);
+                for (String s : p.extension()) {
+                    if (platformExtension.length() > 0 && platformExtension.endsWith(s)) {
+                        match = true;
+                        break;
+                    }
+                }
+                if (!match) {
+                    continue;
+                }
                 if (p.pragma()     .length > 0) { pragma      = p.pragma();      }
                 if (p.define()     .length > 0) { define      = p.define();      }
-                if (p.exclude()    .length > 0) { exclude     = p.exclude();    }
+                if (p.exclude()    .length > 0) { exclude     = p.exclude();     }
                 if (p.include()    .length > 0) { include     = p.include();     }
                 if (p.cinclude()   .length > 0) { cinclude    = p.cinclude();    }
                 if (p.includepath().length > 0) { includepath = p.includepath(); }
@@ -210,7 +222,7 @@ public class ClassProperties extends HashMap<String,List<String>> {
                 if (p.preload()    .length > 0) { preload     = p.preload();     }
                 if (p.resourcepath().length > 0) { resourcepath = p.resourcepath(); }
                 if (p.resource()    .length > 0) { resource     = p.resource();     }
-                if (p.extensions()  .length > 0) { extensions  = p.extensions();    }
+                if (p.extension()   .length > 0) { extension    = p.extension();    }
                 if (p.library().length() > 0)   { library     = p.library();     }
             }
         }
@@ -255,7 +267,7 @@ public class ClassProperties extends HashMap<String,List<String>> {
         addAll("platform.preload", preload);
         addAll("platform.resourcepath", resourcepath);
         addAll("platform.resource", resource);
-        addAll("platform.extensions", extensions);
+        addAll("platform.extension", extension);
         setProperty("platform.library", library);
 
         try {

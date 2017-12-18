@@ -46,6 +46,7 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import org.bytedeco.javacpp.BoolPointer;
 import org.bytedeco.javacpp.BytePointer;
@@ -133,10 +134,10 @@ import org.bytedeco.javacpp.annotation.Virtual;
  */
 public class Generator {
 
-    public Generator(Logger logger, ClassProperties properties) {
+    public Generator(Logger logger, Properties properties) {
         this(logger, properties, null);
     }
-    public Generator(Logger logger, ClassProperties properties, String encoding) {
+    public Generator(Logger logger, Properties properties, String encoding) {
         this.logger = logger;
         this.properties = properties;
         this.encoding = encoding;
@@ -160,7 +161,7 @@ public class Generator {
             SizeTPointer.class });
 
     final Logger logger;
-    final ClassProperties properties;
+    final Properties properties;
     final String encoding;
     PrintWriter out, out2;
     IndexedSet<String> callbacks;
@@ -239,10 +240,11 @@ public class Generator {
             out2.println(warning);
             out2.println();
         }
-        for (String s : properties.get("platform.pragma")) {
+        ClassProperties clsProperties = Loader.loadProperties(classes, properties, true);
+        for (String s : clsProperties.get("platform.pragma")) {
             out.println("#pragma " + s);
         }
-        for (String s : properties.get("platform.define")) {
+        for (String s : clsProperties.get("platform.define")) {
             out.println("#define " + s);
         }
         out.println();
@@ -359,16 +361,16 @@ public class Generator {
 
         if (loadSuffix == null) {
             loadSuffix = "";
-            String p = properties.getProperty("platform.library.static", "false").toLowerCase();
+            String p = clsProperties.getProperty("platform.library.static", "false").toLowerCase();
             if (p.equals("true") || p.equals("t") || p.equals("")) {
-                loadSuffix = "_" + properties.getProperty("platform.library");
+                loadSuffix = "_" + clsProperties.getProperty("platform.library");
             }
         }
 
         if (classes != null) {
-            List exclude = properties.get("platform.exclude");
-            List[] include = { properties.get("platform.include"),
-                               properties.get("platform.cinclude") };
+            List exclude = clsProperties.get("platform.exclude");
+            List[] include = { clsProperties.get("platform.include"),
+                               clsProperties.get("platform.cinclude") };
             for (int i = 0; i < include.length; i++) {
                 if (include[i] != null && include[i].size() > 0) {
                     if (i == 1) {
@@ -2828,6 +2830,7 @@ public class Generator {
             defaultNames = new String[0];
         }
         String platform2 = properties.getProperty("platform");
+        String platformExtension = properties.getProperty("platform.extension", "");
         String[][] names = { platform.value().length > 0 ? platform.value() : defaultNames, platform.not() };
         boolean[] matches = { false, false };
         for (int i = 0; i < names.length; i++) {
@@ -2839,6 +2842,16 @@ public class Generator {
             }
         }
         if ((names[0].length == 0 || matches[0]) && (names[1].length == 0 || !matches[1])) {
+            boolean match = platform.extension().length == 0;
+            for (String s : platform.extension()) {
+                if (platformExtension.length() > 0 && platformExtension.endsWith(s)) {
+                    match = true;
+                    break;
+                }
+            }
+            if (!match) {
+                return false;
+            }
             return true;
         }
         return false;

@@ -89,7 +89,7 @@ public @interface Platform {
     String[] resource()     default {};
     /** The platform extensions to attempt to load for this library. The names here are
      *  appended to the platform name and looked up in the class path. */
-    String[] extensions()  default {};
+    String[] extension()   default {};
     /** The native JNI library associated with this class that {@link Builder} should
      *  try to build and {@link Loader} should try to load. If left empty, this value
      *  defaults to "jni" + the name that {@link Class#getSimpleName()} returns. */

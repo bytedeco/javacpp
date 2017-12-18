@@ -23,9 +23,10 @@ package org.bytedeco.javacpp;
 
 import java.io.File;
 import java.util.Properties;
-import org.bytedeco.javacpp.LoadEnabled;
 import org.bytedeco.javacpp.annotation.Platform;
+import org.bytedeco.javacpp.tools.BuildEnabled;
 import org.bytedeco.javacpp.tools.Builder;
+import org.bytedeco.javacpp.tools.Logger;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -34,36 +35,59 @@ import static org.junit.Assert.*;
  *
  * @author Samuel Audet
  */
-@Platform(extensions = {"ext1", "ext2"})
-public class BuilderTest implements LoadEnabled {
+@Platform(extension = {"-ext1", "-ext2"})
+public class BuilderTest implements BuildEnabled, LoadEnabled {
 
     static int initCount = 0;
+    static Logger logger = null;
+    static Properties properties = null;
+    static String encoding = null;
 
     @Override public void init(ClassProperties properties) {
         initCount++;
     }
 
+    @Override public void init(Logger logger, Properties properties, String encoding) {
+        this.logger = logger;
+        this.properties = properties;
+        this.encoding = encoding;
+    }
+
     @Test public void testExtensions() throws Exception {
         System.out.println("Builder");
         Class c = BuilderTest.class;
-        Builder builder = new Builder().extension("ext2").classesOrPackages(c.getName());
+        Builder builder0 = new Builder().classesOrPackages(c.getName());
+        File[] outputFiles0 = builder0.build();
+        assertEquals(0, outputFiles0.length);
+
+        System.out.println("Builder");
+        Builder builder = new Builder().property("platform.extension", "-ext2").classesOrPackages(c.getName());
         File[] outputFiles = builder.build();
 
         System.out.println("Loader");
+        Loader.loadProperties().remove("platform.extension");
         Loader.load(c);
-
-        assertTrue(Loader.loadedLibraries.get("jniBuilderTest").contains("ext2"));
+        assertTrue(Loader.loadedLibraries.get("jniBuilderTest").contains("-ext2"));
         Loader.loadedLibraries.clear();
 
         System.out.println("Builder");
-        Builder builder2 = new Builder().extension("ext1").classesOrPackages(c.getName());
+        Builder builder2 = new Builder().property("platform.extension", "-ext1").classesOrPackages(c.getName());
         File[] outputFiles2 = builder2.build();
 
         System.out.println("Loader");
+        Loader.loadProperties().remove("platform.extension");
         Loader.load(c);
-        assertTrue(Loader.loadedLibraries.get("jniBuilderTest").contains("ext1"));
+        assertTrue(Loader.loadedLibraries.get("jniBuilderTest").contains("-ext1"));
+        Loader.loadedLibraries.clear();
 
-        assertTrue(initCount >= 4);
+        Loader.loadProperties().put("platform.extension", "-ext2");
+        Loader.load(c);
+        assertTrue(Loader.loadedLibraries.get("jniBuilderTest").contains("-ext2"));
+
+        System.out.println(initCount);
+        assertTrue(initCount >= 6);
+        assertNotNull(logger);
+        assertNotNull(properties);
     }
 
 }

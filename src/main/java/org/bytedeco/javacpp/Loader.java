@@ -231,8 +231,10 @@ public class Loader {
      */
     public static ClassProperties loadProperties(Class[] cls, Properties properties, boolean inherit) {
         ClassProperties cp = new ClassProperties(properties);
-        for (Class c : cls) {
-            cp.load(c, inherit);
+        if (cls != null) {
+            for (Class c : cls) {
+                cp.load(c, inherit);
+            }
         }
         return cp;
     }
@@ -250,7 +252,9 @@ public class Loader {
      */
     public static ClassProperties loadProperties(Class cls, Properties properties, boolean inherit) {
         ClassProperties cp = new ClassProperties(properties);
-        cp.load(cls, inherit);
+        if (cls != null) {
+            cp.load(cls, inherit);
+        }
         return cp;
     }
 
@@ -892,7 +896,7 @@ public class Loader {
 
         // If we do not already have the native library file ...
         String platform = properties.getProperty("platform");
-        String[] extensions = properties.get("platform.extensions").toArray(new String[0]);
+        String[] extensions = properties.get("platform.extension").toArray(new String[0]);
         String prefix = properties.getProperty("platform.library.prefix", "");
         String suffix = properties.getProperty("platform.library.suffix", "");
         String[] styles = {
