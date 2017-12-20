@@ -1,4 +1,5 @@
 
+ * Produce `pop_back()` and `push_back()` for relevant basic containers in `Parser` ([issue bytedeco/javacv#659](https://github.com/bytedeco/javacv/issues/659))
  * Add "nowarnings" option for the `@Platform(compiler=...)` value to suppress all warnings
  * Have `Builder` generate base JNI functions into `jnijavacpp.cpp` for better iOS support ([issue #213](https://github.com/bytedeco/javacpp/issues/213))
  * Output single value setters for containers in `Parser` to avoid surprises ([issue #217](https://github.com/bytedeco/javacpp/issues/217))

@@ -275,7 +275,7 @@ public class Parser {
                             decl.text += "    @ValueSetter @Index public native " + containerType.javaName + " put(" + params + separator + valueType.annotations + valueType.javaNames[i] + " value);\n";
                         }
                     }
-                    if (dim == 1 && containerType.arguments.length >= 1 && containerType.arguments[containerType.arguments.length - 1].javaName.length() > 0) {
+                    if (dim == 1 && !containerName.startsWith("std::bitset") && containerType.arguments.length >= 1 && containerType.arguments[containerType.arguments.length - 1].javaName.length() > 0) {
                         if (indexType != null && !indexType.annotations.contains("@Const") && !indexType.annotations.contains("@Cast") && !indexType.value) {
                             indexType.annotations += "@Const ";
                         }
@@ -327,13 +327,26 @@ public class Parser {
                                   +  "    }\n";
                     }
                 } else if (resizable && firstType == null && secondType == null) {
+                    boolean first = true;
                     for (String javaName : valueType.javaNames != null ? valueType.javaNames : new String[] {valueType.javaName}) {
                         decl.text += "\n";
                         if (dim < 2 && !javaName.equals("int") && !javaName.equals("long")) {
-                            decl.text += "    public " + containerType.javaName + " put(" + javaName + " value) {\n"
+                            if (first) {
+                                decl.text += "    public " + javaName + " pop_back() {\n"
+                                          +  "        long size = size();\n"
+                                          +  "        " + javaName + " value = get(size - 1);\n"
+                                          +  "        resize(size - 1);\n"
+                                          +  "        return value;\n"
+                                          +  "    }\n";
+                            }
+                            decl.text += "    public " + containerType.javaName + " push_back(" + javaName + " value) {\n"
+                                      +  "        long size = size();\n"
+                                      +  "        resize(size + 1);\n"
+                                      +  "        return put(size, value);\n"
+                                      +  "    }\n"
+                                      +  "    public " + containerType.javaName + " put(" + javaName + " value) {\n"
                                       +  "        if (size() != 1) { resize(1); }\n"
-                                      +  "        put(0, value);\n"
-                                      +  "        return this;\n"
+                                      +  "        return put(0, value);\n"
                                       +  "    }\n";
                         }
                         decl.text += "    public " + containerType.javaName + " put(" + javaName + arrayBrackets + " ... array) {\n";
@@ -356,6 +369,7 @@ public class Parser {
                         }
                         decl.text += "        return this;\n"
                                   +  "    }\n";
+                        first = false;
                     }
                 }
                 decl.text += "}\n";
@@ -3376,6 +3390,12 @@ public class Parser {
                 paths.add(f.getCanonicalPath());
             }
         }
+
+        if (clsIncludes.size() == 0) {
+            logger.info("Nothing targeted for " + targetFile);
+            return null;
+        }
+
         String[] includePaths = paths.toArray(new String[paths.size() + includePath.length]);
         System.arraycopy(includePath, 0, includePaths, paths.size(), includePath.length);
         DeclarationList declList = new DeclarationList();
