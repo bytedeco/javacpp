@@ -1,4 +1,5 @@
 
+ * Add "nowarnings" option for the `@Platform(compiler=...)` value to suppress all warnings
  * Have `Builder` generate base JNI functions into `jnijavacpp.cpp` for better iOS support ([issue #213](https://github.com/bytedeco/javacpp/issues/213))
  * Output single value setters for containers in `Parser` to avoid surprises ([issue #217](https://github.com/bytedeco/javacpp/issues/217))
  * Add `Parser` support for C++11 `using` declarations inheriting constructors ([issue bytedeco/javacpp-presets#491](https://github.com/bytedeco/javacpp-presets/issues/491))
