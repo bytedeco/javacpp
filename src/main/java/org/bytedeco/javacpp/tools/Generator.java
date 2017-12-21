@@ -1831,6 +1831,8 @@ public class Generator {
                     out.println("    const char* rptr;");
                     if (returnBy instanceof ByRef) {
                         returnPrefix = "std::string rstr(";
+                    } else if (returnBy instanceof ByPtrPtr) {
+                        returnPrefix = "rptr = NULL; const char** rptrptr = (const char**)";
                     } else {
                         returnPrefix += "(const char*)";
                     }
@@ -2098,7 +2100,8 @@ public class Generator {
         if ((Pointer.class.isAssignableFrom(methodInfo.returnType) ||
                 (methodInfo.returnType.isArray() &&
                  methodInfo.returnType.getComponentType().isPrimitive()) ||
-                Buffer.class.isAssignableFrom(methodInfo.returnType))) {
+                Buffer.class.isAssignableFrom(methodInfo.returnType)) ||
+                methodInfo.returnType == String.class) {
             if (returnBy instanceof ByVal && adapterInfo == null) {
                 suffix = ")" + suffix;
             } else if (returnBy instanceof ByPtrPtr) {
@@ -2175,7 +2178,8 @@ public class Generator {
                             for (int i = 0; i < methodInfo.parameterTypes.length; i++) {
                                 String cast = cast(methodInfo, i);
                                 if (Arrays.equals(methodInfo.parameterAnnotations[i], methodInfo.annotations)
-                                        && methodInfo.parameterTypes[i] == methodInfo.returnType) {
+                                        && methodInfo.parameterTypes[i] == methodInfo.returnType
+                                        && !(returnBy instanceof ByPtrPtr) && !(returnBy instanceof ByPtrRef)) {
                                     out.println(         "if (rptr == " + cast + "ptr" + i + ") {");
                                     out.println(indent + "    rarg = arg" + i + ";");
                                     out.print(indent + "} else ");
