@@ -1,4 +1,5 @@
 
+ * Update platform properties to support recent versions of the Android NDK
  * Fix `Generator` issues with `@ByPtrPtr` return of `String` or `Pointer` types ([issue bytedeco/javacpp-presets#499](https://github.com/bytedeco/javacpp-presets/issues/499))
  * Produce `pop_back()` and `push_back()` for relevant basic containers in `Parser` ([issue bytedeco/javacv#659](https://github.com/bytedeco/javacv/issues/659))
  * Add "nowarnings" option for the `@Platform(compiler=...)` value to suppress all warnings
