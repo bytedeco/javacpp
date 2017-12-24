@@ -237,14 +237,17 @@ public class Parser {
 
                 for (int i = 0; i < dim; i++) {
                     String indexAnnotation = i > 0 ? ("@Index" + (i > 1 ? "(" + i + ") " : " " )) : "";
-                    String indices = "", separator = "";
+                    String indices = "", indices2 = "", separator = "";
                     for (int j = 0; indexType != null && j < i; j++) {
                         indices += separator + indexType.annotations + indexType.javaName + " " + (char)('i' + j);
+                        indices2 += separator + (char)('i' + j);
                         separator = ", ";
                     }
 
-                    decl.text += "    public native " + indexAnnotation + "long size(" + indices + ");\n"  + (!resizable ? ""
-                               : "    public native " + indexAnnotation + "void resize(" + indices + separator + "@Cast(\"size_t\") long n);\n");
+                    decl.text += "    public boolean empty(" + indices + ") { return size(" + indices2 + ") == 0; }\n"
+                               + "    public native " + indexAnnotation + "long size(" + indices + ");\n"  + (!resizable ? ""
+                               : "    public void clear(" + indices + ") { resize(" + indices2 + separator + "0); }\n"
+                               + "    public native " + indexAnnotation + "void resize(" + indices + separator + "@Cast(\"size_t\") long n);\n");
                 }
 
                 String params = "", separator = "";
