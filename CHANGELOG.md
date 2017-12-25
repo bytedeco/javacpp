@@ -7,7 +7,7 @@
  * Output single value setters for containers in `Parser` to avoid surprises ([issue #217](https://github.com/bytedeco/javacpp/issues/217))
  * Add `Parser` support for C++11 `using` declarations inheriting constructors ([issue bytedeco/javacpp-presets#491](https://github.com/bytedeco/javacpp-presets/issues/491))
  * Fix compiler error when defining `std::set` or `std::unordered_set` with `Parser`
- * Make `Parser` take `Info.skip()` into account for enumerators as well
+ * Make `Parser` honor `Info.skip()` for enumerators and function pointers as well
  * Add `LoadEnabled` interface to allow classes to modify their `ClassProperties` at runtime
  * Move `sizeof()` and `offsetof()` data to global variables to prevent `StackOverflowError` in `JNI_OnLoad()` ([issue bytedeco/javacpp-presets#331](https://github.com/bytedeco/javacpp-presets/issues/331))
  * Propagate within `Parser` type information from macros to other macros referencing them

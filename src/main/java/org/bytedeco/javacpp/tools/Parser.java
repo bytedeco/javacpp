@@ -1239,6 +1239,9 @@ public class Parser {
                     }
                 }
                 info = infoMap.getFirst(cppType += ")");
+                if (info == null) {
+                    info = infoMap.getFirst(dcl.cppName);
+                }
 
                 String functionType = null;
                 if (originalName != null) {
@@ -1263,6 +1266,7 @@ public class Parser {
                         definition.text += s + " ";
                     }
                 }
+                functionType = functionType.substring(functionType.lastIndexOf(' ') + 1); // get rid of pointer annotations
                 definition.text += (tokens.get().match(Token.CONST, Token.__CONST, Token.CONSTEXPR) ? "@Const " : "") +
                         "public static class " + functionType + " extends FunctionPointer {\n" +
                         "    static { Loader.load(); }\n" +
@@ -1286,7 +1290,9 @@ public class Parser {
                 definition.signature = functionType;
                 definition.declarator = new Declarator();
                 definition.declarator.parameters = dcl.parameters;
-                dcl.definition = definition;
+                if (info == null || !info.skip) {
+                    dcl.definition = definition;
+                }
                 dcl.indirections = indirections2;
                 if (pointerAsArray && dcl.indirections > 1) {
                     // treat second indirection as an array
