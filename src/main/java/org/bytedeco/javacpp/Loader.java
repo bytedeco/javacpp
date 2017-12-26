@@ -836,6 +836,7 @@ public class Loader {
 
         // Preload native libraries desired by our class
         List<String> preloads = new ArrayList<String>();
+        List<String> preloaded = new ArrayList<String>();
         preloads.addAll(p.get("platform.preload"));
         preloads.addAll(p.get("platform.link"));
         UnsatisfiedLinkError preloadError = null;
@@ -844,6 +845,7 @@ public class Loader {
                 URL[] urls = findLibrary(cls, p, preload, pathsFirst);
                 String filename = loadLibrary(urls, preload);
                 if (cacheDir != null && filename != null && filename.startsWith(cacheDir)) {
+                    preloaded.add(filename);
                     createLibraryLink(filename, p, preload);
                 }
             } catch (UnsatisfiedLinkError e) {
@@ -854,7 +856,7 @@ public class Loader {
         try {
             String library = p.getProperty("platform.library");
             URL[] urls = findLibrary(cls, p, library, pathsFirst);
-            String filename = loadLibrary(urls, library);
+            String filename = loadLibrary(urls, library, preloaded.toArray(new String[preloaded.size()]));
             if (cacheDir != null && filename != null && filename.startsWith(cacheDir)) {
                 createLibraryLink(filename, p, library);
             }
@@ -981,11 +983,12 @@ public class Loader {
      * @param urls the URLs to try loading the library from
      * @param libnameversion the name of the library + "@" + optional version tag
      *                       + "#" + a second optional name used at extraction
+     * @param preloaded libraries for which to create symbolic links in same cache directory
      * @return the full path of the file loaded, or the library name if unknown
      *         (but {@code if (!isLoadLibraries) { return null; }})
      * @throws UnsatisfiedLinkError on failure
      */
-    public static String loadLibrary(URL[] urls, String libnameversion) {
+    public static String loadLibrary(URL[] urls, String libnameversion, String ... preloaded) {
         if (!isLoadLibraries()) {
             return null;
         }
@@ -1031,6 +1034,35 @@ public class Loader {
                     }
                     // ... extract it from resources into the cache, if necessary ...
                     file = cacheResource(url, filename);
+
+                    // ... create symbolic links to previously loaded libraries as needed on Mac, at least, ...
+                    if (file != null && preloaded != null) {
+                        File dir = file.getParentFile();
+                        for (String s : preloaded) {
+                            File file2 = new File(s);
+                            File dir2 = file2.getParentFile();
+                            if (!dir2.equals(dir)) {
+                                File linkFile = new File(dir, file2.getName());
+                                Path linkPath = linkFile.toPath();
+                                Path targetPath = file2.toPath();
+                                try {
+                                    if ((!linkFile.exists() || !Files.isSymbolicLink(linkPath) || !Files.readSymbolicLink(linkPath).equals(targetPath))
+                                            && targetPath.isAbsolute() && !targetPath.equals(linkPath)) {
+                                        if (logger.isDebugEnabled()) {
+                                            logger.debug("Creating symbolic link " + linkPath + " to " + targetPath);
+                                        }
+                                        linkFile.delete();
+                                        Files.createSymbolicLink(linkPath, targetPath);
+                                    }
+                                } catch (IOException | UnsupportedOperationException e) {
+                                    // ... (probably an unsupported operation on Windows, but DLLs never need links) ...
+                                    if (logger.isDebugEnabled()) {
+                                        logger.debug("Failed to create symbolic link " + linkPath + " to " + targetPath + ": " + e);
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
                 if (filename != null) {
                     return filename;
