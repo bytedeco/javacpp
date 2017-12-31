@@ -1,4 +1,5 @@
 
+ * Fix "Negative Buffer Capacity" errors happening in subclasses on `Pointer.asBuffer()` ([issue deeplearning4j/deeplearning4j#4061](https://github.com/deeplearning4j/deeplearning4j/issues/4061))
  * Prevent `JNI_OnLoad()` from failing when `Loader.putMemberOffset()` cannot find a class
  * Throw clear error message when `Loader.load()` gets called on a class not supporting current platform
  * Create symbolic links to libraries preloaded by `Loader` as needed on Mac for renamed libraries

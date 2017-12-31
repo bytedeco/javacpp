@@ -627,7 +627,7 @@ public class Pointer implements AutoCloseable {
             if (c != Pointer.class) {
                 offset = Loader.offsetof(c, member);
             }
-        } catch (NullPointerException e) {
+        } catch (ClassCastException | NullPointerException e) {
             return offset;
         }
         return offset;
@@ -663,7 +663,7 @@ public class Pointer implements AutoCloseable {
         Pointer p = new Pointer();
         p.address = address;
         return p.position(size * position)
-                .limit(size * (limit <= 0 ? position + 1 : limit))
+                .capacity(size * (limit <= 0 ? position + 1 : limit))
                 .asDirectBuffer().order(ByteOrder.nativeOrder());
     }
     /**

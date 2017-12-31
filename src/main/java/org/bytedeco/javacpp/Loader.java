@@ -1325,7 +1325,12 @@ public class Loader {
      */
     public static int offsetof(Class<? extends Pointer> type, String member) {
         // Should we synchronize that?
-        return memberOffsets.get(type).get(member);
+        HashMap<String,Integer> offsets = memberOffsets.get(type);
+        while (offsets == null && type.getSuperclass() != null) {
+            type = type.getSuperclass().asSubclass(Pointer.class);
+            offsets = memberOffsets.get(type);
+        }
+        return offsets.get(member);
     }
 
     /**
@@ -1335,8 +1340,7 @@ public class Loader {
      * @return {@code memberOffsets.get(type).get("sizeof")}
      */
     public static int sizeof(Class<? extends Pointer> type) {
-        // Should we synchronize that?
-        return memberOffsets.get(type).get("sizeof");
+        return offsetof(type, "sizeof");
     }
 
 
