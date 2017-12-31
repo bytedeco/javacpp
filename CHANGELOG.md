@@ -1,4 +1,6 @@
 
+ * Prevent `JNI_OnLoad()` from failing when `Loader.putMemberOffset()` cannot find a class
+ * Throw clear error message when `Loader.load()` gets called on a class not supporting current platform
  * Create symbolic links to libraries preloaded by `Loader` as needed on Mac for renamed libraries
  * Update platform properties to support recent versions of the Android NDK
  * Fix `Generator` issues with `@ByPtrPtr` return of `String` or `Pointer` types ([issue bytedeco/javacpp-presets#499](https://github.com/bytedeco/javacpp-presets/issues/499))

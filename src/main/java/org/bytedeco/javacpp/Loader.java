@@ -39,9 +39,11 @@ import java.nio.channels.FileLock;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
@@ -759,6 +761,94 @@ public class Loader {
         return s.equals("true") || s.equals("t") || s.equals("");
     }
 
+    public static boolean checkPlatform(Class<?> cls, Properties properties) {
+        // check in priority this class for platform information, before the enclosing class
+        Class<?> enclosingClass = Loader.getEnclosingClass(cls);
+        while (!cls.isAnnotationPresent(org.bytedeco.javacpp.annotation.Properties.class)
+                && !cls.isAnnotationPresent(Platform.class) && cls.getSuperclass() != null) {
+            if (enclosingClass != null && cls.getSuperclass() == Object.class) {
+                cls = enclosingClass;
+                enclosingClass = null;
+            } else {
+                cls = cls.getSuperclass();
+            }
+        }
+
+        org.bytedeco.javacpp.annotation.Properties classProperties =
+                cls.getAnnotation(org.bytedeco.javacpp.annotation.Properties.class);
+        if (classProperties != null) {
+            Class[] classes = classProperties.inherit();
+
+            // get default platform names, searching in inherited classes as well
+            String[] defaultNames = classProperties.names();
+            Deque<Class> queue = new ArrayDeque<Class>(Arrays.asList(classes));
+            while (queue.size() > 0 && (defaultNames == null || defaultNames.length == 0)) {
+                Class<?> c = queue.removeFirst();
+                org.bytedeco.javacpp.annotation.Properties p =
+                        c.getAnnotation(org.bytedeco.javacpp.annotation.Properties.class);
+                if (p != null) {
+                    defaultNames = p.names();
+                    queue.addAll(Arrays.asList(p.inherit()));
+                }
+            }
+
+            // check in priority the platforms inside our properties annotation, before inherited ones
+            Platform[] platforms = classProperties.value();
+            if (platforms != null) {
+                for (Platform p : platforms) {
+                    if (checkPlatform(p, properties, defaultNames)) {
+                        return true;
+                    }
+                }
+            } else if (classes != null) {
+                for (Class c : classes) {
+                    if (checkPlatform(c, properties)) {
+                        return true;
+                    }
+                }
+            }
+        } else if (checkPlatform(cls.getAnnotation(Platform.class), properties)) {
+            return true;
+        }
+        return false;
+    }
+
+    public static boolean checkPlatform(Platform platform, Properties properties, String... defaultNames) {
+        if (platform == null) {
+            return true;
+        }
+        if (defaultNames == null) {
+            defaultNames = new String[0];
+        }
+        String platform2 = properties.getProperty("platform");
+        String platformExtension = properties.getProperty("platform.extension", "");
+        String[][] names = { platform.value().length > 0 ? platform.value() : defaultNames, platform.not() };
+        boolean[] matches = { false, false };
+        for (int i = 0; i < names.length; i++) {
+            for (String s : names[i]) {
+                if (platform2.startsWith(s)) {
+                    matches[i] = true;
+                    break;
+                }
+            }
+        }
+        if ((names[0].length == 0 || matches[0]) && (names[1].length == 0 || !matches[1])) {
+            // when no extensions are given by user, but we are in library loading mode, try to load extensions anyway
+            boolean match = platform.extension().length == 0 || (Loader.isLoadLibraries() && platformExtension.length() == 0);
+            for (String s : platform.extension()) {
+                if (platformExtension.length() > 0 && platformExtension.endsWith(s)) {
+                    match = true;
+                    break;
+                }
+            }
+            if (!match) {
+                return false;
+            }
+            return true;
+        }
+        return false;
+    }
+
     /** Returns {@code load(getCallerClass(2), loadProperties(), false)}. */
     public static String load() {
         return load(getCallerClass(2), loadProperties(), false);
@@ -795,6 +885,10 @@ public class Loader {
     public static String load(Class cls, Properties properties, boolean pathsFirst) {
         if (!isLoadLibraries() || cls == null) {
             return null;
+        }
+
+        if (!checkPlatform(cls, properties)) {
+            throw new UnsatisfiedLinkError("Platform \"" + properties.getProperty("platform") + "\" not supported");
         }
 
         // Find the top enclosing class, to match the library filename
@@ -1196,11 +1290,16 @@ public class Loader {
      * @throws ClassNotFoundException on Class initialization failure
      */
     static Class putMemberOffset(String typeName, String member, int offset) throws ClassNotFoundException {
-        Class<?> c = Class.forName(typeName.replace('/', '.'), false, Loader.class.getClassLoader());
-        if (member != null) {
-            putMemberOffset(c.asSubclass(Pointer.class), member, offset);
+        try {
+            Class<?> c = Class.forName(typeName.replace('/', '.'), false, Loader.class.getClassLoader());
+            if (member != null) {
+                putMemberOffset(c.asSubclass(Pointer.class), member, offset);
+            }
+            return c;
+        } catch (ClassNotFoundException e) {
+            logger.warn("Loader.putMemberOffset(): " + e);
+            return null;
         }
-        return c;
     }
     /**
      * Called by native libraries to put {@code offsetof()} and {@code sizeof()} values in {@link #memberOffsets}.

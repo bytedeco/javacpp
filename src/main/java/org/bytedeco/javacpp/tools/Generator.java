@@ -1308,12 +1308,12 @@ public class Generator {
         out.println("                args[2].i = JavaCPP_offsets[i][j];");
         out.println("                jclass cls = (jclass)env->CallStaticObjectMethodA(JavaCPP_getClass(env, " +
                 jclasses.index(Loader.class) + "), putMemberOffsetMID, args);");
-        out.println("                if (cls == NULL || env->ExceptionCheck()) {");
+        out.println("                if (env->ExceptionCheck()) {");
         out.println("                    JavaCPP_log(\"Error putting member offsets for class %s.\", JavaCPP_classNames[i]);");
         out.println("                    return JNI_ERR;");
         out.println("                }");
-        out.println("                JavaCPP_classes[i] = (jclass)env->NewWeakGlobalRef(cls);"); // cache here for custom class loaders
-        out.println("                if (JavaCPP_classes[i] == NULL || env->ExceptionCheck()) {");
+        out.println("                JavaCPP_classes[i] = cls == NULL ? NULL : (jclass)env->NewWeakGlobalRef(cls);"); // cache here for custom class loaders
+        out.println("                if (env->ExceptionCheck()) {");
         out.println("                    JavaCPP_log(\"Error creating global reference of class %s.\", JavaCPP_classNames[i]);");
         out.println("                    return JNI_ERR;");
         out.println("                }");
@@ -1421,7 +1421,7 @@ public class Generator {
             allClasses.addAll(Arrays.asList(classes));
 
             for (Class<?> cls : classes) {
-                supportedPlatform |= checkPlatform(cls);
+                supportedPlatform |= Loader.checkPlatform(cls, properties);
             }
         }
 
@@ -1446,7 +1446,7 @@ public class Generator {
     }
 
     boolean methods(Class<?> cls) {
-        if (!checkPlatform(cls)) {
+        if (!Loader.checkPlatform(cls, properties)) {
             return false;
         }
 
@@ -1504,7 +1504,7 @@ public class Generator {
         Method[] functionMethods = functionMethods(cls, callbackAllocators);
         boolean firstCallback = true;
         for (int i = 0; i < methods.length; i++) {
-            if (!checkPlatform(methods[i].getAnnotation(Platform.class), null)) {
+            if (!Loader.checkPlatform(methods[i].getAnnotation(Platform.class), properties)) {
                 continue;
             }
             MethodInformation methodInfo = methodInfos[i];
@@ -2772,93 +2772,6 @@ public class Generator {
         }
         out.println("    }");
         out.println("}");
-    }
-
-    boolean checkPlatform(Class<?> cls) {
-        // check in priority this class for platform information, before the enclosing class
-        Class<?> enclosingClass = Loader.getEnclosingClass(cls);
-        while (!cls.isAnnotationPresent(org.bytedeco.javacpp.annotation.Properties.class)
-                && !cls.isAnnotationPresent(Platform.class) && cls.getSuperclass() != null) {
-            if (enclosingClass != null && cls.getSuperclass() == Object.class) {
-                cls = enclosingClass;
-                enclosingClass = null;
-            } else {
-                cls = cls.getSuperclass();
-            }
-        }
-
-        org.bytedeco.javacpp.annotation.Properties classProperties =
-                cls.getAnnotation(org.bytedeco.javacpp.annotation.Properties.class);
-        if (classProperties != null) {
-            Class[] classes = classProperties.inherit();
-
-            // get default platform names, searching in inherited classes as well
-            String[] defaultNames = classProperties.names();
-            Deque<Class> queue = new ArrayDeque<Class>(Arrays.asList(classes));
-            while (queue.size() > 0 && (defaultNames == null || defaultNames.length == 0)) {
-                Class<?> c = queue.removeFirst();
-                org.bytedeco.javacpp.annotation.Properties p =
-                        c.getAnnotation(org.bytedeco.javacpp.annotation.Properties.class);
-                if (p != null) {
-                    defaultNames = p.names();
-                    queue.addAll(Arrays.asList(p.inherit()));
-                }
-            }
-
-            // check in priority the platforms inside our properties annotation, before inherited ones
-            Platform[] platforms = classProperties.value();
-            if (platforms != null) {
-                for (Platform p : platforms) {
-                    if (checkPlatform(p, defaultNames)) {
-                        return true;
-                    }
-                }
-            } else if (classes != null) {
-                for (Class c : classes) {
-                    if (checkPlatform(c)) {
-                        return true;
-                    }
-                }
-            }
-        } else if (checkPlatform(cls.getAnnotation(Platform.class), null)) {
-            return true;
-        }
-        return false;
-    }
-
-    boolean checkPlatform(Platform platform, String[] defaultNames) {
-        if (platform == null) {
-            return true;
-        }
-        if (defaultNames == null) {
-            defaultNames = new String[0];
-        }
-        String platform2 = properties.getProperty("platform");
-        String platformExtension = properties.getProperty("platform.extension", "");
-        String[][] names = { platform.value().length > 0 ? platform.value() : defaultNames, platform.not() };
-        boolean[] matches = { false, false };
-        for (int i = 0; i < names.length; i++) {
-            for (String s : names[i]) {
-                if (platform2.startsWith(s)) {
-                    matches[i] = true;
-                    break;
-                }
-            }
-        }
-        if ((names[0].length == 0 || matches[0]) && (names[1].length == 0 || !matches[1])) {
-            boolean match = platform.extension().length == 0;
-            for (String s : platform.extension()) {
-                if (platformExtension.length() > 0 && platformExtension.endsWith(s)) {
-                    match = true;
-                    break;
-                }
-            }
-            if (!match) {
-                return false;
-            }
-            return true;
-        }
-        return false;
     }
 
     static String functionClassName(Class<?> cls) {
