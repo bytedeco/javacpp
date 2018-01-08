@@ -236,6 +236,7 @@ public class InfoMap extends HashMap<String,List<Info>> {
     public List<Info> get(String cppName, boolean partial) {
         String key = normalize(cppName, false, false);
         List<Info> infoList = super.get(key);
+        boolean partialMatch = false;
         if (infoList == null) {
             key = normalize(cppName, true, false);
             infoList = super.get(key);
@@ -243,6 +244,7 @@ public class InfoMap extends HashMap<String,List<Info>> {
         if (infoList == null && partial) {
             key = normalize(cppName, true, true);
             infoList = super.get(key);
+            partialMatch = true;
         }
         if (infoList == null) {
             infoList = new ArrayList<Info>();
@@ -251,7 +253,12 @@ public class InfoMap extends HashMap<String,List<Info>> {
             List<Info> l = parent.get(cppName, partial);
             if (l != null && l.size() > 0) {
                 infoList = new ArrayList<Info>(infoList);
-                infoList.addAll(l);
+                // prioritize parent when we only have a partial match
+                if (partialMatch) {
+                    infoList.addAll(0, l);
+                } else {
+                    infoList.addAll(l);
+                }
             }
         }
         return infoList;
