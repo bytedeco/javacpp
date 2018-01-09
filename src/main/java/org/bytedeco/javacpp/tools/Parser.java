@@ -602,7 +602,7 @@ public class Parser {
             }
             return null;
         } else if (type.operator) {
-            for (Token token = tokens.get(); !token.match(Token.EOF, '('); token = tokens.next()) {
+            for (Token token = tokens.get(); !token.match(Token.EOF, '(', ';'); token = tokens.next()) {
                 type.cppName += token;
             }
         }
@@ -722,6 +722,9 @@ public class Parser {
                 type.annotations += "@ByVal ";
             } else if (type.indirections == 0 && type.reference && !type.value) {
                 type.annotations += "@ByRef ";
+            }
+            if (info != null && info.cast) {
+                type.annotations += "@Cast(\"" + type.cppName + (type.indirections == 0 && !type.value ? "*" : "") + "\") ";
             }
             type.annotations += "@Name(\"operator " + (type.constValue ? "const " : "")
                     + type.cppName + (type.indirections > 0 ? "*" : type.reference ? "&" : "") + "\") ";
