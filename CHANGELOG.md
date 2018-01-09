@@ -1,4 +1,5 @@
 
+ * Switch architecture in `android-arm.properties` to ARMv7-A
  * Fix `Parser` not producing `@Cast` annotations for types with `Info.cast()` on `operator()`, as well as failing on `using operator` statements
  * Fix `Parser` issue with multiple container types (`std::vector`, etc) getting mixed up when mapped to adapters (`@StdVector`, etc)
  * Fix "Negative Buffer Capacity" errors happening in subclasses on `Pointer.asBuffer()` ([issue deeplearning4j/deeplearning4j#4061](https://github.com/deeplearning4j/deeplearning4j/issues/4061))
