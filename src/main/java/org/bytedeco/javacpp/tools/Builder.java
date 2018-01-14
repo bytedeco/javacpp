@@ -762,6 +762,23 @@ public class Builder {
             for (String arg : buildCommand) {
                 command.add(arg != null ? arg : "");
             }
+
+            String text = "";
+            String platform  = Loader.getPlatform();
+            boolean windows = platform.startsWith("windows");
+            for (String s : command) {
+                boolean hasSpaces = s.indexOf(" ") > 0;
+                if (hasSpaces) {
+                    text += windows ? "\"" : "'";
+                }
+                text += s;
+                if (hasSpaces) {
+                    text += windows ? "\"" : "'";
+                }
+                text += " ";
+            }
+            logger.info(text);
+
             ProcessBuilder pb = new ProcessBuilder(command);
             if (workingDirectory != null) {
                 pb.directory(workingDirectory);

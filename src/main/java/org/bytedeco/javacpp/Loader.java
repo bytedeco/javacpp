@@ -888,7 +888,7 @@ public class Loader {
         }
 
         if (!checkPlatform(cls, properties)) {
-            throw new UnsatisfiedLinkError("Platform \"" + properties.getProperty("platform") + "\" not supported");
+            throw new UnsatisfiedLinkError("Platform \"" + properties.getProperty("platform") + "\" not supported by " + cls);
         }
 
         // Find the top enclosing class, to match the library filename
