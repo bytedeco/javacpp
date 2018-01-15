@@ -6,7 +6,7 @@ JavaCPP
 
 Introduction
 ------------
-JavaCPP provides efficient access to native C++ inside Java, not unlike the way some C/C++ compilers interact with assembly language. No need to invent new languages such as with [SWIG](http://www.swig.org/), [SIP](http://riverbankcomputing.co.uk/software/sip/), [C++/CLI](http://www.ecma-international.org/publications/standards/Ecma-372.htm), [Cython](http://www.cython.org/), or [RPython](https://pypi.python.org/pypi/rpython) as required by [cppyy](http://doc.pypy.org/en/latest/cppyy.html). Instead, it exploits the syntactic and semantic similarities between Java and C++. Under the hood, it uses JNI, so it works with all implementations of Java SE, in addition to [Android](http://www.android.com/), [Avian](https://readytalk.github.io/avian/), and [RoboVM](http://www.robovm.org/) ([instructions](#instructions-for-android-avian-and-robovm)).
+JavaCPP provides efficient access to native C++ inside Java, not unlike the way some C/C++ compilers interact with assembly language. No need to invent new languages such as with [SWIG](http://www.swig.org/), [SIP](http://riverbankcomputing.co.uk/software/sip/), [C++/CLI](http://www.ecma-international.org/publications/standards/Ecma-372.htm), [Cython](http://www.cython.org/), or [RPython](https://pypi.python.org/pypi/rpython) as required by [cppyy](http://doc.pypy.org/en/latest/cppyy.html). Instead, it exploits the syntactic and semantic similarities between Java and C++. Under the hood, it uses JNI, so it works with all implementations of Java SE, in addition to [Android](http://www.android.com/), [Avian](https://readytalk.github.io/avian/), and [RoboVM](http://robovm.mobidevelop.com/) ([instructions](#instructions-for-android-avian-and-robovm)).
 
 More specifically, when compared to the approaches above or elsewhere ([CableSwig](http://www.itk.org/ITK/resources/CableSwig.html), [JNIGeneratorApp](http://www.eclipse.org/swt/jnigen.php), [cxxwrap](http://cxxwrap.sourceforge.net/), [JNIWrapper](http://www.teamdev.com/jniwrapper/), [Platform Invoke](https://msdn.microsoft.com/en-us/library/aa719485.aspx), [GlueGen](http://jogamp.org/gluegen/www/), [LWJGL Generator](https://github.com/LWJGL/lwjgl3-wiki/wiki/4.5.-The-Generator), [JNIDirect](http://web.archive.org/web/20050329122501/http://homepage.mac.com/pcbeard/JNIDirect/), [ctypes](http://docs.python.org/library/ctypes.html), [JNA](https://github.com/twall/jna), [JNIEasy](http://www.innowhere.com/jnieasy/), [JniMarshall](http://flinflon.brandonu.ca/Dueck/SystemsProgramming/JniMarshall/), [JNative](http://jnative.free.fr/), [J/Invoke](http://web.archive.org/web/20110727133817/http://www.jinvoke.com/), [HawtJNI](http://hawtjni.fusesource.org/), [JNR](https://github.com/jnr/), [BridJ](http://code.google.com/p/bridj/), [fficxx](http://ianwookim.org/fficxx/), etc.), it maps naturally and efficiently many common features afforded by the C++ language and often considered problematic, including overloaded operators, class and function templates, callbacks through function pointers, function objects (aka functors), virtual functions and member function pointers, nested struct definitions, variable length arguments, nested namespaces, large data structures containing arbitrary cycles, virtual and multiple inheritance, passing/returning by value/reference/string/vector, anonymous unions, bit fields, exceptions, destructors and shared or unique pointers (via either try-with-resources or garbage collection), and documentation comments. Obviously, neatly supporting the whole of C++ would require more work (although one could argue about the intrinsic neatness of C++), but we are releasing it here as a proof of concept.
 
@@ -17,8 +17,8 @@ Please feel free to ask questions on [the mailing list](http://groups.google.com
 
 Downloads
 ---------
- * JavaCPP 1.3.3 binary archive  [javacpp-1.3.3-bin.zip](http://search.maven.org/remotecontent?filepath=org/bytedeco/javacpp/1.3.3/javacpp-1.3.3-bin.zip) (336 KB)
- * JavaCPP 1.3.3 source archive  [javacpp-1.3.3-src.zip](http://search.maven.org/remotecontent?filepath=org/bytedeco/javacpp/1.3.3/javacpp-1.3.3-src.zip) (307 KB)
+ * JavaCPP 1.4 binary archive  [javacpp-1.4-bin.zip](http://search.maven.org/remotecontent?filepath=org/bytedeco/javacpp/1.4/javacpp-1.4-bin.zip) (348 KB)
+ * JavaCPP 1.4 source archive  [javacpp-1.4-src.zip](http://search.maven.org/remotecontent?filepath=org/bytedeco/javacpp/1.4/javacpp-1.4-src.zip) (319 KB)
 
 We can also have everything downloaded and installed automatically with:
 
@@ -27,20 +27,20 @@ We can also have everything downloaded and installed automatically with:
   <dependency>
     <groupId>org.bytedeco</groupId>
     <artifactId>javacpp</artifactId>
-    <version>1.3.3</version>
+    <version>1.4</version>
   </dependency>
 ```
 
  * Gradle (inside the `build.gradle` file)
 ```groovy
   dependencies {
-    compile group: 'org.bytedeco', name: 'javacpp', version: '1.3.3'
+    compile group: 'org.bytedeco', name: 'javacpp', version: '1.4'
   }
 ```
 
  * sbt (inside the `build.sbt` file)
 ```scala
-  libraryDependencies += "org.bytedeco" % "javacpp" % "1.3.3"
+  libraryDependencies += "org.bytedeco" % "javacpp" % "1.4"
 ```
 
 Another option available for Scala users is [sbt-javacpp](https://github.com/bytedeco/sbt-javacpp).
@@ -67,7 +67,7 @@ To produce binary files for Android 4.0 or newer, you will also have to install:
 
 And similarly to target iOS, you will need to install:
 
- * RoboVM 1.x  http://download.robovm.org/
+ * RoboVM 1.x  http://robovm.mobidevelop.com/downloads/
 
 To modify the source code, please note that the project files were created for:
 

@@ -1,4 +1,5 @@
 
+### January 16, 2018 version 1.4
  * Output to log all commands executed for `Builder.buildCommand` via `ProcessBuilder`
  * Switch architecture in `android-arm.properties` to ARMv7-A
  * Fix `Parser` not producing `@Cast` annotations for types with `Info.cast()` on `operator()`, as well as failing on `using operator` statements
