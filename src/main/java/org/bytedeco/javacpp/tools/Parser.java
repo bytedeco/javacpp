@@ -1270,25 +1270,27 @@ public class Parser {
                     }
                 }
                 functionType = functionType.substring(functionType.lastIndexOf(' ') + 1); // get rid of pointer annotations
-                definition.text += (tokens.get().match(Token.CONST, Token.__CONST, Token.CONSTEXPR) ? "@Const " : "") +
-                        "public static class " + functionType + " extends FunctionPointer {\n" +
-                        "    static { Loader.load(); }\n" +
-                        "    /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */\n" +
-                        "    public    " + functionType + "(Pointer p) { super(p); }\n" +
-                    (groupInfo != null ? "" :
-                        "    protected " + functionType + "() { allocate(); }\n" +
-                        "    private native void allocate();\n");
-                if (fieldPointer) {
-                    definition.text +=
-                        "    public native " + type.annotations + type.javaName + " get(" + groupInfo.pointerTypes[0] + " o);\n" +
-                        "    public native " + functionType + " put(" + groupInfo.pointerTypes[0] + " o, " + type.annotations + type.javaName + " v);\n" +
-                        "}\n";
-                } else {
-                    definition.text +=
-                        "    public native " + type.annotations + type.javaName + " call" +
-                    (groupInfo != null ? "(" + groupInfo.pointerTypes[0] + " o" + (dcl.parameters.list.charAt(1) == ')' ?
-                            ")" : ", " + dcl.parameters.list.substring(1)) : dcl.parameters.list) + ";\n" +
-                        "}\n";
+                if (!functionType.equals("Pointer")) {
+                    definition.text += (tokens.get().match(Token.CONST, Token.__CONST, Token.CONSTEXPR) ? "@Const " : "") +
+                            "public static class " + functionType + " extends FunctionPointer {\n" +
+                            "    static { Loader.load(); }\n" +
+                            "    /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */\n" +
+                            "    public    " + functionType + "(Pointer p) { super(p); }\n" +
+                        (groupInfo != null ? "" :
+                            "    protected " + functionType + "() { allocate(); }\n" +
+                            "    private native void allocate();\n");
+                    if (fieldPointer) {
+                        definition.text +=
+                            "    public native " + type.annotations + type.javaName + " get(" + groupInfo.pointerTypes[0] + " o);\n" +
+                            "    public native " + functionType + " put(" + groupInfo.pointerTypes[0] + " o, " + type.annotations + type.javaName + " v);\n" +
+                            "}\n";
+                    } else {
+                        definition.text +=
+                            "    public native " + type.annotations + type.javaName + " call" +
+                        (groupInfo != null ? "(" + groupInfo.pointerTypes[0] + " o" + (dcl.parameters.list.charAt(1) == ')' ?
+                                ")" : ", " + dcl.parameters.list.substring(1)) : dcl.parameters.list) + ";\n" +
+                            "}\n";
+                    }
                 }
                 definition.signature = functionType;
                 definition.declarator = new Declarator();
@@ -1310,7 +1312,7 @@ public class Parser {
                     type.annotations = "@Cast(\"" + cppType.substring(0, n + 1) + "*" + cppType.substring(n + 1) + "\") ";
                     type.javaName = "PointerPointer";
                 } else {
-                    type.annotations = "";
+                    type.annotations = info != null && info.cast ? "@Cast(\"" + cppType + "\") " : "";
                     type.javaName = functionType;
                 }
             }

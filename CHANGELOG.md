@@ -1,4 +1,6 @@
 
+ * Allow `Parser` to map and cast function pointers to `Pointer`
+
 ### January 16, 2018 version 1.4
  * Output to log all commands executed for `Builder.buildCommand` via `ProcessBuilder`
  * Switch architecture in `android-arm.properties` to ARMv7-A
