@@ -1136,10 +1136,13 @@ public class Loader {
                             File file2 = new File(s);
                             File dir2 = file2.getParentFile();
                             if (!dir2.equals(dir)) {
+
                                 File linkFile = new File(dir, file2.getName());
-                                Path linkPath = linkFile.toPath();
-                                Path targetPath = file2.toPath();
+                                Path linkPath = null;
+                                Path targetPath = null;
                                 try {
+                                    linkPath = linkFile.toPath();
+                                    targetPath = file2.toPath();
                                     if ((!linkFile.exists() || !Files.isSymbolicLink(linkPath) || !Files.readSymbolicLink(linkPath).equals(targetPath))
                                             && targetPath.isAbsolute() && !targetPath.equals(linkPath)) {
                                         if (logger.isDebugEnabled()) {
@@ -1152,6 +1155,12 @@ public class Loader {
                                     // ... (probably an unsupported operation on Windows, but DLLs never need links) ...
                                     if (logger.isDebugEnabled()) {
                                         logger.debug("Failed to create symbolic link " + linkPath + " to " + targetPath + ": " + e);
+                                    }
+                                } catch (RuntimeException e){
+                                    //Other (filesystem?) exception: for example, "sun.nio.fs.UnixException: No such file or directory"
+                                    // on File.toPath()
+                                    if (logger.isDebugEnabled()) {
+                                        logger.debug("Failed to create symbolic link for file " + linkFile + ": " + e);
                                     }
                                 }
                             }
