@@ -1977,7 +1977,7 @@ public class Parser {
             dcl.type.annotations += attr.javaName;
         }
 
-        if (cppName == null || javaName == null || !tokens.get().match('(', '[', '=', ',', ':', ';')) {
+        if (cppName == null || javaName == null || !tokens.get().match('(', '[', '=', ',', ':', ';', '{')) {
             tokens.index = backIndex;
             return false;
         } else if (!dcl.type.staticMember && context.javaName != null) {
