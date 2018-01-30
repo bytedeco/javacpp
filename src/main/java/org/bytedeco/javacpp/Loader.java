@@ -50,6 +50,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.WeakHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import org.bytedeco.javacpp.annotation.Name;
@@ -408,6 +409,7 @@ public class Loader {
         File lockFile = new File(cacheDir, ".lock");
         FileChannel lockChannel = null;
         FileLock lock = null;
+        ReentrantLock threadLock = null;
         if (target != null && target.length() > 0) {
             // ... create symbolic link to already extracted library or ...
             try {
@@ -417,6 +419,8 @@ public class Loader {
                     if (logger.isDebugEnabled()) {
                         logger.debug("Locking " + cacheDir + " to create symbolic link");
                     }
+                    threadLock = new ReentrantLock();
+                    threadLock.lock();
                     lockChannel = new FileOutputStream(lockFile).getChannel();
                     lock = lockChannel.lock();
                     if ((!file.exists() || !Files.isSymbolicLink(path) || !Files.readSymbolicLink(path).equals(targetPath))
@@ -448,6 +452,9 @@ public class Loader {
                 if (lockChannel != null) {
                     lockChannel.close();
                 }
+                if (threadLock != null) {
+                    threadLock.unlock();
+                }
             }
         } else {
             if (urlFile.exists() && reference) {
@@ -459,6 +466,8 @@ public class Loader {
                         if (logger.isDebugEnabled()) {
                             logger.debug("Locking " + cacheDir + " to create symbolic link");
                         }
+                        threadLock = new ReentrantLock();
+                        threadLock.lock();
                         lockChannel = new FileOutputStream(lockFile).getChannel();
                         lock = lockChannel.lock();
                         if ((!file.exists() || !Files.isSymbolicLink(path) || !Files.readSymbolicLink(path).equals(urlPath))
@@ -488,6 +497,9 @@ public class Loader {
                     if (lockChannel != null) {
                         lockChannel.close();
                     }
+                    if (threadLock != null) {
+                        threadLock.unlock();
+                    }
                 }
             }
             // ... check if it has not already been extracted, and if not ...
@@ -498,6 +510,8 @@ public class Loader {
                     if (logger.isDebugEnabled()) {
                         logger.debug("Locking " + cacheDir + " before extracting");
                     }
+                    threadLock = new ReentrantLock();
+                    threadLock.lock();
                     lockChannel = new FileOutputStream(lockFile).getChannel();
                     lock = lockChannel.lock();
                     // ... check if other JVM has extracted it before this JVM get the lock ...
@@ -517,6 +531,9 @@ public class Loader {
                     }
                     if (lockChannel != null) {
                         lockChannel.close();
+                    }
+                    if (threadLock != null) {
+                        threadLock.unlock();
                     }
                 }
             }
