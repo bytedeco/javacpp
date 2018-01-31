@@ -22,32 +22,6 @@
 
 package org.bytedeco.javacpp.tools;
 
-import java.io.Closeable;
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.Writer;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.nio.Buffer;
-import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
-import java.nio.DoubleBuffer;
-import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
-import java.nio.LongBuffer;
-import java.nio.ShortBuffer;
-import java.util.ArrayDeque;
-import java.util.Arrays;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
 import org.bytedeco.javacpp.BoolPointer;
 import org.bytedeco.javacpp.BytePointer;
 import org.bytedeco.javacpp.CLongPointer;
@@ -89,6 +63,30 @@ import org.bytedeco.javacpp.annotation.Raw;
 import org.bytedeco.javacpp.annotation.ValueGetter;
 import org.bytedeco.javacpp.annotation.ValueSetter;
 import org.bytedeco.javacpp.annotation.Virtual;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.Writer;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.nio.Buffer;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.DoubleBuffer;
+import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
+import java.nio.LongBuffer;
+import java.nio.ShortBuffer;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 
 /**
  * The Generator is where all the C++ source code that we need gets generated.
@@ -3210,6 +3208,27 @@ public class Generator {
         return type;
     }
 
+    static boolean constFunction(Class<?> classType, Method functionMethod) {
+        if (classType.isAnnotationPresent(Const.class)) {
+            return true;
+        }
+
+        if (!functionMethod.isAnnotationPresent(Const.class)) {
+            return false;
+        }
+
+        for (Annotation a : functionMethod.getDeclaredAnnotations()) {
+            if (a instanceof Const) {
+                boolean[] b = ((Const) a).value();
+                if (b.length > 2 && b[2]) {
+                    return true;
+                }
+                return false;
+            }
+        }
+        return false;
+    }
+
     String[] cppAnnotationTypeName(Class<?> type, Annotation ... annotations) {
         String[] typeName = cppCastTypeName(type, annotations);
         String prefix = typeName[0];
@@ -3387,6 +3406,9 @@ public class Generator {
             for (int j = namespace == null ? 0 : 1; j < parameterTypes.length; j++) {
                 String[] paramTypeName = cppAnnotationTypeName(parameterTypes[j], parameterAnnotations[j]);
                 AdapterInformation paramAdapterInfo = adapterInformation(false, valueTypeName(paramTypeName), parameterAnnotations[j]);
+                if (paramAdapterInfo != null && paramAdapterInfo.constant) {
+                    suffix += "const ";
+                }
                 if (paramAdapterInfo != null && paramAdapterInfo.cast.length() > 0) {
                     suffix += paramAdapterInfo.cast + " arg" + j;
                 } else {
@@ -3398,7 +3420,7 @@ public class Generator {
             }
             suffix += ")";
         }
-        if (type.isAnnotationPresent(Const.class)) {
+        if (constFunction(type, functionMethod)) {
             suffix += " const";
         }
         return new String[] { prefix, suffix };
