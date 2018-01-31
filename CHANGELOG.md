@@ -1,4 +1,5 @@
 
+ * Add `.a` as an allowed library extension for iOS so they can get bundled
  * Fix `Parser` failing on variables with direct list initialization `{ ... }` ([issue #223](https://github.com/bytedeco/javacpp/issues/223))
  * Allow `Parser` to map and cast function pointers to `Pointer`
 
