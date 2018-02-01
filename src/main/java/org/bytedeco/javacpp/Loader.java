@@ -50,6 +50,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.WeakHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import org.bytedeco.javacpp.annotation.Name;
@@ -408,15 +409,18 @@ public class Loader {
         File lockFile = new File(cacheDir, ".lock");
         FileChannel lockChannel = null;
         FileLock lock = null;
+        ReentrantLock threadLock = null;
         if (target != null && target.length() > 0) {
             // ... create symbolic link to already extracted library or ...
-            Path path = file.toPath(), targetPath = Paths.get(target);
             try {
+                Path path = file.toPath(), targetPath = Paths.get(target);
                 if ((!file.exists() || !Files.isSymbolicLink(path) || !Files.readSymbolicLink(path).equals(targetPath))
                         && targetPath.isAbsolute() && !targetPath.equals(path)) {
                     if (logger.isDebugEnabled()) {
                         logger.debug("Locking " + cacheDir + " to create symbolic link");
                     }
+                    threadLock = new ReentrantLock();
+                    threadLock.lock();
                     lockChannel = new FileOutputStream(lockFile).getChannel();
                     lock = lockChannel.lock();
                     if ((!file.exists() || !Files.isSymbolicLink(path) || !Files.readSymbolicLink(path).equals(targetPath))
@@ -433,10 +437,12 @@ public class Loader {
                         }
                     }
                 }
-            } catch (IOException | UnsupportedOperationException e) {
-                // ... (probably an unsupported operation on Windows, but DLLs never need links) ...
+            } catch (IOException | RuntimeException e) {
+                // ... (probably an unsupported operation on Windows, but DLLs never need links,
+                // or other (filesystem?) exception: for example,
+                // "sun.nio.fs.UnixException: No such file or directory" on File.toPath()) ...
                 if (logger.isDebugEnabled()) {
-                    logger.debug("Failed to create symbolic link " + path + ": " + e);
+                    logger.debug("Failed to create symbolic link " + file + ": " + e);
                 }
                 return null;
             } finally {
@@ -446,17 +452,22 @@ public class Loader {
                 if (lockChannel != null) {
                     lockChannel.close();
                 }
+                if (threadLock != null) {
+                    threadLock.unlock();
+                }
             }
         } else {
             if (urlFile.exists() && reference) {
                 // ... try to create a symbolic link to the existing file, if we can, ...
-                Path path = file.toPath(), urlPath = urlFile.toPath();
                 try {
+                    Path path = file.toPath(), urlPath = urlFile.toPath();
                     if ((!file.exists() || !Files.isSymbolicLink(path) || !Files.readSymbolicLink(path).equals(urlPath))
                             && urlPath.isAbsolute() && !urlPath.equals(path)) {
                         if (logger.isDebugEnabled()) {
                             logger.debug("Locking " + cacheDir + " to create symbolic link");
                         }
+                        threadLock = new ReentrantLock();
+                        threadLock.lock();
                         lockChannel = new FileOutputStream(lockFile).getChannel();
                         lock = lockChannel.lock();
                         if ((!file.exists() || !Files.isSymbolicLink(path) || !Files.readSymbolicLink(path).equals(urlPath))
@@ -474,10 +485,10 @@ public class Loader {
                         }
                     }
                     return file;
-                } catch (IOException | UnsupportedOperationException e) {
+                } catch (IOException | RuntimeException e) {
                     // ... (let's try to copy the file instead, such as on Windows) ...
                     if (logger.isDebugEnabled()) {
-                        logger.debug("Could not create symbolic link " + path + ": " + e);
+                        logger.debug("Could not create symbolic link " + file + ": " + e);
                     }
                 } finally {
                     if (lock != null) {
@@ -485,6 +496,9 @@ public class Loader {
                     }
                     if (lockChannel != null) {
                         lockChannel.close();
+                    }
+                    if (threadLock != null) {
+                        threadLock.unlock();
                     }
                 }
             }
@@ -496,6 +510,8 @@ public class Loader {
                     if (logger.isDebugEnabled()) {
                         logger.debug("Locking " + cacheDir + " before extracting");
                     }
+                    threadLock = new ReentrantLock();
+                    threadLock.lock();
                     lockChannel = new FileOutputStream(lockFile).getChannel();
                     lock = lockChannel.lock();
                     // ... check if other JVM has extracted it before this JVM get the lock ...
@@ -515,6 +531,9 @@ public class Loader {
                     }
                     if (lockChannel != null) {
                         lockChannel.close();
+                    }
+                    if (threadLock != null) {
+                        threadLock.unlock();
                     }
                 }
             }
@@ -1137,9 +1156,9 @@ public class Loader {
                             File dir2 = file2.getParentFile();
                             if (!dir2.equals(dir)) {
                                 File linkFile = new File(dir, file2.getName());
-                                Path linkPath = linkFile.toPath();
-                                Path targetPath = file2.toPath();
                                 try {
+                                    Path linkPath = linkFile.toPath();
+                                    Path targetPath = file2.toPath();
                                     if ((!linkFile.exists() || !Files.isSymbolicLink(linkPath) || !Files.readSymbolicLink(linkPath).equals(targetPath))
                                             && targetPath.isAbsolute() && !targetPath.equals(linkPath)) {
                                         if (logger.isDebugEnabled()) {
@@ -1148,10 +1167,12 @@ public class Loader {
                                         linkFile.delete();
                                         Files.createSymbolicLink(linkPath, targetPath);
                                     }
-                                } catch (IOException | UnsupportedOperationException e) {
-                                    // ... (probably an unsupported operation on Windows, but DLLs never need links) ...
+                                } catch (IOException | RuntimeException e) {
+                                    // ... (probably an unsupported operation on Windows, but DLLs never need links,
+                                    // or other (filesystem?) exception: for example,
+                                    // "sun.nio.fs.UnixException: No such file or directory" on File.toPath()) ...
                                     if (logger.isDebugEnabled()) {
-                                        logger.debug("Failed to create symbolic link " + linkPath + " to " + targetPath + ": " + e);
+                                        logger.debug("Failed to create symbolic link " + linkFile + " to " + file2 + ": " + e);
                                     }
                                 }
                             }
@@ -1247,9 +1268,9 @@ public class Loader {
         }
         if (link != null && link.length() > 0 && !link.equals(name)) {
             File linkFile = new File(parent, link);
-            Path linkPath = linkFile.toPath();
-            Path targetPath = Paths.get(name);
             try {
+                Path linkPath = linkFile.toPath();
+                Path targetPath = Paths.get(name);
                 if ((!linkFile.exists() || !Files.isSymbolicLink(linkPath) || !Files.readSymbolicLink(linkPath).equals(targetPath))
                         && !targetPath.isAbsolute() && !targetPath.equals(linkPath)) {
                     if (logger.isDebugEnabled()) {
@@ -1259,10 +1280,12 @@ public class Loader {
                     Files.createSymbolicLink(linkPath, targetPath);
                 }
                 filename = linkFile.toString();
-            } catch (IOException | UnsupportedOperationException e) {
-                // ... (probably an unsupported operation on Windows, but DLLs never need links) ...
+            } catch (IOException | RuntimeException e) {
+                // ... (probably an unsupported operation on Windows, but DLLs never need links,
+                // or other (filesystem?) exception: for example,
+                // "sun.nio.fs.UnixException: No such file or directory" on File.toPath()) ...
                 if (logger.isDebugEnabled()) {
-                    logger.debug("Failed to create symbolic link " + linkPath + ": " + e);
+                    logger.debug("Failed to create symbolic link " + linkFile + ": " + e);
                 }
                 return null;
             }
