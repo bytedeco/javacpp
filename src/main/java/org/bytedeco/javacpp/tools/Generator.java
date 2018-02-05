@@ -3272,12 +3272,16 @@ public class Generator {
                 }
                 typeName = prefix.length() > 0 ? new String[] { prefix, suffix } : null;
             } else if (a instanceof Const) {
+                boolean[] b = ((Const)a).value();
+                if ((b.length == 1 && !b[0]) || (b.length > 1 && !b[0] && !b[1])) {
+                    // not interested in const members
+                    continue;
+                }
                 if (warning = typeName != null) {
                     // prioritize @Cast
                     continue;
                 }
                 typeName = cppTypeName(type);
-                boolean[] b = ((Const)a).value();
                 if (b.length > 1 && b[1] && !typeName[0].endsWith(" const *")) {
                     typeName[0] = valueTypeName(typeName) + " const *";
                 }

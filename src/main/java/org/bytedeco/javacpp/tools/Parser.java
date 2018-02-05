@@ -1934,7 +1934,8 @@ public class Parser {
                 tokens.next();
             }
 
-            if (decl.constMember) {
+            // add @Const annotation only for const virtual functions
+            if (decl.constMember && type.virtual && context.virtualize) {
                 if (type.annotations.contains("@Const")) {
                     type.annotations = incorporateConstAnnotation(type.annotations, 2, true);
                 } else {
