@@ -32,6 +32,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.bytedeco.javacpp.ClassProperties;
 import org.bytedeco.javacpp.Loader;
 
@@ -1702,6 +1704,32 @@ public class Parser {
         return params;
     }
 
+    static String incorporateConstAnnotation(String annotations, int constValueIndex, boolean constValue) {
+        int start = annotations.indexOf("@Const");
+        int end = annotations.indexOf("@", start + 1);
+        if (end == -1) {
+            end = annotations.length();
+        }
+        String prefix = annotations.substring(0, start);
+        String constAnnotation = annotations.substring(start, end);
+        String suffix = " " + annotations.substring(end, annotations.length());
+
+        String boolPatternStr = "(true|false)";
+        Pattern boolPattern = Pattern.compile(boolPatternStr);
+        Matcher matcher = boolPattern.matcher(constAnnotation);
+
+        /** default value same with {@link org.bytedeco.javacpp.annotation.Const} **/
+        boolean constArray[] = {true, false, false};
+        int index = 0;
+        while (matcher.find()) {
+            constArray[index++] = Boolean.parseBoolean(matcher.group(1));
+        }
+        constArray[constValueIndex] = constValue;
+
+        String incorporatedConstAnnotation = "@Const({" + constArray[0] + ", " + constArray[1] + ", " + constArray[2] + "})";
+        return prefix + incorporatedConstAnnotation + suffix;
+    }
+
     boolean function(Context context, DeclarationList declList) throws ParserException {
         int backIndex = tokens.index;
         String spacing = tokens.get().spacing;
@@ -1905,6 +1933,15 @@ public class Parser {
                     tokens.next().expect(';');
                 }
                 tokens.next();
+            }
+
+            // add @Const annotation only for const virtual functions
+            if (decl.constMember && type.virtual && context.virtualize) {
+                if (type.annotations.contains("@Const")) {
+                    type.annotations = incorporateConstAnnotation(type.annotations, 2, true);
+                } else {
+                    type.annotations += "@Const({false, false, true}) ";
+                }
             }
 
             // add @Virtual annotation on user request only, inherited through context
@@ -2735,7 +2772,7 @@ public class Parser {
         String modifiers = "public static ", constructors = "";
         boolean implicitConstructor = true, defaultConstructor = false, longConstructor = false,
                 pointerConstructor = false, abstractClass = info != null && info.purify && !ctx.virtualize,
-                havePureConst = false, haveVariables = false;
+                allPureConst = true, haveVariables = false;
         for (Declaration d : declList2) {
             if (d.declarator != null && d.declarator.type != null && d.declarator.type.using && decl.text != null) {
                 // inheriting constructors
@@ -2756,10 +2793,10 @@ public class Parser {
                 pointerConstructor |= paramDcls.length == 1 && paramDcls[0].type.javaName.equals("Pointer") && !d.inaccessible;
             }
             abstractClass |= d.abstractMember;
-            havePureConst |= d.constMember && d.abstractMember;
+            allPureConst &= d.constMember && d.abstractMember;
             haveVariables |= d.variable;
         }
-        if (havePureConst && ctx.virtualize) {
+        if (allPureConst && ctx.virtualize) {
             modifiers = "@Const " + modifiers;
         }
         if (!anonymous) {

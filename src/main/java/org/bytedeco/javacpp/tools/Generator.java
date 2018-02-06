@@ -22,7 +22,6 @@
 
 package org.bytedeco.javacpp.tools;
 
-import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -38,9 +37,7 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 import java.nio.ShortBuffer;
-import java.util.ArrayDeque;
 import java.util.Arrays;
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -3210,6 +3207,27 @@ public class Generator {
         return type;
     }
 
+    static boolean constFunction(Class<?> classType, Method functionMethod) {
+        if (classType.isAnnotationPresent(Const.class)) {
+            return true;
+        }
+
+        if (!functionMethod.isAnnotationPresent(Const.class)) {
+            return false;
+        }
+
+        for (Annotation a : functionMethod.getDeclaredAnnotations()) {
+            if (a instanceof Const) {
+                boolean[] b = ((Const) a).value();
+                if (b.length > 2 && b[2]) {
+                    return true;
+                }
+                return false;
+            }
+        }
+        return false;
+    }
+
     String[] cppAnnotationTypeName(Class<?> type, Annotation ... annotations) {
         String[] typeName = cppCastTypeName(type, annotations);
         String prefix = typeName[0];
@@ -3253,12 +3271,16 @@ public class Generator {
                 }
                 typeName = prefix.length() > 0 ? new String[] { prefix, suffix } : null;
             } else if (a instanceof Const) {
+                boolean[] b = ((Const)a).value();
+                if ((b.length == 1 && !b[0]) || (b.length > 1 && !b[0] && !b[1])) {
+                    // not interested in const members
+                    continue;
+                }
                 if (warning = typeName != null) {
                     // prioritize @Cast
                     continue;
                 }
                 typeName = cppTypeName(type);
-                boolean[] b = ((Const)a).value();
                 if (b.length > 1 && b[1] && !typeName[0].endsWith(" const *")) {
                     typeName[0] = valueTypeName(typeName) + " const *";
                 }
@@ -3387,6 +3409,9 @@ public class Generator {
             for (int j = namespace == null ? 0 : 1; j < parameterTypes.length; j++) {
                 String[] paramTypeName = cppAnnotationTypeName(parameterTypes[j], parameterAnnotations[j]);
                 AdapterInformation paramAdapterInfo = adapterInformation(false, valueTypeName(paramTypeName), parameterAnnotations[j]);
+                if (paramAdapterInfo != null && paramAdapterInfo.constant) {
+                    suffix += "const ";
+                }
                 if (paramAdapterInfo != null && paramAdapterInfo.cast.length() > 0) {
                     suffix += paramAdapterInfo.cast + " arg" + j;
                 } else {
@@ -3398,7 +3423,7 @@ public class Generator {
             }
             suffix += ")";
         }
-        if (type.isAnnotationPresent(Const.class)) {
+        if (constFunction(type, functionMethod)) {
             suffix += " const";
         }
         return new String[] { prefix, suffix };
