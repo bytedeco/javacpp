@@ -957,8 +957,10 @@ public class Loader {
             try {
                 URL[] urls = findLibrary(cls, p, preload, pathsFirst);
                 String filename = loadLibrary(urls, preload);
-                if (cacheDir != null && filename != null && filename.startsWith(cacheDir)) {
+                if (filename != null) {
                     preloaded.add(filename);
+                }
+                if (cacheDir != null && filename != null && filename.startsWith(cacheDir)) {
                     createLibraryLink(filename, p, preload);
                 }
             } catch (UnsatisfiedLinkError e) {
@@ -1148,7 +1150,8 @@ public class Loader {
                     // ... extract it from resources into the cache, if necessary ...
                     file = cacheResource(url, filename);
 
-                    // ... create symbolic links to previously loaded libraries as needed on Mac, at least, ...
+                    // ... create symbolic links to previously loaded libraries as needed on Mac,
+                    // at least, and some libraries like MKL on Linux too, ...
                     if (file != null && preloaded != null) {
                         File dir = file.getParentFile();
                         for (String s : preloaded) {

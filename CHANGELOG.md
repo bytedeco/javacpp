@@ -1,4 +1,5 @@
 
+ * Create more symbolic links to libraries preloaded by `Loader` to satisfy libraries like MKL
  * Work around in `Builder` the inability to pass empty arguments on Windows
  * Catch more exceptions that can occur in `Loader` when caching resources ([pull #226](https://github.com/bytedeco/javacpp/pull/226))
  * Add `.a` as an allowed library extension for iOS so they can get bundled
