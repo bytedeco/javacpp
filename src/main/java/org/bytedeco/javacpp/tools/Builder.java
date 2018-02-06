@@ -350,10 +350,22 @@ public class Builder {
             }
         }
 
-        String text = "";
         boolean windows = platform.startsWith("windows");
+        for (int i = 0; i < command.size(); i++) {
+            String arg = command.get(i);
+            if (arg == null) {
+                arg = "";
+            }
+            if (arg.trim().isEmpty() && windows) {
+                // seems to be the only way to pass empty arguments on Windows?
+                arg = "\"\"";
+            }
+            command.set(i, arg);
+        }
+
+        String text = "";
         for (String s : command) {
-            boolean hasSpaces = s.indexOf(" ") > 0;
+            boolean hasSpaces = s.indexOf(" ") > 0 || s.isEmpty();
             if (hasSpaces) {
                 text += windows ? "\"" : "'";
             }
@@ -758,16 +770,24 @@ public class Builder {
      */
     public File[] build() throws IOException, InterruptedException, ParserException {
         if (buildCommand != null && buildCommand.length > 0) {
-            ArrayList<String> command = new ArrayList<String>(buildCommand.length);
-            for (String arg : buildCommand) {
-                command.add(arg != null ? arg : "");
+            List<String> command = Arrays.asList(buildCommand);
+            String platform  = Loader.getPlatform();
+            boolean windows = platform.startsWith("windows");
+            for (int i = 0; i < command.size(); i++) {
+                String arg = command.get(i);
+                if (arg == null) {
+                    arg = "";
+                }
+                if (arg.trim().isEmpty() && windows) {
+                    // seems to be the only way to pass empty arguments on Windows?
+                    arg = "\"\"";
+                }
+                command.set(i, arg);
             }
 
             String text = "";
-            String platform  = Loader.getPlatform();
-            boolean windows = platform.startsWith("windows");
             for (String s : command) {
-                boolean hasSpaces = s.indexOf(" ") > 0;
+                boolean hasSpaces = s.indexOf(" ") > 0 || s.isEmpty();
                 if (hasSpaces) {
                     text += windows ? "\"" : "'";
                 }
