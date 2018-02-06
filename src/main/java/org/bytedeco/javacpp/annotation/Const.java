@@ -5,18 +5,21 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import org.bytedeco.javacpp.FunctionPointer;
+import org.bytedeco.javacpp.tools.Generator;
 
 /**
- * A shortcut annotation to {@link Cast} that simply adds {@code const} to the parameter type, function or class.
+ * A shortcut annotation to {@link Cast} that simply adds {@code const} to the parameter type, function, or class.
  *
  * <p><ul>
- * <li>For parameter type, the first one is for a value like {@code const char*} and the second for a pointer like {@code char const *}.
- * <li>For function, the first and third one are used. The first is applied to the return value/pointer.
- * The third one determines whether the function is {@code const} or not. For compatible problem, we keep the third value empty.
- * <li>For class, only the first one is used, if it is {@code true}, it means the functions are all {@code const}
+ * <li>For a parameter type, the first element is for a value like {@code const char*} and the second for a pointer like {@code char const *}.
+ * <li>For a function, the first, second, and third ones are used. The first two are applied to the return value/pointer.
+ *     The third one determines whether the function is {@code const} or not. For backward compatibility, we keep the third element empty.
+ * <li>For a class, only the first one is used, and if it is {@code true}, it means all the functions are {@code const}.
+ *     Can also be declared on a {@link FunctionPointer} in the case of {@code const} functions.
  * </ul></p>
  *
- * @see {@link org.bytedeco.javacpp.tools.Generator}
+ * @see Generator
  *
  * @author Samuel Audet
  */

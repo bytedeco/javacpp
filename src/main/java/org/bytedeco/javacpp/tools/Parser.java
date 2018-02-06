@@ -22,9 +22,6 @@
 
 package org.bytedeco.javacpp.tools;
 
-import org.bytedeco.javacpp.ClassProperties;
-import org.bytedeco.javacpp.Loader;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -37,6 +34,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.bytedeco.javacpp.ClassProperties;
+import org.bytedeco.javacpp.Loader;
 
 /**
  * The Parser, just like the Generator, is a mess that is not meant to support the
