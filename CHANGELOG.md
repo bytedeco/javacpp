@@ -1,4 +1,6 @@
 
+ * Access elements of basic containers defined in `Parser` with `at()` instead of `operator[]` ([issue #223](https://github.com/bytedeco/javacpp/issues/223))
+ * Add third element to `@Const` annotation to support `virtual const` functions ([pull #224](https://github.com/bytedeco/javacpp/pull/224))
  * Create more symbolic links to libraries preloaded by `Loader` to satisfy libraries like MKL
  * Work around in `Builder` the inability to pass empty arguments on Windows
  * Catch more exceptions that can occur in `Loader` when caching resources ([pull #226](https://github.com/bytedeco/javacpp/pull/226))

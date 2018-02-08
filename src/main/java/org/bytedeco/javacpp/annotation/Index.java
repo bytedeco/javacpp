@@ -21,4 +21,6 @@ import org.bytedeco.javacpp.tools.Generator;
 public @interface Index {
     /** The number of indices spread over the parameters, for multidimensional access. */
     int value() default 1;
+    /** The name of a function to call instead of {@code operator[]}, for example, "at". */
+    String function() default "";
 }

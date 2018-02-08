@@ -1858,9 +1858,10 @@ public class Generator {
         String prefix = "(";
         String suffix = ")";
         int skipParameters = methodInfo.parameterTypes.length > 0 && methodInfo.parameterTypes[0] == Class.class ? 1 : 0;
-        boolean index = methodInfo.method.isAnnotationPresent(Index.class) ||
-                 (methodInfo.pairedMethod != null &&
-                  methodInfo.pairedMethod.isAnnotationPresent(Index.class));
+        Index index = methodInfo.method.getAnnotation(Index.class);
+        if (index == null && methodInfo.pairedMethod != null) {
+            index = methodInfo.pairedMethod.getAnnotation(Index.class);
+        }
         if (methodInfo.deallocator) {
             out.println(indent + "void* allocatedAddress = jlong_to_ptr(arg0);");
             out.println(indent + "void (*deallocatorAddress)(void*) = (void(*)(void*))jlong_to_ptr(arg1);");
@@ -1904,7 +1905,7 @@ public class Generator {
             if (Modifier.isStatic(methodInfo.modifiers) || !Pointer.class.isAssignableFrom(methodInfo.cls)) {
                 out.print(cppScopeName(methodInfo));
             } else if (methodInfo.memberGetter || methodInfo.memberSetter) {
-                if (index) {
+                if (index != null) {
                     out.print("(*ptr)");
                     prefix = "." + methodInfo.memberName[0] + prefix;
                 } else {
@@ -1912,11 +1913,11 @@ public class Generator {
                 }
             } else { // methodInfo.valueGetter || methodInfo.valueSetter
                 String cast = cast(methodInfo.returnType, methodInfo.annotations);
-                if (!index && cast.length() > 0) {
+                if (index == null && cast.length() > 0) {
                     // make sure to cast the returned pointer and not the value
                     out.print("*(" + cast.substring(1, cast.length() - 1) + "*)&");
                 }
-                out.print(index ? "(*ptr)" : methodInfo.dim > 0 || wantsPointer ? "ptr" : "*ptr");
+                out.print(index != null ? "(*ptr)" : methodInfo.dim > 0 || wantsPointer ? "ptr" : "*ptr");
             }
         } else if (methodInfo.bufferGetter) {
             out.print(indent + returnPrefix + "ptr");
@@ -1978,7 +1979,7 @@ public class Generator {
                         name = "super_" + name;
                     }
                     out.print("((" + subType + "*)ptr)->" + name);
-                } else if (index) {
+                } else if (index != null) {
                     out.print("(*ptr)");
                     prefix = "." + name + prefix;
                 } else {
@@ -2015,7 +2016,11 @@ public class Generator {
             if (j < skipParameters + methodInfo.dim) {
                 // print array indices to access array members, or whatever
                 // the C++ operator does with them when the Index annotation is present
-                out.print("[");
+                if (index == null || index.function().length() == 0) {
+                    out.print("[");
+                } else {
+                    out.print("." + index.function() + "(");
+                }
             }
             Annotation passBy = by(methodInfo, j);
             String cast = cast(methodInfo, j);
@@ -2063,7 +2068,11 @@ public class Generator {
             }
 
             if (j < skipParameters + methodInfo.dim) {
-                out.print("]");
+                if (index == null || index.function().length() == 0) {
+                    out.print("]");
+                } else {
+                    out.print(")");
+                }
             } else if (j < methodInfo.parameterTypes.length - 1) {
                 out.print(", ");
             }

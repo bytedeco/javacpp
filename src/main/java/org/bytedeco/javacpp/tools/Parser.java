@@ -238,7 +238,7 @@ public class Parser {
                            + "    public native @Name(\"operator=\") @ByRef " + containerType.javaName + " put(@ByRef " + containerType.javaName + " x);\n\n";
 
                 for (int i = 0; i < dim; i++) {
-                    String indexAnnotation = i > 0 ? ("@Index" + (i > 1 ? "(" + i + ") " : " " )) : "";
+                    String indexAnnotation = i > 0 ? ("@Index(" + (i > 1 ? "value = " + i + ", " : "" ) + "function = \"at\") ") : "";
                     String indices = "", indices2 = "", separator = "";
                     for (int j = 0; indexType != null && j < i; j++) {
                         indices += separator + indexType.annotations + indexType.javaName + " " + (char)('i' + j);
@@ -259,25 +259,25 @@ public class Parser {
                 }
 
                 if (firstType != null && secondType != null) {
-                    String indexAnnotation = dim == 0 ? "@MemberGetter " : "@Index" + (dim > 1 ? "(" + dim + ") " : " ");
+                    String indexAnnotation = dim == 0 ? "@MemberGetter " : "@Index(" + (dim > 1 ? "value = " + dim + ", " : "") + "function = \"at\") ";
                     decl.text += "\n"
                               +  "    " + indexAnnotation + "public native " + firstType.annotations + firstType.javaName + " first(" + params + ");"
                               +  " public native " + containerType.javaName + " first(" + params + separator + firstType.javaName + " first);\n"
                               +  "    " + indexAnnotation + "public native " + secondType.annotations + secondType.javaName + " second(" + params + "); "
                               +  " public native " + containerType.javaName + " second(" + params + separator + secondType.javaName + " second);\n";
                     for (int i = 1; firstType.javaNames != null && i < firstType.javaNames.length; i++) {
-                        decl.text += "    @MemberSetter @Index public native " + containerType.javaName + " first(" + params + separator + firstType.annotations + firstType.javaNames[i] + " first);\n";
+                        decl.text += "    @MemberSetter @Index(function = \"at\") public native " + containerType.javaName + " first(" + params + separator + firstType.annotations + firstType.javaNames[i] + " first);\n";
                     }
                     for (int i = 1; secondType.javaNames != null && i < secondType.javaNames.length; i++) {
-                        decl.text += "    @MemberSetter @Index public native " + containerType.javaName + " second(" + params + separator + secondType.annotations + secondType.javaNames[i] + " second);\n";
+                        decl.text += "    @MemberSetter @Index(function = \"at\") public native " + containerType.javaName + " second(" + params + separator + secondType.annotations + secondType.javaNames[i] + " second);\n";
                     }
                 } else {
                     if (indexType != null) {
                         decl.text += "\n"
-                                  +  "    @Index public native " + valueType.annotations + valueType.javaName + " get(" + params + ");\n"
+                                  +  "    @Index(function = \"at\") public native " + valueType.annotations + valueType.javaName + " get(" + params + ");\n"
                                   +  "    public native " + containerType.javaName + " put(" + params + separator + valueType.javaName + " value);\n";
                         for (int i = 1; valueType.javaNames != null && i < valueType.javaNames.length; i++) {
-                            decl.text += "    @ValueSetter @Index public native " + containerType.javaName + " put(" + params + separator + valueType.annotations + valueType.javaNames[i] + " value);\n";
+                            decl.text += "    @ValueSetter @Index(function = \"at\") public native " + containerType.javaName + " put(" + params + separator + valueType.annotations + valueType.javaNames[i] + " value);\n";
                         }
                     }
                     if (dim == 1 && !containerName.startsWith("std::bitset") && containerType.arguments.length >= 1 && containerType.arguments[containerType.arguments.length - 1].javaName.length() > 0) {
