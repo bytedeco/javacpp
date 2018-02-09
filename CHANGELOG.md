@@ -1,4 +1,5 @@
 
+ * Fix `Parser` failure of variable or function declarations on names starting with `::`
  * Access elements of basic containers defined in `Parser` with `at()` instead of `operator[]` ([issue #223](https://github.com/bytedeco/javacpp/issues/223))
  * Add third element to `@Const` annotation to support `virtual const` functions ([pull #224](https://github.com/bytedeco/javacpp/pull/224))
  * Create more symbolic links to libraries preloaded by `Loader` to satisfy libraries like MKL

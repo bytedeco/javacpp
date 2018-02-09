@@ -473,6 +473,11 @@ public class Parser {
         List<Attribute> attributes = new ArrayList<Attribute>();
         for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.get()) {
             if (token.match("::")) {
+                Info info = infoMap.getFirst(type.cppName, false);
+                if (info != null && info.pointerTypes != null && info.pointerTypes.length > 0
+                        && !type.cppName.contains("::") && token.spacing.length() > 0) {
+                    break;
+                }
                 type.cppName += token;
             } else if (token.match(Token.DECLTYPE)) {
                 type.cppName += token.toString() + tokens.next().expect('(');
@@ -919,7 +924,7 @@ public class Parser {
             if (tokens.get().match(')')) {
                 tokens.next();
             }
-        } else if (tokens.get().match(Token.IDENTIFIER)) {
+        } else if (tokens.get().match(Token.IDENTIFIER, "::")) {
             for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.next()) {
                 if (dcl.cppName.length() > 0 && token.match('*')) {
                     // a data member pointer or something
