@@ -3017,9 +3017,12 @@ public class Generator {
             }
         }
 
+        Index index2 = pairedMethod != null ? pairedMethod.getAnnotation(Index.class) : null;
         info.throwsException = null;
         if (!noException(info.cls, method)) {
             if ((by(info.annotations) instanceof ByVal && !noException(info.returnType, method)) ||
+                    (index != null && index.function().length() > 0) ||
+                    (index2 != null && index2.function().length() > 0) ||
                     !info.deallocator && !info.valueGetter && !info.valueSetter &&
                     !info.memberGetter && !info.memberSetter && !info.bufferGetter) {
                 Class<?>[] exceptions = method.getExceptionTypes();
