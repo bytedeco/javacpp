@@ -29,6 +29,7 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -127,14 +128,16 @@ public class Parser {
             basicContainers.addAll(Arrays.asList(info.cppTypes));
         }
         for (String containerName : basicContainers) {
-            List<Info> infoList = leafInfoMap.get(containerName);
-            for (Info info : infoList) {
+            LinkedHashSet<Info> infoSet = new LinkedHashSet<Info>();
+            infoSet.addAll(leafInfoMap.get("const " + containerName));
+            infoSet.addAll(leafInfoMap.get(containerName));
+            for (Info info : infoSet) {
                 Declaration decl = new Declaration();
                 if (info == null || info.skip || !info.define) {
                     continue;
                 }
                 int dim = containerName.startsWith("std::pair") ? 0 : 1;
-                boolean resizable;
+                boolean constant = info.cppNames[0].startsWith("const "), resizable = !constant;
                 Type containerType = new Parser(this, info.cppNames[0]).type(context),
                         indexType, valueType, firstType = null, secondType = null;
                 if (containerType.arguments == null || containerType.arguments.length == 0 || containerType.arguments[0] == null
@@ -145,15 +148,17 @@ public class Parser {
                     indexType = containerType.arguments[0];
                     valueType = containerType.arguments[1];
                 } else {
-                    resizable = containerType.arguments.length == 1; // assume second argument is the fixed size
+                    resizable &= containerType.arguments.length == 1; // assume second argument is the fixed size
                     indexType = new Type();
                     indexType.annotations = "@Cast(\"size_t\") ";
                     indexType.cppName = "size_t";
                     indexType.javaName = "long";
                     valueType = containerType.arguments[0];
                 }
+                String indexFunction = "(function = \"at\")";
                 if (valueType.javaName == null || valueType.javaName.length() == 0
                         || containerName.startsWith("std::bitset")) {
+                    indexFunction = "";
                     valueType.javaName = "boolean";
                     resizable = false;
                 } else if (containerName.endsWith("set")) {
@@ -214,7 +219,7 @@ public class Parser {
                         + "    static { Loader.load(); }\n"
                         + "    /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */\n"
                         + "    public " + containerType.javaName + "(Pointer p) { super(p); }\n";
-                if ((dim == 0 || containerType.arguments.length == 1) && firstType != null && secondType != null) {
+                if (!constant && (dim == 0 || containerType.arguments.length == 1) && firstType != null && secondType != null) {
                     String[] firstNames = firstType.javaNames != null ? firstType.javaNames : new String[] {firstType.javaName};
                     String[] secondNames = secondType.javaNames != null ? secondType.javaNames : new String[] {secondType.javaName};
                     String brackets = arrayBrackets + (dim > 0 ? "[]" : "");
@@ -265,19 +270,21 @@ public class Parser {
                               +  " public native " + containerType.javaName + " first(" + params + separator + firstType.javaName + " first);\n"
                               +  "    " + indexAnnotation + "public native " + secondType.annotations + secondType.javaName + " second(" + params + "); "
                               +  " public native " + containerType.javaName + " second(" + params + separator + secondType.javaName + " second);\n";
-                    for (int i = 1; firstType.javaNames != null && i < firstType.javaNames.length; i++) {
-                        decl.text += "    @MemberSetter @Index(function = \"at\") public native " + containerType.javaName + " first(" + params + separator + firstType.annotations + firstType.javaNames[i] + " first);\n";
+                    for (int i = 1; !constant && firstType.javaNames != null && i < firstType.javaNames.length; i++) {
+                        decl.text += "    @MemberSetter @Index" + indexFunction + " public native " + containerType.javaName + " first(" + params + separator + firstType.annotations + firstType.javaNames[i] + " first);\n";
                     }
-                    for (int i = 1; secondType.javaNames != null && i < secondType.javaNames.length; i++) {
-                        decl.text += "    @MemberSetter @Index(function = \"at\") public native " + containerType.javaName + " second(" + params + separator + secondType.annotations + secondType.javaNames[i] + " second);\n";
+                    for (int i = 1; !constant && secondType.javaNames != null && i < secondType.javaNames.length; i++) {
+                        decl.text += "    @MemberSetter @Index" + indexFunction + " public native " + containerType.javaName + " second(" + params + separator + secondType.annotations + secondType.javaNames[i] + " second);\n";
                     }
                 } else {
                     if (indexType != null) {
                         decl.text += "\n"
-                                  +  "    @Index(function = \"at\") public native " + valueType.annotations + valueType.javaName + " get(" + params + ");\n"
-                                  +  "    public native " + containerType.javaName + " put(" + params + separator + valueType.javaName + " value);\n";
-                        for (int i = 1; valueType.javaNames != null && i < valueType.javaNames.length; i++) {
-                            decl.text += "    @ValueSetter @Index(function = \"at\") public native " + containerType.javaName + " put(" + params + separator + valueType.annotations + valueType.javaNames[i] + " value);\n";
+                                  +  "    @Index" + indexFunction + " public native " + valueType.annotations + valueType.javaName + " get(" + params + ");\n";
+                        if (!constant) {
+                            decl.text += "    public native " + containerType.javaName + " put(" + params + separator + valueType.javaName + " value);\n";
+                        }
+                        for (int i = 1; !constant && valueType.javaNames != null && i < valueType.javaNames.length; i++) {
+                            decl.text += "    @ValueSetter @Index" + indexFunction + " public native " + containerType.javaName + " put(" + params + separator + valueType.annotations + valueType.javaNames[i] + " value);\n";
                         }
                     }
                     if (dim == 1 && !containerName.startsWith("std::bitset") && containerType.arguments.length >= 1 && containerType.arguments[containerType.arguments.length - 1].javaName.length() > 0) {
@@ -302,7 +309,7 @@ public class Parser {
                     }
                 }
 
-                if ((dim == 0 || containerType.arguments.length == 1) && firstType != null && secondType != null) {
+                if (!constant && (dim == 0 || containerType.arguments.length == 1) && firstType != null && secondType != null) {
                     String[] firstNames = firstType.javaNames != null ? firstType.javaNames : new String[] {firstType.javaName};
                     String[] secondNames = secondType.javaNames != null ? secondType.javaNames : new String[] {secondType.javaName};
                     String brackets = arrayBrackets + (dim > 0 ? "[]" : "");
@@ -667,14 +674,17 @@ public class Parser {
         Info info = null;
         String[] names = context.qualify(type.cppName);
         if (definition && names.length > 0) {
-            info = infoMap.getFirst(type.cppName = names[0], false);
+            String constName = type.constValue || type.constPointer ? "const " + names[0] : names[0];
+            info = infoMap.getFirst(constName, false);
+            type.cppName = names[0];
         } else {
             // guess the fully qualified C++ type with what's available in the InfoMap
             for (String name : names) {
-                if ((info = infoMap.getFirst(name, false)) != null) {
+                String constName = type.constValue || type.constPointer ? "const " + name : name;
+                if ((info = infoMap.getFirst(constName, false)) != null) {
                     type.cppName = name;
                     break;
-                } else if (infoMap.getFirst(name) != null) {
+                } else if (infoMap.getFirst(constName) != null) {
                     type.cppName = name;
                 }
             }

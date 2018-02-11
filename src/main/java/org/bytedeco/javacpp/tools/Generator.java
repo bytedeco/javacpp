@@ -2967,7 +2967,7 @@ public class Generator {
             } else if (info.returnType.isAssignableFrom(ByteBuffer.class) && "asDirectBuffer".equals(info.name) &&
                     !Modifier.isStatic(info.modifiers) && info.parameterTypes.length == 0) {
                 info.bufferGetter = true;
-            } else if (valueGetter) {
+            } else if (valueGetter || (!memberGetter && canBeGetter && "get".equals(info.name) && index != null)) {
                 info.valueGetter = true;
                 info.noReturnGetter = noReturnGetter;
                 info.pairedMethod = pairedMethod;
