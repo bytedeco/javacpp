@@ -1,4 +1,5 @@
 
+ * Add `-stdlib=libc++` option to iOS properties, required by `clang++` to support C++11 ([pull #221](https://github.com/bytedeco/javacpp/pull/221))
  * Make it possible to define read-only containers with `Parser` by prepending `const ` ([issue #223](https://github.com/bytedeco/javacpp/issues/223))
  * Fix `Parser` failure of variable or function declarations on names starting with `::`
  * Access elements of basic containers defined in `Parser` with `at()` instead of `operator[]` ([issue #223](https://github.com/bytedeco/javacpp/issues/223))
