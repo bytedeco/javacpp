@@ -3039,7 +3039,11 @@ public class Generator {
             if (noException = cls.isAnnotationPresent(NoException.class)) {
                 break;
             }
-            cls = cls.getDeclaringClass();
+            if (cls.getDeclaringClass() != null) {
+                cls = cls.getDeclaringClass();
+            } else {
+                cls = cls.getSuperclass();
+            }
         }
         return noException;
     }
