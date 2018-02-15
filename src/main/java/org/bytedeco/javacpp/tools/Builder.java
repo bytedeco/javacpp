@@ -904,6 +904,8 @@ public class Builder {
             Class[] classArray = classSet.toArray(new Class[classSet.size()]);
             File[] files = generateAndCompile(classArray, libraryName, count == 0, count == map.size() - 1);
             if (files != null && files.length > 0) {
+                // files[0] might be null if "jnijavacpp" was not generated and compiled
+                File directory = files[files.length - 1].getParentFile();
                 outputFiles.addAll(Arrays.asList(files));
                 if (copyLibs) {
                     // Do not copy library files from inherit properties ...
@@ -914,7 +916,6 @@ public class Builder {
                     // ... but we should use all the inherited paths!
                     p = Loader.loadProperties(classArray, properties, true);
 
-                    File directory = files[0].getParentFile();
                     for (String s : preloads) {
                         URL[] urls = Loader.findLibrary(null, p, s, true);
                         File fi;
@@ -947,9 +948,9 @@ public class Builder {
                     p = Loader.loadProperties(classArray, properties, true);
                     List<String> paths =  p.get("platform.resourcepath");
 
-                    Path directory = files[0].getParentFile().toPath();
+                    Path directoryPath = directory.toPath();
                     for (String resource : resources) {
-                        final Path target = directory.resolve(resource);
+                        final Path target = directoryPath.resolve(resource);
                         if (!Files.exists(target)) {
                             Files.createDirectories(target);
                         }
