@@ -1,4 +1,5 @@
 
+ * Fix `Generator` incorrectly splitting type names for template arguments containing function types
  * Fix `NullPointerException` in `Builder` when copying resources for static libraries
  * Let `Generator` pick up `@NoException` annotations from super classes as well
  * Add `-stdlib=libc++` option to iOS properties, required by `clang++` to support C++11 ([pull #221](https://github.com/bytedeco/javacpp/pull/221))

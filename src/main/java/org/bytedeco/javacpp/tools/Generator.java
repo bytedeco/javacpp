@@ -3280,10 +3280,18 @@ public class Generator {
             if (a instanceof Cast) {
                 warning = typeName != null;
                 String prefix = ((Cast)a).value()[0], suffix = "";
-                int parenthesis = prefix.indexOf(')');
-                if (parenthesis > 0) {
-                    suffix = prefix.substring(parenthesis).trim();
-                    prefix = prefix.substring(0, parenthesis).trim();
+                int templateCount = 0;
+                for (int i = 0; i < prefix.length(); i++) {
+                    int c = prefix.charAt(i);
+                    if (c == '<') {
+                        templateCount++;
+                    } else if (c == '>') {
+                        templateCount--;
+                    } else if (templateCount == 0 && c == ')') {
+                        suffix = prefix.substring(i).trim();
+                        prefix = prefix.substring(0, i).trim();
+                        break;
+                    }
                 }
                 typeName = prefix.length() > 0 ? new String[] { prefix, suffix } : null;
             } else if (a instanceof Const) {
