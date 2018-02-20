@@ -1,4 +1,5 @@
 
+ * Add `Parser` support for `_Bool`, `_Complex`, `_Imaginary`, `complex`, `imaginary` types from C99
  * Fix `Generator` incorrectly splitting type names for template arguments containing function types
  * Fix `NullPointerException` in `Builder` when copying resources for static libraries
  * Let `Generator` pick up `@NoException` annotations from super classes as well
