@@ -725,6 +725,12 @@ public class Loader {
     /** Contains all the native libraries that we have loaded to avoid reloading them. */
     static Map<String,String> loadedLibraries = Collections.synchronizedMap(new HashMap<String,String>());
 
+    static boolean pathsFirst = false;
+    static {
+        String s = System.getProperty("org.bytedeco.javacpp.pathsfirst", "false").toLowerCase();
+        pathsFirst = s.equals("true") || s.equals("t") || s.equals("");
+    }
+
     /** Creates and returns {@code System.getProperty("org.bytedeco.javacpp.cachedir")} or {@code ~/.javacpp/cache/} when not set. */
     public static File getCacheDir() throws IOException {
         if (cacheDir == null) {
@@ -868,9 +874,9 @@ public class Loader {
         return false;
     }
 
-    /** Returns {@code load(getCallerClass(2), loadProperties(), false)}. */
+    /** Returns {@code load(getCallerClass(2), loadProperties(), Loader.pathsFirst)}. */
     public static String load() {
-        return load(getCallerClass(2), loadProperties(), false);
+        return load(getCallerClass(2), loadProperties(), Loader.pathsFirst);
     }
     /**
      * Loads native libraries associated with the {@link Class} of the caller.
@@ -884,9 +890,9 @@ public class Loader {
         Class cls = getCallerClass(2);
         return load(cls, loadProperties(), pathsFirst);
     }
-    /** Returns {@code load(cls, loadProperties(), false)}. */
+    /** Returns {@code load(cls, loadProperties(), Loader.pathsFirst)}. */
     public static String load(Class cls) {
-        return load(cls, loadProperties(), false);
+        return load(cls, loadProperties(), Loader.pathsFirst);
     }
     /**
      * Loads native libraries associated with the given {@link Class}.
@@ -982,6 +988,11 @@ public class Loader {
             }
             throw e;
         }
+    }
+
+    /** Returns {@code findLibrary(cls, properties, libnameversion, Loader.pathsFirst)}. */
+    public static URL[] findLibrary(Class cls, ClassProperties properties, String libnameversion) {
+        return findLibrary(cls, properties, libnameversion, Loader.pathsFirst);
     }
 
     /**

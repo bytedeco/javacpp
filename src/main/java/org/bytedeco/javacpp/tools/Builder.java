@@ -913,16 +913,27 @@ public class Builder {
                     List<String> preloads = new ArrayList<String>();
                     preloads.addAll(p.get("platform.preload"));
                     preloads.addAll(p.get("platform.link"));
-                    // ... but we should use all the inherited paths!
-                    p = Loader.loadProperties(classArray, properties, true);
+                    // ... but we should try to use all the inherited paths!
+                    ClassProperties p2 = Loader.loadProperties(classArray, properties, true);
 
                     for (String s : preloads) {
-                        URL[] urls = Loader.findLibrary(null, p, s, true);
+                        if (s.trim().endsWith("#")) {
+                            // the user specified an empty destination to skip the copy
+                            continue;
+                        }
+                        URL[] urls = Loader.findLibrary(null, p, s);
                         File fi;
                         try {
                             fi = new File(urls[0].toURI());
                         } catch (Exception e) {
-                            continue;
+                            // try with inherited paths as well
+                            urls = Loader.findLibrary(null, p2, s);
+                            try {
+                                fi = new File(urls[0].toURI());
+                            } catch (Exception e2) {
+                                logger.warn("Could not find library " + s);
+                                continue;
+                            }
                         }
                         File fo = new File(directory, fi.getName());
                         if (fi.exists() && !outputFiles.contains(fo)) {
