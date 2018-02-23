@@ -1,4 +1,5 @@
 
+ * Fix properties for `android-arm64` and `android-x86_64` platforms that need API level 21
  * Add "org.bytedeco.javacpp.pathsfirst" system property to let users search "java.library.path", etc before the class path
  * Add `Parser` support for `_Bool`, `_Complex`, `_Imaginary`, `complex`, `imaginary` types from C99
  * Fix `Generator` incorrectly splitting type names for template arguments containing function types
