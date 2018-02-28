@@ -204,6 +204,8 @@ public class Parser {
                         for (int i = 0; i < valueType.indirections; i++) {
                             cast += "*";
                         }
+                    } else if (!valueType.value) {
+                        cast += "*";
                     }
                     if (valueType.reference) {
                         cast += "&";
@@ -290,6 +292,9 @@ public class Parser {
                     if (dim == 1 && !containerName.startsWith("std::bitset") && containerType.arguments.length >= 1 && containerType.arguments[containerType.arguments.length - 1].javaName.length() > 0) {
                         if (indexType != null && !indexType.annotations.contains("@Const") && !indexType.annotations.contains("@Cast") && !indexType.value) {
                             indexType.annotations += "@Const ";
+                        }
+                        if (!valueType.annotations.contains("@Const") && !valueType.value) {
+                            valueType.annotations += "@Const ";
                         }
                         decl.text += "\n"
                                   +  "    public native @ByVal Iterator begin();\n"
@@ -1619,11 +1624,11 @@ public class Parser {
                 defaultToken = tokens.get();
                 int count2 = 0;
                 for (token = tokens.next(), token.spacing = ""; !token.match(Token.EOF); token = tokens.next()) {
-                    if (count2 == 0 && token.match(',', ')')) {
+                    if (count2 == 0 && token.match(',', ')', '}')) {
                         break;
-                    } else if (token.match('(')) {
+                    } else if (token.match('(', '{')) {
                         count2++;
-                    } else if (token.match(')')) {
+                    } else if (token.match(')', '}')) {
                         count2--;
                     }
 
@@ -1802,7 +1807,7 @@ public class Parser {
         if (context.namespace != null && namespace < 0) {
             dcl.cppName = context.namespace + "::" + dcl.cppName;
         }
-        Info info = null;
+        Info info = null, fullInfo = null;
         String fullname = dcl.cppName, fullname2 = dcl.cppName;
         if (dcl.parameters != null) {
             fullname += "(";
@@ -1833,7 +1838,7 @@ public class Parser {
                     separator = ", ";
                 }
             }
-            info = infoMap.getFirst(fullname += ")");
+            info = fullInfo = infoMap.getFirst(fullname += ")");
             if (info == null) {
                 info = infoMap.getFirst(fullname2 += ")");
             }
@@ -1878,7 +1883,9 @@ public class Parser {
             if (tokens.get().match('{')) {
                 body();
             } else {
-                tokens.next();
+                while (!tokens.get().match(';', Token.EOF)) {
+                    tokens.next();
+                }
             }
             decl.text = spacing;
             decl.function = true;
@@ -1969,6 +1976,12 @@ public class Parser {
             decl.declarator = dcl;
             if (context.namespace != null && context.javaName == null) {
                 decl.text += "@Namespace(\"" + context.namespace + "\") ";
+            }
+            // append annotations specified for a full function declaration only to avoid overlap with type.annotations
+            if (fullInfo != null && fullInfo.annotations != null) {
+                for (String s : fullInfo.annotations) {
+                    decl.text += s + " ";
+                }
             }
             if (type.constructor && params != null) {
                 decl.text += "public " + context.shorten(context.javaName) + dcl.parameters.list + " { super((Pointer)null); allocate" + params.names + "; }\n" +

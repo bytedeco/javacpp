@@ -212,7 +212,16 @@ class TokenIndexer {
                         boolean foundArg = false;
                         for (int i = 0; i < params.size(); i++) {
                             if (params.get(i).equals(token.value)) {
-                                tokens.addAll(args[i]);
+                                String s = token.spacing;
+                                for (Token arg : args[i]) {
+                                    // clone tokens here to avoid potential problems with concatenation below
+                                    Token t = new Token(arg);
+                                    if (s != null) {
+                                        t.spacing += s;
+                                    }
+                                    tokens.add(t);
+                                    s = null;
+                                }
                                 foundArg = true;
                                 break;
                             }
