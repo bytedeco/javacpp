@@ -2229,7 +2229,7 @@ public class Parser {
                     for (Token token = tokens.get(); tokens.index < endIndex; token = tokens.next()) {
                         info.cppText += token.match("\n") ? token : token.spacing + token;
                     }
-                    infoMap.putFirst(info);
+                    infoMap.put(info);
                     break;
                 } else if (info != null && info.cppText == null &&
                         info.cppTypes != null && info.cppTypes.length > (hasArgs ? 0 : 1)) {

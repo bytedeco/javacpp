@@ -138,7 +138,14 @@ class TokenIndexer {
         if (index < array.length && infoMap.containsKey(array[index].value)) {
             // if we hit a token whose info.cppText starts with #define (a macro), expand it
             int startIndex = index;
-            Info info = infoMap.getFirst(array[index].value);
+            List<Info> infoList = infoMap.get(array[index].value);
+            Info info = null;
+            for (Info i : infoList) {
+                // pick last (re)definition to be consistent with the real preprocessor
+                if (i != null && i.cppText != null) {
+                    info = i;
+                }
+            }
             if (info != null && info.cppText != null) {
                 try {
                     Tokenizer tokenizer = new Tokenizer(info.cppText, array[index].file, array[index].lineNumber);
