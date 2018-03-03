@@ -25,6 +25,7 @@ import java.io.File;
 import java.nio.IntBuffer;
 import org.bytedeco.javacpp.annotation.Cast;
 import org.bytedeco.javacpp.annotation.Const;
+import org.bytedeco.javacpp.annotation.Function;
 import org.bytedeco.javacpp.annotation.Platform;
 import org.bytedeco.javacpp.annotation.SharedPtr;
 import org.bytedeco.javacpp.annotation.StdString;
@@ -73,6 +74,7 @@ public class AdapterTest {
         native int data(); native UniqueData data(int data);
     }
 
+    @Function static native @UniquePtr UniqueData createUniqueData();
     static native void createUniqueData(@UniquePtr UniqueData u);
     static native void storeUniqueData(@Const @UniquePtr UniqueData u);
     static native @Const @UniquePtr UniqueData fetchUniqueData();
@@ -178,6 +180,14 @@ public class AdapterTest {
 
         UniqueData uniqueData = fetchUniqueData();
         assertEquals(13, uniqueData.data());
+
+        uniqueData = createUniqueData();
+        assertEquals(5, uniqueData.data());
+
+        storeUniqueData(uniqueData);
+
+        uniqueData = fetchUniqueData();
+        assertEquals(5, uniqueData.data());
 
         uniqueData = new UniqueData(null);
         createUniqueData(uniqueData);

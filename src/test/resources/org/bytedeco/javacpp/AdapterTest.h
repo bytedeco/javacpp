@@ -53,6 +53,10 @@ struct UniqueData {
     UniqueData(int data) : data(data) { }
 };
 
+std::unique_ptr<UniqueData> createUniqueData() {
+    return std::unique_ptr<UniqueData>(new UniqueData(5));
+}
+
 void createUniqueData(std::unique_ptr<UniqueData> *u) {
     u->reset(new UniqueData(42));
 }

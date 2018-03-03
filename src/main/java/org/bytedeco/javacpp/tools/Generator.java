@@ -1001,11 +1001,10 @@ public class Generator {
             out.println("        if (owner == NULL || owner == ptr) {");
             out.println("            owner = new S(sharedPtr);");
             out.println("        }");
-            out.println("        return ptr;");
+            out.println("        return (typename SHARED_PTR_NAMESPACE::remove_const<T>::type*)ptr;");
             out.println("    }");
-            out.println("    operator const T*() { return sharedPtr.get(); }");
-            out.println("    operator       S&() { return sharedPtr; }");
-            out.println("    operator       S*() { return &sharedPtr; }");
+            out.println("    operator S&() { return sharedPtr; }");
+            out.println("    operator S*() { return &sharedPtr; }");
             out.println("    T* ptr;");
             out.println("    size_t size;");
             out.println("    void* owner;");
@@ -1021,6 +1020,7 @@ public class Generator {
             out.println("    UniquePtrAdapter(const T* ptr, size_t size, void* owner) : ptr((T*)ptr), size(size), owner(owner),");
             out.println("            uniquePtr2(owner != NULL && owner != ptr ? U() : U((T*)ptr)),");
             out.println("            uniquePtr(owner != NULL && owner != ptr ? *(U*)owner : uniquePtr2) { }");
+            out.println("    UniquePtrAdapter(U&& uniquePtr) : ptr(0), size(0), owner(0), uniquePtr2(UNIQUE_PTR_NAMESPACE::move(uniquePtr)), uniquePtr(uniquePtr2) { }");
             out.println("    UniquePtrAdapter(const U& uniquePtr) : ptr(0), size(0), owner(0), uniquePtr((U&)uniquePtr) { }");
             out.println("    UniquePtrAdapter(      U& uniquePtr) : ptr(0), size(0), owner(0), uniquePtr(uniquePtr) { }");
             out.println("    UniquePtrAdapter(const U* uniquePtr) : ptr(0), size(0), owner(0), uniquePtr(*(U*)uniquePtr) { }");
@@ -1033,14 +1033,14 @@ public class Generator {
             out.println("    static void deallocate(void* owner) { delete (U*)owner; }");
             out.println("    operator typename UNIQUE_PTR_NAMESPACE::remove_const<T>::type*() {");
             out.println("        ptr = uniquePtr.get();");
-            out.println("        if (owner == NULL || owner == ptr) {");
+            out.println("        if (ptr == uniquePtr2.get() && (owner == NULL || owner == ptr)) {");
+            out.println("            // only move the pointer if we actually own it through uniquePtr2");
             out.println("            owner = new U(UNIQUE_PTR_NAMESPACE::move(uniquePtr));");
             out.println("        }");
-            out.println("        return ptr;");
+            out.println("        return (typename UNIQUE_PTR_NAMESPACE::remove_const<T>::type*)ptr;");
             out.println("    }");
-            out.println("    operator const T*() { return uniquePtr.get(); }");
-            out.println("    operator       U&() { return uniquePtr; }");
-            out.println("    operator       U*() { return &uniquePtr; }");
+            out.println("    operator U&() { return uniquePtr; }");
+            out.println("    operator U*() { return &uniquePtr; }");
             out.println("    T* ptr;");
             out.println("    size_t size;");
             out.println("    void* owner;");
@@ -2162,8 +2162,7 @@ public class Generator {
                         if (Pointer.class.isAssignableFrom(methodInfo.returnType)) {
                             out.println(indent + "void* rowner = radapter.owner;");
                         }
-                        out.println(indent + "void (*deallocator)(void*) = " +
-                                (adapterInfo.constant ? "NULL;" : "&" + adapterInfo.name + "::deallocate;"));
+                        out.println(indent + "void (*deallocator)(void*) = &" + adapterInfo.name + "::deallocate;");
                     }
                     needInit = true;
                 } else if (returnBy instanceof ByVal ||
