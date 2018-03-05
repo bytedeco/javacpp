@@ -1,4 +1,5 @@
 
+ * Add `get()` and `toString()` methods to basic containers defined in `Parser`
  * Fix `Parser` ignoring `Info.define` and other information for macros actually defined
  * Fix `SharedPtrAdapter` and `UniquePtrAdapter` failing to take ownership of temporary objects
  * Fix properties for `android-arm64` and `android-x86_64` platforms that need API level 21

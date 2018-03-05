@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2017 Samuel Audet
+ * Copyright (C) 2013-2018 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -312,6 +312,34 @@ public class Parser {
                                          "        public native @Name(\"operator*\") " + valueType.annotations + valueType.javaName + " get();\n")
                                   +  "    }\n";
                     }
+                    if (resizable) {
+                        decl.text += "\n"
+                                  +  "    public " + valueType.javaName + arrayBrackets + "[] get() {\n";
+                        String indent = "        ", indices = "", args = "", brackets = arrayBrackets;
+                        separator = "";
+                        for (int i = 0; i < dim; i++) {
+                            char c = (char)('i' + i);
+                            decl.text +=
+                                    indent + (i == 0 ? valueType.javaName + brackets + "[] " : "") + "array" + indices + " = new " + valueType.javaName
+                                                + "[size(" + args + ") < Integer.MAX_VALUE ? (int)size(" + args + ") : Integer.MAX_VALUE]" + brackets + ";\n" +
+                                    indent + "for (int " + c + " = 0; " + c + " < array" + indices + ".length; " + c + "++) {\n";
+                            indent += "    ";
+                            indices += "[" + c + "]";
+                            args += separator + c;
+                            brackets = brackets.length() < 2 ? "" : brackets.substring(2);
+                            separator = ", ";
+                        }
+                        decl.text += indent + "array" + indices + " = get(" + args + ");\n";
+                        for (int i = 0; i < dim; i++) {
+                            indent = indent.substring(4);
+                            decl.text += indent + "}\n";
+                        }
+                        decl.text += "        return array;\n"
+                                  +  "    }\n"
+                                  +  "    @Override public String toString() {\n"
+                                  +  "        return java.util.Arrays." + (dim < 2 ? "toString" : "deepToString" ) + "(get());\n"
+                                  +  "    }\n";
+                    }
                 }
 
                 if (!constant && (dim == 0 || containerType.arguments.length == 1) && firstType != null && secondType != null) {
@@ -347,7 +375,7 @@ public class Parser {
                     boolean first = true;
                     for (String javaName : valueType.javaNames != null ? valueType.javaNames : new String[] {valueType.javaName}) {
                         decl.text += "\n";
-                        if (dim < 2 && !javaName.equals("int") && !javaName.equals("long")) {
+                        if (dim < 2) {
                             if (first) {
                                 decl.text += "    public " + javaName + " pop_back() {\n"
                                           +  "        long size = size();\n"
