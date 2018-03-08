@@ -672,7 +672,7 @@ public class Generator {
             out.println("    return total;");
             out.println("}");
             out.println();
-            out.println("#ifdef __linux__");
+            out.println("#if defined(__linux__) && !(defined(__ANDROID__) && defined(__arm__))");
             out.println("static int JavaCPP_dlcallback(dl_phdr_info *info, size_t size, void *data) {");
             out.println("    void *handle = dlopen(info->dlpi_name, RTLD_LAZY);");
             out.println("    if (handle != NULL) {");
@@ -691,11 +691,13 @@ public class Generator {
             out.println("    void *address = NULL;");
             out.println("#ifdef __linux__");
             out.println("    address = dlsym(RTLD_DEFAULT, name);");
+            out.println("#if !(defined(__ANDROID__) && defined(__arm__))");
             out.println("    if (address == NULL) {");
             out.println("        void *data[] = { (char*)name, NULL };");
             out.println("        dl_iterate_phdr(JavaCPP_dlcallback, data);");
             out.println("        address = data[1];");
             out.println("    }");
+            out.println("#endif");
             out.println("#elif defined(__APPLE__)");
             out.println("    address = dlsym(RTLD_DEFAULT, name);");
             out.println("    if (address == NULL) {");
