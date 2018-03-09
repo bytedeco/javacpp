@@ -1571,6 +1571,9 @@ public class Parser {
     }
 
     Attribute attribute() throws ParserException {
+        return attribute(false);
+    }
+    Attribute attribute(boolean explicit) throws ParserException {
         // attributes might have arguments that start with '(', but not '<'
         if (!tokens.get().match(Token.IDENTIFIER) || tokens.get(1).match('<')) {
             return null;
@@ -1582,6 +1585,9 @@ public class Parser {
             for (String s : info.annotations) {
                 attr.javaName += s + " ";
             }
+        }
+        if (explicit && !attr.annotation) {
+            return null;
         }
         if (!tokens.next().match('(')) {
             return attr;
@@ -3007,6 +3013,15 @@ public class Parser {
         String name = "";
         Token token = tokens.next().expect(Token.IDENTIFIER, '{', ':', ';');
         if (token.match(Token.IDENTIFIER)) {
+            while (tokens.get(1).match(Token.IDENTIFIER)) {
+                Attribute attr = attribute(true);
+                if (attr != null && attr.annotation) {
+                    // XXX: What to do with annotations here?
+                } else {
+                    break;
+                }
+                token = tokens.get();
+            }
             name = token.value;
             token = tokens.next();
         }
