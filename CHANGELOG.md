@@ -1,4 +1,5 @@
 
+ * Fix missing `jnijavacpp.cpp` when processing classes from different packages ([issue #228](https://github.com/bytedeco/javacpp/issues/228))
  * Enhance `Loader.addressof()` by making it try harder to find symbols on Linux and Mac OS X
  * Add `get()` and `toString()` methods to basic containers defined in `Parser`
  * Fix `Parser` ignoring `Info.define` and other information for macros actually defined

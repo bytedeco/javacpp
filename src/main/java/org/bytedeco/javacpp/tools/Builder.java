@@ -407,6 +407,7 @@ public class Builder {
         String libraryPath  = p.getProperty("platform.library.path", "");
         String libraryPrefix  = p.getProperty("platform.library.prefix", "") ;
         String librarySuffix  = p.getProperty("platform.library.suffix", "");
+        String[] sourcePrefixes = {sourcePrefix, sourcePrefix};
         if (outputPath == null) {
             URI uri = null;
             try {
@@ -414,17 +415,19 @@ public class Builder {
                 String resourceURL = classes[classes.length - 1].getResource(resourceName).toString();
                 uri = new URI(resourceURL.substring(0, resourceURL.lastIndexOf('/') + 1));
                 boolean isFile = "file".equals(uri.getScheme());
-                String classPath = classScanner.getClassLoader().getPaths()[0];
+                File classPath = new File(classScanner.getClassLoader().getPaths()[0]).getCanonicalFile();
                 // If our class is not a file, use first path of the user class loader as base for our output path
                 File packageDir = isFile ? new File(uri)
                                          : new File(classPath, resourceName.substring(0, resourceName.lastIndexOf('/') + 1));
                 // Output to the library path inside of the class path, if provided by the user
                 uri = new URI(resourceURL.substring(0, resourceURL.length() - resourceName.length() + 1));
                 File targetDir = libraryPath.length() > 0
-                        ? (isFile ? new File(uri) : new File(classPath))
+                        ? (isFile ? new File(uri) : classPath)
                         : new File(packageDir, platform + (extension != null ? extension : ""));
                 outputPath = new File(targetDir, libraryPath);
                 sourcePrefix = packageDir.getPath() + File.separator;
+                // make sure jnijavacpp.cpp ends up in the same directory for all classes in different packages
+                sourcePrefixes = new String[] {classPath.getPath() + File.separator, sourcePrefix};
             } catch (URISyntaxException e) {
                 throw new RuntimeException(e);
             } catch (IllegalArgumentException e) {
@@ -435,9 +438,9 @@ public class Builder {
             outputPath.mkdirs();
         }
         Generator generator = new Generator(logger, properties, encoding);
-        String[] sourceFilenames = {sourcePrefix + "jnijavacpp" + sourceSuffix,
-                                    sourcePrefix + outputName + sourceSuffix};
-        String[] headerFilenames = {null, header ? sourcePrefix + outputName +  ".h" : null};
+        String[] sourceFilenames = {sourcePrefixes[0] + "jnijavacpp" + sourceSuffix,
+                                    sourcePrefixes[1] + outputName + sourceSuffix};
+        String[] headerFilenames = {null, header ? sourcePrefixes[1] + outputName +  ".h" : null};
         String[] loadSuffixes = {"_jnijavacpp", null};
         String[] baseLoadSuffixes = {null, "_jnijavacpp"};
         String classPath = System.getProperty("java.class.path");
