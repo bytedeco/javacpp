@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Samuel Audet
+ * Copyright (C) 2011-2018 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -1130,36 +1130,30 @@ public class Loader {
         try {
             for (URL url : urls) {
                 URI uri = url.toURI();
-                File file;
+                File file = null;
                 try {
                     // ... and if the URL is not already a file without fragments, etc ...
                     file = new File(uri);
                 } catch (Exception exc) {
+                    // ... extract it from resources into the cache, if necessary ...
+                    File f = cacheResource(url, filename);
                     try {
-                        try {
-                            file = new File(new URI(uri.toString().split("#")[0]));
-                        } catch (IllegalArgumentException | URISyntaxException e) {
-                            file = new File(uri.getPath());
-                        }
-                        if (file.exists()) {
-                            // ... else preload it as some libraries do not like being renamed ...
-                            String filename2 = file.getAbsolutePath();
-                            if (logger.isDebugEnabled()) {
-                                logger.debug("Preloading " + filename2);
-                            }
+                        if (f != null) {
+                            file = f;
+                        } else {
+                            // ... else try to load directly as some libraries do not like being renamed ...
                             try {
-                                System.load(filename2);
-                            } catch (UnsatisfiedLinkError e) {
-                                if (logger.isDebugEnabled()) {
-                                    logger.debug("Failed to preload " + filename2 + ": " + e);
-                                }
+                                file = new File(new URI(uri.toString().split("#")[0]));
+                            } catch (IllegalArgumentException | URISyntaxException e) {
+                                file = new File(uri.getPath());
                             }
                         }
                     } catch (Exception exc2) {
-                        /// ... or give up and ...
+                        // ... (or give up) and ...
+                        if (logger.isDebugEnabled()) {
+                            logger.debug("Failed to access " + uri + ": " + exc2);
+                        }
                     }
-                    // ... extract it from resources into the cache, if necessary ...
-                    file = cacheResource(url, filename);
 
                     // ... create symbolic links to previously loaded libraries as needed on Mac,
                     // at least, and some libraries like MKL on Linux too, ...
