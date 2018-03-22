@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.Buffer;
@@ -140,6 +141,10 @@ public class Generator {
         this.encoding = encoding;
     }
 
+    static enum ByteEnum { BYTE; byte value; }
+    static enum ShortEnum { SHORT; short value; }
+    static enum IntEnum { INT; int value; }
+    static enum LongEnum { LONG; long value; }
     static final String JNI_VERSION = "JNI_VERSION_1_4";
     static final List<Class> baseClasses = Arrays.asList(new Class[] {
             Loader.class,
@@ -203,6 +208,7 @@ public class Generator {
                 }
                 out = encoding != null ? new PrintWriter(sourceFile, encoding) : new PrintWriter(sourceFile);
                 if (headerFilename != null) {
+                    logger.info("Generating " + headerFilename);
                     File headerFile = new File(headerFilename);
                     File headerDir = headerFile.getParentFile();
                     if (headerDir != null) {
@@ -434,6 +440,10 @@ public class Generator {
         out.println("static jfieldID JavaCPP_capacityFID = NULL;");
         out.println("static jfieldID JavaCPP_deallocatorFID = NULL;");
         out.println("static jfieldID JavaCPP_ownerAddressFID = NULL;");
+        out.println("static jfieldID JavaCPP_byteValueFID = NULL;");
+        out.println("static jfieldID JavaCPP_shortValueFID = NULL;");
+        out.println("static jfieldID JavaCPP_intValueFID = NULL;");
+        out.println("static jfieldID JavaCPP_longValueFID = NULL;");
         out.println("static jmethodID JavaCPP_initMID = NULL;");
         out.println("static jmethodID JavaCPP_arrayMID = NULL;");
         out.println("static jmethodID JavaCPP_stringMID = NULL;");
@@ -1389,6 +1399,26 @@ public class Generator {
         out.println("    if (JavaCPP_ownerAddressFID == NULL) {");
         out.println("        return JNI_ERR;");
         out.println("    }");
+        out.println("    JavaCPP_byteValueFID = JavaCPP_getFieldID(env, " +
+                jclasses.index(ByteEnum.class) + ", \"value\", \"B\");");
+        out.println("    if (JavaCPP_byteValueFID == NULL) {");
+        out.println("        return JNI_ERR;");
+        out.println("    }");
+        out.println("    JavaCPP_shortValueFID = JavaCPP_getFieldID(env, " +
+                jclasses.index(ShortEnum.class) + ", \"value\", \"S\");");
+        out.println("    if (JavaCPP_shortValueFID == NULL) {");
+        out.println("        return JNI_ERR;");
+        out.println("    }");
+        out.println("    JavaCPP_intValueFID = JavaCPP_getFieldID(env, " +
+                jclasses.index(IntEnum.class) + ", \"value\", \"I\");");
+        out.println("    if (JavaCPP_intValueFID == NULL) {");
+        out.println("        return JNI_ERR;");
+        out.println("    }");
+        out.println("    JavaCPP_longValueFID = JavaCPP_getFieldID(env, " +
+                jclasses.index(LongEnum.class) + ", \"value\", \"J\");");
+        out.println("    if (JavaCPP_longValueFID == NULL) {");
+        out.println("        return JNI_ERR;");
+        out.println("    }");
         out.println("    JavaCPP_initMID = JavaCPP_getMethodID(env, " +
                 jclasses.index(Pointer.class) + ", \"init\", \"(JJJJ)V\");");
         out.println("    if (JavaCPP_initMID == NULL) {");
@@ -1671,6 +1701,21 @@ public class Generator {
                 AdapterInformation adapterInfo = methodInfo.parameterRaw[j] ? null
                         : adapterInformation(false, methodInfo, j);
 
+                if (Enum.class.isAssignableFrom(methodInfo.parameterTypes[j])) {
+                    String s = enumValueType(methodInfo.parameterTypes[j]);
+                    if (s != null) {
+                        String S = Character.toUpperCase(s.charAt(0)) + s.substring(1);
+                        out.println("    if (arg" + j + " == NULL) {");
+                        out.println("        env->ThrowNew(JavaCPP_getClass(env, " +
+                                jclasses.index(NullPointerException.class) + "), \"Enum for argument " + j + " is NULL.\");");
+                        out.println("        return" + (methodInfo.returnType == void.class ? ";" : " 0;"));
+                        out.println("    }");
+                        out.println("    " + typeName[0] + " val" + j + typeName[1] + " = (" + typeName[0] + typeName[1] +
+                                ")env->Get" + S + "Field(arg" + j + ", JavaCPP_" + s + "ValueFID);");
+                    }
+                    continue;
+                }
+
                 if (FunctionPointer.class.isAssignableFrom(methodInfo.parameterTypes[j])) {
                     functions.index(methodInfo.parameterTypes[j]);
                     if (methodInfo.parameterTypes[j] == FunctionPointer.class) {
@@ -1817,7 +1862,10 @@ public class Generator {
                 out.println("    jobject rarg = obj;");
             } else if (methodInfo.returnType.isPrimitive()) {
                 out.println("    " + jniTypeName(methodInfo.returnType) + " rarg = 0;");
-                returnPrefix = typeName[0] + " rvalue" + typeName[1] + " = " + cast;
+                returnPrefix = typeName[0] + " rval" + typeName[1] + " = " + cast;
+            } else if (Enum.class.isAssignableFrom(methodInfo.returnType)) {
+                out.println("    jobject rarg = JavaCPP_createPointer(env, " + jclasses.index(methodInfo.returnType) + ");");
+                returnPrefix = typeName[0] + " rval" + typeName[1] + " = " + cast;
             } else {
                 Annotation returnBy = by(methodInfo.annotations);
                 String valueTypeName = valueTypeName(typeName);
@@ -2074,7 +2122,9 @@ public class Generator {
                 String[] typeName = cppTypeName(methodInfo.cls);
                 cast = "(" + typeName[0] + typeName[1] + ")";
             }
-            if (("(void*)".equals(cast) || "(void *)".equals(cast)) &&
+            if (Enum.class.isAssignableFrom(methodInfo.parameterTypes[j])) {
+                out.print(cast + "val" + j);
+            } else if (("(void*)".equals(cast) || "(void *)".equals(cast)) &&
                     methodInfo.parameterTypes[j] == long.class) {
                 out.print("jlong_to_ptr(arg" + j + ")");
             } else if (methodInfo.parameterTypes[j].isPrimitive()) {
@@ -2191,9 +2241,17 @@ public class Generator {
             if (methodInfo.valueSetter || methodInfo.memberSetter || methodInfo.noReturnGetter) {
                 // nothing
             } else if (methodInfo.returnType.isPrimitive()) {
-                out.println(indent + "rarg = (" + jniTypeName(methodInfo.returnType) + ")rvalue;");
+                out.println(indent + "rarg = (" + jniTypeName(methodInfo.returnType) + ")rval;");
             } else if (methodInfo.returnRaw) {
                 out.println(indent + "rarg = rptr;");
+            } else if (Enum.class.isAssignableFrom(methodInfo.returnType)) {
+                String s = enumValueType(methodInfo.returnType);
+                if (s != null) {
+                    String S = Character.toUpperCase(s.charAt(0)) + s.substring(1);
+                    out.println(indent + "if (rarg != NULL) {");
+                    out.println(indent + "    env->Set" + S + "Field(rarg, JavaCPP_" + s + "ValueFID, (j" + s + ")rval);");
+                    out.println(indent + "}");
+                }
             } else {
                 boolean needInit = false;
                 if (adapterInfo != null) {
@@ -2294,7 +2352,7 @@ public class Generator {
         }
         int skipParameters = methodInfo.parameterTypes.length > 0 && methodInfo.parameterTypes[0] == Class.class ? 1 : 0;
         for (int j = skipParameters; j < methodInfo.parameterTypes.length; j++) {
-            if (methodInfo.parameterRaw[j]) {
+            if (methodInfo.parameterRaw[j] || Enum.class.isAssignableFrom(methodInfo.parameterTypes[j])) {
                 continue;
             }
             Annotation passBy = by(methodInfo, j);
@@ -2516,6 +2574,16 @@ public class Generator {
                     out.println("    args[" + j + "]." +
                             signature(callbackParameterTypes[j]).toLowerCase() + " = (" +
                             jniTypeName(callbackParameterTypes[j]) + ")arg" + j + ";");
+                } else if (Enum.class.isAssignableFrom(callbackParameterTypes[j])) {
+                    String s = enumValueType(callbackParameterTypes[j]);
+                    if (s != null) {
+                        String S = Character.toUpperCase(s.charAt(0)) + s.substring(1);
+                        out.println("    jobject obj" + j + " = JavaCPP_createPointer(env, " + jclasses.index(callbackParameterTypes[j]) + ");");
+                        out.println("    args[" + j + "].l = obj" + j + ";");
+                        out.println("    if (obj" + j + " != NULL) {");
+                        out.println("        env->Set" + S + "Field(obj" + j + ", JavaCPP_" + s + "ValueFID, (j" + s + ")arg" + j + ");");
+                        out.println("    }");
+                    }
                 } else {
                     Annotation passBy = by(callbackParameterAnnotations[j]);
                     String[] typeName = cppTypeName(callbackParameterTypes[j]);
@@ -2724,7 +2792,17 @@ public class Generator {
             if ("void*".equals(returnTypeName[0]) && !callbackReturnType.isAnnotationPresent(Opaque.class)) {
                 returnTypeName[0] = "char*";
             }
-            if (Pointer.class.isAssignableFrom(callbackReturnType)) {
+            if (Enum.class.isAssignableFrom(callbackReturnType)) {
+                s = enumValueType(callbackReturnType);
+                if (s != null) {
+                    String S = Character.toUpperCase(s.charAt(0)) + s.substring(1);
+                    out.println("    if (rarg == NULL) {");
+                    out.println("        JavaCPP_log(\"Enum for return is NULL in callback for " + cls.getCanonicalName() + ".\");");
+                    out.println("    }");
+                    out.println("    " + returnTypeName[0] + " rval" + returnTypeName[1] + " = (" + returnTypeName[0] + returnTypeName[1] +
+                            ")(rarg == NULL ? 0 : env->Get" + S + "Field(rarg, JavaCPP_" + s + "ValueFID));");
+                }
+            } else if (Pointer.class.isAssignableFrom(callbackReturnType)) {
                 out.println("    " + returnTypeName[0] + " rptr" + returnTypeName[1] + " = rarg == NULL ? NULL : (" +
                         returnTypeName[0] + returnTypeName[1] + ")jlong_to_ptr(env->GetLongField(rarg, JavaCPP_addressFID));");
                 if (returnAdapterInfo != null) {
@@ -2774,6 +2852,8 @@ public class Generator {
         if (callbackReturnType != void.class) {
             if (callbackReturnType.isPrimitive()) {
                 out.println("    return " + callbackReturnCast + "rarg;");
+            } else if (Enum.class.isAssignableFrom(callbackReturnType)) {
+                out.println("    return " + callbackReturnCast + "rval;");
             } else if (returnAdapterInfo != null) {
                 usesAdapters = true;
                 out.println("    return " + returnAdapterInfo.name + "(" + callbackReturnCast + "rptr, rsize, rowner);");
@@ -3245,6 +3325,21 @@ public class Generator {
         return behaviorAnnotation;
     }
 
+    String enumValueType(Class<?> type) {
+        try {
+            Field f = type.getField("value");
+            if (!f.getType().isPrimitive()) {
+                logger.warn("Field \"value\" of enum type \"" + type.getCanonicalName()
+                        + "\" is not of a primitive type. Compilation will most likely fail.");
+            }
+            return f.getType().getName();
+        } catch (NoSuchFieldException ex) {
+            logger.warn("Field \"value\" missing from enum type \"" + type.getCanonicalName()
+                    + ". Compilation will most likely fail.");
+            return null;
+        }
+    }
+
     static String constValueTypeName(String ... typeName) {
         String type = typeName[0];
         if (type.endsWith("*") || type.endsWith("&")) {
@@ -3413,7 +3508,7 @@ public class Generator {
         } else {
             String scopedType = cppScopeName(type);
             if (scopedType.length() > 0) {
-                prefix = scopedType + "*";
+                prefix = scopedType + (Enum.class.isAssignableFrom(type) ? "" : "*");
             } else {
                 logger.warn("The class " + type.getCanonicalName() +
                         " does not map to any C++ type. Compilation will most likely fail.");
@@ -3519,8 +3614,8 @@ public class Generator {
         while (type != null) {
             Namespace namespace = type.getAnnotation(Namespace.class);
             String spaceName = namespace == null ? "" : namespace.value();
-            if (Pointer.class.isAssignableFrom(type) && (!baseClasses.contains(type)
-                    || type.isAnnotationPresent(Name.class))) {
+            if ((Enum.class.isAssignableFrom(type) || Pointer.class.isAssignableFrom(type))
+                    && (!baseClasses.contains(type) || type.isAnnotationPresent(Name.class))) {
                 Name name = type.getAnnotation(Name.class);
                 String s;
                 if (name == null) {

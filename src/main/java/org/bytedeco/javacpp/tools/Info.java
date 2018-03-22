@@ -85,6 +85,8 @@ public class Info {
     boolean cast = false;
     /** Indicates expressions of conditional macro groups to parse, or templates to specialize. */
     boolean define = false;
+    /** Maps native C++ {@code enum} classes to Java {@code enum} types, along with methods using them. */
+    boolean enumerate = false;
     /** Outputs declarations for this class into their subclasses as well.
      * Also adds methods for explicit casting, as done for multiple inheritance by default. */
     boolean flatten = false;
@@ -115,6 +117,8 @@ public class Info {
     public Info cast(boolean cast) { this.cast = cast; return this;  }
     public Info define() { this.define = true; return this; }
     public Info define(boolean define) { this.define = define; return this; }
+    public Info enumerate() { this.enumerate = true; return this; }
+    public Info enumerate(boolean enumerate) { this.enumerate = enumerate; return this; }
     public Info flatten() { this.flatten = true; return this; }
     public Info flatten(boolean flatten) { this.flatten = flatten; return this; }
     public Info translate() { this.translate = true; return this; }

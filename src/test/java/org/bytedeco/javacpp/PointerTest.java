@@ -197,8 +197,8 @@ public class PointerTest {
             new BytePointer(chunkSize);
             fail("OutOfMemoryError should have been thrown.");
         } catch (OutOfMemoryError e) {
-            System.out.println(e);
-            System.out.println(e.getCause());
+            //System.out.println(e);
+            //System.out.println(e.getCause());
         }
         for (int j = 0; j < chunks; j++) {
             pointers[j] = null;
@@ -276,8 +276,8 @@ public class PointerTest {
             new ShortPointer(chunkSize);
             fail("OutOfMemoryError should have been thrown.");
         } catch (OutOfMemoryError e) {
-            System.out.println(e);
-            System.out.println(e.getCause());
+            //System.out.println(e);
+            //System.out.println(e.getCause());
         }
         for (int j = 0; j < chunks; j++) {
             pointers[j] = null;
@@ -355,8 +355,8 @@ public class PointerTest {
             new IntPointer(chunkSize);
             fail("OutOfMemoryError should have been thrown.");
         } catch (OutOfMemoryError e) {
-            System.out.println(e);
-            System.out.println(e.getCause());
+            //System.out.println(e);
+            //System.out.println(e.getCause());
         }
         for (int j = 0; j < chunks; j++) {
             pointers[j] = null;
@@ -434,8 +434,8 @@ public class PointerTest {
             new LongPointer(chunkSize);
             fail("OutOfMemoryError should have been thrown.");
         } catch (OutOfMemoryError e) {
-            System.out.println(e);
-            System.out.println(e.getCause());
+            //System.out.println(e);
+            //System.out.println(e.getCause());
         }
         for (int j = 0; j < chunks; j++) {
             pointers[j] = null;
@@ -513,8 +513,8 @@ public class PointerTest {
             new FloatPointer(chunkSize);
             fail("OutOfMemoryError should have been thrown.");
         } catch (OutOfMemoryError e) {
-            System.out.println(e);
-            System.out.println(e.getCause());
+            //System.out.println(e);
+            //System.out.println(e.getCause());
         }
         for (int j = 0; j < chunks; j++) {
             pointers[j] = null;
@@ -592,8 +592,8 @@ public class PointerTest {
             new DoublePointer(chunkSize);
             fail("OutOfMemoryError should have been thrown.");
         } catch (OutOfMemoryError e) {
-            System.out.println(e);
-            System.out.println(e.getCause());
+            //System.out.println(e);
+            //System.out.println(e.getCause());
         }
         for (int j = 0; j < chunks; j++) {
             pointers[j] = null;
@@ -671,8 +671,8 @@ public class PointerTest {
             new CharPointer(chunkSize);
             fail("OutOfMemoryError should have been thrown.");
         } catch (OutOfMemoryError e) {
-            System.out.println(e);
-            System.out.println(e.getCause());
+            //System.out.println(e);
+            //System.out.println(e.getCause());
         }
         for (int j = 0; j < chunks; j++) {
             pointers[j] = null;

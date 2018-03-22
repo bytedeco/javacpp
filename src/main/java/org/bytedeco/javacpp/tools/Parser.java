@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -1161,14 +1162,14 @@ public class Parser {
             }
         }
         if (!using && info != null) {
-            valueType = info.valueTypes != null && ((type.constValue && dcl.reference) ||
+            valueType = (info.enumerate || info.valueTypes != null) && ((type.constValue && dcl.reference) ||
                     (dcl.indirections == 0 && !dcl.reference) || info.pointerTypes == null);
             implicitConst = info.cppNames[0].startsWith("const ");
-            infoLength = valueType ? info.valueTypes.length :
-                    info.pointerTypes != null ? info.pointerTypes.length : 1;
+            infoLength = valueType ? (info.valueTypes != null ? info.valueTypes.length : 1)
+                                   : (info.pointerTypes != null ? info.pointerTypes.length : 1);
             dcl.infoNumber = infoNumber < 0 ? 0 : infoNumber % infoLength;
-            type.javaName = valueType ? info.valueTypes[dcl.infoNumber] :
-                    info.pointerTypes != null ? info.pointerTypes[dcl.infoNumber] : type.javaName;
+            type.javaName = valueType ? (info.valueTypes != null ? info.valueTypes[dcl.infoNumber] : type.javaName)
+                                      : (info.pointerTypes != null ? info.pointerTypes[dcl.infoNumber] : type.javaName);
             type.javaName = context.shorten(type.javaName);
             needCast |= info.cast && !type.cppName.equals(type.javaName);
         }
@@ -3007,8 +3008,10 @@ public class Parser {
         String javaType = "int";
         String separator = "";
         String enumPrefix = "public static final " + javaType;
-        String countPrefix = " ";
+        String countPrefix = "";
         String enumerators = "";
+        String enumerators2 = "";
+        HashMap<String,String> enumeratorMap = new HashMap<String,String>();
         String extraText = "";
         String name = "";
         Token token = tokens.next().expect(Token.IDENTIFIER, '{', ':', ';');
@@ -3070,10 +3073,13 @@ public class Parser {
             } else if (info == null) {
                 infoMap.put(info = new Info(cppName).cppText(""));
             }
-            String spacing2 = " ";
+            String spacing2 = "";
             if (tokens.next().match('=')) {
                 spacing2 = tokens.get().spacing;
-                countPrefix = " ";
+                if (spacing2.length() > 0 && spacing2.charAt(0) == ' ') {
+                    spacing2 = spacing2.substring(1);
+                }
+                countPrefix = "";
                 int count2 = 0;
                 Token prevToken = new Token();
                 boolean translate = true;
@@ -3094,22 +3100,26 @@ public class Parser {
                 }
                 try {
                     count = Integer.parseInt(countPrefix.trim());
-                    countPrefix = " ";
+                    countPrefix = "";
                 } catch (NumberFormatException e) {
                     count = 0;
                     if (translate) {
                         countPrefix = translate(countPrefix);
+                        if (countPrefix.length() > 0 && countPrefix.charAt(0) == ' ') {
+                            countPrefix = countPrefix.substring(1);
+                        }
                     } else {
                         if (separator.equals(",")) {
                             separator = ";";
                         }
                         extraText = "\npublic static native @MemberGetter " + javaType + " " + javaName + "();\n";
                         enumPrefix = "public static final " + javaType;
-                        countPrefix = " " + javaName + "()";
+                        countPrefix = javaName + "()";
                     }
                 }
             }
             String text = separator + extraText + enumPrefix + comment;
+            String text2 = separator + comment;
             comment = commentAfter();
             if (comment.length() == 0 && tokens.get().match(',')) {
                 tokens.next();
@@ -3118,6 +3128,7 @@ public class Parser {
             String spacing = enumerator.spacing;
             if (comment.length() > 0) {
                 text += spacing + comment;
+                text2 += spacing + comment;
                 int newline = spacing.lastIndexOf('\n');
                 if (newline >= 0) {
                     spacing = spacing.substring(newline + 1);
@@ -3126,18 +3137,26 @@ public class Parser {
             if (spacing.length() == 0 && !text.endsWith(",")) {
                 spacing = " ";
             }
-            text += spacing + javaName + spacing2 + "=" + countPrefix;
+            text += spacing + javaName + spacing2 + " = " + countPrefix;
+            text2 += spacing + javaName + spacing2 + "(" + countPrefix;
             if (countPrefix.trim().length() > 0) {
                 if (count > 0) {
                     text += " + " + count;
+                    if (enumeratorMap.containsKey(countPrefix)) {
+                        text2 += ".value";
+                    }
+                    text2 += " + " + count;
                 }
             } else {
                 text += count;
+                text2 += count;
             }
             count++;
 
             if (info == null || !info.skip) {
                 enumerators += text;
+                enumerators2 += text2 + ")";
+                enumeratorMap.put(javaName, text);
                 separator = ",";
                 enumPrefix = "";
                 extraText = "";
@@ -3173,24 +3192,49 @@ public class Parser {
             }
             token = tokens.next();
         }
-        if (context.namespace != null) {
-            name = context.namespace + "::" + name;
-        }
-        Info info = infoMap.getFirst(name);
+        String cppName = context.namespace != null ? context.namespace + "::" + name : name;
+        Info info = infoMap.getFirst(cppName);
         if (info != null && info.skip) {
             decl.text = enumSpacing;
         } else {
-            decl.text += enumSpacing + "/** " + enumType + " " + name + " */\n";
             int newline = enumSpacing.lastIndexOf('\n');
-            if (newline >= 0) {
-                enumSpacing = enumSpacing.substring(newline + 1);
+            String enumSpacing2 = newline < 0 ? enumSpacing : enumSpacing.substring(newline + 1);
+            if (info != null && info.enumerate) {
+                String javaName = info.valueTypes != null && info.valueTypes.length > 0 ? info.valueTypes[0] : name;
+                String fullName = context.namespace != null ? context.namespace + "::" + javaName : javaName;
+                String annotations = "";
+                if (!fullName.equals(cppName)){
+                    annotations += "@Name(\"" + cppName + "\") ";
+                } else if (context.namespace != null && context.javaName == null) {
+                    annotations += "@Namespace(\"" + context.namespace + "\") ";
+                }
+                decl.text += enumSpacing + annotations + "public static enum " + javaName + " {"
+                          +  enumerators2 + token.expect(';').spacing + ";"
+                          + (comment.length() > 0 && comment.charAt(0) == ' ' ? comment.substring(1) : comment) + "\n\n"
+                          +  enumSpacing2 + "    public final " + javaType + " value;\n"
+                          +  enumSpacing2 + "    private " + javaName  + "(" + javaType + " v) { this.value = v; }\n"
+                          +  enumSpacing2 + "    private " + javaName  + "(" + javaName + " e) { this.value = e.value; }\n"
+                          +  enumSpacing2 + "}";
+                Info info2 = new Info(infoMap.getFirst(cppType)).cppNames(cppName);
+                info2.valueTypes = Arrays.copyOf(info2.valueTypes, info2.valueTypes.length + 1);
+                for (int i = 1; i < info2.valueTypes.length; i++) {
+                    info2.valueTypes[i] = "@Cast(\"" + cppName + "\") " + info2.valueTypes[i - 1];
+                }
+                info2.valueTypes[0] = javaName;
+                info2.pointerTypes = Arrays.copyOf(info2.pointerTypes, info2.pointerTypes.length);
+                for (int i = 0; i < info2.pointerTypes.length; i++) {
+                    info2.pointerTypes[i] = "@Cast(\"" + cppName + "*\") " + info2.pointerTypes[i];
+                }
+                infoMap.put(info2);
+            } else {
+                decl.text += enumSpacing + "/** " + enumType + " " + cppName + " */\n"
+                          +  enumSpacing2 + enumerators + token.expect(';').spacing + ";";
+                if (cppName.length() > 0) {
+                    Info info2 = infoMap.getFirst(cppType);
+                    infoMap.put(new Info(info2).cast().cppNames(cppName));
+                }
+                decl.text += extraText + comment;
             }
-            decl.text += enumSpacing + enumerators + token.expect(';').spacing + ";";
-            if (name.length() > 0) {
-                Info info2 = infoMap.getFirst(cppType);
-                infoMap.put(new Info(info2).cast().cppNames(name));
-            }
-            decl.text += extraText + comment;
         }
         declList.add(decl);
         tokens.next();
