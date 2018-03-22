@@ -30,6 +30,12 @@ import java.lang.reflect.Modifier;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Collection;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReentrantLock;
+
 import org.bytedeco.javacpp.annotation.Name;
 import org.bytedeco.javacpp.annotation.Platform;
 import org.bytedeco.javacpp.tools.Generator;
@@ -220,10 +226,10 @@ public class Pointer implements AutoCloseable {
     }
 
     /**
-     * A subclass of {@link PhantomReference} that also acts as a linked
-     * list to keep their references alive until they get garbage collected.
-     * Also keeps track of total allocated memory in bytes, to have it
-     * call {@link System#gc()} when that amount reaches {@link #maxBytes}.
+     * A subclass of {@link PhantomReference}, but also manages how instances can
+     * be allocated or removed.  This does it by tracking references of instances,
+     * and tracks memory usage.  If this class is unable to allocate, 
+     * {@link #trim()} should be invoked to try and free memory before retrying.
      */
     static class DeallocatorReference extends PhantomReference<Pointer> {
         DeallocatorReference(Pointer p, Deallocator deallocator) {
@@ -232,41 +238,90 @@ public class Pointer implements AutoCloseable {
             this.bytes = p.capacity * p.sizeof();
         }
 
-        static volatile DeallocatorReference head = null;
-        volatile DeallocatorReference prev = null, next = null;
+        static final int PHYSICAL_BYTES_SYNC_PAGE = 1000;
+        static final Collection<DeallocatorReference> refs = new ConcurrentLinkedQueue<>();
         Deallocator deallocator;
 
-        static volatile long totalBytes = 0;
+        static final ReentrantLock trimLock = new ReentrantLock();
+        static final AtomicInteger addPager = new AtomicInteger();
+        static final AtomicLong physicalBytes = new AtomicLong();
+        static final AtomicLong totalBytes = new AtomicLong();
         long bytes;
 
-        final void add() {
-            synchronized (DeallocatorReference.class) {
-                if (head == null) {
-                    head = this;
-                } else {
-                    next = head;
-                    next.prev = head = this;
+        final static int trim() {
+            if (trimLock.tryLock()) {
+                try {
+                    int count = 0;
+                    long startPhysicalBytes = physicalBytes();
+                    long startTotalBytes = totalBytes.get();
+                    long lastPhysicalBytes = startPhysicalBytes;
+                    while (count < maxRetries && 
+                            (totalBytes.get() >= startTotalBytes || 
+                              (lastPhysicalBytes = physicalBytes()) >= startPhysicalBytes)) {
+                        // only increment count if we are going to try a free
+                        count++;
+                        
+                        if (logger.isDebugEnabled()) {
+                            logger.debug("Calling System.gc() and Pointer.trimMemory()");
+                        }
+                        System.gc();
+                        Thread.sleep(100);  // TODO - evaluating using Thread.yield with a hot spin
+                        trimMemory();
+                    }
+                    
+                    physicalBytes.set(lastPhysicalBytes);
+                    
+                    return count;
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException(ex);
+                } catch (UnsatisfiedLinkError e) {
+                    // old binaries with physicalBytes() or trimMemory() missing -> ignore for backward compatibility
+                    if (logger.isDebugEnabled()) {
+                        logger.debug(e.getMessage());
+                    }
                 }
-                totalBytes += bytes;
+                return maxRetries;
+            } else {
+                trimLock.lock();  // just block while trim is going on other thread
+                trimLock.unlock();
+                return 0;
+            }
+        }
+
+        final boolean add() {
+            while (true) {
+                long pCas = physicalBytes.get();
+                long tCas = totalBytes.get();
+                if ((maxBytes <= 0 || tCas + bytes < maxBytes) && 
+                        (maxPhysicalBytes <= 0 || pCas + bytes < maxPhysicalBytes)) {
+                    if (physicalBytes.compareAndSet(pCas, pCas + bytes)) {
+                        if (totalBytes.compareAndSet(tCas, tCas + bytes)) {
+                            refs.add(this);
+                            if (addPager.incrementAndGet() % PHYSICAL_BYTES_SYNC_PAGE == 0) {
+                                // every now and then lets make sure physical bytes are not drifting from reality
+                                physicalBytes.set(physicalBytes());
+                                // subtract to avoid overflow (negative mod is slow)
+                                addPager.addAndGet(-PHYSICAL_BYTES_SYNC_PAGE);
+                            }
+                            return true;
+                        } else {
+                            physicalBytes.addAndGet(-bytes);  // total bytes prevented allocation, need to try again
+                        }
+                    }
+                } else {
+                    return false;
+                }
             }
         }
 
         final void remove() {
-            synchronized (DeallocatorReference.class) {
-                if (prev == this && next == this) {
-                    return;
-                }
-                if (prev == null) {
-                    head = next;
-                } else {
-                    prev.next = next;
-                }
-                if (next != null) {
-                    next.prev = prev;
-                }
-                prev = next = this;
-                totalBytes -= bytes;
-            }
+          if (refs.remove(this)) {
+              // decrement totalBytes here, but physical bytes are only updated lazily
+              totalBytes.addAndGet(-bytes);
+          } else {
+              throw new IllegalStateException("Pointer already removed");
+          }
         }
 
         @Override public void clear() {
@@ -422,7 +477,7 @@ public class Pointer implements AutoCloseable {
 
     /** Returns {@link DeallocatorReference#totalBytes}, current amount of memory tracked by deallocators. */
     public static long totalBytes() {
-        return DeallocatorReference.totalBytes;
+        return DeallocatorReference.totalBytes.get();
     }
 
     /** Returns {@link #maxPhysicalBytes}, the maximum amount of physical memory that should be used. */
@@ -543,42 +598,29 @@ public class Pointer implements AutoCloseable {
             DeallocatorReference r = deallocator instanceof DeallocatorReference ?
                     (DeallocatorReference)deallocator :
                     new DeallocatorReference(this, deallocator);
-            synchronized (DeallocatorThread.class) {
-                int count = 0;
-                long lastPhysicalBytes = 0;
-                try {
-                    while (count++ < maxRetries && ((maxBytes > 0 && DeallocatorReference.totalBytes + r.bytes > maxBytes)
-                                         || (maxPhysicalBytes > 0 && (lastPhysicalBytes = physicalBytes()) > maxPhysicalBytes))) {
-                        if (logger.isDebugEnabled()) {
-                            logger.debug("Calling System.gc() and Pointer.trimMemory() in " + this);
-                        }
-                        // try to get some more memory back
-                        System.gc();
-                        Thread.sleep(100);
-                        trimMemory();
-                    }
-                } catch (InterruptedException ex) {
-                    // reset interrupt to be nice
-                    Thread.currentThread().interrupt();
-                } catch (UnsatisfiedLinkError e) {
-                    // old binaries with physicalBytes() or trimMemory() missing -> ignore for backward compatibility
-                    if (logger.isDebugEnabled()) {
-                        logger.debug(e.getMessage());
-                    }
-                }
-                if (maxBytes > 0 && DeallocatorReference.totalBytes + r.bytes > maxBytes) {
+            int tryCount = 0;
+            while (true) {
+                if (r.add()) {
+                    break;
+                } else if (tryCount >= maxRetries) {
                     deallocate();
-                    throw new OutOfMemoryError("Failed to allocate memory within limits: totalBytes = "
-                            + formatBytes(DeallocatorReference.totalBytes) + " + " + formatBytes(r.bytes) + " > maxBytes = " + formatBytes(maxBytes));
-                } else if (maxPhysicalBytes > 0 && lastPhysicalBytes > maxPhysicalBytes) {
-                    deallocate();
-                    throw new OutOfMemoryError("Physical memory usage is too high: physicalBytes = "
-                            + formatBytes(lastPhysicalBytes) + " > maxPhysicalBytes = " + formatBytes(maxPhysicalBytes));
+                    if (maxBytes > 0 && DeallocatorReference.totalBytes.get() + r.bytes > maxBytes) {
+                        throw new OutOfMemoryError("Failed to allocate memory within limits: totalBytes = "
+                                + formatBytes(DeallocatorReference.totalBytes.get()) + " + " + formatBytes(r.bytes) + " > maxBytes = " + formatBytes(maxBytes));
+                    }
+                    long physicalBytes = DeallocatorReference.physicalBytes.get();
+                    if (maxPhysicalBytes > 0 && physicalBytes >= maxPhysicalBytes) {
+                        throw new OutOfMemoryError("Physical memory usage is too high: physicalBytes = "
+                                + formatBytes(physicalBytes) + " > maxPhysicalBytes = " + formatBytes(maxPhysicalBytes));
+                    } else {
+                        throw new OutOfMemoryError("Unable to allocate, unable to determine cause: bytes = "
+                                + formatBytes(r.bytes) + ", physicalBytes = "
+                                + formatBytes(physicalBytes) + ", totalBytes = "
+                                + formatBytes(DeallocatorReference.totalBytes.get()));
+                    }
+                } else {
+                    tryCount += DeallocatorReference.trim();
                 }
-                if (logger.isDebugEnabled()) {
-                    logger.debug("Registering " + this);
-                }
-                r.add();
             }
         }
         return (P)this;
@@ -606,15 +648,13 @@ public class Pointer implements AutoCloseable {
             deallocator.deallocate();
             address = 0;
         } else synchronized(DeallocatorReference.class) {
-            DeallocatorReference r = DeallocatorReference.head;
-            while (r != null) {
+            for (DeallocatorReference r : DeallocatorReference.refs) {
                 if (r.deallocator == deallocator) {
                     r.deallocator = null;
                     r.clear();
                     r.remove();
                     break;
                 }
-                r = r.next;
             }
         }
     }

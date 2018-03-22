@@ -191,7 +191,7 @@ public class PointerTest {
         for (int j = 0; j < chunks - 1; j++) {
             pointers[j] = new BytePointer(chunkSize);
         }
-        assertTrue(Pointer.DeallocatorReference.totalBytes >= (chunks - 1) * chunkSize * byteSize);
+        assertTrue(Pointer.DeallocatorReference.totalBytes.get() >= (chunks - 1) * chunkSize * byteSize);
         try {
             fieldReference = pointers;
             new BytePointer(chunkSize);
@@ -206,9 +206,9 @@ public class PointerTest {
         // make sure garbage collection runs
         fieldReference = null;
         pointers[0] = new BytePointer(chunkSize);
-        assertTrue(Pointer.DeallocatorReference.totalBytes < (chunks - 1) * chunkSize * byteSize);
-        assertTrue(Pointer.DeallocatorReference.totalBytes >= chunkSize * byteSize);
-        System.out.println(Pointer.DeallocatorReference.totalBytes + " " + chunkSize * byteSize);
+        assertTrue(Pointer.DeallocatorReference.totalBytes.get() < (chunks - 1) * chunkSize * byteSize);
+        assertTrue(Pointer.DeallocatorReference.totalBytes.get() >= chunkSize * byteSize);
+        System.out.println(Pointer.DeallocatorReference.totalBytes.get() + " " + chunkSize * byteSize);
     }
 
     @Test public void testShortPointer() {
@@ -270,7 +270,7 @@ public class PointerTest {
         for (int j = 0; j < chunks - 1; j++) {
             pointers[j] = new ShortPointer(chunkSize);
         }
-        assertTrue(Pointer.DeallocatorReference.totalBytes >= (chunks - 1) * chunkSize * shortSize);
+        assertTrue(Pointer.DeallocatorReference.totalBytes.get() >= (chunks - 1) * chunkSize * shortSize);
         try {
             fieldReference = pointers;
             new ShortPointer(chunkSize);
@@ -285,9 +285,9 @@ public class PointerTest {
         // make sure garbage collection runs
         fieldReference = null;
         pointers[0] = new ShortPointer(chunkSize);
-        assertTrue(Pointer.DeallocatorReference.totalBytes < (chunks - 1) * chunkSize * shortSize);
-        assertTrue(Pointer.DeallocatorReference.totalBytes >= chunkSize * shortSize);
-        System.out.println(Pointer.DeallocatorReference.totalBytes + " " + chunkSize * shortSize);
+        assertTrue(Pointer.DeallocatorReference.totalBytes.get() < (chunks - 1) * chunkSize * shortSize);
+        assertTrue(Pointer.DeallocatorReference.totalBytes.get() >= chunkSize * shortSize);
+        System.out.println(Pointer.DeallocatorReference.totalBytes.get() + " " + chunkSize * shortSize);
     }
 
     @Test public void testIntPointer() {
@@ -349,7 +349,7 @@ public class PointerTest {
         for (int j = 0; j < chunks - 1; j++) {
             pointers[j] = new IntPointer(chunkSize);
         }
-        assertTrue(Pointer.DeallocatorReference.totalBytes >= (chunks - 1) * chunkSize * intSize);
+        assertTrue(Pointer.DeallocatorReference.totalBytes.get() >= (chunks - 1) * chunkSize * intSize);
         try {
             fieldReference = pointers;
             new IntPointer(chunkSize);
@@ -364,9 +364,9 @@ public class PointerTest {
         // make sure garbage collection runs
         fieldReference = null;
         pointers[0] = new IntPointer(chunkSize);
-        assertTrue(Pointer.DeallocatorReference.totalBytes < (chunks - 1) * chunkSize * intSize);
-        assertTrue(Pointer.DeallocatorReference.totalBytes >= chunkSize * intSize);
-        System.out.println(Pointer.DeallocatorReference.totalBytes + " " + chunkSize * intSize);
+        assertTrue(Pointer.DeallocatorReference.totalBytes.get() < (chunks - 1) * chunkSize * intSize);
+        assertTrue(Pointer.DeallocatorReference.totalBytes.get() >= chunkSize * intSize);
+        System.out.println(Pointer.DeallocatorReference.totalBytes.get() + " " + chunkSize * intSize);
     }
 
     @Test public void testLongPointer() {
@@ -428,7 +428,7 @@ public class PointerTest {
         for (int j = 0; j < chunks - 1; j++) {
             pointers[j] = new LongPointer(chunkSize);
         }
-        assertTrue(Pointer.DeallocatorReference.totalBytes >= (chunks - 1) * chunkSize * longSize);
+        assertTrue(Pointer.DeallocatorReference.totalBytes.get() >= (chunks - 1) * chunkSize * longSize);
         try {
             fieldReference = pointers;
             new LongPointer(chunkSize);
@@ -443,9 +443,9 @@ public class PointerTest {
         // make sure garbage collection runs
         fieldReference = null;
         pointers[0] = new LongPointer(chunkSize);
-        assertTrue(Pointer.DeallocatorReference.totalBytes < (chunks - 1) * chunkSize * longSize);
-        assertTrue(Pointer.DeallocatorReference.totalBytes >= chunkSize * longSize);
-        System.out.println(Pointer.DeallocatorReference.totalBytes + " " + chunkSize * longSize);
+        assertTrue(Pointer.DeallocatorReference.totalBytes.get() < (chunks - 1) * chunkSize * longSize);
+        assertTrue(Pointer.DeallocatorReference.totalBytes.get() >= chunkSize * longSize);
+        System.out.println(Pointer.DeallocatorReference.totalBytes.get() + " " + chunkSize * longSize);
     }
 
     @Test public void testFloatPointer() {
@@ -507,7 +507,7 @@ public class PointerTest {
         for (int j = 0; j < chunks - 1; j++) {
             pointers[j] = new FloatPointer(chunkSize);
         }
-        assertTrue(Pointer.DeallocatorReference.totalBytes >= (chunks - 1) * chunkSize * floatSize);
+        assertTrue(Pointer.DeallocatorReference.totalBytes.get() >= (chunks - 1) * chunkSize * floatSize);
         try {
             fieldReference = pointers;
             new FloatPointer(chunkSize);
@@ -522,9 +522,9 @@ public class PointerTest {
         // make sure garbage collection runs
         fieldReference = null;
         pointers[0] = new FloatPointer(chunkSize);
-        assertTrue(Pointer.DeallocatorReference.totalBytes < (chunks - 1) * chunkSize * floatSize);
-        assertTrue(Pointer.DeallocatorReference.totalBytes >= chunkSize * floatSize);
-        System.out.println(Pointer.DeallocatorReference.totalBytes + " " + chunkSize * floatSize);
+        assertTrue(Pointer.DeallocatorReference.totalBytes.get() < (chunks - 1) * chunkSize * floatSize);
+        assertTrue(Pointer.DeallocatorReference.totalBytes.get() >= chunkSize * floatSize);
+        System.out.println(Pointer.DeallocatorReference.totalBytes.get() + " " + chunkSize * floatSize);
     }
 
     @Test public void testDoublePointer() {
@@ -586,7 +586,7 @@ public class PointerTest {
         for (int j = 0; j < chunks - 1; j++) {
             pointers[j] = new DoublePointer(chunkSize);
         }
-        assertTrue(Pointer.DeallocatorReference.totalBytes >= (chunks - 1) * chunkSize * doubleSize);
+        assertTrue(Pointer.DeallocatorReference.totalBytes.get() >= (chunks - 1) * chunkSize * doubleSize);
         try {
             fieldReference = pointers;
             new DoublePointer(chunkSize);
@@ -601,9 +601,9 @@ public class PointerTest {
         // make sure garbage collection runs
         fieldReference = null;
         pointers[0] = new DoublePointer(chunkSize);
-        assertTrue(Pointer.DeallocatorReference.totalBytes < (chunks - 1) * chunkSize * doubleSize);
-        assertTrue(Pointer.DeallocatorReference.totalBytes >= chunkSize * doubleSize);
-        System.out.println(Pointer.DeallocatorReference.totalBytes + " " + chunkSize * doubleSize);
+        assertTrue(Pointer.DeallocatorReference.totalBytes.get() < (chunks - 1) * chunkSize * doubleSize);
+        assertTrue(Pointer.DeallocatorReference.totalBytes.get() >= chunkSize * doubleSize);
+        System.out.println(Pointer.DeallocatorReference.totalBytes.get() + " " + chunkSize * doubleSize);
     }
 
     @Test public void testCharPointer() {
@@ -665,7 +665,7 @@ public class PointerTest {
         for (int j = 0; j < chunks - 1; j++) {
             pointers[j] = new CharPointer(chunkSize);
         }
-        assertTrue(Pointer.DeallocatorReference.totalBytes >= (chunks - 1) * chunkSize * charSize);
+        assertTrue(Pointer.DeallocatorReference.totalBytes.get() >= (chunks - 1) * chunkSize * charSize);
         try {
             fieldReference = pointers;
             new CharPointer(chunkSize);
@@ -680,9 +680,9 @@ public class PointerTest {
         // make sure garbage collection runs
         fieldReference = null;
         pointers[0] = new CharPointer(chunkSize);
-        assertTrue(Pointer.DeallocatorReference.totalBytes < (chunks - 1) * chunkSize * charSize);
-        assertTrue(Pointer.DeallocatorReference.totalBytes >= chunkSize * charSize);
-        System.out.println(Pointer.DeallocatorReference.totalBytes + " " + chunkSize * charSize);
+        assertTrue(Pointer.DeallocatorReference.totalBytes.get() < (chunks - 1) * chunkSize * charSize);
+        assertTrue(Pointer.DeallocatorReference.totalBytes.get() >= chunkSize * charSize);
+        System.out.println(Pointer.DeallocatorReference.totalBytes.get() + " " + chunkSize * charSize);
     }
 
     @Test public void testDeallocator() throws InterruptedException {
