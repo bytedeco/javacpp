@@ -35,7 +35,7 @@ import static org.junit.Assert.*;
  *
  * @author Samuel Audet
  */
-@Platform(include = "EnumTest.h")
+@Platform(compiler = "cpp11", include = "EnumTest.h")
 public class EnumTest {
 
     @Name("CharEnum") public static enum ByteEnum {
