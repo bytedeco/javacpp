@@ -481,8 +481,7 @@ public class Generator {
             out.println("        char line[256];");
             out.println("        char* s;");
             out.println("        int n;");
-            out.println("        lseek(fd, 0, SEEK_SET);");
-            out.println("        if ((n = read(fd, line, sizeof(line))) > 0 && (s = (char*)memchr(line, ' ', n)) != NULL) {");
+            out.println("        if ((n = pread(fd, line, sizeof(line), 0)) > 0 && (s = (char*)memchr(line, ' ', n)) != NULL) {");
             out.println("            size = (jlong)(atoll(s + 1) * getpagesize());");
             out.println("        }");
             out.println("        // no close(fd);");
