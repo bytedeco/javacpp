@@ -326,12 +326,12 @@ public class Pointer implements AutoCloseable {
         }
 
         final void remove() {
-          if (refs.remove(this)) {
-              // decrement totalBytes here, but physical bytes are only updated lazily
-              totalBytes.addAndGet(-bytes);
-          } else {
-              throw new IllegalStateException("Pointer already removed");
-          }
+            if (refs.remove(this)) {
+                // decrement totalBytes here, but physical bytes are only updated lazily
+                totalBytes.addAndGet(-bytes);
+            } else {
+                throw new IllegalStateException("Pointer already removed");
+            }
         }
 
         @Override public void clear() {
@@ -657,7 +657,7 @@ public class Pointer implements AutoCloseable {
             }
             deallocator.deallocate();
             address = 0;
-        } else synchronized(DeallocatorReference.class) {
+        } else {
             for (DeallocatorReference r : DeallocatorReference.refs) {
                 if (r.deallocator == deallocator) {
                     r.deallocator = null;
