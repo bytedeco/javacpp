@@ -32,7 +32,6 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -238,29 +237,21 @@ public class Pointer implements AutoCloseable {
             this.bytes = p.capacity * p.sizeof();
         }
 
-        static final int PHYSICAL_BYTES_SYNC_MAX_PAGE = 1000;
         static final Collection<DeallocatorReference> refs = new ConcurrentLinkedQueue<>();
         Deallocator deallocator;
 
         static final ReentrantLock trimLock = new ReentrantLock();
-        static final AtomicInteger addPager = new AtomicInteger();
-        static final AtomicLong physicalBytes = new AtomicLong();
         static final AtomicLong totalBytes = new AtomicLong();
         long bytes;
 
-        final static int trim() {
+        final static int trim(long neededBytes) {
             if (trimLock.tryLock()) {
                 try {
                     int count = 0;
-                    long startPhysicalBytes = physicalBytes();
-                    long startTotalBytes = totalBytes.get();
-                    long lastPhysicalBytes = startPhysicalBytes;
-                    while (count < maxRetries && 
-                            (totalBytes.get() >= startTotalBytes || 
-                              (lastPhysicalBytes = physicalBytes()) >= startPhysicalBytes)) {
+                    while (count < maxRetries && ((maxBytes > 0 && DeallocatorReference.totalBytes.get() + neededBytes > maxBytes)
+                            || (maxPhysicalBytes > 0 && physicalBytes() + neededBytes > maxPhysicalBytes))) {
                         // only increment count if we are going to try a free
                         count++;
-                        
                         if (logger.isDebugEnabled()) {
                             logger.debug("Calling System.gc() and Pointer.trimMemory()");
                         }
@@ -268,9 +259,6 @@ public class Pointer implements AutoCloseable {
                         Thread.sleep(100);  // TODO - evaluating using Thread.yield with a hot spin
                         trimMemory();
                     }
-                    
-                    physicalBytes.set(lastPhysicalBytes);
-                    
                     return count;
                 } catch (InterruptedException ex) {
                     Thread.currentThread().interrupt();
@@ -291,33 +279,12 @@ public class Pointer implements AutoCloseable {
 
         final boolean add() {
             while (true) {
-                long pCas = physicalBytes.get();
                 long tCas = totalBytes.get();
                 if ((maxBytes <= 0 || tCas + bytes < maxBytes) && 
-                        (maxPhysicalBytes <= 0 || pCas + bytes < maxPhysicalBytes)) {
-                    if (physicalBytes.compareAndSet(pCas, pCas + bytes)) {
-                        if (totalBytes.compareAndSet(tCas, tCas + bytes)) {
-                            refs.add(this);
-                            int page = PHYSICAL_BYTES_SYNC_MAX_PAGE;
-                            if (maxPhysicalBytes > 0) {
-                                if (pCas > maxPhysicalBytes / 10) {
-                                    page /= 10;
-                                } else if (pCas > maxPhysicalBytes / 4) {
-                                    page /= 5;
-                                } else if (pCas > maxPhysicalBytes / 2) {
-                                    page /= 2;
-                                }
-                            } 
-                            if (addPager.incrementAndGet() % page == 0) {
-                                // every now and then lets make sure physical bytes are not drifting from reality
-                                physicalBytes.set(physicalBytes());
-                                // subtract to avoid overflow (negative mod is slow)
-                                addPager.addAndGet(-page);
-                            }
-                            return true;
-                        } else {
-                            physicalBytes.addAndGet(-bytes);  // total bytes prevented allocation, need to try again
-                        }
+                        (maxPhysicalBytes <= 0 || physicalBytes() < maxPhysicalBytes)) {
+                    if (totalBytes.compareAndSet(tCas, tCas + bytes)) {
+                        refs.add(this);
+                        return true;
                     }
                 } else {
                     return false;
@@ -618,7 +585,7 @@ public class Pointer implements AutoCloseable {
                         throw new OutOfMemoryError("Failed to allocate memory within limits: totalBytes = "
                                 + formatBytes(DeallocatorReference.totalBytes.get()) + " + " + formatBytes(r.bytes) + " > maxBytes = " + formatBytes(maxBytes));
                     }
-                    long physicalBytes = DeallocatorReference.physicalBytes.get();
+                    long physicalBytes = physicalBytes();
                     if (maxPhysicalBytes > 0 && physicalBytes >= maxPhysicalBytes) {
                         throw new OutOfMemoryError("Physical memory usage is too high: physicalBytes = "
                                 + formatBytes(physicalBytes) + " > maxPhysicalBytes = " + formatBytes(maxPhysicalBytes));
@@ -629,7 +596,7 @@ public class Pointer implements AutoCloseable {
                                 + formatBytes(DeallocatorReference.totalBytes.get()));
                     }
                 } else {
-                    tryCount += DeallocatorReference.trim();
+                    tryCount += DeallocatorReference.trim(r.bytes);
                 }
             }
         }
