@@ -3049,7 +3049,7 @@ public class Parser {
                 extraText += comment + macroDecl.text;
                 if (separator.equals(",") && !macroDecl.text.trim().startsWith("//")) {
                     separator = ";";
-                    enumPrefix = "\npublic static final " + javaType;
+                    enumPrefix = "public static final " + javaType;
                 }
                 continue;
             }
@@ -3112,11 +3112,15 @@ public class Parser {
                         if (separator.equals(",")) {
                             separator = ";";
                         }
-                        extraText = "\npublic static native @MemberGetter " + javaType + " " + javaName + "();\n";
+                        extraText += "\npublic static native @MemberGetter " + javaType + " " + javaName + "();\n";
                         enumPrefix = "public static final " + javaType;
                         countPrefix = javaName + "()";
                     }
                 }
+            }
+            if (extraText.length() > 0 && !extraText.endsWith("\n") && enumPrefix.length() > 0) {
+                extraText += comment + "\n";
+                comment = "";
             }
             String text = separator + extraText + enumPrefix + comment;
             String text2 = separator + comment;
