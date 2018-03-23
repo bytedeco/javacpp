@@ -238,7 +238,7 @@ public class Pointer implements AutoCloseable {
             this.bytes = p.capacity * p.sizeof();
         }
 
-        static final int PHYSICAL_BYTES_SYNC_PAGE = 1000;
+        static final int PHYSICAL_BYTES_SYNC_MAX_PAGE = 1000;
         static final Collection<DeallocatorReference> refs = new ConcurrentLinkedQueue<>();
         Deallocator deallocator;
 
@@ -298,11 +298,21 @@ public class Pointer implements AutoCloseable {
                     if (physicalBytes.compareAndSet(pCas, pCas + bytes)) {
                         if (totalBytes.compareAndSet(tCas, tCas + bytes)) {
                             refs.add(this);
-                            if (addPager.incrementAndGet() % PHYSICAL_BYTES_SYNC_PAGE == 0) {
+                            int page = PHYSICAL_BYTES_SYNC_MAX_PAGE;
+                            if (maxPhysicalBytes > 0) {
+                                if (pCas > maxPhysicalBytes / 10) {
+                                    page /= 10;
+                                } else if (pCas > maxPhysicalBytes / 4) {
+                                    page /= 5;
+                                } else if (pCas > maxPhysicalBytes / 2) {
+                                    page /= 2;
+                                }
+                            } 
+                            if (addPager.incrementAndGet() % page == 0) {
                                 // every now and then lets make sure physical bytes are not drifting from reality
                                 physicalBytes.set(physicalBytes());
                                 // subtract to avoid overflow (negative mod is slow)
-                                addPager.addAndGet(-PHYSICAL_BYTES_SYNC_PAGE);
+                                addPager.addAndGet(-page);
                             }
                             return true;
                         } else {
