@@ -1,4 +1,5 @@
 
+ * Enhance `Loader.createLibraryLink()` by allowing to create symbolic links in other directories
  * Fix `Parser` failing on `enum` declarations where the first line is a macro ([issue #230](https://github.com/bytedeco/javacpp/issues/230))
  * Make call to `Pointer.physicalBytes()` thread safe and remove lock ([issue #231](https://github.com/bytedeco/javacpp/issues/231))
  * Add `Info.enumerate` to let `Parser` map C++ enum classes to Java enum types ([issue #108](https://github.com/bytedeco/javacpp/issues/108))

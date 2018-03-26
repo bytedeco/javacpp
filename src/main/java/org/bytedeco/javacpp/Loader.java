@@ -1248,39 +1248,50 @@ public class Loader {
 
     /**
      * Creates a version-less symbolic link to a library file, if needed.
+     * Also creates symbolic links in given paths, with and without version.
      *
      * @param filename of the probably versioned library
      * @param properties of the class associated with the library
-     * @param libnameversion the library name and version as with {@link #loadLibrary(URL[], String)}
+     * @param libnameversion the library name and version as with {@link #loadLibrary(URL[], String)} (can be null)
+     * @param paths where to create links, in addition to the parent directory of filename
      * @return the version-less filename (or null on failure), a symbolic link only if needed
      */
-    public static String createLibraryLink(String filename, ClassProperties properties, String libnameversion) {
+    public static String createLibraryLink(String filename, ClassProperties properties, String libnameversion, String ... paths) {
         File file = new File(filename);
         String parent = file.getParent(), name = file.getName(), link = null;
 
-        String[] split = libnameversion.split("#");
+        String[] split = libnameversion != null ? libnameversion.split("#") : new String[] {""};
         String[] s = (split.length > 1 ? split[1] : split[0]).split("@");
         String libname = s[0];
         String version = s.length > 1 ? s[s.length-1] : "";
 
-        if (version.length() == 0 || !name.contains(libname)) {
+        if (!name.contains(libname)) {
             return filename;
         }
         for (String suffix : properties.get("platform.library.suffix")) {
             int n = name.lastIndexOf(suffix);
-            int n2 = name.lastIndexOf(version);
+            int n2 = version.length() != 0 ? name.lastIndexOf(version)
+                                           : name.indexOf(".");
             if (n > 0 && n2 > 0) {
                 link = name.substring(0, n < n2 ? n : n2) + suffix;
                 break;
             }
         }
-        if (link != null && link.length() > 0 && !link.equals(name)) {
+        if (link == null) {
+            for (String suffix : properties.get("platform.library.suffix")) {
+                if (name.endsWith(suffix)) {
+                    link = name;
+                    break;
+                }
+            }
+        }
+        if (link != null && link.length() > 0) {
             File linkFile = new File(parent, link);
             try {
                 Path linkPath = linkFile.toPath();
                 Path targetPath = Paths.get(name);
                 if ((!linkFile.exists() || !Files.isSymbolicLink(linkPath) || !Files.readSymbolicLink(linkPath).equals(targetPath))
-                        && !targetPath.isAbsolute() && !targetPath.equals(linkPath)) {
+                        && !targetPath.isAbsolute() && !targetPath.equals(linkPath.getFileName())) {
                     if (logger.isDebugEnabled()) {
                         logger.debug("Creating symbolic link " + linkPath);
                     }
@@ -1288,6 +1299,25 @@ public class Loader {
                     Files.createSymbolicLink(linkPath, targetPath);
                 }
                 filename = linkFile.toString();
+
+                for (String parent2 : paths) {
+                    if (parent2 == null) {
+                        continue;
+                    }
+                    for (String link2 : new String[] { link, name }) {
+                        File linkFile2 = new File(parent2, link2);
+                        Path linkPath2 = linkFile2.toPath();
+                        Path relativeTarget = Paths.get(parent2).relativize(Paths.get(parent)).resolve(name);
+                        if ((!linkFile2.exists() || !Files.isSymbolicLink(linkPath2) || !Files.readSymbolicLink(linkPath2).equals(relativeTarget))
+                                && !relativeTarget.isAbsolute() && !relativeTarget.equals(linkPath2.getFileName())) {
+                            if (logger.isDebugEnabled()) {
+                                logger.debug("Creating symbolic link " + linkPath2);
+                            }
+                            linkFile2.delete();
+                            Files.createSymbolicLink(linkPath2, relativeTarget);
+                        }
+                    }
+                }
             } catch (IOException | RuntimeException e) {
                 // ... (probably an unsupported operation on Windows, but DLLs never need links,
                 // or other (filesystem?) exception: for example,
