@@ -31,7 +31,8 @@ import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Collection;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.Collections;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -237,7 +238,8 @@ public class Pointer implements AutoCloseable {
             this.bytes = p.capacity * p.sizeof();
         }
 
-        static final Collection<DeallocatorReference> refs = new ConcurrentLinkedQueue<>();
+        static final Collection<DeallocatorReference> refs = 
+                Collections.newSetFromMap(new ConcurrentHashMap<DeallocatorReference, Boolean>(16, 1, 1));
         Deallocator deallocator;
 
         static final ReentrantLock trimLock = new ReentrantLock();
@@ -438,7 +440,9 @@ public class Pointer implements AutoCloseable {
         maxRetries = n;
     }
 
-    /** Clears, deallocates, and removes all garbage collected objects from the {@link #referenceQueue}. */
+    /** Clears, deallocates, and removes all garbage collected objects from the {@link #referenceQueue}.  This will be 
+     * a no-op if the dealocator thread is NOT running (enabled by default).  If the thread is running, this will 
+     * attempt to reduce its burden and instead by also deallocating references on this invoking thread.*/
     public static void deallocateReferences() {
         DeallocatorReference r;
         while (referenceQueue != null && (r = (DeallocatorReference)referenceQueue.poll()) != null) {
