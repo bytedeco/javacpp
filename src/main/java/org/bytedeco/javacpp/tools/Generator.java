@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Samuel Audet
+ * Copyright (C) 2011-2018 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -170,7 +170,7 @@ public class Generator {
     IndexedSet<Class> functions, deallocators, arrayDeallocators, jclasses;
     Map<Class,Set<String>> members, virtualFunctions, virtualMembers;
     Map<Method,MethodInformation> annotationCache;
-    boolean mayThrowExceptions, usesAdapters, passesStrings;
+    boolean mayThrowExceptions, usesAdapters, passesStrings, accessesEnums;
 
     public boolean generate(String sourceFilename, String headerFilename, String loadSuffix,
             String baseLoadSuffix, String classPath, Class<?> ... classes) throws IOException {
@@ -199,7 +199,7 @@ public class Generator {
                     jclasses.index(cls);
                 }
             }
-            if (classes(true, true, true, loadSuffix, baseLoadSuffix, classPath, classes)) {
+            if (classes(true, true, true, true, loadSuffix, baseLoadSuffix, classPath, classes)) {
                 // second pass with a real writer
                 File sourceFile = new File(sourceFilename);
                 File sourceDir = sourceFile.getParentFile();
@@ -216,7 +216,7 @@ public class Generator {
                     }
                     out2 = encoding != null ? new PrintWriter(headerFile, encoding) : new PrintWriter(headerFile);
                 }
-                return classes(mayThrowExceptions, usesAdapters, passesStrings, loadSuffix, baseLoadSuffix, classPath, classes);
+                return classes(mayThrowExceptions, usesAdapters, passesStrings, accessesEnums, loadSuffix, baseLoadSuffix, classPath, classes);
             } else {
                 return false;
             }
@@ -230,7 +230,7 @@ public class Generator {
         }
     }
 
-    boolean classes(boolean handleExceptions, boolean defineAdapters, boolean convertStrings,
+    boolean classes(boolean handleExceptions, boolean defineAdapters, boolean convertStrings, boolean declareEnums,
             String loadSuffix, String baseLoadSuffix, String classPath, Class<?> ... classes) {
         String version = Generator.class.getPackage().getImplementationVersion();
         if (version == null) {
@@ -440,10 +440,12 @@ public class Generator {
         out.println("static jfieldID JavaCPP_capacityFID = NULL;");
         out.println("static jfieldID JavaCPP_deallocatorFID = NULL;");
         out.println("static jfieldID JavaCPP_ownerAddressFID = NULL;");
-        out.println("static jfieldID JavaCPP_byteValueFID = NULL;");
-        out.println("static jfieldID JavaCPP_shortValueFID = NULL;");
-        out.println("static jfieldID JavaCPP_intValueFID = NULL;");
-        out.println("static jfieldID JavaCPP_longValueFID = NULL;");
+        if (declareEnums) {
+            out.println("static jfieldID JavaCPP_byteValueFID = NULL;");
+            out.println("static jfieldID JavaCPP_shortValueFID = NULL;");
+            out.println("static jfieldID JavaCPP_intValueFID = NULL;");
+            out.println("static jfieldID JavaCPP_longValueFID = NULL;");
+        }
         out.println("static jmethodID JavaCPP_initMID = NULL;");
         out.println("static jmethodID JavaCPP_arrayMID = NULL;");
         out.println("static jmethodID JavaCPP_stringMID = NULL;");
@@ -778,6 +780,22 @@ public class Generator {
         out.println("    return fid;");
         out.println("}");
         out.println();
+        if (declareEnums) {
+            out.println("static JavaCPP_noinline jfieldID JavaCPP_getFieldID(JNIEnv* env, const char* clsName, const char* name, const char* sig) {");
+            out.println("    jclass cls = env->FindClass(clsName);");
+            out.println("    if (cls == NULL || env->ExceptionCheck()) {");
+            out.println("        JavaCPP_log(\"Error loading class %s.\", clsName);");
+            out.println("        return NULL;");
+            out.println("    }");
+            out.println("    jfieldID fid = env->GetFieldID(cls, name, sig);");
+            out.println("    if (fid == NULL || env->ExceptionCheck()) {");
+            out.println("        JavaCPP_log(\"Error getting field ID of %s/%s\", clsName, name);");
+            out.println("        return NULL;");
+            out.println("    }");
+            out.println("    return fid;");
+            out.println("}");
+            out.println();
+        }
         out.println("static JavaCPP_noinline jmethodID JavaCPP_getMethodID(JNIEnv* env, int i, const char* name, const char* sig) {");
         out.println("    jclass cls = JavaCPP_getClass(env, i);");
         out.println("    if (cls == NULL) {");
@@ -1398,26 +1416,28 @@ public class Generator {
         out.println("    if (JavaCPP_ownerAddressFID == NULL) {");
         out.println("        return JNI_ERR;");
         out.println("    }");
-        out.println("    JavaCPP_byteValueFID = JavaCPP_getFieldID(env, " +
-                jclasses.index(ByteEnum.class) + ", \"value\", \"B\");");
-        out.println("    if (JavaCPP_byteValueFID == NULL) {");
-        out.println("        return JNI_ERR;");
-        out.println("    }");
-        out.println("    JavaCPP_shortValueFID = JavaCPP_getFieldID(env, " +
-                jclasses.index(ShortEnum.class) + ", \"value\", \"S\");");
-        out.println("    if (JavaCPP_shortValueFID == NULL) {");
-        out.println("        return JNI_ERR;");
-        out.println("    }");
-        out.println("    JavaCPP_intValueFID = JavaCPP_getFieldID(env, " +
-                jclasses.index(IntEnum.class) + ", \"value\", \"I\");");
-        out.println("    if (JavaCPP_intValueFID == NULL) {");
-        out.println("        return JNI_ERR;");
-        out.println("    }");
-        out.println("    JavaCPP_longValueFID = JavaCPP_getFieldID(env, " +
-                jclasses.index(LongEnum.class) + ", \"value\", \"J\");");
-        out.println("    if (JavaCPP_longValueFID == NULL) {");
-        out.println("        return JNI_ERR;");
-        out.println("    }");
+        if (declareEnums) {
+            out.println("    JavaCPP_byteValueFID = JavaCPP_getFieldID(env, \"" +
+                    ByteEnum.class.getName().replace('.', '/') + "\", \"value\", \"B\");");
+            out.println("    if (JavaCPP_byteValueFID == NULL) {");
+            out.println("        return JNI_ERR;");
+            out.println("    }");
+            out.println("    JavaCPP_shortValueFID = JavaCPP_getFieldID(env, \"" +
+                    ShortEnum.class.getName().replace('.', '/') + "\", \"value\", \"S\");");
+            out.println("    if (JavaCPP_shortValueFID == NULL) {");
+            out.println("        return JNI_ERR;");
+            out.println("    }");
+            out.println("    JavaCPP_intValueFID = JavaCPP_getFieldID(env, \"" +
+                    IntEnum.class.getName().replace('.', '/') + "\", \"value\", \"I\");");
+            out.println("    if (JavaCPP_intValueFID == NULL) {");
+            out.println("        return JNI_ERR;");
+            out.println("    }");
+            out.println("    JavaCPP_longValueFID = JavaCPP_getFieldID(env, \"" +
+                    LongEnum.class.getName().replace('.', '/') + "\", \"value\", \"J\");");
+            out.println("    if (JavaCPP_longValueFID == NULL) {");
+            out.println("        return JNI_ERR;");
+            out.println("    }");
+        }
         out.println("    JavaCPP_initMID = JavaCPP_getMethodID(env, " +
                 jclasses.index(Pointer.class) + ", \"init\", \"(JJJJ)V\");");
         out.println("    if (JavaCPP_initMID == NULL) {");
@@ -1701,6 +1721,7 @@ public class Generator {
                         : adapterInformation(false, methodInfo, j);
 
                 if (Enum.class.isAssignableFrom(methodInfo.parameterTypes[j])) {
+                    accessesEnums = true;
                     String s = enumValueType(methodInfo.parameterTypes[j]);
                     if (s != null) {
                         String S = Character.toUpperCase(s.charAt(0)) + s.substring(1);
@@ -1863,6 +1884,7 @@ public class Generator {
                 out.println("    " + jniTypeName(methodInfo.returnType) + " rarg = 0;");
                 returnPrefix = typeName[0] + " rval" + typeName[1] + " = " + cast;
             } else if (Enum.class.isAssignableFrom(methodInfo.returnType)) {
+                accessesEnums = true;
                 out.println("    jobject rarg = JavaCPP_createPointer(env, " + jclasses.index(methodInfo.returnType) + ");");
                 returnPrefix = typeName[0] + " rval" + typeName[1] + " = " + cast;
             } else {
@@ -2122,6 +2144,7 @@ public class Generator {
                 cast = "(" + typeName[0] + typeName[1] + ")";
             }
             if (Enum.class.isAssignableFrom(methodInfo.parameterTypes[j])) {
+                accessesEnums = true;
                 out.print(cast + "val" + j);
             } else if (("(void*)".equals(cast) || "(void *)".equals(cast)) &&
                     methodInfo.parameterTypes[j] == long.class) {
@@ -2244,6 +2267,7 @@ public class Generator {
             } else if (methodInfo.returnRaw) {
                 out.println(indent + "rarg = rptr;");
             } else if (Enum.class.isAssignableFrom(methodInfo.returnType)) {
+                accessesEnums = true;
                 String s = enumValueType(methodInfo.returnType);
                 if (s != null) {
                     String S = Character.toUpperCase(s.charAt(0)) + s.substring(1);
@@ -2574,6 +2598,7 @@ public class Generator {
                             signature(callbackParameterTypes[j]).toLowerCase() + " = (" +
                             jniTypeName(callbackParameterTypes[j]) + ")arg" + j + ";");
                 } else if (Enum.class.isAssignableFrom(callbackParameterTypes[j])) {
+                    accessesEnums = true;
                     String s = enumValueType(callbackParameterTypes[j]);
                     if (s != null) {
                         String S = Character.toUpperCase(s.charAt(0)) + s.substring(1);
@@ -2792,6 +2817,7 @@ public class Generator {
                 returnTypeName[0] = "char*";
             }
             if (Enum.class.isAssignableFrom(callbackReturnType)) {
+                accessesEnums = true;
                 s = enumValueType(callbackReturnType);
                 if (s != null) {
                     String S = Character.toUpperCase(s.charAt(0)) + s.substring(1);
