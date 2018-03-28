@@ -17,8 +17,8 @@ Please feel free to ask questions on [the mailing list](http://groups.google.com
 
 Downloads
 ---------
- * JavaCPP 1.4 binary archive  [javacpp-1.4-bin.zip](http://search.maven.org/remotecontent?filepath=org/bytedeco/javacpp/1.4/javacpp-1.4-bin.zip) (348 KB)
- * JavaCPP 1.4 source archive  [javacpp-1.4-src.zip](http://search.maven.org/remotecontent?filepath=org/bytedeco/javacpp/1.4/javacpp-1.4-src.zip) (319 KB)
+ * JavaCPP 1.4.1 binary archive  [javacpp-1.4.1-bin.zip](http://search.maven.org/remotecontent?filepath=org/bytedeco/javacpp/1.4.1/javacpp-1.4.1-bin.zip) (359 KB)
+ * JavaCPP 1.4.1 source archive  [javacpp-1.4.1-src.zip](http://search.maven.org/remotecontent?filepath=org/bytedeco/javacpp/1.4.1/javacpp-1.4.1-src.zip) (327 KB)
 
 We can also have everything downloaded and installed automatically with:
 
@@ -27,20 +27,20 @@ We can also have everything downloaded and installed automatically with:
   <dependency>
     <groupId>org.bytedeco</groupId>
     <artifactId>javacpp</artifactId>
-    <version>1.4</version>
+    <version>1.4.1</version>
   </dependency>
 ```
 
  * Gradle (inside the `build.gradle` file)
 ```groovy
   dependencies {
-    compile group: 'org.bytedeco', name: 'javacpp', version: '1.4'
+    compile group: 'org.bytedeco', name: 'javacpp', version: '1.4.1'
   }
 ```
 
  * sbt (inside the `build.sbt` file)
 ```scala
-  libraryDependencies += "org.bytedeco" % "javacpp" % "1.4"
+  libraryDependencies += "org.bytedeco" % "javacpp" % "1.4.1"
 ```
 
 Another option available for Scala users is [sbt-javacpp](https://github.com/bytedeco/sbt-javacpp).
@@ -52,7 +52,7 @@ To use JavaCPP, you will need to download and install the following software:
 
  * An implementation of Java SE 7 or newer:
    * OpenJDK  http://openjdk.java.net/install/  or
-   * Sun JDK  http://www.oracle.com/technetwork/java/javase/downloads/  or
+   * Oracle JDK  http://www.oracle.com/technetwork/java/javase/downloads/  or
    * IBM JDK  http://www.ibm.com/developerworks/java/jdk/
  * A C++ compiler, out of which these have been tested:
    * GNU C/C++ Compiler (Linux, etc.)  http://gcc.gnu.org/
@@ -65,8 +65,9 @@ To produce binary files for Android 4.0 or newer, you will also have to install:
 
  * Android NDK r7 or newer  http://developer.android.com/ndk/downloads/
 
-And similarly to target iOS, you will need to install:
+And similarly to target iOS, you will need to install either:
 
+ * GluonVM  http://gluonhq.com/products/mobile/vm/  or
  * RoboVM 1.x or newer  http://robovm.mobidevelop.com/downloads/
 
 To modify the source code, please note that the project files were created for:

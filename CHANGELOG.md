@@ -1,4 +1,5 @@
 
+### March 29, 2018 version 1.4.1
  * Enhance `Loader.createLibraryLink()` by allowing to create symbolic links in other directories
  * Fix `Parser` failing on `enum` declarations where the first line is a macro ([issue #230](https://github.com/bytedeco/javacpp/issues/230))
  * Make call to `Pointer.physicalBytes()` thread safe and remove lock ([issue #231](https://github.com/bytedeco/javacpp/issues/231))
