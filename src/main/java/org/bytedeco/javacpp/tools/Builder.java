@@ -810,6 +810,7 @@ public class Builder {
                 pb.environment().putAll(environmentVariables);
             }
             String paths = properties.getProperty("platform.buildpath", "");
+            String links = properties.getProperty("platform.linkresource", "");
             String resources = properties.getProperty("platform.buildresource", "");
             String separator = properties.getProperty("platform.path.separator");
             if (paths.length() > 0 || resources.length() > 0) {
@@ -833,18 +834,27 @@ public class Builder {
                 // Extract the required resources.
                 for (String s : resources.split(separator)) {
                     for (File f : Loader.cacheResources(s)) {
+                        String path = f.getCanonicalPath();
                         if (paths.length() > 0 && !paths.endsWith(separator)) {
                             paths += separator;
                         }
-                        paths += f.getCanonicalPath();
+                        paths += path;
 
                         // Also create symbolic links for native libraries found there.
-                        File[] files = f.listFiles();
-                        if (files != null) {
-                            for (File file : files) {
-                                for (String lib : libs) {
-                                    Loader.createLibraryLink(file.getAbsolutePath(), libProperties, lib);
+                        List<String> linkPaths = new ArrayList<String>();
+                        for (String s2 : links.split(separator)) {
+                            for (File f2 : Loader.cacheResources(s2)) {
+                                String path2 = f2.getCanonicalPath();
+                                if (path2.startsWith(path) && !path2.equals(path)) {
+                                    linkPaths.add(path2);
                                 }
+                            }
+                        }
+                        File[] files = f.listFiles();
+                        if (files != null && libProperties != null) {
+                            for (File file : files) {
+                                Loader.createLibraryLink(file.getAbsolutePath(), libProperties, null,
+                                        linkPaths.toArray(new String[linkPaths.size()]));
                             }
                         }
                     }
