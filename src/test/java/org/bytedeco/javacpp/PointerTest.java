@@ -687,9 +687,12 @@ public class PointerTest {
 
     @Test public void testDeallocator() throws InterruptedException {
         System.out.println("Deallocator");
+        System.out.println("maxBytes = " + Pointer.maxBytes());
+        System.out.println("maxPhysicalBytes = " + Pointer.maxPhysicalBytes());
 
         final boolean[] failed = { false };
         ExecutorService pool = Executors.newFixedThreadPool(24);
+        long time = System.nanoTime();
         for (int i = 0; i < 24; i++) {
             pool.execute(new Runnable() {
                 @Override public void run() {
@@ -709,6 +712,7 @@ public class PointerTest {
         if (failed[0]) {
             fail("OutOfMemoryError should not have been thrown.");
         }
+        System.out.println("Took " + (System.nanoTime() - time) / 1000000 + " ms");
     }
 
 }

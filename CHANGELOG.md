@@ -1,4 +1,6 @@
 
+ * Avoid `synchronized` on first call to `physicalBytes()` in `Pointer.deallocator()` to reduce contention ([pull #232](https://github.com/bytedeco/javacpp/pull/232))
+
 ### March 29, 2018 version 1.4.1
  * Enhance `Loader.createLibraryLink()` by allowing to create symbolic links in other directories
  * Fix `Parser` failing on `enum` declarations where the first line is a macro ([issue #230](https://github.com/bytedeco/javacpp/issues/230))

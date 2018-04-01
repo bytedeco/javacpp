@@ -364,6 +364,7 @@ public class Pointer implements AutoCloseable {
 
     static {
         String s = System.getProperty("org.bytedeco.javacpp.nopointergc", "false").toLowerCase();
+        s = System.getProperty("org.bytedeco.javacpp.noPointerGC", s).toLowerCase();
         if (s.equals("true") || s.equals("t") || s.equals("")) {
             referenceQueue = null;
             deallocatorThread = null;
@@ -374,6 +375,7 @@ public class Pointer implements AutoCloseable {
 
         long m = Runtime.getRuntime().maxMemory();
         s = System.getProperty("org.bytedeco.javacpp.maxbytes");
+        s = System.getProperty("org.bytedeco.javacpp.maxBytes", s);
         if (s != null && s.length() > 0) {
             try {
                 m = parseBytes(s);
@@ -385,6 +387,7 @@ public class Pointer implements AutoCloseable {
 
         m = 2 * Runtime.getRuntime().maxMemory();
         s = System.getProperty("org.bytedeco.javacpp.maxphysicalbytes");
+        s = System.getProperty("org.bytedeco.javacpp.maxPhysicalBytes", s);
         if (s != null && s.length() > 0) {
             try {
                 m = parseBytes(s);
@@ -396,6 +399,7 @@ public class Pointer implements AutoCloseable {
 
         int n = 10;
         s = System.getProperty("org.bytedeco.javacpp.maxretries");
+        s = System.getProperty("org.bytedeco.javacpp.maxRetries", s);
         if (s != null && s.length() > 0) {
             try {
                 n = Integer.parseInt(s);
@@ -543,12 +547,12 @@ public class Pointer implements AutoCloseable {
             DeallocatorReference r = deallocator instanceof DeallocatorReference ?
                     (DeallocatorReference)deallocator :
                     new DeallocatorReference(this, deallocator);
+            int count = 0;
+            long lastPhysicalBytes = maxPhysicalBytes > 0 ? physicalBytes() : 0;
             synchronized (DeallocatorThread.class) {
-                int count = 0;
-                long lastPhysicalBytes = 0;
                 try {
                     while (count++ < maxRetries && ((maxBytes > 0 && DeallocatorReference.totalBytes + r.bytes > maxBytes)
-                                         || (maxPhysicalBytes > 0 && (lastPhysicalBytes = physicalBytes()) > maxPhysicalBytes))) {
+                                         || (maxPhysicalBytes > 0 && lastPhysicalBytes > maxPhysicalBytes))) {
                         if (logger.isDebugEnabled()) {
                             logger.debug("Calling System.gc() and Pointer.trimMemory() in " + this);
                         }
@@ -556,6 +560,7 @@ public class Pointer implements AutoCloseable {
                         System.gc();
                         Thread.sleep(100);
                         trimMemory();
+                        lastPhysicalBytes = maxPhysicalBytes > 0 ? physicalBytes() : 0;
                     }
                 } catch (InterruptedException ex) {
                     // reset interrupt to be nice
@@ -568,12 +573,12 @@ public class Pointer implements AutoCloseable {
                 }
                 if (maxBytes > 0 && DeallocatorReference.totalBytes + r.bytes > maxBytes) {
                     deallocate();
-                    throw new OutOfMemoryError("Failed to allocate memory within limits: totalBytes = "
-                            + formatBytes(DeallocatorReference.totalBytes) + " + " + formatBytes(r.bytes) + " > maxBytes = " + formatBytes(maxBytes));
+                    throw new OutOfMemoryError("Failed to allocate memory within limits: totalBytes ("
+                            + formatBytes(DeallocatorReference.totalBytes) + " + " + formatBytes(r.bytes) + ") > maxBytes (" + formatBytes(maxBytes) + ")");
                 } else if (maxPhysicalBytes > 0 && lastPhysicalBytes > maxPhysicalBytes) {
                     deallocate();
-                    throw new OutOfMemoryError("Physical memory usage is too high: physicalBytes = "
-                            + formatBytes(lastPhysicalBytes) + " > maxPhysicalBytes = " + formatBytes(maxPhysicalBytes));
+                    throw new OutOfMemoryError("Physical memory usage is too high: physicalBytes ("
+                            + formatBytes(lastPhysicalBytes) + ") > maxPhysicalBytes (" + formatBytes(maxPhysicalBytes) + ")");
                 }
                 if (logger.isDebugEnabled()) {
                     logger.debug("Registering " + this);
