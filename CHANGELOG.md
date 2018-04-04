@@ -1,4 +1,6 @@
 
+ * Allow using `new Info().enumerate()` to map all C++ `enum` to Java `enum` types by default
+ * Fix `Parser` issues surrounding enum classes, anonymous namespaces, and pure virtual classes
  * Avoid `synchronized` on first call to `physicalBytes()` in `Pointer.deallocator()` to reduce contention ([pull #232](https://github.com/bytedeco/javacpp/pull/232))
 
 ### March 29, 2018 version 1.4.1

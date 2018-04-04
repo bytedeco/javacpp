@@ -1552,7 +1552,7 @@ public class Generator {
         boolean didSomething = false;
         for (Class<?> c : cls.getDeclaredClasses()) {
             if (Pointer.class.isAssignableFrom(c) ||
-                    Pointer.class.isAssignableFrom(c.getEnclosingClass())) {
+                    Pointer.class.equals(c.getEnclosingClass())) {
                 didSomething |= methods(c);
             }
         }

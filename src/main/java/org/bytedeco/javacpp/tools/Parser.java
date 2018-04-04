@@ -2886,7 +2886,7 @@ public class Parser {
             decl.text += modifiers + "class " + name + " extends " + base.javaName + " {\n" +
                          "    static { Loader.load(); }\n";
 
-            if (implicitConstructor && (!abstractClass || ctx.virtualize)) {
+            if (implicitConstructor && (info == null || !info.purify) && (!abstractClass || ctx.virtualize)) {
                 constructors += "    /** Default native constructor. */\n" +
                              "    public " + name + "() { super((Pointer)null); allocate(); }\n" +
                              "    /** Native array allocator. Access with {@link Pointer#position(long)}. */\n" +
@@ -2903,7 +2903,7 @@ public class Parser {
                     constructors += "    /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */\n" +
                                  "    public " + name + "(Pointer p) { super(p); }\n";
                 }
-                if (defaultConstructor && (!abstractClass || ctx.virtualize) && !longConstructor) {
+                if (defaultConstructor && (info == null || !info.purify) && (!abstractClass || ctx.virtualize) && !longConstructor) {
                     constructors += "    /** Native array allocator. Access with {@link Pointer#position(long)}. */\n" +
                                  "    public " + name + "(long size) { super((Pointer)null); allocateArray(size); }\n" +
                                  "    private native void allocateArray(long size);\n" +
@@ -3141,8 +3141,9 @@ public class Parser {
             if (spacing.length() == 0 && !text.endsWith(",")) {
                 spacing = " ";
             }
+            String cast = javaType.equals("byte") || javaType.equals("short") ? "(" + javaType + ")" : "";
             text += spacing + javaName + spacing2 + " = " + countPrefix;
-            text2 += spacing + javaName + spacing2 + "(" + countPrefix;
+            text2 += spacing + javaName + spacing2 + "(" + cast + countPrefix;
             if (countPrefix.trim().length() > 0) {
                 if (count > 0) {
                     text += " + " + count;
@@ -3198,13 +3199,17 @@ public class Parser {
         }
         String cppName = context.namespace != null ? context.namespace + "::" + name : name;
         Info info = infoMap.getFirst(cppName);
+        boolean enumerate = info != null ? info.enumerate : false;
+        for (Info i : infoMap.get(null)) {
+            enumerate |= i.enumerate;
+        }
         if (info != null && info.skip) {
             decl.text = enumSpacing;
         } else {
             int newline = enumSpacing.lastIndexOf('\n');
             String enumSpacing2 = newline < 0 ? enumSpacing : enumSpacing.substring(newline + 1);
-            if (info != null && info.enumerate) {
-                String javaName = info.valueTypes != null && info.valueTypes.length > 0 ? info.valueTypes[0] : name;
+            if (enumerate) {
+                String javaName = info != null && info.valueTypes != null && info.valueTypes.length > 0 ? info.valueTypes[0] : name;
                 String fullName = context.namespace != null ? context.namespace + "::" + javaName : javaName;
                 String annotations = "";
                 if (!fullName.equals(cppName)){
@@ -3229,7 +3234,7 @@ public class Parser {
                 for (int i = 0; i < info2.pointerTypes.length; i++) {
                     info2.pointerTypes[i] = "@Cast(\"" + cppName + "*\") " + info2.pointerTypes[i];
                 }
-                infoMap.put(info2);
+                infoMap.put(info2.cast(false).enumerate());
             } else {
                 decl.text += enumSpacing + "/** " + enumType + " " + cppName + " */\n"
                           +  enumSpacing2 + enumerators + token.expect(';').spacing + ";";
@@ -3274,7 +3279,7 @@ public class Parser {
         }
 
         context = new Context(context);
-        context.namespace = name == null ? null : context.namespace != null ? context.namespace + "::" + name : name;
+        context.namespace = name == null ? context.namespace : context.namespace != null ? context.namespace + "::" + name : name;
         declarations(context, declList);
         decl.text += tokens.get().expect('}').spacing;
         tokens.next();
