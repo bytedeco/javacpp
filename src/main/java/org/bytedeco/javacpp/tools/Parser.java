@@ -1229,14 +1229,17 @@ public class Parser {
             }
         }
 
-        // initialize shorten Java name and get fully qualitifed C++ name
+        // initialize shorten Java name and get fully qualified C++ name
         dcl.javaName = attr != null ? attr.arguments : dcl.cppName;
-        for (String name : context.qualify(dcl.cppName)) {
-            if ((info = infoMap.getFirst(name, false)) != null) {
-                dcl.cppName = name;
-                break;
-            } else if (infoMap.getFirst(name) != null) {
-                dcl.cppName = name;
+        if (defaultName == null) {
+            // but only for names that are not function arguments, which can never be qualified
+            for (String name : context.qualify(dcl.cppName)) {
+                if ((info = infoMap.getFirst(name, false)) != null) {
+                    dcl.cppName = name;
+                    break;
+                } else if (infoMap.getFirst(name) != null) {
+                    dcl.cppName = name;
+                }
             }
         }
 
