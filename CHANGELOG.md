@@ -1,4 +1,5 @@
 
+ * Accelerate copy and extraction of resources by using larger buffers for file operations
  * Fix `Parser` incorrectly referring to function arguments with impossibly qualified names
  * Allow using `new Info().enumerate()` to map all C++ `enum` to Java `enum` types by default
  * Fix `Parser` issues surrounding enum classes, anonymous namespaces, and pure virtual classes

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Samuel Audet
+ * Copyright (C) 2011-2018 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -547,7 +547,7 @@ public class Builder {
             e.setTime(f.lastModified());
             jos.putNextEntry(e);
             FileInputStream fis = new FileInputStream(f);
-            byte[] buffer = new byte[1024];
+            byte[] buffer = new byte[64 * 1024];
             int length;
             while ((length = fis.read(buffer)) != -1) {
                 jos.write(buffer, 0, length);
@@ -953,7 +953,7 @@ public class Builder {
                             logger.info("Copying " + fi);
                             FileInputStream fis = new FileInputStream(fi);
                             FileOutputStream fos = new FileOutputStream(fo);
-                            byte[] buffer = new byte[1024];
+                            byte[] buffer = new byte[64 * 1024];
                             int length;
                             while ((length = fis.read(buffer)) != -1) {
                                 fos.write(buffer, 0, length);
