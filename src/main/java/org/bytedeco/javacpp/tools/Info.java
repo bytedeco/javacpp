@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2016 Samuel Audet
+ * Copyright (C) 2014-2018 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -95,6 +95,8 @@ public class Info {
     /** Skips entirely all the code associated with the C++ identifiers, expressions, or header filenames.
      * Unless more {@link Info} is provided... */
     boolean skip = false;
+    /** Ignores default function arguments to avoid ambiguous C++ function calls. */
+    boolean skipDefaults = false;
     /** Forces a class to be treated as if it were abstract. */
     boolean purify = false;
     /** Annotates virtual functions with @{@link Virtual} and adds appropriate constructors. */
@@ -125,6 +127,8 @@ public class Info {
     public Info translate(boolean translate) { this.translate = translate; return this; }
     public Info skip() { this.skip = true; return this; }
     public Info skip(boolean skip) { this.skip = skip; return this; }
+    public Info skipDefaults() { this.skipDefaults = true; return this; }
+    public Info skipDefaults(boolean skipDefaults) { this.skipDefaults = skip; return this; }
     public Info purify() { this.purify = true; return this; }
     public Info purify(boolean purify) { this.purify = purify; return this; }
     public Info virtualize() { this.virtualize = true; return this; }

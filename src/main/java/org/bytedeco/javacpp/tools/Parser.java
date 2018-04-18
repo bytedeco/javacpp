@@ -1944,7 +1944,7 @@ public class Parser {
             tokens.index = startIndex;
             if ((type.constructor || type.destructor || type.operator) && params != null) {
                 type = type(context);
-                params = parameters(context, n / 2, n % 2 != 0);
+                params = parameters(context, n / 2, (info == null || !info.skipDefaults) && n % 2 != 0);
                 dcl = new Declarator();
                 dcl.type = type;
                 dcl.parameters = params;
@@ -1963,7 +1963,7 @@ public class Parser {
                     }
                 }
             } else {
-                dcl = declarator(context, null, n / 2, n % 2 != 0, 0, false, false);
+                dcl = declarator(context, null, n / 2, (info == null || !info.skipDefaults) && n % 2 != 0, 0, false, false);
                 type = dcl.type;
                 namespace = dcl.cppName.lastIndexOf("::");
                 if (context.namespace != null && namespace < 0) {
