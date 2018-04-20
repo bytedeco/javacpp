@@ -1162,8 +1162,10 @@ public class Parser {
             }
         }
         if (!using && info != null) {
-            valueType = (info.enumerate || info.valueTypes != null) && ((type.constValue && dcl.reference) ||
-                    (dcl.indirections == 0 && !dcl.reference) || info.pointerTypes == null);
+            valueType = (info.enumerate || info.valueTypes != null)
+                    && ((type.constValue && dcl.indirections == 0 && dcl.reference)
+                        || (dcl.indirections == 0 && !dcl.reference)
+                        || info.pointerTypes == null);
             implicitConst = info.cppNames[0].startsWith("const ");
             infoLength = valueType ? (info.valueTypes != null ? info.valueTypes.length : 1)
                                    : (info.pointerTypes != null ? info.pointerTypes.length : 1);

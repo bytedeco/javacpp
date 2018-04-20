@@ -1,4 +1,5 @@
 
+ * Fix `Parser` failing on `const void*&` or similar function arguments
  * Add `Info.skipDefaults` to have the `Parser` ignore default function arguments and prevent method overloading
  * Accelerate copy and extraction of resources by using larger buffers for file operations
  * Fix `Parser` incorrectly referring to function arguments with impossibly qualified names
