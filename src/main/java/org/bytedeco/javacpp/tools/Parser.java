@@ -786,16 +786,19 @@ public class Parser {
             }
         }
         if (context.cppName != null && type.javaName.length() > 0) {
+            String cppName = type.cppName;
             String groupName = context.cppName;
             int template2 = groupName != null ? groupName.lastIndexOf('<') : -1;
             if (template < 0 && template2 >= 0) {
                 groupName = groupName.substring(0, template2);
+            } else if (template >= 0 && template2 < 0) {
+                cppName = cppName.substring(0, template);
             }
             int namespace2 = groupName != null ? groupName.lastIndexOf("::") : -1;
             if (namespace < 0 && namespace2 >= 0) {
                 groupName = groupName.substring(namespace2 + 2);
             }
-            if (type.cppName.equals(groupName)) {
+            if (cppName.equals(groupName)) {
                 type.constructor = !type.destructor && !type.operator
                         && type.indirections == 0 && !type.reference && tokens.get().match('(', ':');
             }
