@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Samuel Audet
+ * Copyright (C) 2011-2018 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -43,6 +43,9 @@ import org.bytedeco.javacpp.tools.Logger;
  * provides functionality to access native array elements as well as utility methods
  * and classes to let users benefit not only from from garbage collection, but also the
  * try-with-resources statement, since it implements the {@link AutoCloseable} interface.
+ * <p>
+ * It is also possible to use a {@link PointerScope} to keep track of a group of Pointer objects,
+ * and have them deallocated in a transparent but deterministic manner.
  * <p>
  * For examples of subclasses, please refer to the following:
  *
@@ -119,6 +122,10 @@ public class Pointer implements AutoCloseable {
         capacity = allocatedCapacity;
         if (ownerAddress != 0 && deallocatorAddress != 0) {
             deallocator(new NativeDeallocator(this, ownerAddress, deallocatorAddress));
+        }
+        PointerScope s = PointerScope.scopeStack.get().peek();
+        if (s != null) {
+            s.attach(this);
         }
     }
 

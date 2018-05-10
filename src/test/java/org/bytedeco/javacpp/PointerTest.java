@@ -715,4 +715,40 @@ public class PointerTest {
         System.out.println("Took " + (System.nanoTime() - time) / 1000000 + " ms");
     }
 
+    @Test public void testPointerScope() {
+        System.out.println("PointerScope");
+        IntPointer outside = new IntPointer(1);
+        IntPointer attached = new IntPointer(1), detached, inside, inside1, inside2, inside3, inside4, inside5;
+
+        try (PointerScope scope = new PointerScope()) {
+            scope.attach(attached);
+
+            detached = new IntPointer(1);
+            scope.detach(detached);
+
+            inside = new IntPointer(1);
+            try (PointerScope scope1 = new PointerScope()) {
+                inside1 = new IntPointer(1);
+                inside2 = new IntPointer(1);
+            }
+            try (PointerScope scope2 = new PointerScope(false)) {
+                inside3 = new IntPointer(1);
+                inside4 = new IntPointer(1);
+            }
+            inside5 = new IntPointer(1);
+        }
+
+        IntPointer outside2 = new IntPointer(1);
+
+        assertFalse(outside.isNull());
+        assertTrue(attached.isNull());
+        assertFalse(detached.isNull());
+        assertTrue(inside.isNull());
+        assertTrue(inside1.isNull());
+        assertTrue(inside2.isNull());
+        assertFalse(inside3.isNull());
+        assertFalse(inside4.isNull());
+        assertTrue(inside5.isNull());
+        assertFalse(outside2.isNull());
+    }
 }
