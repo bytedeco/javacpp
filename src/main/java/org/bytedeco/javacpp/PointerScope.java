@@ -42,6 +42,11 @@ public class PointerScope implements AutoCloseable {
         }
     };
 
+    /** Returns {@code scopeStack.get().peek()}, the last opened scope not yet closed. */
+    public static PointerScope getInnerScope() {
+        return scopeStack.get().peek();
+    }
+
     /** The stack keeping references to attached {@link Pointer} objects. */
     Deque<Pointer> pointerStack = new ArrayDeque<Pointer>();
 

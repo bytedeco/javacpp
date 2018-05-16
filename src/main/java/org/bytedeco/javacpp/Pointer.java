@@ -123,7 +123,7 @@ public class Pointer implements AutoCloseable {
         if (ownerAddress != 0 && deallocatorAddress != 0) {
             deallocator(new NativeDeallocator(this, ownerAddress, deallocatorAddress));
         }
-        PointerScope s = PointerScope.scopeStack.get().peek();
+        PointerScope s = PointerScope.getInnerScope();
         if (s != null) {
             s.attach(this);
         }
