@@ -3226,12 +3226,14 @@ public class Parser {
                 } else if (context.namespace != null && context.javaName == null) {
                     annotations += "@Namespace(\"" + context.namespace + "\") ";
                 }
-                decl.text += enumSpacing + annotations + "public static enum " + javaName + " {"
+                decl.text += enumSpacing + annotations + "public enum " + javaName + " {"
                           +  enumerators2 + token.expect(';').spacing + ";"
                           + (comment.length() > 0 && comment.charAt(0) == ' ' ? comment.substring(1) : comment) + "\n\n"
                           +  enumSpacing2 + "    public final " + javaType + " value;\n"
                           +  enumSpacing2 + "    private " + javaName  + "(" + javaType + " v) { this.value = v; }\n"
                           +  enumSpacing2 + "    private " + javaName  + "(" + javaName + " e) { this.value = e.value; }\n"
+                          +  enumSpacing2 + "    public " + javaName + " intern() { for (" + javaName + " e : values()) if (e.value == value) return e; return this; }\n"
+                          +  enumSpacing2 + "    @Override public String toString() { return intern().name(); }\n"
                           +  enumSpacing2 + "}";
                 Info info2 = new Info(infoMap.getFirst(cppType)).cppNames(cppName);
                 info2.valueTypes = Arrays.copyOf(info2.valueTypes, info2.valueTypes.length + 1);

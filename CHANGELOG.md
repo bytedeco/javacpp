@@ -1,4 +1,5 @@
 
+ * Add to Java enums an `intern()` method and use it in `toString()` to return non-null strings
  * Add `PointerScope` to manage more easily the resources of a group of `Pointer` objects
  * Fix `Parser` failing on `const void*&` or similar function arguments, and on constructors of class templates
  * Add `Info.skipDefaults` to have the `Parser` ignore default function arguments and prevent method overloading
