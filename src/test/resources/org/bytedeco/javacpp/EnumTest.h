@@ -1,17 +1,17 @@
 enum class CharEnum : char {
-    CHAR = 42
+    CHAR_ENUM = 42
 };
 
 enum class ShortEnum : short {
-    SHORT = 654
+    SHORT_ENUM = 654
 };
 
 enum /* no class */ IntEnum : int {
-    INT = 987
+    INT_ENUM = 987
 };
 
 enum /* no class */ LongEnum : long long {
-    LONG = 121110
+    LONG_ENUM = 121110
 };
 
 ShortEnum Char2Short(CharEnum e) {
@@ -23,5 +23,5 @@ LongEnum Int2Long(IntEnum e) {
 }
 
 LongEnum enumCallback(LongEnum (*f)(CharEnum e)) {
-    return f(CharEnum::CHAR);
+    return f(CharEnum::CHAR_ENUM);
 }
