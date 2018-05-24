@@ -999,8 +999,8 @@ public class Loader {
      * Finds from where the library may be extracted and loaded among the {@link Class}
      * resources. But in case that fails, and depending on the value of {@code pathsFirst},
      * either as a fallback or in priority over bundled resources, also searches the paths
-     * found in the "platform.preloadpath" and "platform.linkpath" class properties as well as
-     * the "java.library.path" system property, in that order.
+     * found in the "platform.preloadpath" and "platform.linkpath" class properties (as well as
+     * the "java.library.path" system property if {@code pathsFirst || !loadLibraries}), in that order.
      *
      * @param cls the Class whose package name and {@link ClassLoader} are used to extract from resources
      * @param properties contains the directories to scan for if we fail to extract the library from resources
@@ -1056,7 +1056,8 @@ public class Loader {
         paths.addAll(properties.get("platform.preloadpath"));
         paths.addAll(properties.get("platform.linkpath"));
         String libpath = System.getProperty("java.library.path", "");
-        if (libpath.length() > 0) {
+        if (libpath.length() > 0 && (pathsFirst || !isLoadLibraries())) {
+            // leave loading from "java.library.path" to System.loadLibrary() as fallback, which works better on Android
             paths.addAll(Arrays.asList(libpath.split(File.pathSeparator)));
         }
         ArrayList<URL> urls = new ArrayList<URL>(styles.length * (1 + paths.size()));
