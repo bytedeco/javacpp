@@ -1163,7 +1163,7 @@ public class Loader {
                         for (String s : preloaded) {
                             File file2 = new File(s);
                             File dir2 = file2.getParentFile();
-                            if (!dir2.equals(dir)) {
+                            if (dir2 != null && !dir2.equals(dir)) {
                                 File linkFile = new File(dir, file2.getName());
                                 try {
                                     Path linkPath = linkFile.toPath();
