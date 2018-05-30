@@ -926,12 +926,15 @@ public class Generator {
             out.println("#ifndef GENERIC_EXCEPTION_CLASS");
             out.println("#define GENERIC_EXCEPTION_CLASS std::exception");
             out.println("#endif");
+            out.println("#ifndef GENERIC_EXCEPTION_TOSTRING");
+            out.println("#define GENERIC_EXCEPTION_TOSTRING what()");
+            out.println("#endif");
             out.println("static JavaCPP_noinline jthrowable JavaCPP_handleException(JNIEnv* env, int i) {");
             out.println("    jstring str = NULL;");
             out.println("    try {");
             out.println("        throw;");
             out.println("    } catch (GENERIC_EXCEPTION_CLASS& e) {");
-            out.println("        str = JavaCPP_createString(env, e.what());");
+            out.println("        str = JavaCPP_createString(env, e.GENERIC_EXCEPTION_TOSTRING);");
             out.println("    } catch (...) {");
             out.println("        str = JavaCPP_createString(env, \"Unknown exception.\");");
             out.println("    }");

@@ -1,4 +1,5 @@
 
+ * Make `Generator` use `GENERIC_EXCEPTION_TOSTRING` macro on `GENERIC_EXCEPTION_CLASS` instead of the default `what()`
  * Fall back on Android-friendly `System.loadLibrary()` in `Loader.load()` instead of "java.library.path" ([issue bytedeco/javacv#970](https://github.com/bytedeco/javacv/issues/970))
  * Add to Java enums an `intern()` method and use it in `toString()` to return non-null strings
  * Add `PointerScope` to manage more easily the resources of a group of `Pointer` objects
