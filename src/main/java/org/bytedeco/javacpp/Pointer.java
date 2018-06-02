@@ -617,16 +617,19 @@ public class Pointer implements AutoCloseable {
             }
             deallocator.deallocate();
             address = 0;
-        } else synchronized(DeallocatorReference.class) {
-            DeallocatorReference r = DeallocatorReference.head;
-            while (r != null) {
-                if (r.deallocator == deallocator) {
-                    r.deallocator = null;
-                    r.clear();
-                    r.remove();
-                    break;
+        }
+        if (!deallocate || referenceQueue == null) {
+            synchronized (DeallocatorReference.class) {
+                DeallocatorReference r = DeallocatorReference.head;
+                while (r != null) {
+                    if (r.deallocator == deallocator) {
+                        r.deallocator = null;
+                        r.clear();
+                        r.remove();
+                        break;
+                    }
+                    r = r.next;
                 }
-                r = r.next;
             }
         }
     }
