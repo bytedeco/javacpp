@@ -1,4 +1,5 @@
 
+ * Prevent `Loader` from creating symbolic links to rename libraries, which does not always work
  * Fix memory leak that occurs with "org.bytedeco.javacpp.nopointergc" ([issue #239](https://github.com/bytedeco/javacpp/issues/239))
  * Make `Generator` use `GENERIC_EXCEPTION_TOSTRING` macro on `GENERIC_EXCEPTION_CLASS` instead of the default `what()`
  * Fall back on Android-friendly `System.loadLibrary()` in `Loader.load()` instead of "java.library.path" ([issue bytedeco/javacv#970](https://github.com/bytedeco/javacv/issues/970))

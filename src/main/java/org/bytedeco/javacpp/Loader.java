@@ -402,8 +402,10 @@ public class Loader {
         }
         if (resourceURL.getRef() != null) {
             // ... get the URL fragment to let users rename library files ...
-            name = resourceURL.getRef();
-            reference = true;
+            String newName = resourceURL.getRef();
+            // ... but create a symbolic link only if the name does not change ...
+            reference = newName.equals(name);
+            name = newName;
         }
         File file = new File(cacheSubdir, name);
         File lockFile = new File(cacheDir, ".lock");
