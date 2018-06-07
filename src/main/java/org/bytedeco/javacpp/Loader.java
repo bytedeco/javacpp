@@ -1058,8 +1058,9 @@ public class Loader {
         paths.addAll(properties.get("platform.preloadpath"));
         paths.addAll(properties.get("platform.linkpath"));
         String libpath = System.getProperty("java.library.path", "");
-        if (libpath.length() > 0 && (pathsFirst || !isLoadLibraries())) {
-            // leave loading from "java.library.path" to System.loadLibrary() as fallback, which works better on Android
+        if (libpath.length() > 0 && (pathsFirst || !isLoadLibraries() || reference)) {
+            // leave loading from "java.library.path" to System.loadLibrary() as fallback,
+            // which works better on Android, unless the user wants to rename a library
             paths.addAll(Arrays.asList(libpath.split(File.pathSeparator)));
         }
         ArrayList<URL> urls = new ArrayList<URL>(styles.length * (1 + paths.size()));
