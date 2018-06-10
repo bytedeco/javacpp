@@ -48,8 +48,8 @@ public class AdapterTest {
     static native @StdString String testStdString(@StdString String str);
     static native @StdString BytePointer testStdString(@StdString BytePointer str);
 
-    static native @StdWString @Cast("wchar_t*") CharPointer testStdWString(@StdWString @Cast("wchar_t*") CharPointer str);
-    static native @StdWString @Cast("wchar_t*") IntPointer testStdWString(@StdWString @Cast("wchar_t*") IntPointer str);
+    static native @StdWString CharPointer testStdWString(@StdWString CharPointer str);
+    static native @StdWString IntPointer testStdWString(@StdWString IntPointer str);
 
     static native String testCharString(String str);
     static native @Cast("char*") BytePointer testCharString(@Cast("char*") BytePointer str);

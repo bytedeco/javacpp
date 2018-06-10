@@ -1012,6 +1012,10 @@ public class Generator {
             out.println("        str2(ptr ? (T*)ptr : \"\", ptr ? (size > 0 ? size : strlen((char*)ptr)) : 0), str(str2) { }");
             out.println("    StringAdapter(const       wchar_t* ptr, typename std::basic_string<T>::size_type size, void* owner) : ptr((T*)ptr), size(size), owner(owner),");
             out.println("        str2(ptr ? (T*)ptr : L\"\", ptr ? (size > 0 ? size : wcslen((wchar_t*)ptr)) : 0), str(str2) { }");
+            out.println("    StringAdapter(const unsigned short* ptr, typename std::basic_string<T>::size_type size, void* owner) : ptr((T*)ptr), size(size), owner(owner),");
+            out.println("        str2(ptr ? (T*)ptr : L\"\", ptr ? (size > 0 ? size : wcslen((wchar_t*)ptr)) : 0), str(str2) { }");
+            out.println("    StringAdapter(const   signed   int* ptr, typename std::basic_string<T>::size_type size, void* owner) : ptr((T*)ptr), size(size), owner(owner),");
+            out.println("        str2(ptr ? (T*)ptr : L\"\", ptr ? (size > 0 ? size : wcslen((wchar_t*)ptr)) : 0), str(str2) { }");
             out.println("    StringAdapter(const std::basic_string<T>& str) : ptr(0), size(0), owner(0), str2(str), str(str2) { }");
             out.println("    StringAdapter(      std::basic_string<T>& str) : ptr(0), size(0), owner(0), str(str) { }");
             out.println("    StringAdapter(const std::basic_string<T>* str) : ptr(0), size(0), owner(0), str(*(std::basic_string<T>*)str) { }");
@@ -1030,6 +1034,9 @@ public class Generator {
             out.println("        this->owner = owner;");
             out.println("        str.assign(ptr ? ptr : L\"\", ptr ? (size > 0 ? size : wcslen((wchar_t*)ptr)) : 0);");
             out.println("    }");
+            out.println("    void assign(const        wchar_t* ptr, typename std::basic_string<T>::size_type size, void* owner) { assign((wchar_t*)ptr, size, owner); }");
+            out.println("    void assign(const unsigned short* ptr, typename std::basic_string<T>::size_type size, void* owner) { assign((wchar_t*)ptr, size, owner); }");
+            out.println("    void assign(const   signed   int* ptr, typename std::basic_string<T>::size_type size, void* owner) { assign((wchar_t*)ptr, size, owner); }");
             out.println("    static void deallocate(void* owner) { delete[] (T*)owner; }");
             out.println("    operator char*() {");
             out.println("        const char* data = str.data();");
@@ -1064,6 +1071,11 @@ public class Generator {
             out.println("        owner = ptr;");
             out.println("        return ptr;");
             out.println("    }");
+            out.println("    operator     unsigned   short*() { return (unsigned short*)(operator wchar_t*)(); }");
+            out.println("    operator       signed     int*() { return (  signed   int*)(operator wchar_t*)(); }");
+            out.println("    operator const        wchar_t*() { return                  str.c_str(); }");
+            out.println("    operator const unsigned short*() { return (unsigned short*)str.c_str(); }");
+            out.println("    operator const   signed   int*() { return (  signed   int*)str.c_str(); }");
             out.println("    operator         std::basic_string<T>&() { return str; }");
             out.println("    operator         std::basic_string<T>*() { return ptr ? &str : 0; }");
             out.println("    T* ptr;");
