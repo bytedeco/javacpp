@@ -30,6 +30,7 @@ import org.bytedeco.javacpp.annotation.Platform;
 import org.bytedeco.javacpp.annotation.SharedPtr;
 import org.bytedeco.javacpp.annotation.StdString;
 import org.bytedeco.javacpp.annotation.StdVector;
+import org.bytedeco.javacpp.annotation.StdWString;
 import org.bytedeco.javacpp.annotation.UniquePtr;
 import org.bytedeco.javacpp.tools.Builder;
 import org.junit.BeforeClass;
@@ -46,6 +47,9 @@ public class AdapterTest {
 
     static native @StdString String testStdString(@StdString String str);
     static native @StdString BytePointer testStdString(@StdString BytePointer str);
+
+    static native @StdWString @Cast("wchar_t*") CharPointer testStdWString(@StdWString @Cast("wchar_t*") CharPointer str);
+    static native @StdWString @Cast("wchar_t*") IntPointer testStdWString(@StdWString @Cast("wchar_t*") IntPointer str);
 
     static native String testCharString(String str);
     static native @Cast("char*") BytePointer testCharString(@Cast("char*") BytePointer str);
@@ -119,6 +123,20 @@ public class AdapterTest {
         BytePointer textPtr2 = testStdString(textPtr1);
         assertEquals(textStr1, textPtr1.getString());
         assertEquals(textStr1, textPtr2.getString());
+
+        if (Loader.getPlatform().startsWith("windows")) {
+            // UTF-16
+            CharPointer textCharPtr1 = new CharPointer(textStr1);
+            CharPointer textCharPtr2 = testStdWString(textCharPtr1);
+            assertEquals(textStr1, textCharPtr1.getString());
+            assertEquals(textStr1, textCharPtr2.getString());
+        } else {
+            // UTF-32
+            IntPointer textIntPtr1 = new IntPointer(textStr1);
+            IntPointer textIntPtr2 = testStdWString(textIntPtr1);
+            assertEquals(textStr1, textIntPtr1.getString());
+            assertEquals(textStr1, textIntPtr2.getString());
+        }
         System.gc();
     }
 

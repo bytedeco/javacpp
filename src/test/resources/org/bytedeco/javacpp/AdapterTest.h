@@ -6,6 +6,10 @@ std::string testStdString(std::string str) {
     return str;
 }
 
+std::wstring testStdWString(std::wstring str) {
+    return str;
+}
+
 char *testCharString(const char *str) {
     return strdup(str);
     // memory leak...

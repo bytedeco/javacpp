@@ -8,7 +8,7 @@ import java.lang.annotation.Target;
 import org.bytedeco.javacpp.tools.Generator;
 
 /**
- * A shorthand for {@code @Cast("std::string&") @Adapter("StringAdapter<char>")}.
+ * A shorthand for {@code @Cast("std::wstring&") @Adapter("StringAdapter<wchar_t>")}.
  *
  * @see Adapter
  * @see Generator
@@ -18,6 +18,6 @@ import org.bytedeco.javacpp.tools.Generator;
 @Documented @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.PARAMETER})
 @Cast({"std::basic_string", "&"}) @Adapter("StringAdapter")
-public @interface StdString {
-    String value() default "char";
+public @interface StdWString {
+    String value() default "wchar_t";
 }
