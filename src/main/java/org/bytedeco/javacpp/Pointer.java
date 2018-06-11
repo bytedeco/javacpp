@@ -336,13 +336,13 @@ public class Pointer implements AutoCloseable {
     static final int maxRetries;
 
     public static String formatBytes(long bytes) {
-        if (bytes < 1024L) {
+        if (bytes < 1024L * 100) {
             return bytes + "";
-        } else if ((bytes /= 1024L) < 1024L) {
+        } else if ((bytes /= 1024L) < 1024L * 100) {
             return bytes + "K";
-        } else if ((bytes /= 1024L) < 1024L) {
+        } else if ((bytes /= 1024L) < 1024L * 100) {
             return bytes + "M";
-        } else if ((bytes /= 1024L) < 1024L) {
+        } else if ((bytes /= 1024L) < 1024L * 100) {
             return bytes + "G";
         } else {
             return (bytes / 1024L) + "T";
