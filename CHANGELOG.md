@@ -1,4 +1,7 @@
 
+ * Make `Parser` take into account implicit constructors even when inheriting some with `using` declarations
+ * Pick up `Parser` translation of enum and macro expressions from `Info.javaNames`
+ * Let `Parser` define `Info.pointerTypes` also for partially specialized templates with default arguments
  * Tweak `Pointer.formatBytes()` to increase the number of digits returned ([issue #240](https://github.com/bytedeco/javacpp/issues/240))
  * Enhance `InfoMap` and `StringAdapter` with default mappings and casts for `std::wstring`
  * Templatize `StringAdapter` to allow other character types like `wchar_t` and add corresponding `@StdWString` annotation

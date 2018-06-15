@@ -41,6 +41,15 @@ class TemplateMap extends LinkedHashMap<String,Type> {
         return type != null ? type.cppName : declarator != null ? declarator.cppName : null;
     }
 
+    boolean empty() {
+        for (Type t : values()) {
+            if (t != null) {
+                return false;
+            }
+        }
+        return !isEmpty();
+    }
+
     boolean full() {
         for (Type t : values()) {
             if (t == null) {

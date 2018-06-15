@@ -94,6 +94,10 @@ public class Parser {
     String lineSeparator = null;
 
     String translate(String text) {
+        Info info = infoMap.getFirst(text);
+        if (info != null && info.javaNames != null && info.javaNames.length > 0) {
+            return info.javaNames[0];
+        }
         int namespace = text.lastIndexOf("::");
         if (namespace >= 0) {
             Info info2 = infoMap.getFirst(text.substring(0, namespace));
@@ -2841,21 +2845,21 @@ public class Parser {
             ctx.variable = var;
             declarations(ctx, declList2);
         }
-        String modifiers = "public static ", constructors = "";
+        String modifiers = "public static ", constructors = "", explicitConstructors = "";
         boolean implicitConstructor = true, defaultConstructor = false, longConstructor = false,
                 pointerConstructor = false, abstractClass = info != null && info.purify && !ctx.virtualize,
                 allPureConst = true, haveVariables = false;
         for (Declaration d : declList2) {
             if (d.declarator != null && d.declarator.type != null && d.declarator.type.using && decl.text != null) {
                 // inheriting constructors
-                implicitConstructor = false;
-                defaultConstructor = false;
-                longConstructor = true;
-                pointerConstructor = true;
+                defaultConstructor |= d.text.contains("private native void allocate();");
+                longConstructor |= d.text.contains("private native void allocate(long");
+                pointerConstructor |= d.text.contains("private native void allocate(Pointer");
+                implicitConstructor &= !defaultConstructor && !longConstructor && !pointerConstructor;
                 String baseType = d.declarator.type.cppName;
                 baseType = baseType.substring(0, baseType.lastIndexOf("::"));
                 Info info2 = infoMap.getFirst(baseType);
-                constructors = d.text.replace(info2.pointerTypes[0], name);
+                constructors = d.text.replace(info2.pointerTypes[0], name) + "\n";
                 d.text = "";
             } else if (d.declarator != null && d.declarator.type != null && d.declarator.type.constructor) {
                 implicitConstructor = false;
@@ -2895,6 +2899,7 @@ public class Parser {
             decl.text += modifiers + "class " + name + " extends " + base.javaName + " {\n" +
                          "    static { Loader.load(); }\n";
 
+            explicitConstructors = constructors;
             if (implicitConstructor && (info == null || !info.purify) && (!abstractClass || ctx.virtualize)) {
                 constructors += "    /** Default native constructor. */\n" +
                              "    public " + name + "() { super((Pointer)null); allocate(); }\n" +
@@ -2947,7 +2952,7 @@ public class Parser {
             if (!d.inaccessible && (d.declarator == null || d.declarator.type == null || !d.declarator.type.constructor || !abstractClass)) {
                 decl.text += d.text;
                 if (d.declarator != null && d.declarator.type != null && d.declarator.type.constructor) {
-                    constructors += d.text;
+                    explicitConstructors += d.text;
                 }
             }
         }
@@ -2963,7 +2968,7 @@ public class Parser {
         Info constructorInfo = infoMap.getFirst(type.cppName + "::" + constructorName);
         if (constructorInfo == null) {
             // save constructors to be able inherit them with C++11 "using" statements
-            infoMap.put(new Info(type.cppName + "::" + constructorName).javaText(constructors));
+            infoMap.put(new Info(type.cppName + "::" + constructorName).javaText(explicitConstructors));
         }
         if (!anonymous) {
             decl.text += tokens.get().spacing + '}';

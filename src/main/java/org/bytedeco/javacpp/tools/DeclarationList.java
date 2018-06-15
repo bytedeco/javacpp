@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2017 Samuel Audet
+ * Copyright (C) 2014-2018 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -61,7 +61,7 @@ class DeclarationList extends ArrayList<Declaration> {
 
     @Override public boolean add(Declaration decl) {
         boolean add = true;
-        if (templateMap != null && !templateMap.full() && (decl.type != null || decl.declarator != null)) {
+        if (templateMap != null && templateMap.empty() && (decl.type != null || decl.declarator != null)) {
             // method templates cannot be declared in Java, but make sure to make their
             // info available on request (when Info.javaNames is set) to be able to create instances
             if (infoIterator == null) {
@@ -77,7 +77,8 @@ class DeclarationList extends ArrayList<Declaration> {
                 }
             }
             add = false;
-        } else if (decl.declarator != null && decl.declarator.type != null) {
+        }
+        if (decl.declarator != null && decl.declarator.type != null) {
             // honor to skip over declarations when tagged as such
             Info info = infoMap.getFirst(decl.declarator.type.cppName);
             if (info != null && info.skip && info.valueTypes == null && info.pointerTypes == null) {
@@ -93,6 +94,9 @@ class DeclarationList extends ArrayList<Declaration> {
                     }
                 }
             }
+        }
+        if (decl.type != null && decl.type.javaName.equals("Pointer")) {
+            add = false;
         }
         if (!add) {
             return false;

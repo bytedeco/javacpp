@@ -80,8 +80,11 @@ class Context {
                 if (name.equals(map.getName())) {
                     String args = "<", separator = "";
                     for (Type t : map.values()) {
-                        args += separator + (t != null ? t.cppName : t);
-                        separator = ",";
+                        // assume that missing arguments have default values
+                        if (t != null) {
+                            args += separator + t.cppName;
+                            separator = ",";
+                        }
                     }
                     names.add(name + args + (args.endsWith(">") ? " >" : ">"));
                     break;
