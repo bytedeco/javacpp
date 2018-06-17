@@ -1,4 +1,5 @@
 
+ * Fix `Builder` not bundling libraries containing a `#` fragment only useful at load time
  * Make `Parser` take into account implicit constructors even when inheriting some with `using` declarations
  * Pick up `Parser` translation of enum and macro expressions from `Info.javaNames`
  * Let `Parser` define `Info.pointerTypes` also for partially specialized templates with default arguments
