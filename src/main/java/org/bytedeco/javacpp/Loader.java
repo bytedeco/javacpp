@@ -1055,8 +1055,8 @@ public class Loader {
         }
 
         List<String> paths = new ArrayList<String>();
-        paths.addAll(properties.get("platform.preloadpath"));
         paths.addAll(properties.get("platform.linkpath"));
+        paths.addAll(properties.get("platform.preloadpath"));
         String libpath = System.getProperty("java.library.path", "");
         if (libpath.length() > 0 && (pathsFirst || !isLoadLibraries() || reference)) {
             // leave loading from "java.library.path" to System.loadLibrary() as fallback,
