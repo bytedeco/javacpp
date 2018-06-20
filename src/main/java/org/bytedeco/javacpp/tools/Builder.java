@@ -198,6 +198,19 @@ public class Builder {
         }
 
         {
+            String p = properties.getProperty("platform.toolchain.prefix", "");
+            for (String s : properties.get("platform.toolchain")) {
+                if (new File(s).isDirectory()) {
+                    if (p.endsWith(" ")) {
+                        command.add(p.trim()); command.add(s);
+                    } else {
+                        command.add(p + s);
+                    }
+                }
+            }
+        }
+
+        {
             String p = properties.getProperty("platform.includepath.prefix", "");
             for (String s : properties.get("platform.includepath")) {
                 if (new File(s).isDirectory()) {

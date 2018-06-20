@@ -93,7 +93,7 @@ public class ClassProperties extends HashMap<String,List<String>> {
     public void addAll(String key, Collection<String> values) {
         if (values != null) {
             String root = null;
-            if (key.equals("platform.compiler") || key.equals("platform.sysroot") ||
+            if (key.equals("platform.compiler") || key.equals("platform.sysroot") || key.equals("platform.toolchain") ||
                     key.equals("platform.includepath") || key.equals("platform.linkpath")) {
                 root = platformRoot;
             }
