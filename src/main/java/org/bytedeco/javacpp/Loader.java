@@ -208,7 +208,7 @@ public class Loader {
     public static Class getEnclosingClass(Class cls) {
         Class<?> c = cls;
         // Find first enclosing declaring class with some properties to use
-        while (c.getDeclaringClass() != null) {
+        while (c.getEnclosingClass() != null) {
             if (c.isAnnotationPresent(org.bytedeco.javacpp.annotation.Properties.class)) {
                 break;
             }
@@ -222,7 +222,7 @@ public class Loader {
                     break;
                 }
             }
-            c = c.getDeclaringClass();
+            c = c.getEnclosingClass();
         }
         return c;
     }

@@ -3221,8 +3221,8 @@ public class Generator {
             if (noException = cls.isAnnotationPresent(NoException.class)) {
                 break;
             }
-            if (cls.getDeclaringClass() != null) {
-                cls = cls.getDeclaringClass();
+            if (cls.getEnclosingClass() != null) {
+                cls = cls.getEnclosingClass();
             } else {
                 cls = cls.getSuperclass();
             }
@@ -3704,7 +3704,7 @@ public class Generator {
                 // user wants to reset namespace here
                 break;
             }
-            type = type.getDeclaringClass();
+            type = type.getEnclosingClass();
         }
         return scopeName;
     }

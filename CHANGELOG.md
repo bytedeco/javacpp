@@ -1,4 +1,5 @@
 
+ * Fix issues with anonymous classes by calling `getEnclosingClass()` instead of `getDeclaringClass()`
  * Add `android-arm-clang.properties`, `android-arm64-clang.properties`, `android-x86-clang.properties` and `android-x86_64-clang.properties`
  * Search in `linkpath` before `preloadpath` to avoid copying or loading unwanted libraries
  * Fix `Builder` not bundling libraries containing a `#` fragment only useful at load time
