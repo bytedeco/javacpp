@@ -166,7 +166,7 @@ public class Parser {
                     indexFunction = "";
                     valueType.javaName = "boolean";
                     resizable = false;
-                } else if (containerName.endsWith("set")) {
+                } else if (containerName.endsWith("list") || containerName.endsWith("set")) {
                     indexType = null;
                     resizable = false;
                 }

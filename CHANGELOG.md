@@ -1,4 +1,6 @@
 
+ * Fix `Parser` from outputting accessors not available with `std::forward_list` or `std::list`
+ * Use `pthread_setspecific()` in `Generator` to detach automatically native threads on exit for Android ([pull #243](https://github.com/bytedeco/javacpp/pull/243))
  * Fix issues with anonymous classes by calling `getEnclosingClass()` instead of `getDeclaringClass()`
  * Add `android-arm-clang.properties`, `android-arm64-clang.properties`, `android-x86-clang.properties` and `android-x86_64-clang.properties`
  * Search in `linkpath` before `preloadpath` to avoid copying or loading unwanted libraries
