@@ -280,6 +280,7 @@ public class Generator {
         out.println();
         out.println("#ifdef __ANDROID__");
         out.println("    #include <android/log.h>");
+        out.println("    #include <pthread.h>");
         out.println("#elif defined(__APPLE__) && defined(__OBJC__)");
         out.println("    #include <TargetConditionals.h>");
         out.println("    #include <Foundation/Foundation.h>");
@@ -465,6 +466,20 @@ public class Generator {
         out.println("#endif");
         out.println("    va_end(ap);");
         out.println("}");
+        out.println();
+        out.println("#ifdef __ANDROID__");
+        out.println("    static pthread_key_t JavaCPP_current_env;");
+        out.println("    static JavaCPP_noinline void JavaCPP_detach_env(void *data)");
+        out.println("    {");
+        out.println("        if (JavaCPP_vm) {");
+        out.println("            JavaCPP_vm->DetachCurrentThread();");
+        out.println("        }");
+        out.println("    }");
+        out.println("    static JavaCPP_noinline void JavaCPP_create_pthread_key(void)");
+        out.println("    {");
+        out.println("        pthread_key_create(&JavaCPP_current_env, JavaCPP_detach_env);");
+        out.println("    }");
+        out.println("#endif");
         out.println();
         if (baseLoadSuffix == null || baseLoadSuffix.isEmpty()) {
             out.println("static inline jboolean JavaCPP_trimMemory() {");
@@ -1156,8 +1171,13 @@ public class Generator {
             out.println();
         }
         if (!functions.isEmpty() || !virtualFunctions.isEmpty()) {
+            out.println("#ifdef __ANDROID__");
+            out.println("  static pthread_once_t JavaCPP_once = PTHREAD_ONCE_INIT;");
+            out.println("  static pthread_mutex_t JavaCPP_lock = PTHREAD_MUTEX_INITIALIZER;");
+            out.println("#endif");
+            out.println();
             out.println("static JavaCPP_noinline void JavaCPP_detach(bool detach) {");
-            out.println("#ifndef NO_JNI_DETACH_THREAD");
+            out.println("#if !defined(NO_JNI_DETACH_THREAD) && !defined(__ANDROID__)");
             out.println("    if (detach && JavaCPP_vm->DetachCurrentThread() != JNI_OK) {");
             out.println("        JavaCPP_log(\"Could not detach the JavaVM from the current thread.\");");
             out.println("    }");
@@ -1188,6 +1208,14 @@ public class Generator {
                 out.println("#endif");
             }
             out.println("    }");
+            out.println("#ifdef __ANDROID__");
+            out.println("    pthread_mutex_lock(&JavaCPP_lock);");
+            out.println("    pthread_once(&JavaCPP_once, JavaCPP_create_pthread_key);");
+            out.println("    if ((*env = (JNIEnv *)pthread_getspecific(JavaCPP_current_env)) != NULL) {");
+            out.println("        attached = true;");
+            out.println("        goto done;");
+            out.println("    }");
+            out.println("#endif");
             out.println("    if (vm->GetEnv((void**)env, " + JNI_VERSION + ") != JNI_OK) {");
             out.println("        struct {");
             out.println("            JNIEnv **env;");
@@ -1197,17 +1225,24 @@ public class Generator {
             out.println("        if (vm->AttachCurrentThread(env2, NULL) != JNI_OK) {");
             out.println("            JavaCPP_log(\"Could not attach the JavaVM to the current thread.\");");
             out.println("            *env = NULL;");
-            out.println("            return false;");
+            out.println("            goto done;");
             out.println("        }");
+            out.println("#ifdef __ANDROID__");
+            out.println("        pthread_setspecific(JavaCPP_current_env, *env);");
+            out.println("#endif");
             out.println("        attached = true;");
             out.println("    }");
             out.println("    if (JavaCPP_vm == NULL) {");
             out.println("        if (JNI_OnLoad" + loadSuffix + "(vm, NULL) < 0) {");
             out.println("            JavaCPP_detach(attached);");
             out.println("            *env = NULL;");
-            out.println("            return false;");
+            out.println("            goto done;");
             out.println("        }");
             out.println("    }");
+            out.println("done:");
+            out.println("#ifdef __ANDROID__");
+            out.println("    pthread_mutex_unlock(&JavaCPP_lock);");
+            out.println("#endif");
             out.println("    return attached;");
             out.println("}");
             out.println();
