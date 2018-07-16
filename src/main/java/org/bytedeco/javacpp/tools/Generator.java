@@ -764,6 +764,10 @@ public class Generator {
             out.println("    return address;");
             out.println("}");
             out.println();
+            out.println("static inline JavaVM* JavaCPP_getJavaVM() {");
+            out.println("    return JavaCPP_vm;");
+            out.println("}");
+            out.println();
         }
         out.println("static JavaCPP_noinline jclass JavaCPP_getClass(JNIEnv* env, int i) {");
         out.println("    if (JavaCPP_classes[i] == NULL && env->PushLocalFrame(1) == 0) {");

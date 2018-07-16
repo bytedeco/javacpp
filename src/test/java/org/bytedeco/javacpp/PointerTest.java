@@ -80,6 +80,8 @@ public class PointerTest {
         assertTrue(totalProcessors > 0 && totalProcessors >= Runtime.getRuntime().availableProcessors());
         assertTrue(totalCores > 0 && totalCores <= totalProcessors);
         assertTrue(totalChips > 0 && totalChips <= totalCores);
+
+        assertNotEquals(null, Loader.getJavaVM());
     }
 
     static Object fieldReference;

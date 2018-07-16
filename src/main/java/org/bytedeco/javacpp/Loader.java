@@ -53,6 +53,7 @@ import java.util.WeakHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import org.bytedeco.javacpp.annotation.Cast;
 import org.bytedeco.javacpp.annotation.Name;
 import org.bytedeco.javacpp.annotation.Platform;
 import org.bytedeco.javacpp.tools.Builder;
@@ -1424,4 +1425,7 @@ public class Loader {
     /** Returns the address found under the given name in the "dynamic symbol tables" (Linux, Mac OS X, etc)
      * or the "export tables" (Windows) of all libraries loaded, or null if not found. */
     @Name("JavaCPP_addressof") public static native Pointer addressof(String symbol);
+
+    /** Returns the JavaVM JNI object, as required by some APIs for initialization. */
+    @Name("JavaCPP_getJavaVM") public static native @Cast("JavaVM*") Pointer getJavaVM();
 }
