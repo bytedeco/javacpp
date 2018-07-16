@@ -1,4 +1,5 @@
 
+### July 17, 2018 version 1.4.2
  * Add `Loader.getJavaVM()` method to get the JNI `JavaVM` object as required to initialize some libraries
  * Fix `Parser` from outputting accessors not available with `std::forward_list` or `std::list`
  * Use `pthread_setspecific()` in `Generator` to detach automatically native threads on exit for Android ([pull #243](https://github.com/bytedeco/javacpp/pull/243))
