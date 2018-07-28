@@ -1201,12 +1201,11 @@ public class Loader {
                         if (logger.isDebugEnabled()) {
                             logger.debug("Loading " + filename2);
                         }
-                        loadedLibraries.put(libnameversion2, filename2);
                         System.load(filename2);
+                        loadedLibraries.put(libnameversion2, filename2);
                         return filename2;
                     } catch (UnsatisfiedLinkError e) {
                         loadError = e;
-                        loadedLibraries.remove(libnameversion2);
                         if (logger.isDebugEnabled()) {
                             logger.debug("Failed to load " + filename2 + ": " + e);
                         }
@@ -1221,15 +1220,14 @@ public class Loader {
                 if (logger.isDebugEnabled()) {
                     logger.debug("Loading library " + libname);
                 }
-                loadedLibraries.put(libnameversion2, libname);
                 System.loadLibrary(libname);
+                loadedLibraries.put(libnameversion2, libname);
                 return libname;
             } else {
                 // But do not load when tagged as a system library
                 return null;
             }
         } catch (UnsatisfiedLinkError e) {
-            loadedLibraries.remove(libnameversion2);
             if (loadError != null && e.getCause() == null) {
                 e.initCause(loadError);
             }
@@ -1238,7 +1236,6 @@ public class Loader {
             }
             throw e;
         } catch (IOException | URISyntaxException ex) {
-            loadedLibraries.remove(libnameversion2);
             if (loadError != null && ex.getCause() == null) {
                 ex.initCause(loadError);
             }
