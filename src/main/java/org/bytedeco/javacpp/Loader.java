@@ -906,7 +906,7 @@ public class Loader {
      * @return the full path to the main file loaded, or the library name if unknown
      *         (but {@code if (!isLoadLibraries() || cls == null) { return null; }})
      * @throws NoClassDefFoundError on Class initialization failure
-     * @throws UnsatisfiedLinkError on native library loading failure
+     * @throws UnsatisfiedLinkError on native library loading failure or when interrupted
      * @see #findLibrary(Class, ClassProperties, String, boolean)
      * @see #loadLibrary(URL[], String)
      */
@@ -1117,7 +1117,7 @@ public class Loader {
      * @param preloaded libraries for which to create symbolic links in same cache directory
      * @return the full path of the file loaded, or the library name if unknown
      *         (but {@code if (!isLoadLibraries) { return null; }})
-     * @throws UnsatisfiedLinkError on failure
+     * @throws UnsatisfiedLinkError on failure or when interrupted
      */
     public synchronized static String loadLibrary(URL[] urls, String libnameversion, String ... preloaded) {
         if (!isLoadLibraries()) {

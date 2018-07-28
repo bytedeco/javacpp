@@ -1,4 +1,7 @@
 
+ * Clarify that `Loader.load()` can throw `UnsatisfiedLinkError` when interrupted
+ * Synchronize `Loader.loadLibrary()` to fix potential race condition ([pull #246](https://github.com/bytedeco/javacpp/pull/246))
+
 ### July 17, 2018 version 1.4.2
  * Add `Loader.getJavaVM()` method to get the JNI `JavaVM` object as required to initialize some libraries
  * Fix `Parser` from outputting accessors not available with `std::forward_list` or `std::list`
