@@ -1119,7 +1119,7 @@ public class Loader {
      *         (but {@code if (!isLoadLibraries) { return null; }})
      * @throws UnsatisfiedLinkError on failure
      */
-    public static String loadLibrary(URL[] urls, String libnameversion, String ... preloaded) {
+    public synchronized static String loadLibrary(URL[] urls, String libnameversion, String ... preloaded) {
         if (!isLoadLibraries()) {
             return null;
         }
