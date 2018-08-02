@@ -85,7 +85,8 @@ public class Info {
     boolean cast = false;
     /** Indicates expressions of conditional macro groups to parse, or templates to specialize. */
     boolean define = false;
-    /** Maps native C++ {@code enum} classes to Java {@code enum} types, along with methods using them. */
+    /** Maps native C++ {@code enum} classes to Java {@code enum} types, along with methods using them.
+     * To use as keys in maps, etc, intern() must be called on instances returned from native code. */
     boolean enumerate = false;
     /** Outputs declarations for this class into their subclasses as well.
      * Also adds methods for explicit casting, as done for multiple inheritance by default. */

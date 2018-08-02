@@ -1,4 +1,5 @@
 
+ * Explain the purpose of the `intern()` methods generated for Java enums
  * Clarify that `Loader.load()` can throw `UnsatisfiedLinkError` when interrupted
  * Synchronize `Loader.loadLibrary()` to fix potential race condition ([pull #246](https://github.com/bytedeco/javacpp/pull/246))
 
