@@ -161,6 +161,7 @@ public class Parser {
                     valueType = containerType.arguments[0];
                 }
                 String indexFunction = "(function = \"at\")";
+                boolean list = resizable; // also vector, etc
                 if (valueType.javaName == null || valueType.javaName.length() == 0
                         || containerName.startsWith("std::bitset")) {
                     indexFunction = "";
@@ -169,6 +170,7 @@ public class Parser {
                 } else if (containerName.endsWith("list") || containerName.endsWith("set")) {
                     indexType = null;
                     resizable = false;
+                    list = containerName.endsWith("list");
                 } else if (!constant && !resizable) {
                     indexFunction = ""; // maps need operator[] to be writable
                 }
@@ -297,14 +299,24 @@ public class Parser {
                         }
                     }
                     if (dim == 1 && !containerName.startsWith("std::bitset") && containerType.arguments.length >= 1 && containerType.arguments[containerType.arguments.length - 1].javaName.length() > 0) {
+                        decl.text += "\n";
+                        if (!constant) {
+                            if (list) {
+                                decl.text += "    public native @ByVal Iterator insert(@ByVal Iterator pos, " + valueType.annotations + valueType.javaName + " value);\n"
+                                          +  "    public native @ByVal Iterator erase(@ByVal Iterator pos);\n";
+                            } else if (indexType == null) {
+                                decl.text += "    public native void insert(" + valueType.annotations + valueType.javaName + " value);\n"
+                                          +  "    public native void erase(" + valueType.annotations + valueType.javaName + " value);\n";
+                            }
+                            // XXX: else need to figure out something for maps
+                        }
                         if (indexType != null && !indexType.annotations.contains("@Const") && !indexType.annotations.contains("@Cast") && !indexType.value) {
                             indexType.annotations += "@Const ";
                         }
                         if (!valueType.annotations.contains("@Const") && !valueType.value) {
                             valueType.annotations += "@Const ";
                         }
-                        decl.text += "\n"
-                                  +  "    public native @ByVal Iterator begin();\n"
+                        decl.text += "    public native @ByVal Iterator begin();\n"
                                   +  "    public native @ByVal Iterator end();\n"
                                   +  "    @NoOffset @Name(\"iterator\") public static class Iterator extends Pointer {\n"
                                   +  "        public Iterator(Pointer p) { super(p); }\n"

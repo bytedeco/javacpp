@@ -1,4 +1,5 @@
 
+ * Have `Parser` wrap the `insert()` and `erase()` methods of basic containers to allow modifying lists and sets
  * Let `Parser` create mutable instances of map containers without `const ` prefix ([issue bytedeco/javacpp-presets#595](https://github.com/bytedeco/javacpp-presets/issues/595))
  * Fix `Parser` sometimes ignoring `define` of `const ` containers ([pull bytedeco/javacpp-presets#547](https://github.com/bytedeco/javacpp-presets/pull/547))
  * Explain the purpose of the `intern()` methods generated for Java enums
