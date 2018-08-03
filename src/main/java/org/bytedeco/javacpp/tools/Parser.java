@@ -169,6 +169,8 @@ public class Parser {
                 } else if (containerName.endsWith("list") || containerName.endsWith("set")) {
                     indexType = null;
                     resizable = false;
+                } else if (!constant && !resizable) {
+                    indexFunction = ""; // maps need operator[] to be writable
                 }
                 while (valueType.cppName.startsWith(containerName)
                         && leafInfoMap.get(valueType.cppName, false).size() == 0) {
@@ -1117,9 +1119,12 @@ public class Parser {
 
         int infoLength = 1;
         boolean valueType = false, needCast = arrayAsPointer && dcl.indices > 1, implicitConst = false;
-        String prefix = type.constValue && dcl.indirections < 2 && !dcl.reference ? "const " : "";
-        Info info = infoMap.getFirst(prefix + type.cppName, false);
-        if ((!typedef || dcl.parameters != null) && (info == null || (info.cppTypes != null && info.cppTypes.length > 0))) {
+        Info constInfo = infoMap.getFirst("const " + type.cppName, false);
+        Info info = type.constValue && dcl.indirections < 2 && !dcl.reference ? constInfo
+                  : infoMap.getFirst(type.cppName, false);
+        if ((!typedef || dcl.parameters != null)
+                && (constInfo == null || (constInfo.cppTypes != null && constInfo.cppTypes.length > 0))
+                && (info == null || (info.cppTypes != null && info.cppTypes.length > 0))) {
             // substitute template types that have no info with appropriate adapter annotation
             Type type2 = type;
             if (info != null) {
@@ -1173,7 +1178,7 @@ public class Parser {
                     && ((type.constValue && dcl.indirections == 0 && dcl.reference)
                         || (dcl.indirections == 0 && !dcl.reference)
                         || info.pointerTypes == null);
-            implicitConst = info.cppNames[0].startsWith("const ");
+            implicitConst = info.cppNames[0].startsWith("const ") && !info.define;
             infoLength = valueType ? (info.valueTypes != null ? info.valueTypes.length : 1)
                                    : (info.pointerTypes != null ? info.pointerTypes.length : 1);
             dcl.infoNumber = infoNumber < 0 ? 0 : infoNumber % infoLength;
