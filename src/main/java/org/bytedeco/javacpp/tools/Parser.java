@@ -278,9 +278,9 @@ public class Parser {
                     String indexAnnotation = dim == 0 ? "@MemberGetter " : "@Index(" + (dim > 1 ? "value = " + dim + ", " : "") + "function = \"at\") ";
                     decl.text += "\n"
                               +  "    " + indexAnnotation + "public native " + firstType.annotations + firstType.javaName + " first(" + params + ");"
-                              +  " public native " + containerType.javaName + " first(" + params + separator + firstType.javaName + " first);\n"
+                              +  " public native " + containerType.javaName + " first(" + params + separator + firstType.javaName.substring(firstType.javaName.lastIndexOf(' ') + 1) + " first);\n"
                               +  "    " + indexAnnotation + "public native " + secondType.annotations + secondType.javaName + " second(" + params + "); "
-                              +  " public native " + containerType.javaName + " second(" + params + separator + secondType.javaName + " second);\n";
+                              +  " public native " + containerType.javaName + " second(" + params + separator + secondType.javaName.substring(secondType.javaName.lastIndexOf(' ') + 1) + " second);\n";
                     for (int i = 1; !constant && firstType.javaNames != null && i < firstType.javaNames.length; i++) {
                         decl.text += "    @MemberSetter @Index" + indexFunction + " public native " + containerType.javaName + " first(" + params + separator + firstType.annotations + firstType.javaNames[i] + " first);\n";
                     }
@@ -292,7 +292,7 @@ public class Parser {
                         decl.text += "\n"
                                   +  "    @Index" + indexFunction + " public native " + valueType.annotations + valueType.javaName + " get(" + params + ");\n";
                         if (!constant) {
-                            decl.text += "    public native " + containerType.javaName + " put(" + params + separator + valueType.javaName + " value);\n";
+                            decl.text += "    public native " + containerType.javaName + " put(" + params + separator + valueType.javaName.substring(valueType.javaName.lastIndexOf(' ') + 1) + " value);\n";
                         }
                         for (int i = 1; !constant && valueType.javaNames != null && i < valueType.javaNames.length; i++) {
                             decl.text += "    @ValueSetter @Index" + indexFunction + " public native " + containerType.javaName + " put(" + params + separator + valueType.annotations + valueType.javaNames[i] + " value);\n";
