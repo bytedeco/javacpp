@@ -1,4 +1,5 @@
 
+ * Update `README.md` with reference to newly published [Mapping Recipes for C/C++ Libraries](https://github.com/bytedeco/javacpp/wiki/Mapping-Recipes)
  * Make `Parser` strip annotations from setter methods for basic containers to satisfy the `Generator`
  * Have `Parser` wrap the `insert()` and `erase()` methods of basic containers to allow modifying lists and sets
  * Let `Parser` create mutable instances of map containers without `const ` prefix ([issue bytedeco/javacpp-presets#595](https://github.com/bytedeco/javacpp-presets/issues/595))
