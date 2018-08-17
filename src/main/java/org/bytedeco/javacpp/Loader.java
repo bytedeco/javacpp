@@ -392,7 +392,12 @@ public class Loader {
             size = jarEntry.getSize();
             timestamp = jarEntry.getTime();
             if (!noSubdir) {
-                cacheSubdir = new File(cacheSubdir, jarFileFile.getName() + File.separator + jarEntryFile.getParent());
+                String subdirName = jarFileFile.getName();
+                String parentName = jarEntryFile.getParent();
+                if (parentName != null) {
+                    subdirName = subdirName + File.separator + parentName;
+                }
+                cacheSubdir = new File(cacheSubdir, subdirName);
             }
         } else {
             size = urlFile.length();

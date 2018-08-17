@@ -843,6 +843,9 @@ public class Builder {
                     libs.addAll(libProperties.get("platform.preload"));
                     libs.addAll(libProperties.get("platform.link"));
                 }
+                if (libProperties == null) {
+                    libProperties = new ClassProperties(properties);
+                }
 
                 // Extract the required resources.
                 for (String s : resources.split(separator)) {
@@ -864,7 +867,7 @@ public class Builder {
                             }
                         }
                         File[] files = f.listFiles();
-                        if (files != null && libProperties != null) {
+                        if (files != null) {
                             for (File file : files) {
                                 Loader.createLibraryLink(file.getAbsolutePath(), libProperties, null,
                                         linkPaths.toArray(new String[linkPaths.size()]));
