@@ -4,7 +4,13 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.bytedeco</groupId>
   <artifactId>javacpp</artifactId>
-  <version>1.4.3-SNAPSHOT</version>
+  <version>2.0.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
+  <modules>
+    <module>core</module>
+    <module>maven-plugin</module>
+    <module>generator</module>
+  </modules>
 
   <name>JavaCPP</name>
   <description>The missing bridge between Java and native C++</description>
@@ -63,39 +69,6 @@
     <maven.build.timestamp.format>yyyyMMddhhmm</maven.build.timestamp.format>
   </properties>
 
-  <dependencies>
-    <dependency>
-      <groupId>org.apache.maven</groupId>
-      <artifactId>maven-plugin-api</artifactId>
-      <version>3.5.4</version>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.maven.plugin-tools</groupId>
-      <artifactId>maven-plugin-annotations</artifactId>
-      <version>3.5.2</version>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.maven</groupId>
-      <artifactId>maven-core</artifactId>
-      <version>3.0</version>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.12</version>
-      <optional>true</optional>
-    </dependency>
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-simple</artifactId>
-      <version>1.7.25</version>
-      <optional>true</optional>
-    </dependency>
-  </dependencies>
-
   <repositories>
     <repository>
       <id>sonatype-nexus-snapshots</id>
@@ -114,30 +87,11 @@
     <finalName>${project.artifactId}</finalName>
     <plugins>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-plugin-plugin</artifactId>
-        <version>3.5.2</version>
-        <configuration>
-          <packagingTypes>
-            <packagingType>jar</packagingType>
-          </packagingTypes>
-        </configuration>
-        <executions>
-          <execution>
-            <id>default-descriptor</id>
-            <phase>process-classes</phase>
-            <goals>
-              <goal>descriptor</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.7.0</version>
         <configuration>
-          <source>1.7</source>
-          <target>1.7</target>
+          <source>9</source>
+          <target>9</target>
         </configuration>
       </plugin>
       <plugin>
@@ -161,9 +115,6 @@
         <version>3.1.0</version>
         <configuration>
           <archive>
-            <manifest>
-              <mainClass>org.bytedeco.javacpp.tools.Builder</mainClass>
-            </manifest>
             <manifestEntries>
               <Class-Path>.</Class-Path>
               <Name>org/bytedeco/javacpp/</Name>
