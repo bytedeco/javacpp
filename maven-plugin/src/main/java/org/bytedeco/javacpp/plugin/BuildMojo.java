@@ -35,8 +35,8 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.bytedeco.javacpp.Loader;
-import org.bytedeco.javacpp.generator.Builder;
-import org.bytedeco.javacpp.generator.ParserException;
+import org.bytedeco.javacpp.tools.Builder;
+import org.bytedeco.javacpp.tools.ParserException;
 import org.bytedeco.javacpp.tools.Logger;
 
 /**

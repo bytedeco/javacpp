@@ -9,7 +9,6 @@
   <modules>
     <module>core</module>
     <module>maven-plugin</module>
-    <module>generator</module>
   </modules>
 
   <name>JavaCPP</name>
@@ -92,22 +91,6 @@
         <configuration>
           <source>9</source>
           <target>9</target>
-        </configuration>
-      </plugin>
-      <plugin>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <version>2.22.0</version>
-        <configuration>
-          <systemProperties>
-            <property>
-              <name>org.bytedeco.javacpp.maxbytes</name>
-              <value>1gb</value>
-            </property>
-            <property>
-              <name>org.bytedeco.javacpp.maxretries</name>
-              <value>3</value>
-            </property>
-          </systemProperties>
         </configuration>
       </plugin>
       <plugin>

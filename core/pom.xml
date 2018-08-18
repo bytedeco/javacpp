@@ -27,4 +27,45 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.1.0</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>org.bytedeco.javacpp.tools.Builder</mainClass>
+                        </manifest>
+                        <manifestEntries>
+                            <Class-Path>.</Class-Path>
+                            <Name>org/bytedeco/javacpp/</Name>
+                            <Implementation-Title>${project.name}</Implementation-Title>
+                            <Implementation-Vendor>Bytedeco</Implementation-Vendor>
+                            <Implementation-Version>${project.version}</Implementation-Version>
+                            <Specification-Title>${project.name}</Specification-Title>
+                            <Specification-Vendor>Bytedeco</Specification-Vendor>
+                            <Specification-Version>${project.version}</Specification-Version>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.22.0</version>
+                <configuration>
+                    <systemProperties>
+                        <property>
+                            <name>org.bytedeco.javacpp.maxbytes</name>
+                            <value>1gb</value>
+                        </property>
+                        <property>
+                            <name>org.bytedeco.javacpp.maxretries</name>
+                            <value>3</value>
+                        </property>
+                    </systemProperties>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>

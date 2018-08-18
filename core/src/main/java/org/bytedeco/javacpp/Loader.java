@@ -155,7 +155,7 @@ public class Loader {
         int i = s.indexOf('/');
         p.put("platform.library.prefix", s.substring(0, i));
         p.put("platform.library.suffix", s.substring(i + 1));
-        name = "properties/" + name + ".properties";
+        name = "/properties/" + name + ".properties";
         InputStream is = Loader.class.getResourceAsStream(name);
         try {
             try {
@@ -164,7 +164,7 @@ public class Loader {
                 p.load(is);
             }
         } catch (Exception e) {
-            name = "properties/" + defaults + ".properties";
+            name = "/properties/" + defaults + ".properties";
             InputStream is2 = Loader.class.getResourceAsStream(name);
             try {
                 try {
