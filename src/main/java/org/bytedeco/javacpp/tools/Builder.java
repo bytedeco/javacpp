@@ -167,7 +167,7 @@ public class Builder {
     /**
      * Launches and waits for the native compiler to produce a native shared library.
      *
-     * @param sourceFilename the C++ source filename
+     * @param sourceFilenames the C++ source filename
      * @param outputFilename the output filename of the shared library
      * @param properties the Properties detailing the compiler options to use
      * @return the result of {@link Process#waitFor()}
@@ -311,8 +311,8 @@ public class Builder {
         }
 
         {
-            String p = properties.getProperty("platform.link.prefix", "");
-            String x = properties.getProperty("platform.link.suffix", "");
+            List<String> p = Arrays.asList(properties.getProperty("platform.link.prefix", "").split(" "));
+            List<String> x = Arrays.asList(properties.getProperty("platform.link.suffix", "").split(" "));
             int i = command.size(); // to inverse order and satisfy typical compilers
             for (String s : properties.get("platform.link")) {
                 String[] libnameversion = s.split("#")[0].split("@");
@@ -322,15 +322,22 @@ public class Builder {
                 } else {
                     s = libnameversion[0];
                 }
-                if (p.endsWith(" ") && x.startsWith(" ")) {
-                    command.add(i, p.trim()); command.add(i + 1, s); command.add(i + 2, x.trim());
-                } else if (p.endsWith(" ")) {
-                    command.add(i, p.trim()); command.add(i + 1, s + x);
-                } else if (x.startsWith(" ")) {
-                    command.add(i, p + s); command.add(i + 1, x.trim());
+
+                List<String> l = new ArrayList<>();
+                if (p.size() > 1 && x.size() > 1) {
+                    l.addAll(p.subList(0, p.size() - 1));
+                    l.add(p.get(p.size() - 1) + s + x.get(0));
+                    l.addAll(x.subList(1, x.size()));
+                } else if (p.size() > 1) {
+                    l.addAll(p.subList(0, p.size() - 1));
+                    l.add(p.get(p.size() - 1) + s + x.get(0));
+                } else if (x.size() > 1) {
+                    l.add(p.get(0) + s + x.get(0));
+                    l.addAll(x.subList(1, x.size()));
                 } else {
-                    command.add(i, p + s + x);
+                    command.add(i, p.get(0) + s + x.get(0));
                 }
+                command.addAll(i, l);
             }
         }
 
