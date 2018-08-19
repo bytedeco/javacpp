@@ -181,7 +181,7 @@ public class ClassProperties extends HashMap<String,List<String>> {
         String[] pragma = {}, define = {}, exclude = {}, include = {}, cinclude = {}, includepath = {}, includeresource = {}, compiler = {},
                  linkpath = {}, linkresource = {}, link = {}, frameworkpath = {}, framework = {}, preloadpath = {}, preload = {},
                  resourcepath = {}, resource = {}, extension = {};
-        String library = "jni" + c.getSimpleName(), linkbefore ="", linkafter="";
+        String library = "jni" + c.getSimpleName();
         for (Platform p : platforms != null ? platforms : new Platform[0]) {
             String[][] names = { p.value().length > 0 ? p.value() : defaultNames, p.not() };
             boolean[] matches = { false, false };
@@ -216,8 +216,6 @@ public class ClassProperties extends HashMap<String,List<String>> {
                 if (p.linkpath()   .length > 0) { linkpath    = p.linkpath();    }
                 if (p.linkresource()   .length > 0) { linkresource    = p.linkresource();    }
                 if (p.link()       .length > 0) { link        = p.link();        }
-                if (p.linkbefore() .length() > 0) { linkbefore = p.linkbefore(); }
-                if (p.linkafter()  .length() > 0) { linkafter = p.linkafter(); }
                 if (p.frameworkpath().length > 0) { frameworkpath = p.frameworkpath(); }
                 if (p.framework()  .length > 0) { framework   = p.framework();   }
                 if (p.preloadpath().length > 0) { preloadpath = p.preloadpath(); }
@@ -263,8 +261,6 @@ public class ClassProperties extends HashMap<String,List<String>> {
         addAll("platform.linkpath", linkpath);
         addAll("platform.linkresource", linkresource);
         addAll("platform.link", link);
-        setProperty("platform.linkbefore", linkbefore);
-        setProperty("platform.linkafter", linkafter);
         addAll("platform.frameworkpath", frameworkpath);
         addAll("platform.framework", framework);
         addAll("platform.preloadpath", preloadpath);

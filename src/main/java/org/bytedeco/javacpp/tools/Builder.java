@@ -167,7 +167,7 @@ public class Builder {
     /**
      * Launches and waits for the native compiler to produce a native shared library.
      *
-     * @param sourceFilenames the C++ source filename
+     * @param sourceFilename the C++ source filename
      * @param outputFilename the output filename of the shared library
      * @param properties the Properties detailing the compiler options to use
      * @return the result of {@link Process#waitFor()}
@@ -331,12 +331,6 @@ public class Builder {
                 } else {
                     command.add(i, p + s + x);
                 }
-            }
-            if (command.size() > i) {
-                String b = properties.getProperty("platform.linkbefore", "");
-                String a = properties.getProperty("platform.linkafter", "");
-                command.add(i, b);
-                command.add(a);
             }
         }
 

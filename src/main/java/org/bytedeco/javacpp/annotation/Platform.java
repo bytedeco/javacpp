@@ -73,10 +73,6 @@ public @interface Platform {
     String[] linkresource() default {};
     /** A list of libraries the native compiler should link with. */
     String[] link()        default {};
-    /** An option added before linked libraries. */
-    String linkbefore()        default "";
-    /** An option added after linked libraries. */
-    String linkafter()        default "";
     /** A list of framework paths passed to the native compiler for use at link time. */
     String[] frameworkpath() default {};
     /** A list of frameworks the native compiler should build against. */
