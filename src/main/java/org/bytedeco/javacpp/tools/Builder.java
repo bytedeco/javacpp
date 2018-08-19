@@ -311,8 +311,38 @@ public class Builder {
         }
 
         {
-            List<String> p = Arrays.asList(properties.getProperty("platform.link.prefix", "").split(" "));
-            List<String> x = Arrays.asList(properties.getProperty("platform.link.suffix", "").split(" "));
+            String p = properties.getProperty("platform.link.prefix", "");
+            String x = properties.getProperty("platform.link.suffix", "");
+
+            String linkPrefix = "";
+            String linkSuffix = "";
+            String linkBefore = "";
+            String linkAfter  = "";
+
+            if (p.endsWith(" ")) {
+                linkBefore = p.trim();
+            } else {
+                int lastSpaceIndex = p.lastIndexOf(" ");
+                if (lastSpaceIndex != -1) {
+                    linkBefore = p.substring(0, lastSpaceIndex);
+                    linkPrefix = p.substring(lastSpaceIndex + 1);
+                } else {
+                    linkPrefix = p;
+                }
+            }
+
+            if (x.startsWith(" ")) {
+                linkAfter = x.trim();
+            } else {
+                int firstSpaceIndex = x.indexOf(" ");
+                if (firstSpaceIndex != -1) {
+                    linkSuffix = x.substring(0, firstSpaceIndex);
+                    linkAfter = x.substring(firstSpaceIndex + 1);
+                } else {
+                    linkSuffix = x;
+                }
+            }
+
             int i = command.size(); // to inverse order and satisfy typical compilers
             for (String s : properties.get("platform.link")) {
                 String[] libnameversion = s.split("#")[0].split("@");
@@ -322,22 +352,13 @@ public class Builder {
                 } else {
                     s = libnameversion[0];
                 }
-
-                List<String> l = new ArrayList<>();
-                if (p.size() > 1 && x.size() > 1) {
-                    l.addAll(p.subList(0, p.size() - 1));
-                    l.add(p.get(p.size() - 1) + s + x.get(0));
-                    l.addAll(x.subList(1, x.size()));
-                } else if (p.size() > 1) {
-                    l.addAll(p.subList(0, p.size() - 1));
-                    l.add(p.get(p.size() - 1) + s + x.get(0));
-                } else if (x.size() > 1) {
-                    l.add(p.get(0) + s + x.get(0));
-                    l.addAll(x.subList(1, x.size()));
-                } else {
-                    command.add(i, p.get(0) + s + x.get(0));
-                }
-                command.addAll(i, l);
+                command.add(i, linkPrefix + s + linkSuffix);
+            }
+            if (linkBefore.length() != 0) {
+                command.add(i, linkBefore);
+            }
+            if (linkAfter.length() != 0) {
+                command.add(linkAfter);
             }
         }
 
