@@ -25,8 +25,8 @@ import org.bytedeco.javacpp.tools.Parser;
  * annotated with this annotation, and specialize further for the current class.
  *
  * @see Builder
- * @see Loader
  * @see Generator
+ * @see Loader
  * @see Parser
  *
  * @author Samuel Audet

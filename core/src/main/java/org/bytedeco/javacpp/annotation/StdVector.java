@@ -6,11 +6,13 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import org.bytedeco.javacpp.Pointer;
+import org.bytedeco.javacpp.tools.Generator;
 
 /**
  * A shorthand for {@code @Adapter("VectorAdapter<type>")}.
  *
  * @see Adapter
+ * @see Generator
  *
  * @author Samuel Audet
  */

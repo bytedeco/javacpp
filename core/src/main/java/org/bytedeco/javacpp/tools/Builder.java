@@ -77,7 +77,7 @@ public class Builder {
      * @throws ParserException on C/C++ header file parsing error
      */
     File parse(String[] classPath, Class cls) throws IOException, ParserException {
-        return new Parser(logger, getProperties(), encoding, null).parse(outputDirectory, classPath, cls);
+        return new Parser(logger, properties, encoding, null).parse(outputDirectory, classPath, cls);
     }
 
     /**
