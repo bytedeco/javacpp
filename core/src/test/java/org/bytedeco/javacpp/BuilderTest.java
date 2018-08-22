@@ -23,7 +23,6 @@ package org.bytedeco.javacpp;
 
 import java.io.File;
 import java.util.Properties;
-
 import org.bytedeco.javacpp.annotation.Platform;
 import org.bytedeco.javacpp.tools.BuildEnabled;
 import org.bytedeco.javacpp.tools.Builder;

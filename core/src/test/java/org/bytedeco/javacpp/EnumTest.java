@@ -22,7 +22,6 @@
 package org.bytedeco.javacpp;
 
 import java.io.File;
-
 import org.bytedeco.javacpp.annotation.Name;
 import org.bytedeco.javacpp.annotation.Platform;
 import org.bytedeco.javacpp.tools.Builder;
