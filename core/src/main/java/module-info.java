@@ -1,5 +1,5 @@
 module javacpp.core {
-  requires org.slf4j;
+  requires static org.slf4j; // 'static' means that downstream libraries don't need the SLF4J dependency
   requires jdk.unsupported; // For UnsafeRaw
 
   exports org.bytedeco.javacpp;
