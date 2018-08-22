@@ -6,6 +6,9 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import org.bytedeco.javacpp.Loader;
+import org.bytedeco.javacpp.tools.Builder;
+import org.bytedeco.javacpp.tools.Generator;
+import org.bytedeco.javacpp.tools.Parser;
 
 /**
  * Makes it possible to define more than one set of properties for each platform.
@@ -21,7 +24,10 @@ import org.bytedeco.javacpp.Loader;
  * Additionally, it is possible to inherit properties from another class also
  * annotated with this annotation, and specialize further for the current class.
  *
+ * @see Builder
  * @see Loader
+ * @see Generator
+ * @see Parser
  *
  * @author Samuel Audet
  */
@@ -34,9 +40,9 @@ public @interface Properties {
     String[] names() default {};
     /** A list of properties for different platforms. */
     Platform[] value() default {};
-    /** The target Java source code file of the {@code Parser}. */
+    /** The target Java source code file of the {@link Parser}. */
     String target() default "";
-    /** An optional helper class the {@code Parser} should use as base of the target.
+    /** An optional helper class the {@link Parser} should use as base of the target.
         Defaults to the class where this annotation was found. */
     String helper() default "";
 }

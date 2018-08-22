@@ -5,10 +5,11 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import org.bytedeco.javacpp.tools.Generator;
 
 /**
  * Names the identifier of a native C++ struct, class, union, function, variable,
- * operator, macro, etc. Without this annotation, {@code Generator} guesses the
+ * operator, macro, etc. Without this annotation, {@link Generator} guesses the
  * native name based on the name of the Java peer. However, it may sometimes be
  * impossible to use the same name in Java, for example, in the case of overloaded
  * operators or to specify template arguments, while other times we may need to

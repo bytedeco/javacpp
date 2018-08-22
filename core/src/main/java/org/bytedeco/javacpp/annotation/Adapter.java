@@ -7,10 +7,11 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.nio.Buffer;
 import org.bytedeco.javacpp.Pointer;
+import org.bytedeco.javacpp.tools.Generator;
 
 /**
  * Specifies a C++ class to act as an adapter to convert the types of arguments.
- * Three such C++ classes made available by {@code Generator} are {@code StringAdapter},
+ * Three such C++ classes made available by {@link Generator} are {@code StringAdapter},
  * {@code VectorAdapter}, and {@code SharedPtrAdapter} to bridge a few differences between
  * {@code std::string} and {@link String}; between {@code std::vector}, Java arrays of
  * primitive types, {@link Buffer}, and {@link Pointer}; and between {@code xyz::shared_ptr}
@@ -35,7 +36,7 @@ import org.bytedeco.javacpp.Pointer;
 public @interface Adapter {
     /** The name of the C++ adapter class. */
     String value();
-    /** The number of arguments that {@code Generator} takes from the method as
+    /** The number of arguments that {@link Generator} takes from the method as
      *  arguments to the adapter constructor. */
     int argc() default 1;
 }

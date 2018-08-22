@@ -29,9 +29,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * A {@link Map} containing {@link Info} objects consumed by the {@code Parser}.
+ * A {@link Map} containing {@link Info} objects consumed by the {@link Parser}.
  * Also contains a few utility methods to facilitate its use for both the user
- * and the {@code Parser}.
+ * and the {@link Parser}.
  *
  * @author Samuel Audet
  */

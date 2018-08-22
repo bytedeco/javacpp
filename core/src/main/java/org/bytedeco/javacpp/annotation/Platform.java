@@ -6,13 +6,15 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import org.bytedeco.javacpp.Loader;
+import org.bytedeco.javacpp.tools.Builder;
+import org.bytedeco.javacpp.tools.Generator;
 
 /**
  * Defines native properties for a top-level enclosing class as well as indicates
  * classes and methods that should be generated or not, for specified platforms.
  * <p>
  * A class or method annotated with only {@link #value()} or {@link #not()}
- * lets {@code Generator} know for which platforms it should generate code
+ * lets {@link Generator} know for which platforms it should generate code
  * (or not). The strings are matched with {@link String#startsWith(String)}.
  * In particular, {@code @Platform(value="")} matches all platforms, while
  * {@code @Platform(not="")} matches no platforms, providing a way to specify
@@ -20,13 +22,15 @@ import org.bytedeco.javacpp.Loader;
  * <p>
  * Classes annotated with at least one of the other values define a top-enclosing
  * class as returned by {@link Loader#getEnclosingClass(Class)}. By default, one
- * native library gets created for each such class, but {@code Builder} recognizes
+ * native library gets created for each such class, but {@link Builder} recognizes
  * more than one class with the same {@link #library()} name and produces only one
  * library in that case.
  * <p>
  * Further, with the {@link Properties} annotation, properties can be inherited
  * from other classes, and different properties can be defined for each platform.
  *
+ * @see Builder
+ * @see Generator
  * @see Loader
  *
  * @author Samuel Audet
@@ -61,7 +65,7 @@ public @interface Platform {
     /** A list of options applied for the native compiler. The options here refer to
      *  property names. The actual command line options of the native compiler are the
      *  values of these properties, which need to be defined elsewhere. On an empty
-     *  array, the {@code Builder} uses the "platform.compiler.default" property. */
+     *  array, the {@link Builder} uses the "platform.compiler.default" property. */
     String[] compiler()    default {};
     /** A list of library paths passed to the native compiler for use at link time. */
     String[] linkpath()    default {};
@@ -86,7 +90,7 @@ public @interface Platform {
     /** The platform extensions to attempt to load for this library. The names here are
      *  appended to the platform name and looked up in the class path. */
     String[] extension()   default {};
-    /** The native JNI library associated with this class that {@code Builder} should
+    /** The native JNI library associated with this class that {@link Builder} should
      *  try to build and {@link Loader} should try to load. If left empty, this value
      *  defaults to "jni" + the name that {@link Class#getSimpleName()} returns. */
     String   library()     default "";

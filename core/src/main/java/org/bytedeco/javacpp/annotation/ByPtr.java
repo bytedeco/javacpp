@@ -6,6 +6,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import org.bytedeco.javacpp.Pointer;
+import org.bytedeco.javacpp.tools.Generator;
 
 /**
  * Indicates that an argument should get passed or returned by pointer. By default,

@@ -5,6 +5,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import org.bytedeco.javacpp.tools.Generator;
 
 /**
  * An annotation indicating that a method should behave like a value setter.

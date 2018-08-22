@@ -5,6 +5,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import org.bytedeco.javacpp.tools.Generator;
 
 /**
  * Allows using method arguments to call {@code operator[]} in some circumstances.

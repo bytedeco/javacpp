@@ -6,6 +6,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import org.bytedeco.javacpp.FunctionPointer;
+import org.bytedeco.javacpp.tools.Generator;
 
 /**
  * A shortcut annotation to {@link Cast} that simply adds {@code const} to the parameter type, function, or class.
