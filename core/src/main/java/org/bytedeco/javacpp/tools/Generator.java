@@ -2095,7 +2095,7 @@ public class Generator {
             } else if (methodInfo.memberGetter || methodInfo.memberSetter) {
                 if (index != null) {
                     out.print("(*ptr)");
-                    prefix = "" + methodInfo.memberName[0] + prefix;
+                    prefix = "." + methodInfo.memberName[0] + prefix;
                 } else {
                     out.print("ptr->" + methodInfo.memberName[0]);
                 }
@@ -2169,7 +2169,7 @@ public class Generator {
                     out.print("((" + subType + "*)ptr)->" + name);
                 } else if (index != null) {
                     out.print("(*ptr)");
-                    prefix = "" + name + prefix;
+                    prefix = "." + name + prefix;
                 } else {
                     String op = name.startsWith("operator") ? name.substring(8).trim() : "";
                     if (methodInfo.parameterTypes.length > 0
@@ -2207,7 +2207,7 @@ public class Generator {
                 if (index == null || index.function().length() == 0) {
                     out.print("[");
                 } else {
-                    out.print("" + index.function() + "(");
+                    out.print("." + index.function() + "(");
                 }
             }
             Annotation passBy = by(methodInfo, j);
@@ -3742,7 +3742,7 @@ public class Generator {
                     s = type.getName();
                     int i = s.lastIndexOf("$");
                     if (i < 0) {
-                        i = s.lastIndexOf("");
+                        i = s.lastIndexOf(".");
                     }
                     s = s.substring(i+1);
                 } else {

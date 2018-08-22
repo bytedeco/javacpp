@@ -103,7 +103,7 @@ public class Parser {
             Info info2 = infoMap.getFirst(text.substring(0, namespace));
             String localName = text.substring(namespace + 2);
             if (info2 != null && info2.pointerTypes != null) {
-                text = info2.pointerTypes[0] + "" + localName;
+                text = info2.pointerTypes[0] + "." + localName;
             } else if (localName.length() > 0 && Character.isJavaIdentifierStart(localName.charAt(0))) {
                 for (char c : localName.toCharArray()) {
                     if (!Character.isJavaIdentifierPart(c)) {
@@ -2169,7 +2169,7 @@ public class Parser {
                 }
                 if (metadcl != null && metadcl.cppName.length() > 0) {
                     decl.text += metadcl.indices == 0
-                            ? "@Name(\"" + metadcl.cppName + "" + shortName + "\") "
+                            ? "@Name(\"" + metadcl.cppName + "." + shortName + "\") "
                             : "@Name({\"" + metadcl.cppName + "\", \"." + shortName + "\"}) ";
                     dcl.type.annotations = dcl.type.annotations.replaceAll("@Name\\(.*\\) ", "");
                     javaName = metadcl.javaName + "_" + shortName;
@@ -2211,7 +2211,7 @@ public class Parser {
                 }
                 if (metadcl != null && metadcl.cppName.length() > 0) {
                     decl.text += metadcl.indices == 0
-                            ? "@Name(\"" + metadcl.cppName + "" + shortName + "\") "
+                            ? "@Name(\"" + metadcl.cppName + "." + shortName + "\") "
                             : "@Name({\"" + metadcl.cppName + "\", \"." + shortName + "\"}) ";
                     dcl.type.annotations = dcl.type.annotations.replaceAll("@Name\\(.*\\) ", "");
                     javaName = metadcl.javaName + "_" + shortName;
@@ -2523,7 +2523,7 @@ public class Parser {
                 // a function pointer or something
                 decl = dcl.definition;
                 if (dcl.javaName.length() > 0 && context.javaName != null) {
-                    dcl.javaName = context.javaName + "" + dcl.javaName;
+                    dcl.javaName = context.javaName + "." + dcl.javaName;
                 }
                 if (info == null || !info.skip) {
                     info = info != null ? new Info(info).cppNames(defName) : new Info(defName);
@@ -2763,7 +2763,7 @@ public class Parser {
             name = context.shorten(type.javaName);
         } else if (info == null) {
             if (type.javaName.length() > 0 && context.javaName != null) {
-                type.javaName = context.javaName + "" + type.javaName;
+                type.javaName = context.javaName + "." + type.javaName;
             }
             infoMap.put(info = new Info(type.cppName).pointerTypes(type.javaName));
         }
@@ -2856,7 +2856,7 @@ public class Parser {
             declarations(ctx, declList2);
         } else for (Declarator var : variables) {
             if (context.variable != null) {
-                var.cppName = context.variable.cppName + "" + var.cppName;
+                var.cppName = context.variable.cppName + "." + var.cppName;
                 var.javaName = context.variable.javaName + "_" + var.javaName;
             }
             ctx.variable = var;
