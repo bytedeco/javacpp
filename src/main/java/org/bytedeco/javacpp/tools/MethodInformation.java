@@ -41,7 +41,8 @@ public class MethodInformation {
     Class<?>[] parameterTypes;
     Annotation[][] parameterAnnotations;
     boolean returnRaw, withEnv, overloaded, noOffset, deallocator, allocator, arrayAllocator,
-            bufferGetter, valueGetter, valueSetter, memberGetter, memberSetter, noReturnGetter;
+            bufferGetter, valueGetter, valueSetter, memberGetter, memberSetter, noReturnGetter,
+            criticalRegion;
     Method pairedMethod;
     Class<?> throwsException;
 }
