@@ -47,6 +47,7 @@ import java.util.Collection;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -316,15 +317,15 @@ public class Builder {
 
             String linkPrefix = "";
             String linkSuffix = "";
-            String linkBefore = "";
-            String linkAfter  = "";
+            List<String> linkBeforeOptions = new LinkedList<>();
+            List<String> linkAfterOptions  = new LinkedList<>();
 
             if (p.endsWith(" ")) {
-                linkBefore = p.trim();
+                linkBeforeOptions.addAll(Arrays.asList(p.trim().split(" ")));
             } else {
                 int lastSpaceIndex = p.lastIndexOf(" ");
                 if (lastSpaceIndex != -1) {
-                    linkBefore = p.substring(0, lastSpaceIndex);
+                    linkBeforeOptions.addAll(Arrays.asList(p.substring(0, lastSpaceIndex).split(" ")));
                     linkPrefix = p.substring(lastSpaceIndex + 1);
                 } else {
                     linkPrefix = p;
@@ -332,12 +333,12 @@ public class Builder {
             }
 
             if (x.startsWith(" ")) {
-                linkAfter = x.trim();
+                linkAfterOptions.addAll(Arrays.asList(x.trim().split(" ")));
             } else {
                 int firstSpaceIndex = x.indexOf(" ");
                 if (firstSpaceIndex != -1) {
                     linkSuffix = x.substring(0, firstSpaceIndex);
-                    linkAfter = x.substring(firstSpaceIndex + 1);
+                    linkAfterOptions.addAll(Arrays.asList(x.substring(firstSpaceIndex + 1).split(" ")));
                 } else {
                     linkSuffix = x;
                 }
@@ -354,11 +355,11 @@ public class Builder {
                 }
                 command.add(i, linkPrefix + s + linkSuffix);
             }
-            if (linkBefore.length() != 0) {
-                command.add(i, linkBefore);
+            if (linkBeforeOptions.size() != 0) {
+                command.addAll(i, linkBeforeOptions);
             }
-            if (linkAfter.length() != 0) {
-                command.add(linkAfter);
+            if (linkAfterOptions.size() != 0) {
+                command.addAll(linkAfterOptions);
             }
         }
 
