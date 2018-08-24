@@ -694,6 +694,97 @@ public class PointerTest {
         System.out.println(Pointer.DeallocatorReference.totalBytes + " " + chunkSize * charSize);
     }
 
+    @Test public void testPointerPointer() {
+        System.out.println("PointerPointer");
+
+        int pointerSize = Loader.sizeof(Pointer.class);
+        assertEquals(pointerSize, Loader.sizeof(PointerPointer.class));
+
+        Pointer[] array = new Pointer[8192];
+        PointerPointer pointer = new PointerPointer(array);
+        assertEquals(array.length, pointer.limit());
+        assertEquals(array.length, pointer.capacity());
+
+        for (int i = 0; i < array.length; i++) {
+            final int j = i;
+            Pointer p = new Pointer() { { address = j; } };
+            array[i] = p;
+            pointer.put(i, p);
+            assertEquals(array[i], pointer.get(i));
+        }
+
+        for (int i = 0; i < array.length; i++) {
+            pointer.position(i).put(array[i]);
+            assertEquals(array[i], pointer.position(i).get());
+        }
+
+        Pointer[] array2 = new Pointer[array.length];
+        for (int i = 0; i < array2.length; i++) {
+            array2[i] = pointer.position(0).get(i);
+        }
+        assertArrayEquals(array, array2);
+
+        PointerPointer stringArray = new PointerPointer("one", "two");
+        assertEquals(2, stringArray.capacity());
+        assertEquals("one", stringArray.getString(0));
+        assertEquals("two", stringArray.getString(1));
+
+        int offset = 42;
+        for (int i = 0; i < array.length - offset; i++) {
+            pointer.put(i, array[offset + i]);
+            array2[offset + i] = pointer.get(i);
+        }
+        assertArrayEquals(array, array2);
+
+        PointerPointer pointer2 = new PointerPointer(array.length).zero();
+        pointer2.position(10).limit(30).fill(0xFF);
+        pointer.position(20);
+        pointer2.position(20);
+        for (int i = 0; i < 10; i++) {
+            pointer.put(i, pointer2.get(i));
+        }
+        pointer.position(0);
+        pointer2.position(0);
+        for (int i = 0; i < array.length; i++) {
+            if (i < 10) {
+                assertNull(pointer2.get(i));
+            } else if (i < 20) {
+                assertEquals(0xFFFFFFFF, pointer2.get(i).address() & 0xFFFFFFFF);
+            } else if (i < 30) {
+                assertEquals(pointer.get(i), pointer2.get(i));
+            } else {
+                assertNull(pointer2.get(i));
+            }
+        }
+
+        assertEquals(maxBytes, Pointer.maxBytes);
+        int chunks = 8;
+        PointerPointer[] pointers = new PointerPointer[chunks];
+        long chunkSize = Pointer.maxBytes / pointerSize / chunks + 1;
+        for (int j = 0; j < chunks - 1; j++) {
+            pointers[j] = new PointerPointer(chunkSize);
+        }
+        assertTrue(Pointer.DeallocatorReference.totalBytes >= (chunks - 1) * chunkSize * pointerSize);
+        try {
+            fieldReference = pointers;
+            System.out.println("Note: OutOfMemoryError should get thrown here and printed below.");
+            new PointerPointer(chunkSize);
+            fail("OutOfMemoryError should have been thrown.");
+        } catch (OutOfMemoryError e) {
+            System.out.println(e);
+            System.out.println(e.getCause());
+        }
+        for (int j = 0; j < chunks; j++) {
+            pointers[j] = null;
+        }
+        // make sure garbage collection runs
+        fieldReference = null;
+        pointers[0] = new PointerPointer(chunkSize);
+        assertTrue(Pointer.DeallocatorReference.totalBytes < (chunks - 1) * chunkSize * pointerSize);
+        assertTrue(Pointer.DeallocatorReference.totalBytes >= chunkSize * pointerSize);
+        System.out.println(Pointer.DeallocatorReference.totalBytes + " " + chunkSize * pointerSize);
+    }
+
     @Test public void testDeallocator() throws InterruptedException {
         System.out.println("Deallocator");
         System.out.println("maxBytes = " + Pointer.maxBytes());
