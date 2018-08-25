@@ -1,4 +1,5 @@
 
+ * Add new `@CriticalRegion` annotation to allow zero-copy access to data of Java arrays ([pull #254](https://github.com/bytedeco/javacpp/pull/254))
  * Allow `Builder` to create links for resource libraries even when no Java classes are built
  * Fix `Loader.cacheResource()` creating a subdirectory named "null" when caching a top-level file
  * Update `README.md` with reference to newly published [Mapping Recipes for C/C++ Libraries](https://github.com/bytedeco/javacpp/wiki/Mapping-Recipes)

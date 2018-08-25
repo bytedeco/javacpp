@@ -72,6 +72,7 @@ import org.bytedeco.javacpp.annotation.ByVal;
 import org.bytedeco.javacpp.annotation.Cast;
 import org.bytedeco.javacpp.annotation.Const;
 import org.bytedeco.javacpp.annotation.Convention;
+import org.bytedeco.javacpp.annotation.CriticalRegion;
 import org.bytedeco.javacpp.annotation.Function;
 import org.bytedeco.javacpp.annotation.Index;
 import org.bytedeco.javacpp.annotation.MemberGetter;
@@ -87,7 +88,6 @@ import org.bytedeco.javacpp.annotation.Raw;
 import org.bytedeco.javacpp.annotation.ValueGetter;
 import org.bytedeco.javacpp.annotation.ValueSetter;
 import org.bytedeco.javacpp.annotation.Virtual;
-import org.bytedeco.javacpp.annotation.CriticalRegion;
 
 /**
  * The Generator is where all the C++ source code that we need gets generated.
@@ -114,6 +114,7 @@ import org.bytedeco.javacpp.annotation.CriticalRegion;
  * @see Cast
  * @see Const
  * @see Convention
+ * @see CriticalRegion
  * @see Function
  * @see Index
  * @see MemberGetter
@@ -128,7 +129,6 @@ import org.bytedeco.javacpp.annotation.CriticalRegion;
  * @see Raw
  * @see ValueGetter
  * @see ValueSetter
- * @see CriticalRegion
  *
  * @author Samuel Audet
  */
@@ -1873,8 +1873,8 @@ public class Generator {
                         methodInfo.parameterTypes[j].getComponentType().isPrimitive()) {
                     out.print("arg" + j + " == NULL ? NULL : ");
                     String s = methodInfo.parameterTypes[j].getComponentType().getName();
-                    if (methodInfo.valueGetter || methodInfo.valueSetter ||
-                            methodInfo.memberGetter || methodInfo.memberSetter || methodInfo.criticalRegion) {
+                    if (methodInfo.criticalRegion || methodInfo.valueGetter || methodInfo.valueSetter ||
+                            methodInfo.memberGetter || methodInfo.memberSetter) {
                         out.println("(j" + s + "*)env->GetPrimitiveArrayCritical(arg" + j + ", NULL);");
                     } else {
                         s = Character.toUpperCase(s.charAt(0)) + s.substring(1);
@@ -2504,8 +2504,8 @@ public class Generator {
                     out.println("    }");
                 }
                 out.print("    if (arg" + j + " != NULL) ");
-                if (methodInfo.valueGetter || methodInfo.valueSetter ||
-                        methodInfo.memberGetter || methodInfo.memberSetter || methodInfo.criticalRegion) {
+                if (methodInfo.criticalRegion || methodInfo.valueGetter || methodInfo.valueSetter ||
+                        methodInfo.memberGetter || methodInfo.memberSetter) {
                     out.println("env->ReleasePrimitiveArrayCritical(arg" + j + ", ptr" + j + ", " + releaseArrayFlag + ");");
                 } else {
                     String componentType = methodInfo.parameterTypes[j].getComponentType().getName();
@@ -3055,6 +3055,7 @@ public class Generator {
         info.dim    = index != null ? index.value() : 0;
         info.parameterTypes       = method.getParameterTypes();
         info.parameterAnnotations = method.getParameterAnnotations();
+        info.criticalRegion = criticalRegion(info.cls, info.method);
         info.returnRaw = method.isAnnotationPresent(Raw.class);
         info.withEnv = info.returnRaw ? method.getAnnotation(Raw.class).withEnv() : false;
         info.parameterRaw = new boolean[info.parameterAnnotations.length];
@@ -3252,25 +3253,7 @@ public class Generator {
                 info.throwsException = exceptions.length > 0 ? exceptions[0] : RuntimeException.class;
             }
         }
-
-        info.criticalRegion = criticalRegion(info.cls, info.method);
         return info;
-    }
-
-    static boolean noException(Class<?> cls, Method method) {
-        boolean noException = baseClasses.contains(cls) ||
-                method.isAnnotationPresent(NoException.class);
-        while (!noException && cls != null) {
-            if (noException = cls.isAnnotationPresent(NoException.class)) {
-                break;
-            }
-            if (cls.getEnclosingClass() != null) {
-                cls = cls.getEnclosingClass();
-            } else {
-                cls = cls.getSuperclass();
-            }
-        }
-        return noException;
     }
 
     static boolean criticalRegion(Class<?> cls, Method method) {
@@ -3287,6 +3270,22 @@ public class Generator {
             }
         }
         return criticalRegion;
+    }
+
+    static boolean noException(Class<?> cls, Method method) {
+        boolean noException = baseClasses.contains(cls) ||
+                method.isAnnotationPresent(NoException.class);
+        while (!noException && cls != null) {
+            if (noException = cls.isAnnotationPresent(NoException.class)) {
+                break;
+            }
+            if (cls.getEnclosingClass() != null) {
+                cls = cls.getEnclosingClass();
+            } else {
+                cls = cls.getSuperclass();
+            }
+        }
+        return noException;
     }
 
     AdapterInformation adapterInformation(boolean out, MethodInformation methodInfo, int j) {
