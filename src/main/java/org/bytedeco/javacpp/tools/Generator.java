@@ -72,6 +72,7 @@ import org.bytedeco.javacpp.annotation.ByVal;
 import org.bytedeco.javacpp.annotation.Cast;
 import org.bytedeco.javacpp.annotation.Const;
 import org.bytedeco.javacpp.annotation.Convention;
+import org.bytedeco.javacpp.annotation.CriticalRegion;
 import org.bytedeco.javacpp.annotation.Function;
 import org.bytedeco.javacpp.annotation.Index;
 import org.bytedeco.javacpp.annotation.MemberGetter;
@@ -113,6 +114,7 @@ import org.bytedeco.javacpp.annotation.Virtual;
  * @see Cast
  * @see Const
  * @see Convention
+ * @see CriticalRegion
  * @see Function
  * @see Index
  * @see MemberGetter
@@ -1871,7 +1873,7 @@ public class Generator {
                         methodInfo.parameterTypes[j].getComponentType().isPrimitive()) {
                     out.print("arg" + j + " == NULL ? NULL : ");
                     String s = methodInfo.parameterTypes[j].getComponentType().getName();
-                    if (methodInfo.valueGetter || methodInfo.valueSetter ||
+                    if (methodInfo.criticalRegion || methodInfo.valueGetter || methodInfo.valueSetter ||
                             methodInfo.memberGetter || methodInfo.memberSetter) {
                         out.println("(j" + s + "*)env->GetPrimitiveArrayCritical(arg" + j + ", NULL);");
                     } else {
@@ -2502,7 +2504,7 @@ public class Generator {
                     out.println("    }");
                 }
                 out.print("    if (arg" + j + " != NULL) ");
-                if (methodInfo.valueGetter || methodInfo.valueSetter ||
+                if (methodInfo.criticalRegion || methodInfo.valueGetter || methodInfo.valueSetter ||
                         methodInfo.memberGetter || methodInfo.memberSetter) {
                     out.println("env->ReleasePrimitiveArrayCritical(arg" + j + ", ptr" + j + ", " + releaseArrayFlag + ");");
                 } else {
@@ -3053,6 +3055,7 @@ public class Generator {
         info.dim    = index != null ? index.value() : 0;
         info.parameterTypes       = method.getParameterTypes();
         info.parameterAnnotations = method.getParameterAnnotations();
+        info.criticalRegion = criticalRegion(info.cls, info.method);
         info.returnRaw = method.isAnnotationPresent(Raw.class);
         info.withEnv = info.returnRaw ? method.getAnnotation(Raw.class).withEnv() : false;
         info.parameterRaw = new boolean[info.parameterAnnotations.length];
@@ -3251,6 +3254,22 @@ public class Generator {
             }
         }
         return info;
+    }
+
+    static boolean criticalRegion(Class<?> cls, Method method) {
+        boolean criticalRegion = baseClasses.contains(cls) ||
+                method.isAnnotationPresent(CriticalRegion.class);
+        while (!criticalRegion && cls != null) {
+            if (criticalRegion = cls.isAnnotationPresent(CriticalRegion.class)) {
+                break;
+            }
+            if (cls.getEnclosingClass() != null) {
+                cls = cls.getEnclosingClass();
+            } else {
+                cls = cls.getSuperclass();
+            }
+        }
+        return criticalRegion;
     }
 
     static boolean noException(Class<?> cls, Method method) {
