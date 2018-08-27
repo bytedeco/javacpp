@@ -355,11 +355,15 @@ public class Builder {
                 }
                 command.add(i, linkPrefix + s + linkSuffix);
             }
-            if (linkBeforeOptions.size() != 0) {
-                command.addAll(i, linkBeforeOptions);
-            }
-            if (linkAfterOptions.size() != 0) {
-                command.addAll(linkAfterOptions);
+
+            boolean hasLinkLib = command.size() > i;
+            if (hasLinkLib) {
+                if (linkBeforeOptions.size() != 0) {
+                    command.addAll(i, linkBeforeOptions);
+                }
+                if (linkAfterOptions.size() != 0) {
+                    command.addAll(linkAfterOptions);
+                }
             }
         }
 
