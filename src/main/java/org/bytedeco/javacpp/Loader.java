@@ -982,19 +982,36 @@ public class Loader {
             }
         }
 
-        try {
-            String library = p.getProperty("platform.library");
-            URL[] urls = findLibrary(cls, p, library, pathsFirst);
-            String filename = loadLibrary(urls, library, preloaded.toArray(new String[preloaded.size()]));
-            if (cacheDir != null && filename != null && filename.startsWith(cacheDir)) {
-                createLibraryLink(filename, p, library);
+        int librarySuffix = -1;
+    tryAgain:
+        while (true) {
+            try {
+                String library = p.getProperty("platform.library");
+                if (librarySuffix >= 0) {
+                    // try to load the JNI library using a different name
+                    library += "#" + library + librarySuffix;
+                }
+                URL[] urls = findLibrary(cls, p, library, pathsFirst);
+                String filename = loadLibrary(urls, library, preloaded.toArray(new String[preloaded.size()]));
+                if (cacheDir != null && filename != null && filename.startsWith(cacheDir)) {
+                    createLibraryLink(filename, p, library);
+                }
+                return filename;
+            } catch (UnsatisfiedLinkError e) {
+                Throwable t = e;
+                while (t != null) {
+                    if (t instanceof UnsatisfiedLinkError &&
+                            t.getMessage().contains("already loaded in another classloader")) {
+                        librarySuffix++;
+                        continue tryAgain;
+                    }
+                    t = t.getCause() != t ? t.getCause() : null;
+                }
+                if (preloadError != null && e.getCause() == null) {
+                    e.initCause(preloadError);
+                }
+                throw e;
             }
-            return filename;
-        } catch (UnsatisfiedLinkError e) {
-            if (preloadError != null && e.getCause() == null) {
-                e.initCause(preloadError);
-            }
-            throw e;
         }
     }
 
