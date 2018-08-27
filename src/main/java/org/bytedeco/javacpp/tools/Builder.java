@@ -353,17 +353,12 @@ public class Builder {
                 } else {
                     s = libnameversion[0];
                 }
-                command.add(i, linkPrefix + s + linkSuffix);
-            }
+                List<String> l = new ArrayList<>();
+                l.addAll(linkBeforeOptions);
+                l.add(linkPrefix + s + linkSuffix);
+                l.addAll(linkAfterOptions);
 
-            boolean hasLinkLib = command.size() > i;
-            if (hasLinkLib) {
-                if (linkBeforeOptions.size() != 0) {
-                    command.addAll(i, linkBeforeOptions);
-                }
-                if (linkAfterOptions.size() != 0) {
-                    command.addAll(linkAfterOptions);
-                }
+                command.addAll(i, l);
             }
         }
 
