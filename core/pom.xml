@@ -11,6 +11,11 @@
 
     <artifactId>javacpp-core</artifactId>
 
+    <properties>
+        <java9.sourceDirectory>${project.basedir}/src/main/java9</java9.sourceDirectory>
+        <java9.build.outputDirectory>${project.build.directory}/classes-java9</java9.build.outputDirectory>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -43,12 +48,64 @@
                             <Implementation-Title>${project.name}</Implementation-Title>
                             <Implementation-Vendor>Bytedeco</Implementation-Vendor>
                             <Implementation-Version>${project.version}</Implementation-Version>
+                            <Multi-Release>true</Multi-Release>
                             <Specification-Title>${project.name}</Specification-Title>
                             <Specification-Vendor>Bytedeco</Specification-Vendor>
                             <Specification-Version>${project.version}</Specification-Version>
                         </manifestEntries>
                     </archive>
                 </configuration>
+            </plugin>
+            <!-- For multi-release JAR -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.8</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.apache.ant</groupId>
+                        <artifactId>ant</artifactId>
+                        <version>1.10.5</version>
+                    </dependency>
+                </dependencies>
+                <executions>
+                    <execution>
+                        <id>compile-java9</id>
+                        <phase>compile</phase>
+                        <configuration>
+                            <tasks>
+                                <mkdir dir="${java9.build.outputDirectory}"/>
+                                <javac srcdir="${project.build.sourceDirectory}:${java9.sourceDirectory}" destdir="${java9.build.outputDirectory}"
+                                       modulepath="${maven.dependency.org.slf4j.slf4j-api.jar.path}:${maven.dependency.org.slf4j.slf4j-simple.jar.path}"
+                                       classpath="${project.build.outputDirectory}" includeantruntime="false"/>
+                            </tasks>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-resources</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.outputDirectory}/META-INF/versions/9</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${java9.build.outputDirectory}</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
