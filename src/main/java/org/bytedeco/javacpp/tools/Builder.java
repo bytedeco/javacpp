@@ -47,7 +47,6 @@ import java.util.Collection;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -168,7 +167,7 @@ public class Builder {
     /**
      * Launches and waits for the native compiler to produce a native shared library.
      *
-     * @param sourceFilenames the C++ source filename
+     * @param sourceFilenames the C++ source filenames
      * @param outputFilename the output filename of the shared library
      * @param properties the Properties detailing the compiler options to use
      * @return the result of {@link Process#waitFor()}
@@ -317,8 +316,8 @@ public class Builder {
 
             String linkPrefix = "";
             String linkSuffix = "";
-            List<String> linkBeforeOptions = new LinkedList<>();
-            List<String> linkAfterOptions  = new LinkedList<>();
+            List<String> linkBeforeOptions = new ArrayList<>();
+            List<String> linkAfterOptions  = new ArrayList<>();
 
             if (p.endsWith(" ")) {
                 linkBeforeOptions.addAll(Arrays.asList(p.trim().split(" ")));
