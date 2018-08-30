@@ -1,4 +1,5 @@
 
+ * Make `Builder` accept multiple options for `platform.link.prefix` and `platform.link.suffix` ([pull #250](https://github.com/bytedeco/javacpp/pull/250))
  * Let `Loader` rename JNI libraries when "already loaded in another classloader" ([issue deeplearning4j/deeplearning4j#6166](https://github.com/deeplearning4j/deeplearning4j/issues/6166))
  * Add new `@CriticalRegion` annotation to allow zero-copy access to data of Java arrays ([pull #254](https://github.com/bytedeco/javacpp/pull/254))
  * Allow `Builder` to create links for resource libraries even when no Java classes are built

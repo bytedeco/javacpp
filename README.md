@@ -88,6 +88,11 @@ Finally, because we are dealing with native code, bugs can easily crash the virt
    * http://docs.oracle.com/javase/8/docs/technotes/guides/troubleshoot/
 
 
+Getting Started
+---------------
+To understand how JavaCPP is meant to be used, one should first take a look at the [Mapping Recipes for C/C++ Libraries](https://github.com/bytedeco/javacpp/wiki/Mapping-Recipes). The repository of the [JavaCPP Presets](https://github.com/bytedeco/javacpp-presets) further provides complex examples that we can use as templates, but it also includes a wiki page on how to [Create New Presets](https://github.com/bytedeco/javacpp-presets/wiki/Create-New-Presets) that explains their structure in detail along with a small but complete sample project from which one can start experimenting with.
+
+
 Key Use Cases
 -------------
 To implement `native` methods, JavaCPP generates appropriate code for JNI, and passes it to the C++ compiler to build a native library. At no point do we need to get our hands dirty with JNI, makefiles, or other native tools. The important thing to realize here is that, while we do all customization inside the Java language using annotations, JavaCPP produces code that has *zero overhead* compared to manually coded JNI functions (verify the generated .cpp files to convince yourself). Moreover, at runtime, the `Loader.load()` method automatically loads the native libraries from Java resources, which were placed in the right directory by the building process. They can even be archived in a JAR file, it changes nothing. Users simply do not need to figure out how to make the system load the files. These characteristics make JavaCPP suitable for either
