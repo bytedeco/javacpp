@@ -218,7 +218,7 @@ public class Loader {
                 if (p.pragma().length > 0 || p.define().length > 0 || p.exclude().length > 0 || p.include().length > 0 || p.cinclude().length > 0
                     || p.includepath().length > 0 || p.includeresource().length > 0 || p.compiler().length > 0
                     || p.linkpath().length > 0 || p.linkresource().length > 0 || p.link().length > 0 || p.frameworkpath().length > 0
-                    || p.framework().length > 0 || p.preloadpath().length > 0 || p.preload().length > 0
+                    || p.framework().length > 0 || p.preloadresource().length > 0 || p.preloadpath().length > 0 || p.preload().length > 0
                     || p.resourcepath().length > 0 || p.resource().length > 0 || p.library().length() > 0) {
                     break;
                 }
@@ -1080,6 +1080,7 @@ public class Loader {
         List<String> paths = new ArrayList<String>();
         paths.addAll(properties.get("platform.linkpath"));
         paths.addAll(properties.get("platform.preloadpath"));
+        String[] resources = properties.get("platform.preloadresource").toArray(new String[0]);
         String libpath = System.getProperty("java.library.path", "");
         if (libpath.length() > 0 && (pathsFirst || !isLoadLibraries() || reference)) {
             // leave loading from "java.library.path" to System.loadLibrary() as fallback,
@@ -1090,18 +1091,24 @@ public class Loader {
         for (int i = 0; cls != null && i < styles.length; i++) {
             // ... then find it from in our resources ...
             for (String extension : Arrays.copyOf(extensions, extensions.length + 1)) {
-                String subdir = platform + (extension == null ? "" : extension) + "/";
-                URL u = cls.getResource(subdir + styles[i]);
-                if (u != null) {
-                    if (reference) {
-                        try {
-                            u = new URL(u + "#" + styles2[i]);
-                        } catch (MalformedURLException e) {
-                            throw new RuntimeException(e);
-                        }
+                for (String resource : Arrays.copyOf(resources, resources.length + 1)) {
+                    if (resource != null && !resource.endsWith("/")) {
+                        resource += "/";
                     }
-                    if (!urls.contains(u)) {
-                        urls.add(u);
+                    String subdir = (resource == null ? "" : "/" + resource) + platform
+                                  + (extension == null ? "" : extension) + "/";
+                    URL u = cls.getResource(subdir + styles[i]);
+                    if (u != null) {
+                        if (reference) {
+                            try {
+                                u = new URL(u + "#" + styles2[i]);
+                            } catch (MalformedURLException e) {
+                                throw new RuntimeException(e);
+                            }
+                        }
+                        if (!urls.contains(u)) {
+                            urls.add(u);
+                        }
                     }
                 }
             }

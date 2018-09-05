@@ -60,7 +60,7 @@ public class ClassProperties extends HashMap<String,List<String>> {
             }
             if (k.equals("platform.includepath") || k.equals("platform.includeresource") || k.equals("platform.include")
                 || k.equals("platform.linkpath") || k.equals("platform.linkresource") || k.equals("platform.link")
-                || k.equals("platform.preloadpath") || k.equals("platform.preload")
+                || k.equals("platform.preloadpath") || k.equals("platform.preloadresource") || k.equals("platform.preload")
                 || k.equals("platform.resourcepath") || k.equals("platform.resource")
                 || k.equals("platform.frameworkpath") || k.equals("platform.framework")
                 || k.equals("platform.library.suffix") || k.equals("platform.extension")) {
@@ -179,7 +179,7 @@ public class ClassProperties extends HashMap<String,List<String>> {
         }
 
         String[] pragma = {}, define = {}, exclude = {}, include = {}, cinclude = {}, includepath = {}, includeresource = {}, compiler = {},
-                 linkpath = {}, linkresource = {}, link = {}, frameworkpath = {}, framework = {}, preloadpath = {}, preload = {},
+                 linkpath = {}, linkresource = {}, link = {}, frameworkpath = {}, framework = {}, preloadpath = {}, preloadresource = {}, preload = {},
                  resourcepath = {}, resource = {}, extension = {};
         String library = "jni" + c.getSimpleName();
         for (Platform p : platforms != null ? platforms : new Platform[0]) {
@@ -218,6 +218,7 @@ public class ClassProperties extends HashMap<String,List<String>> {
                 if (p.link()       .length > 0) { link        = p.link();        }
                 if (p.frameworkpath().length > 0) { frameworkpath = p.frameworkpath(); }
                 if (p.framework()  .length > 0) { framework   = p.framework();   }
+                if (p.preloadresource().length > 0) { preloadresource = p.preloadresource(); }
                 if (p.preloadpath().length > 0) { preloadpath = p.preloadpath(); }
                 if (p.preload()    .length > 0) { preload     = p.preload();     }
                 if (p.resourcepath().length > 0) { resourcepath = p.resourcepath(); }
@@ -263,6 +264,7 @@ public class ClassProperties extends HashMap<String,List<String>> {
         addAll("platform.link", link);
         addAll("platform.frameworkpath", frameworkpath);
         addAll("platform.framework", framework);
+        addAll("platform.preloadresource", preloadresource);
         addAll("platform.preloadpath", preloadpath);
         addAll("platform.preload", preload);
         addAll("platform.resourcepath", resourcepath);

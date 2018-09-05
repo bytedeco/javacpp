@@ -110,6 +110,14 @@ public class BuildMojo extends AbstractMojo {
     @Parameter(property = "javacpp.preloadPaths")
     String[] preloadPaths = null;
 
+    /** Add the path to the "platform.preloadresource" property. */
+    @Parameter(property = "javacpp.preloadResource")
+    String preloadResource = null;
+
+    /** Add the paths to the "platform.preloadresource" property. */
+    @Parameter(property = "javacpp.preloadResources")
+    String[] preloadResources = null;
+
     /** Add the path to the "platform.resourcepath" property. */
     @Parameter(property = "javacpp.resourcePath")
     String resourcePath = null;
@@ -231,6 +239,8 @@ public class BuildMojo extends AbstractMojo {
                 log.debug("linkResources: " + Arrays.deepToString(linkResources));
                 log.debug("preloadPath: " + preloadPath);
                 log.debug("preloadPaths: " + Arrays.deepToString(preloadPaths));
+                log.debug("preloadResource: " + preloadResource);
+                log.debug("preloadResources: " + Arrays.deepToString(preloadResources));
                 log.debug("resourcePath: " + resourcePath);
                 log.debug("resourcePaths: " + Arrays.deepToString(resourcePaths));
                 log.debug("encoding: " + encoding);
@@ -330,6 +340,11 @@ public class BuildMojo extends AbstractMojo {
             for (String s : merge(preloadPaths, preloadPath)) {
                 String v = properties.getProperty("platform.preloadpath", "");
                 properties.setProperty("platform.preloadpath",
+                        v.length() == 0 || v.endsWith(separator) ? v + s : v + separator + s);
+            }
+            for (String s : merge(preloadResources, preloadResource)) {
+                String v = properties.getProperty("platform.preloadresource", "");
+                properties.setProperty("platform.preloadresource",
                         v.length() == 0 || v.endsWith(separator) ? v + s : v + separator + s);
             }
             for (String s : merge(resourcePaths, resourcePath)) {

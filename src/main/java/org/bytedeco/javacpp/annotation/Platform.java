@@ -80,6 +80,9 @@ public @interface Platform {
     /** A list of paths from which to attempt preloading libraries from the
      *  {@link #link()} and {@link #preload()} lists. */
     String[] preloadpath() default {};
+    /** A list of resources from which to attempt preloading libraries from the
+     *  {@link #link()} and {@link #preload()} lists. */
+    String[] preloadresource() default {};
     /** A list of libraries, in addition to {@link #link()}, that should be
      *  extracted and preloaded, if possible. */
     String[] preload()     default {};

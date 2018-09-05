@@ -3549,7 +3549,7 @@ public class Parser {
         }
         infoMap.putAll(leafInfoMap);
 
-        String version = Generator.class.getPackage().getImplementationVersion();
+        String version = Parser.class.getPackage().getImplementationVersion();
         if (version == null) {
             version = "unknown";
         }
