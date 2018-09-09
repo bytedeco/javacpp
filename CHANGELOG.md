@@ -1,4 +1,6 @@
 
+ * Fix `Parser` failing when a value of an `std::pair` basic container is also an `std::pair` ([issue bytedeco/javacpp-presets#614](https://github.com/bytedeco/javacpp-presets/issues/614))
+ * Fix build issues with `android-arm` and recent versions of the NDK ([pull #256](https://github.com/bytedeco/javacpp/pull/256))
  * Add `platform.preloadresource` property to be able to preload libraries from other Java packages
  * Make `Builder` accept multiple options for `platform.link.prefix` and `platform.link.suffix` ([pull #250](https://github.com/bytedeco/javacpp/pull/250))
  * Let `Loader` rename JNI libraries when "already loaded in another classloader" ([issue deeplearning4j/deeplearning4j#6166](https://github.com/deeplearning4j/deeplearning4j/issues/6166))

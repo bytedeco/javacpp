@@ -141,7 +141,7 @@ public class Parser {
                 if (info == null || info.skip || !info.define) {
                     continue;
                 }
-                int dim = containerName.startsWith("std::pair") ? 0 : 1;
+                int dim = containerName.endsWith("pair") ? 0 : 1;
                 boolean constant = info.cppNames[0].startsWith("const "), resizable = !constant;
                 Type containerType = new Parser(this, info.cppNames[0]).type(context),
                         indexType, valueType, firstType = null, secondType = null;
@@ -163,7 +163,7 @@ public class Parser {
                 String indexFunction = "(function = \"at\")";
                 boolean list = resizable; // also vector, etc
                 if (valueType.javaName == null || valueType.javaName.length() == 0
-                        || containerName.startsWith("std::bitset")) {
+                        || containerName.endsWith("bitset")) {
                     indexFunction = "";
                     valueType.javaName = "boolean";
                     resizable = false;
@@ -180,11 +180,11 @@ public class Parser {
                     dim++;
                     valueType = valueType.arguments[0];
                 }
-                if (containerName.startsWith("std::pair")) {
+                int valueTemplate = valueType.cppName.indexOf("<");
+                if (containerName.endsWith("pair")) {
                     firstType = containerType.arguments[0];
                     secondType = containerType.arguments[1];
-                }
-                if (valueType.cppName.startsWith("std::pair")) {
+                } else if (valueTemplate >= 0 && valueType.cppName.substring(0, valueTemplate).endsWith("pair")) {
                     firstType = valueType.arguments[0];
                     secondType = valueType.arguments[1];
                 }
@@ -298,7 +298,7 @@ public class Parser {
                             decl.text += "    @ValueSetter @Index" + indexFunction + " public native " + containerType.javaName + " put(" + params + separator + valueType.annotations + valueType.javaNames[i] + " value);\n";
                         }
                     }
-                    if (dim == 1 && !containerName.startsWith("std::bitset") && containerType.arguments.length >= 1 && containerType.arguments[containerType.arguments.length - 1].javaName.length() > 0) {
+                    if (dim == 1 && !containerName.endsWith("bitset") && containerType.arguments.length >= 1 && containerType.arguments[containerType.arguments.length - 1].javaName.length() > 0) {
                         decl.text += "\n";
                         if (!constant) {
                             if (list) {
