@@ -2592,7 +2592,7 @@ public class Generator {
                        +  methodInfo.memberName[0] + parameterDeclaration + ";\n    "
                        +  returnConvention[0] + "super_" + methodInfo.memberName[0] + nonconstParamDeclaration + " { ";
                 if (methodInfo.method.getAnnotation(Virtual.class).value()) {
-                    member += "throw JavaCPP_exception(\"Cannot call a pure virtual function(" + cls.getSimpleName() + "::" + methodInfo.memberName[0] + ").\"); }";
+                    member += "throw JavaCPP_exception(\"Cannot call pure virtual function " + valueTypeName + "::" + methodInfo.memberName[0] + "().\"); }";
                 } else {
                     member += (callbackReturnType != void.class ? "return " : "") + valueTypeName + "::" + methodInfo.memberName[0] + "(";
                     for (int j = 0; j < callbackParameterTypes.length; j++) {
