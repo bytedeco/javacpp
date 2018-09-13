@@ -42,7 +42,6 @@ import java.nio.file.Paths;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Deque;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -731,7 +730,7 @@ public class Loader {
     /** Temporary directory set and returned by {@link #getTempDir()}. */
     static File tempDir = null;
     /** Contains all the native libraries that we have loaded to avoid reloading them. */
-    static Map<String,String> loadedLibraries = Collections.synchronizedMap(new HashMap<String,String>());
+    static Map<String,String> loadedLibraries = new HashMap<String,String>();
 
     static boolean pathsFirst = false;
     static {
@@ -785,6 +784,11 @@ public class Loader {
             }
         }
         return tempDir;
+    }
+
+    /** Returns a Map that relates each library name to the path of the loaded file. */
+    public static synchronized Map<String,String> getLoadedLibraries() {
+        return new HashMap<String,String>(loadedLibraries);
     }
 
     /** Returns {@code System.getProperty("org.bytedeco.javacpp.loadlibraries")}.
@@ -1148,7 +1152,7 @@ public class Loader {
      *         (but {@code if (!isLoadLibraries) { return null; }})
      * @throws UnsatisfiedLinkError on failure or when interrupted
      */
-    public synchronized static String loadLibrary(URL[] urls, String libnameversion, String ... preloaded) {
+    public static synchronized String loadLibrary(URL[] urls, String libnameversion, String ... preloaded) {
         if (!isLoadLibraries()) {
             return null;
         }

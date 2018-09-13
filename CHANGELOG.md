@@ -1,4 +1,6 @@
 
+ * Add `Loader.getLoadedLibraries()` method for debugging purposes and fix flaky `BuilderTest` ([issue #245](https://github.com/bytedeco/javacpp/issues/245))
+ * Call `PointerScope.attach()` as part of `Pointer.deallocator()`, instead of `init()`, to support custom deallocators as well
  * Fix `Parser` failing when a value of an `std::pair` basic container is also an `std::pair` ([issue bytedeco/javacpp-presets#614](https://github.com/bytedeco/javacpp-presets/issues/614))
  * Fix build issues with `android-arm` and recent versions of the NDK ([pull #256](https://github.com/bytedeco/javacpp/pull/256))
  * Add `platform.preloadresource` property to be able to preload libraries from other Java packages
@@ -8,7 +10,7 @@
  * Allow `Builder` to create links for resource libraries even when no Java classes are built
  * Fix `Loader.cacheResource()` creating a subdirectory named "null" when caching a top-level file
  * Update `README.md` with reference to newly published [Mapping Recipes for C/C++ Libraries](https://github.com/bytedeco/javacpp/wiki/Mapping-Recipes)
- * Make `Parser` strip annotations from setter methods for basic containers to satisfy the `Generator`
+ * Prevent `Parser` from appending annotations to setter methods of variables and for basic containers to satisfy the `Generator`
  * Have `Parser` wrap the `insert()` and `erase()` methods of basic containers to allow modifying lists and sets
  * Let `Parser` create mutable instances of map containers without `const ` prefix ([issue bytedeco/javacpp-presets#595](https://github.com/bytedeco/javacpp-presets/issues/595))
  * Fix `Parser` sometimes ignoring `define` of `const ` containers ([pull bytedeco/javacpp-presets#547](https://github.com/bytedeco/javacpp-presets/pull/547))

@@ -22,6 +22,7 @@
 package org.bytedeco.javacpp;
 
 import java.io.File;
+import java.net.URL;
 import java.util.Properties;
 import org.bytedeco.javacpp.annotation.Platform;
 import org.bytedeco.javacpp.tools.BuildEnabled;
@@ -56,6 +57,16 @@ public class BuilderTest implements BuildEnabled, LoadEnabled {
     @Test public void testExtensions() throws Exception {
         System.out.println("Builder");
         Class c = BuilderTest.class;
+        String[] extensions = {"", "-ext1", "-ext2"};
+        for (String extension : extensions) {
+            URL u = c.getResource(Loader.getPlatform() + extension);
+            if (u != null) {
+                for (File f : new File(u.toURI()).listFiles()) {
+                    f.delete();
+                }
+            }
+        }
+
         Builder builder0 = new Builder().classesOrPackages(c.getName());
         File[] outputFiles0 = builder0.build();
         assertEquals(0, outputFiles0.length);
@@ -67,7 +78,7 @@ public class BuilderTest implements BuildEnabled, LoadEnabled {
         System.out.println("Loader");
         Loader.loadProperties().remove("platform.extension");
         Loader.load(c);
-        assertTrue(Loader.loadedLibraries.get("jniBuilderTest").contains("-ext2"));
+        assertTrue(Loader.getLoadedLibraries().get("jniBuilderTest").contains("-ext2"));
         Loader.loadedLibraries.clear();
 
         System.out.println("Builder");
@@ -77,12 +88,12 @@ public class BuilderTest implements BuildEnabled, LoadEnabled {
         System.out.println("Loader");
         Loader.loadProperties().remove("platform.extension");
         Loader.load(c);
-        assertTrue(Loader.loadedLibraries.get("jniBuilderTest").contains("-ext1"));
+        assertTrue(Loader.getLoadedLibraries().get("jniBuilderTest").contains("-ext1"));
         Loader.loadedLibraries.clear();
 
         Loader.loadProperties().put("platform.extension", "-ext2");
         Loader.load(c);
-        assertTrue(Loader.loadedLibraries.get("jniBuilderTest").contains("-ext2"));
+        assertTrue(Loader.getLoadedLibraries().get("jniBuilderTest").contains("-ext2"));
 
         System.out.println(initCount);
         assertTrue(initCount >= 6);

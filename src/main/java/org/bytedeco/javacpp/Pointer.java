@@ -123,10 +123,6 @@ public class Pointer implements AutoCloseable {
         if (ownerAddress != 0 && deallocatorAddress != 0) {
             deallocator(new NativeDeallocator(this, ownerAddress, deallocatorAddress));
         }
-        PointerScope s = PointerScope.getInnerScope();
-        if (s != null) {
-            s.attach(this);
-        }
     }
 
     /** The interface to implement to produce a Deallocator usable by Pointer. */
@@ -591,6 +587,11 @@ public class Pointer implements AutoCloseable {
                     logger.debug("Registering " + this);
                 }
                 r.add();
+
+                PointerScope s = PointerScope.getInnerScope();
+                if (s != null) {
+                    s.attach(this);
+                }
             }
         }
         return (P)this;
