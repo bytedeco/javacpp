@@ -1,4 +1,5 @@
 
+ * Add to default `InfoMap` missing `int` value type and `IntPointer` pointer type for `wchar_t`
  * Add `Loader.getLoadedLibraries()` method for debugging purposes and fix flaky `BuilderTest` ([issue #245](https://github.com/bytedeco/javacpp/issues/245))
  * Call `PointerScope.attach()` as part of `Pointer.deallocator()`, instead of `init()`, to support custom deallocators as well
  * Fix `Parser` failing when a value of an `std::pair` basic container is also an `std::pair` ([issue bytedeco/javacpp-presets#614](https://github.com/bytedeco/javacpp-presets/issues/614))
