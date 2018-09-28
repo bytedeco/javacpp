@@ -12,7 +12,7 @@
  * Add new `@CriticalRegion` annotation to allow zero-copy access to data of Java arrays ([pull #254](https://github.com/bytedeco/javacpp/pull/254))
  * Allow `Builder` to create links for resource libraries even when no Java classes are built
  * Fix `Loader.cacheResource()` creating a subdirectory named "null" when caching a top-level file
- * Update `README.md` with reference to newly published [Mapping Recipes for C/C++ Libraries](https://github.com/bytedeco/javacpp/wiki/Mapping-Recipes)
+ * Update `README.md` with references to newly published [Basic Architecture of JavaCPP](https://github.com/bytedeco/javacpp/wiki/Basic-Architecture) and [Mapping Recipes for C/C++ Libraries](https://github.com/bytedeco/javacpp/wiki/Mapping-Recipes)
  * Prevent `Parser` from appending annotations to setter methods of variables and for basic containers to satisfy the `Generator`
  * Have `Parser` wrap the `insert()` and `erase()` methods of basic containers to allow modifying lists and sets
  * Let `Parser` create mutable instances of map containers without `const ` prefix ([issue bytedeco/javacpp-presets#595](https://github.com/bytedeco/javacpp-presets/issues/595))
