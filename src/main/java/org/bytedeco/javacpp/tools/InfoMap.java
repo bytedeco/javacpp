@@ -48,7 +48,7 @@ public class InfoMap extends HashMap<String,List<Info>> {
                                               "_Bool", "_Complex", "_Imaginary", "complex", "imaginary"))
 
         .put(new Info("__COUNTER__").cppText("#define __COUNTER__ 0"))
-        .put(new Info(" __attribute__", "__declspec").annotations().skip())
+        .put(new Info(" __attribute__", "__declspec", "static_assert").annotations().skip())
         .put(new Info("void").valueTypes("void").pointerTypes("Pointer"))
         .put(new Info("std::nullptr_t").valueTypes("Pointer").pointerTypes("PointerPointer"))
         .put(new Info("FILE", "time_t", "va_list", "std::exception", "std::istream", "std::ostream", "std::iostream",
