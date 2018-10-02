@@ -47,6 +47,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import org.bytedeco.javacpp.BoolPointer;
+import org.bytedeco.javacpp.BooleanPointer;
 import org.bytedeco.javacpp.BytePointer;
 import org.bytedeco.javacpp.CLongPointer;
 import org.bytedeco.javacpp.CharPointer;
@@ -159,6 +160,7 @@ public class Generator {
             FloatPointer.class,
             DoublePointer.class,
             CharPointer.class,
+            BooleanPointer.class,
             PointerPointer.class,
             BoolPointer.class,
             CLongPointer.class,
@@ -3603,7 +3605,7 @@ public class Generator {
             prefix = "double*";
         } else if (type == char[].class || type == CharBuffer.class || type == CharPointer.class) {
             prefix = "unsigned short*";
-        } else if (type == boolean[].class) {
+        } else if (type == boolean[].class || type == BooleanPointer.class) {
             prefix = "unsigned char*";
         } else if (type == PointerPointer.class) {
             prefix = "void**";

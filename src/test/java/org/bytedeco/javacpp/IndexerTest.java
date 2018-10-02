@@ -25,6 +25,7 @@ import java.io.File;
 import java.nio.ByteOrder;
 
 import org.bytedeco.javacpp.annotation.Platform;
+import org.bytedeco.javacpp.indexer.BooleanIndexer;
 import org.bytedeco.javacpp.indexer.ByteIndexer;
 import org.bytedeco.javacpp.indexer.CharIndexer;
 import org.bytedeco.javacpp.indexer.DoubleIndexer;
@@ -604,6 +605,85 @@ public class IndexerTest {
                 assertEquals((long)longIndexer.get(longSize - i - 1), (char)i);
             }
             System.out.println("longIndexer[0x" + Long.toHexString(longSize) + " - 8192] = " + (int)longIndexer.get(longSize - 8192));
+        } catch (OutOfMemoryError e) {
+            System.out.println(e);
+        }
+        System.out.println();
+    }
+
+    @Test public void testBooleanIndexer() {
+        System.out.println("BooleanIndexer");
+        long size = 7 * 5 * 3 * 2;
+        long[] sizes = { 7, 5, 3, 2 };
+        long[] strides = { 5 * 3 * 2, 3 * 2, 2, 1 };
+        final BooleanPointer ptr = new BooleanPointer(size);
+        for (int i = 0; i < size; i++) {
+            ptr.position(i).put(i % 2 != 0);
+        }
+        BooleanIndexer arrayIndexer = BooleanIndexer.create(ptr.position(0), sizes, strides, false);
+        BooleanIndexer directIndexer = BooleanIndexer.create(ptr.position(0), sizes, strides, true);
+        ByteIndexer byteIndexer = ByteIndexer.create(new BytePointer(ptr).position(0), sizes, strides, true);
+
+        int n = 0;
+        for (int i = 0; i < sizes[0]; i++) {
+            assertEquals(n % 2 != 0, arrayIndexer.get(i * strides[0]));
+            assertEquals(n % 2 != 0, directIndexer.get(i * strides[0]));
+            assertEquals(n % 2 != 0 ? 1 : 0, byteIndexer.get(i * strides[0]));
+            for (int j = 0; j < sizes[1]; j++) {
+                assertEquals(n % 2 != 0, arrayIndexer.get(i, j * strides[1]));
+                assertEquals(n % 2 != 0, directIndexer.get(i, j * strides[1]));
+                assertEquals(n % 2 != 0 ? 1 : 0, byteIndexer.get(i, j * strides[1]));
+                for (int k = 0; k < sizes[2]; k++) {
+                    assertEquals(n % 2 != 0, arrayIndexer.get(i, j, k * strides[2]));
+                    assertEquals(n % 2 != 0, directIndexer.get(i, j, k * strides[2]));
+                    assertEquals(n % 2 != 0 ? 1 : 0, byteIndexer.get(i, j, k * strides[2]));
+                    for (int m = 0; m < sizes[3]; m++) {
+                        long[] index = { i, j, k, m  * strides[3] };
+                        assertEquals(n % 2 != 0, arrayIndexer.get(index));
+                        assertEquals(n % 2 != 0, directIndexer.get(index));
+                        assertEquals(n % 2 != 0 ? 1 : 0, byteIndexer.get(index));
+                        arrayIndexer.put(index, n % 3 != 0);
+                        directIndexer.put(index, n % 4 != 0);
+                        n++;
+                    }
+                }
+            }
+        }
+
+        try {
+            arrayIndexer.get(size);
+            fail("IndexOutOfBoundsException should have been thrown.");
+        } catch (IndexOutOfBoundsException e) { }
+
+        try {
+            directIndexer.get(size);
+            fail("IndexOutOfBoundsException should have been thrown.");
+        } catch (IndexOutOfBoundsException e) { }
+
+        System.out.println("arrayIndexer" + arrayIndexer);
+        System.out.println("directIndexer" + directIndexer);
+        for (int i = 0; i < size; i++) {
+            assertEquals(i % 4 != 0, ptr.position(i).get());
+        }
+        arrayIndexer.release();
+        for (int i = 0; i < size; i++) {
+            assertEquals(i % 3 != 0, ptr.position(i).get());
+        }
+        System.gc();
+
+        try {
+            long longSize = 0x80000000L + 8192;
+            final BooleanPointer longPointer = new BooleanPointer(longSize);
+            assertEquals(longSize, longPointer.capacity());
+            BooleanIndexer longIndexer = BooleanIndexer.create(longPointer);
+            assertEquals(longIndexer.pointer(), longPointer);
+            for (long i = 0; i < 8192; i++) {
+                longPointer.put(longSize - i - 1, i % 2 != 0);
+            }
+            for (long i = 0; i < 8192; i++) {
+                assertEquals(longIndexer.get(longSize - i - 1), i % 2 != 0);
+            }
+            System.out.println("longIndexer[0x" + Long.toHexString(longSize) + " - 8192] = " + longIndexer.get(longSize - 8192));
         } catch (OutOfMemoryError e) {
             System.out.println(e);
         }

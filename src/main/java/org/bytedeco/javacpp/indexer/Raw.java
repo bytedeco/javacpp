@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2017 Samuel Audet
+ * Copyright (C) 2016-2018 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -55,6 +55,8 @@ abstract class Raw {
     abstract void putDouble(long address, double d);
     abstract char getChar(long address);
     abstract void putChar(long address, char c);
+    abstract boolean getBoolean(long address);
+    abstract void putBoolean(long address, boolean b);
 
     abstract byte getByte(byte[] array, long offset);
     abstract void putByte(byte[] array, long offset, byte b);
@@ -70,4 +72,6 @@ abstract class Raw {
     abstract void putDouble(byte[] array, long offset, double d);
     abstract char getChar(byte[] array, long offset);
     abstract void putChar(byte[] array, long offset, char c);
+    abstract boolean getBoolean(byte[] array, long offset);
+    abstract void putBoolean(byte[] array, long offset, boolean b);
 }

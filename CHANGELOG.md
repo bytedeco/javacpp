@@ -1,4 +1,5 @@
 
+ * Add `BooleanPointer` and `BooleanIndexer` to access arrays of boolean values with `sizeof(jboolean) == 1`
  * Let `Parser` skip over `static_assert()` declarations of C++11
  * Fix `android-arm-clang.properties` and `android-x86-clang.properties` for builds with NDK r18 ([pull #263](https://github.com/bytedeco/javacpp/pull/263))
  * Add to default `InfoMap` missing `int` value type and `IntPointer` pointer type for `wchar_t`

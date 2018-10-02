@@ -694,6 +694,86 @@ public class PointerTest {
         System.out.println(Pointer.DeallocatorReference.totalBytes + " " + chunkSize * charSize);
     }
 
+    @Test public void testBooleanPointer() {
+        System.out.println("BooleanPointer");
+
+        int booleanSize = 1;
+        assertEquals(booleanSize, Loader.sizeof(BooleanPointer.class));
+
+        boolean[] array = new boolean[8192];
+        BooleanPointer pointer = new BooleanPointer(array);
+        assertEquals(array.length, pointer.limit());
+        assertEquals(array.length, pointer.capacity());
+
+        for (int i = 0; i < array.length; i++) {
+            array[i] = i % 2 != 0;
+            pointer.put(i, i % 2 != 0);
+            assertEquals(array[i], pointer.get(i));
+        }
+
+        for (int i = 0; i < array.length; i++) {
+            pointer.position(i).put(array[i]);
+            assertEquals(array[i], pointer.position(i).get());
+        }
+
+        boolean[] array2 = new boolean[array.length];
+        pointer.position(0).get(array2);
+        assertArrayEquals(array, array2);
+
+        ByteBuffer buffer = pointer.asByteBuffer();
+        assertEquals(pointer.address(), new BooleanPointer(buffer).address());
+        assertEquals(pointer.capacity(), new BooleanPointer(buffer).capacity());
+
+        int offset = 42;
+        pointer.put(array, offset, array.length - offset);
+        pointer.get(array2, offset, array.length - offset);
+        assertArrayEquals(array, array2);
+
+        BooleanPointer pointer2 = new BooleanPointer(array.length).zero();
+        pointer2.position(10).limit(30).fill(0xFF);
+        pointer2.position(20).put(pointer.position(20).limit(30));
+        pointer.position(0);
+        pointer2.position(0);
+        for (int i = 0; i < array.length; i++) {
+            if (i < 10) {
+                assertEquals(false, pointer2.get(i));
+            } else if (i < 20) {
+                assertEquals(true, pointer2.get(i));
+            } else if (i < 30) {
+                assertEquals(pointer.get(i), pointer2.get(i));
+            } else {
+                assertEquals(false, pointer2.get(i));
+            }
+        }
+
+        assertEquals(maxBytes, Pointer.maxBytes);
+        int chunks = 8;
+        BooleanPointer[] pointers = new BooleanPointer[chunks];
+        long chunkSize = Pointer.maxBytes / booleanSize / chunks + 1;
+        for (int j = 0; j < chunks - 1; j++) {
+            pointers[j] = new BooleanPointer(chunkSize);
+        }
+        assertTrue(Pointer.DeallocatorReference.totalBytes >= (chunks - 1) * chunkSize * booleanSize);
+        try {
+            fieldReference = pointers;
+            System.out.println("Note: OutOfMemoryError should get thrown here and printed below.");
+            new BooleanPointer(chunkSize);
+            fail("OutOfMemoryError should have been thrown.");
+        } catch (OutOfMemoryError e) {
+            System.out.println(e);
+            System.out.println(e.getCause());
+        }
+        for (int j = 0; j < chunks; j++) {
+            pointers[j] = null;
+        }
+        // make sure garbage collection runs
+        fieldReference = null;
+        pointers[0] = new BooleanPointer(chunkSize);
+        assertTrue(Pointer.DeallocatorReference.totalBytes < (chunks - 1) * chunkSize * booleanSize);
+        assertTrue(Pointer.DeallocatorReference.totalBytes >= chunkSize * booleanSize);
+        System.out.println(Pointer.DeallocatorReference.totalBytes + " " + chunkSize * booleanSize);
+    }
+
     @Test public void testPointerPointer() {
         System.out.println("PointerPointer");
 
