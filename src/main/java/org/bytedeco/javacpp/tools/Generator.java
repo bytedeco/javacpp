@@ -1953,6 +1953,7 @@ public class Generator {
             String cast = cast(methodInfo.returnType, methodInfo.annotations);
             String[] typeName = methodInfo.returnRaw ? new String[] { "" }
                     : cppCastTypeName(methodInfo.returnType, methodInfo.annotations);
+            Annotation returnBy = by(methodInfo.annotations);
             if (FunctionPointer.class.isAssignableFrom(methodInfo.cls)
                     && !methodInfo.cls.isAnnotationPresent(Namespace.class)
                     && methodInfo.valueGetter) {
@@ -1963,12 +1964,14 @@ public class Generator {
             } else if (methodInfo.returnType.isPrimitive()) {
                 out.println("    " + jniTypeName(methodInfo.returnType) + " rarg = 0;");
                 returnPrefix = typeName[0] + " rval" + typeName[1] + " = " + cast;
+                if ((returnBy instanceof ByPtr) || (returnBy instanceof ByPtrRef)) {
+                    returnPrefix += "*";
+                }
             } else if (Enum.class.isAssignableFrom(methodInfo.returnType)) {
                 accessesEnums = true;
                 out.println("    jobject rarg = JavaCPP_createPointer(env, " + jclasses.index(methodInfo.returnType) + ");");
                 returnPrefix = typeName[0] + " rval" + typeName[1] + " = " + cast;
             } else {
-                Annotation returnBy = by(methodInfo.annotations);
                 String valueTypeName = valueTypeName(typeName);
 
                 returnPrefix = "rptr = " + cast;
@@ -2230,6 +2233,9 @@ public class Generator {
                     methodInfo.parameterTypes[j] == long.class) {
                 out.print("jlong_to_ptr(arg" + j + ")");
             } else if (methodInfo.parameterTypes[j].isPrimitive()) {
+                if (passBy instanceof ByPtr || passBy instanceof ByPtrRef) {
+                    out.print("&");
+                }
                 out.print(cast + "arg" + j);
             } else if (adapterInfo != null) {
                 cast = adapterInfo.cast.trim();
@@ -2662,8 +2668,11 @@ public class Generator {
         String[] returnTypeName = cppTypeName(callbackReturnType);
         String returnValueTypeName = valueTypeName(returnTypeName);
         AdapterInformation returnAdapterInfo = adapterInformation(false, returnValueTypeName, callbackAnnotations);
+        boolean throwsExceptions = !noException(cls, callbackMethod);
 
-        out.println("    jthrowable exc = NULL;");
+        if (throwsExceptions) {
+            out.println("    jthrowable exc = NULL;");
+        }
         out.println("    JNIEnv* env;");
         out.println("    bool attached = JavaCPP_getEnv(&env);");
         out.println("    if (env == NULL) {");
@@ -2673,10 +2682,12 @@ public class Generator {
         if (callbackParameterTypes.length > 0) {
             out.println("    jvalue args[" + callbackParameterTypes.length + "];");
             for (int j = 0; j < callbackParameterTypes.length; j++) {
+                Annotation passBy = by(callbackParameterAnnotations[j]);
                 if (callbackParameterTypes[j].isPrimitive()) {
                     out.println("    args[" + j + "]." +
                             signature(callbackParameterTypes[j]).toLowerCase() + " = (" +
-                            jniTypeName(callbackParameterTypes[j]) + ")arg" + j + ";");
+                            jniTypeName(callbackParameterTypes[j]) + ")" +
+                            (passBy instanceof ByPtr || passBy instanceof ByPtrRef ? "*arg" : "arg") + j + ";");
                 } else if (Enum.class.isAssignableFrom(callbackParameterTypes[j])) {
                     accessesEnums = true;
                     String s = enumValueType(callbackParameterTypes[j]);
@@ -2689,7 +2700,6 @@ public class Generator {
                         out.println("    }");
                     }
                 } else {
-                    Annotation passBy = by(callbackParameterAnnotations[j]);
                     String[] typeName = cppTypeName(callbackParameterTypes[j]);
                     String valueTypeName = valueTypeName(typeName);
                     AdapterInformation adapterInfo = adapterInformation(false, valueTypeName, callbackParameterAnnotations[j]);
@@ -2833,7 +2843,7 @@ public class Generator {
                     signature(callbackMethod.getParameterTypes()) + ")" + signature(callbackMethod.getReturnType()) + "\");");
             out.println("    }");
         }
-        out.println("    if (env->IsSameObject(obj, NULL)) {");
+        out.println("    if (obj == NULL) {");
         out.println("        JavaCPP_log(\"Function pointer object is NULL in callback for " + cls.getCanonicalName() + ".\");");
         out.println("    } else if (mid == NULL) {");
         out.println("        JavaCPP_log(\"Error getting method ID of function caller \\\"" + callbackMethod + "\\\" for callback.\");");
@@ -2844,9 +2854,11 @@ public class Generator {
             s = Character.toUpperCase(s.charAt(0)) + s.substring(1);
         }
         out.println("        " + returnPrefix + "env->Call" + s + "MethodA(obj, mid, " + (callbackParameterTypes.length == 0 ? "NULL);" : "args);"));
-        out.println("        if ((exc = env->ExceptionOccurred()) != NULL) {");
-        out.println("            env->ExceptionClear();");
-        out.println("        }");
+        if (throwsExceptions) {
+            out.println("        if ((exc = env->ExceptionOccurred()) != NULL) {");
+            out.println("            env->ExceptionClear();");
+            out.println("        }");
+        }
         out.println("    }");
 
         for (int j = 0; j < callbackParameterTypes.length; j++) {
@@ -2941,22 +2953,26 @@ public class Generator {
         }
 
         passesStrings = true;
-        out.println("    if (exc != NULL) {");
-        out.println("        jstring str = (jstring)env->CallObjectMethod(exc, JavaCPP_toStringMID);");
-        out.println("        env->DeleteLocalRef(exc);");
-        out.println("        const char *msg = JavaCPP_getStringBytes(env, str);");
-        out.println("        JavaCPP_exception e(msg);");
-        out.println("        JavaCPP_releaseStringBytes(env, str, msg);");
-        out.println("        env->DeleteLocalRef(str);");
-        out.println("        JavaCPP_detach(attached);");
-        out.println("        throw e;");
-        out.println("    } else {");
-        out.println("        JavaCPP_detach(attached);");
-        out.println("    }");
+        if (throwsExceptions) {
+            out.println("    if (exc != NULL) {");
+            out.println("        jstring str = (jstring)env->CallObjectMethod(exc, JavaCPP_toStringMID);");
+            out.println("        env->DeleteLocalRef(exc);");
+            out.println("        const char *msg = JavaCPP_getStringBytes(env, str);");
+            out.println("        JavaCPP_exception e(msg);");
+            out.println("        JavaCPP_releaseStringBytes(env, str, msg);");
+            out.println("        env->DeleteLocalRef(str);");
+            out.println("        JavaCPP_detach(attached);");
+            out.println("        throw e;");
+            out.println("    } else {");
+            out.println("        JavaCPP_detach(attached);");
+            out.println("    }");
+        } else {
+            out.println("    JavaCPP_detach(attached);");
+        }
 
         if (callbackReturnType != void.class) {
             if (callbackReturnType.isPrimitive()) {
-                out.println("    return " + callbackReturnCast + "rarg;");
+                out.println("    return " + callbackReturnCast + ((returnBy instanceof ByPtr || returnBy instanceof ByPtrRef) ? "&rarg;" : "rarg;"));
             } else if (Enum.class.isAssignableFrom(callbackReturnType)) {
                 out.println("    return " + callbackReturnCast + "rval;");
             } else if (returnAdapterInfo != null) {
@@ -3523,7 +3539,9 @@ public class Generator {
             prefix = prefix + "*";
         } else if (by instanceof ByPtrRef) {
             prefix = prefix + "&";
-        } // else ByPtr
+        } else if (by instanceof ByPtr && type.isPrimitive()) {
+            prefix = prefix + "*";
+        }
 
         typeName[0] = prefix;
         typeName[1] = suffix;
