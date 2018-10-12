@@ -156,7 +156,7 @@ After compiling the Java source code in the usual way, we also need to build usi
 ```bash
 $ javac -cp javacpp.jar NativeLibrary.java 
 $ java -jar javacpp.jar NativeLibrary
-$ java  -cp javacpp.jar NativeLibrary
+$ java  -cp javacpp.jar:. NativeLibrary
 Hello World!
 ```
 
@@ -269,7 +269,7 @@ It would then compile and execute like this:
 ```bash
 $ javac -cp javacpp.jar Processor.java
 $ java -jar javacpp.jar Processor
-$ java  -cp javacpp.jar Processor
+$ java  -cp javacpp.jar:. Processor
 Processing in C++...
 ```
 
