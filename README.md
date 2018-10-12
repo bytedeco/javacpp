@@ -215,7 +215,7 @@ Executing that program using these commands produces the following output:
 ```bash
 $ javac -cp javacpp.jar VectorTest.java
 $ java -jar javacpp.jar VectorTest
-$ java  -cp javacpp.jar VectorTest
+$ java  -cp javacpp.jar:. VectorTest
 13 42  org.bytedeco.javacpp.Pointer[address=0xdeadbeef,position=0,limit=0,capacity=0,deallocator=null]
 Exception in thread "main" java.lang.RuntimeException: vector::_M_range_check: __n (which is 42) >= this->size() (which is 13)
 	at VectorTest$PointerVectorVector.at(Native Method)
@@ -326,7 +326,7 @@ Since functions also have pointers, we can use `FunctionPointer` instances accor
 
 ```bash
 $ javac -cp javacpp.jar Foo.java
-$ java -jar javacpp.jar Foo -header
+$ java -jar javacpp.jar:. Foo -header
 $ g++ -I/usr/lib/jvm/java/include/ -I/usr/lib/jvm/java/include/linux/ foo.cpp linux-x86_64/libjniFoo.so -o foo
 $ ./foo
 java.lang.Exception: bar 42
@@ -393,7 +393,7 @@ Which outputs what one would naturally assume:
 ```bash
 $ javac -cp javacpp.jar VirtualFoo.java
 $ java -jar javacpp.jar VirtualFoo
-$ java  -cp javacpp.jar VirtualFoo
+$ java  -cp javacpp.jar:. VirtualFoo
 Callback in C++ (n == 13)
 Callback in Java (n == 42)
 Callback in C++ (n == 13)
