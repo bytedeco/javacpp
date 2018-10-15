@@ -1,4 +1,6 @@
 
+### October 15, 2018 version 1.4.3
+ * Add support for `linux-mips64el` with `linux-mips64el.properties` ([pull #268](https://github.com/bytedeco/javacpp/pull/268))
  * Enhance `Generator` with `@ByPtr` for primitive types and `@NoException` for `FunctionPointer` methods
  * Add `BooleanPointer` and `BooleanIndexer` to access arrays of boolean values with `sizeof(jboolean) == 1`
  * Let `Parser` skip over `static_assert()` declarations of C++11

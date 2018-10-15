@@ -17,8 +17,8 @@ Please feel free to ask questions on [the mailing list](http://groups.google.com
 
 Downloads
 ---------
- * JavaCPP 1.4.2 binary archive  [javacpp-1.4.2-bin.zip](http://search.maven.org/remotecontent?filepath=org/bytedeco/javacpp/1.4.2/javacpp-1.4.2-bin.zip) (367 KB)
- * JavaCPP 1.4.2 source archive  [javacpp-1.4.2-src.zip](http://search.maven.org/remotecontent?filepath=org/bytedeco/javacpp/1.4.2/javacpp-1.4.2-src.zip) (335 KB)
+ * JavaCPP 1.4.3 binary archive  [javacpp-1.4.3-bin.zip](http://search.maven.org/remotecontent?filepath=org/bytedeco/javacpp/1.4.3/javacpp-1.4.3-bin.zip) (379 KB)
+ * JavaCPP 1.4.3 source archive  [javacpp-1.4.3-src.zip](http://search.maven.org/remotecontent?filepath=org/bytedeco/javacpp/1.4.3/javacpp-1.4.3-src.zip) (348 KB)
 
 We can also have everything downloaded and installed automatically with:
 
@@ -27,27 +27,27 @@ We can also have everything downloaded and installed automatically with:
   <dependency>
     <groupId>org.bytedeco</groupId>
     <artifactId>javacpp</artifactId>
-    <version>1.4.2</version>
+    <version>1.4.3</version>
   </dependency>
 ```
 
  * Gradle (inside the `build.gradle` file)
 ```groovy
   dependencies {
-    compile group: 'org.bytedeco', name: 'javacpp', version: '1.4.2'
+    compile group: 'org.bytedeco', name: 'javacpp', version: '1.4.3'
   }
 ```
 
  * Leiningen (inside the `project.clj` file)
 ```clojure
   :dependencies [
-    [org.bytedeco/javacpp "1.4.2"]
+    [org.bytedeco/javacpp "1.4.3"]
   ]
 ```
 
  * sbt (inside the `build.sbt` file)
 ```scala
-  libraryDependencies += "org.bytedeco" % "javacpp" % "1.4.2"
+  libraryDependencies += "org.bytedeco" % "javacpp" % "1.4.3"
 ```
 
 Another option available for Scala users is [sbt-javacpp](https://github.com/bytedeco/sbt-javacpp).
@@ -65,8 +65,8 @@ To use JavaCPP, you will need to download and install the following software:
    * GNU C/C++ Compiler (Linux, etc.)  http://gcc.gnu.org/
      * For Windows x86 and x64  http://mingw-w64.org/
    * LLVM Clang (Mac OS X, etc.)  http://clang.llvm.org/
-   * Microsoft C/C++ Compiler, part of Visual Studio  https://www.visualstudio.com/
-     * [Walkthrough: Compiling a Native C++ Program on the Command Line](https://msdn.microsoft.com/en-us/library/ms235639.aspx)
+   * Microsoft C/C++ Compiler, part of Visual Studio  https://visualstudio.microsoft.com/
+     * https://docs.microsoft.com/en-us/cpp/build/walkthrough-compiling-a-native-cpp-program-on-the-command-line
 
 To produce binary files for Android 4.0 or newer, you will also have to install:
 
