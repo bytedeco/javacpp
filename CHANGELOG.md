@@ -1,4 +1,6 @@
 
+ * Fix `Generator` output for `@Const` parameters of function pointers
+
 ### October 15, 2018 version 1.4.3
  * Add support for `linux-mips64el` with `linux-mips64el.properties` ([pull #268](https://github.com/bytedeco/javacpp/pull/268))
  * Enhance `Generator` with `@ByPtr` for primitive types and `@NoException` for `FunctionPointer` methods

@@ -3580,11 +3580,18 @@ public class Generator {
                     continue;
                 }
                 typeName = cppTypeName(type);
-                if (b.length > 1 && b[1] && !typeName[0].endsWith(" const *")) {
-                    typeName[0] = valueTypeName(typeName) + " const *";
-                }
-                if (b.length > 0 && b[0] && !typeName[0].startsWith("const ")) {
-                    typeName[0] = "const " + typeName[0];
+                if (typeName[0].contains("(*")) {
+                    // function pointer
+                    if (b.length > 0 && b[0] && !typeName[0].endsWith("const")) {
+                        typeName[0] += "const";
+                    }
+                } else {
+                    if (b.length > 1 && b[1] && !typeName[0].endsWith(" const *")) {
+                        typeName[0] = valueTypeName(typeName) + " const *";
+                    }
+                    if (b.length > 0 && b[0] && !typeName[0].startsWith("const ")) {
+                        typeName[0] = "const " + typeName[0];
+                    }
                 }
                 Annotation by = by(annotations);
                 if (by instanceof ByPtrPtr) {
