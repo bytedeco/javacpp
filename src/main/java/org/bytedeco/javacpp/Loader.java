@@ -933,7 +933,7 @@ public class Loader {
         ClassProperties p = loadProperties(cls, properties, true);
 
         // Force initialization of all the target classes in case they need it
-        List<String> targets = p.get("target");
+        List<String> targets = p.get("global");
         if (targets.isEmpty()) {
             if (p.getInheritedClasses() != null) {
                 for (Class c : p.getInheritedClasses()) {

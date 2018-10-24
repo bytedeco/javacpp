@@ -1,4 +1,5 @@
 
+ * Add `@Properties(global=...)` value to allow `Parser` to target Java packages ([pull #252](https://github.com/bytedeco/javacpp/pull/252))
  * Fix `Generator` output for `@Const` parameters of function pointers
 
 ### October 15, 2018 version 1.4.3

@@ -432,6 +432,6 @@ And instead of `Loader.load()`, the library should be loaded with `System.load("
 
 
 ----
-Project lead: Samuel Audet [samuel.audet `at` gmail.com](mailto:samuel.audet at gmail.com)  
+Project lead: Samuel Audet [samuel.audet `at` gmail.com](mailto:samuel.audet&nbsp;at&nbsp;gmail.com)  
 Developer site: https://github.com/bytedeco/javacpp  
 Discussion group: http://groups.google.com/group/javacpp-project

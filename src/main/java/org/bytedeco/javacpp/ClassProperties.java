@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Samuel Audet
+ * Copyright (C) 2011-2018 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -166,6 +166,15 @@ public class ClassProperties extends HashMap<String,List<String>> {
             String target = classProperties.target();
             if (target.length() > 0) {
                 addAll("target", target);
+            }
+            String global = classProperties.global();
+            if (global.length() == 0) {
+                global = target;
+            } else if (target.length() > 0 && !global.startsWith(target)) {
+                global = target + "." + global;
+            }
+            if (global.length() > 0) {
+                addAll("global", global);
             }
             String helper = classProperties.helper();
             if (helper.length() > 0) {
