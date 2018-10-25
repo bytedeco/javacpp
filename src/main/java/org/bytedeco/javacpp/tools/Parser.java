@@ -1782,7 +1782,7 @@ public class Parser {
                 tokens.next();
             }
         }
-        if (dcls.size() == 1 && (dcls.get(0) == null || dcls.get(0).type == null
+        if (context.templateMap == null && dcls.size() == 1 && (dcls.get(0) == null || dcls.get(0).type == null
                 || dcls.get(0).type.cppName == null || dcls.get(0).type.cppName.length() == 0)) {
             // this looks more like a variable initialization
             tokens.index = backIndex;
@@ -1833,7 +1833,7 @@ public class Parser {
             tokens.index = backIndex;
             return false;
         } else if (context.javaName == null && !type.operator && params != null) {
-            // this is a constructor definition or specialization, skip over
+            // this is a constructor/destructor definition or specialization, skip over
             if (tokens.get().match(':')) {
                 for (Token token = tokens.next(); !token.match(Token.EOF); token = tokens.next()) {
                     if (token.match('{', ';')) {
@@ -1844,7 +1844,9 @@ public class Parser {
             if (tokens.get().match('{')) {
                 body();
             } else {
-                tokens.next();
+                while (!tokens.get().match(';', Token.EOF)) {
+                    tokens.next();
+                }
             }
             decl.text = spacing;
             decl.function = true;
@@ -2000,10 +2002,13 @@ public class Parser {
                 }
             }
 
-            // check for const and pure virtual functions, ignoring the body if present
+            // check for const, other attributes, and pure virtual functions, ignoring the body if present
             for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.get()) {
                 decl.constMember |= token.match(Token.CONST, Token.__CONST, Token.CONSTEXPR);
-                if (attribute() == null) {
+                Attribute attr = attribute();
+                if (attr != null && attr.annotation) {
+                    dcl.type.annotations += attr.javaName;
+                } else if (attr == null) {
                     break;
                 }
             }

@@ -46,6 +46,7 @@ public class InfoMap extends HashMap<String,List<Info>> {
                                                    "std::priority_queue", "std::unordered_map", "std::unordered_set"))
         .put(new Info("basic/types").cppTypes("signed", "unsigned", "char", "short", "int", "long", "bool", "float", "double",
                                               "_Bool", "_Complex", "_Imaginary", "complex", "imaginary"))
+        .put(new Info("noexcept").annotations("@NoException"))
 
         .put(new Info("__COUNTER__").cppText("#define __COUNTER__ 0"))
         .put(new Info(" __attribute__", "__declspec", "static_assert").annotations().skip())

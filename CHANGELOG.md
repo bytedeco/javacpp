@@ -1,4 +1,6 @@
 
+ * Add default `Info` to map `noexcept` attribute from C++11 to `@NoException` annotation
+ * Fix `Parser` failures on variadic function template arguments `...` and destructor attributes ([pull bytedeco/javacpp-presets#622](https://github.com/bytedeco/javacpp-presets/pull/622))
  * Add `@Properties(global=...)` value to allow `Parser` to target Java packages ([pull #252](https://github.com/bytedeco/javacpp/pull/252))
  * Fix `Generator` output for `@Const` parameters of function pointers
 
