@@ -2629,7 +2629,7 @@ public class Parser {
             decl = dcl.definition;
         }
         Info info = infoMap.getFirst(dcl.type.cppName);
-        if (info != null && info.javaText != null) {
+        if (!context.inaccessible && info != null && info.javaText != null) {
             // inherit constructors
             decl.text = info.javaText;
             decl.declarator = dcl;
@@ -2924,33 +2924,34 @@ public class Parser {
             if (info != null && info.base != null) {
                 base.javaName = info.base;
             }
-            decl.text += modifiers + "class " + name + " extends " + base.javaName + " {\n" +
+            String shortName = name.substring(name.lastIndexOf('.') + 1);
+            decl.text += modifiers + "class " + shortName + " extends " + base.javaName + " {\n" +
                          "    static { Loader.load(); }\n";
 
             explicitConstructors = constructors;
             if (implicitConstructor && (info == null || !info.purify) && (!abstractClass || ctx.virtualize)) {
                 constructors += "    /** Default native constructor. */\n" +
-                             "    public " + name + "() { super((Pointer)null); allocate(); }\n" +
+                             "    public " + shortName + "() { super((Pointer)null); allocate(); }\n" +
                              "    /** Native array allocator. Access with {@link Pointer#position(long)}. */\n" +
-                             "    public " + name + "(long size) { super((Pointer)null); allocateArray(size); }\n" +
+                             "    public " + shortName + "(long size) { super((Pointer)null); allocateArray(size); }\n" +
                              "    /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */\n" +
-                             "    public " + name + "(Pointer p) { super(p); }\n" +
+                             "    public " + shortName + "(Pointer p) { super(p); }\n" +
                              "    private native void allocate();\n" +
                              "    private native void allocateArray(long size);\n" +
-                             "    @Override public " + name + " position(long position) {\n" +
-                             "        return (" + name + ")super.position(position);\n" +
+                             "    @Override public " + shortName + " position(long position) {\n" +
+                             "        return (" + shortName + ")super.position(position);\n" +
                              "    }\n";
             } else {
                 if (!pointerConstructor) {
                     constructors += "    /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */\n" +
-                                 "    public " + name + "(Pointer p) { super(p); }\n";
+                                 "    public " + shortName + "(Pointer p) { super(p); }\n";
                 }
                 if (defaultConstructor && (info == null || !info.purify) && (!abstractClass || ctx.virtualize) && !longConstructor) {
                     constructors += "    /** Native array allocator. Access with {@link Pointer#position(long)}. */\n" +
-                                 "    public " + name + "(long size) { super((Pointer)null); allocateArray(size); }\n" +
+                                 "    public " + shortName + "(long size) { super((Pointer)null); allocateArray(size); }\n" +
                                  "    private native void allocateArray(long size);\n" +
-                                 "    @Override public " + name + " position(long position) {\n" +
-                                 "        return (" + name + ")super.position(position);\n" +
+                                 "    @Override public " + shortName + " position(long position) {\n" +
+                                 "        return (" + shortName + ")super.position(position);\n" +
                                  "    }\n";
                 }
             }
@@ -2994,7 +2995,7 @@ public class Parser {
             constructorName = constructorName.substring(namespace2 + 2);
         }
         Info constructorInfo = infoMap.getFirst(type.cppName + "::" + constructorName);
-        if (constructorInfo == null) {
+        if ((context.templateMap == null || context.templateMap.full()) && constructorInfo == null) {
             // save constructors to be able inherit them with C++11 "using" statements
             infoMap.put(new Info(type.cppName + "::" + constructorName).javaText(explicitConstructors));
         }
