@@ -99,6 +99,7 @@ public class Pointer implements AutoCloseable {
             allocate(b);
         }
         if (!isNull()) {
+            address -= b.position() * sizeof();
             position = b.position();
             limit = b.limit();
             capacity = b.capacity();

@@ -1,4 +1,5 @@
 
+ * Enhance support for `java.nio.Buffer` by taking into account `offset`, `position`, `limit`, and `capacity` on function calls
  * Make sure `Parser` always uses the short version of identifiers for Java class declarations
  * Prevent `Parser` from inheriting constructors with `using` when not accessible or of incomplete template instances
  * Add default `Info` to map `noexcept` attribute from C++11 to `@NoException` annotation

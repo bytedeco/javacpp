@@ -148,7 +148,7 @@ public class Generator {
     static enum ShortEnum { SHORT; short value; }
     static enum IntEnum { INT; int value; }
     static enum LongEnum { LONG; long value; }
-    static final String JNI_VERSION = "JNI_VERSION_1_4";
+    static final String JNI_VERSION = "JNI_VERSION_1_6";
     static final List<Class> baseClasses = Arrays.asList(new Class[] {
             Loader.class,
             Pointer.class,
@@ -453,6 +453,10 @@ public class Generator {
         }
         out.println("static jmethodID JavaCPP_initMID = NULL;");
         out.println("static jmethodID JavaCPP_arrayMID = NULL;");
+        out.println("static jmethodID JavaCPP_arrayOffsetMID = NULL;");
+        out.println("static jfieldID JavaCPP_bufferPositionFID = NULL;");
+        out.println("static jfieldID JavaCPP_bufferLimitFID = NULL;");
+        out.println("static jfieldID JavaCPP_bufferCapacityFID = NULL;");
         out.println("static jmethodID JavaCPP_stringMID = NULL;");
         out.println("static jmethodID JavaCPP_getBytesMID = NULL;");
         out.println("static jmethodID JavaCPP_toStringMID = NULL;");
@@ -1528,6 +1532,26 @@ public class Generator {
         out.println("    if (JavaCPP_arrayMID == NULL) {");
         out.println("        return JNI_ERR;");
         out.println("    }");
+        out.println("    JavaCPP_arrayOffsetMID = JavaCPP_getMethodID(env, " +
+                jclasses.index(Buffer.class) + ", \"arrayOffset\", \"()I\");");
+        out.println("    if (JavaCPP_arrayOffsetMID == NULL) {");
+        out.println("        return JNI_ERR;");
+        out.println("    }");
+        out.println("    JavaCPP_bufferPositionFID = JavaCPP_getFieldID(env, " +
+                jclasses.index(Buffer.class) + ", \"position\", \"I\");");
+        out.println("    if (JavaCPP_bufferPositionFID == NULL) {");
+        out.println("        return JNI_ERR;");
+        out.println("    }");
+        out.println("    JavaCPP_bufferLimitFID = JavaCPP_getFieldID(env, " +
+                jclasses.index(Buffer.class) + ", \"limit\", \"I\");");
+        out.println("    if (JavaCPP_bufferLimitFID == NULL) {");
+        out.println("        return JNI_ERR;");
+        out.println("    }");
+        out.println("    JavaCPP_bufferCapacityFID = JavaCPP_getFieldID(env, " +
+                jclasses.index(Buffer.class) + ", \"capacity\", \"I\");");
+        out.println("    if (JavaCPP_bufferCapacityFID == NULL) {");
+        out.println("        return JNI_ERR;");
+        out.println("    }");
         out.println("    JavaCPP_stringMID = JavaCPP_getMethodID(env, " +
                 jclasses.index(String.class) + ", \"<init>\", \"([B)V\");");
         out.println("    if (JavaCPP_stringMID == NULL) {");
@@ -1760,10 +1784,11 @@ public class Generator {
                 }
                 if (!cls.isAnnotationPresent(Opaque.class)) {
                     out.println("    jlong position = env->GetLongField(obj, JavaCPP_positionFID);");
-                    out.println("    ptr += position;");
                     if (methodInfo.bufferGetter) {
-                        out.println("    jlong size = env->GetLongField(obj, JavaCPP_limitFID);");
-                        out.println("    size -= position;");
+                        out.println("    jlong limit = env->GetLongField(obj, JavaCPP_limitFID);");
+                        out.println("    jlong capacity = env->GetLongField(obj, JavaCPP_capacityFID);");
+                    } else {
+                        out.println("    ptr += position;");
                     }
                 }
             }
@@ -1890,8 +1915,8 @@ public class Generator {
                 } else if (Buffer.class.isAssignableFrom(methodInfo.parameterTypes[j])) {
                     out.println("arg" + j + " == NULL ? NULL : (" + typeName[0] + typeName[1] + ")env->GetDirectBufferAddress(arg" + j + ");");
                     if (adapterInfo != null || prevAdapterInfo != null) {
-                        out.println("    jlong size" + j +
-                                " = arg" + j + " == NULL ? 0 : env->GetDirectBufferCapacity(arg" + j + ");");
+                        out.println("    jlong size" + j + " = arg" + j + " == NULL ? 0 : env->GetIntField(arg" + j +
+                                ", JavaCPP_bufferLimitFID);");
                         out.println("    void* owner" + j + " = (void*)ptr" + j + ";");
                     }
                     if (methodInfo.parameterTypes[j] != Buffer.class) {
@@ -1900,17 +1925,28 @@ public class Generator {
                         paramName = paramName.substring(0, paramName.length() - 6);
                         String paramNameLowerCase = Character.toLowerCase(paramName.charAt(0)) + paramName.substring(1);
                         out.println("    j" + paramNameLowerCase + "Array arr" + j + " = NULL;");
+                        out.println("    jlong offset" + j + " = 0;");
                         out.println("    if (arg" + j + " != NULL && ptr" + j + " == NULL) {");
                         out.println("        arr" + j + " = (j" + paramNameLowerCase + "Array)env->CallObjectMethod(arg" + j + ", JavaCPP_arrayMID);");
+                        out.println("        offset" + j + " = env->CallIntMethod(arg" + j + ", JavaCPP_arrayOffsetMID);");
                         out.println("        if (env->ExceptionOccurred() != NULL) {");
                         out.println("            env->ExceptionClear();");
                         out.println("        } else {");
-                        out.println("            ptr" + j + " = arr" + j + " == NULL ? NULL : env->Get" + paramName + "ArrayElements(arr" + j + ", NULL);");
-                        if (adapterInfo != null || prevAdapterInfo != null) {
-                            out.println("            size" + j + " = env->GetArrayLength(arr" + j + ");");
+                        if (methodInfo.criticalRegion) {
+                            out.println("            ptr" + j + " = arr" + j + " == NULL ? NULL : (" + typeName[0] + typeName[1]
+                                    + ")env->GetPrimitiveArrayCritical(arr" + j + ", NULL) + offset" + j + ";");
+                        } else {
+                            out.println("            ptr" + j + " = arr" + j + " == NULL ? NULL : env->Get"
+                                    + paramName + "ArrayElements(arr" + j + ", NULL) + offset" + j + ";");
                         }
                         out.println("        }");
                         out.println("    }");
+                    }
+                    out.println("    jlong position" + j + " = arg" + j + " == NULL ? 0 : env->GetIntField(arg" + j +
+                            ", JavaCPP_bufferPositionFID);");
+                    out.println("    ptr"  + j + " += position" + j + ";");
+                    if (adapterInfo != null || prevAdapterInfo != null) {
+                        out.println("    size" + j + " -= position" + j + ";");
                     }
                 } else {
                     out.println("arg" + j + ";");
@@ -2438,13 +2474,21 @@ public class Generator {
                     }
                 } else if (Buffer.class.isAssignableFrom(methodInfo.returnType)) {
                     if (methodInfo.bufferGetter) {
-                        out.println(indent + "jlong rcapacity = size;");
+                        out.println(indent + "jlong rposition = position;");
+                        out.println(indent + "jlong rlimit = limit;");
+                        out.println(indent + "jlong rcapacity = capacity;");
                     } else if (adapterInfo == null && !(returnBy instanceof ByVal)) {
                         out.println(indent + "jlong rcapacity = rptr != NULL ? 1 : 0;");
                     }
                     out.println(indent + "if (rptr != NULL) {");
                     out.println(indent + "    jlong rcapacityptr = rcapacity * sizeof(rptr[0]);");
                     out.println(indent + "    rarg = env->NewDirectByteBuffer((void*)rptr, rcapacityptr < INT_MAX ? rcapacityptr : INT_MAX);");
+                    if (methodInfo.bufferGetter) {
+                        out.println(indent + "    jlong rpositionptr = rposition * sizeof(rptr[0]);");
+                        out.println(indent + "    jlong rlimitptr = rlimit * sizeof(rptr[0]);");
+                        out.println(indent + "    env->SetIntField(rarg, JavaCPP_bufferPositionFID, rpositionptr < INT_MAX ? rpositionptr : INT_MAX);");
+                        out.println(indent + "    env->SetIntField(rarg, JavaCPP_bufferLimitFID, rlimitptr < INT_MAX ? rlimitptr : INT_MAX);");
+                    }
                     out.println(indent + "}");
                 }
             }
@@ -2533,10 +2577,13 @@ public class Generator {
                 String parameterSimpleName = methodInfo.parameterTypes[j].getSimpleName();
                 parameterSimpleName = parameterSimpleName.substring(0, parameterSimpleName.length() - 6);
                 String parameterSimpleNameLowerCase = Character.toLowerCase(parameterSimpleName.charAt(0)) + parameterSimpleName.substring(1);
-                
-                out.println("env->Release" + parameterSimpleName + "ArrayElements(arr" + j + ", " + 
-                            "(j" + parameterSimpleNameLowerCase + "*)ptr" + j + ", " + 
-                            releaseArrayFlag + ");");
+                if (methodInfo.criticalRegion) {
+                    out.println("env->ReleasePrimitiveArrayCritical(arr" + j + ", ptr" + j + " - position" + j +", " + releaseArrayFlag + ");");
+                } else {
+                    out.println("env->Release" + parameterSimpleName + "ArrayElements(arr" + j + ", " +
+                                "(j" + parameterSimpleNameLowerCase + "*)(ptr" + j + " - position" + j +"), " +
+                                releaseArrayFlag + ");");
+                }
             }
         }
     }
@@ -2805,6 +2852,7 @@ public class Generator {
                             out.println("        (*(void(*)(void*))jlong_to_ptr(deallocator" + j + "))((void*)ptr" + j + ");");
                             out.println("    }");
                         }
+                        out.println("    args[" + j + "].l = obj" + j + ";");
                     } else if (Buffer.class.isAssignableFrom(callbackParameterTypes[j])) {
                         if (adapterInfo == null) {
                             out.println("    jlong size" + j + " = ptr" + j + " != NULL ? 1 : 0;");
@@ -2813,6 +2861,7 @@ public class Generator {
                         out.println("        jlong sizeptr = size" + j + " * sizeof(ptr" + j + "[0]);");
                         out.println("        obj" + j + " = env->NewDirectByteBuffer((void*)ptr" + j + ", sizeptr < INT_MAX ? sizeptr : INT_MAX);");
                         out.println("    }");
+                        out.println("    args[" + j + "].l = obj" + j + ";");
                     } else {
                         logger.warn("Callback \"" + callbackMethod + "\" has unsupported parameter type \"" +
                                 callbackParameterTypes[j].getCanonicalName() + "\". Compilation will most likely fail.");
@@ -2941,10 +2990,14 @@ public class Generator {
                     out.println("    void* rowner = (void*)rptr");
                 }
             } else if (Buffer.class.isAssignableFrom(callbackReturnType)) {
-                out.println("    " + returnTypeName[0] + " rptr" + returnTypeName[1] + " = rarg == NULL ? NULL : env->GetDirectBufferAddress(rarg);");
+                out.println("    " + returnTypeName[0] + " rptr" + returnTypeName[1] + " = rarg == NULL ? NULL : ("
+                        + returnTypeName[0] + returnTypeName[1] + ")env->GetDirectBufferAddress(rarg);");
                 if (returnAdapterInfo != null) {
-                    out.println("    jlong rsize = rarg == NULL ? 0 : env->GetDirectBufferCapacity(rarg);");
+                    out.println("    jlong rsize = rarg == NULL ? 0 : env->GetIntField(rarg, JavaCPP_bufferLimitFID);");
                     out.println("    void* rowner = (void*)rptr;");
+                    out.println("    jlong rposition = rarg == NULL ? 0 : env->GetIntField(rarg, JavaCPP_bufferPositionFID);");
+                    out.println("    rptr += rposition;");
+                    out.println("    rsize -= rposition;");
                 }
             } else if (!callbackReturnType.isPrimitive()) {
                 logger.warn("Callback \"" + callbackMethod + "\" has unsupported return type \"" +
