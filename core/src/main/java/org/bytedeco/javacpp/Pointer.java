@@ -99,6 +99,7 @@ public class Pointer implements AutoCloseable {
             allocate(b);
         }
         if (!isNull()) {
+            address -= b.position() * sizeof();
             position = b.position();
             limit = b.limit();
             capacity = b.capacity();
@@ -122,10 +123,6 @@ public class Pointer implements AutoCloseable {
         capacity = allocatedCapacity;
         if (ownerAddress != 0 && deallocatorAddress != 0) {
             deallocator(new NativeDeallocator(this, ownerAddress, deallocatorAddress));
-        }
-        PointerScope s = PointerScope.getInnerScope();
-        if (s != null) {
-            s.attach(this);
         }
     }
 
@@ -591,6 +588,11 @@ public class Pointer implements AutoCloseable {
                     logger.debug("Registering " + this);
                 }
                 r.add();
+
+                PointerScope s = PointerScope.getInnerScope();
+                if (s != null) {
+                    s.attach(this);
+                }
             }
         }
         return (P)this;

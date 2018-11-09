@@ -42,7 +42,6 @@ import java.nio.file.Paths;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Deque;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -218,7 +217,7 @@ public class Loader {
                 if (p.pragma().length > 0 || p.define().length > 0 || p.exclude().length > 0 || p.include().length > 0 || p.cinclude().length > 0
                     || p.includepath().length > 0 || p.includeresource().length > 0 || p.compiler().length > 0
                     || p.linkpath().length > 0 || p.linkresource().length > 0 || p.link().length > 0 || p.frameworkpath().length > 0
-                    || p.framework().length > 0 || p.preloadpath().length > 0 || p.preload().length > 0
+                    || p.framework().length > 0 || p.preloadresource().length > 0 || p.preloadpath().length > 0 || p.preload().length > 0
                     || p.resourcepath().length > 0 || p.resource().length > 0 || p.library().length() > 0) {
                     break;
                 }
@@ -731,7 +730,7 @@ public class Loader {
     /** Temporary directory set and returned by {@link #getTempDir()}. */
     static File tempDir = null;
     /** Contains all the native libraries that we have loaded to avoid reloading them. */
-    static Map<String,String> loadedLibraries = Collections.synchronizedMap(new HashMap<String,String>());
+    static Map<String,String> loadedLibraries = new HashMap<String,String>();
 
     static boolean pathsFirst = false;
     static {
@@ -785,6 +784,11 @@ public class Loader {
             }
         }
         return tempDir;
+    }
+
+    /** Returns a Map that relates each library name to the path of the loaded file. */
+    public static synchronized Map<String,String> getLoadedLibraries() {
+        return new HashMap<String,String>(loadedLibraries);
     }
 
     /** Returns {@code System.getProperty("org.bytedeco.javacpp.loadlibraries")}.
@@ -929,7 +933,7 @@ public class Loader {
         ClassProperties p = loadProperties(cls, properties, true);
 
         // Force initialization of all the target classes in case they need it
-        List<String> targets = p.get("target");
+        List<String> targets = p.get("global");
         if (targets.isEmpty()) {
             if (p.getInheritedClasses() != null) {
                 for (Class c : p.getInheritedClasses()) {
@@ -1080,6 +1084,7 @@ public class Loader {
         List<String> paths = new ArrayList<String>();
         paths.addAll(properties.get("platform.linkpath"));
         paths.addAll(properties.get("platform.preloadpath"));
+        String[] resources = properties.get("platform.preloadresource").toArray(new String[0]);
         String libpath = System.getProperty("java.library.path", "");
         if (libpath.length() > 0 && (pathsFirst || !isLoadLibraries() || reference)) {
             // leave loading from "java.library.path" to System.loadLibrary() as fallback,
@@ -1090,18 +1095,24 @@ public class Loader {
         for (int i = 0; cls != null && i < styles.length; i++) {
             // ... then find it from in our resources ...
             for (String extension : Arrays.copyOf(extensions, extensions.length + 1)) {
-                String subdir = platform + (extension == null ? "" : extension) + "/";
-                URL u = cls.getResource(subdir + styles[i]);
-                if (u != null) {
-                    if (reference) {
-                        try {
-                            u = new URL(u + "#" + styles2[i]);
-                        } catch (MalformedURLException e) {
-                            throw new RuntimeException(e);
-                        }
+                for (String resource : Arrays.copyOf(resources, resources.length + 1)) {
+                    if (resource != null && !resource.endsWith("/")) {
+                        resource += "/";
                     }
-                    if (!urls.contains(u)) {
-                        urls.add(u);
+                    String subdir = (resource == null ? "" : "/" + resource) + platform
+                                  + (extension == null ? "" : extension) + "/";
+                    URL u = cls.getResource(subdir + styles[i]);
+                    if (u != null) {
+                        if (reference) {
+                            try {
+                                u = new URL(u + "#" + styles2[i]);
+                            } catch (MalformedURLException e) {
+                                throw new RuntimeException(e);
+                            }
+                        }
+                        if (!urls.contains(u)) {
+                            urls.add(u);
+                        }
                     }
                 }
             }
@@ -1141,7 +1152,7 @@ public class Loader {
      *         (but {@code if (!isLoadLibraries) { return null; }})
      * @throws UnsatisfiedLinkError on failure or when interrupted
      */
-    public synchronized static String loadLibrary(URL[] urls, String libnameversion, String ... preloaded) {
+    public static synchronized String loadLibrary(URL[] urls, String libnameversion, String ... preloaded) {
         if (!isLoadLibraries()) {
             return null;
         }

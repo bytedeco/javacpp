@@ -40,9 +40,13 @@ public @interface Properties {
     String[] names() default {};
     /** A list of properties for different platforms. */
     Platform[] value() default {};
-    /** The target Java source code file of the {@link Parser}. */
+    /** The target Java source code file of the {@link Parser}, unless {@link #global()} is set,
+        in which case this specifies the target Java package. */
     String target() default "";
-    /** An optional helper class the {@link Parser} should use as base of the target.
+    /** The name of a class where to output any global declarations that are not in classes.
+        If left empty, considers the {@link #target()} as a class where to put everything. */
+    String global() default "";
+    /** An optional helper class the {@link Parser} should use as base for the global class.
         Defaults to the class where this annotation was found. */
     String helper() default "";
 }

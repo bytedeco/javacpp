@@ -1,10 +1,31 @@
 
+ * Enhance support for `java.nio.Buffer` by taking into account `offset`, `position`, `limit`, and `capacity` on function calls
+ * Make sure `Parser` always uses the short version of identifiers for Java class declarations
+ * Prevent `Parser` from inheriting constructors with `using` when not accessible or of incomplete template instances
+ * Add default `Info` to map `noexcept` attribute from C++11 to `@NoException` annotation
+ * Fix `Parser` failures on variadic function template arguments `...` and destructor attributes ([pull bytedeco/javacpp-presets#622](https://github.com/bytedeco/javacpp-presets/pull/622))
+ * Add `@Properties(global=...)` value to allow `Parser` to target Java packages ([pull #252](https://github.com/bytedeco/javacpp/pull/252))
+ * Fix `Generator` output for `@Const` parameters of function pointers
+
+### October 15, 2018 version 1.4.3
+ * Add support for `linux-mips64el` with `linux-mips64el.properties` ([pull #268](https://github.com/bytedeco/javacpp/pull/268))
+ * Enhance `Generator` with `@ByPtr` for primitive types and `@NoException` for `FunctionPointer` methods
+ * Add `BooleanPointer` and `BooleanIndexer` to access arrays of boolean values with `sizeof(jboolean) == 1`
+ * Let `Parser` skip over `static_assert()` declarations of C++11
+ * Fix `android-arm-clang.properties` and `android-x86-clang.properties` for builds with NDK r18 ([pull #263](https://github.com/bytedeco/javacpp/pull/263))
+ * Add to default `InfoMap` missing `int` value type and `IntPointer` pointer type for `wchar_t`
+ * Add `Loader.getLoadedLibraries()` method for debugging purposes and fix flaky `BuilderTest` ([issue #245](https://github.com/bytedeco/javacpp/issues/245))
+ * Call `PointerScope.attach()` as part of `Pointer.deallocator()`, instead of `init()`, to support custom deallocators as well
+ * Fix `Parser` failing when a value of an `std::pair` basic container is also an `std::pair` ([issue bytedeco/javacpp-presets#614](https://github.com/bytedeco/javacpp-presets/issues/614))
+ * Fix build issues with `android-arm` and recent versions of the NDK ([pull #256](https://github.com/bytedeco/javacpp/pull/256))
+ * Add `platform.preloadresource` property to be able to preload libraries from other Java packages
+ * Make `Builder` accept multiple options for `platform.link.prefix` and `platform.link.suffix` ([pull #250](https://github.com/bytedeco/javacpp/pull/250))
  * Let `Loader` rename JNI libraries when "already loaded in another classloader" ([issue deeplearning4j/deeplearning4j#6166](https://github.com/deeplearning4j/deeplearning4j/issues/6166))
  * Add new `@CriticalRegion` annotation to allow zero-copy access to data of Java arrays ([pull #254](https://github.com/bytedeco/javacpp/pull/254))
  * Allow `Builder` to create links for resource libraries even when no Java classes are built
  * Fix `Loader.cacheResource()` creating a subdirectory named "null" when caching a top-level file
- * Update `README.md` with reference to newly published [Mapping Recipes for C/C++ Libraries](https://github.com/bytedeco/javacpp/wiki/Mapping-Recipes)
- * Make `Parser` strip annotations from setter methods for basic containers to satisfy the `Generator`
+ * Update `README.md` with references to newly published [Basic Architecture of JavaCPP](https://github.com/bytedeco/javacpp/wiki/Basic-Architecture) and [Mapping Recipes for C/C++ Libraries](https://github.com/bytedeco/javacpp/wiki/Mapping-Recipes)
+ * Prevent `Parser` from appending annotations to setter methods of variables and for basic containers to satisfy the `Generator`
  * Have `Parser` wrap the `insert()` and `erase()` methods of basic containers to allow modifying lists and sets
  * Let `Parser` create mutable instances of map containers without `const ` prefix ([issue bytedeco/javacpp-presets#595](https://github.com/bytedeco/javacpp-presets/issues/595))
  * Fix `Parser` sometimes ignoring `define` of `const ` containers ([pull bytedeco/javacpp-presets#547](https://github.com/bytedeco/javacpp-presets/pull/547))

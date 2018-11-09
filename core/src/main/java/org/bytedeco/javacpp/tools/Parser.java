@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Writer;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -141,7 +142,7 @@ public class Parser {
                 if (info == null || info.skip || !info.define) {
                     continue;
                 }
-                int dim = containerName.startsWith("std::pair") ? 0 : 1;
+                int dim = containerName.endsWith("pair") ? 0 : 1;
                 boolean constant = info.cppNames[0].startsWith("const "), resizable = !constant;
                 Type containerType = new Parser(this, info.cppNames[0]).type(context),
                         indexType, valueType, firstType = null, secondType = null;
@@ -163,7 +164,7 @@ public class Parser {
                 String indexFunction = "(function = \"at\")";
                 boolean list = resizable; // also vector, etc
                 if (valueType.javaName == null || valueType.javaName.length() == 0
-                        || containerName.startsWith("std::bitset")) {
+                        || containerName.endsWith("bitset")) {
                     indexFunction = "";
                     valueType.javaName = "boolean";
                     resizable = false;
@@ -180,11 +181,11 @@ public class Parser {
                     dim++;
                     valueType = valueType.arguments[0];
                 }
-                if (containerName.startsWith("std::pair")) {
+                int valueTemplate = valueType.cppName.indexOf("<");
+                if (containerName.endsWith("pair")) {
                     firstType = containerType.arguments[0];
                     secondType = containerType.arguments[1];
-                }
-                if (valueType.cppName.startsWith("std::pair")) {
+                } else if (valueTemplate >= 0 && valueType.cppName.substring(0, valueTemplate).endsWith("pair")) {
                     firstType = valueType.arguments[0];
                     secondType = valueType.arguments[1];
                 }
@@ -225,6 +226,7 @@ public class Parser {
                 for (int i = 0; i < dim - 1; i++) {
                     arrayBrackets += "[]";
                 }
+                decl.type = new Type(containerType.javaName);
                 decl.text += (dim == 0 ? "\n@NoOffset " : "\n")
                         + "@Name(\"" + containerType.cppName + "\") public static class " + containerType.javaName + " extends Pointer {\n"
                         + "    static { Loader.load(); }\n"
@@ -298,7 +300,7 @@ public class Parser {
                             decl.text += "    @ValueSetter @Index" + indexFunction + " public native " + containerType.javaName + " put(" + params + separator + valueType.annotations + valueType.javaNames[i] + " value);\n";
                         }
                     }
-                    if (dim == 1 && !containerName.startsWith("std::bitset") && containerType.arguments.length >= 1 && containerType.arguments[containerType.arguments.length - 1].javaName.length() > 0) {
+                    if (dim == 1 && !containerName.endsWith("bitset") && containerType.arguments.length >= 1 && containerType.arguments[containerType.arguments.length - 1].javaName.length() > 0) {
                         decl.text += "\n";
                         if (!constant) {
                             if (list) {
@@ -1352,6 +1354,7 @@ public class Parser {
                 }
                 functionType = functionType.substring(functionType.lastIndexOf(' ') + 1); // get rid of pointer annotations
                 if (!functionType.equals("Pointer")) {
+                    definition.type = new Type(functionType);
                     definition.text += (tokens.get().match(Token.CONST, Token.__CONST, Token.CONSTEXPR) ? "@Const " : "") +
                             "public static class " + functionType + " extends FunctionPointer {\n" +
                             "    static { Loader.load(); }\n" +
@@ -1779,7 +1782,7 @@ public class Parser {
                 tokens.next();
             }
         }
-        if (dcls.size() == 1 && (dcls.get(0) == null || dcls.get(0).type == null
+        if (context.templateMap == null && dcls.size() == 1 && (dcls.get(0) == null || dcls.get(0).type == null
                 || dcls.get(0).type.cppName == null || dcls.get(0).type.cppName.length() == 0)) {
             // this looks more like a variable initialization
             tokens.index = backIndex;
@@ -1830,7 +1833,7 @@ public class Parser {
             tokens.index = backIndex;
             return false;
         } else if (context.javaName == null && !type.operator && params != null) {
-            // this is a constructor definition or specialization, skip over
+            // this is a constructor/destructor definition or specialization, skip over
             if (tokens.get().match(':')) {
                 for (Token token = tokens.next(); !token.match(Token.EOF); token = tokens.next()) {
                     if (token.match('{', ';')) {
@@ -1841,7 +1844,9 @@ public class Parser {
             if (tokens.get().match('{')) {
                 body();
             } else {
-                tokens.next();
+                while (!tokens.get().match(';', Token.EOF)) {
+                    tokens.next();
+                }
             }
             decl.text = spacing;
             decl.function = true;
@@ -1997,10 +2002,13 @@ public class Parser {
                 }
             }
 
-            // check for const and pure virtual functions, ignoring the body if present
+            // check for const, other attributes, and pure virtual functions, ignoring the body if present
             for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.get()) {
                 decl.constMember |= token.match(Token.CONST, Token.__CONST, Token.CONSTEXPR);
-                if (attribute() == null) {
+                Attribute attr = attribute();
+                if (attr != null && attr.annotation) {
+                    dcl.type.annotations += attr.javaName;
+                } else if (attr == null) {
                     break;
                 }
             }
@@ -2183,7 +2191,8 @@ public class Parser {
                     if (indices.length() > 0) {
                         indices += ", ";
                     }
-                    decl.text += " " + modifiers + setterType + javaName + "(" + indices + dcl.type.javaName + " " + javaName + ");";
+                    String javaTypeWithoutAnnotations = dcl.type.javaName.substring(dcl.type.javaName.lastIndexOf(" ") + 1);
+                    decl.text += " " + modifiers + setterType + javaName + "(" + indices + javaTypeWithoutAnnotations + " " + javaName + ");";
                 }
                 decl.text += "\n";
                 if ((dcl.type.constValue || dcl.constPointer) && dcl.type.staticMember && indices.length() == 0) {
@@ -2540,6 +2549,7 @@ public class Parser {
                     } else if (context.namespace != null && context.javaName == null) {
                         decl.text += "@Namespace(\"" + context.namespace + "\") ";
                     }
+                    decl.type = new Type(dcl.javaName);
                     decl.text += "@Opaque public static class " + dcl.javaName + " extends Pointer {\n" +
                                  "    /** Empty constructor. Calls {@code super((Pointer)null)}. */\n" +
                                  "    public " + dcl.javaName + "() { super((Pointer)null); }\n" +
@@ -2619,7 +2629,7 @@ public class Parser {
             decl = dcl.definition;
         }
         Info info = infoMap.getFirst(dcl.type.cppName);
-        if (info != null && info.javaText != null) {
+        if (!context.inaccessible && info != null && info.javaText != null) {
             // inherit constructors
             decl.text = info.javaText;
             decl.declarator = dcl;
@@ -2819,6 +2829,7 @@ public class Parser {
             } else if (context.namespace != null && context.javaName == null) {
                 decl.text += "@Namespace(\"" + context.namespace + "\") ";
             }
+            decl.type = new Type(name);
             decl.text += "@Opaque public static class " + name + " extends " + base.javaName + " {\n" +
                          "    /** Empty constructor. Calls {@code super((Pointer)null)}. */\n" +
                          "    public " + name + "() { super((Pointer)null); }\n" +
@@ -2913,33 +2924,34 @@ public class Parser {
             if (info != null && info.base != null) {
                 base.javaName = info.base;
             }
-            decl.text += modifiers + "class " + name + " extends " + base.javaName + " {\n" +
+            String shortName = name.substring(name.lastIndexOf('.') + 1);
+            decl.text += modifiers + "class " + shortName + " extends " + base.javaName + " {\n" +
                          "    static { Loader.load(); }\n";
 
             explicitConstructors = constructors;
             if (implicitConstructor && (info == null || !info.purify) && (!abstractClass || ctx.virtualize)) {
                 constructors += "    /** Default native constructor. */\n" +
-                             "    public " + name + "() { super((Pointer)null); allocate(); }\n" +
+                             "    public " + shortName + "() { super((Pointer)null); allocate(); }\n" +
                              "    /** Native array allocator. Access with {@link Pointer#position(long)}. */\n" +
-                             "    public " + name + "(long size) { super((Pointer)null); allocateArray(size); }\n" +
+                             "    public " + shortName + "(long size) { super((Pointer)null); allocateArray(size); }\n" +
                              "    /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */\n" +
-                             "    public " + name + "(Pointer p) { super(p); }\n" +
+                             "    public " + shortName + "(Pointer p) { super(p); }\n" +
                              "    private native void allocate();\n" +
                              "    private native void allocateArray(long size);\n" +
-                             "    @Override public " + name + " position(long position) {\n" +
-                             "        return (" + name + ")super.position(position);\n" +
+                             "    @Override public " + shortName + " position(long position) {\n" +
+                             "        return (" + shortName + ")super.position(position);\n" +
                              "    }\n";
             } else {
                 if (!pointerConstructor) {
                     constructors += "    /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */\n" +
-                                 "    public " + name + "(Pointer p) { super(p); }\n";
+                                 "    public " + shortName + "(Pointer p) { super(p); }\n";
                 }
                 if (defaultConstructor && (info == null || !info.purify) && (!abstractClass || ctx.virtualize) && !longConstructor) {
                     constructors += "    /** Native array allocator. Access with {@link Pointer#position(long)}. */\n" +
-                                 "    public " + name + "(long size) { super((Pointer)null); allocateArray(size); }\n" +
+                                 "    public " + shortName + "(long size) { super((Pointer)null); allocateArray(size); }\n" +
                                  "    private native void allocateArray(long size);\n" +
-                                 "    @Override public " + name + " position(long position) {\n" +
-                                 "        return (" + name + ")super.position(position);\n" +
+                                 "    @Override public " + shortName + " position(long position) {\n" +
+                                 "        return (" + shortName + ")super.position(position);\n" +
                                  "    }\n";
                 }
             }
@@ -2983,7 +2995,7 @@ public class Parser {
             constructorName = constructorName.substring(namespace2 + 2);
         }
         Info constructorInfo = infoMap.getFirst(type.cppName + "::" + constructorName);
-        if (constructorInfo == null) {
+        if ((context.templateMap == null || context.templateMap.full()) && constructorInfo == null) {
             // save constructors to be able inherit them with C++11 "using" statements
             infoMap.put(new Info(type.cppName + "::" + constructorName).javaText(explicitConstructors));
         }
@@ -3364,6 +3376,7 @@ public class Parser {
             if (comment != null && comment.length() > 0) {
                 decl.inaccessible = ctx.inaccessible;
                 decl.text = comment;
+                decl.comment = true;
                 declList.add(decl);
             }
             int startIndex = tokens.index;
@@ -3432,6 +3445,7 @@ public class Parser {
         Declaration decl = new Declaration();
         if (comment != null && comment.length() > 0) {
             decl.text = comment;
+            decl.comment = true;
             declList.add(decl);
         }
     }
@@ -3520,9 +3534,12 @@ public class Parser {
         allIncludes.addAll(allProperties.get("platform.include"));
         allIncludes.addAll(allProperties.get("platform.cinclude"));
         List<String> allTargets = allProperties.get("target");
+        List<String> allGlobals = allProperties.get("global");
         List<String> clsTargets = clsProperties.get("target");
+        List<String> clsGlobals = clsProperties.get("global");
         List<String> clsHelpers = clsProperties.get("helper");
         String target = clsTargets.get(0); // there can only be one
+        String global = clsGlobals.get(0);
         List<Class> allInherited = allProperties.getInheritedClasses();
 
         infoMap = new InfoMap();
@@ -3549,14 +3566,16 @@ public class Parser {
         }
         infoMap.putAll(leafInfoMap);
 
-        String version = Generator.class.getPackage().getImplementationVersion();
+        String version = Parser.class.getPackage().getImplementationVersion();
         if (version == null) {
             version = "unknown";
         }
         String text = "// Targeted by JavaCPP version " + version + ": DO NOT EDIT THIS FILE\n\n";
-        int n = target.lastIndexOf('.');
+        String targetPackage = "";
+        int n = global.lastIndexOf('.');
         if (n >= 0) {
-            text += "package " + target.substring(0, n) + ";\n\n";
+            targetPackage = global.substring(0, n);
+            text += "package " + targetPackage + ";\n\n";
         }
         List<Info> infoList = leafInfoMap.get(null);
         for (Info info : infoList) {
@@ -3567,19 +3586,24 @@ public class Parser {
         text += "import java.nio.*;\n"
              +  "import org.bytedeco.javacpp.*;\n"
              +  "import org.bytedeco.javacpp.annotation.*;\n\n";
-        for (String s : allTargets) {
-            if (!target.equals(s)) {
-                text += "import static " + s + ".*;\n";
+        for (int i = 0; i < allTargets.size(); i++) {
+            if (!target.equals(allTargets.get(i))) {
+                if (allTargets.get(i).equals(allGlobals.get(i))) {
+                    text += "import static " + allTargets.get(i) + ".*;\n";
+                } else {
+                    text += "import " + allTargets.get(i) + ".*;\n"
+                         +  "import static " + allGlobals.get(i) + ".*;\n";
+                }
             }
         }
         if (allTargets.size() > 1) {
             text += "\n";
         }
-        text += "public class " + target.substring(n + 1) + " extends "
+        String globalText = text + "public class " + global.substring(n + 1) + " extends "
              + (clsHelpers.size() > 0 && clsIncludes.size() > 0 ? clsHelpers.get(0) : cls.getCanonicalName()) + " {\n"
              + "    static { Loader.load(); }\n";
 
-        String targetPath = target.replace('.', File.separatorChar);
+        String targetPath = global.replace('.', File.separatorChar);
         File targetFile = new File(outputDirectory, targetPath + ".java");
         logger.info("Targeting " + targetFile);
         Context context = new Context();
@@ -3635,14 +3659,37 @@ public class Parser {
         }
         try (Writer out = encoding != null ? new EncodingFileWriter(targetFile, encoding, lineSeparator)
                                            : new EncodingFileWriter(targetFile, lineSeparator)) {
-            out.append(text);
+            out.append(globalText);
             for (Info info : infoList) {
                 if (info.javaText != null && !info.javaText.startsWith("import")) {
                     out.append(info.javaText + "\n");
                 }
             }
+            Declaration prevd = null;
             for (Declaration d : declList) {
-                out.append(d.text);
+                if (!target.equals(global) && d.type != null && d.type.javaName != null && d.type.javaName.length() > 0) {
+                    // if the user gave us a class name for "global", we're targeting a package, so output global classes into their own files
+                    File javaFile = new File(targetDir, d.type.javaName + ".java");
+                    if (prevd != null && !prevd.comment) {
+                        out.append(prevd.text);
+                    }
+                    out.append("\n// Targeting " + d.type.javaName + ".java" + "\n\n");
+                    logger.info("Targeting " + javaFile);
+                    String javaText = text + "import static " + global + ".*;\n"
+                            + "@Platform(library = \"" + clsProperties.getProperty("platform.library") + "\")\n"
+                            + (prevd != null && prevd.comment ? prevd.text : "")
+                            + d.text.replace("public static class " + d.type.javaName + " ", "public class " + d.type.javaName + " ");
+                    Files.write(javaFile.toPath(), encoding != null ? javaText.getBytes(encoding) : javaText.getBytes());
+                    prevd = null;
+                } else {
+                    if (prevd != null) {
+                        out.append(prevd.text);
+                    }
+                    prevd = d;
+                }
+            }
+            if (prevd != null) {
+                out.append(prevd.text);
             }
             out.append("\n}\n").close();
         }

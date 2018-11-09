@@ -936,11 +936,18 @@ public class Builder {
             } catch (ClassCastException | InstantiationException | IllegalAccessException e) {
                 // fail silently as if the interface wasn't implemented
             }
-            String target = p.getProperty("target");
+            String target = p.getProperty("global");
             if (target != null && !c.getName().equals(target)) {
-                File f = parse(classScanner.getClassLoader().getPaths(), c);
-                if (f != null) {
-                    outputFiles.add(f);
+                boolean found = false;
+                for (Class c2 : classScanner.getClasses()) {
+                    // do not try to regenerate classes that are already loaded
+                    found |= c2.getName().equals(target);
+                }
+                if (!found) {
+                    File f = parse(classScanner.getClassLoader().getPaths(), c);
+                    if (f != null) {
+                        outputFiles.add(f);
+                    }
                 }
                 continue;
             }

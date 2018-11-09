@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Samuel Audet
+ * Copyright (C) 2014-2018 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -30,6 +30,6 @@ class Declaration {
     Type type = null;
     Declarator declarator = null;
     boolean abstractMember = false, constMember = false, inaccessible = false,
-            incomplete = false, function = false, variable = false;
+            incomplete = false, function = false, variable = false, comment = false;
     String signature = "", text = "";
 }

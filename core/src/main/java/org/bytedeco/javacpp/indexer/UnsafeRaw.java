@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2017 Samuel Audet
+ * Copyright (C) 2016-2018 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -75,6 +75,8 @@ class UnsafeRaw extends Raw {
     @Override void putDouble(long address, double d) { UNSAFE.putDouble(address, d); }
     @Override char getChar(long address) { return UNSAFE.getChar(address); }
     @Override void putChar(long address, char c) { UNSAFE.putChar(address, c); }
+    @Override boolean getBoolean(long address) { return UNSAFE.getByte(address) != 0; }
+    @Override void putBoolean(long address, boolean b) { UNSAFE.putByte(address, b ? (byte)1 : (byte)0); }
 
     @Override byte getByte(byte[] array, long offset) { return UNSAFE.getByte(array, arrayOffset + offset); }
     @Override void putByte(byte[] array, long offset, byte b) { UNSAFE.putByte(array, arrayOffset + offset, b); }
@@ -90,4 +92,6 @@ class UnsafeRaw extends Raw {
     @Override void putDouble(byte[] array, long offset, double d) { UNSAFE.putDouble(array, arrayOffset + offset, d); }
     @Override char getChar(byte[] array, long offset) { return UNSAFE.getChar(array, arrayOffset + offset); }
     @Override void putChar(byte[] array, long offset, char c) { UNSAFE.putChar(array, arrayOffset + offset, c); }
+    @Override boolean getBoolean(byte[] array, long offset) { return UNSAFE.getBoolean(array, arrayOffset + offset); }
+    @Override void putBoolean(byte[] array, long offset, boolean b) { UNSAFE.putBoolean(array, arrayOffset + offset, b); }
 }
