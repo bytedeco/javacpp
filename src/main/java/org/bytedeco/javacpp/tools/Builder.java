@@ -165,6 +165,57 @@ public class Builder {
     }
 
     /**
+     * Executes a command with {@link ProcessBuilder}, but also logs the call
+     * and redirects its input and output to our process.
+     *
+     * @param command to have {@link ProcessBuilder} execute
+     * @param workingDirectory to pass to {@link ProcessBuilder#directory()}
+     * @param environmentVariables to put in {@link ProcessBuilder#environment()}
+     * @return the exit value of the command
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    int executeCommand(List<String> command, File workingDirectory,
+            Map<String,String> environmentVariables) throws IOException, InterruptedException {
+        String platform = Loader.getPlatform();
+        boolean windows = platform.startsWith("windows");
+        for (int i = 0; i < command.size(); i++) {
+            String arg = command.get(i);
+            if (arg == null) {
+                arg = "";
+            }
+            if (arg.trim().isEmpty() && windows) {
+                // seems to be the only way to pass empty arguments on Windows?
+                arg = "\"\"";
+            }
+            command.set(i, arg);
+        }
+
+        String text = "";
+        for (String s : command) {
+            boolean hasSpaces = s.indexOf(" ") > 0 || s.isEmpty();
+            if (hasSpaces) {
+                text += windows ? "\"" : "'";
+            }
+            text += s;
+            if (hasSpaces) {
+                text += windows ? "\"" : "'";
+            }
+            text += " ";
+        }
+        logger.info(text);
+
+        ProcessBuilder pb = new ProcessBuilder(command);
+        if (workingDirectory != null) {
+            pb.directory(workingDirectory);
+        }
+        if (environmentVariables != null) {
+            pb.environment().putAll(environmentVariables);
+        }
+        return pb.inheritIO().start().waitFor();
+    }
+
+    /**
      * Launches and waits for the native compiler to produce a native shared library.
      *
      * @param sourceFilenames the C++ source filenames
@@ -403,28 +454,9 @@ public class Builder {
             command.set(i, arg);
         }
 
-        String text = "";
-        for (String s : command) {
-            boolean hasSpaces = s.indexOf(" ") > 0 || s.isEmpty();
-            if (hasSpaces) {
-                text += windows ? "\"" : "'";
-            }
-            text += s;
-            if (hasSpaces) {
-                text += windows ? "\"" : "'";
-            }
-            text += " ";
-        }
-        logger.info(text);
-
-        ProcessBuilder pb = new ProcessBuilder(command);
         // Use the library output path as the working directory so that all
         // build files, including intermediate ones from MSVC, are dumped there
-        pb.directory(workingDirectory);
-        if (environmentVariables != null) {
-            pb.environment().putAll(environmentVariables);
-        }
-        return pb.inheritIO().start().waitFor();
+        return executeCommand(command, workingDirectory, environmentVariables);
     }
 
     /**
@@ -814,41 +846,6 @@ public class Builder {
     public File[] build() throws IOException, InterruptedException, ParserException {
         if (buildCommand != null && buildCommand.length > 0) {
             List<String> command = Arrays.asList(buildCommand);
-            String platform  = Loader.getPlatform();
-            boolean windows = platform.startsWith("windows");
-            for (int i = 0; i < command.size(); i++) {
-                String arg = command.get(i);
-                if (arg == null) {
-                    arg = "";
-                }
-                if (arg.trim().isEmpty() && windows) {
-                    // seems to be the only way to pass empty arguments on Windows?
-                    arg = "\"\"";
-                }
-                command.set(i, arg);
-            }
-
-            String text = "";
-            for (String s : command) {
-                boolean hasSpaces = s.indexOf(" ") > 0 || s.isEmpty();
-                if (hasSpaces) {
-                    text += windows ? "\"" : "'";
-                }
-                text += s;
-                if (hasSpaces) {
-                    text += windows ? "\"" : "'";
-                }
-                text += " ";
-            }
-            logger.info(text);
-
-            ProcessBuilder pb = new ProcessBuilder(command);
-            if (workingDirectory != null) {
-                pb.directory(workingDirectory);
-            }
-            if (environmentVariables != null) {
-                pb.environment().putAll(environmentVariables);
-            }
             String paths = properties.getProperty("platform.buildpath", "");
             String links = properties.getProperty("platform.linkresource", "");
             String resources = properties.getProperty("platform.buildresource", "");
@@ -903,11 +900,14 @@ public class Builder {
                     }
                 }
                 if (paths.length() > 0) {
-                    pb.environment().put("BUILD_PATH", paths);
-                    pb.environment().put("BUILD_PATH_SEPARATOR", separator);
+                    if (environmentVariables == null) {
+                        environmentVariables = new LinkedHashMap<String,String>();
+                    }
+                    environmentVariables.put("BUILD_PATH", paths);
+                    environmentVariables.put("BUILD_PATH_SEPARATOR", separator);
                 }
             }
-            int exitValue = pb.inheritIO().start().waitFor();
+            int exitValue = executeCommand(command, workingDirectory, environmentVariables);
             if (exitValue != 0) {
                 throw new RuntimeException("Process exited with an error: " + exitValue);
             }
@@ -1082,10 +1082,10 @@ public class Builder {
         }
         System.out.println(
             "JavaCPP version " + version + "\n" +
-            "Copyright (C) 2011-2017 Samuel Audet <samuel.audet@gmail.com>\n" +
+            "Copyright (C) 2011-2018 Samuel Audet <samuel.audet@gmail.com>\n" +
             "Project site: https://github.com/bytedeco/javacpp");
         System.out.println();
-        System.out.println("Usage: java -jar javacpp.jar [options] [class or package (suffixed with .* or .**)]");
+        System.out.println("Usage: java -jar javacpp.jar [options] [class or package (suffixed with .* or .**)] [commands]");
         System.out.println();
         System.out.println("where options include:");
         System.out.println();
@@ -1104,6 +1104,10 @@ public class Builder {
         System.out.println("    -D<property>=<value>   Set property to value");
         System.out.println("    -Xcompiler <option>    Pass option directly to compiler");
         System.out.println();
+        System.out.println("and where optional commands include:");
+        System.out.println();
+        System.out.println("    -exec [args...]        After build, call java command on the first class");
+        System.out.println();
     }
 
     /**
@@ -1115,6 +1119,7 @@ public class Builder {
     public static void main(String[] args) throws Exception {
         boolean addedClasses = false;
         Builder builder = new Builder();
+        String[] execArgs = null;
         for (int i = 0; i < args.length; i++) {
             if ("-help".equals(args[i]) || "--help".equals(args[i])) {
                 printHelp();
@@ -1147,18 +1152,50 @@ public class Builder {
                 builder.property(args[i]);
             } else if ("-Xcompiler".equals(args[i])) {
                 builder.compilerOptions(args[++i]);
+            } else if ("-exec".equals(args[i])) {
+                execArgs = Arrays.copyOfRange(args, i + 1, args.length);
+                i = args.length;
             } else if (args[i].startsWith("-")) {
                 builder.logger.error("Invalid option \"" + args[i] + "\"");
                 printHelp();
                 System.exit(1);
             } else {
-                builder.classesOrPackages(args[i]);
+                String arg = args[i];
+                if (arg.endsWith(".java")) {
+                    // We got a source file instead, let's try to compile it first
+                    ArrayList<String> command = new ArrayList<String>(Arrays.asList("javac", "-cp"));
+                    String paths = System.getProperty("java.class.path");
+                    for (String path : builder.classScanner.getClassLoader().getPaths()) {
+                        paths += File.pathSeparator + path;
+                    }
+                    command.add(paths);
+                    command.add(arg);
+                    int exitValue = builder.executeCommand(command, builder.workingDirectory, builder.environmentVariables);
+                    if (exitValue != 0) {
+                        throw new RuntimeException("Could not compile " + arg + ": " + exitValue);
+                    }
+                    arg = arg.replace(File.separatorChar, '.').replace('/', '.').substring(0, arg.length() - 5);
+                }
+                builder.classesOrPackages(arg);
                 addedClasses = true;
             }
         }
         if (!addedClasses) {
             builder.classesOrPackages((String[])null);
         }
-        builder.build();
+        File[] outputFiles = builder.build();
+        Collection<Class> classes = builder.classScanner.getClasses();
+        if (outputFiles != null && outputFiles.length > 0 && !classes.isEmpty() && execArgs != null) {
+            Class c = classes.iterator().next();
+            ArrayList<String> command = new ArrayList<String>(Arrays.asList("java", "-cp"));
+            String paths = System.getProperty("java.class.path");
+            for (String path : builder.classScanner.getClassLoader().getPaths()) {
+                paths += File.pathSeparator + path;
+            }
+            command.add(paths);
+            command.add(c.getCanonicalName());
+            command.addAll(Arrays.asList(execArgs));
+            System.exit(builder.executeCommand(command, builder.workingDirectory, builder.environmentVariables));
+        }
     }
 }
