@@ -1834,6 +1834,9 @@ public class Parser {
             return false;
         } else if (context.javaName == null && !type.operator && params != null) {
             // this is a constructor/destructor definition or specialization, skip over
+            while (!tokens.get().match(':', '{', ';', Token.EOF)) {
+                tokens.next();
+            }
             if (tokens.get().match(':')) {
                 for (Token token = tokens.next(); !token.match(Token.EOF); token = tokens.next()) {
                     if (token.match('{', ';')) {
@@ -1938,6 +1941,9 @@ public class Parser {
         }
         if (type.friend || (context.javaName == null && localNamespace > 0) || (info != null && info.skip)) {
             // this is a friend declaration, or a member function definition or specialization, skip over
+            while (!tokens.get().match(':', '{', ';', Token.EOF)) {
+                tokens.next();
+            }
             for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.get()) {
                 if (attribute() == null) {
                     break;
@@ -1973,9 +1979,10 @@ public class Parser {
         for (int n = -2; n < Integer.MAX_VALUE; n++) {
             decl = new Declaration();
             tokens.index = startIndex;
+            boolean useDefaults = (info == null || !info.skipDefaults) && n % 2 != 0;
             if ((type.constructor || type.destructor || type.operator) && params != null) {
                 type = type(context);
-                params = parameters(context, n / 2, (info == null || !info.skipDefaults) && n % 2 != 0);
+                params = parameters(context, n / 2, useDefaults);
                 dcl = new Declarator();
                 dcl.type = type;
                 dcl.parameters = params;
@@ -2063,6 +2070,11 @@ public class Parser {
                 decl.text += modifiers + type.annotations + context.shorten(type.javaName) + " " + dcl.javaName + dcl.parameters.list + ";\n";
             }
             decl.signature = dcl.signature;
+
+            if (useDefaults) {
+                // we cannot override when leaving out parameters with default arguments
+                decl.text = decl.text.replaceAll("@Override ", "");
+            }
 
             // replace all of the declaration by user specified text
             if (info != null && info.javaText != null) {

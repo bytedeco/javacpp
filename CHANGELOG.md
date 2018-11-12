@@ -1,4 +1,7 @@
 
+ * Provide default `Info` for `std::string*` and `std::wstring*` mapping to `BytePointer`, and `CharPointer` and `IntPointer`
+ * Ensure `Parser` skips over attributes of friend declarations or function definitions that are not used
+ * Do not let `Parser` output `@Override` when overloading a method with less parameters using default arguments
  * Allow `Builder` to execute `javac` and `java` for convenience, and remove "." from class path ([issue #192](https://github.com/bytedeco/javacpp/issues/192))
  * Enhance support for `java.nio.Buffer` by taking into account `offset`, `position`, `limit`, and `capacity` on function calls
  * Make sure `Parser` always uses the short version of identifiers for Java class declarations
