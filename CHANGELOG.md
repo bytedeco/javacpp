@@ -1,4 +1,5 @@
 
+ * Prevent `Parser` from outputting twice the same `Info.javaText` by using it as declaration signature
  * Provide default `Info` for `std::string*` and `std::wstring*` mapping to `BytePointer`, and `CharPointer` and `IntPointer`
  * Ensure `Parser` skips over attributes of friend declarations or function definitions that are not used
  * Do not let `Parser` output `@Override` when overloading a method with less parameters using default arguments

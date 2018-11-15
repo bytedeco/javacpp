@@ -2079,7 +2079,7 @@ public class Parser {
             // replace all of the declaration by user specified text
             if (info != null && info.javaText != null) {
                 if (first) {
-                    decl.text = info.javaText;
+                    decl.signature = decl.text = info.javaText;
                 } else {
                     break;
                 }
@@ -2254,7 +2254,7 @@ public class Parser {
             }
             decl.signature = dcl.signature;
             if (info != null && info.javaText != null) {
-                decl.text = info.javaText;
+                decl.signature = decl.text = info.javaText;
                 decl.declarator = null;
             }
             while (!tokens.get().match(Token.EOF, ';')) {
@@ -2471,7 +2471,7 @@ public class Parser {
                     }
                 }
                 if (info != null && info.javaText != null) {
-                    decl.text = info.javaText;
+                    decl.signature = decl.text = info.javaText;
                     break;
                 }
             }
@@ -2614,7 +2614,7 @@ public class Parser {
             }
 
             if (info != null && info.javaText != null) {
-                decl.text = info.javaText;
+                decl.signature = decl.text = info.javaText;
             }
             String comment = commentAfter();
             decl.text = comment + decl.text;
@@ -2643,7 +2643,7 @@ public class Parser {
         Info info = infoMap.getFirst(dcl.type.cppName);
         if (!context.inaccessible && info != null && info.javaText != null) {
             // inherit constructors
-            decl.text = info.javaText;
+            decl.signature = decl.text = info.javaText;
             decl.declarator = dcl;
         }
         String comment = commentAfter();
@@ -3023,7 +3023,7 @@ public class Parser {
         tokens.next();
         decl.type = type;
         if (info != null && info.javaText != null) {
-            decl.text = info.javaText;
+            decl.signature = decl.text = info.javaText;
         } else if (info != null && info.flatten) {
             info.javaText = decl.text;
         }
