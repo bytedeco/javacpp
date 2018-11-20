@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
 import java.net.JarURLConnection;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -397,6 +398,13 @@ public class Loader {
                     subdirName = subdirName + File.separator + parentName;
                 }
                 cacheSubdir = new File(cacheSubdir, subdirName);
+            }
+        } else if (urlConnection instanceof HttpURLConnection) {
+            size = urlConnection.getContentLength();
+            timestamp = urlConnection.getLastModified();
+            if (!noSubdir) {
+                String path = resourceURL.getHost() + resourceURL.getPath();
+                cacheSubdir = new File(cacheSubdir, path.substring(0, path.lastIndexOf('/') + 1));
             }
         } else {
             size = urlFile.length();
