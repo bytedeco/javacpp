@@ -1,4 +1,5 @@
 
+ * Fix `Parser` mapping of `const` function pointer variable declarations
  * Enhance `Loader.cacheResource()` with support for HTTP connections
  * Add `module-info.java` and create a multi-release JAR to comply with JPMS ([pull #252](https://github.com/bytedeco/javacpp/pull/252))
  * Prevent `Parser` from outputting twice the same `Info.javaText` by using it as declaration signature

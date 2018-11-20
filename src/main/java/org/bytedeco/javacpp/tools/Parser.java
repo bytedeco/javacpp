@@ -946,7 +946,9 @@ public class Parser {
                 tokens.next();
             }
             for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.get()) {
-                if (token.match(Token.IDENTIFIER, "::")) {
+                if (token.match(Token.CONST, Token.__CONST, Token.CONSTEXPR)) {
+                    dcl.constPointer = true;
+                } else if (token.match(Token.IDENTIFIER, "::")) {
                     int backIndex2 = tokens.index;
                     Attribute attr2 = attribute();
                     if (attr2 != null && attr2.annotation) {
@@ -1396,7 +1398,7 @@ public class Parser {
                     type.annotations = "@Cast(\"" + cppType.substring(0, n + 1) + "*" + cppType.substring(n + 1) + "\") ";
                     type.javaName = "PointerPointer";
                 } else {
-                    type.annotations = info != null && info.cast ? "@Cast(\"" + cppType + "\") " : "";
+                    type.annotations = info != null && info.cast ? "@Cast(\"" + cppType + "\") " : dcl.constPointer ? "@Const " : "";
                     type.javaName = functionType;
                 }
             }
