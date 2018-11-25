@@ -661,9 +661,11 @@ public class Builder {
     String outputName = null;
     /** The name of the JAR file to create, if not {@code null}. */
     String jarPrefix = null;
+    /** If true, attempts to generate C++ JNI files, but if false, only attempts to parse header files. */
+    boolean generate = true;
     /** If true, compiles the generated source file to a shared library and deletes source. */
     boolean compile = true;
-    /** If true, preserves the generated C++ JNI files after compilation */
+    /** If true, preserves the generated C++ JNI files after compilation. */
     boolean deleteJniFiles = true;
     /** If true, also generates C++ header files containing declarations of callback functions. */
     boolean header = false;
@@ -707,6 +709,11 @@ public class Builder {
     /** Sets the {@link #outputDirectory} field to the argument. */
     public Builder outputDirectory(File outputDirectory) {
         this.outputDirectory = outputDirectory;
+        return this;
+    }
+    /** Sets the {@link #generate} field to the argument. */
+    public Builder generate(boolean generate) {
+        this.generate = generate;
         return this;
     }
     /** Sets the {@link #compile} field to the argument. */
@@ -940,10 +947,10 @@ public class Builder {
             if (target != null && !c.getName().equals(target)) {
                 boolean found = false;
                 for (Class c2 : classScanner.getClasses()) {
-                    // do not try to regenerate classes that are already loaded
+                    // do not try to regenerate classes that are already scheduled for C++ compilation
                     found |= c2.getName().equals(target);
                 }
-                if (!found) {
+                if (!generate || !found) {
                     File f = parse(classScanner.getClassLoader().getPaths(), c);
                     if (f != null) {
                         outputFiles.add(f);
@@ -952,7 +959,7 @@ public class Builder {
                 continue;
             }
             String libraryName = outputName != null ? outputName : p.getProperty("platform.library", "");
-            if (libraryName.length() == 0) {
+            if (!generate || libraryName.length() == 0) {
                 continue;
             }
             LinkedHashSet<Class> classList = map.get(libraryName);
@@ -1093,7 +1100,8 @@ public class Builder {
         System.out.println("    -encoding <name>       Character encoding used for input and output files");
         System.out.println("    -d <directory>         Output all generated files to directory");
         System.out.println("    -o <name>              Output everything in a file named after given name");
-        System.out.println("    -nocompile             Do not compile or delete the generated source files");
+        System.out.println("    -nogenerate            Do not try to generate C++ source files, only try to parse header files");
+        System.out.println("    -nocompile             Do not compile or delete the generated C++ source files");
         System.out.println("    -nodelete              Do not delete generated C++ JNI files after compilation");
         System.out.println("    -header                Generate header file with declarations of callbacks functions");
         System.out.println("    -copylibs              Copy to output directory dependent libraries (link and preload)");
@@ -1132,6 +1140,8 @@ public class Builder {
                 builder.outputDirectory(args[++i]);
             } else if ("-o".equals(args[i])) {
                 builder.outputName(args[++i]);
+            } else if ("-nocpp".equals(args[i]) || "-nogenerate".equals(args[i])) {
+                builder.generate(false);
             } else if ("-cpp".equals(args[i]) || "-nocompile".equals(args[i])) {
                 builder.compile(false);
             } else if ("-nodelete".equals(args[i])) {

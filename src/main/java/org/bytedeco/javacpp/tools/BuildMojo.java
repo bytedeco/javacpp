@@ -138,6 +138,10 @@ public class BuildMojo extends AbstractMojo {
     @Parameter(property = "javacpp.outputName")
     String outputName = null;
 
+    /** Generates .cpp files from Java interfaces if found, parsing from header files if not. */
+    @Parameter(property = "javacpp.generate", defaultValue = "true")
+    boolean generate = true;
+
     /** Compile and delete the generated .cpp files. */
     @Parameter(property = "javacpp.compile", defaultValue = "true")
     boolean compile = true;
@@ -246,6 +250,7 @@ public class BuildMojo extends AbstractMojo {
                 log.debug("encoding: " + encoding);
                 log.debug("outputDirectory: " + outputDirectory);
                 log.debug("outputName: " + outputName);
+                log.debug("generate: " + generate);
                 log.debug("compile: " + compile);
                 log.debug("deleteJniFiles: " + deleteJniFiles);
                 log.debug("header: " + header);
@@ -287,6 +292,7 @@ public class BuildMojo extends AbstractMojo {
                     .encoding(encoding)
                     .outputDirectory(outputDirectory)
                     .outputName(outputName)
+                    .generate(generate)
                     .compile(compile)
                     .deleteJniFiles(deleteJniFiles)
                     .header(header)

@@ -1,4 +1,5 @@
 
+ * Add `Builder.generate` option and corresponding `ParseMojo` to prioritize parsing header files
  * Fix `Parser` mapping of `const` function pointer variable declarations
  * Enhance `Loader.cacheResource()` with support for HTTP connections
  * Add `module-info.java` and create a multi-release JAR to comply with JPMS ([pull #252](https://github.com/bytedeco/javacpp/pull/252))
