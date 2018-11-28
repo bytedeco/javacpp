@@ -1,4 +1,5 @@
 
+ * Make sure `Generator` does not use `position` of `@Opaque Pointer` output parameters with `@Adapter` ([pull bytedeco/javacpp-presets#642](https://github.com/bytedeco/javacpp-presets/pull/642))
  * Prevent `Builder` from trying to use `Pointer` as library name for the output
  * Add `Builder.generate` option and corresponding `ParseMojo` to prioritize parsing header files
  * Fix `Parser` mapping of `const` function pointer variable declarations
