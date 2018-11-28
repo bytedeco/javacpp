@@ -1,4 +1,5 @@
 
+ * Prevent `Builder` from trying to use `Pointer` as library name for the output
  * Add `Builder.generate` option and corresponding `ParseMojo` to prioritize parsing header files
  * Fix `Parser` mapping of `const` function pointer variable declarations
  * Enhance `Loader.cacheResource()` with support for HTTP connections
