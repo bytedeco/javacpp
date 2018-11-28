@@ -96,6 +96,7 @@ public @interface Platform {
     String[] extension()   default {};
     /** The native JNI library associated with this class that {@link Builder} should
      *  try to build and {@link Loader} should try to load. If left empty, this value
-     *  defaults to "jni" + the name that {@link Class#getSimpleName()} returns. */
+     *  defaults to "jni" + the name that {@link Class#getSimpleName()} returns for
+     *  {@link Properties#target} or {@link Properties#global} class, or this class, if not given. */
     String   library()     default "";
 }

@@ -191,6 +191,10 @@ public class ClassProperties extends HashMap<String,List<String>> {
                  linkpath = {}, linkresource = {}, link = {}, frameworkpath = {}, framework = {}, preloadpath = {}, preloadresource = {}, preload = {},
                  resourcepath = {}, resource = {}, extension = {};
         String library = "jni" + c.getSimpleName();
+        String target = getProperty("global");
+        if (target != null && target.length() > 0) {
+            library = "jni" + target.substring(target.lastIndexOf('.') + 1);
+        }
         for (Platform p : platforms != null ? platforms : new Platform[0]) {
             String[][] names = { p.value().length > 0 ? p.value() : defaultNames, p.not() };
             boolean[] matches = { false, false };
