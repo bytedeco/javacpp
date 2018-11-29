@@ -931,31 +931,38 @@ public class Builder {
             if (Loader.getEnclosingClass(c) != c) {
                 continue;
             }
+            // Do not inherit properties when parsing because it generates annotations itself
             ClassProperties p = Loader.loadProperties(c, properties, false);
+            if (p.isLoaded()) {
+                try {
+                    if (Arrays.asList(c.getInterfaces()).contains(BuildEnabled.class)) {
+                        ((BuildEnabled)c.newInstance()).init(logger, properties, encoding);
+                    }
+                } catch (ClassCastException | InstantiationException | IllegalAccessException e) {
+                    // fail silently as if the interface wasn't implemented
+                }
+                String target = p.getProperty("global");
+                if (target != null && !c.getName().equals(target)) {
+                    boolean found = false;
+                    for (Class c2 : classScanner.getClasses()) {
+                        // do not try to regenerate classes that are already scheduled for C++ compilation
+                        found |= c2.getName().equals(target);
+                    }
+                    if (!generate || !found) {
+                        File f = parse(classScanner.getClassLoader().getPaths(), c);
+                        if (f != null) {
+                            outputFiles.add(f);
+                        }
+                    }
+                    continue;
+                }
+            }
+            if (!p.isLoaded()) {
+                // Now try to inherit to generate C++ source files
+                p = Loader.loadProperties(c, properties, true);
+            }
             if (!p.isLoaded()) {
                 logger.warn("Could not load platform properties for " + c);
-                continue;
-            }
-            try {
-                if (Arrays.asList(c.getInterfaces()).contains(BuildEnabled.class)) {
-                    ((BuildEnabled)c.newInstance()).init(logger, properties, encoding);
-                }
-            } catch (ClassCastException | InstantiationException | IllegalAccessException e) {
-                // fail silently as if the interface wasn't implemented
-            }
-            String target = p.getProperty("global");
-            if (target != null && !c.getName().equals(target)) {
-                boolean found = false;
-                for (Class c2 : classScanner.getClasses()) {
-                    // do not try to regenerate classes that are already scheduled for C++ compilation
-                    found |= c2.getName().equals(target);
-                }
-                if (!generate || !found) {
-                    File f = parse(classScanner.getClassLoader().getPaths(), c);
-                    if (f != null) {
-                        outputFiles.add(f);
-                    }
-                }
                 continue;
             }
             String libraryName = outputName != null ? outputName : p.getProperty("platform.library", "");

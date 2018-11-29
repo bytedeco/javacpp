@@ -3552,8 +3552,9 @@ public class Parser {
         List<String> clsTargets = clsProperties.get("target");
         List<String> clsGlobals = clsProperties.get("global");
         List<String> clsHelpers = clsProperties.get("helper");
-        String target = clsTargets.get(0); // there can only be one
-        String global = clsGlobals.get(0);
+        // There can only be one target, pick the last one set
+        String target = clsTargets.get(clsTargets.size() - 1);
+        String global = clsGlobals.get(clsGlobals.size() - 1);
         List<Class> allInherited = allProperties.getInheritedClasses();
 
         infoMap = new InfoMap();
@@ -3690,9 +3691,10 @@ public class Parser {
                     out.append("\n// Targeting " + d.type.javaName + ".java" + "\n\n");
                     logger.info("Targeting " + javaFile);
                     String javaText = text + "import static " + global + ".*;\n"
-                            + "@Platform(library = \"" + clsProperties.getProperty("platform.library") + "\")\n"
                             + (prevd != null && prevd.comment ? prevd.text : "")
-                            + d.text.replace("public static class " + d.type.javaName + " ", "public class " + d.type.javaName + " ");
+                            + d.text.replace("public static class " + d.type.javaName + " ",
+                                    "@Properties(inherit = " + cls.getSimpleName() + ".class)\n"
+                                  + "public class " + d.type.javaName + " ");
                     Files.write(javaFile.toPath(), encoding != null ? javaText.getBytes(encoding) : javaText.getBytes());
                     prevd = null;
                 } else {

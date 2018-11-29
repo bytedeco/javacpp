@@ -839,13 +839,13 @@ public class Loader {
 
             // check in priority the platforms inside our properties annotation, before inherited ones
             Platform[] platforms = classProperties.value();
-            if (platforms != null) {
+            if (platforms != null && platforms.length > 0) {
                 for (Platform p : platforms) {
                     if (checkPlatform(p, properties, defaultNames)) {
                         return true;
                     }
                 }
-            } else if (classes != null) {
+            } else if (classes != null && classes.length > 0) {
                 for (Class c : classes) {
                     if (checkPlatform(c, properties)) {
                         return true;
