@@ -1,4 +1,5 @@
 
+ * Fix `Generator` errors for `@StdString` and other `@Adapter` on `@Virtual` return values
  * Use simple name from `@Properties(target=..., global=...)` class as default for `@Platform(library=...)` name
  * Make sure `Generator` does not use `position` of `@Opaque Pointer` output parameters with `@Adapter` ([pull bytedeco/javacpp-presets#642](https://github.com/bytedeco/javacpp-presets/pull/642))
  * Prevent `Builder` from trying to use `Pointer` as library name for the output

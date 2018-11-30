@@ -2316,11 +2316,6 @@ public class Generator {
         if (methodInfo.memberName.length > 2) {
             out.print(methodInfo.memberName[2]);
         }
-        if (by(methodInfo.annotations) instanceof ByRef &&
-                methodInfo.returnType == String.class) {
-            // special considerations for std::string
-            out.print(");\n" + indent + "rptr = rstr.c_str()");
-        }
         if (needSecondCall) {
             call(methodInfo, " : ", true);
             out.print(")");
@@ -2335,6 +2330,12 @@ public class Generator {
         String valueTypeName = valueTypeName(typeName);
         AdapterInformation adapterInfo = adapterInformation(false, valueTypeName, methodInfo.annotations);
         String suffix = methodInfo.deallocator ? "" : ";";
+        if (by(methodInfo.annotations) instanceof ByRef
+                && methodInfo.returnType == String.class
+                && adapterInfo == null) {
+            // special considerations for std::string without adapter
+            out.print(");\n" + indent + "rptr = rstr.c_str()");
+        }
         if (!methodInfo.returnType.isPrimitive() && adapterInfo != null) {
             suffix = ")" + suffix;
         }
@@ -2988,7 +2989,7 @@ public class Generator {
                 out.println("    " + returnTypeName[0] + " rptr" + returnTypeName[1] + " = JavaCPP_getStringBytes(env, rarg);");
                 if (returnAdapterInfo != null) {
                     out.println("    jlong rsize = 0;");
-                    out.println("    void* rowner = (void*)rptr");
+                    out.println("    void* rowner = (void*)rptr;");
                 }
             } else if (Buffer.class.isAssignableFrom(callbackReturnType)) {
                 out.println("    " + returnTypeName[0] + " rptr" + returnTypeName[1] + " = rarg == NULL ? NULL : ("
