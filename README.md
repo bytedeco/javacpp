@@ -154,9 +154,7 @@ public class NativeLibrary {
 
 After compiling the Java source code in the usual way, we also need to build using JavaCPP before executing it as follows:
 ```bash
-$ javac -cp javacpp.jar NativeLibrary.java 
-$ java -jar javacpp.jar NativeLibrary
-$ java  -cp javacpp.jar NativeLibrary
+$ java -jar javacpp.jar NativeLibrary.java -exec
 Hello World!
 ```
 
@@ -213,9 +211,7 @@ public class VectorTest {
 
 Executing that program using these commands produces the following output:
 ```bash
-$ javac -cp javacpp.jar VectorTest.java
-$ java -jar javacpp.jar VectorTest
-$ java  -cp javacpp.jar VectorTest
+$ java -jar javacpp.jar VectorTest.java -exec
 13 42  org.bytedeco.javacpp.Pointer[address=0xdeadbeef,position=0,limit=0,capacity=0,deallocator=null]
 Exception in thread "main" java.lang.RuntimeException: vector::_M_range_check: __n (which is 42) >= this->size() (which is 13)
 	at VectorTest$PointerVectorVector.at(Native Method)
@@ -267,9 +263,7 @@ public class Processor {
 
 It would then compile and execute like this:
 ```bash
-$ javac -cp javacpp.jar Processor.java
-$ java -jar javacpp.jar Processor
-$ java  -cp javacpp.jar Processor
+$ java -jar javacpp.jar Processor.java -exec
 Processing in C++...
 ```
 
@@ -325,8 +319,7 @@ public class Foo {
 Since functions also have pointers, we can use `FunctionPointer` instances accordingly, in ways similar to the [`FunPtr` type of Haskell FFI](http://hackage.haskell.org/packages/archive/base/4.6.0.0/doc/html/Foreign-Ptr.html#g:2), but where any `java.lang.Throwable` object thrown gets translated to `std::exception`. Building and running this sample code with these commands under Linux x86_64 produces the expected output:
 
 ```bash
-$ javac -cp javacpp.jar Foo.java
-$ java -jar javacpp.jar Foo -header
+$ java -jar javacpp.jar Foo.java -header
 $ g++ -I/usr/lib/jvm/java/include/ -I/usr/lib/jvm/java/include/linux/ foo.cpp linux-x86_64/libjniFoo.so -o foo
 $ ./foo
 java.lang.Exception: bar 42
@@ -351,7 +344,6 @@ public:
 void callback(Foo *foo) {
     foo->bar();
 }
-
 ```
 
 The function `Foo::bar()` can be overridden in Java if we declare the method in the peer class either as `native` or `abstract` and annotate it with `@Virtual`, for example:
@@ -391,9 +383,7 @@ public class VirtualFoo {
 
 Which outputs what one would naturally assume:
 ```bash
-$ javac -cp javacpp.jar VirtualFoo.java
-$ java -jar javacpp.jar VirtualFoo
-$ java  -cp javacpp.jar VirtualFoo
+$ java -jar javacpp.jar VirtualFoo.java -exec
 Callback in C++ (n == 13)
 Callback in Java (n == 42)
 Callback in C++ (n == 13)
