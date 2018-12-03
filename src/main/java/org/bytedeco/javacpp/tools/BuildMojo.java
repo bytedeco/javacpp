@@ -43,7 +43,7 @@ import org.bytedeco.javacpp.Loader;
  * @author Arnaud Nauwynck
  * @author Samuel Audet
  */
-@Mojo(name = "build", defaultPhase = LifecyclePhase.PROCESS_CLASSES)
+@Mojo(name = "build", defaultPhase = LifecyclePhase.PROCESS_CLASSES, threadSafe = true)
 public class BuildMojo extends AbstractMojo {
 
     /** Load user classes from classPath. */
