@@ -1,4 +1,5 @@
 
+ * Synchronize `Loader.cacheResources()` on `Runtime` to avoid `OverlappingFileLockException` with multiple class loaders ([issue bytedeco/javacpp-presets#650](https://github.com/bytedeco/javacpp-presets/issues/650))
  * Annotate `BuildMojo` as `threadSafe`
  * Fix `Generator` errors for `@StdString` and other `@Adapter` on `@Virtual` return values
  * Use simple name from `@Properties(target=..., global=...)` class as default for `@Platform(library=...)` name

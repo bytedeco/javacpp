@@ -50,7 +50,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.WeakHashMap;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import org.bytedeco.javacpp.annotation.Cast;
@@ -424,9 +423,9 @@ public class Loader {
         File lockFile = new File(cacheDir, ".lock");
         FileChannel lockChannel = null;
         FileLock lock = null;
-        ReentrantLock threadLock = null;
         if (target != null && target.length() > 0) {
             // ... create symbolic link to already extracted library or ...
+            synchronized (Runtime.getRuntime()) {
             try {
                 Path path = file.toPath(), targetPath = Paths.get(target);
                 if ((!file.exists() || !Files.isSymbolicLink(path) || !Files.readSymbolicLink(path).equals(targetPath))
@@ -434,8 +433,6 @@ public class Loader {
                     if (logger.isDebugEnabled()) {
                         logger.debug("Locking " + cacheDir + " to create symbolic link");
                     }
-                    threadLock = new ReentrantLock();
-                    threadLock.lock();
                     lockChannel = new FileOutputStream(lockFile).getChannel();
                     lock = lockChannel.lock();
                     if ((!file.exists() || !Files.isSymbolicLink(path) || !Files.readSymbolicLink(path).equals(targetPath))
@@ -467,13 +464,12 @@ public class Loader {
                 if (lockChannel != null) {
                     lockChannel.close();
                 }
-                if (threadLock != null) {
-                    threadLock.unlock();
-                }
+            }
             }
         } else {
             if (urlFile.exists() && reference) {
                 // ... try to create a symbolic link to the existing file, if we can, ...
+                synchronized (Runtime.getRuntime()) {
                 try {
                     Path path = file.toPath(), urlPath = urlFile.toPath();
                     if ((!file.exists() || !Files.isSymbolicLink(path) || !Files.readSymbolicLink(path).equals(urlPath))
@@ -481,8 +477,6 @@ public class Loader {
                         if (logger.isDebugEnabled()) {
                             logger.debug("Locking " + cacheDir + " to create symbolic link");
                         }
-                        threadLock = new ReentrantLock();
-                        threadLock.lock();
                         lockChannel = new FileOutputStream(lockFile).getChannel();
                         lock = lockChannel.lock();
                         if ((!file.exists() || !Files.isSymbolicLink(path) || !Files.readSymbolicLink(path).equals(urlPath))
@@ -512,21 +506,18 @@ public class Loader {
                     if (lockChannel != null) {
                         lockChannel.close();
                     }
-                    if (threadLock != null) {
-                        threadLock.unlock();
-                    }
+                }
                 }
             }
             // ... check if it has not already been extracted, and if not ...
             if (!file.exists() || file.length() != size || file.lastModified() != timestamp
                     || !cacheSubdir.equals(file.getCanonicalFile().getParentFile())) {
                 // ... add lock to avoid two JVMs access cacheDir simultaneously and ...
+                synchronized (Runtime.getRuntime()) {
                 try {
                     if (logger.isDebugEnabled()) {
                         logger.debug("Locking " + cacheDir + " before extracting");
                     }
-                    threadLock = new ReentrantLock();
-                    threadLock.lock();
                     lockChannel = new FileOutputStream(lockFile).getChannel();
                     lock = lockChannel.lock();
                     // ... check if other JVM has extracted it before this JVM get the lock ...
@@ -547,9 +538,7 @@ public class Loader {
                     if (lockChannel != null) {
                         lockChannel.close();
                     }
-                    if (threadLock != null) {
-                        threadLock.unlock();
-                    }
+                }
                 }
             }
         }
