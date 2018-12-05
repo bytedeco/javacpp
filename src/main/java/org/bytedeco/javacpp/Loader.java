@@ -1098,7 +1098,7 @@ public class Loader {
                     }
                     String subdir = (resource == null ? "" : "/" + resource) + platform
                                   + (extension == null ? "" : extension) + "/";
-                    URL u = cls.getResource(subdir + styles[i]);
+                    URL u = cls.getClassLoader().getResource(subdir + styles[i]);
                     if (u != null) {
                         if (reference) {
                             try {
