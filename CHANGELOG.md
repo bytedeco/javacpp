@@ -1,4 +1,5 @@
 
+ * Add `Bfloat16Indexer` to access `short` arrays as `bfloat16` floating point numbers
  * When `Indexer.sizes.length != 3`, return -1 for `rows()`, `cols()`, `width()`, `height()`, and `channels()` ([pull #275](https://github.com/bytedeco/javacpp/pull/275))
  * Synchronize `Loader.cacheResources()` on `Runtime` to avoid `OverlappingFileLockException` with multiple class loaders ([issue bytedeco/javacpp-presets#650](https://github.com/bytedeco/javacpp-presets/issues/650))
  * Annotate `BuildMojo` as `threadSafe`
