@@ -1,4 +1,8 @@
 
+ * Add `Bfloat16Indexer` to access `short` arrays as `bfloat16` floating point numbers
+ * When `Indexer.sizes.length != 3`, return -1 for `rows()`, `cols()`, `width()`, `height()`, and `channels()` ([pull #275](https://github.com/bytedeco/javacpp/pull/275))
+ * Synchronize `Loader.cacheResources()` on `Runtime` to avoid `OverlappingFileLockException` with multiple class loaders ([issue bytedeco/javacpp-presets#650](https://github.com/bytedeco/javacpp-presets/issues/650))
+ * Annotate `BuildMojo` as `threadSafe`
  * Fix `Generator` errors for `@StdString` and other `@Adapter` on `@Virtual` return values
  * Use simple name from `@Properties(target=..., global=...)` class as default for `@Platform(library=...)` name
  * Make sure `Generator` does not use `position` of `@Opaque Pointer` output parameters with `@Adapter` ([pull bytedeco/javacpp-presets#642](https://github.com/bytedeco/javacpp-presets/pull/642))
