@@ -59,7 +59,7 @@ public class BuilderTest implements BuildEnabled, LoadEnabled {
         Class c = BuilderTest.class;
         String[] extensions = {"", "-ext1", "-ext2"};
         for (String extension : extensions) {
-            URL u = c.getResource(Loader.getPlatform() + extension);
+            URL u = Loader.findResource(c, Loader.getPlatform() + extension);
             if (u != null) {
                 for (File f : new File(u.toURI()).listFiles()) {
                     f.delete();

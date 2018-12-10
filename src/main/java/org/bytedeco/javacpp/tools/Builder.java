@@ -460,11 +460,13 @@ public class Builder {
     }
 
     /**
-     * Generates a C++ source file for classes, and compiles everything in
+     * Generates C++ source files for classes, and compiles everything in
      * one shared library when {@code compile == true}.
      *
      * @param classes the Class objects as input to Generator
      * @param outputName the output name of the shared library
+     * @param first of the batch, so generate jnijavacpp.cpp
+     * @param last of the batch, so delete jnijavacpp.cpp
      * @return the actual File generated, either the compiled library or its source
      * @throws IOException
      * @throws InterruptedException
@@ -483,9 +485,23 @@ public class Builder {
         if (outputPath == null) {
             URI uri = null;
             try {
-                String resourceName = '/' + classes[classes.length - 1].getName().replace('.', '/')  + ".class";
-                String resourceURL = classes[classes.length - 1].getResource(resourceName).toString();
-                uri = new URI(resourceURL.substring(0, resourceURL.lastIndexOf('/') + 1));
+                String resourceName = '/' + classes[0].getName().replace('.', '/')  + ".class";
+                String resourceURL = Loader.findResource(classes[0], resourceName).toString();
+                String packageURI = resourceURL.substring(0, resourceURL.lastIndexOf('/') + 1);
+                for (int i = 1; i < classes.length; i++) {
+                    // Use shortest common package name among all classes as default output path
+                    String resourceName2 = '/' + classes[i].getName().replace('.', '/')  + ".class";
+                    String resourceURL2 = Loader.findResource(classes[i], resourceName2).toString();
+                    String packageURI2 = resourceURL2.substring(0, resourceURL2.lastIndexOf('/') + 1);
+
+                    String longest = packageURI2.length() > packageURI.length() ? packageURI2 : packageURI;
+                    String shortest = packageURI2.length() < packageURI.length() ? packageURI2 : packageURI;
+                    while (!longest.startsWith(shortest) && shortest.lastIndexOf('/') > 0) {
+                        shortest = shortest.substring(0, shortest.lastIndexOf('/'));
+                    }
+                    packageURI = shortest;
+                }
+                uri = new URI(packageURI);
                 boolean isFile = "file".equals(uri.getScheme());
                 File classPath = new File(classScanner.getClassLoader().getPaths()[0]).getCanonicalFile();
                 // If our class is not a file, use first path of the user class loader as base for our output path

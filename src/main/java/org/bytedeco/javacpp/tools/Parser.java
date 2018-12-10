@@ -3693,7 +3693,7 @@ public class Parser {
                     String javaText = text + "import static " + global + ".*;\n"
                             + (prevd != null && prevd.comment ? prevd.text : "")
                             + d.text.replace("public static class " + d.type.javaName + " ",
-                                    "@Properties(inherit = " + cls.getSimpleName() + ".class)\n"
+                                    "@Properties(inherit = " + cls.getCanonicalName() + ".class)\n"
                                   + "public class " + d.type.javaName + " ");
                     Files.write(javaFile.toPath(), encoding != null ? javaText.getBytes(encoding) : javaText.getBytes());
                     prevd = null;

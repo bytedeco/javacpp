@@ -1,4 +1,7 @@
 
+ * Replace calls to `Class.getResource()` with `Loader.findResource()` to work around issues with JPMS ([pull #276](https://github.com/bytedeco/javacpp/pull/276))
+ * Enhance `Loader.findResources()` with `Class.getResource()` and search among parent packages
+ * Take shortest common package name among all user classes for the default output path of `Builder`
  * Add `Bfloat16Indexer` to access `short` arrays as `bfloat16` floating point numbers
  * When `Indexer.sizes.length != 3`, return -1 for `rows()`, `cols()`, `width()`, `height()`, and `channels()` ([pull #275](https://github.com/bytedeco/javacpp/pull/275))
  * Synchronize `Loader.cacheResources()` on `Runtime` to avoid `OverlappingFileLockException` with multiple class loaders ([issue bytedeco/javacpp-presets#650](https://github.com/bytedeco/javacpp-presets/issues/650))

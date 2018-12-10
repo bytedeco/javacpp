@@ -30,7 +30,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.JarURLConnection;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -320,7 +319,7 @@ public class Loader {
      * @see #cacheResource(URL)
      */
     public static File cacheResource(Class cls, String name) throws IOException {
-        return cacheResource(cls.getResource(name));
+        return cacheResource(findResource(cls, name));
     }
 
     /**
@@ -565,7 +564,7 @@ public class Loader {
      */
     public static File extractResource(Class cls, String name, File directory,
             String prefix, String suffix) throws IOException {
-        return extractResource(cls.getResource(name), directory, prefix, suffix);
+        return extractResource(findResource(cls, name), directory, prefix, suffix);
     }
 
     /**
@@ -692,32 +691,68 @@ public class Loader {
         return file;
     }
 
+    /** Returns {@code findResources(cls, name, 1)[0]} or null if none. */
+    public static URL findResource(Class cls, String name) throws IOException {
+        URL[] url = findResources(cls, name, 1);
+        return url.length > 0 ? url[0] : null;
+    }
+
+    /** Returns {@code findResources(cls, name, -1)}. */
+    public static URL[] findResources(Class cls, String name) throws IOException {
+        return findResources(cls, name, -1);
+    }
+
     /**
-     * Finds by name resources using the {@link ClassLoader} of the specified {@link Class}.
-     * Names not prefixed with '/' are considered relative to the Class.
+     * Finds by name resources using the {@link Class} and its {@link ClassLoader}.
+     * Names not prefixed with '/' are considered in priority relative to the Class,
+     * but parent packages, including the default one, also get searched.
      *
      * @param cls the Class from whose ClassLoader to load resources
-     * @param name of the resources passed to {@link ClassLoader#getResources(String)}
+     * @param name of the resources passed to {@link Class#getResource(String)} and {@link ClassLoader#getResources(String)}
+     * @param maxLength of the array to return, or -1 for no limit
      * @return URLs to the resources
      * @throws IOException
      */
-    public static URL[] findResources(Class cls, String name) throws IOException {
+    public static URL[] findResources(Class cls, String name, int maxLength) throws IOException {
         while (name.contains("//")) {
             name = name.replace("//", "/");
         }
+
+        // Under JPMS, Class.getResource() and ClassLoader.getResources() do not return the same URLs
+        URL url = cls.getResource(name);
+        if (url != null && maxLength == 1) {
+            return new URL[] {url};
+        }
+
+        String path = "";
         if (!name.startsWith("/")) {
             String s = cls.getName().replace('.', '/');
             int n = s.lastIndexOf('/');
             if (n >= 0) {
-                name = s.substring(0, n + 1) + name;
+                path = s.substring(0, n + 1);
             }
         } else {
             name = name.substring(1);
         }
-        Enumeration<URL> urls = cls.getClassLoader().getResources(name);
+        Enumeration<URL> urls = cls.getClassLoader().getResources(path + name);
         ArrayList<URL> array = new ArrayList<URL>();
-        while (urls.hasMoreElements()) {
-            array.add(urls.nextElement());
+        if (url != null) {
+            array.add(url);
+        }
+        while (url == null && !urls.hasMoreElements() && path.length() > 0) {
+            int n = path.lastIndexOf('/', path.length() - 2);
+            if (n >= 0) {
+                path = path.substring(0, n + 1);
+            } else {
+                path = "";
+            }
+            urls = cls.getClassLoader().getResources(path + name);
+        }
+        while (urls.hasMoreElements() && array.size() < maxLength) {
+            url = urls.nextElement();
+            if (!array.contains(url)) {
+                array.add(url);
+            }
         }
         return array.toArray(new URL[array.size()]);
     }
@@ -1098,18 +1133,18 @@ public class Loader {
                     }
                     String subdir = (resource == null ? "" : "/" + resource) + platform
                                   + (extension == null ? "" : extension) + "/";
-                    URL u = cls.getResource(subdir + styles[i]);
-                    if (u != null) {
-                        if (reference) {
-                            try {
+                    try {
+                        URL u = findResource(cls, subdir + styles[i]);
+                        if (u != null) {
+                            if (reference) {
                                 u = new URL(u + "#" + styles2[i]);
-                            } catch (MalformedURLException e) {
-                                throw new RuntimeException(e);
+                            }
+                            if (!urls.contains(u)) {
+                                urls.add(u);
                             }
                         }
-                        if (!urls.contains(u)) {
-                            urls.add(u);
-                        }
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
                     }
                 }
             }
@@ -1128,7 +1163,7 @@ public class Loader {
                         if (!urls.contains(u)) {
                             urls.add(k++, u);
                         }
-                    } catch (MalformedURLException ex) {
+                    } catch (IOException ex) {
                         throw new RuntimeException(ex);
                     }
                 }
