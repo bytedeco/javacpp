@@ -210,7 +210,11 @@ public class Builder {
             pb.directory(workingDirectory);
         }
         if (environmentVariables != null) {
-            pb.environment().putAll(environmentVariables);
+            for (Map.Entry<String,String> e : environmentVariables.entrySet()) {
+                if (e.getKey() != null && e.getValue() != null) {
+                    pb.environment().put(e.getKey(), e.getValue());
+                }
+            }
         }
         return pb.inheritIO().start().waitFor();
     }

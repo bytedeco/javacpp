@@ -1,4 +1,5 @@
 
+ * Add validation for `Builder.environmentVariables` to prevent `NullPointerException` in `executeCommand()`
  * Update `android-arm-clang.properties` and `android-x86-clang.properties` to API level 21 (Android 5.0) for consistency and forward compatibility
  * Replace calls to `Class.getResource()` with `Loader.findResource()` to work around issues with JPMS ([pull #276](https://github.com/bytedeco/javacpp/pull/276))
  * Enhance `Loader.findResources()` with `Class.getResource()` and search among parent packages
