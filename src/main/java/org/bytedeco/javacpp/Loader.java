@@ -714,6 +714,9 @@ public class Loader {
      * @throws IOException
      */
     public static URL[] findResources(Class cls, String name, int maxLength) throws IOException {
+        if (maxLength == 0) {
+            return new URL[0];
+        }
         while (name.contains("//")) {
             name = name.replace("//", "/");
         }
@@ -748,7 +751,7 @@ public class Loader {
             }
             urls = cls.getClassLoader().getResources(path + name);
         }
-        while (urls.hasMoreElements() && array.size() < maxLength) {
+        while (urls.hasMoreElements() && (maxLength < 0 || array.size() < maxLength)) {
             url = urls.nextElement();
             if (!array.contains(url)) {
                 array.add(url);
