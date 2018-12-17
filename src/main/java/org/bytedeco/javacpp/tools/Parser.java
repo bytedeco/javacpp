@@ -1864,7 +1864,8 @@ public class Parser {
             dcl.cppName = type.cppName;
             dcl.javaName = type.javaName.substring(type.javaName.lastIndexOf(' ') + 1);
             if (type.operator) {
-                dcl.cppName = "operator " + dcl.cppName;
+                dcl.cppName = "operator " + (dcl.type.constValue ? "const " : "")
+                        + dcl.type.cppName + (dcl.type.indirections > 0 ? "*" : dcl.type.reference ? "&" : "");
                 dcl.javaName = "as" + Character.toUpperCase(dcl.javaName.charAt(0)) + dcl.javaName.substring(1);
             }
             dcl.signature = dcl.javaName + params.signature;
@@ -1991,7 +1992,8 @@ public class Parser {
                 dcl.cppName = type.cppName;
                 dcl.javaName = type.javaName.substring(type.javaName.lastIndexOf(' ') + 1);
                 if (type.operator) {
-                    dcl.cppName = "operator " + dcl.cppName;
+                    dcl.cppName = "operator " + (dcl.type.constValue ? "const " : "")
+                            + dcl.type.cppName + (dcl.type.indirections > 0 ? "*" : dcl.type.reference ? "&" : "");
                     dcl.javaName = "as" + Character.toUpperCase(dcl.javaName.charAt(0)) + dcl.javaName.substring(1);
                 }
                 dcl.signature = dcl.javaName + params.signature;
