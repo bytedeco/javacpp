@@ -1,4 +1,5 @@
 
+ * Let `Parser` skip over C++11 style `{ ... }` member initializer lists ([pull bytedeco/javacpp-presets#642](https://github.com/bytedeco/javacpp-presets/pull/642))
  * Fix `Parser` not picking up `Info` for cast `operator` declarations with `const`, `&`, or `*` ([issue bytedeco/javacpp-presets#377](https://github.com/bytedeco/javacpp-presets/issues/377))
  * Add validation for `Builder.environmentVariables` to prevent `NullPointerException` in `executeCommand()`
  * Update `android-arm-clang.properties` and `android-x86-clang.properties` to API level 21 (Android 5.0) for consistency and forward compatibility

@@ -1841,7 +1841,12 @@ public class Parser {
             }
             if (tokens.get().match(':')) {
                 for (Token token = tokens.next(); !token.match(Token.EOF); token = tokens.next()) {
-                    if (token.match('{', ';')) {
+                    // consider { ... } preceded by an identifier as an initializer list
+                    if (!token.match(Token.IDENTIFIER) && tokens.get(1).match('{')) {
+                        tokens.next();
+                        break;
+                    }
+                    if (token.match(';')) {
                         break;
                     }
                 }
@@ -1954,7 +1959,12 @@ public class Parser {
             }
             if (tokens.get().match(':')) {
                 for (Token token = tokens.next(); !token.match(Token.EOF); token = tokens.next()) {
-                    if (token.match('{', ';')) {
+                    // consider { ... } preceded by an identifier as an initializer list
+                    if (!token.match(Token.IDENTIFIER) && tokens.get(1).match('{')) {
+                        tokens.next();
+                        break;
+                    }
+                    if (token.match(';')) {
                         break;
                     }
                 }
@@ -1999,7 +2009,12 @@ public class Parser {
                 dcl.signature = dcl.javaName + params.signature;
                 if (tokens.get().match(':')) {
                     for (Token token = tokens.next(); !token.match(Token.EOF); token = tokens.next()) {
-                        if (token.match('{', ';')) {
+                        // consider { ... } preceded by an identifier as an initializer list
+                        if (!token.match(Token.IDENTIFIER) && tokens.get(1).match('{')) {
+                            tokens.next();
+                            break;
+                        }
+                        if (token.match(';')) {
                             break;
                         }
                     }
