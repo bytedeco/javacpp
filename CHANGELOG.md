@@ -1,4 +1,5 @@
 
+ * Add `size()` and `stride()` methods to `Indexer` for convenience
  * Let `Parser` skip over C++11 style `{ ... }` member initializer lists ([pull bytedeco/javacpp-presets#642](https://github.com/bytedeco/javacpp-presets/pull/642))
  * Fix `Parser` not picking up `Info` for cast `operator` declarations with `const`, `&`, or `*` ([issue bytedeco/javacpp-presets#377](https://github.com/bytedeco/javacpp-presets/issues/377))
  * Add validation for `Builder.environmentVariables` to prevent `NullPointerException` in `executeCommand()`

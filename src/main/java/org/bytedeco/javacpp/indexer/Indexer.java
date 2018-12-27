@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2016 Samuel Audet
+ * Copyright (C) 2014-2018 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -72,6 +72,11 @@ public abstract class Indexer implements AutoCloseable {
     public long[] sizes() { return sizes; }
     /** Returns {@link #strides} */
     public long[] strides() { return strides; }
+
+    /** Returns {@code sizes[i]} */
+    public long size(int i) { return sizes[i]; }
+    /** Returns {@code strides[i]} */
+    public long stride(int i) { return strides[i]; }
 
     /** Returns {@code sizes[0]} if the number of dimensions is 3, else returns -1 */
     public long rows() { return sizes.length == 3 ? sizes[0] : -1; }
