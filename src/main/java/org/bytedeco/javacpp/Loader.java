@@ -737,7 +737,12 @@ public class Loader {
         } else {
             name = name.substring(1);
         }
-        Enumeration<URL> urls = cls.getClassLoader().getResources(path + name);
+        ClassLoader classLoader = cls.getClassLoader();
+        if (classLoader == null) {
+            // This is the bootstrap class loader, let's try the system class loader instead
+            classLoader = ClassLoader.getSystemClassLoader();
+        }
+        Enumeration<URL> urls = classLoader.getResources(path + name);
         ArrayList<URL> array = new ArrayList<URL>();
         if (url != null) {
             array.add(url);
@@ -749,7 +754,7 @@ public class Loader {
             } else {
                 path = "";
             }
-            urls = cls.getClassLoader().getResources(path + name);
+            urls = classLoader.getResources(path + name);
         }
         while (urls.hasMoreElements() && (maxLength < 0 || array.size() < maxLength)) {
             url = urls.nextElement();
