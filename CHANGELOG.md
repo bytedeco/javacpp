@@ -1,4 +1,5 @@
 
+ * Have `BuildMojo` output its class path back to the Maven project as `${javacpp.platform.artifacts}`
  * Fix potential `NullPointerException` in `Loader.findResources()` under the bootstrap class loader
  * Add `size()` and `stride()` methods to `Indexer` for convenience
  * Let `Parser` skip over C++11 style `{ ... }` member initializer lists ([pull bytedeco/javacpp-presets#642](https://github.com/bytedeco/javacpp-presets/pull/642))

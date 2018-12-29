@@ -27,8 +27,10 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Properties;
+import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.descriptor.PluginDescriptor;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -213,6 +215,9 @@ public class BuildMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project}", required = true, readonly = true)
     MavenProject project;
 
+    @Parameter(defaultValue = "${plugin}", required = true, readonly = true)
+    PluginDescriptor plugin;
+
     String[] merge(String[] ss, String s) {
         if (ss != null && s != null) {
             ss = Arrays.copyOf(ss, ss.length + 1);
@@ -356,6 +361,13 @@ public class BuildMojo extends AbstractMojo {
             for (String s : merge(resourcePaths, resourcePath)) {
                 String v = properties.getProperty("platform.resourcepath", "");
                 properties.setProperty("platform.resourcepath",
+                        v.length() == 0 || v.endsWith(separator) ? v + s : v + separator + s);
+            }
+            properties.setProperty("platform.artifacts", project.getBuild().getOutputDirectory());
+            for (Artifact a : plugin.getArtifacts()) {
+                String s = a.getFile().getCanonicalPath();
+                String v = properties.getProperty("platform.artifacts", "");
+                properties.setProperty("platform.artifacts",
                         v.length() == 0 || v.endsWith(separator) ? v + s : v + separator + s);
             }
             Properties projectProperties = project.getProperties();
