@@ -191,6 +191,13 @@ public class Loader {
                 logger.error("Unable to close resource : " + ex.getMessage());
             }
         }
+        for (Map.Entry e : System.getProperties().entrySet()) {
+            String key = (String)e.getKey();
+            String value = (String)e.getValue();
+            if (key != null && value != null && key.startsWith("org.bytedeco.javacpp.platform.")) {
+                p.put(key.substring(key.indexOf("platform.")), value);
+            }
+        }
         return p;
     }
 
@@ -898,7 +905,7 @@ public class Loader {
             defaultNames = new String[0];
         }
         String platform2 = properties.getProperty("platform");
-        String platformExtension = properties.getProperty("platform.extension", "");
+        String platformExtension = properties.getProperty("platform.extension");
         String[][] names = { platform.value().length > 0 ? platform.value() : defaultNames, platform.not() };
         boolean[] matches = { false, false };
         for (int i = 0; i < names.length; i++) {
@@ -911,17 +918,14 @@ public class Loader {
         }
         if ((names[0].length == 0 || matches[0]) && (names[1].length == 0 || !matches[1])) {
             // when no extensions are given by user, but we are in library loading mode, try to load extensions anyway
-            boolean match = platform.extension().length == 0 || (Loader.isLoadLibraries() && platformExtension.length() == 0);
+            boolean match = platform.extension().length == 0 || (Loader.isLoadLibraries() && platformExtension == null);
             for (String s : platform.extension()) {
-                if (platformExtension.length() > 0 && platformExtension.endsWith(s)) {
+                if (platformExtension != null && platformExtension.length() > 0 && platformExtension.endsWith(s)) {
                     match = true;
                     break;
                 }
             }
-            if (!match) {
-                return false;
-            }
-            return true;
+            return match;
         }
         return false;
     }

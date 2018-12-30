@@ -1,4 +1,5 @@
 
+ * Allow users to override platform properties via system properties starting with "org.bytedeco.javacpp.platform."
  * Have `BuildMojo` output its class path back to the Maven project as `${javacpp.platform.artifacts}`
  * Fix potential `NullPointerException` in `Loader.findResources()` under the bootstrap class loader
  * Add `size()` and `stride()` methods to `Indexer` for convenience

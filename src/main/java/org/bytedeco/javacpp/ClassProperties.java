@@ -44,7 +44,7 @@ public class ClassProperties extends HashMap<String,List<String>> {
     public ClassProperties() { }
     public ClassProperties(Properties properties) {
         platform      = properties.getProperty("platform");
-        platformExtension = properties.getProperty("platform.extension", "");
+        platformExtension = properties.getProperty("platform.extension");
         platformRoot  = properties.getProperty("platform.root");
         pathSeparator = properties.getProperty("platform.path.separator");
         if (platformRoot == null || platformRoot.length() == 0) {
@@ -209,9 +209,9 @@ public class ClassProperties extends HashMap<String,List<String>> {
             }
             if ((names[0].length == 0 || matches[0]) && (names[1].length == 0 || !matches[1])) {
                 // when no extensions are given by user, but we are in library loading mode, try to load extensions anyway
-                boolean match = p.extension().length == 0 || (Loader.isLoadLibraries() && platformExtension.length() == 0);
+                boolean match = p.extension().length == 0 || (Loader.isLoadLibraries() && platformExtension == null);
                 for (String s : p.extension()) {
-                    if (platformExtension.length() > 0 && platformExtension.endsWith(s)) {
+                    if (platformExtension != null && platformExtension.length() > 0 && platformExtension.endsWith(s)) {
                         match = true;
                         break;
                     }
