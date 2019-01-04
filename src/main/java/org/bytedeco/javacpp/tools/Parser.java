@@ -1840,9 +1840,16 @@ public class Parser {
                 tokens.next();
             }
             if (tokens.get().match(':')) {
+                int count = 0;
                 for (Token token = tokens.next(); !token.match(Token.EOF); token = tokens.next()) {
+                    if (token.match('(')) {
+                        count++;
+                    } else if (token.match(')')) {
+                        count--;
+                    }
+
                     // consider { ... } preceded by an identifier as an initializer list
-                    if (!token.match(Token.IDENTIFIER) && tokens.get(1).match('{')) {
+                    if (count == 0 && !token.match(Token.IDENTIFIER) && tokens.get(1).match('{')) {
                         tokens.next();
                         break;
                     }
@@ -1958,9 +1965,16 @@ public class Parser {
                 }
             }
             if (tokens.get().match(':')) {
+                int count = 0;
                 for (Token token = tokens.next(); !token.match(Token.EOF); token = tokens.next()) {
+                    if (token.match('(')) {
+                        count++;
+                    } else if (token.match(')')) {
+                        count--;
+                    }
+
                     // consider { ... } preceded by an identifier as an initializer list
-                    if (!token.match(Token.IDENTIFIER) && tokens.get(1).match('{')) {
+                    if (count == 0 && !token.match(Token.IDENTIFIER) && tokens.get(1).match('{')) {
                         tokens.next();
                         break;
                     }
@@ -2008,9 +2022,16 @@ public class Parser {
                 }
                 dcl.signature = dcl.javaName + params.signature;
                 if (tokens.get().match(':')) {
+                    int count = 0;
                     for (Token token = tokens.next(); !token.match(Token.EOF); token = tokens.next()) {
+                        if (token.match('(')) {
+                            count++;
+                        } else if (token.match(')')) {
+                            count--;
+                        }
+
                         // consider { ... } preceded by an identifier as an initializer list
-                        if (!token.match(Token.IDENTIFIER) && tokens.get(1).match('{')) {
+                        if (count == 0 && !token.match(Token.IDENTIFIER) && tokens.get(1).match('{')) {
                             tokens.next();
                             break;
                         }
