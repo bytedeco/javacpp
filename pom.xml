@@ -224,11 +224,11 @@
             </goals>
             <configuration>
               <links>
-                <link>http://maven.apache.org/ref/3.3.3/maven-plugin-api/apidocs/</link>
-                <link>http://maven.apache.org/plugin-tools/maven-plugin-annotations/apidocs/</link>
-                <link>http://maven.apache.org/ref/3.0/maven-core/apidocs/</link>
-                <link>http://www.slf4j.org/apidocs/</link>
-                <link>http://junit.org/junit4/javadoc/4.11/</link>
+                <link>http://maven.apache.org/ref/3.5.4/maven-plugin-api/apidocs</link>
+                <link>http://maven.apache.org/plugin-tools/maven-plugin-annotations/apidocs</link>
+                <link>http://maven.apache.org/ref/3.0/maven-core/apidocs</link>
+                <link>http://www.slf4j.org/apidocs</link>
+                <link>http://junit.org/junit4/javadoc/4.12</link>
               </links>
               <show>private</show>
               <tagletArtifacts>
