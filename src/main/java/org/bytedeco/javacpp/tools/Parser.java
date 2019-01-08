@@ -1426,7 +1426,7 @@ public class Parser {
         { "authors?\\b", "author" },
         { "deprecated\\b", "deprecated" },
         { "(?:exception|throws?)\\b", "throws" },
-        { "param\\s*\\[[a-z,\\s]+\\]", "param" },
+        { "param\\s*(\\[[a-z,\\s]+\\])\\s+(\\S+)", "param $2 $1 " },
         { "param\\b", "param" },
         { "(?:returns?|result)\\b", "return" },
         { "(?:see|sa)\\b", "see" },
@@ -1505,13 +1505,11 @@ public class Parser {
                 for (DocTag tag : docTags) {
                     Matcher matcher = tag.pattern.matcher(ss);
                     if (matcher.lookingAt()) {
-                        sb.replace(index + matcher.start() + 1,
-                              index + matcher.end() + 1,
-                              tag.replacement);
+                        StringBuffer sbuf = new StringBuffer();
+                        matcher.appendReplacement(sbuf, tag.replacement);
+                        sb.replace(index + 1+ matcher.start(),
+                              index + 1 + matcher.end(), sbuf.toString());
                         sb.setCharAt(index, '@');
-                        int n = index + 1 + tag.replacement.length();
-                        if (!Character.isWhitespace(sb.charAt(n)))
-                            sb.insert(n, ' ');
                         tagFound = true;
                         break;
                     }
