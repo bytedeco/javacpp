@@ -22,17 +22,23 @@
 
 package org.bytedeco.javacpp.tools;
 
-import org.bytedeco.javacpp.ClassProperties;
-import org.bytedeco.javacpp.Loader;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Writer;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.bytedeco.javacpp.ClassProperties;
+import org.bytedeco.javacpp.Loader;
 
 /**
  * The Parser, just like the Generator, is a mess that is not meant to support the
@@ -1420,34 +1426,6 @@ public class Parser {
         return dcl;
     }
 
-    /** Documentation tags, where we keep only the ones that could be compatible between Javadoc and Doxygen. */
-
-    private static String[][] docTagsStr = { 
-        { "authors?\\b", "author" },
-        { "deprecated\\b", "deprecated" },
-        { "(?:exception|throws?)\\b", "throws" },
-        { "param\\s*(\\[[a-z,\\s]+\\])\\s+(\\S+)", "param $2 $1 " },
-        { "param\\b", "param" },
-        { "(?:returns?|result)\\b", "return" },
-        { "(?:see|sa)\\b", "see" },
-        { "since\\b", "since" },
-        { "version\\b", "version" }
-        /* "code", "docRoot", "inheritDoc", "link", "linkplain", "literal", "serial", "serialData", "serialField", "value" */
-    };
-    private static class DocTag {
-        private Pattern pattern;
-        private String replacement;
-        DocTag(String p, String r) {
-            pattern = Pattern.compile(p);
-            replacement = r;
-        }
-    }
-    private static DocTag[] docTags = new DocTag[docTagsStr.length];
-    static {
-        for (int i=0; i<docTagsStr.length; i++)
-            docTags[i] = new DocTag(docTagsStr[i][0], docTagsStr[i][1]);
-    }
-
     /** Tries to adapt a Doxygen-style documentation comment to Javadoc-style. */
     String commentDoc(String s, int startIndex) {
         if (startIndex < 0 || startIndex > s.length()) {
@@ -1502,7 +1480,7 @@ public class Parser {
                 sb.insert(index + 1, indent + "<p>");
             } else if (c == '\\' || c == '@') {
                 boolean tagFound = false;
-                for (DocTag tag : docTags) {
+                for (DocTag tag : DocTag.docTags) {
                     Matcher matcher = tag.pattern.matcher(ss);
                     if (matcher.lookingAt()) {
                         StringBuffer sbuf = new StringBuffer();
