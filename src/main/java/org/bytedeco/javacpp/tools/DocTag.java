@@ -34,7 +34,10 @@ class DocTag {
         { "authors?\\b", "author" },
         { "deprecated\\b", "deprecated" },
         { "(?:exception|throws?)\\b", "throws" },
-        { "param\\s*(\\[[a-z,\\s]+\\])\\s+(\\S+)", "param $2 $1 " },
+        // DOxygen allows the definition of multiple params with a single
+        // \param, separated by ,. JavaDoc doesn't. Treat ,identifier as part
+        // of the description for now.
+        { "param\\s*(\\[[a-z,\\s]+\\])\\h+([a-zA-Z\\$_]+)", "param $2 $1 " },
         { "param\\b", "param" },
         { "(?:returns?|result)\\b", "return" },
         { "(?:see|sa)\\b", "see" },
