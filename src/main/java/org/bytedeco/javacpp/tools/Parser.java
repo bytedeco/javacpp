@@ -252,14 +252,8 @@ public class Parser {
                 decl.text += "    public " + containerType.javaName + "()       { allocate();  }\n" + (!resizable ? ""
                            : "    public " + containerType.javaName + "(long n) { allocate(n); }\n")
                            + "    private native void allocate();\n"                                + (!resizable ? ""
-                           : "    private native void allocate(@Cast(\"size_t\") long n);\n");
-
-		if(!constant) {
-			decl.text += "    public native @Name(\"operator=\") @ByRef " + containerType.javaName + " put(@ByRef " + containerType.javaName + " x);\n\n";
-                }
-		else {
-			decl.text += "\n\n";
-		}
+                           : "    private native void allocate(@Cast(\"size_t\") long n);\n")       + (constant   ? "\n\n"
+                           : "    public native @Name(\"operator=\") @ByRef " + containerType.javaName + " put(@ByRef " + containerType.javaName + " x);\n\n");
 
                 for (int i = 0; i < dim; i++) {
                     String indexAnnotation = i > 0 ? ("@Index(" + (i > 1 ? "value = " + i + ", " : "" ) + "function = \"at\") ") : "";
