@@ -17,8 +17,8 @@ Please feel free to ask questions on [the mailing list](http://groups.google.com
 
 Downloads
 ---------
- * JavaCPP 1.4.3 binary archive  [javacpp-1.4.3-bin.zip](http://search.maven.org/remotecontent?filepath=org/bytedeco/javacpp/1.4.3/javacpp-1.4.3-bin.zip) (379 KB)
- * JavaCPP 1.4.3 source archive  [javacpp-1.4.3-src.zip](http://search.maven.org/remotecontent?filepath=org/bytedeco/javacpp/1.4.3/javacpp-1.4.3-src.zip) (348 KB)
+ * JavaCPP 1.4.4 binary archive  [javacpp-1.4.4-bin.zip](http://search.maven.org/remotecontent?filepath=org/bytedeco/javacpp/1.4.4/javacpp-1.4.4-bin.zip) (392 KB)
+ * JavaCPP 1.4.4 source archive  [javacpp-1.4.4-src.zip](http://search.maven.org/remotecontent?filepath=org/bytedeco/javacpp/1.4.4/javacpp-1.4.4-src.zip) (363 KB)
 
 We can also have everything downloaded and installed automatically with:
 
@@ -27,27 +27,27 @@ We can also have everything downloaded and installed automatically with:
   <dependency>
     <groupId>org.bytedeco</groupId>
     <artifactId>javacpp</artifactId>
-    <version>1.4.3</version>
+    <version>1.4.4</version>
   </dependency>
 ```
 
  * Gradle (inside the `build.gradle` file)
 ```groovy
   dependencies {
-    compile group: 'org.bytedeco', name: 'javacpp', version: '1.4.3'
+    compile group: 'org.bytedeco', name: 'javacpp', version: '1.4.4'
   }
 ```
 
  * Leiningen (inside the `project.clj` file)
 ```clojure
   :dependencies [
-    [org.bytedeco/javacpp "1.4.3"]
+    [org.bytedeco/javacpp "1.4.4"]
   ]
 ```
 
  * sbt (inside the `build.sbt` file)
 ```scala
-  libraryDependencies += "org.bytedeco" % "javacpp" % "1.4.3"
+  libraryDependencies += "org.bytedeco" % "javacpp" % "1.4.4"
 ```
 
 Another option available for Scala users is [sbt-javacpp](https://github.com/bytedeco/sbt-javacpp).
@@ -152,7 +152,7 @@ public class NativeLibrary {
 }
 ```
 
-After compiling the Java source code in the usual way, we also need to build using JavaCPP before executing it as follows:
+After compiling the Java source code in the usual way, we also need to build using JavaCPP before executing it, or we can let it do everything as follows:
 ```bash
 $ java -jar javacpp.jar NativeLibrary.java -exec
 Hello World!
@@ -209,7 +209,7 @@ public class VectorTest {
 }
 ```
 
-Executing that program using these commands produces the following output:
+Executing that program using this command produces the following output:
 ```bash
 $ java -jar javacpp.jar VectorTest.java -exec
 13 42  org.bytedeco.javacpp.Pointer[address=0xdeadbeef,position=0,limit=0,capacity=0,deallocator=null]
