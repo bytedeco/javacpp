@@ -1,4 +1,6 @@
 
+ * Do not let `Parser` map `operator=()` when prefixing container name with `const ` ([pull #280](https://github.com/bytedeco/javacpp/pull/280))
+
 ### January 11, 2019 version 1.4.4
  * Allow users to override platform properties via system properties starting with "org.bytedeco.javacpp.platform."
  * Have `BuildMojo` output its class path back to the Maven project as `${javacpp.platform.artifacts}`
