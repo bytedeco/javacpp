@@ -1485,9 +1485,15 @@ public class Parser {
                     if (matcher.lookingAt()) {
                         StringBuffer sbuf = new StringBuffer();
                         matcher.appendReplacement(sbuf, tag.replacement);
-                        sb.replace(index + 1+ matcher.start(),
+                        // If we replace with a @command, make sure
+                        // it's followed by a space, since javadoc doesn't
+                        // accept things like @deprecated: while Doxygen does.
+                        if (sbuf.charAt(0) == '@' &&
+                            !Character.isWhitespace(sb.charAt(index+matcher.end()+1) ))
+                            sbuf.append(' ');
+                        sb.replace(index + matcher.start(),
                               index + 1 + matcher.end(), sbuf.toString());
-                        sb.setCharAt(index, '@');
+                        index += sbuf.length() - 1;
                         tagFound = true;
                         break;
                     }

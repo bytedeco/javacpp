@@ -31,18 +31,20 @@ import java.util.regex.Pattern;
  */
 class DocTag {
     static String[][] docTagsStr = {
-        { "authors?\\b", "author" },
-        { "deprecated\\b", "deprecated" },
-        { "(?:exception|throws?)\\b", "throws" },
+        { "\\\\", "\\\\" },
+        { "@", "&#064;" },
+        { "authors?\\b", "@author" },
+        { "deprecated\\b", "@deprecated" },
+        { "(?:exception|throws?)\\b", "@throws" },
         // DOxygen allows the definition of multiple params with a single
         // \param, separated by ,. JavaDoc doesn't. Treat ,identifier as part
         // of the description for now.
-        { "param\\s*(\\[[a-z,\\s]+\\])\\h+([a-zA-Z\\$_]+)", "param $2 $1 " },
-        { "param\\b", "param" },
-        { "(?:returns?|result)\\b", "return" },
-        { "(?:see|sa)\\b", "see" },
-        { "since\\b", "since" },
-        { "version\\b", "version" }
+        { "param\\s*(\\[[a-z,\\s]+\\])\\h+([a-zA-Z\\$_]+)", "@param $2 $1" },
+        { "param\\b", "@param" },
+        { "(?:returns?|result)\\b", "@return" },
+        { "(?:see|sa)\\b", "@see" },
+        { "since\\b", "@since" },
+        { "version\\b", "@version" }
         /* "code", "docRoot", "inheritDoc", "link", "linkplain", "literal", "serial", "serialData", "serialField", "value" */
     };
     static DocTag[] docTags = new DocTag[docTagsStr.length];
