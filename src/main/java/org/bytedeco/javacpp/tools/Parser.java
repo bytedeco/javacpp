@@ -1489,10 +1489,11 @@ public class Parser {
                         // it's followed by a space, since javadoc doesn't
                         // accept things like @deprecated: while Doxygen does.
                         if (sbuf.charAt(0) == '@' &&
-                            !Character.isWhitespace(sb.charAt(index+matcher.end()+1) ))
+                                !Character.isWhitespace(sb.charAt(index + matcher.end() + 1))) {
                             sbuf.append(' ');
+                        }
                         sb.replace(index + matcher.start(),
-                              index + 1 + matcher.end(), sbuf.toString());
+                                   index + 1 + matcher.end(), sbuf.toString());
                         index += sbuf.length() - 1;
                         tagFound = true;
                         break;
