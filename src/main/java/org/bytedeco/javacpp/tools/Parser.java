@@ -1426,10 +1426,6 @@ public class Parser {
         return dcl;
     }
 
-    /** Documentation tags, where we keep only the ones that could be compatible between Javadoc and Doxygen. */
-    String[] docTags = {"author", "deprecated", "exception", "param", "return", "see", "since", "throws", "version",
-        /* "code", "docRoot", "inheritDoc", "link", "linkplain", "literal", "serial", "serialData", "serialField", "value" */};
-
     /** Tries to adapt a Doxygen-style documentation comment to Javadoc-style. */
     String commentDoc(String s, int startIndex) {
         if (startIndex < 0 || startIndex > s.length()) {
@@ -1483,22 +1479,27 @@ public class Parser {
                 }
                 sb.insert(index + 1, indent + "<p>");
             } else if (c == '\\' || c == '@') {
-                String foundTag = null;
-                for (String tag : docTags) {
-                    if (ss.startsWith(tag)) {
-                        foundTag = tag;
+                boolean tagFound = false;
+                for (DocTag tag : DocTag.docTags) {
+                    Matcher matcher = tag.pattern.matcher(ss);
+                    if (matcher.lookingAt()) {
+                        StringBuffer sbuf = new StringBuffer();
+                        matcher.appendReplacement(sbuf, tag.replacement);
+                        // If we replace with a @command, make sure
+                        // it's followed by a space, since javadoc doesn't
+                        // accept things like @deprecated: while Doxygen does.
+                        if (sbuf.charAt(0) == '@' &&
+                                !Character.isWhitespace(sb.charAt(index + matcher.end() + 1))) {
+                            sbuf.append(' ');
+                        }
+                        sb.replace(index + matcher.start(),
+                                   index + 1 + matcher.end(), sbuf.toString());
+                        index += sbuf.length() - 1;
+                        tagFound = true;
                         break;
                     }
                 }
-                if (foundTag != null) {
-                    sb.setCharAt(index, '@');
-                    int n = index + foundTag.length() + 1;
-                    if (sb.charAt(n) == 's' && !foundTag.endsWith("s")) {
-                        sb.deleteCharAt(n);
-                    } else if (!Character.isWhitespace(sb.charAt(n))) {
-                        sb.insert(n, ' ');
-                    }
-                } else {
+                if (!tagFound) {
                     // keep unmapped tags around as part of the comments
                     sb.setCharAt(index, '\\');
                 }
