@@ -1,4 +1,5 @@
 
+ * Consider `@Properties(global=..., helper=...)` class names without "." as relative to `target` ([pull bytedeco/javacpp-presets#669](https://github.com/bytedeco/javacpp-presets/pull/669))
  * Use regex in `Parser` to translate more Doxygen commands into Javadoc tags ([pull #278](https://github.com/bytedeco/javacpp/pull/278) and [pull #281](https://github.com/bytedeco/javacpp/pull/281))
  * Do not let `Parser` map `operator=()` when prefixing container name with `const ` ([pull #280](https://github.com/bytedeco/javacpp/pull/280))
 

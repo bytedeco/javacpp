@@ -170,13 +170,16 @@ public class ClassProperties extends HashMap<String,List<String>> {
             String global = classProperties.global();
             if (global.length() == 0) {
                 global = target;
-            } else if (target.length() > 0 && !global.startsWith(target)) {
+            } else if (target.length() > 0 && !global.contains(".")) {
                 global = target + "." + global;
             }
             if (global.length() > 0) {
                 addAll("global", global);
             }
             String helper = classProperties.helper();
+            if (helper.length() > 0 && !helper.contains(".")) {
+                helper = target + "." + helper;
+            }
             if (helper.length() > 0) {
                 addAll("helper", helper);
             }
