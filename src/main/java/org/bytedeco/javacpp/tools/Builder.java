@@ -76,7 +76,7 @@ public class Builder {
      * @throws IOException on Java target file writing error
      * @throws ParserException on C/C++ header file parsing error
      */
-    File parse(String[] classPath, Class cls) throws IOException, ParserException {
+    File[] parse(String[] classPath, Class cls) throws IOException, ParserException {
         return new Parser(logger, properties, encoding, null).parse(outputDirectory, classPath, cls);
     }
 
@@ -969,9 +969,9 @@ public class Builder {
                         found |= c2.getName().equals(target);
                     }
                     if (!generate || !found) {
-                        File f = parse(classScanner.getClassLoader().getPaths(), c);
-                        if (f != null) {
-                            outputFiles.add(f);
+                        File[] files = parse(classScanner.getClassLoader().getPaths(), c);
+                        if (files != null) {
+                            outputFiles.addAll(Arrays.asList(files));
                         }
                     }
                     continue;
