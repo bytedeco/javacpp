@@ -2851,6 +2851,16 @@ public class Parser {
         }
         decl.signature = type.javaName;
         tokens.index = startIndex;
+        String shortName = name.substring(name.lastIndexOf('.') + 1);
+        String fullName = context.namespace != null ? context.namespace + "::" + name : name;
+        String cppName = type.cppName;
+        for (Token prefix : prefixes) {
+            if (info != null && info.cppNames[0].startsWith(prefix.value + " ")) {
+                // make it possible to force resolution with a prefix
+                cppName = prefix.value + " " + cppName;
+                break;
+            }
+        }
         if (name.length() > 0 && !hasBody) {
             // incomplete type (forward or friend declaration)
             if (!tokens.get().match(';')) {
@@ -2867,15 +2877,6 @@ public class Parser {
             }
             if (name.equals("Pointer")) {
                 return true;
-            }
-            String fullName = context.namespace != null ? context.namespace + "::" + name : name;
-            String cppName = type.cppName;
-            for (Token prefix : prefixes) {
-                if (info != null && info.cppNames[0].startsWith(prefix.value + " ")) {
-                    // make it possible to force resolution with a prefix
-                    cppName = prefix.value + " " + cppName;
-                    break;
-                }
             }
             if (!fullName.equals(cppName)) {
                 decl.text += "@Name(\"" + (context.javaName == null || namespace < 0 ? cppName : cppName.substring(namespace + 2)) + "\") ";
@@ -2939,8 +2940,16 @@ public class Parser {
                 implicitConstructor &= !defaultConstructor && !longConstructor && !pointerConstructor;
                 String baseType = d.declarator.type.cppName;
                 baseType = baseType.substring(0, baseType.lastIndexOf("::"));
-                Info info2 = infoMap.getFirst(baseType);
-                constructors = d.text.replace(info2.pointerTypes[0], name) + "\n";
+                List<Info> infoList = infoMap.get(baseType);
+                String[] pointerTypes = null;
+                for (Info info2 : infoList) {
+                    if (info2 != null && info2.pointerTypes != null && info2.pointerTypes.length > 0) {
+                        pointerTypes = info2.pointerTypes;
+                        break;
+                    }
+                }
+                int namespace2 = baseType.lastIndexOf("::");
+                constructors = d.text.replace(pointerTypes != null ? pointerTypes[0] : namespace2 >= 0 ? baseType.substring(namespace2 + 2) : baseType, shortName) + "\n";
                 d.text = "";
             } else if (d.declarator != null && d.declarator.type != null && d.declarator.type.constructor) {
                 implicitConstructor = false;
@@ -2957,15 +2966,6 @@ public class Parser {
             modifiers = "@Const " + modifiers;
         }
         if (!anonymous) {
-            String fullName = context.namespace != null ? context.namespace + "::" + name : name;
-            String cppName = type.cppName;
-            for (Token prefix : prefixes) {
-                if (info != null && info.cppNames[0].startsWith(prefix.value + " ")) {
-                    // make it possible to force resolution with a prefix
-                    cppName = prefix.value + " " + cppName;
-                    break;
-                }
-            }
             if (!fullName.equals(cppName)) {
                 decl.text += "@Name(\"" + cppName + "\") ";
             } else if (context.namespace != null && context.javaName == null) {
@@ -2977,7 +2977,6 @@ public class Parser {
             if (info != null && info.base != null) {
                 base.javaName = info.base;
             }
-            String shortName = name.substring(name.lastIndexOf('.') + 1);
             decl.text += modifiers + "class " + shortName + " extends " + base.javaName + " {\n" +
                          "    static { Loader.load(); }\n";
 
@@ -3031,7 +3030,8 @@ public class Parser {
             }
         }
         for (Declaration d : declList2) {
-            if (!d.inaccessible && (d.declarator == null || d.declarator.type == null || !d.declarator.type.constructor || !abstractClass)) {
+            if (!d.inaccessible && (d.declarator == null || d.declarator.type == null
+                    || !d.declarator.type.constructor || !abstractClass || (info != null && info.virtualize))) {
                 decl.text += d.text;
                 if (d.declarator != null && d.declarator.type != null && d.declarator.type.constructor) {
                     explicitConstructors += d.text;

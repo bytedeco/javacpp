@@ -1,4 +1,6 @@
 
+ * Enhance `UniquePtrAdapter` with the ability to move pointers out with the `&&` operator
+ * Let `Parser` map constructors also for abstract classes with `Info.virtualize`
  * Fix `Parser` taking the global package as the target package even when both are set
  * Consider `@Properties(global=..., helper=...)` class names without "." as relative to `target` ([pull bytedeco/javacpp-presets#669](https://github.com/bytedeco/javacpp-presets/pull/669))
  * Use regex in `Parser` to translate more Doxygen commands into Javadoc tags ([pull #278](https://github.com/bytedeco/javacpp/pull/278) and [pull #281](https://github.com/bytedeco/javacpp/pull/281))
