@@ -164,14 +164,16 @@ public class ClassProperties extends HashMap<String,List<String>> {
                 }
             }
             String target = classProperties.target();
-            if (target.length() > 0) {
-                addAll("target", target);
-            }
             String global = classProperties.global();
             if (global.length() == 0) {
                 global = target;
+            } else if (target.length() == 0) {
+                target = global;
             } else if (target.length() > 0 && !global.contains(".")) {
                 global = target + "." + global;
+            }
+            if (target.length() > 0) {
+                addAll("target", target);
             }
             if (global.length() > 0) {
                 addAll("global", global);
