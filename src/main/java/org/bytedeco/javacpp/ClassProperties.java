@@ -144,13 +144,9 @@ public class ClassProperties extends HashMap<String,List<String>> {
         }
         org.bytedeco.javacpp.annotation.Properties classProperties =
                 c.getAnnotation(org.bytedeco.javacpp.annotation.Properties.class);
+        Platform classPlatform = c.getAnnotation(Platform.class);
         Platform[] platforms = null;
-        if (classProperties == null) {
-            Platform platform = c.getAnnotation(Platform.class);
-            if (platform != null) {
-                platforms = new Platform[] { platform };
-            }
-        } else {
+        if (classProperties != null) {
             Class[] classes = classProperties.inherit();
             if (inherit && classes != null) {
                 if (inheritedClasses == null) {
@@ -190,6 +186,14 @@ public class ClassProperties extends HashMap<String,List<String>> {
                 defaultNames = names;
             }
             platforms = classProperties.value();
+        }
+        if (classPlatform != null) {
+            if (platforms == null) {
+                platforms = new Platform[] { classPlatform };
+            } else {
+                platforms = Arrays.copyOf(platforms, platforms.length + 1);
+                platforms[platforms.length - 1] = classPlatform;
+            }
         }
 
         String[] pragma = {}, define = {}, exclude = {}, include = {}, cinclude = {}, includepath = {}, includeresource = {}, compiler = {},

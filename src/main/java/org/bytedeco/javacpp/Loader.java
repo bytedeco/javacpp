@@ -860,6 +860,8 @@ public class Loader {
 
         org.bytedeco.javacpp.annotation.Properties classProperties =
                 cls.getAnnotation(org.bytedeco.javacpp.annotation.Properties.class);
+        Platform classPlatform = cls.getAnnotation(Platform.class);
+        boolean supported = classProperties == null && classPlatform == null;
         if (classProperties != null) {
             Class[] classes = classProperties.inherit();
 
@@ -881,20 +883,23 @@ public class Loader {
             if (platforms != null && platforms.length > 0) {
                 for (Platform p : platforms) {
                     if (checkPlatform(p, properties, defaultNames)) {
-                        return true;
+                        supported = true;
+                        break;
                     }
                 }
             } else if (classes != null && classes.length > 0) {
                 for (Class c : classes) {
                     if (checkPlatform(c, properties)) {
-                        return true;
+                        supported = true;
+                        break;
                     }
                 }
             }
-        } else if (checkPlatform(cls.getAnnotation(Platform.class), properties)) {
-            return true;
         }
-        return false;
+        if (classPlatform != null) {
+            supported = checkPlatform(cls.getAnnotation(Platform.class), properties);
+        }
+        return supported;
     }
 
     public static boolean checkPlatform(Platform platform, Properties properties, String... defaultNames) {
