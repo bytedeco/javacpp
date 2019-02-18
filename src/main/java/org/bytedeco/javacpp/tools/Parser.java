@@ -813,10 +813,13 @@ public class Parser {
                 groupName = groupName.substring(0, template2);
             } else if (template >= 0 && template2 < 0) {
                 cppName = cppName.substring(0, template);
+                namespace = cppName.lastIndexOf("::");
             }
             int namespace2 = groupName != null ? groupName.lastIndexOf("::") : -1;
             if (namespace < 0 && namespace2 >= 0) {
                 groupName = groupName.substring(namespace2 + 2);
+            } else if (namespace >= 0 && namespace2 < 0) {
+                cppName = cppName.substring(namespace + 2);
             }
             if (cppName.equals(groupName)) {
                 type.constructor = !type.destructor && !type.operator
@@ -2101,7 +2104,7 @@ public class Parser {
             // append annotations specified for a full function declaration only to avoid overlap with type.annotations
             if (fullInfo != null && fullInfo.annotations != null) {
                 for (String s : fullInfo.annotations) {
-                    decl.text += s + " ";
+                    type.annotations += s + " ";
                 }
             }
             if (type.constructor && params != null) {
@@ -2785,8 +2788,16 @@ public class Parser {
                         } else {
                             if (type.cppName.equals(originalName)) {
                                 name = type.javaName = type.cppName = token.value;
+                                Info info = infoMap.getFirst(name);
+                                if (info != null && info.annotations != null) {
+                                    for (String s : info.annotations) {
+                                        decl.text += s + " ";
+                                    }
+                                }
                             }
-                            infoMap.put(new Info(name2).cast().pointerTypes(name));
+                            if (!name2.equals(name)) {
+                                infoMap.put(new Info(name2).cast().pointerTypes(name));
+                            }
                         }
                     }
                     token = tokens.next();
