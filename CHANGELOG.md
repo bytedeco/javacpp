@@ -1,4 +1,5 @@
 
+ * Add a `BuildMojo.targetDirectories` parameter to allow setting multiple directories where to find generated Java files
  * Add `Parser` support for attributes appearing after `struct` declarations ([issue bytedeco/javacpp-presets#685](https://github.com/bytedeco/javacpp-presets/issues/685))
  * Fix `Parser` overlooking `Info` for constructors inside a namespace ([issue #284](https://github.com/bytedeco/javacpp/issues/284))
  * Fix `Parser` applying some `Info.annotations` at the wrong place ([issue #284](https://github.com/bytedeco/javacpp/issues/284))
