@@ -3748,7 +3748,8 @@ public class Parser {
             for (Declaration d : declList) {
                 if (!target.equals(global) && d.type != null && d.type.javaName != null && d.type.javaName.length() > 0) {
                     // if the user gave us a class name for "global", we're targeting a package, so output global classes into their own files
-                    File javaFile = new File(targetDir, d.type.javaName + ".java");
+                    String shortName = d.type.javaName.substring(d.type.javaName.lastIndexOf('.') + 1);
+                    File javaFile = new File(targetDir, shortName + ".java");
                     if (prevd != null && !prevd.comment) {
                         out.append(prevd.text);
                     }
@@ -3756,9 +3757,9 @@ public class Parser {
                     logger.info("Targeting " + javaFile);
                     String javaText = targetHeader + text + "import static " + global + ".*;\n"
                             + (prevd != null && prevd.comment ? prevd.text : "")
-                            + d.text.replace("public static class " + d.type.javaName + " ",
+                            + d.text.replace("public static class " + shortName + " ",
                                     "@Properties(inherit = " + cls.getCanonicalName() + ".class)\n"
-                                  + "public class " + d.type.javaName + " ");
+                                  + "public class " + shortName + " ") + "\n";
                     outputFiles.add(javaFile);
                     Files.write(javaFile.toPath(), encoding != null ? javaText.getBytes(encoding) : javaText.getBytes());
                     prevd = null;
