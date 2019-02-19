@@ -726,6 +726,7 @@ public class Parser {
         }
 
         Info info = null;
+        String shortName = type.cppName;
         String[] names = context.qualify(type.cppName);
         if (definition && names.length > 0) {
             String constName = type.constValue || type.constPointer ? "const " + names[0] : names[0];
@@ -821,7 +822,7 @@ public class Parser {
             } else if (namespace >= 0 && namespace2 < 0) {
                 cppName = cppName.substring(namespace + 2);
             }
-            if (cppName.equals(groupName)) {
+            if (cppName.equals(groupName) || (groupName.endsWith("::" + shortName) && cppName.equals(groupName + "::" + shortName))) {
                 type.constructor = !type.destructor && !type.operator
                         && type.indirections == 0 && !type.reference && tokens.get().match('(', ':');
             }

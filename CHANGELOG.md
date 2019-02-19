@@ -1,4 +1,5 @@
 
+ * Fix `Parser` overlooking `Info` for constructors inside a namespace ([issue #284](https://github.com/bytedeco/javacpp/issues/284))
  * Fix `Parser` applying some `Info.annotations` at the wrong place ([issue #284](https://github.com/bytedeco/javacpp/issues/284))
  * Make `Parser` behave the same with `@Properties` having only one out of `global` or `target` value set
  * Enhance `UniquePtrAdapter` with the ability to move pointers out with the `&&` operator
