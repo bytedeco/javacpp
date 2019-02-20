@@ -822,7 +822,12 @@ public class Parser {
             } else if (namespace >= 0 && namespace2 < 0) {
                 cppName = cppName.substring(namespace + 2);
             }
-            if (cppName.equals(groupName) || (groupName.endsWith("::" + shortName) && cppName.equals(groupName + "::" + shortName))) {
+            String groupName2 = groupName;
+            template2 = groupName2 != null ? groupName2.lastIndexOf('<') : -1;
+            if (template2 >= 0) {
+                groupName2 = groupName2.substring(0, template2);
+            }
+            if (cppName.equals(groupName) || (groupName2.endsWith("::" + shortName) && cppName.equals(groupName + "::" + shortName))) {
                 type.constructor = !type.destructor && !type.operator
                         && type.indirections == 0 && !type.reference && tokens.get().match('(', ':');
             }
