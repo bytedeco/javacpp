@@ -734,7 +734,17 @@ public class Parser {
             type.cppName = names[0];
         } else {
             // guess the fully qualified C++ type with what's available in the InfoMap
+            String groupName = context.cppName;
+            String groupName2 = groupName;
+            int template2 = groupName2 != null ? groupName2.lastIndexOf('<') : -1;
+            if (template2 >= 0) {
+                groupName2 = groupName2.substring(0, template2);
+            }
             for (String name : names) {
+                if (groupName2 != null && groupName2.endsWith("::" + shortName) && name.equals(groupName + "::" + shortName)) {
+                    // skip, we would probably get Info for the constructors, not the type
+                    continue;
+                }
                 String constName = type.constValue || type.constPointer ? "const " + name : name;
                 if ((info = infoMap.getFirst(constName, false)) != null) {
                     type.cppName = name;
@@ -822,12 +832,7 @@ public class Parser {
             } else if (namespace >= 0 && namespace2 < 0) {
                 cppName = cppName.substring(namespace + 2);
             }
-            String groupName2 = groupName;
-            template2 = groupName2 != null ? groupName2.lastIndexOf('<') : -1;
-            if (template2 >= 0) {
-                groupName2 = groupName2.substring(0, template2);
-            }
-            if (cppName.equals(groupName) || (groupName2.endsWith("::" + shortName) && cppName.equals(groupName + "::" + shortName))) {
+            if (cppName.equals(groupName)) {
                 type.constructor = !type.destructor && !type.operator
                         && type.indirections == 0 && !type.reference && tokens.get().match('(', ':');
             }
@@ -1942,7 +1947,21 @@ public class Parser {
             }
         }
         if (info == null) {
-            info = infoMap.getFirst(dcl.cppName);
+            if (type.constructor) {
+                // get Info explicitly associated with all constructors
+                String name = dcl.cppName;
+                int template2 = name.lastIndexOf('<');
+                if (template2 >= 0) {
+                    name = name.substring(0, template2);
+                }
+                int namespace2 = name.lastIndexOf("::");
+                if (namespace2 >= 0) {
+                    name = name.substring(namespace2 + 2);
+                }
+                info = fullInfo = infoMap.getFirst(dcl.cppName + "::" + name);
+            } else {
+                info = infoMap.getFirst(dcl.cppName);
+            }
             if (!type.constructor && !type.destructor && !type.operator) {
                 infoMap.put(info != null ? new Info(info).cppNames(fullname) : new Info(fullname));
             }
@@ -3752,7 +3771,7 @@ public class Parser {
             Declaration prevd = null;
             for (Declaration d : declList) {
                 if (!target.equals(global) && d.type != null && d.type.javaName != null && d.type.javaName.length() > 0) {
-                    // if the user gave us a class name for "global", we're targeting a package, so output global classes into their own files
+                    // when "target" != "global", the former is a package where to output top-level classes into their own files
                     String shortName = d.type.javaName.substring(d.type.javaName.lastIndexOf('.') + 1);
                     File javaFile = new File(targetDir, shortName + ".java");
                     if (prevd != null && !prevd.comment) {
