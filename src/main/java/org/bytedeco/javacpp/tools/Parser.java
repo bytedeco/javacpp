@@ -1959,7 +1959,8 @@ public class Parser {
                     name = name.substring(namespace2 + 2);
                 }
                 info = fullInfo = infoMap.getFirst(dcl.cppName + "::" + name);
-            } else {
+            }
+            if (info == null) {
                 info = infoMap.getFirst(dcl.cppName);
             }
             if (!type.constructor && !type.destructor && !type.operator) {
