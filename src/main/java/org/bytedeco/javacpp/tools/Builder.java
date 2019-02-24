@@ -67,6 +67,29 @@ import org.bytedeco.javacpp.Loader;
 public class Builder {
 
     /**
+     * Deletes {@link #outputDirectory} if {@link #clean} is true.
+     * @throws IOException
+     */
+    void cleanOutputDirectory() throws IOException {
+        if (outputDirectory != null && outputDirectory.isDirectory() && clean) {
+            logger.info("Deleting " + outputDirectory);
+            Files.walkFileTree(outputDirectory.toPath(), new SimpleFileVisitor<Path>() {
+                @Override public FileVisitResult postVisitDirectory(Path dir, IOException e) throws IOException {
+                    if (e != null) {
+                        throw e;
+                    }
+                    Files.delete(dir);
+                    return FileVisitResult.CONTINUE;
+                }
+                @Override public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    Files.delete(file);
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        }
+    }
+
+    /**
      * Calls {@link Parser#parse(File, String[], Class)} after creating an instance of the Class.
      *
      * @param classPath an array of paths to try to load header files from
@@ -77,6 +100,7 @@ public class Builder {
      * @throws ParserException on C/C++ header file parsing error
      */
     File[] parse(String[] classPath, Class cls) throws IOException, ParserException {
+        cleanOutputDirectory();
         return new Parser(logger, properties, encoding, null).parse(outputDirectory, classPath, cls);
     }
 
@@ -476,6 +500,7 @@ public class Builder {
      * @throws InterruptedException
      */
     File[] generateAndCompile(Class[] classes, String outputName, boolean first, boolean last) throws IOException, InterruptedException {
+        cleanOutputDirectory();
         File outputPath = outputDirectory != null ? outputDirectory.getCanonicalFile() : null;
         ClassProperties p = Loader.loadProperties(classes, properties, true);
         String platform     = properties.getProperty("platform");
@@ -681,6 +706,8 @@ public class Builder {
     String outputName = null;
     /** The name of the JAR file to create, if not {@code null}. */
     String jarPrefix = null;
+    /** If true, deletes all files from {@link #outputDirectory} before writing anything in it. */
+    boolean clean = false;
     /** If true, attempts to generate C++ JNI files, but if false, only attempts to parse header files. */
     boolean generate = true;
     /** If true, compiles the generated source file to a shared library and deletes source. */
@@ -729,6 +756,11 @@ public class Builder {
     /** Sets the {@link #outputDirectory} field to the argument. */
     public Builder outputDirectory(File outputDirectory) {
         this.outputDirectory = outputDirectory;
+        return this;
+    }
+    /** Sets the {@link #clean} field to the argument. */
+    public Builder clean(boolean clean) {
+        this.clean = clean;
         return this;
     }
     /** Sets the {@link #generate} field to the argument. */
@@ -1127,6 +1159,7 @@ public class Builder {
         System.out.println("    -encoding <name>       Character encoding used for input and output files");
         System.out.println("    -d <directory>         Output all generated files to directory");
         System.out.println("    -o <name>              Output everything in a file named after given name");
+        System.out.println("    -clean                 Delete the output directory before generating anything in it");
         System.out.println("    -nogenerate            Do not try to generate C++ source files, only try to parse header files");
         System.out.println("    -nocompile             Do not compile or delete the generated C++ source files");
         System.out.println("    -nodelete              Do not delete generated C++ JNI files after compilation");
@@ -1167,6 +1200,8 @@ public class Builder {
                 builder.outputDirectory(args[++i]);
             } else if ("-o".equals(args[i])) {
                 builder.outputName(args[++i]);
+            } else if ("-clean".equals(args[i])) {
+                builder.clean(true);
             } else if ("-nocpp".equals(args[i]) || "-nogenerate".equals(args[i])) {
                 builder.generate(false);
             } else if ("-cpp".equals(args[i]) || "-nocompile".equals(args[i])) {

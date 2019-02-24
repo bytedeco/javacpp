@@ -1,4 +1,5 @@
 
+ * Add `Builder.clean` option to delete the `outputDirectory` before generating files
  * Let `Parser` pick up `Info` explicitly for all constructors by considering their names as functions ([issue #284](https://github.com/bytedeco/javacpp/issues/284))
  * Fix `Parser` not always generating files using the simple names of classes
  * Add a `BuildMojo.targetDirectories` parameter to allow setting multiple directories where to find generated Java files
