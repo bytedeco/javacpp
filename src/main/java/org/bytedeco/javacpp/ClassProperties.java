@@ -303,7 +303,8 @@ public class ClassProperties extends HashMap<String,List<String>> {
             // fail silently as if the interface wasn't implemented
         }
 
-        if (platforms != null && platforms.length > 0) {
+        // need platform information from both classProperties and classPlatform to be considered "loaded"
+        if (platforms != null && platforms.length > (classProperties != null && classPlatform != null ? 1 : 0)) {
             loaded = true;
         }
     }
