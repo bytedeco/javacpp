@@ -332,6 +332,7 @@ public class BuildMojo extends AbstractMojo {
             log.info("Detected platform \"" + Loader.getPlatform() + "\"");
             log.info("Building for platform \"" + properties.get("platform") + "\""
                     + (extension != null && extension.length() > 0 ? " with extension \"" + extension + "\"" : ""));
+            properties.setProperty("platform.host", Loader.getPlatform());
             String module = properties.get("platform") + (extension != null ? extension : "");
             // make available a platform name that is JPMS friendly without hyphens
             properties.setProperty("platform.module", module.replace('-', '.'));

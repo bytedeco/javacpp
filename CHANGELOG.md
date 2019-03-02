@@ -1,4 +1,5 @@
 
+ * Let `BuildMojo` return to the Maven project the detected host platform as `${javacpp.platform.host}`
  * Have `BuildMojo` output a JPMS friendly name for the platform and extension back to the Maven project as `${javacpp.platform.module}`
  * Add `Builder.clean` option to delete the `outputDirectory` before generating files
  * Let `Parser` pick up `Info` explicitly for all constructors by considering their names as functions ([issue #284](https://github.com/bytedeco/javacpp/issues/284))
