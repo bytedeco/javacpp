@@ -192,10 +192,12 @@ public class Loader {
             }
         }
         for (Map.Entry e : System.getProperties().entrySet()) {
-            String key = (String)e.getKey();
-            String value = (String)e.getValue();
-            if (key != null && value != null && key.startsWith("org.bytedeco.javacpp.platform.")) {
-                p.put(key.substring(key.indexOf("platform.")), value);
+            if (e.getKey() instanceof String && e.getValue() instanceof String) {
+                String key = (String)e.getKey();
+                String value = (String)e.getValue();
+                if (key != null && value != null && key.startsWith("org.bytedeco.javacpp.platform.")) {
+                    p.put(key.substring(key.indexOf("platform.")), value);
+                }
             }
         }
         return p;

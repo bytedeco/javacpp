@@ -3068,7 +3068,7 @@ public class Parser {
                     }
                 }
                 int end = text.lastIndexOf('}');
-                decl.text += text.substring(start, end).replaceAll("(\\s+)" + base2.javaName + "(\\s+)", "$1" + type.javaName + "$2");
+                decl.text += text.substring(start, end).replace(base2.javaName, type.javaName);
             }
         }
         for (Declaration d : declList2) {

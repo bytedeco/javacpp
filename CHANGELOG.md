@@ -1,4 +1,6 @@
 
+ * Prevent `ClassCastException` in `Loader` on illegal system properties ([issue #289](https://github.com/bytedeco/javacpp/issues/289))
+ * Fix `Parser` not replacing all type names of the base class with `Info.flatten` ([issue #288](https://github.com/bytedeco/javacpp/issues/288))
  * Let `BuildMojo` return to the Maven project the detected host platform as `${javacpp.platform.host}`
  * Have `BuildMojo` output a JPMS friendly name for the platform and extension back to the Maven project as `${javacpp.platform.module}`
  * Add `Builder.clean` option to delete the `outputDirectory` before generating files
