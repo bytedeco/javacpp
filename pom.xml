@@ -35,10 +35,6 @@
     </developer>
   </developers>
 
-  <prerequisites>
-    <maven>3.0</maven>
-  </prerequisites>
-
   <scm>
     <url>https://github.com/bytedeco/javacpp</url>
     <connection>scm:git:git://github.com/bytedeco/javacpp.git</connection>

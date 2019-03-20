@@ -1025,7 +1025,7 @@ public class Loader {
         for (String preload : preloads) {
             try {
                 URL[] urls = findLibrary(cls, p, preload, pathsFirst);
-                String filename = loadLibrary(urls, preload);
+                String filename = loadLibrary(urls, preload, preloaded.toArray(new String[preloaded.size()]));
                 if (filename != null) {
                     preloaded.add(filename);
                 }
