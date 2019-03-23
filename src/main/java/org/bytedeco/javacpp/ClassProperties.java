@@ -63,6 +63,7 @@ public class ClassProperties extends HashMap<String,List<String>> {
                 || k.equals("platform.preloadpath") || k.equals("platform.preloadresource") || k.equals("platform.preload")
                 || k.equals("platform.resourcepath") || k.equals("platform.resource")
                 || k.equals("platform.frameworkpath") || k.equals("platform.framework")
+                || k.equals("platform.executablepath") || k.equals("platform.executable")
                 || k.equals("platform.library.suffix") || k.equals("platform.extension")) {
                 addAll(k, v.split(pathSeparator));
             } else {
@@ -198,7 +199,8 @@ public class ClassProperties extends HashMap<String,List<String>> {
 
         String[] pragma = {}, define = {}, exclude = {}, include = {}, cinclude = {}, includepath = {}, includeresource = {}, compiler = {},
                  linkpath = {}, linkresource = {}, link = {}, frameworkpath = {}, framework = {}, preloadpath = {}, preloadresource = {}, preload = {},
-                 resourcepath = {}, resource = {}, extension = {};
+                 resourcepath = {}, resource = {}, extension = {}, executablepath = {};
+        String executable = "";
         String library = "jni" + c.getSimpleName();
         List<String> targets = get("global");
         if (targets != null && targets.size() > 0) {
@@ -247,6 +249,8 @@ public class ClassProperties extends HashMap<String,List<String>> {
                 if (p.resourcepath().length > 0) { resourcepath = p.resourcepath(); }
                 if (p.resource()    .length > 0) { resource     = p.resource();     }
                 if (p.extension()   .length > 0) { extension    = p.extension();    }
+                if (p.executablepath().length > 0) { executablepath = p.executablepath(); }
+                if (p.executable().length() > 0) { executable   = p.executable();   }
                 if (p.library().length() > 0)   { library     = p.library();     }
             }
         }
@@ -293,6 +297,8 @@ public class ClassProperties extends HashMap<String,List<String>> {
         addAll("platform.resourcepath", resourcepath);
         addAll("platform.resource", resource);
         addAll("platform.extension", extension);
+        addAll("platform.executablepath", executablepath);
+        setProperty("platform.executable", executable);
         setProperty("platform.library", library);
 
         try {

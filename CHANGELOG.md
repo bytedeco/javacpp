@@ -1,4 +1,5 @@
 
+ * Add `platform.executable` and `platform.executablepath` properties to bundle executables and extract them with `Loader.load()`
  * Create symbolic links for all libraries preloaded by `Loader` as they get loaded to satisfy libraries like MKL
  * Prevent `ClassCastException` in `Loader` on illegal system properties ([issue #289](https://github.com/bytedeco/javacpp/issues/289))
  * Fix `Parser` not replacing all type names of the base class with `Info.flatten` ([issue #288](https://github.com/bytedeco/javacpp/issues/288))

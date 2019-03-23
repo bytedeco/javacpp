@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2018 Samuel Audet
+ * Copyright (C) 2011-2019 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -45,6 +45,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -488,29 +489,28 @@ public class Builder {
     }
 
     /**
-     * Generates C++ source files for classes, and compiles everything in
-     * one shared library when {@code compile == true}.
+     * Creates and returns the directory where output files should be placed.
+     * Uses {@link #outputDirectory} as is when available, but falls back
+     * on the shortest common path to the classes as well as the platform
+     * specific library path when available, or the platform name itself
+     * and the user provided extension when not.
      *
-     * @param classes the Class objects as input to Generator
-     * @param outputName the output name of the shared library
-     * @param first of the batch, so generate jnijavacpp.cpp
-     * @param last of the batch, so delete jnijavacpp.cpp
-     * @return the actual File generated, either the compiled library or its source
+     * @param classes from which to derive the output path
+     * @param sourcePrefixes returned, 2 strings without platform names, one from our class loader, the other from the common path of the classes
+     * @return directory where binary files should be written to
      * @throws IOException
-     * @throws InterruptedException
      */
-    File[] generateAndCompile(Class[] classes, String outputName, boolean first, boolean last) throws IOException, InterruptedException {
+    File getOutputPath(Class[] classes, String[] sourcePrefixes) throws IOException {
         cleanOutputDirectory();
         File outputPath = outputDirectory != null ? outputDirectory.getCanonicalFile() : null;
         ClassProperties p = Loader.loadProperties(classes, properties, true);
         String platform     = properties.getProperty("platform");
         String extension    = properties.getProperty("platform.extension");
         String sourcePrefix = outputPath != null ? outputPath.getPath() + File.separator : "";
-        String sourceSuffix = p.getProperty("platform.source.suffix", ".cpp");
         String libraryPath  = p.getProperty("platform.library.path", "");
-        String libraryPrefix  = p.getProperty("platform.library.prefix", "") ;
-        String librarySuffix  = p.getProperty("platform.library.suffix", "");
-        String[] sourcePrefixes = {sourcePrefix, sourcePrefix};
+        if (sourcePrefixes != null) {
+            sourcePrefixes[0] = sourcePrefixes[1] = sourcePrefix;
+        }
         if (outputPath == null) {
             URI uri = null;
             try {
@@ -544,7 +544,10 @@ public class Builder {
                 outputPath = new File(targetDir, libraryPath);
                 sourcePrefix = packageDir.getPath() + File.separator;
                 // make sure jnijavacpp.cpp ends up in the same directory for all classes in different packages
-                sourcePrefixes = new String[] {classPath.getPath() + File.separator, sourcePrefix};
+                if (sourcePrefixes != null) {
+                    sourcePrefixes[0] = classPath.getPath() + File.separator;
+                    sourcePrefixes[1] = sourcePrefix;
+                }
             } catch (URISyntaxException e) {
                 throw new RuntimeException(e);
             } catch (IllegalArgumentException e) {
@@ -554,6 +557,28 @@ public class Builder {
         if (!outputPath.exists()) {
             outputPath.mkdirs();
         }
+        return outputPath;
+    }
+
+    /**
+     * Generates C++ source files for classes, and compiles everything in
+     * one shared library when {@code compile == true}.
+     *
+     * @param classes the Class objects as input to Generator
+     * @param outputName the output name of the shared library
+     * @param first of the batch, so generate jnijavacpp.cpp
+     * @param last of the batch, so delete jnijavacpp.cpp
+     * @return the actual File generated, either the compiled library or its source
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    File[] generateAndCompile(Class[] classes, String outputName, boolean first, boolean last) throws IOException, InterruptedException {
+        String[] sourcePrefixes = new String[2];
+        File outputPath = getOutputPath(classes, sourcePrefixes);
+        ClassProperties p = Loader.loadProperties(classes, properties, true);
+        String sourceSuffix = p.getProperty("platform.source.suffix", ".cpp");
+        String libraryPrefix  = p.getProperty("platform.library.prefix", "") ;
+        String librarySuffix  = p.getProperty("platform.library.suffix", "");
         Generator generator = new Generator(logger, properties, encoding);
         String[] sourceFilenames = {sourcePrefixes[0] + "jnijavacpp" + sourceSuffix,
                                     sourcePrefixes[1] + outputName + sourceSuffix};
@@ -978,7 +1003,9 @@ public class Builder {
         }
 
         List<File> outputFiles = new ArrayList<File>();
-        Map<String, LinkedHashSet<Class>> map = new LinkedHashMap<String, LinkedHashSet<Class>>();
+        List<String> allNames = new ArrayList<String>();
+        Map<String, LinkedHashSet<Class>> executableMap = new HashMap<String, LinkedHashSet<Class>>();
+        Map<String, LinkedHashSet<Class>> libraryMap = new HashMap<String, LinkedHashSet<Class>>();
         for (Class c : classScanner.getClasses()) {
             if (Loader.getEnclosingClass(c) != c) {
                 continue;
@@ -1017,21 +1044,60 @@ public class Builder {
                 logger.warn("Could not load platform properties for " + c);
                 continue;
             }
+
+            String executableName = p.getProperty("platform.executable");
+            if (executableName != null && executableName.length() > 0) {
+                LinkedHashSet<Class> classList = executableMap.get(executableName);
+                if (classList == null) {
+                    allNames.add(executableName);
+                    executableMap.put(executableName, classList = new LinkedHashSet<Class>());
+                }
+                classList.addAll(p.getEffectiveClasses());
+                continue;
+            }
+
             String libraryName = outputName != null ? outputName : p.getProperty("platform.library", "");
             if (!generate || libraryName.length() == 0) {
                 continue;
             }
-            LinkedHashSet<Class> classList = map.get(libraryName);
+            LinkedHashSet<Class> classList = libraryMap.get(libraryName);
             if (classList == null) {
-                map.put(libraryName, classList = new LinkedHashSet<Class>());
+                allNames.add(libraryName);
+                libraryMap.put(libraryName, classList = new LinkedHashSet<Class>());
             }
             classList.addAll(p.getEffectiveClasses());
         }
         int count = 0;
-        for (String libraryName : map.keySet()) {
-            LinkedHashSet<Class> classSet = map.get(libraryName);
-            Class[] classArray = classSet.toArray(new Class[classSet.size()]);
-            File[] files = generateAndCompile(classArray, libraryName, count == 0, count == map.size() - 1);
+        for (String name : allNames) {
+            LinkedHashSet<Class> executableClassSet = executableMap.get(name);
+            LinkedHashSet<Class> libraryClassSet = libraryMap.get(name);
+            Class[] classArray = null;
+            File[] files = null;
+            if (executableClassSet != null) {
+                classArray = executableClassSet.toArray(new Class[executableClassSet.size()]);
+                ClassProperties p = Loader.loadProperties(classArray, properties, true);
+                String prefix = p.getProperty("platform.executable.prefix", "");
+                String suffix = p.getProperty("platform.executable.suffix", "");
+                String filename = prefix + name + suffix;
+                for (String path : p.get("platform.executablepath")) {
+                    Path in = Paths.get(path, filename);
+                    if (Files.exists(in)) {
+                        logger.info("Copying " + in);
+                        File outputPath = getOutputPath(classArray, null);
+                        Path out = new File(outputPath, filename).toPath();
+                        Files.copy(in, out);
+                        files = new File[] { out.toFile() };
+                        break;
+                    }
+                }
+            } else if (libraryClassSet != null) {
+                classArray = libraryClassSet.toArray(new Class[libraryClassSet.size()]);
+                files = generateAndCompile(classArray, name, count == 0, count == libraryMap.size() - 1);
+                count++;
+            } else {
+                continue;
+            }
+
             if (files != null && files.length > 0) {
                 // files[0] might be null if "jnijavacpp" was not generated and compiled
                 File directory = files[files.length - 1].getParentFile();
@@ -1067,15 +1133,7 @@ public class Builder {
                         File fo = new File(directory, fi.getName());
                         if (fi.exists() && !outputFiles.contains(fo)) {
                             logger.info("Copying " + fi);
-                            FileInputStream fis = new FileInputStream(fi);
-                            FileOutputStream fos = new FileOutputStream(fo);
-                            byte[] buffer = new byte[64 * 1024];
-                            int length;
-                            while ((length = fis.read(buffer)) != -1) {
-                                fos.write(buffer, 0, length);
-                            }
-                            fos.close();
-                            fis.close();
+                            Files.copy(fi.toPath(), fo.toPath());
                             outputFiles.add(fo);
                         }
                     }
@@ -1120,7 +1178,6 @@ public class Builder {
                     }
                 }
             }
-            count++;
         }
 
         File[] files = outputFiles.toArray(new File[outputFiles.size()]);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2018 Samuel Audet
+ * Copyright (C) 2011-2019 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -328,7 +328,8 @@ public class Loader {
      * @see #cacheResource(URL)
      */
     public static File cacheResource(Class cls, String name) throws IOException {
-        return cacheResource(findResource(cls, name));
+        URL u = findResource(cls, name);
+        return u != null ? cacheResource(u) : null;
     }
 
     /**
@@ -573,7 +574,8 @@ public class Loader {
      */
     public static File extractResource(Class cls, String name, File directory,
             String prefix, String suffix) throws IOException {
-        return extractResource(findResource(cls, name), directory, prefix, suffix);
+        URL u = findResource(cls, name);
+        return u != null ? extractResource(u, directory, prefix, suffix) : null;
     }
 
     /**
@@ -784,6 +786,7 @@ public class Loader {
     static boolean pathsFirst = false;
     static {
         String s = System.getProperty("org.bytedeco.javacpp.pathsfirst", "false").toLowerCase();
+        s = System.getProperty("org.bytedeco.javacpp.pathsFirst", s).toLowerCase();
         pathsFirst = s.equals("true") || s.equals("t") || s.equals("");
     }
 
@@ -791,6 +794,7 @@ public class Loader {
     public static File getCacheDir() throws IOException {
         if (cacheDir == null) {
             String[] dirNames = {System.getProperty("org.bytedeco.javacpp.cachedir"),
+                                 System.getProperty("org.bytedeco.javacpp.cacheDir"),
                                  System.getProperty("user.home") + "/.javacpp/cache/",
                                  System.getProperty("java.io.tmpdir") + "/.javacpp-" + System.getProperty("user.name") + "/cache/"};
             for (String dirName : dirNames) {
@@ -844,6 +848,7 @@ public class Loader {
      *  Flag set by the {@link Builder} to tell us not to try to load anything. */
     public static boolean isLoadLibraries() {
         String s = System.getProperty("org.bytedeco.javacpp.loadlibraries", "true").toLowerCase();
+        s = System.getProperty("org.bytedeco.javacpp.loadLibraries", s).toLowerCase();
         return s.equals("true") || s.equals("t") || s.equals("");
     }
 
@@ -1035,6 +1040,28 @@ public class Loader {
             } catch (UnsatisfiedLinkError e) {
                 preloadError = e;
             }
+        }
+
+        String executable = p.getProperty("platform.executable");
+        if (executable != null && executable.length() > 0) {
+            String platform = p.getProperty("platform");
+            String[] extensions = p.get("platform.extension").toArray(new String[0]);
+            String prefix = p.getProperty("platform.executable.prefix", "");
+            String suffix = p.getProperty("platform.executable.suffix", "");
+            String filename = prefix + executable + suffix;
+            try {
+                for (String extension : Arrays.copyOf(extensions, extensions.length + 1)) {
+                    String subdir = platform + (extension == null ? "" : extension) + "/";
+                    File f = cacheResource(cls, subdir + filename);
+                    if (f != null) {
+                        f.setExecutable(true);
+                        return f.getAbsolutePath();
+                    }
+                }
+            } catch (IOException e) {
+                logger.error("Could not extract executable " + filename + ": " + e);
+            }
+            return null;
         }
 
         int librarySuffix = -1;

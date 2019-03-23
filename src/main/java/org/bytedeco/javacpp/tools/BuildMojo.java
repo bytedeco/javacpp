@@ -128,6 +128,14 @@ public class BuildMojo extends AbstractMojo {
     @Parameter(property = "javacpp.resourcePaths")
     String[] resourcePaths = null;
 
+    /** Add the path to the "platform.executablepath" property. */
+    @Parameter(property = "javacpp.executablePath")
+    String executablePath = null;
+
+    /** Add the paths to the "platform.executablepath" property. */
+    @Parameter(property = "javacpp.executablePaths")
+    String[] executablePaths = null;
+
     /** Specify the character encoding used for input and output. */
     @Parameter(property = "javacpp.encoding")
     String encoding = null;
@@ -260,6 +268,8 @@ public class BuildMojo extends AbstractMojo {
                 log.debug("preloadResources: " + Arrays.deepToString(preloadResources));
                 log.debug("resourcePath: " + resourcePath);
                 log.debug("resourcePaths: " + Arrays.deepToString(resourcePaths));
+                log.debug("executablePath: " + executablePath);
+                log.debug("executablePaths: " + Arrays.deepToString(executablePaths));
                 log.debug("encoding: " + encoding);
                 log.debug("outputDirectory: " + outputDirectory);
                 log.debug("outputName: " + outputName);
@@ -380,6 +390,11 @@ public class BuildMojo extends AbstractMojo {
             for (String s : merge(resourcePaths, resourcePath)) {
                 String v = properties.getProperty("platform.resourcepath", "");
                 properties.setProperty("platform.resourcepath",
+                        v.length() == 0 || v.endsWith(separator) ? v + s : v + separator + s);
+            }
+            for (String s : merge(executablePaths, executablePath)) {
+                String v = properties.getProperty("platform.executablepath", "");
+                properties.setProperty("platform.executablepath",
                         v.length() == 0 || v.endsWith(separator) ? v + s : v + separator + s);
             }
             properties.setProperty("platform.artifacts", project.getBuild().getOutputDirectory());
