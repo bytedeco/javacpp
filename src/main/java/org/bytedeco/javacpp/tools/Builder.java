@@ -1085,7 +1085,7 @@ public class Builder {
                         logger.info("Copying " + in);
                         File outputPath = getOutputPath(classArray, null);
                         Path out = new File(outputPath, filename).toPath();
-                        Files.copy(in, out);
+                        Files.copy(in, out, StandardCopyOption.REPLACE_EXISTING);
                         files = new File[] { out.toFile() };
                         break;
                     }
@@ -1133,7 +1133,7 @@ public class Builder {
                         File fo = new File(directory, fi.getName());
                         if (fi.exists() && !outputFiles.contains(fo)) {
                             logger.info("Copying " + fi);
-                            Files.copy(fi.toPath(), fo.toPath());
+                            Files.copy(fi.toPath(), fo.toPath(), StandardCopyOption.REPLACE_EXISTING);
                             outputFiles.add(fo);
                         }
                     }
