@@ -37,6 +37,16 @@ import org.bytedeco.javacpp.annotation.Name;
 @Name("long")
 public class CLongPointer extends Pointer {
     /**
+     * Allocates enough memory for the array and copies it.
+     *
+     * @param array the array to copy
+     * @see #put(long[])
+     */
+    public CLongPointer(long ... array) {
+        this(array.length);
+        put(array);
+    }
+    /**
      * Allocates a native {@code long} array of the given size.
      *
      * @param size the number of {@code long} elements to allocate
@@ -89,4 +99,37 @@ public class CLongPointer extends Pointer {
      * @return this
      */
     public native CLongPointer put(long i, long l);
+
+    /** @return {@code get(array, 0, array.length)} */
+    public CLongPointer get(long[] array) { return get(array, 0, array.length); }
+    /** @return {@code put(array, 0, array.length)} */
+    public CLongPointer put(long ... array) { return put(array, 0, array.length); }
+    /**
+     * Reads a portion of the native array into a Java array.
+     *
+     * @param array the array to write to
+     * @param offset the offset into the array where to start writing
+     * @param length the length of data to read and write
+     * @return this
+     */
+    public CLongPointer get(long[] array, int offset, int length) {
+        for (int i = offset; i < offset + length; i++) {
+            array[i] = get(i);
+        }
+        return this;
+    }
+    /**
+     * Writes a portion of a Java array into the native array.
+     *
+     * @param array the array to read from
+     * @param offset the offset into the array where to start reading
+     * @param length the length of data to read and write
+     * @return this
+     */
+    public CLongPointer put(long[] array, int offset, int length) {
+        for (int i = offset; i < offset + length; i++) {
+            put(i, array[i]);
+        }
+        return this;
+    }
 }

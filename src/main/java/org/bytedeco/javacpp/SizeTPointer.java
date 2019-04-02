@@ -36,6 +36,16 @@ import org.bytedeco.javacpp.annotation.Name;
 @Name("size_t")
 public class SizeTPointer extends Pointer {
     /**
+     * Allocates enough memory for the array and copies it.
+     *
+     * @param array the array to copy
+     * @see #put(long[])
+     */
+    public SizeTPointer(long ... array) {
+        this(array.length);
+        put(array);
+    }
+    /**
      * Allocates a native {@code size_t} array of the given size.
      *
      * @param size the number of {@code size_t} elements to allocate
@@ -88,4 +98,37 @@ public class SizeTPointer extends Pointer {
      * @return this
      */
     public native SizeTPointer put(long i, long s);
+
+    /** @return {@code get(array, 0, array.length)} */
+    public SizeTPointer get(long[] array) { return get(array, 0, array.length); }
+    /** @return {@code put(array, 0, array.length)} */
+    public SizeTPointer put(long ... array) { return put(array, 0, array.length); }
+    /**
+     * Reads a portion of the native array into a Java array.
+     *
+     * @param array the array to write to
+     * @param offset the offset into the array where to start writing
+     * @param length the length of data to read and write
+     * @return this
+     */
+    public SizeTPointer get(long[] array, int offset, int length) {
+        for (int i = offset; i < offset + length; i++) {
+            array[i] = get(i);
+        }
+        return this;
+    }
+    /**
+     * Writes a portion of a Java array into the native array.
+     *
+     * @param array the array to read from
+     * @param offset the offset into the array where to start reading
+     * @param length the length of data to read and write
+     * @return this
+     */
+    public SizeTPointer put(long[] array, int offset, int length) {
+        for (int i = offset; i < offset + length; i++) {
+            put(i, array[i]);
+        }
+        return this;
+    }
 }

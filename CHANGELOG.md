@@ -1,4 +1,5 @@
 
+ * Add `long...` constructors, getters, and setters to `CLongPointer` and `SizeTPointer` for convenience
  * Fix some `Generator` issues with `FunctionPointer` passed or returned `@ByPtrPtr`
  * Use ModiTect to compile `module-info.java` with JDK 8 and preserve backward compatibility
  * Add `platform.executable` and `platform.executablepath` properties to bundle executables and extract them with `Loader.load()`
