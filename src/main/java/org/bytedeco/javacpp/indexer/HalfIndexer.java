@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Samuel Audet
+ * Copyright (C) 2016-2019 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -38,11 +38,11 @@ public abstract class HalfIndexer extends Indexer {
         super(sizes, strides);
     }
 
-    /** Returns {@code new ShortArrayIndexer(array)} */
+    /** Returns {@code new HalfArrayIndexer(array)} */
     public static HalfIndexer create(short[] array) {
         return new HalfArrayIndexer(array);
     }
-    /** Returns {@code new ShortBufferIndexer(buffer)} */
+    /** Returns {@code new HalfBufferIndexer(buffer)} */
     public static HalfIndexer create(ShortBuffer buffer) {
         return new HalfBufferIndexer(buffer);
     }
@@ -51,11 +51,24 @@ public abstract class HalfIndexer extends Indexer {
         return create(pointer, new long[] { pointer.limit() - pointer.position() }, ONE_STRIDE);
     }
 
-    /** Returns {@code new ShortArrayIndexer(array, sizes, strides)} */
+    /** Returns {@code new HalfArrayIndexer(array, sizes)} */
+    public static HalfIndexer create(short[] array, long[] sizes) {
+        return new HalfArrayIndexer(array, sizes);
+    }
+    /** Returns {@code new HalfBufferIndexer(buffer, sizes)} */
+    public static HalfIndexer create(ShortBuffer buffer, long[] sizes) {
+        return new HalfBufferIndexer(buffer, sizes);
+    }
+    /** Returns {@code create(pointer, sizes, strides(sizes))} */
+    public static HalfIndexer create(ShortPointer pointer, long[] sizes) {
+        return create(pointer, sizes, strides(sizes));
+    }
+
+    /** Returns {@code new HalfArrayIndexer(array, sizes, strides)} */
     public static HalfIndexer create(short[] array, long[] sizes, long[] strides) {
         return new HalfArrayIndexer(array, sizes, strides);
     }
-    /** Returns {@code new ShortBufferIndexer(buffer, sizes, strides)} */
+    /** Returns {@code new HalfBufferIndexer(buffer, sizes, strides)} */
     public static HalfIndexer create(ShortBuffer buffer, long[] sizes, long[] strides) {
         return new HalfBufferIndexer(buffer, sizes, strides);
     }
@@ -68,7 +81,7 @@ public abstract class HalfIndexer extends Indexer {
      *
      * @param pointer data to access via a buffer or to copy to an array
      * @param direct {@code true} to use a direct buffer, see {@link Indexer} for details
-     * @return the new short indexer backed by the raw memory interface, a buffer, or an array
+     * @return the new half indexer backed by the raw memory interface, a buffer, or an array
      */
     public static HalfIndexer create(final ShortPointer pointer, long[] sizes, long[] strides, boolean direct) {
         if (direct) {

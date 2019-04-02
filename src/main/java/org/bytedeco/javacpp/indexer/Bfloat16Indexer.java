@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Samuel Audet
+ * Copyright (C) 2018-2019 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -40,11 +40,11 @@ public abstract class Bfloat16Indexer extends Indexer {
         super(sizes, strides);
     }
 
-    /** Returns {@code new ShortArrayIndexer(array)} */
+    /** Returns {@code new Bfloat16ArrayIndexer(array)} */
     public static Bfloat16Indexer create(short[] array) {
         return new Bfloat16ArrayIndexer(array);
     }
-    /** Returns {@code new ShortBufferIndexer(buffer)} */
+    /** Returns {@code new Bfloat16BufferIndexer(buffer)} */
     public static Bfloat16Indexer create(ShortBuffer buffer) {
         return new Bfloat16BufferIndexer(buffer);
     }
@@ -53,11 +53,24 @@ public abstract class Bfloat16Indexer extends Indexer {
         return create(pointer, new long[] { pointer.limit() - pointer.position() }, ONE_STRIDE);
     }
 
-    /** Returns {@code new ShortArrayIndexer(array, sizes, strides)} */
+    /** Returns {@code new Bfloat16ArrayIndexer(array, sizes)} */
+    public static Bfloat16Indexer create(short[] array, long[] sizes) {
+        return new Bfloat16ArrayIndexer(array, sizes);
+    }
+    /** Returns {@code new Bfloat16BufferIndexer(buffer, sizes)} */
+    public static Bfloat16Indexer create(ShortBuffer buffer, long[] sizes) {
+        return new Bfloat16BufferIndexer(buffer, sizes);
+    }
+    /** Returns {@code create(pointer, sizes, strides(sizes))} */
+    public static Bfloat16Indexer create(ShortPointer pointer, long[] sizes) {
+        return create(pointer, sizes, strides(sizes));
+    }
+
+    /** Returns {@code new Bfloat16ArrayIndexer(array, sizes, strides)} */
     public static Bfloat16Indexer create(short[] array, long[] sizes, long[] strides) {
         return new Bfloat16ArrayIndexer(array, sizes, strides);
     }
-    /** Returns {@code new ShortBufferIndexer(buffer, sizes, strides)} */
+    /** Returns {@code new Bfloat16BufferIndexer(buffer, sizes, strides)} */
     public static Bfloat16Indexer create(ShortBuffer buffer, long[] sizes, long[] strides) {
         return new Bfloat16BufferIndexer(buffer, sizes, strides);
     }
@@ -70,7 +83,7 @@ public abstract class Bfloat16Indexer extends Indexer {
      *
      * @param pointer data to access via a buffer or to copy to an array
      * @param direct {@code true} to use a direct buffer, see {@link Indexer} for details
-     * @return the new short indexer backed by the raw memory interface, a buffer, or an array
+     * @return the new bfloat16 indexer backed by the raw memory interface, a buffer, or an array
      */
     public static Bfloat16Indexer create(final ShortPointer pointer, long[] sizes, long[] strides, boolean direct) {
         if (direct) {

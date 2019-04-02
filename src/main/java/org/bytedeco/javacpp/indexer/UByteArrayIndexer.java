@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2016 Samuel Audet
+ * Copyright (C) 2015-2019 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -34,6 +34,11 @@ public class UByteArrayIndexer extends UByteIndexer {
     /** Calls {@code UByteArrayIndexer(array, { array.length }, { 1 })}. */
     public UByteArrayIndexer(byte[] array) {
         this(array, new long[] { array.length }, ONE_STRIDE);
+    }
+
+    /** Calls {@code UByteArrayIndexer(array, sizes, strides(sizes))}. */
+    public UByteArrayIndexer(byte[] array, long[] sizes) {
+        this(array, sizes, strides(sizes));
     }
 
     /** Constructor to set the {@link #array}, {@link #sizes} and {@link #strides}. */

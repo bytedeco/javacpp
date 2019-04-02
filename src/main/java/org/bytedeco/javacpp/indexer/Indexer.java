@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2018 Samuel Audet
+ * Copyright (C) 2014-2019 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -58,7 +58,7 @@ public abstract class Indexer implements AutoCloseable {
     protected long[] sizes;
     /**
      * The number of elements to skip to reach the next element in a given dimension.
-     * {@code strides[i] > strides[i + 1] && strides[strides.length - 1] == 1} must hold.
+     * {@code strides[i] > strides[i + 1] && strides[strides.length - 1] == 1} preferred.
      */
     protected long[] strides;
 
@@ -94,6 +94,18 @@ public abstract class Indexer implements AutoCloseable {
             throw new IndexOutOfBoundsException(Long.toString(i));
         }
         return i;
+    }
+
+    /**
+     * Returns default (row-major contiguous) strides for the given sizes.
+     */
+    public static long[] strides(long... sizes) {
+        long[] strides = new long[sizes.length];
+        strides[sizes.length - 1] = 1;
+        for (int i = sizes.length - 2; i >= 0; i--) {
+            strides[i] = strides[i + 1] * sizes[i + 1];
+        }
+        return strides;
     }
 
     /**

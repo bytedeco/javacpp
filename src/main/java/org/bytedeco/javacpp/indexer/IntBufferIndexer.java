@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2016 Samuel Audet
+ * Copyright (C) 2014-2019 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -37,6 +37,11 @@ public class IntBufferIndexer extends IntIndexer {
     /** Calls {@code IntBufferIndexer(buffer, { buffer.limit() }, { 1 })}. */
     public IntBufferIndexer(IntBuffer buffer) {
         this(buffer, new long[] { buffer.limit() }, ONE_STRIDE);
+    }
+
+    /** Calls {@code IntBufferIndexer(buffer, sizes, strides(sizes))}. */
+    public IntBufferIndexer(IntBuffer buffer, long[] sizes) {
+        this(buffer, sizes, strides(sizes));
     }
 
     /** Constructor to set the {@link #buffer}, {@link #sizes} and {@link #strides}. */

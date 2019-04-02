@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2016 Samuel Audet
+ * Copyright (C) 2015-2019 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -38,11 +38,11 @@ public abstract class UShortIndexer extends Indexer {
         super(sizes, strides);
     }
 
-    /** Returns {@code new ByteArrayIndexer(array)} */
+    /** Returns {@code new UShortArrayIndexer(array)} */
     public static UShortIndexer create(short[] array) {
         return new UShortArrayIndexer(array);
     }
-    /** Returns {@code new ByteBufferIndexer(buffer)} */
+    /** Returns {@code new UShortBufferIndexer(buffer)} */
     public static UShortIndexer create(ShortBuffer buffer) {
         return new UShortBufferIndexer(buffer);
     }
@@ -51,11 +51,24 @@ public abstract class UShortIndexer extends Indexer {
         return create(pointer, new long[] { pointer.limit() - pointer.position() }, ONE_STRIDE);
     }
 
-    /** Returns {@code new ShortArrayIndexer(array, sizes, strides)} */
+    /** Returns {@code new UShortArrayIndexer(array, sizes)} */
+    public static UShortIndexer create(short[] array, long[] sizes) {
+        return new UShortArrayIndexer(array, sizes);
+    }
+    /** Returns {@code new UShortBufferIndexer(buffer, sizes)} */
+    public static UShortIndexer create(ShortBuffer buffer, long[] sizes) {
+        return new UShortBufferIndexer(buffer, sizes);
+    }
+    /** Returns {@code create(pointer, sizes, strides(sizes))} */
+    public static UShortIndexer create(ShortPointer pointer, long[] sizes) {
+        return create(pointer, sizes, strides(sizes));
+    }
+
+    /** Returns {@code new UShortArrayIndexer(array, sizes, strides)} */
     public static UShortIndexer create(short[] array, long[] sizes, long[] strides) {
         return new UShortArrayIndexer(array, sizes, strides);
     }
-    /** Returns {@code new ShortBufferIndexer(buffer, sizes, strides)} */
+    /** Returns {@code new UShortBufferIndexer(buffer, sizes, strides)} */
     public static UShortIndexer create(ShortBuffer buffer, long[] sizes, long[] strides) {
         return new UShortBufferIndexer(buffer, sizes, strides);
     }

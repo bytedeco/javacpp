@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2017 Samuel Audet
+ * Copyright (C) 2014-2019 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -49,6 +49,19 @@ public abstract class ByteIndexer extends Indexer {
     /** Returns {@code create(pointer, { pointer.limit() - pointer.position() }, { 1 }, true)} */
     public static ByteIndexer create(BytePointer pointer) {
         return create(pointer, new long[] { pointer.limit() - pointer.position() }, ONE_STRIDE);
+    }
+
+    /** Returns {@code new ByteArrayIndexer(array, sizes)} */
+    public static ByteIndexer create(byte[] array, long[] sizes) {
+        return new ByteArrayIndexer(array, sizes);
+    }
+    /** Returns {@code new ByteBufferIndexer(buffer, sizes)} */
+    public static ByteIndexer create(ByteBuffer buffer, long[] sizes) {
+        return new ByteBufferIndexer(buffer, sizes);
+    }
+    /** Returns {@code create(pointer, sizes, strides(sizes))} */
+    public static ByteIndexer create(BytePointer pointer, long[] sizes) {
+        return create(pointer, sizes, strides(sizes));
     }
 
     /** Returns {@code new ByteArrayIndexer(array, sizes, strides)} */

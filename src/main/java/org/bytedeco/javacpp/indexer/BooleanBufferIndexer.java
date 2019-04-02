@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Samuel Audet
+ * Copyright (C) 2018-2019 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -37,6 +37,11 @@ public class BooleanBufferIndexer extends BooleanIndexer {
     /** Calls {@code BooleanBufferIndexer(buffer, { buffer.limit() }, { 1 })}. */
     public BooleanBufferIndexer(ByteBuffer buffer) {
         this(buffer, new long[] { buffer.limit() }, ONE_STRIDE);
+    }
+
+    /** Calls {@code BooleanBufferIndexer(buffer, sizes, strides(sizes))}. */
+    public BooleanBufferIndexer(ByteBuffer buffer, long[] sizes) {
+        this(buffer, sizes, strides(sizes));
     }
 
     /** Constructor to set the {@link #buffer}, {@link #sizes} and {@link #strides}. */

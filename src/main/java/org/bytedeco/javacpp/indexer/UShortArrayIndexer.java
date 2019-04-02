@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2016 Samuel Audet
+ * Copyright (C) 2015-2019 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -34,6 +34,11 @@ public class UShortArrayIndexer extends UShortIndexer {
     /** Calls {@code UShortArrayIndexer(array, { array.length }, { 1 })}. */
     public UShortArrayIndexer(short[] array) {
         this(array, new long[] { array.length }, ONE_STRIDE);
+    }
+
+    /** Calls {@code UShortArrayIndexer(array, sizes, strides(sizes))}. */
+    public UShortArrayIndexer(short[] array, long[] sizes) {
+        this(array, sizes, strides(sizes));
     }
 
     /** Constructor to set the {@link #array}, {@link #sizes} and {@link #strides}. */

@@ -23,6 +23,7 @@ package org.bytedeco.javacpp;
 
 import java.io.File;
 import java.nio.ByteOrder;
+import java.util.Arrays;
 
 import org.bytedeco.javacpp.annotation.Platform;
 import org.bytedeco.javacpp.indexer.Bfloat16Indexer;
@@ -32,6 +33,7 @@ import org.bytedeco.javacpp.indexer.CharIndexer;
 import org.bytedeco.javacpp.indexer.DoubleIndexer;
 import org.bytedeco.javacpp.indexer.FloatIndexer;
 import org.bytedeco.javacpp.indexer.HalfIndexer;
+import org.bytedeco.javacpp.indexer.Indexer;
 import org.bytedeco.javacpp.indexer.IntIndexer;
 import org.bytedeco.javacpp.indexer.LongIndexer;
 import org.bytedeco.javacpp.indexer.ShortIndexer;
@@ -66,6 +68,16 @@ public class IndexerTest {
 
     @AfterClass public static void tearDownClass() throws Exception {
         Pointer.DeallocatorReference.totalBytes += 1L << 48;
+    }
+
+    @Test public void testIndexer() {
+        System.out.println("Indexer");
+        long[] sizes = {640, 480, 3};
+        long[] strides = Indexer.strides(sizes);
+        System.out.println(Arrays.toString(strides));
+        assertEquals(1440, strides[0]);
+        assertEquals(   3, strides[1]);
+        assertEquals(   1, strides[2]);
     }
 
     @Test public void testByteIndexer() {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2016 Samuel Audet
+ * Copyright (C) 2014-2019 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -49,6 +49,19 @@ public abstract class DoubleIndexer extends Indexer {
     /** Returns {@code create(pointer, { pointer.limit() - pointer.position() }, { 1 }, true)} */
     public static DoubleIndexer create(DoublePointer pointer) {
         return create(pointer, new long[] { pointer.limit() - pointer.position() }, ONE_STRIDE);
+    }
+
+    /** Returns {@code new DoubleArrayIndexer(array, sizes)} */
+    public static DoubleIndexer create(double[] array, long[] sizes) {
+        return new DoubleArrayIndexer(array, sizes);
+    }
+    /** Returns {@code new DoubleBufferIndexer(buffer, sizes)} */
+    public static DoubleIndexer create(DoubleBuffer buffer, long[] sizes) {
+        return new DoubleBufferIndexer(buffer, sizes);
+    }
+    /** Returns {@code create(pointer, sizes, strides(sizes))} */
+    public static DoubleIndexer create(DoublePointer pointer, long[] sizes) {
+        return create(pointer, sizes, strides(sizes));
     }
 
     /** Returns {@code new DoubleArrayIndexer(array, sizes, strides)} */

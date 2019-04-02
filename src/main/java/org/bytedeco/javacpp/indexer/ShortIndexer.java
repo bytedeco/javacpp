@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2016 Samuel Audet
+ * Copyright (C) 2014-2019 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -49,6 +49,19 @@ public abstract class ShortIndexer extends Indexer {
     /** Returns {@code create(pointer, { pointer.limit() - pointer.position() }, { 1 }, true)} */
     public static ShortIndexer create(ShortPointer pointer) {
         return create(pointer, new long[] { pointer.limit() - pointer.position() }, ONE_STRIDE);
+    }
+
+    /** Returns {@code new ShortArrayIndexer(array, sizes)} */
+    public static ShortIndexer create(short[] array, long[] sizes) {
+        return new ShortArrayIndexer(array, sizes);
+    }
+    /** Returns {@code new ShortBufferIndexer(buffer, sizes)} */
+    public static ShortIndexer create(ShortBuffer buffer, long[] sizes) {
+        return new ShortBufferIndexer(buffer, sizes);
+    }
+    /** Returns {@code create(pointer, sizes, strides(sizes))} */
+    public static ShortIndexer create(ShortPointer pointer, long[] sizes) {
+        return create(pointer, sizes, strides(sizes));
     }
 
     /** Returns {@code new ShortArrayIndexer(array, sizes, strides)} */

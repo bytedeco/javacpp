@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2017 Samuel Audet
+ * Copyright (C) 2014-2019 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -37,6 +37,11 @@ public class ByteBufferIndexer extends ByteIndexer {
     /** Calls {@code ByteBufferIndexer(buffer, { buffer.limit() }, { 1 })}. */
     public ByteBufferIndexer(ByteBuffer buffer) {
         this(buffer, new long[] { buffer.limit() }, ONE_STRIDE);
+    }
+
+    /** Calls {@code ByteBufferIndexer(buffer, sizes, strides(sizes))}. */
+    public ByteBufferIndexer(ByteBuffer buffer, long[] sizes) {
+        this(buffer, sizes, strides(sizes));
     }
 
     /** Constructor to set the {@link #buffer}, {@link #sizes} and {@link #strides}. */

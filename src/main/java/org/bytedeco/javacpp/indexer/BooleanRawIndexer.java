@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Samuel Audet
+ * Copyright (C) 2018-2019 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -41,6 +41,11 @@ public class BooleanRawIndexer extends BooleanIndexer {
     /** Calls {@code BooleanRawIndexer(pointer, { pointer.limit() - pointer.position() }, { 1 })}. */
     public BooleanRawIndexer(BooleanPointer pointer) {
         this(pointer, new long[] { pointer.limit() - pointer.position() }, ONE_STRIDE);
+    }
+
+    /** Calls {@code BooleanRawIndexer(pointer, sizes, strides(sizes))}. */
+    public BooleanRawIndexer(BooleanPointer pointer, long[] sizes) {
+        this(pointer, sizes, strides(sizes));
     }
 
     /** Constructor to set the {@link #pointer}, {@link #sizes} and {@link #strides}. */

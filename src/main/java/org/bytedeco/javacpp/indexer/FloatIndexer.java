@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2016 Samuel Audet
+ * Copyright (C) 2014-2019 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -49,6 +49,19 @@ public abstract class FloatIndexer extends Indexer {
     /** Returns {@code create(pointer, { pointer.limit() - pointer.position() }, { 1 }, true)} */
     public static FloatIndexer create(FloatPointer pointer) {
         return create(pointer, new long[] { pointer.limit() - pointer.position() }, ONE_STRIDE);
+    }
+
+    /** Returns {@code new FloatArrayIndexer(array, sizes)} */
+    public static FloatIndexer create(float[] array, long[] sizes) {
+        return new FloatArrayIndexer(array, sizes);
+    }
+    /** Returns {@code new FloatBufferIndexer(buffer, sizes)} */
+    public static FloatIndexer create(FloatBuffer buffer, long[] sizes) {
+        return new FloatBufferIndexer(buffer, sizes);
+    }
+    /** Returns {@code create(pointer, sizes, strides(sizes))} */
+    public static FloatIndexer create(FloatPointer pointer, long[] sizes) {
+        return create(pointer, sizes, strides(sizes));
     }
 
     /** Returns {@code new FloatArrayIndexer(array, sizes, strides)} */

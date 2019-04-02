@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2016 Samuel Audet
+ * Copyright (C) 2014-2019 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -34,6 +34,11 @@ public class IntArrayIndexer extends IntIndexer {
     /** Calls {@code IntArrayIndexer(array, { array.length }, { 1 })}. */
     public IntArrayIndexer(int[] array) {
         this(array, new long[] { array.length }, ONE_STRIDE);
+    }
+
+    /** Calls {@code IntArrayIndexer(array, sizes, strides(sizes))}. */
+    public IntArrayIndexer(int[] array, long[] sizes) {
+        this(array, sizes, strides(sizes));
     }
 
     /** Constructor to set the {@link #array}, {@link #sizes} and {@link #strides}. */

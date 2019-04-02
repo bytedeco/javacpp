@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2016 Samuel Audet
+ * Copyright (C) 2014-2019 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -49,6 +49,19 @@ public abstract class CharIndexer extends Indexer {
     /** Returns {@code create(pointer, { pointer.limit() - pointer.position() }, { 1 }, true)} */
     public static CharIndexer create(CharPointer pointer) {
         return create(pointer, new long[] { pointer.limit() - pointer.position() }, ONE_STRIDE);
+    }
+
+    /** Returns {@code new CharArrayIndexer(array, sizes)} */
+    public static CharIndexer create(char[] array, long[] sizes) {
+        return new CharArrayIndexer(array, sizes);
+    }
+    /** Returns {@code new CharBufferIndexer(buffer, sizes)} */
+    public static CharIndexer create(CharBuffer buffer, long[] sizes) {
+        return new CharBufferIndexer(buffer, sizes);
+    }
+    /** Returns {@code create(pointer, sizes, strides(sizes))} */
+    public static CharIndexer create(CharPointer pointer, long[] sizes) {
+        return create(pointer, sizes, strides(sizes));
     }
 
     /** Returns {@code new CharArrayIndexer(array, sizes, strides)} */
