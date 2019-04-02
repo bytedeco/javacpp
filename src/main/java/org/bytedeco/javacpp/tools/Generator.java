@@ -2052,6 +2052,10 @@ public class Generator {
                     }
                     if (FunctionPointer.class.isAssignableFrom(methodInfo.returnType)) {
                         out.println("    rptr = new (std::nothrow) " + valueTypeName + ";");
+                        if (returnBy instanceof ByPtrPtr) {
+                            String[] cpptypeName = cppTypeName(methodInfo.returnType);
+                            returnPrefix = cpptypeName[0] + "* rptrptr" + cpptypeName[1] + " = ";
+                        }
                     }
                 } else if (methodInfo.returnType == String.class) {
                     out.println("    jstring rarg = NULL;");
@@ -2354,7 +2358,11 @@ public class Generator {
                 out.println(indent + "    env->ThrowNew(JavaCPP_getClass(env, " +
                         jclasses.index(NullPointerException.class) + "), \"Return pointer address is NULL.\");");
                 out.println(indent + "} else {");
-                out.println(indent + "    rptr = *rptrptr;");
+                if (FunctionPointer.class.isAssignableFrom(methodInfo.returnType)) {
+                    out.println(indent + "    rptr->ptr = *rptrptr;");
+                } else {
+                    out.println(indent + "    rptr = *rptrptr;");
+                }
                 out.println(indent + "}");
             }
         }
@@ -2931,7 +2939,7 @@ public class Generator {
                         out.println("    jlong rsize" + j + " = env->GetLongField(obj" + j + ", JavaCPP_limitFID);");
                         out.println("    void* rowner" + j + " = JavaCPP_getPointerOwner(env, obj" + j + ");");
                     }
-                    if (!callbackParameterTypes[j].isAnnotationPresent(Opaque.class)) {
+                    if (!callbackParameterTypes[j].isAnnotationPresent(Opaque.class) && !FunctionPointer.class.isAssignableFrom(callbackParameterTypes[j])) {
                         out.println("    jlong rposition" + j + " = env->GetLongField(obj" + j + ", JavaCPP_positionFID);");
                         out.println("    rptr" + j + " += rposition" + j + ";");
                         if (adapterInfo != null) {

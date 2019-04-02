@@ -1,4 +1,5 @@
 
+ * Fix some `Generator` issues with `FunctionPointer` passed or returned `@ByPtrPtr`
  * Use ModiTect to compile `module-info.java` with JDK 8 and preserve backward compatibility
  * Add `platform.executable` and `platform.executablepath` properties to bundle executables and extract them with `Loader.load()`
  * Create symbolic links for all libraries preloaded by `Loader` as they get loaded to satisfy libraries like MKL
