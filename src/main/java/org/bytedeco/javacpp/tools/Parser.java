@@ -2274,7 +2274,7 @@ public class Parser {
                         indices += ", ";
                     }
                     String javaTypeWithoutAnnotations = dcl.type.javaName.substring(dcl.type.javaName.lastIndexOf(" ") + 1);
-                    decl.text += " " + modifiers + setterType + javaName + "(" + indices + javaTypeWithoutAnnotations + " " + javaName + ");";
+                    decl.text += " " + modifiers + setterType + javaName + "(" + indices + javaTypeWithoutAnnotations + " setter);";
                 }
                 decl.text += "\n";
                 if ((dcl.type.constValue || dcl.constPointer) && dcl.type.staticMember && indices.length() == 0) {
@@ -2318,7 +2318,7 @@ public class Parser {
                     if (indices.length() > 0) {
                         indices += ", ";
                     }
-                    decl.text += " " + modifiers + setterType + javaName + "(" + indices + dcl.type.javaName + " " + javaName + ");";
+                    decl.text += " " + modifiers + setterType + javaName + "(" + indices + dcl.type.javaName + " setter);";
                 }
                 decl.text += "\n";
             }

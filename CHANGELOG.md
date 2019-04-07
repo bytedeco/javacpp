@@ -1,4 +1,5 @@
 
+ * Have `Parser` output `setter` as dummy parameter name for setter methods to clarify usage
  * Add `Indexer.strides(long... sizes)` and use as default strides when not specified by the user
  * Add `long...` constructors, getters, and setters to `CLongPointer` and `SizeTPointer` for convenience
  * Fix some `Generator` issues with `FunctionPointer` passed or returned `@ByPtrPtr`
