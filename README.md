@@ -17,8 +17,7 @@ Please feel free to ask questions on [the mailing list](http://groups.google.com
 
 Downloads
 ---------
- * JavaCPP 1.4.4 binary archive  [javacpp-1.4.4-bin.zip](http://search.maven.org/remotecontent?filepath=org/bytedeco/javacpp/1.4.4/javacpp-1.4.4-bin.zip) (392 KB)
- * JavaCPP 1.4.4 source archive  [javacpp-1.4.4-src.zip](http://search.maven.org/remotecontent?filepath=org/bytedeco/javacpp/1.4.4/javacpp-1.4.4-src.zip) (363 KB)
+Archives containing JAR files are available as [releases](https://github.com/bytedeco/javacpp/releases).
 
 We can also have everything downloaded and installed automatically with:
 
@@ -27,27 +26,27 @@ We can also have everything downloaded and installed automatically with:
   <dependency>
     <groupId>org.bytedeco</groupId>
     <artifactId>javacpp</artifactId>
-    <version>1.4.4</version>
+    <version>1.5</version>
   </dependency>
 ```
 
  * Gradle (inside the `build.gradle` file)
 ```groovy
   dependencies {
-    compile group: 'org.bytedeco', name: 'javacpp', version: '1.4.4'
+    compile group: 'org.bytedeco', name: 'javacpp', version: '1.5'
   }
 ```
 
  * Leiningen (inside the `project.clj` file)
 ```clojure
   :dependencies [
-    [org.bytedeco/javacpp "1.4.4"]
+    [org.bytedeco/javacpp "1.5"]
   ]
 ```
 
  * sbt (inside the `build.sbt` file)
 ```scala
-  libraryDependencies += "org.bytedeco" % "javacpp" % "1.4.4"
+  libraryDependencies += "org.bytedeco" % "javacpp" % "1.5"
 ```
 
 Another option available for Scala users is [sbt-javacpp](https://github.com/bytedeco/sbt-javacpp).
