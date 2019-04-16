@@ -54,6 +54,7 @@ import java.util.jar.JarFile;
 import org.bytedeco.javacpp.annotation.Cast;
 import org.bytedeco.javacpp.annotation.Name;
 import org.bytedeco.javacpp.annotation.Platform;
+import org.bytedeco.javacpp.annotation.Raw;
 import org.bytedeco.javacpp.tools.Builder;
 import org.bytedeco.javacpp.tools.Logger;
 
@@ -1024,15 +1025,25 @@ public class Loader {
         // Preload native libraries desired by our class
         List<String> preloads = new ArrayList<String>();
         List<String> preloaded = new ArrayList<String>();
+        List<String> preloadGlobals = new ArrayList<String>();
         preloads.addAll(p.get("platform.preload"));
         preloads.addAll(p.get("platform.link"));
         UnsatisfiedLinkError preloadError = null;
         for (String preload : preloads) {
             try {
+                boolean loadGlobally = false;
+                if (preload.endsWith("!")) {
+                    // defer call to loadGlobal() until after we've loaded the JNI library that contains the function
+                    loadGlobally = true;
+                    preload = preload.substring(0, preload.length() - 1);
+                }
                 URL[] urls = findLibrary(cls, p, preload, pathsFirst);
                 String filename = loadLibrary(urls, preload, preloaded.toArray(new String[preloaded.size()]));
                 if (filename != null) {
                     preloaded.add(filename);
+                    if (loadGlobally) {
+                        preloadGlobals.add(filename);
+                    }
                 }
                 if (cacheDir != null && filename != null && filename.startsWith(cacheDir)) {
                     createLibraryLink(filename, p, preload);
@@ -1078,6 +1089,9 @@ public class Loader {
                 if (cacheDir != null && filename != null && filename.startsWith(cacheDir)) {
                     createLibraryLink(filename, p, library);
                 }
+                for (String preloadGlobal : preloadGlobals) {
+                    loadGlobal(preloadGlobal);
+                }
                 return filename;
             } catch (UnsatisfiedLinkError e) {
                 Throwable t = e;
@@ -1113,10 +1127,14 @@ public class Loader {
      * @param properties contains the directories to scan for if we fail to extract the library from resources
      * @param libnameversion the name of the library + "@" + optional version tag
      *                       + "#" + a second optional name used at extraction (or empty to prevent it)
+     *                       + "!" to load all symbols globally
      * @param pathsFirst search the paths first before bundled resources
      * @return URLs that point to potential locations of the library
      */
     public static URL[] findLibrary(Class cls, ClassProperties properties, String libnameversion, boolean pathsFirst) {
+        if (libnameversion.endsWith("!")) {
+            libnameversion = libnameversion.substring(0, libnameversion.length() - 1);
+        }
         if (libnameversion.trim().endsWith("#")) {
             return new URL[0];
         }
@@ -1224,7 +1242,8 @@ public class Loader {
      *
      * @param urls the URLs to try loading the library from
      * @param libnameversion the name of the library + "@" + optional version tag
-     *                       + "#" + a second optional name used at extraction
+     *                       + "#" + a second optional name used at extraction (or empty to prevent it)
+     *                       + "!" to load all symbols globally
      * @param preloaded libraries for which to create symbolic links in same cache directory
      * @return the full path of the file loaded, or the library name if unknown
      *         (but {@code if (!isLoadLibraries) { return null; }})
@@ -1233,6 +1252,11 @@ public class Loader {
     public static synchronized String loadLibrary(URL[] urls, String libnameversion, String ... preloaded) {
         if (!isLoadLibraries()) {
             return null;
+        }
+        boolean loadGlobally = false;
+        if (libnameversion.endsWith("!")) {
+            loadGlobally = true;
+            libnameversion = libnameversion.substring(0, libnameversion.length() - 1);
         }
         String[] split = libnameversion.split("#");
         String libnameversion2 = split[0];
@@ -1314,6 +1338,9 @@ public class Loader {
                         }
                         loadedLibraries.put(libnameversion2, filename2);
                         System.load(filename2);
+                        if (loadGlobally) {
+                            loadGlobal(filename2);
+                        }
                         return filename2;
                     } catch (UnsatisfiedLinkError e) {
                         loadError = e;
@@ -1328,7 +1355,7 @@ public class Loader {
                 return filename;
             } else if (!libnameversion.trim().endsWith("#")) {
                 // ... or as last resort, try to load it via the system.
-                String libname = libnameversion.split("#")[0].split("@")[0];
+                String libname = libnameversion.split("#")[0].split("@")[0].split("!")[0];
                 if (logger.isDebugEnabled()) {
                     logger.debug("Loading library " + libname);
                 }
@@ -1373,6 +1400,9 @@ public class Loader {
      * @return the version-less filename (or null on failure), a symbolic link only if needed
      */
     public static String createLibraryLink(String filename, ClassProperties properties, String libnameversion, String ... paths) {
+        if (libnameversion.endsWith("!")) {
+            libnameversion = libnameversion.substring(0, libnameversion.length() - 1);
+        }
         File file = new File(filename);
         String parent = file.getParent(), name = file.getName(), link = null;
 
@@ -1536,6 +1566,11 @@ public class Loader {
     /** Returns the address found under the given name in the "dynamic symbol tables" (Linux, Mac OS X, etc)
      * or the "export tables" (Windows) of all libraries loaded, or null if not found. */
     @Name("JavaCPP_addressof") public static native Pointer addressof(String symbol);
+
+    /** Loads all symbols from a library globally, that is {@code dlopen(filename, RTLD_LAZY | RTLD_GLOBAL)},
+     * or simply by default with {@code LoadLibrary(filename)} on Windows. If the library name passed to
+     * one of the other load functions in this class ends with "!", this function will get called on them. */
+    @Name("JavaCPP_loadGlobal") @Raw(withEnv = true) public static native void loadGlobal(String filename);
 
     /** Returns the JavaVM JNI object, as required by some APIs for initialization. */
     @Name("JavaCPP_getJavaVM") public static native @Cast("JavaVM*") Pointer getJavaVM();

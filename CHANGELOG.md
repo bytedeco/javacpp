@@ -1,4 +1,6 @@
 
+ * Add `Loader.loadGlobal()` to load symbols globally as often required by Python libraries ([issue ContinuumIO/anaconda-issues#6401](https://github.com/ContinuumIO/anaconda-issues/issues/6401))
+
 ### April 11, 2019 version 1.5
  * Have `Parser` output `setter` as dummy parameter name for setter methods to clarify usage
  * Add `Indexer.strides(long... sizes)` and use as default strides when not specified by the user

@@ -76,8 +76,16 @@ public class BuilderTest implements BuildEnabled, LoadEnabled {
         File[] outputFiles = builder.build();
 
         System.out.println("Loader");
+        try {
+            System.out.println("Note: UnsatisfiedLinkError should get thrown here and printed below.");
+            Loader.loadGlobal("/path/to/nowhere");
+            fail("UnsatisfiedLinkError should have been thrown.");
+        } catch (Throwable t) {
+            System.out.println(t);
+        }
         Loader.loadProperties().remove("platform.extension");
-        Loader.load(c);
+        String filename = Loader.load(c);
+        Loader.loadGlobal(filename);
         assertTrue(Loader.getLoadedLibraries().get("jniBuilderTest").contains("-ext2"));
         Loader.loadedLibraries.clear();
 
@@ -87,12 +95,14 @@ public class BuilderTest implements BuildEnabled, LoadEnabled {
 
         System.out.println("Loader");
         Loader.loadProperties().remove("platform.extension");
-        Loader.load(c);
+        filename = Loader.load(c);
+        Loader.loadGlobal(filename);
         assertTrue(Loader.getLoadedLibraries().get("jniBuilderTest").contains("-ext1"));
         Loader.loadedLibraries.clear();
 
         Loader.loadProperties().put("platform.extension", "-ext2");
-        Loader.load(c);
+        filename = Loader.load(c);
+        Loader.loadGlobal(filename);
         assertTrue(Loader.getLoadedLibraries().get("jniBuilderTest").contains("-ext2"));
 
         System.out.println(initCount);
