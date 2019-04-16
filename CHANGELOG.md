@@ -1,4 +1,5 @@
 
+ * Allow prefixing library names with `:` to have `Loader` consider them as filenames with prefix and suffix already included
  * Add `Loader.loadGlobal()` to load symbols globally as often required by Python libraries ([issue ContinuumIO/anaconda-issues#6401](https://github.com/ContinuumIO/anaconda-issues/issues/6401))
 
 ### April 11, 2019 version 1.5

@@ -1125,13 +1125,18 @@ public class Loader {
      *
      * @param cls the Class whose package name and {@link ClassLoader} are used to extract from resources
      * @param properties contains the directories to scan for if we fail to extract the library from resources
-     * @param libnameversion the name of the library + "@" + optional version tag
+     * @param libnameversion ":" to disable prefixes and suffixes + the name of the library + "@" + optional version tag
      *                       + "#" + a second optional name used at extraction (or empty to prevent it)
      *                       + "!" to load all symbols globally
      * @param pathsFirst search the paths first before bundled resources
      * @return URLs that point to potential locations of the library
      */
     public static URL[] findLibrary(Class cls, ClassProperties properties, String libnameversion, boolean pathsFirst) {
+        boolean nostyle = false;
+        if (libnameversion.startsWith(":")) {
+            nostyle = true;
+            libnameversion = libnameversion.substring(1);
+        }
         if (libnameversion.endsWith("!")) {
             libnameversion = libnameversion.substring(0, libnameversion.length() - 1);
         }
@@ -1175,6 +1180,10 @@ public class Loader {
                 styles2[3 * i + 1] = prefix + libname2 + version2 + suffixes[i]; // Mac OS X style
                 styles2[3 * i + 2] = prefix + libname2 + suffixes[i];            // without version
             }
+        }
+        if (nostyle) {
+            styles = new String[] {libname};
+            styles2 = new String[] {libname2};
         }
 
         List<String> paths = new ArrayList<String>();
@@ -1241,7 +1250,7 @@ public class Loader {
      * Finally, if all fails, falls back on {@link System#loadLibrary(String)}.
      *
      * @param urls the URLs to try loading the library from
-     * @param libnameversion the name of the library + "@" + optional version tag
+     * @param libnameversion ":" to disable prefixes and suffixes + the name of the library + "@" + optional version tag
      *                       + "#" + a second optional name used at extraction (or empty to prevent it)
      *                       + "!" to load all symbols globally
      * @param preloaded libraries for which to create symbolic links in same cache directory
@@ -1252,6 +1261,9 @@ public class Loader {
     public static synchronized String loadLibrary(URL[] urls, String libnameversion, String ... preloaded) {
         if (!isLoadLibraries()) {
             return null;
+        }
+        if (libnameversion.startsWith(":")) {
+            libnameversion = libnameversion.substring(1);
         }
         boolean loadGlobally = false;
         if (libnameversion.endsWith("!")) {
@@ -1355,7 +1367,10 @@ public class Loader {
                 return filename;
             } else if (!libnameversion.trim().endsWith("#")) {
                 // ... or as last resort, try to load it via the system.
-                String libname = libnameversion.split("#")[0].split("@")[0].split("!")[0];
+                String libname = libnameversion.split("#")[0].split("@")[0];
+                if (libname.endsWith("!")) {
+                    libname = libname.substring(0, libname.length() - 1);
+                }
                 if (logger.isDebugEnabled()) {
                     logger.debug("Loading library " + libname);
                 }
@@ -1400,7 +1415,10 @@ public class Loader {
      * @return the version-less filename (or null on failure), a symbolic link only if needed
      */
     public static String createLibraryLink(String filename, ClassProperties properties, String libnameversion, String ... paths) {
-        if (libnameversion.endsWith("!")) {
+        if (libnameversion != null && libnameversion.startsWith(":")) {
+            libnameversion = libnameversion.substring(1);
+        }
+        if (libnameversion != null && libnameversion.endsWith("!")) {
             libnameversion = libnameversion.substring(0, libnameversion.length() - 1);
         }
         File file = new File(filename);

@@ -434,7 +434,7 @@ public class Builder {
                 }
                 List<String> l = new ArrayList<>();
                 l.addAll(linkBeforeOptions);
-                l.add(linkPrefix + s + linkSuffix);
+                l.add(linkPrefix + (s.endsWith("!") ? s.substring(0, s.length() - 1) : s) + linkSuffix);
                 l.addAll(linkAfterOptions);
 
                 command.addAll(i, l);
