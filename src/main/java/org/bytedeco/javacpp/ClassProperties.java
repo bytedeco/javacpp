@@ -296,7 +296,10 @@ public class ClassProperties extends HashMap<String,List<String>> {
         addAll("platform.preload", preload);
         addAll("platform.resourcepath", resourcepath);
         addAll("platform.resource", resource);
-        addAll("platform.extension", extension);
+        if (platformExtension == null || platformExtension.length() == 0) {
+            // don't override the platform extension when found outside the class
+            addAll("platform.extension", extension);
+        }
         addAll("platform.executablepath", executablepath);
         setProperty("platform.executable", executable);
         setProperty("platform.library", library);

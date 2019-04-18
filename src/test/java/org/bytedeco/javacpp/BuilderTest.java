@@ -72,7 +72,7 @@ public class BuilderTest implements BuildEnabled, LoadEnabled {
         assertEquals(0, outputFiles0.length);
 
         System.out.println("Builder");
-        Builder builder = new Builder().property("platform.extension", "-ext2").classesOrPackages(c.getName());
+        Builder builder = new Builder().property("platform.extension", "-ext1").classesOrPackages(c.getName());
         File[] outputFiles = builder.build();
 
         System.out.println("Loader");
@@ -86,24 +86,24 @@ public class BuilderTest implements BuildEnabled, LoadEnabled {
         Loader.loadProperties().remove("platform.extension");
         String filename = Loader.load(c);
         Loader.loadGlobal(filename);
-        assertTrue(Loader.getLoadedLibraries().get("jniBuilderTest").contains("-ext2"));
+        assertTrue(Loader.getLoadedLibraries().get("jniBuilderTest").contains("-ext1"));
         Loader.loadedLibraries.clear();
 
         System.out.println("Builder");
-        Builder builder2 = new Builder().property("platform.extension", "-ext1").classesOrPackages(c.getName());
+        Builder builder2 = new Builder().property("platform.extension", "-ext2").classesOrPackages(c.getName());
         File[] outputFiles2 = builder2.build();
 
         System.out.println("Loader");
         Loader.loadProperties().remove("platform.extension");
         filename = Loader.load(c);
         Loader.loadGlobal(filename);
-        assertTrue(Loader.getLoadedLibraries().get("jniBuilderTest").contains("-ext1"));
+        assertTrue(Loader.getLoadedLibraries().get("jniBuilderTest").contains("-ext2"));
         Loader.loadedLibraries.clear();
 
-        Loader.loadProperties().put("platform.extension", "-ext2");
+        Loader.loadProperties().put("platform.extension", "-ext1");
         filename = Loader.load(c);
         Loader.loadGlobal(filename);
-        assertTrue(Loader.getLoadedLibraries().get("jniBuilderTest").contains("-ext2"));
+        assertTrue(Loader.getLoadedLibraries().get("jniBuilderTest").contains("-ext1"));
 
         System.out.println(initCount);
         assertTrue(initCount >= 6);

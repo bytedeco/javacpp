@@ -1061,7 +1061,9 @@ public class Loader {
             String suffix = p.getProperty("platform.executable.suffix", "");
             String filename = prefix + executable + suffix;
             try {
-                for (String extension : Arrays.copyOf(extensions, extensions.length + 1)) {
+                for (int i = extensions.length - 1; i >= -1; i--) {
+                    // iterate extensions in reverse to be consistent with the overriding of properties
+                    String extension = i >= 0 ? extensions[i] : "";
                     String subdir = platform + (extension == null ? "" : extension) + "/";
                     File f = cacheResource(cls, subdir + filename);
                     if (f != null) {
@@ -1199,7 +1201,9 @@ public class Loader {
         ArrayList<URL> urls = new ArrayList<URL>(styles.length * (1 + paths.size()));
         for (int i = 0; cls != null && i < styles.length; i++) {
             // ... then find it from in our resources ...
-            for (String extension : Arrays.copyOf(extensions, extensions.length + 1)) {
+            for (int j = extensions.length - 1; j >= -1; j--) {
+                // iterate extensions in reverse to be consistent with the overriding of properties
+                String extension = j >= 0 ? extensions[j] : "";
                 for (String resource : Arrays.copyOf(resources, resources.length + 1)) {
                     if (resource != null && !resource.endsWith("/")) {
                         resource += "/";
