@@ -40,7 +40,7 @@ public class LongBufferIndexer extends LongIndexer {
     }
 
     /** Calls {@code LongBufferIndexer(buffer, sizes, strides(sizes))}. */
-    public LongBufferIndexer(LongBuffer buffer, long[] sizes) {
+    public LongBufferIndexer(LongBuffer buffer, long... sizes) {
         this(buffer, sizes, strides(sizes));
     }
 

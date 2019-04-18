@@ -52,15 +52,15 @@ public abstract class DoubleIndexer extends Indexer {
     }
 
     /** Returns {@code new DoubleArrayIndexer(array, sizes)} */
-    public static DoubleIndexer create(double[] array, long[] sizes) {
+    public static DoubleIndexer create(double[] array, long... sizes) {
         return new DoubleArrayIndexer(array, sizes);
     }
     /** Returns {@code new DoubleBufferIndexer(buffer, sizes)} */
-    public static DoubleIndexer create(DoubleBuffer buffer, long[] sizes) {
+    public static DoubleIndexer create(DoubleBuffer buffer, long... sizes) {
         return new DoubleBufferIndexer(buffer, sizes);
     }
     /** Returns {@code create(pointer, sizes, strides(sizes))} */
-    public static DoubleIndexer create(DoublePointer pointer, long[] sizes) {
+    public static DoubleIndexer create(DoublePointer pointer, long... sizes) {
         return create(pointer, sizes, strides(sizes));
     }
 

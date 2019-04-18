@@ -44,7 +44,7 @@ public class UShortRawIndexer extends UShortIndexer {
     }
 
     /** Calls {@code UShortRawIndexer(pointer, sizes, strides(sizes))}. */
-    public UShortRawIndexer(ShortPointer pointer, long[] sizes) {
+    public UShortRawIndexer(ShortPointer pointer, long... sizes) {
         this(pointer, sizes, strides(sizes));
     }
 

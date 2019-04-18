@@ -40,7 +40,7 @@ public class DoubleBufferIndexer extends DoubleIndexer {
     }
 
     /** Calls {@code DoubleBufferIndexer(buffer, sizes, strides(sizes))}. */
-    public DoubleBufferIndexer(DoubleBuffer buffer, long[] sizes) {
+    public DoubleBufferIndexer(DoubleBuffer buffer, long... sizes) {
         this(buffer, sizes, strides(sizes));
     }
 

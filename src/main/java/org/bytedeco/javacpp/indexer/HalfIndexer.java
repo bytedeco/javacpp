@@ -52,15 +52,15 @@ public abstract class HalfIndexer extends Indexer {
     }
 
     /** Returns {@code new HalfArrayIndexer(array, sizes)} */
-    public static HalfIndexer create(short[] array, long[] sizes) {
+    public static HalfIndexer create(short[] array, long... sizes) {
         return new HalfArrayIndexer(array, sizes);
     }
     /** Returns {@code new HalfBufferIndexer(buffer, sizes)} */
-    public static HalfIndexer create(ShortBuffer buffer, long[] sizes) {
+    public static HalfIndexer create(ShortBuffer buffer, long... sizes) {
         return new HalfBufferIndexer(buffer, sizes);
     }
     /** Returns {@code create(pointer, sizes, strides(sizes))} */
-    public static HalfIndexer create(ShortPointer pointer, long[] sizes) {
+    public static HalfIndexer create(ShortPointer pointer, long... sizes) {
         return create(pointer, sizes, strides(sizes));
     }
 

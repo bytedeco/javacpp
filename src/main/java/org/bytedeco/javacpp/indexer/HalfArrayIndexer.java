@@ -37,7 +37,7 @@ public class HalfArrayIndexer extends HalfIndexer {
     }
 
     /** Calls {@code HalfArrayIndexer(array, sizes, strides(sizes))}. */
-    public HalfArrayIndexer(short[] array, long[] sizes) {
+    public HalfArrayIndexer(short[] array, long... sizes) {
         this(array, sizes, strides(sizes));
     }
 

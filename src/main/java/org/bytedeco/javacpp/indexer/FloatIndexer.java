@@ -52,15 +52,15 @@ public abstract class FloatIndexer extends Indexer {
     }
 
     /** Returns {@code new FloatArrayIndexer(array, sizes)} */
-    public static FloatIndexer create(float[] array, long[] sizes) {
+    public static FloatIndexer create(float[] array, long... sizes) {
         return new FloatArrayIndexer(array, sizes);
     }
     /** Returns {@code new FloatBufferIndexer(buffer, sizes)} */
-    public static FloatIndexer create(FloatBuffer buffer, long[] sizes) {
+    public static FloatIndexer create(FloatBuffer buffer, long... sizes) {
         return new FloatBufferIndexer(buffer, sizes);
     }
     /** Returns {@code create(pointer, sizes, strides(sizes))} */
-    public static FloatIndexer create(FloatPointer pointer, long[] sizes) {
+    public static FloatIndexer create(FloatPointer pointer, long... sizes) {
         return create(pointer, sizes, strides(sizes));
     }
 

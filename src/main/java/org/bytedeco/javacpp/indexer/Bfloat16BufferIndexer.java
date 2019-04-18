@@ -40,7 +40,7 @@ public class Bfloat16BufferIndexer extends Bfloat16Indexer {
     }
 
     /** Calls {@code Bfloat16BufferIndexer(buffer, sizes, strides(sizes))}. */
-    public Bfloat16BufferIndexer(ShortBuffer buffer, long[] sizes) {
+    public Bfloat16BufferIndexer(ShortBuffer buffer, long... sizes) {
         this(buffer, sizes, strides(sizes));
     }
 

@@ -40,7 +40,7 @@ public class ShortBufferIndexer extends ShortIndexer {
     }
 
     /** Calls {@code ShortBufferIndexer(buffer, sizes, strides(sizes))}. */
-    public ShortBufferIndexer(ShortBuffer buffer, long[] sizes) {
+    public ShortBufferIndexer(ShortBuffer buffer, long... sizes) {
         this(buffer, sizes, strides(sizes));
     }
 

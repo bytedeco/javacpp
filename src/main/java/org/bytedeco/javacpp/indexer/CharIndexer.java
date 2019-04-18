@@ -52,15 +52,15 @@ public abstract class CharIndexer extends Indexer {
     }
 
     /** Returns {@code new CharArrayIndexer(array, sizes)} */
-    public static CharIndexer create(char[] array, long[] sizes) {
+    public static CharIndexer create(char[] array, long... sizes) {
         return new CharArrayIndexer(array, sizes);
     }
     /** Returns {@code new CharBufferIndexer(buffer, sizes)} */
-    public static CharIndexer create(CharBuffer buffer, long[] sizes) {
+    public static CharIndexer create(CharBuffer buffer, long... sizes) {
         return new CharBufferIndexer(buffer, sizes);
     }
     /** Returns {@code create(pointer, sizes, strides(sizes))} */
-    public static CharIndexer create(CharPointer pointer, long[] sizes) {
+    public static CharIndexer create(CharPointer pointer, long... sizes) {
         return create(pointer, sizes, strides(sizes));
     }
 

@@ -52,15 +52,15 @@ public abstract class UByteIndexer extends Indexer {
     }
 
     /** Returns {@code new UByteArrayIndexer(array, sizes)} */
-    public static UByteIndexer create(byte[] array, long[] sizes) {
+    public static UByteIndexer create(byte[] array, long... sizes) {
         return new UByteArrayIndexer(array, sizes);
     }
     /** Returns {@code new UByteBufferIndexer(buffer, sizes)} */
-    public static UByteIndexer create(ByteBuffer buffer, long[] sizes) {
+    public static UByteIndexer create(ByteBuffer buffer, long... sizes) {
         return new UByteBufferIndexer(buffer, sizes);
     }
     /** Returns {@code create(pointer, sizes, strides(sizes))} */
-    public static UByteIndexer create(BytePointer pointer, long[] sizes) {
+    public static UByteIndexer create(BytePointer pointer, long... sizes) {
         return create(pointer, sizes, strides(sizes));
     }
 

@@ -54,15 +54,15 @@ public abstract class Bfloat16Indexer extends Indexer {
     }
 
     /** Returns {@code new Bfloat16ArrayIndexer(array, sizes)} */
-    public static Bfloat16Indexer create(short[] array, long[] sizes) {
+    public static Bfloat16Indexer create(short[] array, long... sizes) {
         return new Bfloat16ArrayIndexer(array, sizes);
     }
     /** Returns {@code new Bfloat16BufferIndexer(buffer, sizes)} */
-    public static Bfloat16Indexer create(ShortBuffer buffer, long[] sizes) {
+    public static Bfloat16Indexer create(ShortBuffer buffer, long... sizes) {
         return new Bfloat16BufferIndexer(buffer, sizes);
     }
     /** Returns {@code create(pointer, sizes, strides(sizes))} */
-    public static Bfloat16Indexer create(ShortPointer pointer, long[] sizes) {
+    public static Bfloat16Indexer create(ShortPointer pointer, long... sizes) {
         return create(pointer, sizes, strides(sizes));
     }
 

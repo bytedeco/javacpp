@@ -37,7 +37,7 @@ public class BooleanArrayIndexer extends BooleanIndexer {
     }
 
     /** Calls {@code BooleanArrayIndexer(array, sizes, strides(sizes))}. */
-    public BooleanArrayIndexer(boolean[] array, long[] sizes) {
+    public BooleanArrayIndexer(boolean[] array, long... sizes) {
         this(array, sizes, strides(sizes));
     }
 

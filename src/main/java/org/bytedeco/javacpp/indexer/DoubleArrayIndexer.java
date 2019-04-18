@@ -37,7 +37,7 @@ public class DoubleArrayIndexer extends DoubleIndexer {
     }
 
     /** Calls {@code DoubleArrayIndexer(array, sizes, strides(sizes))}. */
-    public DoubleArrayIndexer(double[] array, long[] sizes) {
+    public DoubleArrayIndexer(double[] array, long... sizes) {
         this(array, sizes, strides(sizes));
     }
 

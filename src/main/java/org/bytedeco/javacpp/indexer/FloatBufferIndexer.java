@@ -40,7 +40,7 @@ public class FloatBufferIndexer extends FloatIndexer {
     }
 
     /** Calls {@code FloatBufferIndexer(buffer, sizes, strides(sizes))}. */
-    public FloatBufferIndexer(FloatBuffer buffer, long[] sizes) {
+    public FloatBufferIndexer(FloatBuffer buffer, long... sizes) {
         this(buffer, sizes, strides(sizes));
     }
 

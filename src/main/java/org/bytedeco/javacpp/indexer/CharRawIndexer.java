@@ -44,7 +44,7 @@ public class CharRawIndexer extends CharIndexer {
     }
 
     /** Calls {@code CharRawIndexer(pointer, sizes, strides(sizes))}. */
-    public CharRawIndexer(CharPointer pointer, long[] sizes) {
+    public CharRawIndexer(CharPointer pointer, long... sizes) {
         this(pointer, sizes, strides(sizes));
     }
 

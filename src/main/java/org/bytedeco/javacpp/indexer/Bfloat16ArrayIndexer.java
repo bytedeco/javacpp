@@ -37,7 +37,7 @@ public class Bfloat16ArrayIndexer extends Bfloat16Indexer {
     }
 
     /** Calls {@code Bfloat16ArrayIndexer(array, sizes, strides(sizes))}. */
-    public Bfloat16ArrayIndexer(short[] array, long[] sizes) {
+    public Bfloat16ArrayIndexer(short[] array, long... sizes) {
         this(array, sizes, strides(sizes));
     }
 

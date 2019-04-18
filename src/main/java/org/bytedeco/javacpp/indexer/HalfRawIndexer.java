@@ -44,7 +44,7 @@ public class HalfRawIndexer extends HalfIndexer {
     }
 
     /** Calls {@code HalfRawIndexer(pointer, sizes, strides(sizes))}. */
-    public HalfRawIndexer(ShortPointer pointer, long[] sizes) {
+    public HalfRawIndexer(ShortPointer pointer, long... sizes) {
         this(pointer, sizes, strides(sizes));
     }
 

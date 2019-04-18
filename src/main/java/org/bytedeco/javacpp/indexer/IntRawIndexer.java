@@ -44,7 +44,7 @@ public class IntRawIndexer extends IntIndexer {
     }
 
     /** Calls {@code IntRawIndexer(pointer, sizes, strides(sizes))}. */
-    public IntRawIndexer(IntPointer pointer, long[] sizes) {
+    public IntRawIndexer(IntPointer pointer, long... sizes) {
         this(pointer, sizes, strides(sizes));
     }
 

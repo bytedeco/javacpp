@@ -44,7 +44,7 @@ public class BooleanRawIndexer extends BooleanIndexer {
     }
 
     /** Calls {@code BooleanRawIndexer(pointer, sizes, strides(sizes))}. */
-    public BooleanRawIndexer(BooleanPointer pointer, long[] sizes) {
+    public BooleanRawIndexer(BooleanPointer pointer, long... sizes) {
         this(pointer, sizes, strides(sizes));
     }
 

@@ -40,7 +40,7 @@ public class IntBufferIndexer extends IntIndexer {
     }
 
     /** Calls {@code IntBufferIndexer(buffer, sizes, strides(sizes))}. */
-    public IntBufferIndexer(IntBuffer buffer, long[] sizes) {
+    public IntBufferIndexer(IntBuffer buffer, long... sizes) {
         this(buffer, sizes, strides(sizes));
     }
 

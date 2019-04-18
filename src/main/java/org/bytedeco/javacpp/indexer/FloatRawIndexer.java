@@ -44,7 +44,7 @@ public class FloatRawIndexer extends FloatIndexer {
     }
 
     /** Calls {@code FloatRawIndexer(pointer, sizes, strides(sizes))}. */
-    public FloatRawIndexer(FloatPointer pointer, long[] sizes) {
+    public FloatRawIndexer(FloatPointer pointer, long... sizes) {
         this(pointer, sizes, strides(sizes));
     }
 

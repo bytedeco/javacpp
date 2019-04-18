@@ -52,15 +52,15 @@ public abstract class UShortIndexer extends Indexer {
     }
 
     /** Returns {@code new UShortArrayIndexer(array, sizes)} */
-    public static UShortIndexer create(short[] array, long[] sizes) {
+    public static UShortIndexer create(short[] array, long... sizes) {
         return new UShortArrayIndexer(array, sizes);
     }
     /** Returns {@code new UShortBufferIndexer(buffer, sizes)} */
-    public static UShortIndexer create(ShortBuffer buffer, long[] sizes) {
+    public static UShortIndexer create(ShortBuffer buffer, long... sizes) {
         return new UShortBufferIndexer(buffer, sizes);
     }
     /** Returns {@code create(pointer, sizes, strides(sizes))} */
-    public static UShortIndexer create(ShortPointer pointer, long[] sizes) {
+    public static UShortIndexer create(ShortPointer pointer, long... sizes) {
         return create(pointer, sizes, strides(sizes));
     }
 

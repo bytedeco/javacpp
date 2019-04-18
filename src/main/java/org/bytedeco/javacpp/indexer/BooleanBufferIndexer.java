@@ -40,7 +40,7 @@ public class BooleanBufferIndexer extends BooleanIndexer {
     }
 
     /** Calls {@code BooleanBufferIndexer(buffer, sizes, strides(sizes))}. */
-    public BooleanBufferIndexer(ByteBuffer buffer, long[] sizes) {
+    public BooleanBufferIndexer(ByteBuffer buffer, long... sizes) {
         this(buffer, sizes, strides(sizes));
     }
 

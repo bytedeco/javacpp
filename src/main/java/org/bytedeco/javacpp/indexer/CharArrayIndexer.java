@@ -37,7 +37,7 @@ public class CharArrayIndexer extends CharIndexer {
     }
 
     /** Calls {@code CharArrayIndexer(array, sizes, strides(sizes))}. */
-    public CharArrayIndexer(char[] array, long[] sizes) {
+    public CharArrayIndexer(char[] array, long... sizes) {
         this(array, sizes, strides(sizes));
     }
 

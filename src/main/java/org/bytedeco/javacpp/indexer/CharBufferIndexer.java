@@ -40,7 +40,7 @@ public class CharBufferIndexer extends CharIndexer {
     }
 
     /** Calls {@code CharBufferIndexer(buffer, sizes, strides(sizes))}. */
-    public CharBufferIndexer(CharBuffer buffer, long[] sizes) {
+    public CharBufferIndexer(CharBuffer buffer, long... sizes) {
         this(buffer, sizes, strides(sizes));
     }
 

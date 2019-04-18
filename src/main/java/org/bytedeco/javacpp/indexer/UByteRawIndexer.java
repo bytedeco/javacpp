@@ -44,7 +44,7 @@ public class UByteRawIndexer extends UByteIndexer {
     }
 
     /** Calls {@code UByteRawIndexer(pointer, sizes, strides(sizes))}. */
-    public UByteRawIndexer(BytePointer pointer, long[] sizes) {
+    public UByteRawIndexer(BytePointer pointer, long... sizes) {
         this(pointer, sizes, strides(sizes));
     }
 

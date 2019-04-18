@@ -40,7 +40,7 @@ public class ByteBufferIndexer extends ByteIndexer {
     }
 
     /** Calls {@code ByteBufferIndexer(buffer, sizes, strides(sizes))}. */
-    public ByteBufferIndexer(ByteBuffer buffer, long[] sizes) {
+    public ByteBufferIndexer(ByteBuffer buffer, long... sizes) {
         this(buffer, sizes, strides(sizes));
     }
 

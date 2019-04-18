@@ -37,7 +37,7 @@ public class LongArrayIndexer extends LongIndexer {
     }
 
     /** Calls {@code LongArrayIndexer(array, sizes, strides(sizes))}. */
-    public LongArrayIndexer(long[] array, long[] sizes) {
+    public LongArrayIndexer(long[] array, long... sizes) {
         this(array, sizes, strides(sizes));
     }
 

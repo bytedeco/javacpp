@@ -44,7 +44,7 @@ public class DoubleRawIndexer extends DoubleIndexer {
     }
 
     /** Calls {@code DoubleRawIndexer(pointer, sizes, strides(sizes))}. */
-    public DoubleRawIndexer(DoublePointer pointer, long[] sizes) {
+    public DoubleRawIndexer(DoublePointer pointer, long... sizes) {
         this(pointer, sizes, strides(sizes));
     }
 

@@ -52,15 +52,15 @@ public abstract class IntIndexer extends Indexer {
     }
 
     /** Returns {@code new IntArrayIndexer(array, sizes)} */
-    public static IntIndexer create(int[] array, long[] sizes) {
+    public static IntIndexer create(int[] array, long... sizes) {
         return new IntArrayIndexer(array, sizes);
     }
     /** Returns {@code new IntBufferIndexer(buffer, sizes)} */
-    public static IntIndexer create(IntBuffer buffer, long[] sizes) {
+    public static IntIndexer create(IntBuffer buffer, long... sizes) {
         return new IntBufferIndexer(buffer, sizes);
     }
     /** Returns {@code create(pointer, sizes, strides(sizes))} */
-    public static IntIndexer create(IntPointer pointer, long[] sizes) {
+    public static IntIndexer create(IntPointer pointer, long... sizes) {
         return create(pointer, sizes, strides(sizes));
     }
 

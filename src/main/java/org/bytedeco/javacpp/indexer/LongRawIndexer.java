@@ -44,7 +44,7 @@ public class LongRawIndexer extends LongIndexer {
     }
 
     /** Calls {@code LongRawIndexer(pointer, sizes, strides(sizes))}. */
-    public LongRawIndexer(LongPointer pointer, long[] sizes) {
+    public LongRawIndexer(LongPointer pointer, long... sizes) {
         this(pointer, sizes, strides(sizes));
     }
 

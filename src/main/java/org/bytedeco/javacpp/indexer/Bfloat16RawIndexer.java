@@ -44,7 +44,7 @@ public class Bfloat16RawIndexer extends Bfloat16Indexer {
     }
 
     /** Calls {@code Bfloat16RawIndexer(pointer, sizes, strides(sizes))}. */
-    public Bfloat16RawIndexer(ShortPointer pointer, long[] sizes) {
+    public Bfloat16RawIndexer(ShortPointer pointer, long... sizes) {
         this(pointer, sizes, strides(sizes));
     }
 

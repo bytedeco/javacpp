@@ -40,7 +40,7 @@ public class HalfBufferIndexer extends HalfIndexer {
     }
 
     /** Calls {@code HalfBufferIndexer(buffer, sizes, strides(sizes))}. */
-    public HalfBufferIndexer(ShortBuffer buffer, long[] sizes) {
+    public HalfBufferIndexer(ShortBuffer buffer, long... sizes) {
         this(buffer, sizes, strides(sizes));
     }
 

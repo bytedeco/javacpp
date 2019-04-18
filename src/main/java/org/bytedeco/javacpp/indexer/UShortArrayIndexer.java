@@ -37,7 +37,7 @@ public class UShortArrayIndexer extends UShortIndexer {
     }
 
     /** Calls {@code UShortArrayIndexer(array, sizes, strides(sizes))}. */
-    public UShortArrayIndexer(short[] array, long[] sizes) {
+    public UShortArrayIndexer(short[] array, long... sizes) {
         this(array, sizes, strides(sizes));
     }
 

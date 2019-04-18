@@ -52,15 +52,15 @@ public abstract class ShortIndexer extends Indexer {
     }
 
     /** Returns {@code new ShortArrayIndexer(array, sizes)} */
-    public static ShortIndexer create(short[] array, long[] sizes) {
+    public static ShortIndexer create(short[] array, long... sizes) {
         return new ShortArrayIndexer(array, sizes);
     }
     /** Returns {@code new ShortBufferIndexer(buffer, sizes)} */
-    public static ShortIndexer create(ShortBuffer buffer, long[] sizes) {
+    public static ShortIndexer create(ShortBuffer buffer, long... sizes) {
         return new ShortBufferIndexer(buffer, sizes);
     }
     /** Returns {@code create(pointer, sizes, strides(sizes))} */
-    public static ShortIndexer create(ShortPointer pointer, long[] sizes) {
+    public static ShortIndexer create(ShortPointer pointer, long... sizes) {
         return create(pointer, sizes, strides(sizes));
     }
 

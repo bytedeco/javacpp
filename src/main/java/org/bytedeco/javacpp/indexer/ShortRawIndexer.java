@@ -44,7 +44,7 @@ public class ShortRawIndexer extends ShortIndexer {
     }
 
     /** Calls {@code ShortRawIndexer(pointer, sizes, strides(sizes))}. */
-    public ShortRawIndexer(ShortPointer pointer, long[] sizes) {
+    public ShortRawIndexer(ShortPointer pointer, long... sizes) {
         this(pointer, sizes, strides(sizes));
     }
 

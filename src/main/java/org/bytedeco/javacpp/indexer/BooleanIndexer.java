@@ -52,15 +52,15 @@ public abstract class BooleanIndexer extends Indexer {
     }
 
     /** Returns {@code new BooleanArrayIndexer(array, sizes)} */
-    public static BooleanIndexer create(boolean[] array, long[] sizes) {
+    public static BooleanIndexer create(boolean[] array, long... sizes) {
         return new BooleanArrayIndexer(array, sizes);
     }
     /** Returns {@code new BooleanBufferIndexer(buffer, sizes)} */
-    public static BooleanIndexer create(ByteBuffer buffer, long[] sizes) {
+    public static BooleanIndexer create(ByteBuffer buffer, long... sizes) {
         return new BooleanBufferIndexer(buffer, sizes);
     }
     /** Returns {@code create(pointer, sizes, strides(sizes))} */
-    public static BooleanIndexer create(BooleanPointer pointer, long[] sizes) {
+    public static BooleanIndexer create(BooleanPointer pointer, long... sizes) {
         return create(pointer, sizes, strides(sizes));
     }
 

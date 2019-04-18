@@ -37,7 +37,7 @@ public class UByteArrayIndexer extends UByteIndexer {
     }
 
     /** Calls {@code UByteArrayIndexer(array, sizes, strides(sizes))}. */
-    public UByteArrayIndexer(byte[] array, long[] sizes) {
+    public UByteArrayIndexer(byte[] array, long... sizes) {
         this(array, sizes, strides(sizes));
     }
 

@@ -40,7 +40,7 @@ public class UShortBufferIndexer extends UShortIndexer {
     }
 
     /** Calls {@code UShortBufferIndexer(buffer, sizes, strides(sizes))}. */
-    public UShortBufferIndexer(ShortBuffer buffer, long[] sizes) {
+    public UShortBufferIndexer(ShortBuffer buffer, long... sizes) {
         this(buffer, sizes, strides(sizes));
     }
 

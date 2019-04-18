@@ -44,7 +44,7 @@ public class ByteArrayIndexer extends ByteIndexer {
     }
 
     /** Calls {@code ByteArrayIndexer(array, sizes, strides(sizes))}. */
-    public ByteArrayIndexer(byte[] array, long[] sizes) {
+    public ByteArrayIndexer(byte[] array, long... sizes) {
         this(array, sizes, strides(sizes));
     }
 

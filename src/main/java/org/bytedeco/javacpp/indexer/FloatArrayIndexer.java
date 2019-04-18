@@ -37,7 +37,7 @@ public class FloatArrayIndexer extends FloatIndexer {
     }
 
     /** Calls {@code FloatArrayIndexer(array, sizes, strides(sizes))}. */
-    public FloatArrayIndexer(float[] array, long[] sizes) {
+    public FloatArrayIndexer(float[] array, long... sizes) {
         this(array, sizes, strides(sizes));
     }
 
