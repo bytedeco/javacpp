@@ -1,4 +1,5 @@
 
+ * Fix `Loader.createLibraryLink()` incorrectly truncating library versions when there is one before and another after the suffix
  * Iterate extensions of libraries or executables on `Loader.load()` in reverse to be consistent with properties overriding
  * Allow prefixing library names with `:` to have `Loader` consider them as filenames with prefix and suffix already included
  * Add `Loader.loadGlobal()` to load symbols globally as often required by Python libraries ([issue ContinuumIO/anaconda-issues#6401](https://github.com/ContinuumIO/anaconda-issues/issues/6401))

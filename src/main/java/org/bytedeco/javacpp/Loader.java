@@ -1440,7 +1440,11 @@ public class Loader {
             int n = name.lastIndexOf(suffix);
             int n2 = version.length() != 0 ? name.lastIndexOf(version)
                                            : name.indexOf(".");
-            if (n > 0 && n2 > 0) {
+            int n3 = name.lastIndexOf(".");
+            if (n2 < n && n < n3) {
+                link = name.substring(0, n) + suffix;
+                break;
+            } else if (n > 0 && n2 > 0) {
                 link = name.substring(0, n < n2 ? n : n2) + suffix;
                 break;
             }
