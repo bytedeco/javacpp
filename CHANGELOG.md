@@ -1,4 +1,5 @@
 
+ * Make sure `Loader.load()` also initializes classes that are passed explicitly
  * Fix `Loader.createLibraryLink()` incorrectly truncating library versions when there is one before and another after the suffix
  * Iterate extensions of libraries or executables on `Loader.load()` in reverse to be consistent with properties overriding
  * Allow prefixing library names with `:` to have `Loader` consider them as filenames with prefix and suffix already included

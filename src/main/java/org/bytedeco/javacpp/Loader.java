@@ -948,7 +948,7 @@ public class Loader {
         return load(getCallerClass(2), loadProperties(), Loader.pathsFirst);
     }
     /**
-     * Loads native libraries associated with the {@link Class} of the caller.
+     * Loads native libraries associated with the {@link Class} of the caller and initializes it.
      *
      * @param pathsFirst search the paths first before bundled resources
      * @return {@code load(getCallerClass(2), loadProperties(), pathsFirst) }
@@ -964,9 +964,9 @@ public class Loader {
         return load(cls, loadProperties(), Loader.pathsFirst);
     }
     /**
-     * Loads native libraries associated with the given {@link Class}.
+     * Loads native libraries associated with the given {@link Class} and initializes it.
      *
-     * @param cls the Class to get native library information from
+     * @param cls the Class to get native library information from and to initialize
      * @param properties the platform Properties to inherit
      * @param pathsFirst search the paths first before bundled resources
      * @return the full path to the main file loaded, or the library name if unknown
@@ -977,6 +977,8 @@ public class Loader {
      * @see #loadLibrary(URL[], String)
      */
     public static String load(Class cls, Properties properties, boolean pathsFirst) {
+        Class classToLoad = cls;
+
         if (!isLoadLibraries() || cls == null) {
             return null;
         }
@@ -999,6 +1001,12 @@ public class Loader {
             }
             targets.add(cls.getName());
         }
+
+        // Make sure that we also initialize the class that was passed explicitly
+        if (!targets.contains(classToLoad.getName())) {
+            targets.add(classToLoad.getName());
+        }
+
         for (String s : targets) {
             try {
                 if (logger.isDebugEnabled()) {
