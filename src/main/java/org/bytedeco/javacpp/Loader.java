@@ -1136,7 +1136,7 @@ public class Loader {
      * @param cls the Class whose package name and {@link ClassLoader} are used to extract from resources
      * @param properties contains the directories to scan for if we fail to extract the library from resources
      * @param libnameversion ":" to disable prefixes and suffixes + the name of the library + "@" + optional version tag
-     *                       + "#" + a second optional name used at extraction (or empty to prevent it)
+     *                       + "#" + a second optional name used at extraction (or empty to prevent it, unless it is a second "#")
      *                       + "!" to load all symbols globally
      * @param pathsFirst search the paths first before bundled resources
      * @return URLs that point to potential locations of the library
@@ -1150,11 +1150,11 @@ public class Loader {
         if (libnameversion.endsWith("!")) {
             libnameversion = libnameversion.substring(0, libnameversion.length() - 1);
         }
-        if (libnameversion.trim().endsWith("#")) {
+        if (libnameversion.trim().endsWith("#") && !libnameversion.trim().endsWith("##")) {
             return new URL[0];
         }
         String[] split = libnameversion.split("#");
-        boolean reference = split.length > 1;
+        boolean reference = split.length > 1 && split[1].length() > 0;
         String[] s = split[0].split("@");
         String[] s2 = (reference ? split[1] : split[0]).split("@");
         String libname = s[0];
@@ -1263,7 +1263,7 @@ public class Loader {
      *
      * @param urls the URLs to try loading the library from
      * @param libnameversion ":" to disable prefixes and suffixes + the name of the library + "@" + optional version tag
-     *                       + "#" + a second optional name used at extraction (or empty to prevent it)
+     *                       + "#" + a second optional name used at extraction (or empty to prevent it, unless it is a second "#")
      *                       + "!" to load all symbols globally
      * @param preloaded libraries for which to create symbolic links in same cache directory
      * @return the full path of the file loaded, or the library name if unknown
@@ -1284,7 +1284,7 @@ public class Loader {
         }
         String[] split = libnameversion.split("#");
         String libnameversion2 = split[0];
-        if (split.length > 1) {
+        if (split.length > 1 && split[1].length() > 0) {
             libnameversion2 = split[1];
         }
 
@@ -1437,7 +1437,7 @@ public class Loader {
         String parent = file.getParent(), name = file.getName(), link = null;
 
         String[] split = libnameversion != null ? libnameversion.split("#") : new String[] {""};
-        String[] s = (split.length > 1 ? split[1] : split[0]).split("@");
+        String[] s = (split.length > 1 && split[1].length() > 0 ? split[1] : split[0]).split("@");
         String libname = s[0];
         String version = s.length > 1 ? s[s.length-1] : "";
 
