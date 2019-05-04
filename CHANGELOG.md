@@ -1,4 +1,5 @@
 
+ * Prevent `Loader.load()` from trying to load library files that do not exist or to create symbolic links to them
  * Let `Loader.load()` extract libraries suffixed with `##`, but still ignored for copying by `Builder`
  * Make sure `Loader.load()` also initializes classes that are passed explicitly
  * Fix `Loader.createLibraryLink()` incorrectly truncating library versions when there is one before and another after the suffix

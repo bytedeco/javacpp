@@ -1047,7 +1047,7 @@ public class Loader {
                 }
                 URL[] urls = findLibrary(cls, p, preload, pathsFirst);
                 String filename = loadLibrary(urls, preload, preloaded.toArray(new String[preloaded.size()]));
-                if (filename != null) {
+                if (filename != null && new File(filename).exists()) {
                     preloaded.add(filename);
                     if (loadGlobally) {
                         preloadGlobals.add(filename);
