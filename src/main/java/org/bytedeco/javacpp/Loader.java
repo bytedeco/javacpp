@@ -1135,7 +1135,7 @@ public class Loader {
      *
      * @param cls the Class whose package name and {@link ClassLoader} are used to extract from resources
      * @param properties contains the directories to scan for if we fail to extract the library from resources
-     * @param libnameversion ":" to disable prefixes and suffixes + the name of the library + "@" + optional version tag
+     * @param libnameversion the name of the library + ":" + optional exact path to library + "@" + optional version tag
      *                       + "#" + a second optional name used at extraction (or empty to prevent it, unless it is a second "#")
      *                       + "!" to load all symbols globally
      * @param pathsFirst search the paths first before bundled resources
@@ -1146,6 +1146,9 @@ public class Loader {
         if (libnameversion.startsWith(":")) {
             nostyle = true;
             libnameversion = libnameversion.substring(1);
+        } else if (libnameversion.contains(":")) {
+            nostyle = true;
+            libnameversion = libnameversion.substring(libnameversion.indexOf(":") + 1);
         }
         if (libnameversion.endsWith("!")) {
             libnameversion = libnameversion.substring(0, libnameversion.length() - 1);
@@ -1262,7 +1265,7 @@ public class Loader {
      * Finally, if all fails, falls back on {@link System#loadLibrary(String)}.
      *
      * @param urls the URLs to try loading the library from
-     * @param libnameversion ":" to disable prefixes and suffixes + the name of the library + "@" + optional version tag
+     * @param libnameversion the name of the library + ":" + optional exact path to library + "@" + optional version tag
      *                       + "#" + a second optional name used at extraction (or empty to prevent it, unless it is a second "#")
      *                       + "!" to load all symbols globally
      * @param preloaded libraries for which to create symbolic links in same cache directory
@@ -1276,6 +1279,8 @@ public class Loader {
         }
         if (libnameversion.startsWith(":")) {
             libnameversion = libnameversion.substring(1);
+        } else if (libnameversion.contains(":")) {
+            libnameversion = libnameversion.substring(0, libnameversion.indexOf(":"));
         }
         boolean loadGlobally = false;
         if (libnameversion.endsWith("!")) {
@@ -1429,6 +1434,8 @@ public class Loader {
     public static String createLibraryLink(String filename, ClassProperties properties, String libnameversion, String ... paths) {
         if (libnameversion != null && libnameversion.startsWith(":")) {
             libnameversion = libnameversion.substring(1);
+        } else if (libnameversion != null && libnameversion.contains(":")) {
+            libnameversion = libnameversion.substring(0, libnameversion.indexOf(":"));
         }
         if (libnameversion != null && libnameversion.endsWith("!")) {
             libnameversion = libnameversion.substring(0, libnameversion.length() - 1);

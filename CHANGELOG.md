@@ -1,4 +1,5 @@
 
+ * Allow suffixing library names with `:` to specify exact relative paths to libraries, ignoring any additional prefix or suffix
  * Prevent `Loader.load()` from trying to load library files that do not exist or to create symbolic links to them
  * Let `Loader.load()` extract libraries suffixed with `##`, but still ignored for copying by `Builder`
  * Make sure `Loader.load()` also initializes classes that are passed explicitly
