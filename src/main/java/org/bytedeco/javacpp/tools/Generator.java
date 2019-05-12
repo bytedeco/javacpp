@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2018 Samuel Audet
+ * Copyright (C) 2011-2019 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -39,8 +39,8 @@ import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 import java.nio.ShortBuffer;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -191,10 +191,10 @@ public class Generator {
             deallocators        = new IndexedSet<Class>();
             arrayDeallocators   = new IndexedSet<Class>();
             jclasses            = new IndexedSet<Class>();
-            members             = new HashMap<Class,Set<String>>();
-            virtualFunctions    = new HashMap<Class,Set<String>>();
-            virtualMembers      = new HashMap<Class,Set<String>>();
-            annotationCache     = new HashMap<Method,MethodInformation>();
+            members             = new LinkedHashMap<Class,Set<String>>();
+            virtualFunctions    = new LinkedHashMap<Class,Set<String>>();
+            virtualMembers      = new LinkedHashMap<Class,Set<String>>();
+            annotationCache     = new LinkedHashMap<Method,MethodInformation>();
             mayThrowExceptions  = false;
             usesAdapters        = false;
             passesStrings       = false;
@@ -1327,9 +1327,12 @@ public class Generator {
             String name = "JavaCPP_" + mangle(c.getName());
             out.print("static void " + name + "_deallocate(void *p) { ");
             if (FunctionPointer.class.isAssignableFrom(c)) {
-                String typeName = functionClassName(c) + "*";
-                out.println("JNIEnv *e; bool a = JavaCPP_getEnv(&e); if (e != NULL) e->DeleteWeakGlobalRef((jweak)(("
-                        + typeName + ")p)->obj); delete (" + typeName + ")p; JavaCPP_detach(a); }");
+                String typeName = functionClassName(c);
+                out.println("\n    int n = sizeof(" + typeName + "_instances) / sizeof(" + typeName + "_instances[0]);"
+                          + "\n    for (int i = 0; i < n; i++) { if (" + typeName + "_instances[i].obj == (("
+                          + typeName + "*)p)->obj) " + typeName + "_instances[i].obj = NULL; }"
+                          + "\n    JNIEnv *e; bool a = JavaCPP_getEnv(&e); if (e != NULL) e->DeleteWeakGlobalRef((jweak)(("
+                          + typeName + "*)p)->obj); delete (" + typeName + "*)p; JavaCPP_detach(a); }");
             } else if (virtualFunctions.containsKey(c)) {
                 String[] typeName = cppTypeName(c);
                 String valueTypeName = valueTypeName(typeName);
@@ -1347,7 +1350,7 @@ public class Generator {
             out.println("static void " + name + "_deallocateArray(void* p) { delete[] (" + typeName[0] + typeName[1] + ")p; }");
         }
         out.println();
-        out.println("static const char* JavaCPP_members[" + jclasses.size() + "][" + maxMemberSize + 1 + "] = {");
+        out.println("static const char* JavaCPP_members[" + jclasses.size() + "][" + (maxMemberSize + 1) + "] = {");
         classIterator = jclasses.iterator();
         while (classIterator.hasNext()) {
             out.print("        { ");
@@ -1367,7 +1370,7 @@ public class Generator {
             }
         }
         out.println(" };");
-        out.println("static int JavaCPP_offsets[" + jclasses.size() + "][" + maxMemberSize + 1 + "] = {");
+        out.println("static int JavaCPP_offsets[" + jclasses.size() + "][" + (maxMemberSize + 1) + "] = {");
         classIterator = jclasses.iterator();
         while (classIterator.hasNext()) {
             out.print("        { ");
@@ -1733,7 +1736,7 @@ public class Generator {
                         if (name != null && name.value().length > 0 && name.value()[0].length() > 0) {
                             callbackName = name.value()[0];
                         }
-                        callback(cls, functionMethod, callbackName, firstCallback, null);
+                        callback(cls, functionMethod, callbackName, methodInfo.allocatorMax, firstCallback, null);
                         firstCallback = false;
                         didSomething = true;
                     }
@@ -1743,7 +1746,8 @@ public class Generator {
             if ((Modifier.isNative(methods[i].getModifiers()) || Modifier.isAbstract(methods[i].getModifiers()))
                     && !methodInfo.valueGetter && !methodInfo.valueSetter && !methodInfo.memberGetter && !methodInfo.memberSetter
                     && !cls.isInterface() && (methods[i].isAnnotationPresent(Virtual.class) || methodInfo.allocator)) {
-                callback(cls, methods[i], methodInfo.memberName[0], !methodInfo.allocator, methodInfo);
+                // also process virtual methods and their allocators as callbacks
+                callback(cls, methods[i], methodInfo.memberName[0], methodInfo.allocatorMax, !methodInfo.allocator, methodInfo);
             }
 
             if (!Modifier.isNative(methods[i].getModifiers())) {
@@ -1773,7 +1777,7 @@ public class Generator {
             out.println(") {");
 
             if (callbackAllocators[i]) {
-                callbackAllocator(cls, callbackName);
+                callbackAllocator(cls, callbackName, methodInfo.allocatorMax);
                 continue;
             } else if (!Modifier.isStatic(methodInfo.modifiers) && Pointer.class.isAssignableFrom(cls)
                     && !methodInfo.allocator && !methodInfo.arrayAllocator && !methodInfo.deallocator) {
@@ -1793,7 +1797,7 @@ public class Generator {
                         jclasses.index(NullPointerException.class) + "), \"This pointer address is NULL.\");");
                 out.println("        return" + (methodInfo.returnType == void.class ? ";" : " 0;"));
                 out.println("    }");
-                if (FunctionPointer.class.isAssignableFrom(cls)) {
+                if (FunctionPointer.class.isAssignableFrom(cls) && !methodInfo.valueGetter && !methodInfo.valueSetter) {
                     out.println("    if (ptr->ptr == NULL) {");
                     out.println("        env->ThrowNew(JavaCPP_getClass(env, " +
                             jclasses.index(NullPointerException.class) + "), \"This function pointer address is NULL.\");");
@@ -2616,7 +2620,7 @@ public class Generator {
         }
     }
 
-    void callback(Class<?> cls, Method callbackMethod, String callbackName, boolean needDefinition, MethodInformation methodInfo) {
+    void callback(Class<?> cls, Method callbackMethod, String callbackName, int allocatorMax, boolean needDefinition, MethodInformation methodInfo) {
         Class<?> callbackReturnType = callbackMethod.getReturnType();
         Class<?>[] callbackParameterTypes = callbackMethod.getParameterTypes();
         Annotation[] callbackAnnotations = callbackMethod.getAnnotations();
@@ -2692,7 +2696,7 @@ public class Generator {
             }
             memberList.add(member);
         } else if (callbackName != null) {
-            callbacks.index("static " + instanceTypeName + " " + callbackName + "_instance;");
+            callbacks.index("static " + instanceTypeName + " " + instanceTypeName + "_instances[" + allocatorMax + "];");
             Convention convention = cls.getAnnotation(Convention.class);
             if (convention != null && !convention.extern().equals("C")) {
                 out.println("extern \"" + convention.extern() + "\" {");
@@ -2700,27 +2704,38 @@ public class Generator {
                     out2.println("extern \"" + convention.extern() + "\" {");
                 }
             }
-            if (out2 != null) {
-                out2.println("JNIIMPORT " + returnConvention[0] + (returnConvention.length > 1 ?
-                        returnConvention[1] : "") + callbackName + parameterDeclaration + ";");
-            }
-            out.println("JNIEXPORT " + returnConvention[0] + (returnConvention.length > 1 ?
-                    returnConvention[1] : "") + callbackName + parameterDeclaration + " {");
-            out.print((callbackReturnType != void.class ? "    return " : "    ") + callbackName + "_instance(");
-            for (int j = 0; j < callbackParameterTypes.length; j++) {
-                out.print("arg" + j);
-                if (j < callbackParameterTypes.length - 1) {
-                    out.print(", ");
+            for (int i = 0; i < allocatorMax; i++) {
+                if (out2 != null) {
+                    out2.println("JNIIMPORT " + returnConvention[0] + (returnConvention.length > 1 ?
+                            returnConvention[1] : "") + callbackName + (i > 0 ? i : "") + parameterDeclaration + ";");
                 }
+                out.println("JNIEXPORT " + returnConvention[0] + (returnConvention.length > 1 ?
+                        returnConvention[1] : "") + callbackName + (i > 0 ? i : "") + parameterDeclaration + " {");
+                out.print((callbackReturnType != void.class ? "    return " : "    ") + instanceTypeName + "_instances[" + i + "](");
+                for (int j = 0; j < callbackParameterTypes.length; j++) {
+                    out.print("arg" + j);
+                    if (j < callbackParameterTypes.length - 1) {
+                        out.print(", ");
+                    }
+                }
+                out.println(");");
+                out.println("}");
             }
-            out.println(");");
-            out.println("}");
             if (convention != null && !convention.extern().equals("C")) {
                 out.println("}");
                 if (out2 != null) {
                     out2.println("}");
                 }
             }
+            out.println("static " + returnConvention[0] + "(" + (returnConvention.length > 1 ?
+                    returnConvention[1] : "") + "*" + callbackName + "s[" + allocatorMax + "])" + parameterDeclaration + " = {");
+            for (int i = 0; i < allocatorMax; i++) {
+                out.print("        " + callbackName + (i > 0 ? i : ""));
+                if (i + 1 < allocatorMax) {
+                    out.println(",");
+                }
+            }
+            out.println(" };");
 
             firstLine = returnConvention[0] + instanceTypeName + "::operator()" + parameterDeclaration + " {";
         }
@@ -2913,7 +2928,12 @@ public class Generator {
             out.println("        } else {");
             out.println("            env->SetLongField(obj, JavaCPP_addressFID, ptr_to_jlong(this));");
             out.println("        }");
-            out.println("        ptr = &" + callbackName + ";");
+            out.println("        for (int i = 0; i < " + allocatorMax + "; i++) {");
+            out.println("            if (this == &" + instanceTypeName + "_instances[i]) {");
+            out.println("                ptr = " + callbackName + "s[i];");
+            out.println("                break;");
+            out.println("            }");
+            out.println("        }");
             out.println("    }");
             out.println("    if (mid == NULL) {");
             out.println("        mid = JavaCPP_getMethodID(env, " + jclasses.index(cls) + ", \"" + callbackMethod.getName() + "\", \"(" +
@@ -3079,9 +3099,8 @@ public class Generator {
         out.println("}");
     }
 
-    void callbackAllocator(Class cls, String callbackName) {
-        // XXX: Here, we should actually allocate new trampolines on the heap somehow...
-        // For now it just bumps out from the global variable the last object that called this method
+    void callbackAllocator(Class<?> cls, String callbackName, int allocatorMax) {
+        // XXX: Make callback function pointer allocation more thread safe
         String[] typeName = cppTypeName(cls);
         String instanceTypeName = functionClassName(cls);
         out.println("    obj = env->NewWeakGlobalRef(obj);");
@@ -3091,12 +3110,19 @@ public class Generator {
         out.println("    }");
         out.println("    " + instanceTypeName + "* rptr = new (std::nothrow) " + instanceTypeName + ";");
         out.println("    if (rptr != NULL) {");
-        out.println("        rptr->ptr = " + (callbackName == null ? "(" + typeName[0] + typeName[1] + ")jlong_to_ptr(arg0)" : "&" + callbackName) + ";");
         out.println("        rptr->obj = obj;");
         out.println("        JavaCPP_initPointer(env, obj, rptr, 1, rptr, &JavaCPP_" + mangle(cls.getName()) + "_deallocate);");
         deallocators.index(cls);
         if (callbackName != null) {
-            out.println("        " + callbackName + "_instance = *rptr;");
+            out.println("        for (int i = 0; i < " + allocatorMax + "; i++) {");
+            out.println("            if (" + instanceTypeName + "_instances[i].obj == NULL) {");
+            out.println("                rptr->ptr = " + callbackName + "s[i];");
+            out.println("                " + instanceTypeName + "_instances[i] = *rptr;");
+            out.println("                break;");
+            out.println("            }");
+            out.println("        }");
+        } else {
+            out.println("        rptr->ptr = (" + typeName[0] + typeName[1] + ")jlong_to_ptr(arg0);");
         }
         out.println("    }");
         out.println("}");
@@ -3151,6 +3177,7 @@ public class Generator {
         Name name = method.getAnnotation(Name.class);
         info.memberName = name != null ? name.value() : new String[] { info.name };
         Index index = method.getAnnotation(Index.class);
+        info.allocatorMax = allocatorMax(info.cls, info.method);
         info.dim    = index != null ? index.value() : 0;
         info.parameterTypes       = method.getParameterTypes();
         info.parameterAnnotations = method.getParameterAnnotations();
@@ -3353,6 +3380,25 @@ public class Generator {
             }
         }
         return info;
+    }
+
+    static int allocatorMax(Class<?> cls, Method method) {
+        Allocator a = method.getAnnotation(Allocator.class);
+        while (a == null && cls != null) {
+            if ((a = cls.getAnnotation(Allocator.class)) != null) {
+                break;
+            }
+            if (cls.getEnclosingClass() != null) {
+                cls = cls.getEnclosingClass();
+            } else {
+                cls = cls.getSuperclass();
+            }
+        }
+        try {
+            return a != null ? a.max() : (int)Allocator.class.getDeclaredMethod("max").getDefaultValue();
+        } catch (NoSuchMethodException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     static boolean criticalRegion(Class<?> cls, Method method) {
@@ -3570,9 +3616,16 @@ public class Generator {
     static String valueTypeName(String ... typeName) {
         String type = typeName[0];
         if (type.startsWith("const ")) {
-            type = type.substring(6, type.length()-1);
-        } else if (type.endsWith("*") || type.endsWith("&")) {
-            type = type.substring(0, type.length()-1);
+            type = type.substring(6);
+        }
+        if (type.endsWith(" const")) {
+            type = type.substring(0, type.length() - 6);
+        }
+        if (type.endsWith("*") || type.endsWith("&")) {
+            type = type.substring(0, type.length() - 1);
+        }
+        if (type.endsWith(" const")) {
+            type = type.substring(0, type.length() - 6);
         }
         return type;
     }
@@ -3663,12 +3716,12 @@ public class Generator {
                 typeName = cppTypeName(type);
                 if (typeName[0].contains("(*")) {
                     // function pointer
-                    if (b.length > 0 && b[0] && !typeName[0].endsWith("const")) {
-                        typeName[0] += "const";
+                    if (b.length > 0 && b[0] && !typeName[0].endsWith(" const")) {
+                        typeName[0] += " const";
                     }
                 } else {
-                    if (b.length > 1 && b[1] && !typeName[0].endsWith(" const *")) {
-                        typeName[0] = valueTypeName(typeName) + " const *";
+                    if (b.length > 1 && b[1] && !typeName[0].endsWith(" const")) {
+                        typeName[0] += " const";
                     }
                     if (b.length > 0 && b[0] && !typeName[0].startsWith("const ")) {
                         typeName[0] = "const " + typeName[0];

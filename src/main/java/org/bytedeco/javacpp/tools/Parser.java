@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2018 Samuel Audet
+ * Copyright (C) 2013-2019 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -207,9 +207,6 @@ public class Parser {
                     if (valueType.constValue && !cast.startsWith("const ")) {
                         cast = "const " + cast;
                     }
-                    if (valueType.constPointer && !cast.endsWith(" const")) {
-                        cast = cast + " const";
-                    }
                     if (valueType.indirections > 0) {
                         for (int i = 0; i < valueType.indirections; i++) {
                             cast += "*";
@@ -219,6 +216,9 @@ public class Parser {
                     }
                     if (valueType.reference) {
                         cast += "&";
+                    }
+                    if (valueType.constPointer && !cast.endsWith(" const")) {
+                        cast = cast + " const";
                     }
                     valueType.annotations = "@Cast(\"" + cast + "\") " + valueType.annotations;
                 }
@@ -564,14 +564,14 @@ public class Parser {
                     if (t.constValue && !s.startsWith("const ")) {
                         s = "const " + s;
                     }
-                    if (t.constPointer && !s.endsWith(" const")) {
-                        s = s + " const";
-                    }
                     for (int i = 0; i < t.indirections; i++) {
                         s += "*";
                     }
                     if (t.reference) {
                         s += "&";
+                    }
+                    if (t.constPointer && !s.endsWith(" const")) {
+                        s = s + " const";
                     }
                     type.cppName += s;
                     separator = ",";
@@ -709,6 +709,10 @@ public class Parser {
             type.constValue = true;
             type.cppName = type.cppName.substring(6);
         }
+        if (type.cppName.endsWith(" const")) {
+            type.constPointer = true;
+            type.cppName = type.cppName.substring(0, type.cppName.length() - 6);
+        }
         if (type.cppName.endsWith("*")) {
             type.indirections++;
             if (type.reference) {
@@ -721,7 +725,7 @@ public class Parser {
             type.cppName = type.cppName.substring(0, type.cppName.length() - 1);
         }
         if (type.cppName.endsWith(" const")) {
-            type.constPointer = true;
+            type.constValue = true;
             type.cppName = type.cppName.substring(0, type.cppName.length() - 6);
         }
 
@@ -729,7 +733,8 @@ public class Parser {
         String shortName = type.cppName;
         String[] names = context.qualify(type.cppName);
         if (definition && names.length > 0) {
-            String constName = type.constValue || type.constPointer ? "const " + names[0] : names[0];
+            String constName = type.constValue ? "const " + names[0] : names[0];
+                   constName = type.constPointer ? constName + " const" : constName;
             info = infoMap.getFirst(constName, false);
             type.cppName = names[0];
         } else {
@@ -745,7 +750,8 @@ public class Parser {
                     // skip, we would probably get Info for the constructors, not the type
                     continue;
                 }
-                String constName = type.constValue || type.constPointer ? "const " + name : name;
+                String constName = type.constValue ? "const " + name : name;
+                       constName = type.constPointer ? constName + " const" : constName;
                 if ((info = infoMap.getFirst(constName, false)) != null) {
                     type.cppName = name;
                     break;
@@ -765,6 +771,10 @@ public class Parser {
             type.constValue = true;
             type.cppName = type.cppName.substring(6);
         }
+        if (type.cppName.endsWith(" const")) {
+            type.constPointer = true;
+            type.cppName = type.cppName.substring(0, type.cppName.length() - 6);
+        }
         if (type.cppName.endsWith("*")) {
             type.indirections++;
             if (type.reference) {
@@ -777,7 +787,7 @@ public class Parser {
             type.cppName = type.cppName.substring(0, type.cppName.length() - 1);
         }
         if (type.cppName.endsWith(" const")) {
-            type.constPointer = true;
+            type.constValue = true;
             type.cppName = type.cppName.substring(0, type.cppName.length() - 6);
         }
 
@@ -1182,9 +1192,6 @@ public class Parser {
                     if (type.constValue && !cast.startsWith("const ")) {
                         cast = "const " + cast;
                     }
-                    if (type.constPointer && !cast.endsWith(" const")) {
-                        cast = cast + " const";
-                    }
                     if (type.indirections > 0) {
                         dcl.indirections += type.indirections;
                         for (int i = 0; i < type.indirections; i++) {
@@ -1194,6 +1201,9 @@ public class Parser {
                     if (type.reference) {
                         dcl.reference = true;
                         cast += "&";
+                    }
+                    if (type.constPointer && !cast.endsWith(" const")) {
+                        cast = cast + " const";
                     }
                     for (String s : info2.annotations) {
                         type.annotations += s + " ";
@@ -1245,10 +1255,12 @@ public class Parser {
             }
 
             if (!needCast && !type.javaName.contains("@Cast")) {
-                if (type.constValue && !implicitConst && !type.constPointer) {
+                if (type.constValue && !implicitConst) {
                     type.annotations = "@Const " + type.annotations;
-                } else if (type.constPointer) {
-                    type.annotations = "@Const({" + type.constValue + ", " + type.constPointer + "}) " + type.annotations;
+                }
+                if (type.constPointer) {
+                    // ignore, const pointers are not useful in generated code
+                    // type.annotations = "@Const({" + type.constValue + ", " + type.constPointer + "}) " + type.annotations;
                 }
             }
         }
@@ -1371,6 +1383,13 @@ public class Parser {
                 functionType = functionType.substring(functionType.lastIndexOf(' ') + 1); // get rid of pointer annotations
                 if (!functionType.equals("Pointer")) {
                     definition.type = new Type(functionType);
+                    for (Info info2 : infoMap.get("function/pointers")) {
+                        if (info2 != null && info2.annotations != null) {
+                            for (String s : info2.annotations) {
+                                definition.text += s + " ";
+                            }
+                        }
+                    }
                     definition.text += (tokens.get().match(Token.CONST, Token.__CONST, Token.CONSTEXPR) ? "@Const " : "") +
                             "public static class " + functionType + " extends FunctionPointer {\n" +
                             "    static { Loader.load(); }\n" +
@@ -1923,9 +1942,6 @@ public class Parser {
                     if (d.type.constValue && !s.startsWith("const ")) {
                         s = "const " + s;
                     }
-                    if (d.type.constPointer && !s.endsWith(" const")) {
-                        s = s + " const";
-                    }
                     if (d.indirections > 0) {
                         for (int i = 0; i < d.indirections; i++) {
                             s += "*";
@@ -1935,6 +1951,9 @@ public class Parser {
                     if (d.reference) {
                         s += "&";
                         s2 += "&";
+                    }
+                    if (d.type.constPointer && !s.endsWith(" const")) {
+                        s = s + " const";
                     }
                     fullname += separator + s;
                     fullname2 += separator + s2;
@@ -2264,12 +2283,12 @@ public class Parser {
                     dcl.type.annotations = dcl.type.annotations.replaceAll("@Name\\(.*\\) ", "");
                     javaName = metadcl.javaName + "_" + shortName;
                 }
-                if (dcl.type.constValue || dcl.constPointer) {
+                if ((dcl.type.constValue && dcl.indirections == 0) || dcl.constPointer) {
                     decl.text += "@MemberGetter ";
                 }
                 decl.text += modifiers + dcl.type.annotations.replace("@ByVal ", "@ByRef ")
                           + dcl.type.javaName + " " + javaName + "(" + indices + ");";
-                if (!dcl.type.constValue && !dcl.constPointer) {
+                if (!(dcl.type.constValue && dcl.indirections == 0) && !dcl.constPointer) {
                     if (indices.length() > 0) {
                         indices += ", ";
                     }
@@ -2650,9 +2669,6 @@ public class Parser {
                         if (dcl.type.constValue && !s.startsWith("const ")) {
                             s = "const " + s;
                         }
-                        if (dcl.type.constPointer && !s.endsWith(" const")) {
-                            s = s + " const";
-                        }
                         if (dcl.type.indirections > 0) {
                             for (int i = 0; i < dcl.type.indirections; i++) {
                                 s += "*";
@@ -2660,6 +2676,9 @@ public class Parser {
                         }
                         if (dcl.type.reference) {
                             s += "&";
+                        }
+                        if (dcl.type.constPointer && !s.endsWith(" const")) {
+                            s = s + " const";
                         }
                         info.cppNames(defName, s).cppTypes(s);
                     }
@@ -3498,9 +3517,6 @@ public class Parser {
                             if (t.constValue && !s.startsWith("const ")) {
                                 s = "const " + s;
                             }
-                            if (t.constPointer && !s.endsWith(" const")) {
-                                s = s + " const";
-                            }
                             if (t.indirections > 0) {
                                 for (int i = 0; i < t.indirections; i++) {
                                     s += "*";
@@ -3508,6 +3524,9 @@ public class Parser {
                             }
                             if (t.reference) {
                                 s += "&";
+                            }
+                            if (t.constPointer && !s.endsWith(" const")) {
+                                s = s + " const";
                             }
                             t.cppName = s;
                             e.setValue(t);

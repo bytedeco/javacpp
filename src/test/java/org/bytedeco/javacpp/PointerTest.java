@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2018 Samuel Audet
+ * Copyright (C) 2016-2019 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -33,6 +33,7 @@ import java.nio.ShortBuffer;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import org.bytedeco.javacpp.annotation.Allocator;
 import org.bytedeco.javacpp.annotation.Platform;
 import org.bytedeco.javacpp.tools.Builder;
 import org.junit.BeforeClass;
@@ -47,8 +48,10 @@ import static org.junit.Assert.*;
 @Platform(define = {"NATIVE_ALLOCATOR malloc", "NATIVE_DEALLOCATOR free"})
 public class PointerTest {
 
-    static long maxBytes = 1024 * 1024 * 1024; /* 1g */
+    static final int allocatorMax = 11;
+    static final long maxBytes = 1024 * 1024 * 1024; /* 1g */
 
+    @Allocator(max = allocatorMax)
     static class TestFunction extends FunctionPointer {
         public TestFunction(Pointer p) { super(p); }
         public TestFunction() { allocate(); }
@@ -67,12 +70,6 @@ public class PointerTest {
         System.out.println("Loader");
         Loader.load(c);
 
-        Pointer address = Loader.addressof("strlen");
-        assertNotNull(address);
-        TestFunction function = new TestFunction().put(address);
-        assertEquals(address, function.get());
-        assertEquals(5, function.call("12345"));
-
         int totalProcessors = Loader.totalProcessors();
         int totalCores = Loader.totalCores();
         int totalChips = Loader.totalChips();
@@ -82,6 +79,45 @@ public class PointerTest {
         assertTrue(totalChips > 0 && totalChips <= totalCores);
 
         assertNotEquals(null, Loader.getJavaVM());
+    }
+
+    @Test public void testFunctionPointer() {
+        System.out.println("FunctionPointer");
+
+        Pointer address = Loader.addressof("strlen");
+        assertNotNull(address);
+        TestFunction function = new TestFunction().put(address);
+        assertEquals(address, function.get());
+        assertEquals(5, function.call("12345"));
+        function.deallocate();
+
+        TestFunction[] functions = new TestFunction[allocatorMax];
+        Pointer prevp = new Pointer();
+        for (int i = 0; i < allocatorMax; i++) {
+            final int n = i;
+            functions[i] = new TestFunction() {
+                @Override public int call(String s) { return n; }
+            };
+            Pointer p = functions[i].get();
+            System.out.println(p);
+            assertNotNull(p);
+            assertNotEquals(prevp, p);
+            prevp = p;
+        }
+
+        TestFunction f = new TestFunction() {
+            @Override public int call(String s) { return allocatorMax; }
+        };
+        assertNull(f.get());
+
+        for (int i = 0; i < allocatorMax; i++) {
+            functions[i].deallocate();
+        }
+
+        TestFunction f2 = new TestFunction() {
+            @Override public int call(String s) { return allocatorMax; }
+        };
+        assertNotNull(f2.get());
     }
 
     static Object fieldReference;

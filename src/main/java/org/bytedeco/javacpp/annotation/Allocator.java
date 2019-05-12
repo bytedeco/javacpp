@@ -5,6 +5,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import org.bytedeco.javacpp.FunctionPointer;
 import org.bytedeco.javacpp.Pointer;
 import org.bytedeco.javacpp.tools.Generator;
 
@@ -20,6 +21,8 @@ import org.bytedeco.javacpp.tools.Generator;
  * the given arguments, and initializes the {@link Pointer#address} as well as
  * the {@link Pointer#deallocator} with {@code NativeDeallocator}, based on the
  * {@code delete} operator, if not additionally annotated with {@link NoDeallocator}.
+ * <p>
+ * Can also be used on classes to set the {@link #max} value for enclosed function pointers.
  *
  * @see Pointer#init(long, long, long, long)
  * @see Generator
@@ -27,5 +30,9 @@ import org.bytedeco.javacpp.tools.Generator;
  * @author Samuel Audet
  */
 @Documented @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD})
-public @interface Allocator { }
+@Target({ElementType.TYPE, ElementType.METHOD})
+public @interface Allocator {
+    /** The maximum number of instances that can be allocated in the case of a {@link FunctionPointer} subclass.
+     *  Does not affect the underlying function object or other {@link Pointer} which have no such allocation limits. */
+    int max() default 10;
+}

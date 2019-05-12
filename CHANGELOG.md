@@ -1,4 +1,5 @@
 
+ * Support multiple instances of `FunctionPointer` subclasses, up to the value in `@Allocator(max=...)` ([issue bytedeco/javacpp-presets#683](https://github.com/bytedeco/javacpp-presets/issues/683))
  * Allow suffixing library names with `:` to specify exact relative paths to libraries, ignoring any additional prefix or suffix
  * Prevent `Loader.load()` from trying to load library files that do not exist or to create symbolic links to them
  * Let `Loader.load()` extract libraries suffixed with `##`, but still ignored for copying by `Builder`

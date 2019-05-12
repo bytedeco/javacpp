@@ -1,7 +1,7 @@
 JavaCPP
 =======
 
-[![Join the chat at https://gitter.im/bytedeco/javacpp](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/bytedeco/javacpp?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.bytedeco/javacpp/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.bytedeco/javacpp) [![Sonatype Nexus (Snapshots)](https://img.shields.io/nexus/s/https/oss.sonatype.org/org.bytedeco/javacpp.svg)](http://bytedeco.org/builds/) [![Build Status](https://travis-ci.org/bytedeco/javacpp.svg?branch=master)](https://travis-ci.org/bytedeco/javacpp)
+[![Gitter](https://badges.gitter.im/bytedeco/javacpp.svg)](https://gitter.im/bytedeco/javacpp) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.bytedeco/javacpp/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.bytedeco/javacpp) [![Sonatype Nexus (Snapshots)](https://img.shields.io/nexus/s/https/oss.sonatype.org/org.bytedeco/javacpp.svg)](http://bytedeco.org/builds/) [![Build Status](https://travis-ci.org/bytedeco/javacpp.svg?branch=master)](https://travis-ci.org/bytedeco/javacpp)
 
 
 Introduction

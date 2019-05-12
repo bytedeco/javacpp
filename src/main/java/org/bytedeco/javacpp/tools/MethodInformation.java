@@ -36,7 +36,7 @@ public class MethodInformation {
     int modifiers;
     Class<?> returnType;
     String name, memberName[];
-    int dim;
+    int allocatorMax, dim;
     boolean[] parameterRaw;
     Class<?>[] parameterTypes;
     Annotation[][] parameterAnnotations;
