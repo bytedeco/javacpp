@@ -1205,7 +1205,7 @@ public class Builder {
         }
         System.out.println(
             "JavaCPP version " + version + "\n" +
-            "Copyright (C) 2011-2018 Samuel Audet <samuel.audet@gmail.com>\n" +
+            "Copyright (C) 2011-2019 Samuel Audet <samuel.audet@gmail.com>\n" +
             "Project site: https://github.com/bytedeco/javacpp");
         System.out.println();
         System.out.println("Usage: java -jar javacpp.jar [options] [class or package (suffixed with .* or .**)] [commands]");
@@ -1224,14 +1224,16 @@ public class Builder {
         System.out.println("    -copylibs              Copy to output directory dependent libraries (link and preload)");
         System.out.println("    -copyresources         Copy to output directory resources listed in properties");
         System.out.println("    -jarprefix <prefix>    Also create a JAR file named \"<prefix>-<platform>.jar\"");
-        System.out.println("    -properties <resource> Load all properties from resource");
-        System.out.println("    -propertyfile <file>   Load all properties from file");
-        System.out.println("    -D<property>=<value>   Set property to value");
+        System.out.println("    -properties <resource> Load all platform properties from resource");
+        System.out.println("    -propertyfile <file>   Load all platform properties from file");
+        System.out.println("    -D<property>=<value>   Set platform property to value");
         System.out.println("    -Xcompiler <option>    Pass option directly to compiler");
         System.out.println();
         System.out.println("and where optional commands include:");
         System.out.println();
         System.out.println("    -exec [args...]        After build, call java command on the first class");
+        System.out.println("    -print <property>      Print the given platform property, for example, \"platform.includepath\", and exit");
+        System.out.println("                           \"platform.includepath\" has jni.h, jni_md.h, etc, and \"platform.linkpath\", the jvm library");
         System.out.println();
     }
 
@@ -1245,6 +1247,7 @@ public class Builder {
         boolean addedClasses = false;
         Builder builder = new Builder();
         String[] execArgs = null;
+        String printPath = null;
         for (int i = 0; i < args.length; i++) {
             if ("-help".equals(args[i]) || "--help".equals(args[i])) {
                 printHelp();
@@ -1284,6 +1287,8 @@ public class Builder {
             } else if ("-exec".equals(args[i])) {
                 execArgs = Arrays.copyOfRange(args, i + 1, args.length);
                 i = args.length;
+            } else if ("-print".equals(args[i])) {
+                printPath = args[++i];
             } else if (args[i].startsWith("-")) {
                 builder.logger.error("Invalid option \"" + args[i] + "\"");
                 printHelp();
@@ -1309,8 +1314,17 @@ public class Builder {
                 addedClasses = true;
             }
         }
-        if (!addedClasses) {
-            builder.classesOrPackages((String[])null);
+        if (printPath != null) {
+            Collection<Class> classes = builder.classScanner.getClasses();
+            ClassProperties p = Loader.loadProperties(classes.toArray(new Class[classes.size()]), builder.properties, true);
+            builder.includeJavaPaths(p, true);
+            for (String s : p.get(printPath)) {
+                System.out.println(s);
+            }
+            System.exit(0);
+        } else if (!addedClasses) {
+            printHelp();
+            System.exit(2);
         }
         File[] outputFiles = builder.build();
         Collection<Class> classes = builder.classScanner.getClasses();

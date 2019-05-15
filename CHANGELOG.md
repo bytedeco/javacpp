@@ -1,4 +1,6 @@
 
+ * Add `-print` command line option to access platform properties externally, for example, inside build scripts
+ * Add to `InfoMap` default pointer and value types for `ssize_t`, `char16_t`, `char32_t`, `std::u16string`, and `std::u32string`
  * Support multiple instances of `FunctionPointer` subclasses, up to the value in `@Allocator(max=...)` ([issue bytedeco/javacpp-presets#683](https://github.com/bytedeco/javacpp-presets/issues/683))
  * Allow suffixing library names with `:` to specify exact relative paths to libraries, ignoring any additional prefix or suffix
  * Prevent `Loader.load()` from trying to load library files that do not exist or to create symbolic links to them
