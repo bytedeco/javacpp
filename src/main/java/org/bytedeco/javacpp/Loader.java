@@ -439,14 +439,14 @@ public class Loader {
             try {
                 Path path = file.toPath(), targetPath = Paths.get(target);
                 if ((!file.exists() || !Files.isSymbolicLink(path) || !Files.readSymbolicLink(path).equals(targetPath))
-                        && targetPath.isAbsolute() && !targetPath.equals(path)) {
+                        && targetPath.isAbsolute() && !Files.isSameFile(targetPath, path)) {
                     if (logger.isDebugEnabled()) {
                         logger.debug("Locking " + cacheDir + " to create symbolic link");
                     }
                     lockChannel = new FileOutputStream(lockFile).getChannel();
                     lock = lockChannel.lock();
                     if ((!file.exists() || !Files.isSymbolicLink(path) || !Files.readSymbolicLink(path).equals(targetPath))
-                            && targetPath.isAbsolute() && !targetPath.equals(path)) {
+                            && targetPath.isAbsolute() && !Files.isSameFile(targetPath, path)) {
                         if (logger.isDebugEnabled()) {
                             logger.debug("Creating symbolic link " + path + " to " + targetPath);
                         }
@@ -490,7 +490,7 @@ public class Loader {
                         lockChannel = new FileOutputStream(lockFile).getChannel();
                         lock = lockChannel.lock();
                         if ((!file.exists() || !Files.isSymbolicLink(path) || !Files.readSymbolicLink(path).equals(urlPath))
-                                && urlPath.isAbsolute() && !urlPath.equals(path)) {
+                                && urlPath.isAbsolute() && !Files.isSameFile(urlPath, path)) {
                             if (logger.isDebugEnabled()) {
                                 logger.debug("Creating symbolic link " + path + " to " + urlPath);
                             }
@@ -1337,7 +1337,7 @@ public class Loader {
                                     Path linkPath = linkFile.toPath();
                                     Path targetPath = file2.toPath();
                                     if ((!linkFile.exists() || !Files.isSymbolicLink(linkPath) || !Files.readSymbolicLink(linkPath).equals(targetPath))
-                                            && targetPath.isAbsolute() && !targetPath.equals(linkPath)) {
+                                            && targetPath.isAbsolute() && !Files.isSameFile(targetPath, linkPath)) {
                                         if (logger.isDebugEnabled()) {
                                             logger.debug("Creating symbolic link " + linkPath + " to " + targetPath);
                                         }
