@@ -294,6 +294,7 @@ public class Pointer implements AutoCloseable {
             super("JavaCPP Deallocator");
             setPriority(Thread.MAX_PRIORITY);
             setDaemon(true);
+            setContextClassLoader(null); // as required by containers
             start();
         }
 
