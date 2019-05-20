@@ -39,6 +39,9 @@ import java.nio.channels.FileLock;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.attribute.FileTime;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -110,6 +113,26 @@ public class Loader {
             osArch = "arm";
         }
         PLATFORM = osName + "-" + osArch;
+    }
+
+
+    private static long runtimeBuildTime = 0;
+    /**
+     * Returns the build time of the Java Runtime.
+     * Used when extracting resources from a jlink image.
+     */
+    private static synchronized long getRuntimeBuildTime() {
+        if (runtimeBuildTime == 0) {
+            FileSystem fs = FileSystems.getFileSystem(URI.create("jrt:/"));
+            if (fs != null)
+                try {
+                    FileTime ft = Files.getLastModifiedTime(fs.getRootDirectories().iterator().next());
+                    runtimeBuildTime = ft.toMillis();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+        }
+        return runtimeBuildTime;
     }
 
     /**
@@ -414,6 +437,12 @@ public class Loader {
             if (!noSubdir) {
                 String path = resourceURL.getHost() + resourceURL.getPath();
                 cacheSubdir = new File(cacheSubdir, path.substring(0, path.lastIndexOf('/') + 1));
+            }
+        } else if (resourceURL.getProtocol().equals("jrt")) {
+            size = urlConnection.getContentLength();
+            timestamp = getRuntimeBuildTime();
+            if (!noSubdir) {
+                cacheSubdir = new File(cacheSubdir, urlFile.getParentFile().getName());
             }
         } else {
             size = urlFile.length();
