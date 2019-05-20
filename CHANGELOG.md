@@ -1,4 +1,5 @@
 
+ * Fix compiler error with `SharedPtrAdapter` and `UniquePtrAdapter` in callback functions ([pull #304](https://github.com/bytedeco/javacpp/pull/304))
  * Start `Pointer.DeallocatorThread` with `setContextClassLoader(null)` as required by containers ([issue deeplearning4j/deeplearning4j#7737](https://github.com/deeplearning4j/deeplearning4j/issues/7737))
  * Add `-print` command line option to access platform properties externally, for example, inside build scripts
  * Add to `InfoMap` default pointer and value types for `ssize_t`, `char16_t`, `char32_t`, `std::u16string`, and `std::u32string`
