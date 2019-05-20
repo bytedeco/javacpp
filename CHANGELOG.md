@@ -1,4 +1,5 @@
 
+ * Fix compiler error with `SharedPtrAdapter` and `UniquePtrAdapter` in callback functions ([pull #304](https://github.com/bytedeco/javacpp/pull/304))
  * Add `-print` command line option to access platform properties externally, for example, inside build scripts
  * Add to `InfoMap` default pointer and value types for `ssize_t`, `char16_t`, `char32_t`, `std::u16string`, and `std::u32string`
  * Support multiple instances of `FunctionPointer` subclasses, up to the value in `@Allocator(max=...)` ([issue bytedeco/javacpp-presets#683](https://github.com/bytedeco/javacpp-presets/issues/683))
