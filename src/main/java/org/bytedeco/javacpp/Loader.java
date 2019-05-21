@@ -116,25 +116,6 @@ public class Loader {
     }
 
 
-    private static long runtimeBuildTime = 0;
-    /**
-     * Returns the build time of the Java Runtime.
-     * Used when extracting resources from a jlink image.
-     */
-    private static synchronized long getRuntimeBuildTime() {
-        if (runtimeBuildTime == 0) {
-            FileSystem fs = FileSystems.getFileSystem(URI.create("jrt:/"));
-            if (fs != null)
-                try {
-                    FileTime ft = Files.getLastModifiedTime(fs.getRootDirectories().iterator().next());
-                    runtimeBuildTime = ft.toMillis();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-        }
-        return runtimeBuildTime;
-    }
-
     /**
      * Returns either the value of the "org.bytedeco.javacpp.platform"
      * system property, or {@link #PLATFORM} when the former is not set.
@@ -439,8 +420,17 @@ public class Loader {
                 cacheSubdir = new File(cacheSubdir, path.substring(0, path.lastIndexOf('/') + 1));
             }
         } else if (resourceURL.getProtocol().equals("jrt")) {
-            size = urlConnection.getContentLength();
-            timestamp = getRuntimeBuildTime();
+            String p = resourceURL.getPath();
+            if (!p.startsWith("/modules")) p = "/modules" + p; // Work around bug JDK-8216553
+            try {
+                // urlConnection.getContentLength() would work on jrt URL, but not getLastModified()
+                Path path = Paths.get(new URI("jrt", p, null)); // Remove fragment
+                size = Files.size(path);
+                timestamp = Files.getLastModifiedTime(path).toMillis();
+            } catch (URISyntaxException e) { // Should not happen
+                size = 0;
+                timestamp = 0;
+            }
             if (!noSubdir) {
                 cacheSubdir = new File(cacheSubdir, urlFile.getParentFile().getName());
             }
