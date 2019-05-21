@@ -437,7 +437,8 @@ public class Loader {
             // ... create symbolic link to already extracted library or ...
             synchronized (Runtime.getRuntime()) {
             try {
-                Path path = file.toPath(), targetPath = Paths.get(target);
+                // file is already canonicalized, so normalized
+                Path path = file.toPath(), targetPath = Paths.get(target).normalize();
                 if ((!file.exists() || !Files.isSymbolicLink(path) || !Files.readSymbolicLink(path).equals(targetPath))
                         && targetPath.isAbsolute() && !targetPath.equals(path)) {
                     if (logger.isDebugEnabled()) {
@@ -481,7 +482,7 @@ public class Loader {
                 // ... try to create a symbolic link to the existing file, if we can, ...
                 synchronized (Runtime.getRuntime()) {
                 try {
-                    Path path = file.toPath(), urlPath = urlFile.toPath();
+                    Path path = file.toPath(), urlPath = urlFile.toPath().normalize();
                     if ((!file.exists() || !Files.isSymbolicLink(path) || !Files.readSymbolicLink(path).equals(urlPath))
                             && urlPath.isAbsolute() && !urlPath.equals(path)) {
                         if (logger.isDebugEnabled()) {
@@ -1334,8 +1335,8 @@ public class Loader {
                             if (dir2 != null && !dir2.equals(dir)) {
                                 File linkFile = new File(dir, file2.getName());
                                 try {
-                                    Path linkPath = linkFile.toPath();
-                                    Path targetPath = file2.toPath();
+                                    Path linkPath = linkFile.toPath().normalize();
+                                    Path targetPath = file2.toPath().normalize();
                                     if ((!linkFile.exists() || !Files.isSymbolicLink(linkPath) || !Files.readSymbolicLink(linkPath).equals(targetPath))
                                             && targetPath.isAbsolute() && !targetPath.equals(linkPath)) {
                                         if (logger.isDebugEnabled()) {
@@ -1475,7 +1476,7 @@ public class Loader {
         if (link != null && link.length() > 0) {
             File linkFile = new File(parent, link);
             try {
-                Path linkPath = linkFile.toPath();
+                Path linkPath = linkFile.toPath().normalize();
                 Path targetPath = Paths.get(name);
                 if ((!linkFile.exists() || !Files.isSymbolicLink(linkPath) || !Files.readSymbolicLink(linkPath).equals(targetPath))
                         && !targetPath.isAbsolute() && !targetPath.equals(linkPath.getFileName())) {
@@ -1493,7 +1494,7 @@ public class Loader {
                     }
                     for (String link2 : new String[] { link, name }) {
                         File linkFile2 = new File(parent2, link2);
-                        Path linkPath2 = linkFile2.toPath();
+                        Path linkPath2 = linkFile2.toPath().normalize();
                         Path relativeTarget = Paths.get(parent2).relativize(Paths.get(parent)).resolve(name);
                         if ((!linkFile2.exists() || !Files.isSymbolicLink(linkPath2) || !Files.readSymbolicLink(linkPath2).equals(relativeTarget))
                                 && !relativeTarget.isAbsolute() && !relativeTarget.equals(linkPath2.getFileName())) {
