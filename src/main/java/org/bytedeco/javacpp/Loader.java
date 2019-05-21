@@ -1476,7 +1476,7 @@ public class Loader {
         if (link != null && link.length() > 0) {
             File linkFile = new File(parent, link);
             try {
-                Path linkPath = linkFile.toPath().normalize();
+                Path linkPath = linkFile.toPath();
                 Path targetPath = Paths.get(name);
                 if ((!linkFile.exists() || !Files.isSymbolicLink(linkPath) || !Files.readSymbolicLink(linkPath).equals(targetPath))
                         && !targetPath.isAbsolute() && !targetPath.equals(linkPath.getFileName())) {
@@ -1494,7 +1494,7 @@ public class Loader {
                     }
                     for (String link2 : new String[] { link, name }) {
                         File linkFile2 = new File(parent2, link2);
-                        Path linkPath2 = linkFile2.toPath().normalize();
+                        Path linkPath2 = linkFile2.toPath();
                         Path relativeTarget = Paths.get(parent2).relativize(Paths.get(parent)).resolve(name);
                         if ((!linkFile2.exists() || !Files.isSymbolicLink(linkPath2) || !Files.readSymbolicLink(linkPath2).equals(relativeTarget))
                                 && !relativeTarget.isAbsolute() && !relativeTarget.equals(linkPath2.getFileName())) {
