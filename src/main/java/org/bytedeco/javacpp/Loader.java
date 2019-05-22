@@ -39,9 +39,6 @@ import java.nio.channels.FileLock;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.attribute.FileTime;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -114,7 +111,6 @@ public class Loader {
         }
         PLATFORM = osName + "-" + osArch;
     }
-
 
     /**
      * Returns either the value of the "org.bytedeco.javacpp.platform"
