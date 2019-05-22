@@ -1,4 +1,6 @@
 
+ * Fix compile errors caused by `Generator` occurring with callback functions returning a value by reference
+ * Make `Builder` expand entries from the user class path with `*` as basename to all JAR files in the directory
  * Prevent `Loader` from creating symbolic links pointing to themselves by comparing with `Path.normalize()` ([pull #307](https://github.com/bytedeco/javacpp/pull/307))
  * Fix `Loader.cacheResource()` with the "jrt" protocol as used by jlink ([pull #305](https://github.com/bytedeco/javacpp/pull/305))
  * Fix compiler error with `SharedPtrAdapter` and `UniquePtrAdapter` in callback functions ([pull #304](https://github.com/bytedeco/javacpp/pull/304))

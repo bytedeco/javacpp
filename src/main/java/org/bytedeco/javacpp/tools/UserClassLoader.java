@@ -27,6 +27,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -47,7 +48,20 @@ class UserClassLoader extends URLClassLoader {
         }
         for (String path : paths) {
             File f = new File(path);
-            if (!f.exists()) {
+            if (f.getName().equals("*")) {
+                File[] files = f.getParentFile().listFiles();
+                String[] jars = new String[files.length];
+                int n = 0;
+                for (File file : files) {
+                    String p = file.getPath();
+                    if (p.endsWith(".jar") || p.endsWith(".JAR")) {
+                        jars[n++] = p;
+                    }
+                }
+                addPaths(Arrays.copyOf(jars, n));
+                continue;
+            }
+            if (this.paths.contains(path) || !f.exists()) {
                 continue;
             }
             this.paths.add(path);
