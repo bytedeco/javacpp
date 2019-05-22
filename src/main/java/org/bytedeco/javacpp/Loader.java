@@ -482,6 +482,7 @@ public class Loader {
                 // ... try to create a symbolic link to the existing file, if we can, ...
                 synchronized (Runtime.getRuntime()) {
                 try {
+                    // file is already canonicalized, so normalized
                     Path path = file.toPath(), urlPath = urlFile.toPath().normalize();
                     if ((!file.exists() || !Files.isSymbolicLink(path) || !Files.readSymbolicLink(path).equals(urlPath))
                             && urlPath.isAbsolute() && !urlPath.equals(path)) {
