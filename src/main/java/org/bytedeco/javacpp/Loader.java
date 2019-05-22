@@ -452,7 +452,8 @@ public class Loader {
             // ... create symbolic link to already extracted library or ...
             synchronized (Runtime.getRuntime()) {
             try {
-                Path path = file.toPath(), targetPath = Paths.get(target);
+                // file is already canonicalized, so normalized
+                Path path = file.toPath(), targetPath = Paths.get(target).normalize();
                 if ((!file.exists() || !Files.isSymbolicLink(path) || !Files.readSymbolicLink(path).equals(targetPath))
                         && targetPath.isAbsolute() && !targetPath.equals(path)) {
                     if (logger.isDebugEnabled()) {
@@ -496,7 +497,8 @@ public class Loader {
                 // ... try to create a symbolic link to the existing file, if we can, ...
                 synchronized (Runtime.getRuntime()) {
                 try {
-                    Path path = file.toPath(), urlPath = urlFile.toPath();
+                    // file is already canonicalized, so normalized
+                    Path path = file.toPath(), urlPath = urlFile.toPath().normalize();
                     if ((!file.exists() || !Files.isSymbolicLink(path) || !Files.readSymbolicLink(path).equals(urlPath))
                             && urlPath.isAbsolute() && !urlPath.equals(path)) {
                         if (logger.isDebugEnabled()) {
@@ -1349,8 +1351,8 @@ public class Loader {
                             if (dir2 != null && !dir2.equals(dir)) {
                                 File linkFile = new File(dir, file2.getName());
                                 try {
-                                    Path linkPath = linkFile.toPath();
-                                    Path targetPath = file2.toPath();
+                                    Path linkPath = linkFile.toPath().normalize();
+                                    Path targetPath = file2.toPath().normalize();
                                     if ((!linkFile.exists() || !Files.isSymbolicLink(linkPath) || !Files.readSymbolicLink(linkPath).equals(targetPath))
                                             && targetPath.isAbsolute() && !targetPath.equals(linkPath)) {
                                         if (logger.isDebugEnabled()) {
