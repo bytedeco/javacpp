@@ -1,5 +1,6 @@
 
  * Prevent `Loader` from creating symbolic links pointing to themselves by comparing with `Path.normalize()` ([pull #307](https://github.com/bytedeco/javacpp/pull/307))
+ * Fix `Loader.cacheResource()` with the "jrt" protocol as used by jlink ([pull #305](https://github.com/bytedeco/javacpp/pull/305))
  * Fix compiler error with `SharedPtrAdapter` and `UniquePtrAdapter` in callback functions ([pull #304](https://github.com/bytedeco/javacpp/pull/304))
  * Start `Pointer.DeallocatorThread` with `setContextClassLoader(null)` as required by containers ([issue deeplearning4j/deeplearning4j#7737](https://github.com/deeplearning4j/deeplearning4j/issues/7737))
  * Add `-print` command line option to access platform properties externally, for example, inside build scripts

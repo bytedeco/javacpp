@@ -415,6 +415,21 @@ public class Loader {
                 String path = resourceURL.getHost() + resourceURL.getPath();
                 cacheSubdir = new File(cacheSubdir, path.substring(0, path.lastIndexOf('/') + 1));
             }
+        } else if (resourceURL.getProtocol().equals("jrt")) {
+            String p = resourceURL.getPath();
+            if (!p.startsWith("/modules")) p = "/modules" + p; // Work around bug JDK-8216553
+            try {
+                // urlConnection.getContentLength() would work on jrt URL, but not getLastModified()
+                Path path = Paths.get(new URI("jrt", p, null)); // Remove fragment
+                size = Files.size(path);
+                timestamp = Files.getLastModifiedTime(path).toMillis();
+            } catch (URISyntaxException e) { // Should not happen
+                size = 0;
+                timestamp = 0;
+            }
+            if (!noSubdir) {
+                cacheSubdir = new File(cacheSubdir, urlFile.getParentFile().getName());
+            }
         } else {
             size = urlFile.length();
             timestamp = urlFile.lastModified();
