@@ -209,11 +209,10 @@ public class Loader {
         return checkVersion(groupId, artifactId, "-", true);
     }
 
-    /** Returns {@code getVersion(groupId, artifactId).equals(getVersion("org.bytedeco", "javacpp"))
-     *                                             || .endsWith(separator + getVersion("org.bytedeco", "javacpp"))} or false on error. */
+    /** Returns {@code getVersion(groupId, artifactId).equals(getVersion()) || .endsWith(separator + getVersion())} or false on error. */
     public static boolean checkVersion(String groupId, String artifactId, String separator, boolean logWarnings) {
         try {
-            String javacppVersion = getVersion("org.bytedeco", "javacpp");
+            String javacppVersion = getVersion();
             String version = getVersion(groupId, artifactId);
             boolean matches = version.equals(javacppVersion) || version.endsWith(separator + javacppVersion);
             if (!matches && logWarnings) {
@@ -226,6 +225,11 @@ public class Loader {
             }
         }
         return false;
+    }
+
+    /** Returns {@code getVersion("org.bytedeco", "javacpp")}. */
+    public static String getVersion() throws IOException {
+        return getVersion("org.bytedeco", "javacpp");
     }
 
     /** Returns version property from {@code getResource("META-INF/maven/" + groupId + "/" + artifactId + "/pom.properties")}. */
