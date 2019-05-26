@@ -204,6 +204,53 @@ public class Loader {
         return p;
     }
 
+    /** Returns {@code checkVersion(groupId, artifactId, "-", true)}. */
+    public static boolean checkVersion(String groupId, String artifactId) {
+        return checkVersion(groupId, artifactId, "-", true);
+    }
+
+    /** Returns {@code getVersion(groupId, artifactId).equals(getVersion("org.bytedeco", "javacpp"))
+     *                                             || .endsWith(separator + getVersion("org.bytedeco", "javacpp"))} or false on error. */
+    public static boolean checkVersion(String groupId, String artifactId, String separator, boolean logWarnings) {
+        try {
+            String javacppVersion = getVersion("org.bytedeco", "javacpp");
+            String version = getVersion(groupId, artifactId);
+            boolean matches = version.equals(javacppVersion) || version.endsWith(separator + javacppVersion);
+            if (!matches && logWarnings) {
+                logger.warn("Versions of org.bytedeco:javacpp:" + javacppVersion + " and " + groupId + ":" + artifactId + ":" + version + " do not match.");
+            }
+            return matches;
+        } catch (Exception ex) {
+            if (logWarnings) {
+                logger.warn("Unable to load properties : " + ex.getMessage());
+            }
+        }
+        return false;
+    }
+
+    /** Returns version property from {@code getResource("META-INF/maven/" + groupId + "/" + artifactId + "/pom.properties")}. */
+    public static String getVersion(String groupId, String artifactId) throws IOException {
+        Properties p = new Properties();
+        // Need to call getClassLoader() for non-encapsulated resources under JPMS
+        InputStream is = Loader.class.getClassLoader().getResourceAsStream("META-INF/maven/" + groupId + "/" + artifactId + "/pom.properties");
+        try {
+            try {
+                p.load(new InputStreamReader(is));
+            } catch (NoSuchMethodError e) {
+                p.load(is);
+            }
+            return p.getProperty("version");
+        } finally {
+            try {
+                if (is != null) {
+                    is.close();
+                }
+            } catch (IOException ex) {
+                logger.error("Unable to close resource : " + ex.getMessage());
+            }
+        }
+    }
+
     /**
      * If annotated with properties, returns the argument as "enclosing Class".
      * If no properties are found on the Class, makes a search for the first Class

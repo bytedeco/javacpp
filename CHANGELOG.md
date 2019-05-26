@@ -1,4 +1,5 @@
 
+ * Add `Loader.getVersion()` and `checkVersion()` to get versions of Maven artifacts and check against JavaCPP
  * Fix compile errors caused by `Generator` occurring with callback functions returning a value by reference
  * Make `Builder` expand entries from the user class path with `*` as basename to all JAR files in the directory
  * Prevent `Loader` from creating symbolic links pointing to themselves by comparing with `Path.normalize()` ([pull #307](https://github.com/bytedeco/javacpp/pull/307))
