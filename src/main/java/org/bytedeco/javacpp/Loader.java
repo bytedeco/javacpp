@@ -209,18 +209,23 @@ public class Loader {
         return checkVersion(groupId, artifactId, "-", true);
     }
 
-    /** Returns {@code getVersion(groupId, artifactId).equals(getVersion()) || .endsWith(separator + getVersion())} or false on error. */
+    /** Returns {@code getVersion(groupId, artifactId).equals(getVersion()) || .endsWith(separator + getVersion())} or false on error.
+     *  Also calls {@link Logger#warn(String)} on error when {@code logWarnings && isLoadLibraries()}. */
     public static boolean checkVersion(String groupId, String artifactId, String separator, boolean logWarnings) {
         try {
             String javacppVersion = getVersion();
             String version = getVersion(groupId, artifactId);
+            if (version == null && logWarnings && isLoadLibraries()) {
+                logger.warn("Version of " + groupId + ":" + artifactId + " could not be found.");
+                return false;
+            }
             boolean matches = version.equals(javacppVersion) || version.endsWith(separator + javacppVersion);
-            if (!matches && logWarnings) {
+            if (!matches && logWarnings && isLoadLibraries()) {
                 logger.warn("Versions of org.bytedeco:javacpp:" + javacppVersion + " and " + groupId + ":" + artifactId + ":" + version + " do not match.");
             }
             return matches;
         } catch (Exception ex) {
-            if (logWarnings) {
+            if (logWarnings && isLoadLibraries()) {
                 logger.warn("Unable to load properties : " + ex.getMessage());
             }
         }
@@ -237,6 +242,9 @@ public class Loader {
         Properties p = new Properties();
         // Need to call getClassLoader() for non-encapsulated resources under JPMS
         InputStream is = Loader.class.getClassLoader().getResourceAsStream("META-INF/maven/" + groupId + "/" + artifactId + "/pom.properties");
+        if (is == null) {
+            return null;
+        }
         try {
             try {
                 p.load(new InputStreamReader(is));
