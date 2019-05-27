@@ -325,7 +325,8 @@ public class Pointer implements AutoCloseable {
     static final long maxBytes;
 
     /** Maximum amount of memory reported by {@link #physicalBytes()} before forcing call to {@link System#gc()}.
-     * Set via "org.bytedeco.javacpp.maxphysicalbytes" system property, defaults to {@code 2 * Runtime.maxMemory()}. */
+     * Set via "org.bytedeco.javacpp.maxphysicalbytes" system property, defaults to {@code maxBytes + Runtime.maxMemory()}.
+     * If {@link #maxBytes} is also not set, this is equivalent to a default of {@code 2 * Runtime.maxMemory()}*/
     static final long maxPhysicalBytes;
 
     /** Maximum number of times to call {@link System#gc()} before giving up with {@link OutOfMemoryError}.
@@ -390,7 +391,7 @@ public class Pointer implements AutoCloseable {
         }
         maxBytes = m;
 
-        m = 2 * Runtime.getRuntime().maxMemory();
+        m = maxBytes + Runtime.getRuntime().maxMemory();
         s = System.getProperty("org.bytedeco.javacpp.maxphysicalbytes");
         s = System.getProperty("org.bytedeco.javacpp.maxPhysicalBytes", s);
         if (s != null && s.length() > 0) {
