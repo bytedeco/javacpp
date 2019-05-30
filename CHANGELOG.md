@@ -1,4 +1,12 @@
 
+ * Let `Parser` add `@Name` or `@Namespace` annotations to non-translated enumerators as well
+ * Make `Parser` pick up the names of type aliases for function pointers declared with `using`
+ * Fix `Parser` failing on lambda expressions found inside member initialization lists of constructors
+ * Add special support for `constexpr` variables in `Parser` by disabling their member setters automatically
+ * Fix `Parser` not placing `&` and `*` at the right place inside template arguments containing function declarations
+ * Support more basic containers in `Parser` by comparing their names in a case-insensitive manner and add annotations missing from index types
+ * Fix `Generator` taking the `@By*` annotation of the paired method for the index instead of the value argument of a setter
+ * Fix `Parser` sometimes considering global C++ identifiers starting with `::` as if they were local
  * Change default value for `Pointer.maxPhysicalBytes` to `Pointer.maxBytes + Runtime.maxMemory()` ([pull #310](https://github.com/bytedeco/javacpp/pull/310))
  * Add `Loader.getVersion()` and `checkVersion()` to get versions of Maven artifacts and check against JavaCPP
  * Fix compile errors caused by `Generator` occurring with callback functions returning a value by reference

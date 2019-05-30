@@ -3550,8 +3550,9 @@ public class Generator {
 
     Annotation by(MethodInformation methodInfo, int j) {
         Annotation passBy = by(methodInfo.parameterAnnotations[j]);
-        if (passBy == null && methodInfo.pairedMethod != null &&
-                (methodInfo.valueSetter || methodInfo.memberSetter)) {
+        if (passBy == null && methodInfo.pairedMethod != null
+                && (methodInfo.valueSetter || methodInfo.memberSetter)
+                && j == methodInfo.parameterAnnotations.length - 1) {
             passBy = by(methodInfo.pairedMethod.getAnnotations());
         }
         return passBy;

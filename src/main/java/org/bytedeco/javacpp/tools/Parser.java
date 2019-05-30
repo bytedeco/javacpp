@@ -142,7 +142,7 @@ public class Parser {
                 if (info == null || info.skip || !info.define) {
                     continue;
                 }
-                int dim = containerName.endsWith("pair") ? 0 : 1;
+                int dim = containerName.toLowerCase().endsWith("pair") ? 0 : 1;
                 boolean constant = info.cppNames[0].startsWith("const "), resizable = !constant;
                 Type containerType = new Parser(this, info.cppNames[0]).type(context),
                         indexType, valueType, firstType = null, secondType = null;
@@ -156,7 +156,7 @@ public class Parser {
                 } else {
                     resizable &= containerType.arguments.length == 1; // assume second argument is the fixed size
                     indexType = new Type();
-                    indexType.annotations = "@Cast(\"size_t\") ";
+                    indexType.value = true;
                     indexType.cppName = "size_t";
                     indexType.javaName = "long";
                     valueType = containerType.arguments[0];
@@ -164,14 +164,14 @@ public class Parser {
                 String indexFunction = "(function = \"at\")";
                 boolean list = resizable; // also vector, etc
                 if (valueType.javaName == null || valueType.javaName.length() == 0
-                        || containerName.endsWith("bitset")) {
+                        || containerName.toLowerCase().endsWith("bitset")) {
                     indexFunction = "";
                     valueType.javaName = "boolean";
                     resizable = false;
-                } else if (containerName.endsWith("list") || containerName.endsWith("set")) {
+                } else if (containerName.toLowerCase().endsWith("list") || containerName.toLowerCase().endsWith("set")) {
                     indexType = null;
                     resizable = false;
-                    list = containerName.endsWith("list");
+                    list = containerName.toLowerCase().endsWith("list");
                 } else if (!constant && !resizable) {
                     indexFunction = ""; // maps need operator[] to be writable
                 }
@@ -182,45 +182,48 @@ public class Parser {
                     valueType = valueType.arguments[0];
                 }
                 int valueTemplate = valueType.cppName.indexOf("<");
-                if (containerName.endsWith("pair")) {
+                if (containerName.toLowerCase().endsWith("pair")) {
                     firstType = containerType.arguments[0];
                     secondType = containerType.arguments[1];
-                } else if (valueTemplate >= 0 && valueType.cppName.substring(0, valueTemplate).endsWith("pair")) {
+                } else if (valueTemplate >= 0 && valueType.cppName.substring(0, valueTemplate).toLowerCase().endsWith("pair")) {
                     firstType = valueType.arguments[0];
                     secondType = valueType.arguments[1];
                 }
-                if (firstType != null && (firstType.annotations == null || firstType.annotations.length() == 0)) {
-                    firstType.annotations = (firstType.constValue ? "@Const " : "") + (firstType.indirections == 0 && !firstType.value ? "@ByRef " : "");
-                }
-                if (secondType != null && (secondType.annotations == null || secondType.annotations.length() == 0)) {
-                    secondType.annotations = (secondType.constValue ? "@Const " : "") + (secondType.indirections == 0 && !secondType.value ? "@ByRef " : "");
-                }
-                if (indexType != null && (indexType.annotations == null || indexType.annotations.length() == 0)) {
-                    indexType.annotations = (indexType.constValue ? "@Const " : "") + (indexType.indirections == 0 && !indexType.value ? "@ByRef " : "");
-                }
-                if (valueType != null && (valueType.annotations == null || valueType.annotations.length() == 0)) {
-                    valueType.annotations = (valueType.constValue ? "@Const " : "") + (valueType.indirections == 0 && !valueType.value ? "@ByRef " : "");
-                }
-                Info valueInfo = infoMap.getFirst(valueType.cppName);
-                if (valueInfo != null && valueInfo.cast) {
-                    String cast = valueType.cppName;
-                    if (valueType.constValue && !cast.startsWith("const ")) {
-                        cast = "const " + cast;
+                Type[] types = {firstType, secondType, indexType, valueType};
+                for (int i = 0; i < types.length; i++) {
+                    for (int j = i + 1; j < types.length; j++) {
+                        if (types[j] == types[i]) {
+                            types[j] = null;
+                        }
                     }
-                    if (valueType.indirections > 0) {
-                        for (int i = 0; i < valueType.indirections; i++) {
+                }
+                for (Type type : types) {
+                    if (type == null) {
+                        continue;
+                    } else if (type.annotations == null || type.annotations.length() == 0) {
+                        type.annotations = (type.constValue ? "@Const " : "") + (type.indirections == 0 && !type.value ? "@ByRef " : "");
+                    }
+                    Info info2 = infoMap.getFirst(type.cppName);
+                    if (info2 != null && info2.cast && !type.annotations.contains("@Cast") && !type.javaName.contains("@Cast")) {
+                        String cast = type.cppName;
+                        if (type.constValue && !cast.startsWith("const ")) {
+                            cast = "const " + cast;
+                        }
+                        if (type.indirections > 0) {
+                            for (int i = 0; i < type.indirections; i++) {
+                                cast += "*";
+                            }
+                        } else if (!type.value) {
                             cast += "*";
                         }
-                    } else if (!valueType.value) {
-                        cast += "*";
+                        if (type.reference) {
+                            cast += "&";
+                        }
+                        if (type.constPointer && !cast.endsWith(" const")) {
+                            cast = cast + " const";
+                        }
+                        type.annotations = "@Cast(\"" + cast + "\") " + type.annotations;
                     }
-                    if (valueType.reference) {
-                        cast += "&";
-                    }
-                    if (valueType.constPointer && !cast.endsWith(" const")) {
-                        cast = cast + " const";
-                    }
-                    valueType.annotations = "@Cast(\"" + cast + "\") " + valueType.annotations;
                 }
                 String arrayBrackets = "";
                 for (int i = 0; i < dim - 1; i++) {
@@ -300,7 +303,7 @@ public class Parser {
                             decl.text += "    @ValueSetter @Index" + indexFunction + " public native " + containerType.javaName + " put(" + params + separator + valueType.annotations + valueType.javaNames[i] + " value);\n";
                         }
                     }
-                    if (dim == 1 && !containerName.endsWith("bitset") && containerType.arguments.length >= 1 && containerType.arguments[containerType.arguments.length - 1].javaName.length() > 0) {
+                    if (dim == 1 && !containerName.toLowerCase().endsWith("bitset") && containerType.arguments.length >= 1 && containerType.arguments[containerType.arguments.length - 1].javaName.length() > 0) {
                         decl.text += "\n";
                         if (!constant) {
                             if (list) {
@@ -564,11 +567,22 @@ public class Parser {
                     if (t.constValue && !s.startsWith("const ")) {
                         s = "const " + s;
                     }
+                    int n = s.indexOf('(');
                     for (int i = 0; i < t.indirections; i++) {
-                        s += "*";
+                        if (n >= 0) {
+                            // return value from function type
+                            s = s.substring(0, n) + "*" + s.substring(n);
+                        } else {
+                            s += "*";
+                        }
                     }
                     if (t.reference) {
-                        s += "&";
+                        if (n >= 0) {
+                            // return value from function type
+                            s = s.substring(0, n) + "&" + s.substring(n);
+                        } else {
+                            s += "&";
+                        }
                     }
                     if (t.constPointer && !s.endsWith(" const")) {
                         s = s + " const";
@@ -584,6 +598,9 @@ public class Parser {
                     type.constValue = true;
                 } else {
                     type.constPointer = true;
+                }
+                if (token.match(Token.CONSTEXPR)) {
+                    type.constExpr = true;
                 }
             } else if (token.match('*')) {
                 type.indirections++;
@@ -1887,7 +1904,7 @@ public class Parser {
                         tokens.next();
                         break;
                     }
-                    if (token.match(';')) {
+                    if (count == 0 && token.match(';')) {
                         break;
                     }
                 }
@@ -2027,7 +2044,7 @@ public class Parser {
                         tokens.next();
                         break;
                     }
-                    if (token.match(';')) {
+                    if (count == 0 && token.match(';')) {
                         break;
                     }
                 }
@@ -2084,7 +2101,7 @@ public class Parser {
                             tokens.next();
                             break;
                         }
-                        if (token.match(';')) {
+                        if (count == 0 && token.match(';')) {
                             break;
                         }
                     }
@@ -2283,12 +2300,12 @@ public class Parser {
                     dcl.type.annotations = dcl.type.annotations.replaceAll("@Name\\(.*\\) ", "");
                     javaName = metadcl.javaName + "_" + shortName;
                 }
-                if ((dcl.type.constValue && dcl.indirections == 0) || dcl.constPointer) {
+                if ((dcl.type.constValue && dcl.indirections == 0) || dcl.constPointer || dcl.type.constExpr) {
                     decl.text += "@MemberGetter ";
                 }
                 decl.text += modifiers + dcl.type.annotations.replace("@ByVal ", "@ByRef ")
                           + dcl.type.javaName + " " + javaName + "(" + indices + ");";
-                if (!(dcl.type.constValue && dcl.indirections == 0) && !dcl.constPointer) {
+                if (!(dcl.type.constValue && dcl.indirections == 0) && !dcl.constPointer && !dcl.type.constExpr) {
                     if (indices.length() > 0) {
                         indices += ", ";
                     }
@@ -2296,7 +2313,7 @@ public class Parser {
                     decl.text += " " + modifiers + setterType + javaName + "(" + indices + javaTypeWithoutAnnotations + " setter);";
                 }
                 decl.text += "\n";
-                if ((dcl.type.constValue || dcl.constPointer) && dcl.type.staticMember && indices.length() == 0) {
+                if ((dcl.type.constValue || dcl.constPointer || dcl.type.constExpr) && dcl.type.staticMember && indices.length() == 0) {
                     String rawType = dcl.type.javaName.substring(dcl.type.javaName.lastIndexOf(' ') + 1);
                     if ("byte".equals(rawType) || "short".equals(rawType) || "int".equals(rawType) || "long".equals(rawType)
                             || "float".equals(rawType) || "double".equals(rawType) || "char".equals(rawType) || "boolean".equals(rawType)) {
@@ -2328,12 +2345,12 @@ public class Parser {
                 }
                 tokens.index = backIndex;
                 Declarator dcl2 = declarator(context, null, -1, false, n, false, false);
-                if (dcl2.type.constValue || dcl2.constPointer || dcl2.indirections < 2) {
+                if (dcl2.type.constValue || dcl2.constPointer || dcl2.indirections < 2 || dcl2.type.constExpr) {
                     decl.text += "@MemberGetter ";
                 }
                 decl.text += modifiers + dcl.type.annotations.replace("@ByVal ", "@ByRef ")
                           + dcl.type.javaName + " " + javaName + "(" + indices + ");";
-                if (!dcl.type.constValue && !dcl.constPointer && !(dcl2.indirections < 2)) {
+                if (!dcl.type.constValue && !dcl.constPointer && !(dcl2.indirections < 2) && !dcl2.type.constExpr) {
                     if (indices.length() > 0) {
                         indices += ", ";
                     }
@@ -2632,6 +2649,10 @@ public class Parser {
             if (dcl.definition != null) {
                 // a function pointer or something
                 decl = dcl.definition;
+                if (usingDefName != null) {
+                    decl.text = decl.text.replace(decl.signature, usingDefName);
+                    decl.signature = decl.type.javaName = decl.type.cppName = usingDefName;
+                }
                 if (dcl.javaName.length() > 0 && context.javaName != null) {
                     dcl.javaName = context.javaName + "." + dcl.javaName;
                 }
@@ -3269,7 +3290,13 @@ public class Parser {
                         if (separator.equals(",")) {
                             separator = ";";
                         }
-                        extraText += "\npublic static native @MemberGetter " + javaType + " " + javaName + "();\n";
+                        String annotations = "";
+                        if (!javaName.equals(cppName)){
+                            annotations += "@Name(\"" + cppName + "\") ";
+                        } else if (context.namespace != null && context.javaName == null) {
+                            annotations += "@Namespace(\"" + context.namespace + "\") ";
+                        }
+                        extraText += "\n" + annotations + "public static native @MemberGetter " + javaType + " " + javaName + "();\n";
                         enumPrefix = "public static final " + javaType;
                         countPrefix = javaName + "()";
                     }

@@ -31,7 +31,7 @@ class Type {
     Type(String name) { cppName = javaName = name; }
 
     int indirections = 0;
-    boolean anonymous = false, constPointer = false, constValue = false, constructor = false,
+    boolean anonymous = false, constExpr = false, constPointer = false, constValue = false, constructor = false,
             destructor = false, operator = false, simple = false, staticMember = false, using = false,
             reference = false, value = false, friend = false, typedef = false, virtual = false;
     String annotations = "", cppName = "", javaName = "", javaNames[] = null;

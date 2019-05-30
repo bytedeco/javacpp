@@ -64,12 +64,12 @@ class Context {
         if (cppName == null || cppName.length() == 0) {
             return new String[0];
         }
-        for (Map.Entry<String, String> e : namespaceMap.entrySet()) {
-            cppName = cppName.replaceAll(e.getKey() + "::", e.getValue() + "::");
-        }
         if (cppName.startsWith("::")) {
             // already in global namespace, so strip leading operator
             return new String[] { cppName.substring(2) };
+        }
+        for (Map.Entry<String, String> e : namespaceMap.entrySet()) {
+            cppName = cppName.replaceAll(e.getKey() + "::", e.getValue() + "::");
         }
         List<String> names = new ArrayList<String>();
         String ns = namespace != null ? namespace : "";
