@@ -1,4 +1,5 @@
 
+ * Expose all platform properties to process executed with `Builder.buildCommand` via environment variables, with names uppercase and all `.` replaced with `_`
  * Let `Parser` add `@Name` or `@Namespace` annotations to non-translated enumerators as well
  * Make `Parser` pick up the names of type aliases for function pointers declared with `using`
  * Fix `Parser` failing on lambda expressions found inside member initialization lists of constructors

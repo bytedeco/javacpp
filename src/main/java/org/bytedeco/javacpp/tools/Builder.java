@@ -934,27 +934,39 @@ public class Builder {
             String links = properties.getProperty("platform.linkresource", "");
             String resources = properties.getProperty("platform.buildresource", "");
             String separator = properties.getProperty("platform.path.separator");
+
+            // Get all native libraries for classes on the class path.
+            List<String> libs = new ArrayList<String>();
+            ClassProperties libProperties = null;
+            for (Class c : classScanner.getClasses()) {
+                if (Loader.getEnclosingClass(c) != c) {
+                    continue;
+                }
+                libProperties = Loader.loadProperties(c, properties, true);
+                if (!libProperties.isLoaded()) {
+                    logger.warn("Could not load platform properties for " + c);
+                    continue;
+                }
+                libs.addAll(libProperties.get("platform.preload"));
+                libs.addAll(libProperties.get("platform.link"));
+            }
+            if (libProperties == null) {
+                libProperties = new ClassProperties(properties);
+            }
+            includeJavaPaths(libProperties, header);
+            for (Map.Entry<String, List<String>> entry : libProperties.entrySet()) {
+                String key = entry.getKey();
+                key = key.toUpperCase().replace('.', '_');
+
+                List<String> values = entry.getValue();
+                String value = "";
+                for (String s : values) {
+                    value += value.length() > 0 && !value.endsWith(separator) ? separator + s : s;
+                }
+                environmentVariables.put(key, value);
+            }
+
             if (paths.length() > 0 || resources.length() > 0) {
-
-                // Get all native libraries for classes on the class path.
-                List<String> libs = new ArrayList<String>();
-                ClassProperties libProperties = null;
-                for (Class c : classScanner.getClasses()) {
-                    if (Loader.getEnclosingClass(c) != c) {
-                        continue;
-                    }
-                    libProperties = Loader.loadProperties(c, properties, true);
-                    if (!libProperties.isLoaded()) {
-                        logger.warn("Could not load platform properties for " + c);
-                        continue;
-                    }
-                    libs.addAll(libProperties.get("platform.preload"));
-                    libs.addAll(libProperties.get("platform.link"));
-                }
-                if (libProperties == null) {
-                    libProperties = new ClassProperties(properties);
-                }
-
                 // Extract the required resources.
                 for (String s : resources.split(separator)) {
                     for (File f : Loader.cacheResources(s)) {
@@ -1317,7 +1329,7 @@ public class Builder {
         if (printPath != null) {
             Collection<Class> classes = builder.classScanner.getClasses();
             ClassProperties p = Loader.loadProperties(classes.toArray(new Class[classes.size()]), builder.properties, true);
-            builder.includeJavaPaths(p, true);
+            builder.includeJavaPaths(p, builder.header);
             for (String s : p.get(printPath)) {
                 System.out.println(s);
             }

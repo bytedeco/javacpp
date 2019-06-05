@@ -1658,7 +1658,7 @@ public class Generator {
     }
 
     boolean methods(Class<?> cls) {
-        if (!Loader.checkPlatform(cls, properties)) {
+        if (Modifier.isAbstract(cls.getModifiers()) || !Loader.checkPlatform(cls, properties)) {
             return false;
         }
 
