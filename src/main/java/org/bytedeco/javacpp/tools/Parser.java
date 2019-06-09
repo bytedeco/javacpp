@@ -1397,6 +1397,10 @@ public class Parser {
                         definition.text += s + " ";
                     }
                 }
+                if (functionType == null) {
+                    // temporary name to be replaced in typedef()
+                    functionType = "null";
+                }
                 functionType = functionType.substring(functionType.lastIndexOf(' ') + 1); // get rid of pointer annotations
                 if (!functionType.equals("Pointer")) {
                     definition.type = new Type(functionType);
