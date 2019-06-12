@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2018 Samuel Audet
+ * Copyright (C) 2011-2019 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -315,22 +315,24 @@ public class Pointer implements AutoCloseable {
     private static final Logger logger = Logger.create(Pointer.class);
 
     /** The {@link ReferenceQueue} used by {@link DeallocatorReference}.
-     * Initialized to null if the "org.bytedeco.javacpp.nopointergc" system property is "true". */
+     * Initialized to null if the "org.bytedeco.javacpp.noPointerGC" system property is "true". */
     private static final ReferenceQueue<Pointer> referenceQueue;
 
     static final Thread deallocatorThread;
 
     /** Maximum amount of memory registered with live deallocators before forcing call to {@link System#gc()}.
-     * Set via "org.bytedeco.javacpp.maxbytes" system property, defaults to {@link Runtime#maxMemory()}. */
+     * Set via "org.bytedeco.javacpp.maxBytes" system property, defaults to {@link Runtime#maxMemory()}.
+     * We can use a value of 0 or less to prevent any explicit call to the garbage collector. */
     static final long maxBytes;
 
     /** Maximum amount of memory reported by {@link #physicalBytes()} before forcing call to {@link System#gc()}.
-     * Set via "org.bytedeco.javacpp.maxphysicalbytes" system property, defaults to {@code maxBytes + Runtime.maxMemory()}.
-     * If {@link #maxBytes} is also not set, this is equivalent to a default of {@code 2 * Runtime.maxMemory()}*/
+     * Set via "org.bytedeco.javacpp.maxPhysicalBytes" system property, defaults to {@code maxBytes > 0 ? maxBytes + Runtime.maxMemory() : 0}.
+     * If {@link #maxBytes} is also not set, this is equivalent to a default of {@code 2 * Runtime.maxMemory()}.
+     * We can use a value of 0 or less to prevent any explicit call to the garbage collector. */
     static final long maxPhysicalBytes;
 
     /** Maximum number of times to call {@link System#gc()} before giving up with {@link OutOfMemoryError}.
-     * Set via "org.bytedeco.javacpp.maxretries" system property, defaults to 10, where each retry is followed
+     * Set via "org.bytedeco.javacpp.maxRetries" system property, defaults to 10, where each retry is followed
      * by a call to {@code Thread.sleep(100)} and {@code Pointer.trimMemory()}. */
     static final int maxRetries;
 
@@ -391,7 +393,7 @@ public class Pointer implements AutoCloseable {
         }
         maxBytes = m;
 
-        m = maxBytes + Runtime.getRuntime().maxMemory();
+        m = maxBytes > 0 ? maxBytes + Runtime.getRuntime().maxMemory() : 0;
         s = System.getProperty("org.bytedeco.javacpp.maxphysicalbytes");
         s = System.getProperty("org.bytedeco.javacpp.maxPhysicalBytes", s);
         if (s != null && s.length() > 0) {
