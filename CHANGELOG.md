@@ -1,4 +1,5 @@
 
+ * Avoid `Parser` writing `allocateArray()` when single `int`, `long`, `float`, or `double` constructor already exists ([issue bytedeco/javacv#1224](https://github.com/bytedeco/javacv/issues/1224))
  * Expose all platform properties to process executed with `Builder.buildCommand` via environment variables, with names uppercase and all `.` replaced with `_`
  * Let `Parser` add `@Name` or `@Namespace` annotations to non-translated enumerators as well
  * Make `Parser` pick up the names of type aliases for function pointers declared with `using` and prevent `NullPointerException`

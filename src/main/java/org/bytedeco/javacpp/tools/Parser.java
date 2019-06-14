@@ -3040,9 +3040,10 @@ public class Parser {
             } else if (d.declarator != null && d.declarator.type != null && d.declarator.type.constructor) {
                 implicitConstructor = false;
                 Declarator[] paramDcls = d.declarator.parameters.declarators;
-                defaultConstructor |= (paramDcls.length == 0 || (paramDcls.length == 1 && paramDcls[0].type.javaName.equals("void"))) && !d.inaccessible;
-                longConstructor |= paramDcls.length == 1 && paramDcls[0].type.javaName.equals("long") && !d.inaccessible;
-                pointerConstructor |= paramDcls.length == 1 && paramDcls[0].type.javaName.equals("Pointer") && !d.inaccessible;
+                String t = paramDcls.length > 0 ? paramDcls[0].type.javaName : null;
+                defaultConstructor |= (paramDcls.length == 0 || (paramDcls.length == 1 && t.equals("void"))) && !d.inaccessible;
+                longConstructor |= paramDcls.length == 1 && (t.equals("int") || t.equals("long") || t.equals("float") || t.equals("double")) && !d.inaccessible;
+                pointerConstructor |= paramDcls.length == 1 && t.equals("Pointer") && !d.inaccessible;
             }
             abstractClass |= d.abstractMember;
             allPureConst &= d.constMember && d.abstractMember;
@@ -3603,7 +3604,9 @@ public class Parser {
         List<Token> tokenList = new ArrayList<Token>();
         File file = null;
         String filename = include;
-        if (filename.startsWith("<") && filename.endsWith(">")) {
+        if (filename == null || filename.length() == 0) {
+            return;
+        } else if (filename.startsWith("<") && filename.endsWith(">")) {
             filename = filename.substring(1, filename.length() - 1);
         } else {
             File f = new File(filename);
