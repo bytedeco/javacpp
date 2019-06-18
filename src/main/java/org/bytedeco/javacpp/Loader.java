@@ -614,7 +614,7 @@ public class Loader {
                             logger.debug("Extracting " + resourceURL);
                         }
                         file.delete();
-                        extractResource(resourceURL, file, null, null);
+                        extractResource(resourceURL, file, null, null, true);
                         file.setLastModified(timestamp);
                     }
                 } finally {
@@ -683,6 +683,12 @@ public class Loader {
         return files;
     }
 
+    /** Returns {@code extractResource(resourceURL, directoryOrFile, prefix, suffix, false)}. */
+    public static File extractResource(URL resourceURL, File directoryOrFile,
+            String prefix, String suffix) throws IOException {
+        return extractResource(resourceURL, directoryOrFile, prefix, suffix, false);
+    }
+
     /**
      * Extracts a resource into the specified directory and with the specified
      * prefix and suffix for the filename. If both prefix and suffix are {@code null},
@@ -692,11 +698,12 @@ public class Loader {
      * @param directoryOrFile the output directory or file ({@code null == System.getProperty("java.io.tmpdir")})
      * @param prefix the prefix of the temporary filename to use
      * @param suffix the suffix of the temporary filename to use
+     * @param cacheDirectory to extract files from directories only when size or last modified timestamp differs
      * @return the File object representing the extracted file
      * @throws IOException if fails to extract resource properly
      */
     public static File extractResource(URL resourceURL, File directoryOrFile,
-            String prefix, String suffix) throws IOException {
+            String prefix, String suffix, boolean cacheDirectory) throws IOException {
         URLConnection urlConnection = resourceURL != null ? resourceURL.openConnection() : null;
         if (urlConnection instanceof JarURLConnection) {
             JarFile jarFile = ((JarURLConnection)urlConnection).getJarFile();
@@ -712,16 +719,21 @@ public class Loader {
                 while (entries.hasMoreElements()) {
                     JarEntry entry = entries.nextElement();
                     String entryName = entry.getName();
+                    long entrySize = entry.getSize();
+                    long entryTimestamp = entry.getTime();
                     if (entryName.startsWith(jarEntryName)) {
                         File file = new File(directoryOrFile, entryName.substring(jarEntryName.length()));
                         if (entry.isDirectory()) {
                             file.mkdirs();
-                        } else {
+                        } else if (!cacheDirectory || !file.exists() || file.length() != entrySize
+                                || file.lastModified() != entryTimestamp || !file.equals(file.getCanonicalFile())) {
+                            // ... extract it from our resources ...
+                            file.delete();
                             String s = resourceURL.toString();
                             URL u = new URL(s.substring(0, s.indexOf("!/") + 2) + entryName);
                             file = extractResource(u, file, prefix, suffix);
                         }
-                        file.setLastModified(entry.getTime());
+                        file.setLastModified(entryTimestamp);
                     }
                 }
                 return directoryOrFile;
@@ -1050,7 +1062,7 @@ public class Loader {
      * @throws NoClassDefFoundError on Class initialization failure
      * @throws UnsatisfiedLinkError on native library loading failure or when interrupted
      * @see #findLibrary(Class, ClassProperties, String, boolean)
-     * @see #loadLibrary(URL[], String)
+     * @see #loadLibrary(URL[], String, String...)
      */
     public static String load(Class cls, Properties properties, boolean pathsFirst) {
         Class classToLoad = cls;
@@ -1503,7 +1515,7 @@ public class Loader {
      *
      * @param filename of the probably versioned library
      * @param properties of the class associated with the library
-     * @param libnameversion the library name and version as with {@link #loadLibrary(URL[], String)} (can be null)
+     * @param libnameversion the library name and version as with {@link #loadLibrary(URL[], String, String...)} (can be null)
      * @param paths where to create links, in addition to the parent directory of filename
      * @return the version-less filename (or null on failure), a symbolic link only if needed
      */
