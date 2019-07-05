@@ -170,7 +170,7 @@ public class Generator {
     final Properties properties;
     final String encoding;
     PrintWriter out, out2;
-    IndexedSet<String> callbacks;
+    Map<String,String> callbacks;
     IndexedSet<Class> functions, deallocators, arrayDeallocators, jclasses;
     Map<Class,Set<String>> members, virtualFunctions, virtualMembers;
     Map<Method,MethodInformation> annotationCache;
@@ -186,7 +186,7 @@ public class Generator {
                 @Override public void close() { }
             });
             out2 = null;
-            callbacks           = new IndexedSet<String>();
+            callbacks           = new LinkedHashMap<String,String>();
             functions           = new IndexedSet<Class>();
             deallocators        = new IndexedSet<Class>();
             arrayDeallocators   = new IndexedSet<Class>();
@@ -1319,7 +1319,7 @@ public class Generator {
             }
         }
         out.println();
-        for (String s : callbacks) {
+        for (String s : callbacks.values()) {
             out.println(s);
         }
         out.println();
@@ -1328,10 +1328,12 @@ public class Generator {
             out.print("static void " + name + "_deallocate(void *p) { ");
             if (FunctionPointer.class.isAssignableFrom(c)) {
                 String typeName = functionClassName(c);
-                out.println("\n    int n = sizeof(" + typeName + "_instances) / sizeof(" + typeName + "_instances[0]);"
-                          + "\n    for (int i = 0; i < n; i++) { if (" + typeName + "_instances[i].obj == (("
-                          + typeName + "*)p)->obj) " + typeName + "_instances[i].obj = NULL; }"
-                          + "\n    JNIEnv *e; bool a = JavaCPP_getEnv(&e); if (e != NULL) e->DeleteWeakGlobalRef((jweak)(("
+                if (callbacks.containsKey(typeName)) {
+                    out.print("\n    int n = sizeof(" + typeName + "_instances) / sizeof(" + typeName + "_instances[0]);"
+                            + "\n    for (int i = 0; i < n; i++) { if (" + typeName + "_instances[i].obj == (("
+                            + typeName + "*)p)->obj) " + typeName + "_instances[i].obj = NULL; }");
+                }
+                out.println("\n    JNIEnv *e; bool a = JavaCPP_getEnv(&e); if (e != NULL) e->DeleteWeakGlobalRef((jweak)(("
                           + typeName + "*)p)->obj); delete (" + typeName + "*)p; JavaCPP_detach(a); }");
             } else if (virtualFunctions.containsKey(c)) {
                 String[] typeName = cppTypeName(c);
@@ -2437,7 +2439,11 @@ public class Generator {
                         if (Pointer.class.isAssignableFrom(methodInfo.returnType)) {
                             out.println(indent + "void* rowner = radapter.owner;");
                         }
-                        out.println(indent + "void (*deallocator)(void*) = &" + adapterInfo.name + "::deallocate;");
+                        if (typeName[0].startsWith("const ")) {
+                            out.println(indent + "void (*deallocator)(void*) = 0;");
+                        } else {
+                            out.println(indent + "void (*deallocator)(void*) = &" + adapterInfo.name + "::deallocate;");
+                        }
                     }
                     needInit = true;
                 } else if (returnBy instanceof ByVal ||
@@ -2696,7 +2702,7 @@ public class Generator {
             }
             memberList.add(member);
         } else if (callbackName != null) {
-            callbacks.index("static " + instanceTypeName + " " + instanceTypeName + "_instances[" + allocatorMax + "];");
+            callbacks.put(instanceTypeName, "static " + instanceTypeName + " " + instanceTypeName + "_instances[" + allocatorMax + "];");
             Convention convention = cls.getAnnotation(Convention.class);
             if (convention != null && !convention.extern().equals("C")) {
                 out.println("extern \"" + convention.extern() + "\" {");
