@@ -1,4 +1,6 @@
 
+ * Allow once more `abstract` subclasses of `FunctionPointer` ([issue #318](https://github.com/bytedeco/javacpp/issues/318))
+
 ### July 9, 2019 version 1.5.1
  * Make sure `Generator` ignores deallocators on `const` values returned from adapters ([issue #317](https://github.com/bytedeco/javacpp/issues/317))
  * Accelerate `Loader.extractResource()` for directories already cached, also preventing failures ([issue #197](https://github.com/bytedeco/javacpp/issues/197))

@@ -1660,7 +1660,7 @@ public class Generator {
     }
 
     boolean methods(Class<?> cls) {
-        if (Modifier.isAbstract(cls.getModifiers()) || !Loader.checkPlatform(cls, properties)) {
+        if (!Loader.checkPlatform(cls, properties)) {
             return false;
         }
 
@@ -1690,8 +1690,8 @@ public class Generator {
             methodInfos[i] = methodInformation(methods[i]);
         }
         Class<?> c = cls.getSuperclass();
-        while (c != null && c != Object.class) {
-            // consider non-duplicate virtual functions from superclasses as well
+        while (c != null && c != Object.class && !Modifier.isAbstract(cls.getModifiers())) {
+            // consider non-duplicate virtual functions from superclasses as well, unless abstract anyway
             for (Method m : c.getDeclaredMethods()) {
                 if (m.isAnnotationPresent(Virtual.class)) {
                     boolean found = false;
