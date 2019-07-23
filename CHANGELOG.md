@@ -1,4 +1,5 @@
 
+ * Fix `Parser` issues when casting `const` pointers or enumerating anonymous `enum` declarations
  * Add `Info.objectify` to map global functions without using the `static` modifier, similarly to Scala companion objects
  * Allow once more `abstract` subclasses of `FunctionPointer` ([issue #318](https://github.com/bytedeco/javacpp/issues/318))
 

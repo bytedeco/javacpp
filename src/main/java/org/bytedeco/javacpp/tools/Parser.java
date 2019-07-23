@@ -898,15 +898,16 @@ public class Parser {
 
         // start building an appropriate cast for the C++ type
         String precast = null, cast = type.cppName;
-        if (type.constPointer) {
-            dcl.constPointer = true;
-            cast += " const";
-        }
         if (varNumber == 0 && type.indirections > 0) {
             dcl.indirections += type.indirections;
             for (int i = 0; i < type.indirections; i++) {
                 cast += "*";
             }
+        }
+        if (type.constPointer) {
+            dcl.constPointer = true;
+            // ignore, const pointers are not useful in generated code
+            // cast += " const";
         }
         if (varNumber == 0 && type.reference) {
             dcl.reference = true;
@@ -3397,8 +3398,8 @@ public class Parser {
         } else {
             int newline = enumSpacing.lastIndexOf('\n');
             String enumSpacing2 = newline < 0 ? enumSpacing : enumSpacing.substring(newline + 1);
-            if (enumerate) {
-                String javaName = info != null && info.valueTypes != null && info.valueTypes.length > 0 ? info.valueTypes[0] : name;
+            String javaName = info != null && info.valueTypes != null && info.valueTypes.length > 0 ? info.valueTypes[0] : name;
+            if (enumerate && javaName != null && javaName.length() > 0 && !javaName.equals(javaType)) {
                 String fullName = context.namespace != null ? context.namespace + "::" + javaName : javaName;
                 String annotations = "";
                 if (!fullName.equals(cppName)){
