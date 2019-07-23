@@ -1,4 +1,5 @@
 
+ * Add `Info.objectify` to map global functions without using the `static` modifier, similarly to Scala companion objects
  * Allow once more `abstract` subclasses of `FunctionPointer` ([issue #318](https://github.com/bytedeco/javacpp/issues/318))
 
 ### July 9, 2019 version 1.5.1

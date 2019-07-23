@@ -2065,7 +2065,7 @@ public class Parser {
             declList.add(decl);
             return true;
         } else if (type.staticMember || context.javaName == null) {
-            modifiers = "public static native ";
+            modifiers = "public " + ((info != null && info.objectify) || context.objectify ? "" : "static ") + "native ";
             if (tokens.isCFile) {
                 modifiers = "@NoException " + modifiers;
             }
@@ -3657,6 +3657,7 @@ public class Parser {
         token.lineNumber = tokenList.get(tokenList.size() - 1).lineNumber;
         tokenList.add(token);
         tokens = new TokenIndexer(infoMap, tokenList.toArray(new Token[tokenList.size()]), isCFile);
+        context.objectify |= info != null && info.objectify;
         declarations(context, declList);
     }
 
@@ -3725,7 +3726,9 @@ public class Parser {
         String targetHeader = header + "package " + target + ";\n\n";
         String globalHeader = header + (n >= 0 ? "package " + global.substring(0, n) + ";\n\n": "");
         List<Info> infoList = leafInfoMap.get(null);
+        boolean objectify = false;
         for (Info info : infoList) {
+            objectify |= info != null && info.objectify;
             if (info.javaText != null && info.javaText.startsWith("import")) {
                 text += info.javaText + "\n";
             }
@@ -3760,6 +3763,7 @@ public class Parser {
         logger.info("Targeting " + globalFile);
         Context context = new Context();
         context.infoMap = infoMap;
+        context.objectify = objectify;
         String[] includePath = classPath;
         n = globalPath.lastIndexOf(File.separatorChar);
         if (n >= 0) {
