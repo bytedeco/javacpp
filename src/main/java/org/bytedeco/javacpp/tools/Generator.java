@@ -1035,7 +1035,7 @@ public class Generator {
             out.println("        owner = ptr;");
             out.println("        return ptr;");
             out.println("    }");
-            out.println("    operator const P*()        { return &vec[0]; }");
+            out.println("    operator const P*()        { size = vec.size(); return &vec[0]; }");
             out.println("    operator std::vector<T>&() { return vec; }");
             out.println("    operator std::vector<T>*() { return ptr ? &vec : 0; }");
             out.println("    P* ptr;");
@@ -2066,6 +2066,13 @@ public class Generator {
                         }
                         returnPrefix = "rptr = NULL; " + typeName[0] + "* rptrptr" + typeName[1] + " = " + cast;
                     } // else ByPtr || ByPtrRef
+                    if (methodInfo.returnType.isArray() &&
+                            methodInfo.returnType.getComponentType().isPrimitive()) {
+                        // data will get copied out anyway
+                        if (!typeName[0].startsWith("const ")) {
+                            typeName[0] = "const " + typeName[0];
+                        }
+                    }
                     if (methodInfo.bufferGetter) {
                         out.println("    jobject rarg = NULL;");
                         out.println("    char* rptr;");
@@ -2387,6 +2394,13 @@ public class Generator {
                     out.println(indent + "    rptr = *rptrptr;");
                 }
                 out.println(indent + "}");
+            }
+            if (methodInfo.returnType.isArray() &&
+                    methodInfo.returnType.getComponentType().isPrimitive()) {
+                // data will get copied out anyway
+                if (!typeName[0].startsWith("const ")) {
+                    typeName[0] = "const " + typeName[0];
+                }
             }
         }
         out.println(suffix);
