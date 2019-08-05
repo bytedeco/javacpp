@@ -2033,6 +2033,7 @@ public class Generator {
                 returnPrefix = typeName[0] + " rval" + typeName[1] + " = " + cast;
             } else {
                 String valueTypeName = valueTypeName(typeName);
+                AdapterInformation adapterInfo = adapterInformation(false, valueTypeName, methodInfo.annotations);
 
                 returnPrefix = "rptr = " + cast;
                 if (typeName[0].length() == 0 || methodInfo.returnRaw) {
@@ -2066,7 +2067,7 @@ public class Generator {
                         }
                         returnPrefix = "rptr = NULL; " + typeName[0] + "* rptrptr" + typeName[1] + " = " + cast;
                     } // else ByPtr || ByPtrRef
-                    if (methodInfo.returnType.isArray() &&
+                    if (adapterInfo != null && methodInfo.returnType.isArray() &&
                             methodInfo.returnType.getComponentType().isPrimitive()) {
                         // data will get copied out anyway
                         if (!typeName[0].startsWith("const ")) {
@@ -2102,7 +2103,6 @@ public class Generator {
                             methodInfo.returnType.getCanonicalName() + "\". Compilation will most likely fail.");
                 }
 
-                AdapterInformation adapterInfo = adapterInformation(false, valueTypeName, methodInfo.annotations);
                 if (adapterInfo != null) {
                     usesAdapters = true;
                     returnPrefix = adapterInfo.name + " radapter(";
@@ -2395,7 +2395,7 @@ public class Generator {
                 }
                 out.println(indent + "}");
             }
-            if (methodInfo.returnType.isArray() &&
+            if (adapterInfo != null && methodInfo.returnType.isArray() &&
                     methodInfo.returnType.getComponentType().isPrimitive()) {
                 // data will get copied out anyway
                 if (!typeName[0].startsWith("const ")) {
