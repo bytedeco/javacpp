@@ -1,4 +1,5 @@
 
+ * Make sure we `canRead()`, `canWrite()`, and `canExecute()` what `Loader.getCacheDir()` returns
  * Prevent `Generator` from copying data unnecessarily when returning Java arrays from adapters ([issue #317](https://github.com/bytedeco/javacpp/issues/317))
  * Fix `Parser` issues when casting `const` pointers or enumerating anonymous `enum` declarations
  * Add `Info.objectify` to map global functions without using the `static` modifier, similarly to Scala companion objects

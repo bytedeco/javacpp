@@ -890,7 +890,7 @@ public class Loader {
                 if (dirName != null) {
                     try {
                         File f = new File(dirName);
-                        if (f.exists() || f.mkdirs()) {
+                        if ((f.exists() || f.mkdirs()) && f.canRead() && f.canWrite() && f.canExecute()) {
                             cacheDir = f;
                             break;
                         }
