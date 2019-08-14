@@ -1,4 +1,5 @@
 
+ * Separate the Maven Plugin code from the rest of the JavaCPP library so that JavaCPP can be consumed more safely
  * Make sure we `canRead()`, `canWrite()`, and `canExecute()` what `Loader.getCacheDir()` returns
  * Prevent `Generator` from copying data unnecessarily when returning Java arrays from adapters ([issue #317](https://github.com/bytedeco/javacpp/issues/317))
  * Fix `Parser` issues when casting `const` pointers or enumerating anonymous `enum` declarations
