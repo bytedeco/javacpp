@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  
+  <parent>
+    <groupId>org.bytedeco</groupId>
+    <artifactId>javacpp-reactor</artifactId>
+    <version>1.6.0-SNAPSHOT</version>
+  </parent>
+  
+  <artifactId>javacpp</artifactId>
+
+  <name>JavaCPP</name>
+  <description>The missing bridge between Java and native C++</description>
+  <url>http://bytedeco.org/javacpp/</url>
+
+
+  <dependencies>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>3.1.0</version>
+        <configuration>
+          <archive>
+            <manifest>
+              <mainClass>org.bytedeco.javacpp.tools.Builder</mainClass>
+            </manifest>
+            <manifestEntries>
+              <Name>org/bytedeco/javacpp/</Name>
+              <Implementation-Title>${project.name}</Implementation-Title>
+              <Implementation-Vendor>Bytedeco</Implementation-Vendor>
+              <Implementation-Version>${project.version}</Implementation-Version>
+              <Specification-Title>${project.name}</Specification-Title>
+              <Specification-Vendor>Bytedeco</Specification-Vendor>
+              <Specification-Version>${project.version}</Specification-Version>
+              <Multi-Release>true</Multi-Release>
+            </manifestEntries>
+          </archive>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.moditect</groupId>
+        <artifactId>moditect-maven-plugin</artifactId>
+        <version>1.0.0.Beta2</version>
+        <configuration>
+          <jvmVersion>9</jvmVersion>
+          <overwriteExistingFiles>true</overwriteExistingFiles>
+          <outputDirectory>${project.build.directory}</outputDirectory>
+        </configuration>
+        <executions>
+          <execution>
+            <id>add-module-infos</id>
+            <phase>package</phase>
+            <goals>
+              <goal>add-module-info</goal>
+            </goals>
+            <configuration>
+              <modules>
+                <module>
+                  <file>${project.build.directory}/${project.artifactId}.jar</file>
+                  <moduleInfoFile>${project.basedir}/src/main/java9/module-info.java</moduleInfoFile>
+                </module>
+              </modules>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <artifactId>maven-source-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <artifactId>maven-javadoc-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
+
+</project>
