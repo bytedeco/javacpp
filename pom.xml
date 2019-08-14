@@ -58,6 +58,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.build.timestamp.format>yyyyMMddhhmm</maven.build.timestamp.format>
+    <bnd.version>4.2.0</bnd.version>
   </properties>
 
   <dependencyManagement>
@@ -192,6 +193,7 @@
                   <link>http://maven.apache.org/ref/3.5.4/maven-plugin-api/apidocs</link>
                   <link>http://maven.apache.org/plugin-tools/maven-plugin-annotations/apidocs</link>
                   <link>http://maven.apache.org/ref/3.0/maven-core/apidocs</link>
+                  <link>https://osgi.org/javadoc/osgi.annotation/7.0.0/</link>
                   <link>http://www.slf4j.org/apidocs</link>
                   <link>http://junit.org/junit4/javadoc/4.12</link>
                 </links>
@@ -204,6 +206,31 @@
                   </tagletArtifact>
                 </tagletArtifacts>
               </configuration>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>biz.aQute.bnd</groupId>
+          <artifactId>bnd-maven-plugin</artifactId>
+          <version>${bnd.version}</version>
+          <executions>
+            <execution>
+              <goals>
+                <goal>bnd-process</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+        <plugin>
+          <groupId>biz.aQute.bnd</groupId>
+          <artifactId>bnd-baseline-maven-plugin</artifactId>
+          <version>${bnd.version}</version>
+          <executions>
+            <execution>
+              <id>baseline</id>
+              <goals>
+                <goal>baseline</goal>
+              </goals>
             </execution>
           </executions>
         </plugin>
