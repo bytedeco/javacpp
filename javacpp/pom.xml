@@ -17,6 +17,14 @@
 
 
   <dependencies>
+    <!-- Use build time OSGi annotations to
+         configure the versions of packages -->
+    <dependency>
+      <groupId>org.osgi</groupId>
+      <artifactId>osgi.annotation</artifactId>
+      <version>7.0.0</version>
+      <scope>provided</scope>
+    </dependency>
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
@@ -31,22 +39,24 @@
     <plugins>
       <plugin>
         <artifactId>maven-jar-plugin</artifactId>
-        <version>3.1.0</version>
         <configuration>
           <archive>
+            <manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
             <manifest>
               <mainClass>org.bytedeco.javacpp.tools.Builder</mainClass>
             </manifest>
-            <manifestEntries>
-              <Name>org/bytedeco/javacpp/</Name>
-              <Implementation-Title>${project.name}</Implementation-Title>
-              <Implementation-Vendor>Bytedeco</Implementation-Vendor>
-              <Implementation-Version>${project.version}</Implementation-Version>
-              <Specification-Title>${project.name}</Specification-Title>
-              <Specification-Vendor>Bytedeco</Specification-Vendor>
-              <Specification-Version>${project.version}</Specification-Version>
-              <Multi-Release>true</Multi-Release>
-            </manifestEntries>
+            <manifestSection>
+              <name>org/bytedeco/javacpp/</name>
+              <manifestEntries>
+                <Implementation-Title>${project.name}</Implementation-Title>
+                <Implementation-Vendor>Bytedeco</Implementation-Vendor>
+                <Implementation-Version>${project.version}</Implementation-Version>
+                <Specification-Title>${project.name}</Specification-Title>
+                <Specification-Vendor>Bytedeco</Specification-Vendor>
+                <Specification-Version>${project.version}</Specification-Version>
+                <Multi-Release>true</Multi-Release>
+              </manifestEntries>
+            </manifestSection>
           </archive>
         </configuration>
       </plugin>
@@ -85,6 +95,21 @@
       </plugin>
       <plugin>
         <artifactId>maven-javadoc-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>biz.aQute.bnd</groupId>
+        <artifactId>bnd-maven-plugin</artifactId>
+        <configuration>
+          <bnd><![CDATA[
+api.version: ${maven_version;${project.version}}
+Import-Package: sun.misc;resolution:=optional,\
+ *
+          ]]></bnd>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>biz.aQute.bnd</groupId>
+        <artifactId>bnd-baseline-maven-plugin</artifactId>
       </plugin>
     </plugins>
   </build>
