@@ -22,15 +22,20 @@
 package org.bytedeco.javacpp;
 
 import org.bytedeco.javacpp.annotation.Properties;
+import org.osgi.annotation.versioning.ConsumerType;
 
 /**
  * Classes implementing this interface can access and modify the {@link ClassProperties}
  * produced from their {@link Properties} when {@link Loader#load(Class)} gets called on them.
+ * <p>
+ * Note that this interface is intended to be implemented by users of JavaCPP and so is marked
+ * as a {@link ConsumerType} interface. Adding methods will be considered a breaking change.
  *
  * @see Loader
  *
  * @author Samuel Audet
  */
+@ConsumerType
 public interface LoadEnabled {
     void init(ClassProperties properties);
 }
