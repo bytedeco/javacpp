@@ -346,6 +346,34 @@ Import-Package: \
           </execution>
         </executions>
       </plugin>
+      <plugin>
+        <artifactId>maven-invoker-plugin</artifactId>
+        <version>3.2.0</version>
+          <configuration>
+            <cloneProjectsTo>${project.build.directory}/integration-test/projects</cloneProjectsTo>
+            <cloneClean>true</cloneClean>
+            <projectsDirectory>src/it/</projectsDirectory>
+            <streamLogs>true</streamLogs>
+            <localRepositoryPath>${project.build.directory}/integration-test/repo</localRepositoryPath>
+            <properties>
+              <maven.compiler.source>${maven.compiler.source}</maven.compiler.source>
+              <maven.compiler.target>${maven.compiler.target}</maven.compiler.target>
+              <org.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener>warn</org.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener>
+            </properties>
+            <goals>
+              <goal>verify</goal>
+            </goals>
+          </configuration>
+          <executions>
+            <execution>
+              <id>integration-test</id>
+              <goals>
+                <goal>install</goal>
+                <goal>run</goal>
+              </goals>
+            </execution>
+          </executions>
+      </plugin>
     </plugins>
   </build>
 
