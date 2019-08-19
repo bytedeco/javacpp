@@ -1,0 +1,139 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  
+  <parent>
+    <groupId>org.bytedeco</groupId>
+    <artifactId>javacpp-reactor</artifactId>
+    <version>1.6.0-SNAPSHOT</version>
+  </parent>
+  
+  <artifactId>javacpp-tests-osgi</artifactId>
+  
+  <name>JavaCPP OSGi Tests</name>
+  <description>Integration Tests for Java CPP running in OSGi</description>
+ 
+  <profiles>
+    <profile>
+      <id>macosx</id>
+      <activation>
+        <os>
+          <name>Mac OS X</name>
+        </os>
+      </activation>
+      <properties>
+        <lib.name>macosx-x86_64/libjniCalc.dylib</lib.name>
+        <os.name>MacOSX</os.name>
+      </properties>
+    </profile>
+    <profile>
+      <id>linux</id>
+      <activation>
+        <os>
+          <name>Linux</name>
+        </os>
+      </activation>
+      <properties>
+        <lib.name>linux-x86_64/libjniCalc.so</lib.name>
+        <os.name>Linux</os.name>
+      </properties>
+    </profile>
+  </profiles>
+   
+  <dependencies>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>javacpp</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.felix</groupId>
+      <artifactId>org.apache.felix.framework</artifactId>
+      <version>6.0.2</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-simple</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.servicemix.bundles</groupId>
+      <artifactId>org.apache.servicemix.bundles.junit</artifactId>
+      <version>4.12_1</version>
+    </dependency>
+  </dependencies>
+  
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>${project.groupId}</groupId>
+        <artifactId>javacpp-maven-plugin</artifactId>
+        <version>${project.version}</version>
+        <executions>
+          <execution>
+            <id>javacpp.parser</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>build</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}/generated-sources/javacpp</outputDirectory>
+              <classOrPackageName>org.bytedeco.javacpp.test.osgi.*</classOrPackageName>
+            </configuration>
+          </execution>
+          <execution>
+            <id>javacpp.compiler</id>
+            <phase>process-classes</phase>
+            <goals>
+              <goal>build</goal>
+            </goals>
+            <configuration>
+              <classOrPackageName>org.bytedeco.javacpp.test.osgi.*</classOrPackageName>
+              <includePaths>
+                <includePath>${project.basedir}/src/main/c</includePath>
+              </includePaths>
+              <copyLibs>true</copyLibs>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
+          </archive>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>biz.aQute.bnd</groupId>
+        <artifactId>bnd-maven-plugin</artifactId>
+        <configuration>
+          <bnd><![CDATA[
+Test-Cases: ${classes;NAMED;*Test}
+
+Bundle-NativeCode: \
+ org/bytedeco/javacpp/test/osgi/${lib.name};\
+ osname=${os.name}
+ 
+          ]]></bnd>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>biz.aQute.bnd</groupId>
+        <artifactId>bnd-testing-maven-plugin</artifactId>
+        <version>${bnd.version}</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>testing</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <bndruns>
+            <bndrun>test.bndrun</bndrun>
+          </bndruns>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>
