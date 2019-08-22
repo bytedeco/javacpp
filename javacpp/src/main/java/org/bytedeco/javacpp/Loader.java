@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.net.HttpURLConnection;
 import java.net.JarURLConnection;
 import java.net.URI;
@@ -1134,7 +1135,7 @@ public class Loader {
                     preload = preload.substring(0, preload.length() - 1);
                 }
                 URL[] urls = findLibrary(cls, p, preload, pathsFirst);
-                String filename = loadLibrary(urls, preload, preloaded.toArray(new String[preloaded.size()]));
+                String filename = loadLibrary(cls, urls, preload, preloaded.toArray(new String[preloaded.size()]));
                 if (filename != null && new File(filename).exists()) {
                     preloaded.add(filename);
                     if (loadGlobally) {
@@ -1142,7 +1143,7 @@ public class Loader {
                     }
                 }
                 if (cacheDir != null && filename != null && filename.startsWith(cacheDir)) {
-                    createLibraryLink(filename, p, preload);
+                    createLibraryLink(cls, filename, p, preload);
                 }
             } catch (UnsatisfiedLinkError e) {
                 preloadError = e;
@@ -1183,7 +1184,7 @@ public class Loader {
                     library += "#" + library + librarySuffix;
                 }
                 URL[] urls = findLibrary(cls, p, library, pathsFirst);
-                String filename = loadLibrary(urls, library, preloaded.toArray(new String[preloaded.size()]));
+                String filename = loadLibrary(cls, urls, library, preloaded.toArray(new String[preloaded.size()]));
                 if (cacheDir != null && filename != null && filename.startsWith(cacheDir)) {
                     createLibraryLink(filename, p, library);
                 }
@@ -1362,6 +1363,23 @@ public class Loader {
      * @throws UnsatisfiedLinkError on failure or when interrupted
      */
     public static synchronized String loadLibrary(URL[] urls, String libnameversion, String ... preloaded) {
+    	return loadLibrary(null, urls, libnameversion, preloaded);
+    }
+
+    /**
+     * Tries to load the library from the URLs in order, extracting resources as necessary.
+     * Finally, if all fails, falls back on {@link System#loadLibrary(String)}.
+     * @param cls the Class whose {@link ClassLoader} is used to load the library, may be null
+     * @param urls the URLs to try loading the library from
+     * @param libnameversion the name of the library + ":" + optional exact path to library + "@" + optional version tag
+     *                       + "#" + a second optional name used at extraction (or empty to prevent it, unless it is a second "#")
+     *                       + "!" to load all symbols globally
+     * @param preloaded libraries for which to create symbolic links in same cache directory
+     * @return the full path of the file loaded, or the library name if unknown
+     *         (but {@code if (!isLoadLibraries) { return null; }})
+     * @throws UnsatisfiedLinkError on failure or when interrupted
+     */
+    public static synchronized String loadLibrary(Class<?> cls, URL[] urls, String libnameversion, String ... preloaded) {
         if (!isLoadLibraries()) {
             return null;
         }
@@ -1454,7 +1472,28 @@ public class Loader {
                             logger.debug("Loading " + filename2);
                         }
                         loadedLibraries.put(libnameversion2, filename2);
-                        System.load(filename2);
+                        
+                        boolean loadedByClass = false;
+                        if(cls != null) {
+                        	try {
+                        		Class<?> helper = cls.getClassLoader().loadClass(
+                        				cls.getPackage().getName() + "." + Builder.$JAVA_HELPER_CLASS_NAME);
+                        		helper.getMethod("load", String.class).invoke(null, filename2);
+                        		loadedByClass = true;
+                        	} catch (ClassNotFoundException | IllegalAccessException | IllegalArgumentException | NoSuchMethodException | SecurityException cnfe) {
+                        		logger.warn("Unable to locate a JavaCPP helper class for " + cls.getName());
+                        	} catch(InvocationTargetException ite) {
+                        		Throwable target = ite.getTargetException();
+                        		if(target instanceof UnsatisfiedLinkError) {
+                        			throw (UnsatisfiedLinkError) target;
+                        		} else {
+                        			logger.warn("There was an error calling the JavaCPP helper " + target.getMessage());
+                        		}
+                        	}
+                        }
+                        if(!loadedByClass) {
+                            System.load(filename2);
+                        }
                         if (loadGlobally) {
                             loadGlobal(filename2);
                         }
@@ -1480,7 +1519,27 @@ public class Loader {
                     logger.debug("Loading library " + libname);
                 }
                 loadedLibraries.put(libnameversion2, libname);
-                System.loadLibrary(libname);
+                boolean loadedByClass = false;
+                if(cls != null) {
+                	try {
+                		Class<?> helper = cls.getClassLoader().loadClass(
+                				cls.getPackage().getName() + "." + Builder.$JAVA_HELPER_CLASS_NAME);
+                		helper.getMethod("loadLibrary", String.class).invoke(null, libname);
+                		loadedByClass = true;
+                	} catch (ClassNotFoundException | IllegalAccessException | IllegalArgumentException | NoSuchMethodException | SecurityException cnfe) {
+                		logger.warn("Unable to locate a JavaCPP helper class for " + cls.getName());
+                	} catch(InvocationTargetException ite) {
+                		Throwable target = ite.getTargetException();
+                		if(target instanceof UnsatisfiedLinkError) {
+                			throw (UnsatisfiedLinkError) target;
+                		} else {
+                			logger.warn("There was an error calling the JavaCPP helper " + target.getMessage());
+                		}
+                	}
+                }
+                if(!loadedByClass) {
+                    System.loadLibrary(libname);
+                }
                 return libname;
             } else {
                 // But do not load when tagged as a system library
@@ -1520,6 +1579,20 @@ public class Loader {
      * @return the version-less filename (or null on failure), a symbolic link only if needed
      */
     public static String createLibraryLink(String filename, ClassProperties properties, String libnameversion, String ... paths) {
+        return createLibraryLink(null, filename, properties, libnameversion, paths);
+    }
+    /**
+     * Creates a version-less symbolic link to a library file, if needed.
+     * Also creates symbolic links in given paths, with and without version.
+     *
+     * @param cls the Class whose {@link ClassLoader} is used to load the library, may be null
+     * @param filename of the probably versioned library
+     * @param properties of the class associated with the library
+     * @param libnameversion the library name and version as with {@link #loadLibrary(URL[], String, String...)} (can be null)
+     * @param paths where to create links, in addition to the parent directory of filename
+     * @return the version-less filename (or null on failure), a symbolic link only if needed
+     */
+    public static String createLibraryLink(Class<?> cls, String filename, ClassProperties properties, String libnameversion, String ... paths) {
         if (libnameversion != null && libnameversion.startsWith(":")) {
             libnameversion = libnameversion.substring(1);
         } else if (libnameversion != null && libnameversion.contains(":")) {

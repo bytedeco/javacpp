@@ -228,6 +228,14 @@ public class BuildMojo extends AbstractMojo {
     @Parameter(property = "javacpp.skip", defaultValue = "false")
     boolean skip = false;
 
+    /** Generate the Java Helper. */
+    @Parameter(property = "javacpp.javaHelper", defaultValue = "true")
+    boolean javaHelper = true;
+
+    /** Set the Java Helper package name */
+    @Parameter(property = "javacpp.javaHelper.package")
+    String javaHelperPackage = null;
+
     @Parameter(defaultValue = "${project}", required = true, readonly = true)
     MavenProject project;
 
@@ -292,6 +300,8 @@ public class BuildMojo extends AbstractMojo {
                 log.debug("environmentVariables: " + environmentVariables);
                 log.debug("compilerOptions: " + Arrays.deepToString(compilerOptions));
                 log.debug("skip: " + skip);
+                log.debug("javaHelper: " + javaHelper);
+                log.debug("javaHelperPackage: " + javaHelperPackage);
             }
             if (targetDirectory != null) {
                 project.addCompileSourceRoot(targetDirectory);
@@ -336,7 +346,9 @@ public class BuildMojo extends AbstractMojo {
                     .buildCommand(buildCommand)
                     .workingDirectory(workingDirectory)
                     .environmentVariables(environmentVariables)
-                    .compilerOptions(compilerOptions);
+                    .compilerOptions(compilerOptions)
+                    .generateJavaHelper(javaHelper)
+                    .generatedJavaPackage(javaHelperPackage);
             Properties properties = builder.properties;
             String extension = properties.getProperty("platform.extension");
             log.info("Detected platform \"" + Loader.getPlatform() + "\"");
