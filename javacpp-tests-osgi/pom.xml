@@ -69,17 +69,6 @@
         <version>${project.version}</version>
         <executions>
           <execution>
-            <id>javacpp.parser</id>
-            <phase>generate-sources</phase>
-            <goals>
-              <goal>build</goal>
-            </goals>
-            <configuration>
-              <outputDirectory>${project.build.directory}/generated-sources/javacpp</outputDirectory>
-              <classOrPackageName>org.bytedeco.javacpp.test.osgi.*</classOrPackageName>
-            </configuration>
-          </execution>
-          <execution>
             <id>javacpp.compiler</id>
             <phase>process-classes</phase>
             <goals>
