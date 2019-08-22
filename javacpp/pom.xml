@@ -45,18 +45,16 @@
             <manifest>
               <mainClass>org.bytedeco.javacpp.tools.Builder</mainClass>
             </manifest>
-            <manifestSection>
-              <name>org/bytedeco/javacpp/</name>
-              <manifestEntries>
-                <Implementation-Title>${project.name}</Implementation-Title>
-                <Implementation-Vendor>Bytedeco</Implementation-Vendor>
-                <Implementation-Version>${project.version}</Implementation-Version>
-                <Specification-Title>${project.name}</Specification-Title>
-                <Specification-Vendor>Bytedeco</Specification-Vendor>
-                <Specification-Version>${project.version}</Specification-Version>
-                <Multi-Release>true</Multi-Release>
-              </manifestEntries>
-            </manifestSection>
+            
+            <manifestEntries>
+              <Implementation-Title>${project.name}</Implementation-Title>
+              <Implementation-Vendor>Bytedeco</Implementation-Vendor>
+              <Implementation-Version>${project.version}</Implementation-Version>
+              <Specification-Title>${project.name}</Specification-Title>
+              <Specification-Vendor>Bytedeco</Specification-Vendor>
+              <Specification-Version>${project.version}</Specification-Version>
+              <Multi-Release>true</Multi-Release>
+            </manifestEntries>
           </archive>
         </configuration>
       </plugin>
