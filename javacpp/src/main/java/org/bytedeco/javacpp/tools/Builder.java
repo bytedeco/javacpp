@@ -31,6 +31,7 @@ import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileVisitOption;
@@ -44,6 +45,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -53,6 +55,13 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
+
+import javax.tools.JavaCompiler;
+import javax.tools.JavaFileObject.Kind;
+import javax.tools.SimpleJavaFileObject;
+import javax.tools.StandardJavaFileManager;
+import javax.tools.StandardLocation;
+import javax.tools.ToolProvider;
 
 import org.bytedeco.javacpp.ClassProperties;
 import org.bytedeco.javacpp.Loader;
@@ -67,7 +76,9 @@ import org.bytedeco.javacpp.Loader;
  */
 public class Builder {
 
-    /**
+    public static final String $JAVA_HELPER_CLASS_NAME = "$JAVA_CPP_LOADER";
+
+	/**
      * Deletes {@link #outputDirectory} if {@link #clean} is true.
      * @throws IOException
      */
@@ -607,7 +618,9 @@ public class Builder {
                 generated = false;
                 break;
             }
+            
         }
+        
         if (generated) {
             if (compile) {
                 int exitValue = 0;
@@ -643,6 +656,72 @@ public class Builder {
                 } else {
                     throw new RuntimeException("Process exited with an error: " + exitValue);
                 }
+                
+                if(generateJavaHelper) {
+                	
+                	JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+                    
+                    try (StandardJavaFileManager fileManager = compiler
+                    		.getStandardFileManager(null, null, encoding == null ? 
+                    				Charset.defaultCharset() : Charset.forName(encoding))) {
+                    	
+                    	final String packageName = generatedJavaPackage == null ? 
+                    			classes[0].getPackage().getName() : generatedJavaPackage;
+                    			Path packagePath = Paths.get(packageName.replace('.', '/'));
+                    			
+                    	Path javaOutputPath;
+                    	
+                    	if(generatedJavaOutput != null) {
+                    		javaOutputPath = generatedJavaOutput.toPath();
+                    	} else {
+                    		int packageSegmentCount = packagePath.getNameCount();
+                    		
+                    		javaOutputPath = Paths.get(classScanner.getClassLoader()
+                    				.getResource(packagePath.toString()).toURI());
+                    		
+                    		for(int i = 0; i < packageSegmentCount; i++) {
+                    			javaOutputPath = javaOutputPath.getParent(); 
+                    		}
+                    	}
+                    	
+                    	logger.info("Generating Java Helper class in package " + packageName + 
+                    			" at location " + javaOutputPath.toString());
+                    	
+                    	fileManager.setLocation(StandardLocation.CLASS_OUTPUT, Collections.singleton(javaOutputPath.toFile()));
+                    	
+                    	String sourceFileName = $JAVA_HELPER_CLASS_NAME + Kind.SOURCE.extension;
+						URI sourceURI = new URI("string:///" + packagePath.resolve(sourceFileName).toString());
+                    	
+                    	boolean success = compiler.getTask(null, fileManager, null, 
+                    			Arrays.asList("-source", "1.6", "-target", "1.6"), null, 
+                    			Collections.singleton(new SimpleJavaFileObject(sourceURI, Kind.SOURCE) {
+
+									@Override
+									public CharSequence getCharContent(boolean ignoreEncodingErrors)
+											throws IOException {
+										return new StringBuffer(256)
+												.append("package ")
+												.append(packageName)
+												.append(";\n")
+												.append("public class $JAVA_CPP_LOADER {\n")
+												.append("  public static void loadLibrary(String libName) {\n")
+												.append("    System.loadLibrary(libName);\n")
+												.append("  }\n")
+												.append("  public static void load(String libPath) {\n")
+												.append("    System.load(libPath);\n")
+												.append("  }\n")
+												.append("}\n");
+									}
+                    				
+                    			})).call();
+                    	if(!success) {
+                    		throw new RuntimeException("Failed to generate the Java access class");
+                    	}
+                    } catch (URISyntaxException use) {
+                    	throw new RuntimeException("Unable to generate the Java helper class", use);
+                    }
+                }
+                    
             } else {
                 outputFiles = new File[sourceFilenames.length];
                 for (int i = 0; i < sourceFilenames.length; i++) {
@@ -757,6 +836,12 @@ public class Builder {
     Map<String,String> environmentVariables = null;
     /** Contains additional command line options from the user for the native compiler. */
     Collection<String> compilerOptions = null;
+    /** Generate the java helper class */
+    boolean generateJavaHelper = true;
+    /** The package name for the generated Java Helper, if null then use the package of the first located class */
+    String generatedJavaPackage = null;
+    /** The location for the generated Java Helper, if null then use the class path location of the first located class */
+    File generatedJavaOutput = null;
 
     /** Splits argument with {@link File#pathSeparator} and appends result to paths of the {@link #classScanner}. */
     public Builder classPaths(String classPaths) {
@@ -916,6 +1001,16 @@ public class Builder {
         if (options != null) {
             compilerOptions.addAll(Arrays.asList(options));
         }
+        return this;
+    }
+    /** Sets the {@link #generateJavaHelper} field to the argument. */
+    public Builder generateJavaHelper(boolean generate) {
+        this.generate = generate;
+        return this;
+    }
+    /** Sets the {@link #generatedJavaPackage} field to the argument. */
+    public Builder generatedJavaPackage(String packageName) {
+       this.generatedJavaPackage = packageName;
         return this;
     }
 
