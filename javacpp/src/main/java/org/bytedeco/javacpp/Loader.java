@@ -28,6 +28,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.HttpURLConnection;
 import java.net.JarURLConnection;
 import java.net.URI;
@@ -1134,7 +1136,7 @@ public class Loader {
                     preload = preload.substring(0, preload.length() - 1);
                 }
                 URL[] urls = findLibrary(cls, p, preload, pathsFirst);
-                String filename = loadLibrary(urls, preload, preloaded.toArray(new String[preloaded.size()]));
+                String filename = loadLibrary(cls, urls, preload, preloaded.toArray(new String[preloaded.size()]));
                 if (filename != null && new File(filename).exists()) {
                     preloaded.add(filename);
                     if (loadGlobally) {
@@ -1183,7 +1185,7 @@ public class Loader {
                     library += "#" + library + librarySuffix;
                 }
                 URL[] urls = findLibrary(cls, p, library, pathsFirst);
-                String filename = loadLibrary(urls, library, preloaded.toArray(new String[preloaded.size()]));
+                String filename = loadLibrary(cls, urls, library, preloaded.toArray(new String[preloaded.size()]));
                 if (cacheDir != null && filename != null && filename.startsWith(cacheDir)) {
                     createLibraryLink(filename, p, library);
                 }
@@ -1362,6 +1364,23 @@ public class Loader {
      * @throws UnsatisfiedLinkError on failure or when interrupted
      */
     public static synchronized String loadLibrary(URL[] urls, String libnameversion, String ... preloaded) {
+        return loadLibrary(null, urls, libnameversion, preloaded);
+    }
+
+    /**
+     * Tries to load the library from the URLs in order, extracting resources as necessary.
+     * Finally, if all fails, falls back on {@link System#loadLibrary(String)}.
+     * @param cls the Class whose {@link ClassLoader} is used to load the library, may be null
+     * @param urls the URLs to try loading the library from
+     * @param libnameversion the name of the library + ":" + optional exact path to library + "@" + optional version tag
+     *                       + "#" + a second optional name used at extraction (or empty to prevent it, unless it is a second "#")
+     *                       + "!" to load all symbols globally
+     * @param preloaded libraries for which to create symbolic links in same cache directory
+     * @return the full path of the file loaded, or the library name if unknown
+     *         (but {@code if (!isLoadLibraries) { return null; }})
+     * @throws UnsatisfiedLinkError on failure or when interrupted
+     */
+    public static synchronized String loadLibrary(Class<?> cls, URL[] urls, String libnameversion, String ... preloaded) {
         if (!isLoadLibraries()) {
             return null;
         }
@@ -1454,7 +1473,32 @@ public class Loader {
                             logger.debug("Loading " + filename2);
                         }
                         loadedLibraries.put(libnameversion2, filename2);
-                        System.load(filename2);
+                        
+                        boolean loadedByLoad0 = false;
+                        if(cls != null) {
+                            try {
+                                Method load0 = Runtime.class.getDeclaredMethod("load0", Class.class, String.class);
+                                load0.setAccessible(true);
+                                load0.invoke(Runtime.getRuntime(), cls, filename2);
+                                loadedByLoad0 = true;
+                            } catch (IllegalAccessException | IllegalArgumentException | 
+                                    NoSuchMethodException | SecurityException cnfe) {
+                                logger.warn("Unable to load the library " + libnameversion2 +
+                                        " within the ClassLoader scope of " + cls.getName());
+                            } catch(InvocationTargetException ite) {
+                                Throwable target = ite.getTargetException();
+                                if(target instanceof UnsatisfiedLinkError) {
+                                    throw (UnsatisfiedLinkError) target;
+                                } else {
+                                    logger.warn("Unable to load the library " + libnameversion2
+                                            + " within the ClassLoader scope of " + cls.getName() + 
+                                            " because: " + target.getMessage());
+                                }
+                            }
+                        }
+                        if(!loadedByLoad0) {
+                            System.load(filename2);
+                        }
                         if (loadGlobally) {
                             loadGlobal(filename2);
                         }
@@ -1480,7 +1524,31 @@ public class Loader {
                     logger.debug("Loading library " + libname);
                 }
                 loadedLibraries.put(libnameversion2, libname);
-                System.loadLibrary(libname);
+                boolean loadedByLoadLibrary0 = false;
+                if(cls != null) {
+                    try {
+                        Method load0 = Runtime.class.getDeclaredMethod("loadLibrary0", Class.class, String.class);
+                        load0.setAccessible(true);
+                        load0.invoke(Runtime.getRuntime(), cls, libname);
+                        loadedByLoadLibrary0 = true;
+                    } catch (IllegalAccessException | IllegalArgumentException | 
+                            NoSuchMethodException | SecurityException cnfe) {
+                        logger.warn("Unable to load the library " + libname +
+                                " within the ClassLoader scope of " + cls.getName());
+                    } catch(InvocationTargetException ite) {
+                        Throwable target = ite.getTargetException();
+                        if(target instanceof UnsatisfiedLinkError) {
+                            throw (UnsatisfiedLinkError) target;
+                        } else {
+                            logger.warn("Unable to load the library " + libname
+                                    + " within the ClassLoader scope of " + cls.getName() + 
+                                    " because: " + target.getMessage());
+                        }
+                    }
+                }
+                if(!loadedByLoadLibrary0) {
+                    System.loadLibrary(libname);
+                }
                 return libname;
             } else {
                 // But do not load when tagged as a system library
