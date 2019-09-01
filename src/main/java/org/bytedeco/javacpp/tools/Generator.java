@@ -282,9 +282,14 @@ public class Generator {
             out2.println("#include <jni.h>");
         }
         out.println();
+        out.println("#ifdef _WIN32");
+        out.println("    #include <windows.h>");
+        out.println("#else");
+        out.println("    #include <pthread.h>");
+        out.println("#endif");
+        out.println();
         out.println("#ifdef __ANDROID__");
         out.println("    #include <android/log.h>");
-        out.println("    #include <pthread.h>");
         out.println("#elif defined(__APPLE__) && defined(__OBJC__)");
         out.println("    #include <TargetConditionals.h>");
         out.println("    #include <Foundation/Foundation.h>");
@@ -1252,7 +1257,19 @@ public class Generator {
             out.println("            operator JNIEnv**() { return env; } // Android JNI");
             out.println("            operator void**() { return (void**)env; } // standard JNI");
             out.println("        } env2 = { env };");
-            out.println("        if (vm->AttachCurrentThread(env2, NULL) != JNI_OK) {");
+            out.println("        JavaVMAttachArgs args;");
+            out.println("        args.version = JNI_VERSION_1_6;");
+            out.println("        args.group = NULL;");
+            out.println("        char name[50] = {0};");
+            out.println("#ifdef _WIN32");
+            out.println("        sprintf(name, \"JavaCPP-thread-%u\", GetCurrentThreadId());");
+            out.println("#elif defined(__APPLE__)");
+            out.println("        sprintf(name, \"JavaCPP-thread-%u\", pthread_mach_thread_np(pthread_self()));");
+            out.println("#else");
+            out.println("        sprintf(name, \"JavaCPP-thread-%d\", pthread_self());");
+            out.println("#endif");
+            out.println("        args.name = name;");
+            out.println("        if (vm->AttachCurrentThread(env2, &args) != JNI_OK) {");
             out.println("            JavaCPP_log(\"Could not attach the JavaVM to the current thread.\");");
             out.println("            *env = NULL;");
             out.println("            goto done;");
