@@ -173,26 +173,16 @@
             <manifest>
               <mainClass>org.bytedeco.javacpp.tools.Builder</mainClass>
             </manifest>
-            <!-- Multi-Release: true goes in the main attributes -->
+            
             <manifestEntries>
+              <Implementation-Title>${project.name}</Implementation-Title>
+              <Implementation-Vendor>Bytedeco</Implementation-Vendor>
+              <Implementation-Version>${project.version}</Implementation-Version>
+              <Specification-Title>${project.name}</Specification-Title>
+              <Specification-Vendor>Bytedeco</Specification-Vendor>
+              <Specification-Version>${project.version}</Specification-Version>
               <Multi-Release>true</Multi-Release>
             </manifestEntries>
-            <!-- 
-              We must use a Manifest Section here so that the
-              maven-jar-plugin merges the manifest metadata
-              correctly rather than jumbling things up
-            -->
-            <manifestSection>
-              <name>org/bytedeco/javacpp/</name>
-              <manifestEntries>
-                <Implementation-Title>${project.name}</Implementation-Title>
-                <Implementation-Vendor>Bytedeco</Implementation-Vendor>
-                <Implementation-Version>${project.version}</Implementation-Version>
-                <Specification-Title>${project.name}</Specification-Title>
-                <Specification-Vendor>Bytedeco</Specification-Vendor>
-                <Specification-Version>${project.version}</Specification-Version>
-              </manifestEntries>
-            </manifestSection>
           </archive>
         </configuration>
       </plugin>
