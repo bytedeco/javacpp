@@ -284,7 +284,6 @@ public class Generator {
         out.println();
         out.println("#ifdef __ANDROID__");
         out.println("    #include <android/log.h>");
-        out.println("    #include <pthread.h>");
         out.println("#elif defined(__APPLE__) && defined(__OBJC__)");
         out.println("    #include <TargetConditionals.h>");
         out.println("    #include <Foundation/Foundation.h>");
@@ -299,6 +298,7 @@ public class Generator {
         out.println("    #include <unistd.h>");
         out.println("    #include <dlfcn.h>");
         out.println("    #include <link.h>");
+        out.println("    #include <pthread.h>");
         out.println("#elif defined(__APPLE__)");
         out.println("    #include <sys/types.h>");
         out.println("    #include <sys/sysctl.h>");
@@ -308,6 +308,7 @@ public class Generator {
         out.println("    #include <unistd.h>");
         out.println("    #include <dlfcn.h>");
         out.println("    #include <mach-o/dyld.h>");
+        out.println("    #include <pthread.h>");
         out.println("#elif defined(_WIN32)");
         out.println("    #define NOMINMAX");
         out.println("    #include <windows.h>");
@@ -727,7 +728,7 @@ public class Generator {
             out.println("    HMODULE handle = LoadLibrary(filename);");
             out.println("    if (handle == NULL) {");
             out.println("        char temp[256];");
-            out.println("        sprintf(temp, \"LoadLibrary() failed with 0x%x\", GetLastError());");
+            out.println("        sprintf(temp, \"LoadLibrary() failed with 0x%lx\", GetLastError());");
             out.println("        env->ThrowNew(JavaCPP_getClass(env, " + jclasses.index(UnsatisfiedLinkError.class) + "), temp);");
             out.println("    }");
             out.println("#else");
@@ -1252,7 +1253,19 @@ public class Generator {
             out.println("            operator JNIEnv**() { return env; } // Android JNI");
             out.println("            operator void**() { return (void**)env; } // standard JNI");
             out.println("        } env2 = { env };");
-            out.println("        if (vm->AttachCurrentThread(env2, NULL) != JNI_OK) {");
+            out.println("        JavaVMAttachArgs args;");
+            out.println("        args.version = " + JNI_VERSION + ";");
+            out.println("        args.group = NULL;");
+            out.println("        char name[64] = {0};");
+            out.println("#ifdef _WIN32");
+            out.println("        sprintf(name, \"JavaCPP Thread ID %lu\", GetCurrentThreadId());");
+            out.println("#elif defined(__APPLE__)");
+            out.println("        sprintf(name, \"JavaCPP Thread ID %u\", pthread_mach_thread_np(pthread_self()));");
+            out.println("#else");
+            out.println("        sprintf(name, \"JavaCPP Thread ID %lu\", pthread_self());");
+            out.println("#endif");
+            out.println("        args.name = name;");
+            out.println("        if (vm->AttachCurrentThread(env2, &args) != JNI_OK) {");
             out.println("            JavaCPP_log(\"Could not attach the JavaVM to the current thread.\");");
             out.println("            *env = NULL;");
             out.println("            goto done;");
