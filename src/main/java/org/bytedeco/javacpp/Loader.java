@@ -209,7 +209,8 @@ public class Loader {
         return checkVersion(groupId, artifactId, "-", true);
     }
 
-    /** Returns {@code getVersion(groupId, artifactId).equals(getVersion()) || .endsWith(separator + getVersion())} or false on error.
+    /** Returns {@code getVersion(groupId, artifactId).split(separator)[n].equals(getVersion().split(separator)[0])}
+     *  where {@code n = versions.length - (versions[versions.length - 1].equals("SNAPSHOT") ? 2 : 1)} or false on error.
      *  Also calls {@link Logger#warn(String)} on error when {@code logWarnings && isLoadLibraries()}. */
     public static boolean checkVersion(String groupId, String artifactId, String separator, boolean logWarnings) {
         try {
@@ -219,7 +220,10 @@ public class Loader {
                 logger.warn("Version of " + groupId + ":" + artifactId + " could not be found.");
                 return false;
             }
-            boolean matches = version.equals(javacppVersion) || version.endsWith(separator + javacppVersion);
+            String[] javacppVersions = javacppVersion.split(separator);
+            String[] versions = version.split(separator);
+            int n = versions.length - (versions[versions.length - 1].equals("SNAPSHOT") ? 2 : 1);
+            boolean matches = versions[n].equals(javacppVersions[0]);
             if (!matches && logWarnings && isLoadLibraries()) {
                 logger.warn("Versions of org.bytedeco:javacpp:" + javacppVersion + " and " + groupId + ":" + artifactId + ":" + version + " do not match.");
             }
