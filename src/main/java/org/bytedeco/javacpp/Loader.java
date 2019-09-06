@@ -1362,6 +1362,7 @@ public class Loader {
     /**
      * Tries to load the library from the URLs in order, extracting resources as necessary.
      * Finally, if all fails, falls back on {@link System#loadLibrary(String)}.
+     *
      * @param cls the Class whose {@link ClassLoader} is used to load the library, may be null
      * @param urls the URLs to try loading the library from
      * @param libnameversion the name of the library + ":" + optional exact path to library + "@" + optional version tag
@@ -1465,30 +1466,30 @@ public class Loader {
                             logger.debug("Loading " + filename2);
                         }
                         loadedLibraries.put(libnameversion2, filename2);
-                        
+
                         boolean loadedByLoad0 = false;
-                        if(cls != null && Loader.class.getClassLoader() != cls.getClassLoader()) {
+                        if (cls != null && Loader.class.getClassLoader() != cls.getClassLoader()) {
                             try {
                                 Method load0 = Runtime.class.getDeclaredMethod("load0", Class.class, String.class);
                                 load0.setAccessible(true);
                                 load0.invoke(Runtime.getRuntime(), cls, filename2);
                                 loadedByLoad0 = true;
-                            } catch (IllegalAccessException | IllegalArgumentException | 
-                                    NoSuchMethodException | SecurityException cnfe) {
+                            } catch (IllegalAccessException | IllegalArgumentException
+                                    | NoSuchMethodException | SecurityException cnfe) {
                                 logger.warn("Unable to load the library " + libnameversion2 +
                                         " within the ClassLoader scope of " + cls.getName());
-                            } catch(InvocationTargetException ite) {
+                            } catch (InvocationTargetException ite) {
                                 Throwable target = ite.getTargetException();
-                                if(target instanceof UnsatisfiedLinkError) {
+                                if (target instanceof UnsatisfiedLinkError) {
                                     throw (UnsatisfiedLinkError) target;
                                 } else {
                                     logger.warn("Unable to load the library " + libnameversion2
-                                            + " within the ClassLoader scope of " + cls.getName() + 
-                                            " because: " + target.getMessage());
+                                            + " within the ClassLoader scope of " + cls.getName()
+                                            + " because: " + target.getMessage());
                                 }
                             }
                         }
-                        if(!loadedByLoad0) {
+                        if (!loadedByLoad0) {
                             System.load(filename2);
                         }
                         if (loadGlobally) {
@@ -1517,28 +1518,28 @@ public class Loader {
                 }
                 loadedLibraries.put(libnameversion2, libname);
                 boolean loadedByLoadLibrary0 = false;
-                if(cls != null && Loader.class.getClassLoader() != cls.getClassLoader()) {
+                if (cls != null && Loader.class.getClassLoader() != cls.getClassLoader()) {
                     try {
                         Method load0 = Runtime.class.getDeclaredMethod("loadLibrary0", Class.class, String.class);
                         load0.setAccessible(true);
                         load0.invoke(Runtime.getRuntime(), cls, libname);
                         loadedByLoadLibrary0 = true;
-                    } catch (IllegalAccessException | IllegalArgumentException | 
-                            NoSuchMethodException | SecurityException cnfe) {
+                    } catch (IllegalAccessException | IllegalArgumentException
+                            | NoSuchMethodException | SecurityException cnfe) {
                         logger.warn("Unable to load the library " + libname +
                                 " within the ClassLoader scope of " + cls.getName());
-                    } catch(InvocationTargetException ite) {
+                    } catch (InvocationTargetException ite) {
                         Throwable target = ite.getTargetException();
-                        if(target instanceof UnsatisfiedLinkError) {
+                        if (target instanceof UnsatisfiedLinkError) {
                             throw (UnsatisfiedLinkError) target;
                         } else {
                             logger.warn("Unable to load the library " + libname
-                                    + " within the ClassLoader scope of " + cls.getName() + 
-                                    " because: " + target.getMessage());
+                                    + " within the ClassLoader scope of " + cls.getName()
+                                    + " because: " + target.getMessage());
                         }
                     }
                 }
-                if(!loadedByLoadLibrary0) {
+                if (!loadedByLoadLibrary0) {
                     System.loadLibrary(libname);
                 }
                 return libname;

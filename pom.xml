@@ -91,7 +91,7 @@
       <version>1.7.25</version>
       <optional>true</optional>
     </dependency>
-    <!-- 
+    <!--
       The OSGi R7 Annotations are build time only and not
       needed at runtime, therefore they can be provided scope
     -->
@@ -173,7 +173,6 @@
             <manifest>
               <mainClass>org.bytedeco.javacpp.tools.Builder</mainClass>
             </manifest>
-            
             <manifestEntries>
               <Implementation-Title>${project.name}</Implementation-Title>
               <Implementation-Vendor>Bytedeco</Implementation-Vendor>
@@ -291,7 +290,7 @@
           <skipStagingRepositoryClose>true</skipStagingRepositoryClose>
         </configuration>
       </plugin>
-      <!-- 
+      <!--
         Process the OSGi annotations and generate a suitable
         MANIFEST.MF file for this bundle. This will be merged
         with the entries from the maven-jar-plugin
@@ -306,14 +305,14 @@
               <goal>bnd-process</goal>
             </goals>
             <configuration>
-              <bnd><![CDATA[             
+              <bnd><![CDATA[
 # Avoid pulling in any imports for Maven packages.
 # Their usage is isolated to two types which are
 # excluded from export. If this changes in future
 # then this Import restriction will no longer be safe
 #
 # Also mark sun.misc as an optional import. If it is
-# unavailable then the indexers will fall back to 
+# unavailable then the indexers will fall back to
 # other implementations.
 
 Import-Package: \

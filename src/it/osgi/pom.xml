@@ -6,7 +6,7 @@
   <version>@project.version@</version>
   
   <name>JavaCPP OSGi Tests</name>
-  <description>Integration Tests for Java CPP running in OSGi</description>
+  <description>Integration Tests for JavaCPP running in OSGi</description>
   
   <properties>
     <bnd.version>4.2.0</bnd.version>

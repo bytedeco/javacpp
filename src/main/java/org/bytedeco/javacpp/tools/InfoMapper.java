@@ -36,7 +36,7 @@ import org.osgi.annotation.versioning.ConsumerType;
  * <p>
  * Note that this interface is intended to be implemented by users of JavaCPP and so is marked
  * as a {@link ConsumerType} interface. Adding methods will be considered a breaking change.
- * 
+ *
  * @author Samuel Audet
  */
 @ConsumerType
