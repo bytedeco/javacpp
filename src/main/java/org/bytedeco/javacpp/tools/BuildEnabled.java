@@ -23,14 +23,20 @@ package org.bytedeco.javacpp.tools;
 
 import java.util.Properties;
 
+import org.osgi.annotation.versioning.ConsumerType;
+
 /**
  * Classes implementing {@link InfoMapper} can additionally implement this interface
  * to receive the logger, properties, and encoding associated with the current build session.
+ * <p>
+ * Note that this interface is intended to be implemented by users of JavaCPP and so is marked
+ * as a {@link ConsumerType} interface. Adding methods will be considered a breaking change.
  *
  * @see Parser
  *
  * @author Samuel Audet
  */
+@ConsumerType
 public interface BuildEnabled {
     void init(Logger logger, Properties properties, String encoding);
 }
