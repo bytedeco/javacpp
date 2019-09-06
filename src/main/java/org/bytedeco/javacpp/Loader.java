@@ -1350,20 +1350,8 @@ public class Loader {
         return urls.toArray(new URL[urls.size()]);
     }
 
-    /**
-     * Tries to load the library from the URLs in order, extracting resources as necessary.
-     * Finally, if all fails, falls back on {@link System#loadLibrary(String)}.
-     *
-     * @param urls the URLs to try loading the library from
-     * @param libnameversion the name of the library + ":" + optional exact path to library + "@" + optional version tag
-     *                       + "#" + a second optional name used at extraction (or empty to prevent it, unless it is a second "#")
-     *                       + "!" to load all symbols globally
-     * @param preloaded libraries for which to create symbolic links in same cache directory
-     * @return the full path of the file loaded, or the library name if unknown
-     *         (but {@code if (!isLoadLibraries) { return null; }})
-     * @throws UnsatisfiedLinkError on failure or when interrupted
-     */
-    public static synchronized String loadLibrary(URL[] urls, String libnameversion, String ... preloaded) {
+    /** Returns {@code loadLibrary(null, urls, libnameversion, preloaded)}. */
+    public static String loadLibrary(URL[] urls, String libnameversion, String ... preloaded) {
         return loadLibrary(null, urls, libnameversion, preloaded);
     }
 
