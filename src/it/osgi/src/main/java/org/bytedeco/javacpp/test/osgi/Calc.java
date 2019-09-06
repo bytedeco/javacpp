@@ -5,17 +5,16 @@ import org.bytedeco.javacpp.annotation.Platform;
 
 @Platform(include = "calc.h")
 public class Calc {
-    
+
     static {
-        
         // This line should be sufficient, but it
-        // isn't because the library gets loaded by
-        // the wrong classloader
+        // may not be if the JVM does not allow us
+        // to load it with the right class loader
         //
         Loader.load();
-        
+
         // This is what we need to happen in the scope
-        // of the bundle containing the native code, 
+        // of the bundle containing the native code,
         // not the JavaCPP bundle. Note that the call
         // to the Loader is just to force a wiring to
         // the JavaCPP package needed by the JNI code
@@ -24,10 +23,8 @@ public class Calc {
         //
         //System.loadLibrary("jniCalc");
     }
-    
+
     private Calc() {}
-    
 
     public static native int add(int a, int b);
-
 }
