@@ -1,4 +1,6 @@
 
+### September 5, 2019 version 1.5.1-1
+ * Use the native thread ID as name on `AttachCurrentThread()` ([pull #339](https://github.com/bytedeco/javacpp/pull/339))
  * Make sure we `canRead()`, `canWrite()`, and `canExecute()` what `Loader.getCacheDir()` returns
  * Prevent `Generator` from copying data unnecessarily when returning Java arrays from adapters ([issue #317](https://github.com/bytedeco/javacpp/issues/317))
  * Fix `Parser` issues when casting `const` pointers or enumerating anonymous `enum` declarations
@@ -19,7 +21,7 @@
  * Fix `Generator` taking the `@By*` annotation of the paired method for the index instead of the value argument of a setter
  * Fix `Parser` sometimes considering global C++ identifiers starting with `::` as if they were local
  * Change default value for `Pointer.maxPhysicalBytes` to `Pointer.maxBytes + Runtime.maxMemory()` ([pull #310](https://github.com/bytedeco/javacpp/pull/310))
- * Add `Loader.getVersion()` and `checkVersion()` to get versions of Maven artifacts and check against JavaCPP
+ * Add `Loader.getVersion()` and `checkVersion()` to get versions of Maven artifacts and check against JavaCPP ([issue #194](https://github.com/bytedeco/javacpp/issues/194))
  * Fix compile errors caused by `Generator` occurring with callback functions returning a value by reference
  * Make `Builder` expand entries from the user class path with `*` as basename to all JAR files in the directory
  * Prevent `Loader` from creating symbolic links pointing to themselves by comparing with `Path.normalize()` ([pull #307](https://github.com/bytedeco/javacpp/pull/307))
