@@ -1,4 +1,5 @@
 
+ * Add support for custom `Allocator` to `VectorAdapter` and custom `Deleter` to `UniquePtrAdapter`
  * Enable support for OSGi bundles ([pull #332](https://github.com/bytedeco/javacpp/pull/332))
 
 ### September 5, 2019 version 1.5.1-1

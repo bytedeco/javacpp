@@ -337,6 +337,8 @@ public class Parser {
                                   +  "    }\n";
                     }
                     if (resizable) {
+                        valueType.javaName = valueType.javaName.substring(valueType.javaName.lastIndexOf(' ') + 1); // get rid of any annotations
+
                         decl.text += "\n"
                                   +  "    public " + valueType.javaName + arrayBrackets + "[] get() {\n";
                         String indent = "        ", indices = "", args = "", brackets = arrayBrackets;
@@ -371,9 +373,13 @@ public class Parser {
                     String[] secondNames = secondType.javaNames != null ? secondType.javaNames : new String[] {secondType.javaName};
                     String brackets = arrayBrackets + (dim > 0 ? "[]" : "");
                     for (int n = 0; n < firstNames.length || n < secondNames.length; n++) {
+                        String firstName = firstNames[Math.min(n, firstNames.length - 1)];
+                        String secondName = secondNames[Math.min(n, secondNames.length - 1)];
+                        firstName = firstName.substring(firstName.lastIndexOf(' ') + 1); // get rid of any annotations
+                        secondName = secondName.substring(secondName.lastIndexOf(' ') + 1);
                         decl.text += "\n"
-                                  +  "    public " + containerType.javaName + " put(" + firstNames[Math.min(n, firstNames.length - 1)] + brackets + " firstValue, "
-                                                                                     + secondNames[Math.min(n, secondNames.length - 1)] + brackets + " secondValue) {\n";
+                                  +  "    public " + containerType.javaName + " put(" + firstName + brackets + " firstValue, "
+                                                                                     + secondName + brackets + " secondValue) {\n";
                         String indent = "        ", indices = "", args = "";
                         separator = "";
                         for (int i = 0; i < dim; i++) {
@@ -398,6 +404,7 @@ public class Parser {
                 } else if (resizable && firstType == null && secondType == null) {
                     boolean first = true;
                     for (String javaName : valueType.javaNames != null ? valueType.javaNames : new String[] {valueType.javaName}) {
+                        javaName = javaName.substring(javaName.lastIndexOf(' ') + 1); // get rid of any annotations
                         decl.text += "\n";
                         if (dim < 2) {
                             if (first) {
