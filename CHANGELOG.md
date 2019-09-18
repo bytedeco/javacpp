@@ -1,4 +1,5 @@
 
+ * Introduce `PointerScope.forClasses` to limit the `Pointer` classes that can be attached to a given instance
  * Add support for custom `Allocator` to `VectorAdapter` and custom `Deleter` to `UniquePtrAdapter`
  * Enable support for OSGi bundles ([pull #332](https://github.com/bytedeco/javacpp/pull/332))
 

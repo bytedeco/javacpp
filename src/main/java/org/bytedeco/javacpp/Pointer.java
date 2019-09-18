@@ -30,6 +30,7 @@ import java.lang.reflect.Modifier;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Iterator;
 import org.bytedeco.javacpp.annotation.Name;
 import org.bytedeco.javacpp.annotation.Platform;
 import org.bytedeco.javacpp.tools.Generator;
@@ -593,9 +594,17 @@ public class Pointer implements AutoCloseable {
                 }
                 r.add();
 
-                PointerScope s = PointerScope.getInnerScope();
-                if (s != null) {
-                    s.attach(this);
+                Iterator<PointerScope> it = PointerScope.getScopeIterator();
+                if (it != null) {
+                    while (it.hasNext()) {
+                        try {
+                            it.next().attach(this);
+                        } catch (IllegalArgumentException e) {
+                            // try the next scope down the stack
+                            continue;
+                        }
+                        break;
+                    }
                 }
             }
         }

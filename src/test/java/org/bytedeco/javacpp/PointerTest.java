@@ -990,5 +990,25 @@ public class PointerTest {
         assertFalse(inside4.isNull());
         assertTrue(inside5.isNull());
         assertFalse(outside2.isNull());
+
+        IntPointer intPointer;
+        FloatPointer floatPointer;
+        try (PointerScope globalScope = new PointerScope()) {
+            try (PointerScope localScope = new PointerScope(true, IntPointer.class)) {
+                intPointer = new IntPointer(1);
+                floatPointer = new FloatPointer(1);
+
+                try {
+                    System.out.println("Note: IllegalArgumentException should get thrown here and printed below.");
+                    localScope.attach(floatPointer);
+                    fail("IllegalArgumentException should have been thrown.");
+                } catch (IllegalArgumentException e) {
+                    System.out.println(e);
+                }
+            }
+            assertTrue(intPointer.isNull());
+            assertFalse(floatPointer.isNull());
+        }
+        assertTrue(floatPointer.isNull());
     }
 }

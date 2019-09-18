@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Samuel Audet
+ * Copyright (C) 2018-2019 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -23,19 +23,22 @@
 package org.bytedeco.javacpp;
 
 import java.util.ArrayDeque;
+import java.util.Arrays;
 import java.util.Deque;
+import java.util.Iterator;
 import org.bytedeco.javacpp.tools.Logger;
 
 /**
  * {@link Pointer} objects attach themselves automatically on {@link Pointer#init} to the first {@link PointerScope}
- * found in {@link #scopeStack}. The user can then call {@link #deallocate()}, or rely on {@link #close()},
- * to deallocate in a timely fashion all attached Pointer objects, instead of relying on the garbage collector.
+ * found in {@link #scopeStack} that they can to based on the classes found in {@link #forClasses}. The user can then
+ * call {@link #deallocate()}, or rely on {@link #close()} to deallocate in a timely fashion all attached Pointer objects,
+ * instead of relying on the garbage collector.
  */
 public class PointerScope implements AutoCloseable {
     private static final Logger logger = Logger.create(PointerScope.class);
 
     /** A thread-local stack of {@link PointerScope} objects. Pointer objects attach themselves
-     * automatically on {@link Pointer#init} to the first one on the stack. */
+     * automatically on {@link Pointer#init} to the first one they can to on the stack. */
     static final ThreadLocal<Deque<PointerScope>> scopeStack = new ThreadLocal<Deque<PointerScope>>() {
         @Override protected Deque initialValue() {
             return new ArrayDeque<PointerScope>();
@@ -47,23 +50,32 @@ public class PointerScope implements AutoCloseable {
         return scopeStack.get().peek();
     }
 
+    /** Returns {@code scopeStack.get().iterator()}, all scopes not yet closed. */
+    public static Iterator<PointerScope> getScopeIterator() {
+        return scopeStack.get().iterator();
+    }
+
     /** The stack keeping references to attached {@link Pointer} objects. */
     Deque<Pointer> pointerStack = new ArrayDeque<Pointer>();
 
     /** When true, {@link #deallocate()} gets called on {@link #close()}. */
     boolean deallocateOnClose = true;
 
+    /** When not empty, indicates the classes of objects that are allowed to be attached. */
+    Class<? extends Pointer>[] forClasses = null;
+
     /** Calls {@code this(true)}. */
     public PointerScope() {
         this(true);
     }
 
-    /** Initializes {@link #deallocateOnClose} and pushes itself on the {@link #scopeStack}. */
-    public PointerScope(boolean deallocateOnClose) {
+    /** Initializes {@link #deallocateOnClose} and {@link #forClasses}, and pushes itself on the {@link #scopeStack}. */
+    public PointerScope(boolean deallocateOnClose, Class<? extends Pointer>... forClasses) {
         if (logger.isDebugEnabled()) {
             logger.debug("Opening " + this);
         }
         this.deallocateOnClose = deallocateOnClose;
+        this.forClasses = forClasses;
         scopeStack.get().push(this);
     }
 
@@ -78,10 +90,27 @@ public class PointerScope implements AutoCloseable {
         return deallocateOnClose;
     }
 
-    /** Pushes the Pointer onto the {@link #pointerStack} of this Scope. */
+    public Class<? extends Pointer>[] forClasses() {
+        return forClasses;
+    }
+
+    /** Pushes the Pointer onto the {@link #pointerStack} of this Scope.
+     * @throws IllegalArgumentException when it is not an instance of a class in {@link #forClasses}.*/
     public PointerScope attach(Pointer p) {
         if (logger.isDebugEnabled()) {
             logger.debug("Attaching " + p + " to " + this);
+        }
+        if (forClasses != null && forClasses.length > 0) {
+            boolean found = false;
+            for (Class<? extends Pointer> c : forClasses) {
+                if (c != null && c.isInstance(p)) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                throw new IllegalArgumentException(p + " is not an instance of a class in forClasses: " + Arrays.toString(forClasses));
+            }
         }
         pointerStack.push(p);
         return this;
