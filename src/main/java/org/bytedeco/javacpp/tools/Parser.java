@@ -1765,8 +1765,20 @@ public class Parser {
                         count2--;
                     }
 
-                    // try to qualify all the identifiers
+                    // perform template substitution
                     String cppName = token.value;
+                    if (context.templateMap != null) {
+                        String[] types = cppName.split("::");
+                        String separator = "";
+                        cppName = "";
+                        for (String t : types) {
+                            Type t2 = context.templateMap.get(t);
+                            cppName += separator + (t2 != null ? t2.cppName : t);
+                            separator = "::";
+                        }
+                    }
+
+                    // try to qualify all the identifiers
                     for (String name : context.qualify(cppName)) {
                         if (infoMap.getFirst(name, false) != null) {
                             cppName = name;
