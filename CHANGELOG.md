@@ -1,4 +1,5 @@
 
+ * Perform template substitution in `Parser` also for default argument values ([pull #343](https://github.com/bytedeco/javacpp/pull/343))
  * Introduce `PointerScope.forClasses` to limit the `Pointer` classes that can be attached to a given instance
  * Add support for custom `Allocator` to `VectorAdapter` and custom `Deleter` to `UniquePtrAdapter`
  * Enable support for OSGi bundles ([pull #332](https://github.com/bytedeco/javacpp/pull/332))
