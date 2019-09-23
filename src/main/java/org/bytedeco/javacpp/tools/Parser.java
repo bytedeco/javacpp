@@ -3426,13 +3426,14 @@ public class Parser {
                 } else if (context.namespace != null && context.javaName == null) {
                     annotations += "@Namespace(\"" + context.namespace + "\") ";
                 }
-                decl.text += enumSpacing + annotations + "public enum " + javaName + " {"
+                String shortName = javaName.substring(javaName.lastIndexOf('.') + 1);
+                decl.text += enumSpacing + annotations + "public enum " + shortName + " {"
                           +  enumerators2 + token.expect(';').spacing + ";"
                           + (comment.length() > 0 && comment.charAt(0) == ' ' ? comment.substring(1) : comment) + "\n\n"
                           +  enumSpacing2 + "    public final " + javaType + " value;\n"
-                          +  enumSpacing2 + "    private " + javaName  + "(" + javaType + " v) { this.value = v; }\n"
-                          +  enumSpacing2 + "    private " + javaName  + "(" + javaName + " e) { this.value = e.value; }\n"
-                          +  enumSpacing2 + "    public " + javaName + " intern() { for (" + javaName + " e : values()) if (e.value == value) return e; return this; }\n"
+                          +  enumSpacing2 + "    private " + shortName  + "(" + javaType + " v) { this.value = v; }\n"
+                          +  enumSpacing2 + "    private " + shortName  + "(" + shortName + " e) { this.value = e.value; }\n"
+                          +  enumSpacing2 + "    public " + shortName + " intern() { for (" + shortName + " e : values()) if (e.value == value) return e; return this; }\n"
                           +  enumSpacing2 + "    @Override public String toString() { return intern().name(); }\n"
                           +  enumSpacing2 + "}";
                 Info info2 = new Info(infoMap.getFirst(cppType)).cppNames(cppName);
