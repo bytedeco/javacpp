@@ -1,4 +1,5 @@
 
+ * Fix `Parser` incorrectly inheriting default constructors multiple times with `using`
  * Allow in `Parser` fully qualified names as `Info.valueTypes` for enumerators as well
  * Perform template substitution in `Parser` also for default argument values ([pull #343](https://github.com/bytedeco/javacpp/pull/343))
  * Introduce `PointerScope.forClasses` to limit the `Pointer` classes that can be attached to a given instance

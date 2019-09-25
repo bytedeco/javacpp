@@ -3034,7 +3034,7 @@ public class Parser {
             declarations(ctx, declList2);
         }
         String modifiers = "public static ", constructors = "", explicitConstructors = "";
-        boolean implicitConstructor = true, defaultConstructor = false, longConstructor = false,
+        boolean implicitConstructor = true, arrayConstructor = false, defaultConstructor = false, longConstructor = false,
                 pointerConstructor = false, abstractClass = info != null && info.purify && !ctx.virtualize,
                 allPureConst = true, haveVariables = false;
         for (Declaration d : declList2) {
@@ -3055,15 +3055,23 @@ public class Parser {
                     }
                 }
                 int namespace2 = baseType.lastIndexOf("::");
-                constructors = d.text.replace(pointerTypes != null ? pointerTypes[0] : namespace2 >= 0 ? baseType.substring(namespace2 + 2) : baseType, shortName) + "\n";
+                constructors = d.text.replace(pointerTypes != null ? " " + pointerTypes[0].substring(pointerTypes[0].lastIndexOf('.') + 1)
+                                                                   : namespace2 >= 0 ? " " + baseType.substring(namespace2 + 2) : " " + baseType, " " + shortName) + "\n";
                 d.text = "";
             } else if (d.declarator != null && d.declarator.type != null && d.declarator.type.constructor) {
                 implicitConstructor = false;
                 Declarator[] paramDcls = d.declarator.parameters.declarators;
                 String t = paramDcls.length > 0 ? paramDcls[0].type.javaName : null;
-                defaultConstructor |= (paramDcls.length == 0 || (paramDcls.length == 1 && t.equals("void"))) && !d.inaccessible;
-                longConstructor |= paramDcls.length == 1 && (t.equals("int") || t.equals("long") || t.equals("float") || t.equals("double")) && !d.inaccessible;
-                pointerConstructor |= paramDcls.length == 1 && t.equals("Pointer") && !d.inaccessible;
+                arrayConstructor |= paramDcls.length == 1 && (t.equals("int") || t.equals("long") || t.equals("float") || t.equals("double")) && !d.inaccessible;
+                boolean defaultConstructor2 = (paramDcls.length == 0 || (paramDcls.length == 1 && t.equals("void"))) && !d.inaccessible;
+                boolean longConstructor2 = paramDcls.length == 1 && t.equals("long") && !d.inaccessible;
+                boolean pointerConstructor2 = paramDcls.length == 1 && t.equals("Pointer") && !d.inaccessible;
+                if ((defaultConstructor && defaultConstructor2) || (longConstructor && longConstructor2) || (pointerConstructor && pointerConstructor2)) {
+                    d.text = "";
+                }
+                defaultConstructor |= defaultConstructor2;
+                longConstructor |= longConstructor2;
+                pointerConstructor |= pointerConstructor2;
             }
             abstractClass |= d.abstractMember;
             allPureConst &= d.constMember && d.abstractMember;
@@ -3105,7 +3113,7 @@ public class Parser {
                     constructors += "    /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */\n" +
                                  "    public " + shortName + "(Pointer p) { super(p); }\n";
                 }
-                if (defaultConstructor && (info == null || !info.purify) && (!abstractClass || ctx.virtualize) && !longConstructor) {
+                if (defaultConstructor && (info == null || !info.purify) && (!abstractClass || ctx.virtualize) && !arrayConstructor) {
                     constructors += "    /** Native array allocator. Access with {@link Pointer#position(long)}. */\n" +
                                  "    public " + shortName + "(long size) { super((Pointer)null); allocateArray(size); }\n" +
                                  "    private native void allocateArray(long size);\n" +
