@@ -22,6 +22,7 @@
       </activation>
       <properties>
         <lib.name>macosx-x86_64/libjniCalc.dylib</lib.name>
+        <lib2.name>macosx-x86_64/libjniAdapterTest.dylib</lib2.name>
         <os.name>MacOSX</os.name>
       </properties>
     </profile>
@@ -34,6 +35,7 @@
       </activation>
       <properties>
         <lib.name>linux-x86_64/libjniCalc.so</lib.name>
+        <lib2.name>macosx-x86_64/libjniAdapterTest.so</lib2.name>
         <os.name>Linux</os.name>
       </properties>
     </profile>
@@ -80,6 +82,7 @@
                 <includePath>${project.basedir}/src/main/c</includePath>
               </includePaths>
               <copyLibs>true</copyLibs>
+              <deleteJniFiles>false</deleteJniFiles>
             </configuration>
           </execution>
         </executions>
@@ -101,6 +104,7 @@ Test-Cases: ${classes;NAMED;*Test}
 
 Bundle-NativeCode: \
  org/bytedeco/javacpp/test/osgi/${lib.name};\
+ org/bytedeco/javacpp/test/osgi/${lib2.name};\
  osname=${os.name}
  
           ]]></bnd>

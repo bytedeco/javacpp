@@ -49,6 +49,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Stack;
 import java.util.WeakHashMap;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -79,6 +80,14 @@ public class Loader {
     private static final String PLATFORM;
     /** Default platform properties loaded and returned by {@link #loadProperties()}. */
     private static Properties platformProperties = null;
+    
+    private static final ThreadLocal<Stack<Class<?>>> runtimeLoadContext = 
+    		new ThreadLocal<Stack<Class<?>>>() {
+				@Override
+				protected Stack<Class<?>> initialValue() {
+					return new Stack<Class<?>>();
+				}
+		    };
 
     static {
         String jvmName = System.getProperty("java.vm.name", "").toLowerCase();
@@ -1402,6 +1411,7 @@ public class Loader {
         // If we do not already have the native library file ...
         String filename = loadedLibraries.get(libnameversion2);
         UnsatisfiedLinkError loadError = null;
+        runtimeLoadContext.get().push(cls);
         try {
             for (URL url : urls) {
                 URI uri = url.toURI();
@@ -1565,6 +1575,8 @@ public class Loader {
                 logger.debug("Failed to extract for " + libnameversion + ": " + e);
             }
             throw e;
+        } finally {
+        	runtimeLoadContext.get().pop();
         }
     }
 
@@ -1700,7 +1712,10 @@ public class Loader {
      */
     static Class putMemberOffset(String typeName, String member, int offset) throws ClassNotFoundException {
         try {
-            Class<?> c = Class.forName(typeName.replace('/', '.'), false, Loader.class.getClassLoader());
+        	String className = typeName.replace('/', '.');
+        	Class<?> context = runtimeLoadContext.get().peek();
+            Class<?> c = Class.forName(className, false, 
+            		context == null ? Loader.class.getClassLoader() : context.getClassLoader());
             if (member != null) {
                 putMemberOffset(c.asSubclass(Pointer.class), member, offset);
             }
