@@ -22,7 +22,7 @@
       </activation>
       <properties>
         <lib.name>macosx-x86_64/libjniCalc.dylib</lib.name>
-        <lib2.name>macosx-x86_64/libjniAdapterTest.dylib</lib2.name>
+        <lib2.name>macosx-x86_64/libjniCustomTypesTest.dylib</lib2.name>
         <os.name>MacOSX</os.name>
       </properties>
     </profile>
@@ -35,7 +35,7 @@
       </activation>
       <properties>
         <lib.name>linux-x86_64/libjniCalc.so</lib.name>
-        <lib2.name>macosx-x86_64/libjniAdapterTest.so</lib2.name>
+        <lib2.name>macosx-x86_64/libjniCustomTypesTest.so</lib2.name>
         <os.name>Linux</os.name>
       </properties>
     </profile>
