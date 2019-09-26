@@ -46,10 +46,10 @@ import java.util.Arrays;
 import java.util.Deque;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Stack;
 import java.util.WeakHashMap;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -81,11 +81,11 @@ public class Loader {
     /** Default platform properties loaded and returned by {@link #loadProperties()}. */
     private static Properties platformProperties = null;
     
-    private static final ThreadLocal<Stack<Class<?>>> runtimeLoadContext = 
-    		new ThreadLocal<Stack<Class<?>>>() {
+    private static final ThreadLocal<Deque<Class<?>>> runtimeLoadContext = 
+    		new ThreadLocal<Deque<Class<?>>>() {
 				@Override
-				protected Stack<Class<?>> initialValue() {
-					return new Stack<Class<?>>();
+				protected Deque<Class<?>> initialValue() {
+					return new LinkedList<Class<?>>();
 				}
 		    };
 

@@ -1,27 +1,3 @@
-#include <memory>
-#include <string>
-#include <vector>
-
-std::string testStdString(std::string str) {
-    return str;
-}
-
-std::wstring testStdWString(std::wstring str) {
-    return str;
-}
-
-char *testCharString(const char *str) {
-    return strdup(str);
-    // memory leak...
-}
-
-unsigned short *testShortString(unsigned short *str) {
-    return str;
-}
-
-int *testIntString(int *str) {
-    return str;
-}
 
 int constructorCount = 0;
 int destructorCount = 0;
@@ -73,20 +49,3 @@ void storeUniqueData(const std::unique_ptr<UniqueData>* u) {
 const std::unique_ptr<UniqueData>* fetchUniqueData() {
     return &uniqueData;
 }
-
-std::vector<int> testStdVectorByVal(std::vector<int> v) {
-    return v;
-}
-
-const std::vector<int>& testStdVectorByRef(std::vector<int>& v) {
-    return v;
-}
-
-std::vector<int>* testStdVectorByPtr(std::vector<int>* v) {
-    return v;
-}
-
-std::vector<const char*> testStdVectorConstPointer(std::vector<const char*> v) {
-    return v;
-}
-
