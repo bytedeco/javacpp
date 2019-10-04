@@ -14,6 +14,18 @@
   
   <profiles>
     <profile>
+      <id>Windows</id>
+      <activation>
+        <os>
+          <name>windows</name>
+        </os>
+      </activation>
+      <properties>
+        <lib.name>windows-x86_64/libjniCalc.dylib</lib.name>
+        <os.name>Windows</os.name>
+      </properties>
+    </profile>
+    <profile>
       <id>macosx</id>
       <activation>
         <os>
@@ -26,14 +38,145 @@
       </properties>
     </profile>
     <profile>
-      <id>linux</id>
+      <id>linux-x86_64</id>
       <activation>
         <os>
           <name>Linux</name>
+          <arch>x86_64</arch>
         </os>
       </activation>
       <properties>
         <lib.name>linux-x86_64/libjniCalc.so</lib.name>
+        <os.name>Linux</os.name>
+      </properties>
+    </profile>
+    <profile>
+      <id>linux-x86-64</id>
+      <activation>
+        <os>
+          <name>Linux</name>
+          <arch>x86-64</arch>
+        </os>
+      </activation>
+      <properties>
+        <lib.name>linux-x86_64/libjniCalc.so</lib.name>
+        <os.name>Linux</os.name>
+      </properties>
+    </profile>
+    <profile>
+      <id>linux-amd64</id>
+      <activation>
+        <os>
+          <name>Linux</name>
+          <arch>amd64</arch>
+        </os>
+      </activation>
+      <properties>
+        <lib.name>linux-x86_64/libjniCalc.so</lib.name>
+        <os.name>Linux</os.name>
+      </properties>
+    </profile>
+    <profile>
+      <id>linux-x86</id>
+      <activation>
+        <os>
+          <name>Linux</name>
+          <arch>x86</arch>
+        </os>
+      </activation>
+      <properties>
+        <lib.name>linux-x86/libjniCalc.so</lib.name>
+        <os.name>Linux</os.name>
+      </properties>
+    </profile>
+    <profile>
+      <id>linux-arm</id>
+      <activation>
+        <os>
+          <name>Linux</name>
+          <arch>arm</arch>
+        </os>
+      </activation>
+      <properties>
+        <lib.name>linux-arm/libjniCalc.so</lib.name>
+        <os.name>Linux</os.name>
+      </properties>
+    </profile>
+    <profile>
+      <id>linux-armhf</id>
+      <activation>
+        <os>
+          <name>Linux</name>
+          <arch>armhf</arch>
+        </os>
+      </activation>
+      <properties>
+        <lib.name>linux-armhf/libjniCalc.so</lib.name>
+        <os.name>Linux</os.name>
+      </properties>
+    </profile>
+    <profile>
+      <id>linux-arm64</id>
+      <activation>
+        <os>
+          <name>Linux</name>
+          <arch>aarch64</arch>
+        </os>
+      </activation>
+      <properties>
+        <lib.name>linux-arm64/libjniCalc.so</lib.name>
+        <os.name>Linux</os.name>
+      </properties>
+    </profile>
+    <profile>
+      <id>linux-ppc</id>
+      <activation>
+        <os>
+          <name>Linux</name>
+          <arch>ppc</arch>
+        </os>
+      </activation>
+      <properties>
+        <lib.name>linux-ppc/libjniCalc.so</lib.name>
+        <os.name>Linux</os.name>
+      </properties>
+    </profile>
+    <profile>
+      <id>linux-ppc64</id>
+      <activation>
+        <os>
+          <name>Linux</name>
+          <arch>ppc64</arch>
+        </os>
+      </activation>
+      <properties>
+        <lib.name>linux-ppc64/libjniCalc.so</lib.name>
+        <os.name>Linux</os.name>
+      </properties>
+    </profile>
+    <profile>
+      <id>linux-ppc64le</id>
+      <activation>
+        <os>
+          <name>Linux</name>
+          <arch>ppc64le</arch>
+        </os>
+      </activation>
+      <properties>
+        <lib.name>linux-ppc64le/libjniCalc.so</lib.name>
+        <os.name>Linux</os.name>
+      </properties>
+    </profile>
+    <profile>
+      <id>linux-mips64el</id>
+      <activation>
+        <os>
+          <name>Linux</name>
+          <arch>ppc64le</arch>
+        </os>
+      </activation>
+      <properties>
+        <lib.name>linux-mips64el/libjniCalc.so</lib.name>
         <os.name>Linux</os.name>
       </properties>
     </profile>
