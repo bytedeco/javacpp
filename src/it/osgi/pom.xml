@@ -10,174 +10,127 @@
   
   <properties>
     <bnd.version>4.2.0</bnd.version>
+    <lib.path>${os.name}-${os.arch}/${lib.name}</lib.path>
   </properties>
   
+  <!-- Copied and adapted from the javacpp-presets parent pom. Unfortunately 
+       inheriting these isn't appropriate because it would pull in other 
+       profiles which attempt to build sub-projects which don't exist.
+       Also, importing as a parent would introduce a dependency cycle between
+       javacpp and the javacpp-presets  -->
   <profiles>
     <profile>
-      <id>Windows</id>
+      <id>linux</id>
       <activation>
-        <os>
-          <name>windows</name>
-        </os>
+        <os><name>linux</name></os>
       </activation>
       <properties>
-        <lib.name>windows-x86_64/libjniCalc.dylib</lib.name>
-        <os.name>Windows</os.name>
+        <os.kernel>linux</os.kernel>
+        <os.name>linux</os.name>
+        <lib.name>libjniCalc.so</lib.name>
       </properties>
     </profile>
     <profile>
       <id>macosx</id>
       <activation>
-        <os>
-          <name>Mac OS X</name>
-        </os>
+        <os><name>mac os x</name></os>
       </activation>
       <properties>
-        <lib.name>macosx-x86_64/libjniCalc.dylib</lib.name>
-        <os.name>MacOSX</os.name>
+        <os.kernel>darwin</os.kernel>
+        <os.name>macosx</os.name>
+        <lib.name>libjniCalc.dylib</lib.name>
       </properties>
     </profile>
     <profile>
-      <id>linux-x86_64</id>
+      <id>windows</id>
       <activation>
-        <os>
-          <name>Linux</name>
-          <arch>x86_64</arch>
-        </os>
+        <os><family>windows</family></os>
       </activation>
       <properties>
-        <lib.name>linux-x86_64/libjniCalc.so</lib.name>
-        <os.name>Linux</os.name>
+        <os.kernel>windows</os.kernel>
+        <os.name>windows</os.name>
+        <lib.name>jniCalc.dll</lib.name>
       </properties>
     </profile>
     <profile>
-      <id>linux-x86-64</id>
+      <id>arm</id>
       <activation>
-        <os>
-          <name>Linux</name>
-          <arch>x86-64</arch>
-        </os>
+        <os><arch>arm</arch></os>
       </activation>
       <properties>
-        <lib.name>linux-x86_64/libjniCalc.so</lib.name>
-        <os.name>Linux</os.name>
+        <os.arch>armhf</os.arch>
       </properties>
     </profile>
     <profile>
-      <id>linux-amd64</id>
+      <id>aarch64</id>
       <activation>
-        <os>
-          <name>Linux</name>
-          <arch>amd64</arch>
-        </os>
+        <os><arch>aarch64</arch></os>
       </activation>
       <properties>
-        <lib.name>linux-x86_64/libjniCalc.so</lib.name>
-        <os.name>Linux</os.name>
+        <os.arch>arm64</os.arch>
       </properties>
     </profile>
     <profile>
-      <id>linux-x86</id>
+      <id>armv8</id>
       <activation>
-        <os>
-          <name>Linux</name>
-          <arch>x86</arch>
-        </os>
+        <os><arch>armv8</arch></os>
       </activation>
       <properties>
-        <lib.name>linux-x86/libjniCalc.so</lib.name>
-        <os.name>Linux</os.name>
+        <os.arch>arm64</os.arch>
       </properties>
     </profile>
     <profile>
-      <id>linux-arm</id>
+      <id>i386</id>
       <activation>
-        <os>
-          <name>Linux</name>
-          <arch>arm</arch>
-        </os>
+        <os><arch>i386</arch></os>
       </activation>
       <properties>
-        <lib.name>linux-arm/libjniCalc.so</lib.name>
-        <os.name>Linux</os.name>
+        <os.arch>x86</os.arch>
       </properties>
     </profile>
     <profile>
-      <id>linux-armhf</id>
+      <id>i486</id>
       <activation>
-        <os>
-          <name>Linux</name>
-          <arch>armhf</arch>
-        </os>
+        <os><arch>i486</arch></os>
       </activation>
       <properties>
-        <lib.name>linux-armhf/libjniCalc.so</lib.name>
-        <os.name>Linux</os.name>
+        <os.arch>x86</os.arch>
       </properties>
     </profile>
     <profile>
-      <id>linux-arm64</id>
+      <id>i586</id>
       <activation>
-        <os>
-          <name>Linux</name>
-          <arch>aarch64</arch>
-        </os>
+        <os><arch>i586</arch></os>
       </activation>
       <properties>
-        <lib.name>linux-arm64/libjniCalc.so</lib.name>
-        <os.name>Linux</os.name>
+        <os.arch>x86</os.arch>
       </properties>
     </profile>
     <profile>
-      <id>linux-ppc</id>
+      <id>i686</id>
       <activation>
-        <os>
-          <name>Linux</name>
-          <arch>ppc</arch>
-        </os>
+        <os><arch>i686</arch></os>
       </activation>
       <properties>
-        <lib.name>linux-ppc/libjniCalc.so</lib.name>
-        <os.name>Linux</os.name>
+        <os.arch>x86</os.arch>
       </properties>
     </profile>
     <profile>
-      <id>linux-ppc64</id>
+      <id>amd64</id>
       <activation>
-        <os>
-          <name>Linux</name>
-          <arch>ppc64</arch>
-        </os>
+        <os><arch>amd64</arch></os>
       </activation>
       <properties>
-        <lib.name>linux-ppc64/libjniCalc.so</lib.name>
-        <os.name>Linux</os.name>
+        <os.arch>x86_64</os.arch>
       </properties>
     </profile>
     <profile>
-      <id>linux-ppc64le</id>
+      <id>x86-64</id>
       <activation>
-        <os>
-          <name>Linux</name>
-          <arch>ppc64le</arch>
-        </os>
+        <os><arch>x86-64</arch></os>
       </activation>
       <properties>
-        <lib.name>linux-ppc64le/libjniCalc.so</lib.name>
-        <os.name>Linux</os.name>
-      </properties>
-    </profile>
-    <profile>
-      <id>linux-mips64el</id>
-      <activation>
-        <os>
-          <name>Linux</name>
-          <arch>ppc64le</arch>
-        </os>
-      </activation>
-      <properties>
-        <lib.name>linux-mips64el/libjniCalc.so</lib.name>
-        <os.name>Linux</os.name>
+        <os.arch>x86_64</os.arch>
       </properties>
     </profile>
   </profiles>
@@ -278,7 +231,7 @@
 Test-Cases: ${classes;NAMED;*Test}
 
 Bundle-NativeCode: \
- org/bytedeco/javacpp/test/osgi/${lib.name};\
+ org/bytedeco/javacpp/test/osgi/${lib.path};\
  osname=${os.name}
  
           ]]></bnd>
