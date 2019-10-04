@@ -31,6 +31,7 @@ import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Iterator;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.bytedeco.javacpp.annotation.Name;
 import org.bytedeco.javacpp.annotation.Platform;
 import org.bytedeco.javacpp.tools.Generator;
@@ -84,7 +85,7 @@ public class Pointer implements AutoCloseable {
             limit = p.limit;
             capacity = p.capacity;
             if (p.deallocator != null) {
-                deallocator = new Deallocator() { public void deallocate() { p.deallocate(); } };
+                deallocator = new ProxyDeallocator(this, p);
             }
         }
     }
@@ -104,7 +105,7 @@ public class Pointer implements AutoCloseable {
             position = b.position();
             limit = b.limit();
             capacity = b.capacity();
-            deallocator = new Deallocator() { Buffer bb = b; public void deallocate() { bb = null; } };
+            deallocator = new ProxyDeallocator(this, b);
         }
     }
     private native void allocate(Buffer b);
@@ -132,6 +133,12 @@ public class Pointer implements AutoCloseable {
         void deallocate();
     }
 
+    protected interface ReferenceCounter {
+        void retain();
+        boolean release();
+        int count();
+    }
+
     /**
      * A utility method to register easily a {@link CustomDeallocator} with a Pointer.
      *
@@ -149,7 +156,7 @@ public class Pointer implements AutoCloseable {
      *
      * @see #withDeallocator(Pointer)
      */
-    protected static class CustomDeallocator extends DeallocatorReference implements Deallocator {
+    protected static class CustomDeallocator extends DeallocatorReference {
         public CustomDeallocator(Pointer p) {
             super(p, null);
             this.deallocator = this;
@@ -196,9 +203,9 @@ public class Pointer implements AutoCloseable {
 
     /**
      * A {@link Deallocator} that calls, during garbage collection, a native function.
-     * Passes as single argument the {@link #ownerAddress} passed to the constructor.
+     * Passes as arguments the {@link #ownerAddress} and {@link #deallocatorAddress} given to the constructor.
      */
-    protected static class NativeDeallocator extends DeallocatorReference implements Deallocator {
+    protected static class NativeDeallocator extends DeallocatorReference {
         NativeDeallocator(Pointer p, long ownerAddress, long deallocatorAddress) {
             super(p, null);
             this.deallocator = this;
@@ -224,17 +231,53 @@ public class Pointer implements AutoCloseable {
         }
     }
 
+    /** A {@link Deallocator} that keeps and uses a strong reference to a Buffer or another Pointer. */
+    static class ProxyDeallocator extends DeallocatorReference {
+        Buffer buffer;
+        Pointer pointer;
+
+        public ProxyDeallocator(Pointer p, Buffer b) {
+            super(p, null);
+            this.deallocator = this;
+            this.buffer = b;
+        }
+        public ProxyDeallocator(Pointer p, Pointer p2) {
+            super(p, null);
+            this.deallocator = this;
+            this.pointer = p2;
+        }
+        @Override public void deallocate() {
+            buffer = null;
+            if (pointer != null) pointer.deallocate();
+        }
+        @Override public void retain() {
+            if (pointer != null) pointer.retainReference();
+        }
+        @Override public boolean release() {
+            return pointer != null ? pointer.releaseReference() : false;
+        }
+        @Override public int count() {
+            return pointer != null ? pointer.referenceCount() : -1;
+        }
+
+        @Override public String toString() {
+            return getClass().getName() + "[buffer=" + buffer + ",pointer=" + pointer + "]";
+        }
+    };
+
     /**
      * A subclass of {@link PhantomReference} that also acts as a linked
      * list to keep their references alive until they get garbage collected.
      * Also keeps track of total allocated memory in bytes, to have it
-     * call {@link System#gc()} when that amount reaches {@link #maxBytes}.
+     * call {@link System#gc()} when that amount reaches {@link #maxBytes},
+     * and implements reference counting with an {@link AtomicInteger} count.
      */
-    static class DeallocatorReference extends PhantomReference<Pointer> {
+    static class DeallocatorReference extends PhantomReference<Pointer> implements Deallocator, ReferenceCounter {
         DeallocatorReference(Pointer p, Deallocator deallocator) {
             super(p, referenceQueue);
             this.deallocator = deallocator;
             this.bytes = p.capacity * p.sizeof();
+            this.count = new AtomicInteger(0);
         }
 
         static volatile DeallocatorReference head = null;
@@ -243,6 +286,8 @@ public class Pointer implements AutoCloseable {
 
         static volatile long totalBytes = 0;
         long bytes;
+
+        AtomicInteger count;
 
         final void add() {
             synchronized (DeallocatorReference.class) {
@@ -280,13 +325,38 @@ public class Pointer implements AutoCloseable {
                 if (logger.isDebugEnabled()) {
                     logger.debug("Collecting " + this);
                 }
+                deallocate();
+            }
+        }
+
+        @Override public void deallocate() {
+            if (deallocator != null) {
                 deallocator.deallocate();
                 deallocator = null;
             }
         }
 
+        @Override public void retain() {
+            if (deallocator != null) {
+                count.incrementAndGet();
+            }
+        }
+        @Override public boolean release() {
+            if (deallocator != null && count.decrementAndGet() <= 0) {
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Releasing " + this);
+                }
+                deallocate();
+                return true;
+            }
+            return false;
+        }
+        @Override public int count() {
+            return deallocator != null ? count.get() : -1;
+        }
+
         @Override public String toString() {
-            return getClass().getName() + "[deallocator=" + deallocator + "]";
+            return getClass().getName() + "[deallocator=" + deallocator + ",count=" + count + "]";
         }
     }
 
@@ -552,10 +622,9 @@ public class Pointer implements AutoCloseable {
             this.deallocator = null;
         }
         if (deallocator != null && !deallocator.equals(null)) {
-            this.deallocator = deallocator;
             DeallocatorReference r = deallocator instanceof DeallocatorReference ?
-                    (DeallocatorReference)deallocator :
-                    new DeallocatorReference(this, deallocator);
+                    (DeallocatorReference)deallocator : new DeallocatorReference(this, deallocator);
+            this.deallocator = r;
             int count = 0;
             long lastPhysicalBytes = maxPhysicalBytes > 0 ? physicalBytes() : 0;
             synchronized (DeallocatorThread.class) {
@@ -611,9 +680,9 @@ public class Pointer implements AutoCloseable {
         return (P)this;
     }
 
-    /** Calls {@code deallocate()}. */
+    /** Calls {@code releaseReference()}. */
     @Override public void close() {
-        deallocate();
+        releaseReference();
     }
 
     /** Calls {@code deallocate(true)}. */
@@ -631,22 +700,53 @@ public class Pointer implements AutoCloseable {
                 logger.debug("Deallocating " + this);
             }
             deallocator.deallocate();
+            deallocator = null;
             address = 0;
         }
         if (!deallocate || referenceQueue == null) {
-            synchronized (DeallocatorReference.class) {
-                DeallocatorReference r = DeallocatorReference.head;
-                while (r != null) {
-                    if (r.deallocator == deallocator) {
-                        r.deallocator = null;
-                        r.clear();
-                        r.remove();
-                        break;
-                    }
-                    r = r.next;
-                }
+            DeallocatorReference r = (DeallocatorReference)deallocator;
+            if (r != null) {
+                // remove from queue without calling the deallocator
+                Deallocator d = r.deallocator;
+                r.deallocator = null;
+                r.clear();
+                r.remove();
+                r.deallocator = d;
             }
         }
+    }
+
+    /**
+     * Calls {@link ReferenceCounter#retain()}, incrementing the reference count by 1.
+     * Has no effect if no deallocator was previously set with {@link #deallocator(Deallocator)}.
+     * @return this
+     */
+    public <P extends Pointer> P retainReference() {
+        ReferenceCounter r = (ReferenceCounter)deallocator;
+        if (r != null) {
+            r.retain();
+        }
+        return (P)this;
+    }
+    /**
+     * Calls {@link ReferenceCounter#release()}, decrementing the reference count by 1,
+     * in turn deallocating this Pointer when the count drops to 0.
+     * Has no effect if no deallocator was previously set with {@link #deallocator(Deallocator)}.
+     * @return true when the count drops to 0 and deallocation has occurred
+     */
+    public boolean releaseReference() {
+        ReferenceCounter r = (ReferenceCounter)deallocator;
+        if (r != null && r.release()) {
+            deallocator = null;
+            address = 0;
+            return true;
+        }
+        return false;
+    }
+    /** Returns {@link ReferenceCounter#count()} or -1 if no deallocator has been set. */
+    public int referenceCount() {
+        ReferenceCounter r = (ReferenceCounter)deallocator;
+        return r != null ? r.count() : -1;
     }
 
     /** Returns {@code Loader.offsetof(getClass(), member)} or -1 on error. */

@@ -31,7 +31,7 @@ import org.bytedeco.javacpp.tools.Logger;
 /**
  * {@link Pointer} objects attach themselves automatically on {@link Pointer#init} to the first {@link PointerScope}
  * found in {@link #scopeStack} that they can to based on the classes found in {@link #forClasses}. The user can then
- * call {@link #deallocate()}, or rely on {@link #close()} to deallocate in a timely fashion all attached Pointer objects,
+ * call {@link #deallocate()}, or rely on {@link #close()} to release in a timely fashion all attached Pointer objects,
  * instead of relying on the garbage collector.
  */
 public class PointerScope implements AutoCloseable {
@@ -58,44 +58,24 @@ public class PointerScope implements AutoCloseable {
     /** The stack keeping references to attached {@link Pointer} objects. */
     Deque<Pointer> pointerStack = new ArrayDeque<Pointer>();
 
-    /** When true, {@link #deallocate()} gets called on {@link #close()}. */
-    boolean deallocateOnClose = true;
-
     /** When not empty, indicates the classes of objects that are allowed to be attached. */
     Class<? extends Pointer>[] forClasses = null;
 
-    /** Calls {@code this(true)}. */
-    public PointerScope() {
-        this(true);
-    }
-
-    /** Initializes {@link #deallocateOnClose} and {@link #forClasses}, and pushes itself on the {@link #scopeStack}. */
-    public PointerScope(boolean deallocateOnClose, Class<? extends Pointer>... forClasses) {
+    /** Initializes {@link #forClasses}, and pushes itself on the {@link #scopeStack}. */
+    public PointerScope(Class<? extends Pointer>... forClasses) {
         if (logger.isDebugEnabled()) {
             logger.debug("Opening " + this);
         }
-        this.deallocateOnClose = deallocateOnClose;
         this.forClasses = forClasses;
         scopeStack.get().push(this);
-    }
-
-    /** Sets {@link #deallocateOnClose} and returns this Scope. */
-    public PointerScope deallocateOnClose(boolean deallocateOnClose) {
-        this.deallocateOnClose = deallocateOnClose;
-        return this;
-    }
-
-    /** Returns {@link #deallocateOnClose}. */
-    public boolean deallocateOnClose() {
-        return deallocateOnClose;
     }
 
     public Class<? extends Pointer>[] forClasses() {
         return forClasses;
     }
 
-    /** Pushes the Pointer onto the {@link #pointerStack} of this Scope.
-     * @throws IllegalArgumentException when it is not an instance of a class in {@link #forClasses}.*/
+    /** Pushes the Pointer onto the {@link #pointerStack} of this Scope and calls {@link Pointer#retainReference()}.
+     * @throws IllegalArgumentException when it is not an instance of a class in {@link #forClasses}. */
     public PointerScope attach(Pointer p) {
         if (logger.isDebugEnabled()) {
             logger.debug("Attaching " + p + " to " + this);
@@ -113,32 +93,36 @@ public class PointerScope implements AutoCloseable {
             }
         }
         pointerStack.push(p);
+        p.retainReference();
         return this;
     }
 
-    /** Removes the Pointer from the {@link #pointerStack} of this Scope. */
+    /** Removes the Pointer from the {@link #pointerStack} of this Scope
+     * and calls {@link Pointer#releaseReference()}. */
     public PointerScope detach(Pointer p) {
         if (logger.isDebugEnabled()) {
             logger.debug("Detaching " + p + " from " + this);
         }
         pointerStack.remove(p);
+        p.releaseReference();
         return this;
     }
 
-    /** Calls {@link #deallocate()} when {@link #deallocateOnClose} is true,
+    /** Pops from {@link #pointerStack} all attached pointers,
+     * calls {@link Pointer#releaseReference()} on them,
      * and removes itself from {@link #scopeStack}. */
     @Override public void close() {
         if (logger.isDebugEnabled()) {
             logger.debug("Closing " + this);
         }
-        if (deallocateOnClose()) {
-            deallocate();
+        while (pointerStack.size() > 0) {
+            pointerStack.pop().releaseReference();
         }
         scopeStack.get().remove(this);
     }
 
-    /** Calls {@link Pointer#deallocate()} on all attached pointers, 
-     * as they are popped off the {@link #pointerStack}. */
+    /** Pops from {@link #pointerStack} all attached pointers,
+     * and calls {@link Pointer#deallocate()} on them. */
     public void deallocate() {
         if (logger.isDebugEnabled()) {
             logger.debug("Deallocating " + this);
@@ -146,6 +130,5 @@ public class PointerScope implements AutoCloseable {
         while (pointerStack.size() > 0) {
             pointerStack.pop().deallocate();
         }
-        pointerStack = null;
     }
 }

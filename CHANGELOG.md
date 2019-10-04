@@ -1,4 +1,5 @@
 
+ * Introduce reference counting in `Pointer` and retrofit `PointerScope` to use it
  * Fix `Parser` incorrectly inheriting default constructors multiple times with `using`
  * Allow in `Parser` fully qualified names as `Info.valueTypes` for enumerators as well
  * Perform template substitution in `Parser` also for default argument values ([pull #343](https://github.com/bytedeco/javacpp/pull/343))
