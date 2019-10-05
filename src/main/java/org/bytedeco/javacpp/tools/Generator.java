@@ -532,7 +532,7 @@ public class Generator {
             out.println("#ifdef __linux__");
             out.println("    struct sysinfo info;");
             out.println("    if (sysinfo(&info) == 0) {");
-            out.println("        size = info.totalram;");
+            out.println("        size = (jlong)info.totalram * info.mem_unit;");
             out.println("    }");
             out.println("#elif defined(__APPLE__)");
             out.println("    size_t length = sizeof(size);");
@@ -563,7 +563,7 @@ public class Generator {
             out.println("    if (size == 0) {");
             out.println("        struct sysinfo info;");
             out.println("        if (sysinfo(&info) == 0) {");
-            out.println("            size = info.freeram;");
+            out.println("            size = (jlong)info.freeram * info.mem_unit;");
             out.println("        }");
             out.println("    }");
             out.println("#elif defined(__APPLE__)");

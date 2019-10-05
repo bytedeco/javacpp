@@ -161,7 +161,7 @@ public class IndexerTest {
 
         System.gc();
 
-        try {
+        if (Loader.sizeof(Pointer.class) > 4) try {
             long longSize = 0x80000000L + 8192;
             final BytePointer longPointer = new BytePointer(longSize);
             assertEquals(longSize, longPointer.capacity());
@@ -235,7 +235,7 @@ public class IndexerTest {
         }
         System.gc();
 
-        try {
+        if (Loader.sizeof(Pointer.class) > 4) try {
             long longSize = 0x80000000L + 8192;
             final ShortPointer longPointer = new ShortPointer(longSize);
             assertEquals(longSize, longPointer.capacity());
@@ -309,7 +309,7 @@ public class IndexerTest {
         }
         System.gc();
 
-        try {
+        if (Loader.sizeof(Pointer.class) > 4) try {
             long longSize = 0x80000000L + 8192;
             final IntPointer longPointer = new IntPointer(longSize);
             assertEquals(longSize, longPointer.capacity());
@@ -383,7 +383,7 @@ public class IndexerTest {
         }
         System.gc();
 
-        try {
+        if (Loader.sizeof(Pointer.class) > 4) try {
             long longSize = 0x80000000L + 8192;
             final LongPointer longPointer = new LongPointer(longSize);
             assertEquals(longSize, longPointer.capacity());
@@ -457,7 +457,7 @@ public class IndexerTest {
         }
         System.gc();
 
-        try {
+        if (Loader.sizeof(Pointer.class) > 4) try {
             long longSize = 0x80000000L + 8192;
             final FloatPointer longPointer = new FloatPointer(longSize);
             assertEquals(longSize, longPointer.capacity());
@@ -531,7 +531,7 @@ public class IndexerTest {
         }
         System.gc();
 
-        try {
+        if (Loader.sizeof(Pointer.class) > 4) try {
             long longSize = 0x80000000L + 8192;
             final DoublePointer longPointer = new DoublePointer(longSize);
             assertEquals(longSize, longPointer.capacity());
@@ -605,7 +605,7 @@ public class IndexerTest {
         }
         System.gc();
 
-        try {
+        if (Loader.sizeof(Pointer.class) > 4) try {
             long longSize = 0x80000000L + 8192;
             final CharPointer longPointer = new CharPointer(longSize);
             assertEquals(longSize, longPointer.capacity());
@@ -684,7 +684,7 @@ public class IndexerTest {
         }
         System.gc();
 
-        try {
+        if (Loader.sizeof(Pointer.class) > 4) try {
             long longSize = 0x80000000L + 8192;
             final BooleanPointer longPointer = new BooleanPointer(longSize);
             assertEquals(longSize, longPointer.capacity());
@@ -758,7 +758,7 @@ public class IndexerTest {
         }
         System.gc();
 
-        try {
+        if (Loader.sizeof(Pointer.class) > 4) try {
             long longSize = 0x80000000L + 8192;
             final BytePointer longPointer = new BytePointer(longSize);
             assertEquals(longSize, longPointer.capacity());
@@ -832,7 +832,7 @@ public class IndexerTest {
         }
         System.gc();
 
-        try {
+        if (Loader.sizeof(Pointer.class) > 4) try {
             long longSize = 0x80000000L + 8192;
             final ShortPointer longPointer = new ShortPointer(longSize);
             assertEquals(longSize, longPointer.capacity());
@@ -920,7 +920,7 @@ public class IndexerTest {
         }
         System.gc();
 
-        try {
+        if (Loader.sizeof(Pointer.class) > 4) try {
             long longSize = 0x80000000L + 8192;
             final ShortPointer longPointer = new ShortPointer(longSize);
             assertEquals(longSize, longPointer.capacity());
@@ -1008,7 +1008,7 @@ public class IndexerTest {
         }
         System.gc();
 
-        try {
+        if (Loader.sizeof(Pointer.class) > 4) try {
             long longSize = 0x80000000L + 8192;
             final ShortPointer longPointer = new ShortPointer(longSize);
             assertEquals(longSize, longPointer.capacity());

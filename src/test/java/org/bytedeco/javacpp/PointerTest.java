@@ -190,7 +190,7 @@ public class PointerTest {
         assertEquals(false, pointer.getBool(0));
         assertEquals(true, pointer.getBool(1));
         assertEquals(shortValue, pointer.getChar(1));
-        assertEquals(pointer.sizeof() == 4 ? intValue : longValue, pointer.getPointer(1).address);
+        assertEquals(Loader.sizeof(Pointer.class) == 4 ? intValue : longValue, pointer.getPointer(1).address);
 
         byte[] array2 = new byte[array.length];
         pointer.position(0).get(array2);
@@ -889,7 +889,7 @@ public class PointerTest {
             if (i < 10) {
                 assertNull(pointer2.get(i));
             } else if (i < 20) {
-                assertEquals(0xFFFFFFFF, pointer2.get(i).address() & 0xFFFFFFFF);
+                assertEquals(0xFFFFFFFFL, pointer2.get(i).address() & 0xFFFFFFFFL);
             } else if (i < 30) {
                 assertEquals(pointer.get(i), pointer2.get(i));
             } else {
