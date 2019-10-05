@@ -10,31 +10,127 @@
   
   <properties>
     <bnd.version>4.2.0</bnd.version>
+    <lib.path>${os.name}-${os.arch}/${lib.name}</lib.path>
   </properties>
   
+  <!-- Copied and adapted from the javacpp-presets parent pom. Unfortunately 
+       inheriting these isn't appropriate because it would pull in other 
+       profiles which attempt to build sub-projects which don't exist.
+       Also, importing as a parent would introduce a dependency cycle between
+       javacpp and the javacpp-presets  -->
   <profiles>
-    <profile>
-      <id>macosx</id>
-      <activation>
-        <os>
-          <name>Mac OS X</name>
-        </os>
-      </activation>
-      <properties>
-        <lib.name>macosx-x86_64/libjniCalc.dylib</lib.name>
-        <os.name>MacOSX</os.name>
-      </properties>
-    </profile>
     <profile>
       <id>linux</id>
       <activation>
-        <os>
-          <name>Linux</name>
-        </os>
+        <os><name>linux</name></os>
       </activation>
       <properties>
-        <lib.name>linux-x86_64/libjniCalc.so</lib.name>
-        <os.name>Linux</os.name>
+        <os.kernel>linux</os.kernel>
+        <os.name>linux</os.name>
+        <lib.name>libjniCalc.so</lib.name>
+      </properties>
+    </profile>
+    <profile>
+      <id>macosx</id>
+      <activation>
+        <os><name>mac os x</name></os>
+      </activation>
+      <properties>
+        <os.kernel>darwin</os.kernel>
+        <os.name>macosx</os.name>
+        <lib.name>libjniCalc.dylib</lib.name>
+      </properties>
+    </profile>
+    <profile>
+      <id>windows</id>
+      <activation>
+        <os><family>windows</family></os>
+      </activation>
+      <properties>
+        <os.kernel>windows</os.kernel>
+        <os.name>windows</os.name>
+        <lib.name>jniCalc.dll</lib.name>
+      </properties>
+    </profile>
+    <profile>
+      <id>arm</id>
+      <activation>
+        <os><arch>arm</arch></os>
+      </activation>
+      <properties>
+        <os.arch>armhf</os.arch>
+      </properties>
+    </profile>
+    <profile>
+      <id>aarch64</id>
+      <activation>
+        <os><arch>aarch64</arch></os>
+      </activation>
+      <properties>
+        <os.arch>arm64</os.arch>
+      </properties>
+    </profile>
+    <profile>
+      <id>armv8</id>
+      <activation>
+        <os><arch>armv8</arch></os>
+      </activation>
+      <properties>
+        <os.arch>arm64</os.arch>
+      </properties>
+    </profile>
+    <profile>
+      <id>i386</id>
+      <activation>
+        <os><arch>i386</arch></os>
+      </activation>
+      <properties>
+        <os.arch>x86</os.arch>
+      </properties>
+    </profile>
+    <profile>
+      <id>i486</id>
+      <activation>
+        <os><arch>i486</arch></os>
+      </activation>
+      <properties>
+        <os.arch>x86</os.arch>
+      </properties>
+    </profile>
+    <profile>
+      <id>i586</id>
+      <activation>
+        <os><arch>i586</arch></os>
+      </activation>
+      <properties>
+        <os.arch>x86</os.arch>
+      </properties>
+    </profile>
+    <profile>
+      <id>i686</id>
+      <activation>
+        <os><arch>i686</arch></os>
+      </activation>
+      <properties>
+        <os.arch>x86</os.arch>
+      </properties>
+    </profile>
+    <profile>
+      <id>amd64</id>
+      <activation>
+        <os><arch>amd64</arch></os>
+      </activation>
+      <properties>
+        <os.arch>x86_64</os.arch>
+      </properties>
+    </profile>
+    <profile>
+      <id>x86-64</id>
+      <activation>
+        <os><arch>x86-64</arch></os>
+      </activation>
+      <properties>
+        <os.arch>x86_64</os.arch>
       </properties>
     </profile>
   </profiles>
@@ -135,7 +231,7 @@
 Test-Cases: ${classes;NAMED;*Test}
 
 Bundle-NativeCode: \
- org/bytedeco/javacpp/test/osgi/${lib.name};\
+ org/bytedeco/javacpp/test/osgi/${lib.path};\
  osname=${os.name}
  
           ]]></bnd>
