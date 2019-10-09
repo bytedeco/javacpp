@@ -27,6 +27,7 @@
       <properties>
         <os.kernel>linux</os.kernel>
         <os.name>linux</os.name>
+        <os.bundle>linux</os.bundle>
         <lib.name>libjniCalc.so</lib.name>
       </properties>
     </profile>
@@ -38,6 +39,7 @@
       <properties>
         <os.kernel>darwin</os.kernel>
         <os.name>macosx</os.name>
+        <os.bundle>macosx</os.bundle>
         <lib.name>libjniCalc.dylib</lib.name>
       </properties>
     </profile>
@@ -49,6 +51,7 @@
       <properties>
         <os.kernel>windows</os.kernel>
         <os.name>windows</os.name>
+        <os.bundle>win32</os.bundle>
         <lib.name>jniCalc.dll</lib.name>
       </properties>
     </profile>
@@ -232,7 +235,7 @@ Test-Cases: ${classes;NAMED;*Test}
 
 Bundle-NativeCode: \
  org/bytedeco/javacpp/test/osgi/${lib.path};\
- osname=${os.name}
+ osname=${os.bundle}
  
           ]]></bnd>
         </configuration>
