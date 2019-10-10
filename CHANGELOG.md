@@ -1,4 +1,5 @@
 
+ * Add `Parser` support for macro expansion of `__VA_ARGS__`
  * Fix `Builder` not processing all classes when given `.**` as input ([issue bytedeco/javacv#1311](https://github.com/bytedeco/javacv/issues/1311))
  * Introduce reference counting in `Pointer` and retrofit `PointerScope` to use it
  * Fix `Parser` incorrectly inheriting default constructors multiple times with `using`

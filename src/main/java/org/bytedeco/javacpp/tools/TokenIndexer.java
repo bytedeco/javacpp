@@ -167,11 +167,15 @@ class TokenIndexer {
                     }
                     // pick up the parameters and arguments of the macro if it has any
                     String name = array[index].value;
+                    boolean varargs = false;
                     if (token.match('(')) {
                         token = tokenizer.nextToken();
                         while (!token.isEmpty()) {
                             if (token.match(Token.IDENTIFIER)) {
                                 params.add(token.value);
+                            } else if (token.match("...")) {
+                                params.add("__VA_ARGS__");
+                                varargs = true;
                             } else if (token.match(')')) {
                                 token = tokenizer.nextToken();
                                 break;
@@ -190,7 +194,7 @@ class TokenIndexer {
                             name += token2.spacing + token2;
                             if (count2 == 0 && token2.match(')')) {
                                 break;
-                            } else if (count2 == 0 && token2.match(',')) {
+                            } else if (count2 == 0 && token2.match(',') && (!varargs || count + 1 < args.length)) {
                                 count++;
                                 continue;
                             } else if (token2.match('(','[','{')) {
@@ -207,7 +211,9 @@ class TokenIndexer {
                         }
                         // expand the arguments of the macros as well
                         for (int i = 0; i < args.length; i++) {
-                            if (infoMap.containsKey(args[i].get(0).value)) {
+                            if (args[i] == null) {
+                                args[i] = Arrays.asList(); // empty varargs
+                            } else if (infoMap.containsKey(args[i].get(0).value)) {
                                 args[i] = Arrays.asList(expand(args[i].toArray(new Token[args[i].size()]), 0));
                             }
                         }
