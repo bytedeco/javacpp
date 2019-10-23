@@ -3082,7 +3082,7 @@ public class Parser {
         }
         if (!anonymous) {
             if (!fullName.equals(cppName)) {
-                decl.text += "@Name(\"" + cppName + "\") ";
+                decl.text += "@Name(\"" + (context.javaName == null || namespace < 0 ? cppName : cppName.substring(namespace + 2)) + "\") ";
             } else if (context.namespace != null && context.javaName == null) {
                 decl.text += "@Namespace(\"" + context.namespace + "\") ";
             }
