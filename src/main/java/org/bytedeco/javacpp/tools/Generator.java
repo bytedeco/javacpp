@@ -1189,7 +1189,7 @@ public class Generator {
             out.println("        }");
             out.println("        return (typename UNIQUE_PTR_NAMESPACE::remove_const<T>::type*)ptr;");
             out.println("    }");
-            out.println("    operator const U&() const { return uniquePtr; }");
+            out.println("    operator U&() const { return uniquePtr; }");
             out.println("    operator U&&() { return UNIQUE_PTR_NAMESPACE::move(uniquePtr); }");
             out.println("    operator U*() { return &uniquePtr; }");
             out.println("    T* ptr;");
