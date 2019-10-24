@@ -1,4 +1,5 @@
 
+ * Make `Generator` avoid ambiguous conversion errors from `UniquePtrAdapter` to `std::unique_ptr` ([pull #353](https://github.com/bytedeco/javacpp/pull/353))
  * Fix `Parser` using fully qualified names for `@Name` annotations of nested classes ([issue #352](https://github.com/bytedeco/javacpp/issues/352))
  * Add `Parser` support for macro expansion of `__VA_ARGS__`
  * Fix `Builder` not processing all classes when given `.**` as input ([issue bytedeco/javacv#1311](https://github.com/bytedeco/javacv/issues/1311))
