@@ -61,6 +61,9 @@ public class PointerScope implements AutoCloseable {
     /** When not empty, indicates the classes of objects that are allowed to be attached. */
     Class<? extends Pointer>[] forClasses = null;
 
+    /** When set to true, the next call to {@link #close()} does not release but resets this variable. */
+    boolean extend = false;
+
     /** Initializes {@link #forClasses}, and pushes itself on the {@link #scopeStack}. */
     public PointerScope(Class<? extends Pointer>... forClasses) {
         if (logger.isDebugEnabled()) {
@@ -108,15 +111,30 @@ public class PointerScope implements AutoCloseable {
         return this;
     }
 
+    /** Extends the life of this scope past the next call
+     * to {@link #close()} by setting the {@link #extend} flag. */
+    public PointerScope extend() {
+        if (logger.isDebugEnabled()) {
+            logger.debug("Extending " + this);
+        }
+        extend = true;
+        return this;
+    }
+
     /** Pops from {@link #pointerStack} all attached pointers,
-     * calls {@link Pointer#releaseReference()} on them,
-     * and removes itself from {@link #scopeStack}. */
+     * calls {@link Pointer#releaseReference()} on them, unless extended,
+     * in which case it only resets the {@link #extend} flag instead,
+     * and finally removes itself from {@link #scopeStack}. */
     @Override public void close() {
         if (logger.isDebugEnabled()) {
             logger.debug("Closing " + this);
         }
-        while (pointerStack.size() > 0) {
-            pointerStack.pop().releaseReference();
+        if (extend) {
+            extend = false;
+        } else {
+            while (pointerStack.size() > 0) {
+                pointerStack.pop().releaseReference();
+            }
         }
         scopeStack.get().remove(this);
     }

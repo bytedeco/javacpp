@@ -1,4 +1,5 @@
 
+ * Introduce `PointerScope.extend()` to prevent deallocation on the next call to `close()`
  * Make `Generator` avoid ambiguous conversion errors from `UniquePtrAdapter` to `std::unique_ptr` ([pull #353](https://github.com/bytedeco/javacpp/pull/353))
  * Fix `Parser` using fully qualified names for `@Name` annotations of nested classes ([issue #352](https://github.com/bytedeco/javacpp/issues/352))
  * Add `Parser` support for macro expansion of `__VA_ARGS__`

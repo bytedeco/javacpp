@@ -1010,6 +1010,7 @@ public class PointerTest {
         IntPointer intPointer;
         FloatPointer floatPointer;
         try (PointerScope globalScope = new PointerScope()) {
+            PointerScope extendedLocalScope = null;
             try (PointerScope localScope = new PointerScope(IntPointer.class)) {
                 intPointer = new IntPointer(1);
                 floatPointer = new FloatPointer(1);
@@ -1021,7 +1022,10 @@ public class PointerTest {
                 } catch (IllegalArgumentException e) {
                     System.out.println(e);
                 }
+                extendedLocalScope = localScope.extend();
             }
+            assertFalse(intPointer.isNull());
+            extendedLocalScope.close();
             assertTrue(intPointer.isNull());
             assertFalse(floatPointer.isNull());
         }
