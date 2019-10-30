@@ -124,6 +124,7 @@ public class IndexerTest {
             fail("IndexOutOfBoundsException should have been thrown.");
         } catch (IndexOutOfBoundsException e) { }
 
+        byte byteValue = 0x02;
         short shortValue = 0x0203;
         int intValue = 0x02030405;
         long longValue = 0x0203040506070809L;
@@ -134,6 +135,9 @@ public class IndexerTest {
         }
         float floatValue = Float.intBitsToFloat(intValue);
         double doubleValue = Double.longBitsToDouble(longValue);
+        float halfValue = HalfIndexer.toFloat(shortValue);
+        float bfloat16Value = Bfloat16Indexer.toFloat(shortValue);
+        boolean booleanValue = byteValue != 0;
 
         assertEquals(shortValue, arrayIndexer.getShort(1));
         assertEquals(intValue, arrayIndexer.getInt(1));
@@ -141,6 +145,11 @@ public class IndexerTest {
         assertEquals(floatValue, arrayIndexer.getFloat(1), 0.0);
         assertEquals(doubleValue, arrayIndexer.getDouble(1), 0.0);
         assertEquals(shortValue, arrayIndexer.getChar(1));
+        assertEquals(byteValue, arrayIndexer.getUByte(1));
+        assertEquals(shortValue, arrayIndexer.getUShort(1));
+        assertEquals(halfValue, arrayIndexer.getHalf(1), 0.0);
+        assertEquals(bfloat16Value, arrayIndexer.getBfloat16(1), 0.0);
+        assertEquals(booleanValue, arrayIndexer.getBoolean(1));
 
         System.out.println("arrayIndexer" + arrayIndexer);
         System.out.println("directIndexer" + directIndexer);
@@ -157,7 +166,12 @@ public class IndexerTest {
         assertEquals(longValue, directIndexer.getLong(1));
         assertEquals(floatValue, directIndexer.getFloat(1), 0.0);
         assertEquals(doubleValue, directIndexer.getDouble(1), 0.0);
-        assertEquals((char)shortValue, directIndexer.getChar(1));
+        assertEquals(shortValue, directIndexer.getChar(1));
+        assertEquals(byteValue, directIndexer.getUByte(1));
+        assertEquals(shortValue, directIndexer.getUShort(1));
+        assertEquals(halfValue, directIndexer.getHalf(1), 0.0);
+        assertEquals(bfloat16Value, directIndexer.getBfloat16(1), 0.0);
+        assertEquals(booleanValue, directIndexer.getBoolean(1));
 
         System.gc();
 

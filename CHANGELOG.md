@@ -1,4 +1,5 @@
 
+ * Provide `ByteIndexer` with value getters and setters for unsigned `byte` or `short`, `half`, `bfloat16`, and `boolean` types as well
  * Introduce `PointerScope.extend()` to prevent deallocation on the next call to `close()`
  * Make `Generator` avoid ambiguous conversion errors from `UniquePtrAdapter` to `std::unique_ptr` ([pull #353](https://github.com/bytedeco/javacpp/pull/353))
  * Fix `Parser` using fully qualified names for `@Name` annotations of nested classes ([issue #352](https://github.com/bytedeco/javacpp/issues/352))

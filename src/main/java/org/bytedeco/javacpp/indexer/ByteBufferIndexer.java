@@ -168,5 +168,45 @@ public class ByteBufferIndexer extends ByteIndexer {
         return this;
     }
 
+    @Override public int getUByte(long i) {
+        return buffer.get((int)i) & 0xFF;
+    }
+    @Override public ByteIndexer putUByte(long i, int b) {
+        buffer.put((int)i, (byte)b);
+        return this;
+    }
+
+    @Override public int getUShort(long i) {
+        return buffer.getShort((int)i) & 0xFFFF;
+    }
+    @Override public ByteIndexer putUShort(long i, int s) {
+        buffer.putShort((int)i, (short)s);
+        return this;
+    }
+
+    @Override public float getHalf(long i) {
+        return HalfIndexer.toFloat(buffer.getShort((int)i));
+    }
+    @Override public ByteIndexer putHalf(long i, float h) {
+        buffer.putShort((int)i, (short)HalfIndexer.fromFloat(h));
+        return this;
+    }
+
+    @Override public float getBfloat16(long i) {
+        return Bfloat16Indexer.toFloat(buffer.getShort((int)i));
+    }
+    @Override public ByteIndexer putBfloat16(long i, float h) {
+        buffer.putShort((int)i, (short)Bfloat16Indexer.fromFloat(h));
+        return this;
+    }
+
+    @Override public boolean getBoolean(long i) {
+        return buffer.get((int)i) != 0;
+    }
+    @Override public ByteIndexer putBoolean(long i, boolean b) {
+        buffer.put((int)i, b ? (byte)1 : (byte)0);
+        return this;
+    }
+
     @Override public void release() { buffer = null; }
 }

@@ -172,6 +172,31 @@ public abstract class ByteIndexer extends Indexer {
     /** Sets the {@code char} value at {@code array/buffer[i]} */
     public abstract ByteIndexer putChar(long i, char c);
 
+    /** Returns the {@code byte} value at {@code array/buffer[i]}, treated as unsigned */
+    public abstract int getUByte(long i);
+    /** Sets the {@code byte} value at {@code array/buffer[i]}, treated as unsigned */
+    public abstract ByteIndexer putUByte(long i, int b);
+
+    /** Returns the {@code short} value at {@code array/buffer[i]}, treated as unsigned */
+    public abstract int getUShort(long i);
+    /** Sets the {@code short} value at {@code array/buffer[i]}, treated as unsigned */
+    public abstract ByteIndexer putUShort(long i, int s);
+
+    /** Returns the {@code short} value at {@code array/buffer[i]}, treated as half-precision float */
+    public abstract float getHalf(long i);
+    /** Sets the {@code short} value at {@code array/buffer[i]}, treated as half-precision float */
+    public abstract ByteIndexer putHalf(long i, float h);
+
+    /** Returns the {@code short} value at {@code array/buffer[i]}, treated as bfloat16 */
+    public abstract float getBfloat16(long i);
+    /** Sets the {@code short} value at {@code array/buffer[i]}, treated as bfloat16 */
+    public abstract ByteIndexer putBfloat16(long i, float h);
+
+    /** Returns the {@code boolean} value at {@code array/buffer[i]} */
+    public abstract boolean getBoolean(long i);
+    /** Sets the {@code boolean} value at {@code array/buffer[i]} */
+    public abstract ByteIndexer putBoolean(long i, boolean b);
+
     @Override public double getDouble(long... indices) { return get(indices); }
     @Override public ByteIndexer putDouble(long[] indices, double b) { return put(indices, (byte)b); }
 }
