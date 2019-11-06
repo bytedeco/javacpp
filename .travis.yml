@@ -6,4 +6,4 @@ jobs:
   include:
     - os: linux
       arch: arm64
-      script: "mvn install -B -U -s $HOME/settings.xml"
+      script: "sudo apt install -y maven; mvn install -B -U -s $HOME/settings.xml"
