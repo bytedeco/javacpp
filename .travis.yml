@@ -4,7 +4,6 @@ language: java
 
 jobs:
   include:
-     - os: linux
+    - os: linux
       arch: arm64
-      script:
-          - "mvn install -B -U -s $HOME/settings.xml"
+      script: "mvn install -B -U -s $HOME/settings.xml"
