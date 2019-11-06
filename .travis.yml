@@ -10,6 +10,5 @@ addons:
 jobs:
   include:
     - os: linux
-      jdk: "openjdk11"
       arch: arm64
       script: "mvn install -B -U -s $HOME/settings.xml"
