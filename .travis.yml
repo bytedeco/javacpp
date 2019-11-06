@@ -1,9 +1,15 @@
 dist: xenial
-sudo: false
+sudo: required
 language: java
+install: true
+addons:
+    apt:
+      packages: maven
+
 
 jobs:
   include:
     - os: linux
+      jdk: "openjdk11"
       arch: arm64
-      script: "sudo apt install -y maven; mvn install -B -U -s $HOME/settings.xml"
+      script: "mvn install -B -U -s $HOME/settings.xml"
