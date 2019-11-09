@@ -1,17 +1,14 @@
 dist: xenial
-sudo: true
-cache:
-  directories:
-    - $HOME/.m2
 
 jobs:
   include:
      - os: linux
+       addons:
+         apt:
+          packages: maven
        arch: arm64
        language: java
        script: 
-          - "sudo apt install -y maven"
-          - "sudo apt install -y openjdk-8-jdk-headless"
           - "mvn install -B -U"
      - os: windows
        language: bash
