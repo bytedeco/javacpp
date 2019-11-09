@@ -11,4 +11,4 @@ jobs:
   include:
     - os: linux
       arch: arm64
-      script: "sudo apt install -y openjdk-8-jdk-headless; mvn install -B -U -s $HOME/settings.xml"
+      script: "sudo apt install -y openjdk-8-jdk-headless; mvn install -B -U"
