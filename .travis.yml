@@ -5,7 +5,7 @@ jobs:
      - os: linux
        addons:
          apt:
-          packages: maven, openjdk8
+          packages: maven openjdk-8-jdk-headless
        arch: arm64
        language: java
        script: 
