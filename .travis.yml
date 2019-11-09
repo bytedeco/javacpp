@@ -9,9 +9,9 @@ jobs:
      - os: linux
        arch: arm64
        language: java
-       script: "sudo apt install -y openjdk-8-jdk-headless; mvn install -B -U"
+       script: "sudo apt install -y openjdk-8-jdk-headless maven; mvn install -B -U"
      - os: windows
-       jdk: openjdk8
+       language: bash
        script: "choco install maven; choco install openjdk11"
      - os: linux
        arch: amd64
