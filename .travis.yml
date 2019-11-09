@@ -1,5 +1,5 @@
 dist: xenial
-sudo: false
+sudo: true
 cache:
   directories:
     - $HOME/.m2
@@ -12,7 +12,7 @@ jobs:
        script: "sudo apt install -y openjdk-8-jdk-headless maven; mvn install -B -U"
      - os: windows
        language: bash
-       script: "choco install maven; choco install openjdk11"
+       script: "choco install maven; choco install openjdk11; mvn install -B -U"
      - os: linux
        arch: amd64
        jdk: openjdk8
