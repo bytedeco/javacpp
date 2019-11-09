@@ -1,14 +1,20 @@
 dist: xenial
-sudo: required
+sudo: false
 language: java
-install: true
-addons:
-    apt:
-      packages: maven
-
+cache:
+  directories:
+    - $HOME/.m2
 
 jobs:
   include:
-    - os: linux
+     -os: linux
       arch: arm64
-      script: "sudo apt install -y openjdk-8-jdk-headless; mvn install -B -U"
+      jdk: openjdk8
+      script: "mvn install -B -U"
+     -os: linux
+      arch: amd64
+      jdk: openjdk8
+      script:
+          - "echo '<settings><servers><server><id>sonatype-nexus-snapshots</id><username>${env.CI_DEPLOY_USERNAME}</username><password>${env.CI_DEPLOY_PASSWORD}</password></server></servers></settings>' > $HOME/settings.xml"
+          - "[[ $TRAVIS_PULL_REQUEST == 'false' ]] && export MAVEN_PHASE=deploy || export MAVEN_PHASE=install"
+          - "mvn $MAVEN_PHASE -B -U -s $HOME/settings.xml"
