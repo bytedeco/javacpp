@@ -12,7 +12,7 @@ jobs:
           - "mvn install -B -U"
      - os: windows
        language: bash
-       script: "choco install maven; choco install openjdk11; bash; mvn install -B -U"
+       script: "choco install maven; choco install openjdk11; export PATH=C:\ProgramData\chocolatey\lib\maven; export JAVA_HOME=C:\Program Files\OpenJDK\openjdk-11.0.5_10\bin; export; mvn install -B -U"
      - os: linux
        arch: amd64
        jdk: openjdk8
