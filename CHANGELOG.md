@@ -1,6 +1,4 @@
 
- * Fix Android build properties for NDK r20b ([pull #357](https://github.com/bytedeco/javacpp/pull/357))
-
 ### November 5, 2019 version 1.5.2
  * Provide `ByteIndexer` with value getters and setters for unsigned `byte` or `short`, `half`, `bfloat16`, and `boolean` types as well
  * Introduce `PointerScope.extend()` to prevent deallocation on the next call to `close()`
