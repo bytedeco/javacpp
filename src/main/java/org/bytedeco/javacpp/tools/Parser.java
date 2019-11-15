@@ -2950,9 +2950,11 @@ public class Parser {
         String casts = "";
         if (baseClasses.size() > 0) {
             for (Type t : baseClasses) {
-                casts += "    public " + t.javaName + " as" + t.javaName + "() { return as" + t.javaName + "(this); }\n"
-                        + "    @Namespace public static native @Name(\"static_cast<" + t.cppName + "*>\") "
-                        + t.javaName + " as" + t.javaName + "(" + type.javaName + " pointer);\n";
+                if (!t.javaName.equals("Pointer")) {
+                    casts += "    public " + t.javaName + " as" + t.javaName + "() { return as" + t.javaName + "(this); }\n"
+                            + "    @Namespace public static native @Name(\"static_cast<" + t.cppName + "*>\") "
+                            + t.javaName + " as" + t.javaName + "(" + type.javaName + " pointer);\n";
+                }
             }
         }
         decl.signature = type.javaName;
