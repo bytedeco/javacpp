@@ -595,6 +595,17 @@ public class Builder {
                                   libraryPrefix + outputName + librarySuffix};
         File[] outputFiles = null;
 
+        if (outputName.equals("jnijavacpp")) {
+            // generate a single file if the user only wants "jnijavacpp"
+            sourceFilenames = new String[] {sourcePrefixes[0] + outputName + sourceSuffix};
+            headerFilenames = new String[] {header ? sourcePrefixes[0] + outputName +  ".h" : null};
+            loadSuffixes = new String[] {null};
+            baseLoadSuffixes = new String[] {null};
+            classPaths = new String[] {null};
+            classesArray = new Class[][] {null};
+            libraryNames  = new String[] {libraryPrefix + outputName + librarySuffix};
+        }
+
         boolean generated = true;
         for (int i = 0; i < sourceFilenames.length; i++) {
             if (i == 0 && !first) {
@@ -1010,12 +1021,18 @@ public class Builder {
             return null;
         }
 
-        if (classScanner.getClasses().isEmpty()) {
+        List<File> outputFiles = new ArrayList<File>();
+        List<String> allNames = new ArrayList<String>();
+        if (outputName != null && outputName.equals("jnijavacpp")) {
+            // the user only wants the "jnijavacpp" library
+            File[] files = generateAndCompile(null, outputName, true, true);
+            if (files != null && files.length > 0) {
+                outputFiles.addAll(Arrays.asList(files));
+            }
+        } else if (classScanner.getClasses().isEmpty()) {
             return null;
         }
 
-        List<File> outputFiles = new ArrayList<File>();
-        List<String> allNames = new ArrayList<String>();
         Map<String, LinkedHashSet<Class>> executableMap = new HashMap<String, LinkedHashSet<Class>>();
         Map<String, LinkedHashSet<Class>> libraryMap = new HashMap<String, LinkedHashSet<Class>>();
         for (Class c : classScanner.getClasses()) {

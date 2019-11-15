@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Samuel Audet
+ * Copyright (C) 2019 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -22,20 +22,11 @@
 
 package org.bytedeco.javacpp.tools;
 
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugins.annotations.LifecyclePhase;
-import org.apache.maven.plugins.annotations.Mojo;
-
 /**
- * A {@link BuildMojo} that always forces {@link BuildMojo#generate} to false,
- * with the goal of parsing header files instead.
+ * An interface used by {@link ClassScanner} to determine which classes to load.
  *
  * @author Samuel Audet
  */
-@Mojo(name = "parse", defaultPhase = LifecyclePhase.GENERATE_SOURCES, threadSafe = true)
-public class ParseMojo extends BuildMojo {
-    @Override public void execute() throws MojoExecutionException {
-        generate = false;
-        super.execute();
-    }
+public interface ClassFilter {
+    boolean keep(String filename, byte[] data);
 }

@@ -80,6 +80,12 @@ public class Loader {
     private static final String PLATFORM;
     /** Default platform properties loaded and returned by {@link #loadProperties()}. */
     private static Properties platformProperties = null;
+    /** The stack of classes currently being loaded to support more than one class loader. */
+    private static final ThreadLocal<Deque<Class<?>>> classStack = new ThreadLocal<Deque<Class<?>>>() {
+        @Override protected Deque<Class<?>> initialValue() {
+            return new ArrayDeque<Class<?>>();
+        }
+    };
 
     static {
         String jvmName = System.getProperty("java.vm.name", "").toLowerCase();
@@ -206,18 +212,18 @@ public class Loader {
         return p;
     }
 
-    /** Returns {@code checkVersion(groupId, artifactId, "-", true)}. */
+    /** Returns {@code checkVersion(groupId, artifactId, "-", true, getCallerClass(2))}. */
     public static boolean checkVersion(String groupId, String artifactId) {
-        return checkVersion(groupId, artifactId, "-", true);
+        return checkVersion(groupId, artifactId, "-", true, getCallerClass(2));
     }
 
-    /** Returns {@code getVersion(groupId, artifactId).split(separator)[n].equals(getVersion().split(separator)[0])}
+    /** Returns {@code getVersion(groupId, artifactId, cls).split(separator)[n].equals(getVersion().split(separator)[0])}
      *  where {@code n = versions.length - (versions[versions.length - 1].equals("SNAPSHOT") ? 2 : 1)} or false on error.
      *  Also calls {@link Logger#warn(String)} on error when {@code logWarnings && isLoadLibraries()}. */
-    public static boolean checkVersion(String groupId, String artifactId, String separator, boolean logWarnings) {
+    public static boolean checkVersion(String groupId, String artifactId, String separator, boolean logWarnings, Class cls) {
         try {
             String javacppVersion = getVersion();
-            String version = getVersion(groupId, artifactId);
+            String version = getVersion(groupId, artifactId, cls);
             if (version == null && logWarnings && isLoadLibraries()) {
                 logger.warn("Version of " + groupId + ":" + artifactId + " could not be found.");
                 return false;
@@ -243,11 +249,16 @@ public class Loader {
         return getVersion("org.bytedeco", "javacpp");
     }
 
-    /** Returns version property from {@code getResource("META-INF/maven/" + groupId + "/" + artifactId + "/pom.properties")}. */
+    /** Returns {@code getVersion(groupId, artifactId, getCallerClass(2))}. */
     public static String getVersion(String groupId, String artifactId) throws IOException {
+        return getVersion(groupId, artifactId, getCallerClass(2));
+    }
+
+    /** Returns version property from {@code cls.getResource("META-INF/maven/" + groupId + "/" + artifactId + "/pom.properties")}. */
+    public static String getVersion(String groupId, String artifactId, Class cls) throws IOException {
         Properties p = new Properties();
         // Need to call getClassLoader() for non-encapsulated resources under JPMS
-        InputStream is = Loader.class.getClassLoader().getResourceAsStream("META-INF/maven/" + groupId + "/" + artifactId + "/pom.properties");
+        InputStream is = cls.getClassLoader().getResourceAsStream("META-INF/maven/" + groupId + "/" + artifactId + "/pom.properties");
         if (is == null) {
             return null;
         }
@@ -1037,6 +1048,53 @@ public class Loader {
         return false;
     }
 
+    /** Returns {@code load(classes, true)}. **/
+    public static String[] load(Class... classes) {
+        return load(classes, true);
+    }
+    /**
+     * Calls {@link #load(Class)} on all top-level enclosing classes found in the array.
+     *
+     * @param classes to try to load
+     * @param logMessages on load or fail silently
+     * @return filenames from each successful call to {@link #load(Class)} or null otherwise
+     */
+    public static String[] load(Class[] classes, boolean logMessages) {
+        String[] filenames = new String[classes.length];
+        Properties properties = Loader.loadProperties();
+        ClassProperties libProperties = null;
+        for (int i = 0; i < classes.length; i++) {
+            Class c = classes[i];
+
+            // only load top-level enclosing classes that can load something by themselves
+            if (getEnclosingClass(c) != c) {
+                continue;
+            }
+            libProperties = loadProperties(c, properties, false);
+            if (!libProperties.isLoaded()) {
+                continue;
+            }
+            libProperties = loadProperties(c, properties, true);
+            if (!libProperties.isLoaded()) {
+                if (logMessages) {
+                    logger.warn("Could not load platform properties for " + c);
+                }
+                continue;
+            }
+            try {
+                if (logMessages) {
+                    logger.info("Loading " + c);
+                }
+                filenames[i] = load(c);
+            } catch (UnsatisfiedLinkError | NoClassDefFoundError e) {
+                if (logMessages) {
+                    logger.warn("Could not load " + c + ": " + e);
+                }
+            }
+        }
+        return filenames;
+    }
+
     /** Returns {@code load(getCallerClass(2), loadProperties(), Loader.pathsFirst)}. */
     public static String load() {
         return load(getCallerClass(2), loadProperties(), Loader.pathsFirst);
@@ -1396,6 +1454,7 @@ public class Loader {
         // If we do not already have the native library file ...
         String filename = loadedLibraries.get(libnameversion2);
         UnsatisfiedLinkError loadError = null;
+        classStack.get().push(cls);
         try {
             for (URL url : urls) {
                 URI uri = url.toURI();
@@ -1567,6 +1626,8 @@ public class Loader {
                 logger.debug("Failed to extract for " + libnameversion + ": " + e);
             }
             throw e;
+        } finally {
+            classStack.get().pop();
         }
     }
 
@@ -1688,7 +1749,9 @@ public class Loader {
      */
     static Class putMemberOffset(String typeName, String member, int offset) throws ClassNotFoundException {
         try {
-            Class<?> c = Class.forName(typeName.replace('/', '.'), false, Loader.class.getClassLoader());
+            Class<?> context = classStack.get().peek();
+            Class<?> c = Class.forName(typeName.replace('/', '.'), false,
+                    context != null ? context.getClassLoader() : Loader.class.getClassLoader());
             if (member != null) {
                 putMemberOffset(c.asSubclass(Pointer.class), member, offset);
             }

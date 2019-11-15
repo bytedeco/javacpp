@@ -1,4 +1,5 @@
 
+ * Add `CacheMojo` to help extract binaries and resources used by command line tools outside of the JVM
  * Fix Android build properties for NDK r20b ([pull #357](https://github.com/bytedeco/javacpp/pull/357))
 
 ### November 5, 2019 version 1.5.2

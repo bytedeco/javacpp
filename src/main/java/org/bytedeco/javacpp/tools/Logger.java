@@ -54,10 +54,10 @@ public class Logger {
     /** Returns true. */
     public boolean isErrorEnabled() { return true; }
 
-    /** Calls {@code System.out.println(s)}. */
-    public void debug(String s) { System.out.println(s); }
-    /** Calls {@code System.out.println(s)}. */
-    public void info(String s)  { System.out.println(s); }
+    /** Calls {@code System.err.println("Debug: " + s)}. */
+    public void debug(String s) { System.err.println("Debug: " + s); }
+    /** Calls {@code System.err.println("Info: " + s)}. */
+    public void info(String s)  { System.err.println("Info: " + s); }
     /** Calls {@code System.err.println("Warning: " + s)}. */
     public void warn(String s)  { System.err.println("Warning: " + s); }
     /** Calls {@code System.err.println("Error: " + s)}. */

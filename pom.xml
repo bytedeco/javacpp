@@ -328,6 +328,10 @@ Import-Package: \
         <groupId>biz.aQute.bnd</groupId>
         <artifactId>bnd-baseline-maven-plugin</artifactId>
         <version>${bnd.version}</version>
+        <configuration>
+          <!-- Skip by default until support for the exclude attribute of org.osgi.annotation.bundle.Export gets added -->
+          <skip>true</skip>
+        </configuration>
         <executions>
           <execution>
             <goals>

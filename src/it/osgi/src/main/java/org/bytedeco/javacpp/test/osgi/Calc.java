@@ -1,6 +1,7 @@
 package org.bytedeco.javacpp.test.osgi;
 
 import org.bytedeco.javacpp.Loader;
+import org.bytedeco.javacpp.Pointer;
 import org.bytedeco.javacpp.annotation.Platform;
 
 @Platform(include = "calc.h")
@@ -25,6 +26,14 @@ public class Calc {
     }
 
     private Calc() {}
+
+    static class IntValue extends Pointer {
+        IntValue(Pointer p) { super(p); }
+        IntValue() { allocate(); }
+        native void allocate();
+
+        native int value(); native IntValue value(int setter);
+    }
 
     public static native int add(int a, int b);
 }
