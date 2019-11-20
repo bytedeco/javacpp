@@ -147,6 +147,7 @@ public class ClassProperties extends HashMap<String,List<String>> {
                 c.getAnnotation(org.bytedeco.javacpp.annotation.Properties.class);
         Platform classPlatform = c.getAnnotation(Platform.class);
         Platform[] platforms = null;
+        String ourTarget = null;
         if (classProperties != null) {
             Class[] classes = classProperties.inherit();
             if (inherit && classes != null) {
@@ -169,6 +170,7 @@ public class ClassProperties extends HashMap<String,List<String>> {
             } else if (target.length() > 0 && !global.contains(".")) {
                 global = target + "." + global;
             }
+            ourTarget = global;
             if (target.length() > 0) {
                 addAll("target", target);
             }
@@ -196,16 +198,23 @@ public class ClassProperties extends HashMap<String,List<String>> {
                 platforms[platforms.length - 1] = classPlatform;
             }
         }
+        boolean hasPlatformProperties = platforms != null && platforms.length > (classProperties != null && classPlatform != null ? 1 : 0);
 
         String[] pragma = {}, define = {}, exclude = {}, include = {}, cinclude = {}, includepath = {}, includeresource = {}, compiler = {},
                  linkpath = {}, linkresource = {}, link = {}, frameworkpath = {}, framework = {}, preloadpath = {}, preloadresource = {}, preload = {},
                  resourcepath = {}, resource = {}, extension = {}, executablepath = {};
         String executable = "";
         String library = "jni" + c.getSimpleName();
-        List<String> targets = get("global");
-        if (targets != null && targets.size() > 0) {
-            String target = targets.get(targets.size() - 1);
-            library = "jni" + target.substring(target.lastIndexOf('.') + 1);
+        if (hasPlatformProperties) {
+            if (ourTarget != null && ourTarget.length() > 0) {
+                library = "jni" + ourTarget.substring(ourTarget.lastIndexOf('.') + 1);
+            }
+        } else {
+            List<String> targets = get("global");
+            if (targets != null && targets.size() > 0) {
+                String target = targets.get(targets.size() - 1);
+                library = "jni" + target.substring(target.lastIndexOf('.') + 1);
+            }
         }
         for (Platform p : platforms != null ? platforms : new Platform[0]) {
             String[][] names = { p.value().length > 0 ? p.value() : defaultNames, p.not() };
@@ -313,9 +322,7 @@ public class ClassProperties extends HashMap<String,List<String>> {
         }
 
         // need platform information from both classProperties and classPlatform to be considered "loaded"
-        if (platforms != null && platforms.length > (classProperties != null && classPlatform != null ? 1 : 0)) {
-            loaded = true;
-        }
+        loaded |= hasPlatformProperties;
     }
 
     public List<Class> getInheritedClasses() {
