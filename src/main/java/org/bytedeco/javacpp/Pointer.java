@@ -421,7 +421,7 @@ public class Pointer implements AutoCloseable {
         }
     }
 
-    public static long parseBytes(String string) throws NumberFormatException {
+    public static long parseBytes(String string, long relativeMultiple) throws NumberFormatException {
         int i = 0;
         while (i < string.length()) {
             if (!Character.isDigit(string.charAt(i))) {
@@ -431,6 +431,7 @@ public class Pointer implements AutoCloseable {
         }
         long size = Long.parseLong(string.substring(0, i));
         switch (string.substring(i).trim().toLowerCase()) {
+            case "%": size = size * relativeMultiple / 100; break;
             case "t": case "tb": size *= 1024L; /* no break */
             case "g": case "gb": size *= 1024L; /* no break */
             case "m": case "mb": size *= 1024L; /* no break */
@@ -457,7 +458,7 @@ public class Pointer implements AutoCloseable {
         s = System.getProperty("org.bytedeco.javacpp.maxBytes", s);
         if (s != null && s.length() > 0) {
             try {
-                m = parseBytes(s);
+                m = parseBytes(s, m);
             } catch (NumberFormatException e) {
                 throw new RuntimeException(e);
             }
@@ -469,7 +470,7 @@ public class Pointer implements AutoCloseable {
         s = System.getProperty("org.bytedeco.javacpp.maxPhysicalBytes", s);
         if (s != null && s.length() > 0) {
             try {
-                m = parseBytes(s);
+                m = parseBytes(s, m);
             } catch (NumberFormatException e) {
                 throw new RuntimeException(e);
             }
