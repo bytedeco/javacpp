@@ -831,7 +831,7 @@ public class Parser {
         }
 
         if (type.operator) {
-            if (type.constValue) {
+            if (type.constValue && !type.constExpr) {
                 type.annotations += "@Const ";
             }
             if (type.indirections == 0 && !type.reference && !type.value) {
@@ -842,7 +842,7 @@ public class Parser {
             if (info != null && info.cast) {
                 type.annotations += "@Cast(\"" + type.cppName + (type.indirections == 0 && !type.value ? "*" : "") + "\") ";
             }
-            type.annotations += "@Name(\"operator " + (type.constValue ? "const " : "")
+            type.annotations += "@Name(\"operator " + (type.constValue && !type.constExpr ? "const " : "")
                     + type.cppName + (type.indirections > 0 ? "*" : type.reference ? "&" : "") + "\") ";
         }
         if (info != null && info.annotations != null) {

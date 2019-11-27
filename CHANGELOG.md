@@ -1,4 +1,5 @@
 
+ * Prevent `Parser` from considering `constexpr operator` declarations as `const` types
  * Fix on `Loader.load()` the default library name of classes without `@Properties(target=..., global=...)`
  * Prevent `Parser` from outputting `asPointer()` cast methods with multiple inheritance ([issue #360](https://github.com/bytedeco/javacpp/issues/360))
  * Add `CacheMojo` to help extract binaries and resources used by command line tools outside of the JVM
