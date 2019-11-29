@@ -1,4 +1,7 @@
 dist: xenial
+cache:
+  directories:
+    - $HOME/.m2
 
 jobs:
   include:
