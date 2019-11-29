@@ -1031,4 +1031,19 @@ public class PointerTest {
         }
         assertTrue(floatPointer.isNull());
     }
+
+    @Test public void testParseBytesWithRelativeUnits() {
+        System.out.println("ParseBytesWithRelativeUnits");
+        long arbitraryAmountOfMemory = 300000;
+
+        assertEquals(0, Pointer.parseBytes("0%", arbitraryAmountOfMemory));
+        assertEquals(arbitraryAmountOfMemory * 10 / 100, Pointer.parseBytes("10%", arbitraryAmountOfMemory));
+        try {
+            System.out.println("Note: NumberFormatException should get thrown here and printed below.");
+            Pointer.parseBytes("%", arbitraryAmountOfMemory);
+            fail("NumberFormatException should have been thrown.");
+        } catch (NumberFormatException e) {
+            System.out.println(e);
+        }
+    }
 }
