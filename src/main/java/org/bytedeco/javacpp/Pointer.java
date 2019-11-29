@@ -393,12 +393,14 @@ public class Pointer implements AutoCloseable {
 
     /** Maximum amount of memory registered with live deallocators before forcing call to {@link System#gc()}.
      * Set via "org.bytedeco.javacpp.maxBytes" system property, defaults to {@link Runtime#maxMemory()}.
+     * The value is parsed with {@link #parseBytes(String, long)} where {@code relativeMultiple = Runtime.maxMemory()}.
      * We can use a value of 0 or less to prevent any explicit call to the garbage collector. */
     static final long maxBytes;
 
     /** Maximum amount of memory reported by {@link #physicalBytes()} before forcing call to {@link System#gc()}.
      * Set via "org.bytedeco.javacpp.maxPhysicalBytes" system property, defaults to {@code maxBytes > 0 ? maxBytes + Runtime.maxMemory() : 0}.
      * If {@link #maxBytes} is also not set, this is equivalent to a default of {@code 2 * Runtime.maxMemory()}.
+     * The value is parsed with {@link #parseBytes(String, long)} where {@code relativeMultiple = Runtime.maxMemory()}.
      * We can use a value of 0 or less to prevent any explicit call to the garbage collector. */
     static final long maxPhysicalBytes;
 
@@ -407,6 +409,7 @@ public class Pointer implements AutoCloseable {
      * by a call to {@code Thread.sleep(100)} and {@code Pointer.trimMemory()}. */
     static final int maxRetries;
 
+    /** Truncates and formats the number of bytes to a human readable string ending with "T", "G", "M", or "K" (as multiples of 1024). */
     public static String formatBytes(long bytes) {
         if (bytes < 1024L * 100) {
             return bytes + "";
@@ -421,6 +424,14 @@ public class Pointer implements AutoCloseable {
         }
     }
 
+    /**
+     * Returns the amount of bytes for a number possibly ending with "%", "t", "g", m", or "k" (as multiples of 1024).
+     * May also be suffixed with an optional "b", where all letters are case-insensitive.
+     *
+     * @param string to parse
+     * @param relativeMultiple to use in the case of "%", which is divided by 100
+     * @return the amount of bytes
+     */
     public static long parseBytes(String string, long relativeMultiple) throws NumberFormatException {
         int i = 0;
         while (i < string.length()) {
