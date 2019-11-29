@@ -464,24 +464,25 @@ public class Pointer implements AutoCloseable {
             deallocatorThread = new DeallocatorThread();
         }
 
-        long m = Runtime.getRuntime().maxMemory();
+        long maxMemory = Runtime.getRuntime().maxMemory();
+        long m = maxMemory;
         s = System.getProperty("org.bytedeco.javacpp.maxbytes");
         s = System.getProperty("org.bytedeco.javacpp.maxBytes", s);
         if (s != null && s.length() > 0) {
             try {
-                m = parseBytes(s, m);
+                m = parseBytes(s, maxMemory);
             } catch (NumberFormatException e) {
                 throw new RuntimeException(e);
             }
         }
         maxBytes = m;
 
-        m = maxBytes > 0 ? maxBytes + Runtime.getRuntime().maxMemory() : 0;
+        m = maxBytes > 0 ? maxBytes + maxMemory : 0;
         s = System.getProperty("org.bytedeco.javacpp.maxphysicalbytes");
         s = System.getProperty("org.bytedeco.javacpp.maxPhysicalBytes", s);
         if (s != null && s.length() > 0) {
             try {
-                m = parseBytes(s, m);
+                m = parseBytes(s, maxMemory);
             } catch (NumberFormatException e) {
                 throw new RuntimeException(e);
             }
