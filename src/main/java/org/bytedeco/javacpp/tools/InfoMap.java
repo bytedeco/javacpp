@@ -41,7 +41,7 @@ public class InfoMap extends HashMap<String,List<Info>> {
 
     InfoMap parent = null;
     static final InfoMap defaults = new InfoMap(null)
-        .put(new Info("basic/containers").cppTypes("std::bitset", "std::deque", "std::list", "std::map", "std::queue", "std::set",
+        .put(new Info("basic/containers").cppTypes("std::array", "std::bitset", "std::deque", "std::list", "std::map", "std::queue", "std::set",
                                                    "std::stack", "std::vector", "std::valarray", "std::pair", "std::forward_list",
                                                    "std::priority_queue", "std::unordered_map", "std::unordered_set"))
         .put(new Info("basic/types").cppTypes("signed", "unsigned", "char", "short", "int", "long", "bool", "float", "double",
@@ -88,7 +88,9 @@ public class InfoMap extends HashMap<String,List<Info>> {
             .pointerTypes("FloatPointer", "FloatBuffer", "float[]"))
         .put(new Info("std::complex<double>", "double _Complex", "double _Imaginary", "double complex", "double imaginary").cast()
             .pointerTypes("DoublePointer", "DoubleBuffer", "double[]"))
-        .put(new Info("_Bool", "bool", "jboolean").cast().valueTypes("boolean").pointerTypes("BoolPointer", "boolean[]"))
+        .put(new Info("jboolean").valueTypes("boolean").pointerTypes("BoolPointer", "boolean[]"))
+        .put(new Info("_Bool", "bool").cast().valueTypes("boolean").pointerTypes("BoolPointer", "boolean[]"))
+        .put(new Info("jchar").valueTypes("char").pointerTypes("CharPointer", "char[]"))
         .put(new Info("char16_t").cast().valueTypes("char").pointerTypes("CharPointer", "char[]"))
         .put(new Info("char32_t").cast().valueTypes("int").pointerTypes("IntPointer", "int[]"))
         .put(new Info("wchar_t", "WCHAR").cast().valueTypes("char", "int").pointerTypes("CharPointer", "IntPointer"))
@@ -110,6 +112,7 @@ public class InfoMap extends HashMap<String,List<Info>> {
         .put(new Info("import").javaNames("_import"))
         .put(new Info("instanceof").javaNames("_instanceof"))
         .put(new Info("native").javaNames("_native"))
+        .put(new Info("null").javaNames("_null"))
         .put(new Info("package").javaNames("_package"))
         .put(new Info("super").javaNames("_super"))
         .put(new Info("synchronized").javaNames("_synchronized"))

@@ -552,9 +552,17 @@ public class Parser {
                 type.cppName += token;
             } else if (token.match(Token.DECLTYPE)) {
                 type.cppName += token.toString() + tokens.next().expect('(');
-                int count = 0;
-                for (token = tokens.next(); !token.match(')', Token.EOF); token = tokens.next()) {
+                int count = 1;
+                for (token = tokens.next(); !token.match(Token.EOF); token = tokens.next()) {
+                    if (token.match('(')) {
+                        count++;
+                    } else if (token.match(')')) {
+                        count--;
+                    }
                     type.cppName += token;
+                    if (count == 0) {
+                        break;
+                    }
                 }
                 type.cppName += token;
                 tokens.next();
@@ -866,7 +874,7 @@ public class Parser {
             } else if (namespace >= 0 && namespace2 < 0) {
                 cppName = cppName.substring(namespace + 2);
             }
-            if (cppName.equals(groupName)) {
+            if (cppName.equals(groupName) || groupName.startsWith(cppName + "<")) {
                 type.constructor = !type.destructor && !type.operator
                         && type.indirections == 0 && !type.reference && tokens.get().match('(', ':');
             }
@@ -1673,8 +1681,12 @@ public class Parser {
         return attribute(false);
     }
     Attribute attribute(boolean explicit) throws ParserException {
-        // attributes might have arguments that start with '(', but not '<'
-        if (!tokens.get().match(Token.IDENTIFIER) || tokens.get(1).match('<')) {
+        boolean brackets = false;
+        if (tokens.get().match("[[")) {
+            brackets = true;
+            tokens.next();
+        } else if (!tokens.get().match(Token.IDENTIFIER) || tokens.get(1).match('<')) {
+            // attributes might have arguments that start with '(', but not '<'
             return null;
         }
         Attribute attr = new Attribute();
@@ -1685,20 +1697,22 @@ public class Parser {
                 attr.javaName += s + " ";
             }
         }
-        if (explicit && !attr.annotation) {
+        if (!brackets && explicit && !attr.annotation) {
             return null;
         }
-        if (!tokens.next().match('(')) {
+        int count = tokens.next().match('(') ? 1 : 0;
+        if (!brackets && count <= 0) {
             return attr;
         }
 
-        int count = 1;
         tokens.raw = true;
-        for (Token token = tokens.next(); !token.match(Token.EOF) && count > 0; token = tokens.next()) {
+        for (Token token = tokens.next(); !token.match(Token.EOF) && (brackets || count > 0); token = tokens.next()) {
             if (token.match('(')) {
                 count++;
             } else if (token.match(')')) {
                 count--;
+            } else if (token.match("]]")) {
+                brackets = false;
             } else if (info == null || !info.skip) {
                 attr.arguments += token.value;
             }
@@ -1834,8 +1848,11 @@ public class Parser {
                     params.list = params.list.substring(0, lastVarargs) + "[]" + params.list.substring(lastVarargs + 3);
                 }
                 int n = params.list.length();
+                Info info = infoMap.getFirst(dcl.javaName);
+                String paramName = info != null && info.javaNames != null && info.javaNames.length > 0 ? info.javaNames[0] : dcl.javaName;
+
                 params.infoNumber = Math.max(params.infoNumber, dcl.infoNumber);
-                params.list += (count > 1 ? "," : "") + spacing + dcl.type.annotations + dcl.type.javaName + " " + dcl.javaName;
+                params.list += (count > 1 ? "," : "") + spacing + dcl.type.annotations + dcl.type.javaName + " " + paramName;
                 lastVarargs = params.list.indexOf("...", n);
                 if (hasDefault && !dcl.type.annotations.contains("(nullValue = ")) {
                     // output default argument as a comment
@@ -1845,7 +1862,7 @@ public class Parser {
                 for (char c : dcl.type.javaName.substring(dcl.type.javaName.lastIndexOf(' ') + 1).toCharArray()) {
                     params.signature += Character.isJavaIdentifierPart(c) ? c : '_';
                 }
-                params.names += (count > 1 ? ", " : "") + dcl.javaName;
+                params.names += (count > 1 ? ", " : "") + paramName;
                 if (dcl.javaName.startsWith("arg")) {
                     try {
                         count = Integer.parseInt(dcl.javaName.substring(3)) + 1;
@@ -1913,6 +1930,11 @@ public class Parser {
             // this is a constructor/destructor definition or specialization, skip over
             while (!tokens.get().match(':', '{', ';', Token.EOF)) {
                 tokens.next();
+            }
+            for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.get()) {
+                if (attribute() == null) {
+                    break;
+                }
             }
             if (tokens.get().match(':')) {
                 int count = 0;
@@ -2111,6 +2133,14 @@ public class Parser {
                     dcl.javaName = "as" + Character.toUpperCase(dcl.javaName.charAt(0)) + dcl.javaName.substring(1);
                 }
                 dcl.signature = dcl.javaName + params.signature;
+                for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.get()) {
+                    Attribute attr = attribute();
+                    if (attr != null && attr.annotation) {
+                        dcl.type.annotations += attr.javaName;
+                    } else if (attr == null) {
+                        break;
+                    }
+                }
                 if (tokens.get().match(':')) {
                     int count = 0;
                     for (Token token = tokens.next(); !token.match(Token.EOF); token = tokens.next()) {
@@ -2141,7 +2171,14 @@ public class Parser {
 
             // check for const, other attributes, and pure virtual functions, ignoring the body if present
             for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.get()) {
-                decl.constMember |= token.match(Token.CONST, Token.__CONST, Token.CONSTEXPR);
+                if (token.match(Token.CONST, Token.__CONST, Token.CONSTEXPR)) {
+                    decl.constMember = true;
+                    token = tokens.next();
+                }
+                if (token.match('&', "&&")) {
+                    // ignore?
+                    token = tokens.next();
+                }
                 Attribute attr = attribute();
                 if (attr != null && attr.annotation) {
                     dcl.type.annotations += attr.javaName;
@@ -2195,7 +2232,7 @@ public class Parser {
             }
             if (type.constructor && params != null) {
                 decl.text += "public " + context.shorten(context.javaName) + dcl.parameters.list + " { super((Pointer)null); allocate" + params.names + "; }\n" +
-                             "private native " + type.annotations + "void allocate" + dcl.parameters.list + ";\n";
+                             type.annotations + "private native void allocate" + dcl.parameters.list + ";\n";
             } else {
                 decl.text += modifiers + type.annotations + context.shorten(type.javaName) + " " + dcl.javaName + dcl.parameters.list + ";\n";
             }
@@ -2412,6 +2449,14 @@ public class Parser {
         tokens.raw = true;
         String spacing = tokens.get().spacing;
         Token keyword = tokens.next();
+        if (keyword.spacing.indexOf('\n') >= 0) {
+            // empty macro?
+            Declaration decl = new Declaration();
+            decl.text = spacing + "// #";
+            declList.add(decl);
+            tokens.raw = false;
+            return true;
+        }
 
         // parse all of the macro to find its last token
         tokens.next();
@@ -2930,7 +2975,7 @@ public class Parser {
         } else if (info != null && info.pointerTypes != null && info.pointerTypes.length > 0) {
             type.javaName = info.pointerTypes[0];
             name = context.shorten(type.javaName);
-        } else if (info == null) {
+        } else if (info == null && !friend) {
             if (type.javaName.length() > 0 && context.javaName != null) {
                 type.javaName = context.javaName + "." + type.javaName;
             }
@@ -3035,7 +3080,7 @@ public class Parser {
             ctx.variable = var;
             declarations(ctx, declList2);
         }
-        String modifiers = "public static ", constructors = "", explicitConstructors = "";
+        String modifiers = "public static ", constructors = "", inheritedConstructors = "";
         boolean implicitConstructor = true, arrayConstructor = false, defaultConstructor = false, longConstructor = false,
                 pointerConstructor = false, abstractClass = info != null && info.purify && !ctx.virtualize,
                 allPureConst = true, haveVariables = false;
@@ -3045,7 +3090,7 @@ public class Parser {
                 defaultConstructor |= d.text.contains("private native void allocate();");
                 longConstructor |= d.text.contains("private native void allocate(long");
                 pointerConstructor |= d.text.contains("private native void allocate(Pointer");
-                implicitConstructor &= !defaultConstructor && !longConstructor && !pointerConstructor;
+                implicitConstructor &= !d.text.contains("private native void allocate(");
                 String baseType = d.declarator.type.cppName;
                 baseType = baseType.substring(0, baseType.lastIndexOf("::"));
                 List<Info> infoList = infoMap.get(baseType);
@@ -3057,8 +3102,9 @@ public class Parser {
                     }
                 }
                 int namespace2 = baseType.lastIndexOf("::");
-                constructors = d.text.replace(pointerTypes != null ? " " + pointerTypes[0].substring(pointerTypes[0].lastIndexOf('.') + 1)
-                                                                   : namespace2 >= 0 ? " " + baseType.substring(namespace2 + 2) : " " + baseType, " " + shortName) + "\n";
+                inheritedConstructors += d.text.replace(pointerTypes != null
+                        ? " " + pointerTypes[0].substring(pointerTypes[0].lastIndexOf('.') + 1)
+                        : namespace2 >= 0 ? " " + baseType.substring(namespace2 + 2) : " " + baseType, " " + shortName) + "\n";
                 d.text = "";
             } else if (d.declarator != null && d.declarator.type != null && d.declarator.type.constructor) {
                 implicitConstructor = false;
@@ -3068,7 +3114,9 @@ public class Parser {
                 boolean defaultConstructor2 = (paramDcls.length == 0 || (paramDcls.length == 1 && t.equals("void"))) && !d.inaccessible;
                 boolean longConstructor2 = paramDcls.length == 1 && t.equals("long") && !d.inaccessible;
                 boolean pointerConstructor2 = paramDcls.length == 1 && t.equals("Pointer") && !d.inaccessible;
-                if ((defaultConstructor && defaultConstructor2) || (longConstructor && longConstructor2) || (pointerConstructor && pointerConstructor2)) {
+                int n = d.text.indexOf("private native void allocate");
+                if ((defaultConstructor && defaultConstructor2) || (longConstructor && longConstructor2) || (pointerConstructor && pointerConstructor2)
+                        || (n >= 0 && inheritedConstructors.contains(d.text.substring(n)))) {
                     d.text = "";
                 }
                 defaultConstructor |= defaultConstructor2;
@@ -3097,7 +3145,6 @@ public class Parser {
             decl.text += modifiers + "class " + shortName + " extends " + base.javaName + " {\n" +
                          "    static { Loader.load(); }\n";
 
-            explicitConstructors = constructors;
             if (implicitConstructor && (info == null || !info.purify) && (!abstractClass || ctx.virtualize)) {
                 constructors += "    /** Default native constructor. */\n" +
                              "    public " + shortName + "() { super((Pointer)null); allocate(); }\n" +
@@ -3111,6 +3158,10 @@ public class Parser {
                              "        return (" + shortName + ")super.position(position);\n" +
                              "    }\n";
             } else {
+                if ((info == null || !info.purify) && (!abstractClass || ctx.virtualize)) {
+                    constructors += inheritedConstructors;
+                }
+
                 if (!pointerConstructor) {
                     constructors += "    /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */\n" +
                                  "    public " + shortName + "(Pointer p) { super(p); }\n";
@@ -3150,9 +3201,9 @@ public class Parser {
             if (!d.inaccessible && (d.declarator == null || d.declarator.type == null
                     || !d.declarator.type.constructor || !abstractClass || (info != null && info.virtualize))) {
                 decl.text += d.text;
-                if (d.declarator != null && d.declarator.type != null && d.declarator.type.constructor) {
-                    explicitConstructors += d.text;
-                }
+            }
+            if (!d.inaccessible && d.declarator != null && d.declarator.type != null && d.declarator.type.constructor) {
+                inheritedConstructors += d.text;
             }
         }
         String constructorName = originalName;
@@ -3165,9 +3216,9 @@ public class Parser {
             constructorName = constructorName.substring(namespace2 + 2);
         }
         Info constructorInfo = infoMap.getFirst(type.cppName + "::" + constructorName);
-        if ((context.templateMap == null || context.templateMap.full()) && constructorInfo == null) {
+        if (/*(context.templateMap == null || context.templateMap.full()) &&*/ constructorInfo == null) {
             // save constructors to be able inherit them with C++11 "using" statements
-            infoMap.put(new Info(type.cppName + "::" + constructorName).javaText(explicitConstructors));
+            infoMap.put(new Info(type.cppName + "::" + constructorName).javaText(inheritedConstructors));
         }
         if (!anonymous) {
             decl.text += tokens.get().spacing + '}';
@@ -3451,7 +3502,7 @@ public class Parser {
                 for (int i = 1; i < info2.valueTypes.length; i++) {
                     info2.valueTypes[i] = "@Cast(\"" + cppName + "\") " + info2.valueTypes[i - 1];
                 }
-                info2.valueTypes[0] = javaName;
+                info2.valueTypes[0] = context.javaName != null && context.javaName.length() > 0 ? context.javaName + "." + javaName : javaName;
                 info2.pointerTypes = Arrays.copyOf(info2.pointerTypes, info2.pointerTypes.length);
                 for (int i = 0; i < info2.pointerTypes.length; i++) {
                     info2.pointerTypes[i] = "@Cast(\"" + cppName + "*\") " + info2.pointerTypes[i];

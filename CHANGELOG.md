@@ -1,4 +1,7 @@
 
+ * Include in the defaults of `InfoMap` mappings missing for the `std::array` and `jchar` types
+ * Fix various `Parser` failures with attributes on constructors, empty macros, enum classes, friend classes, inherited constructors, and keywords in parameter names
+ * Add to `Parser` support for C++11 attributes found within `[[` and `]]` brackets
  * Consider `Pointer` values `maxBytes` or `maxPhysicalBytes` suffixed with `%` as relative to `Runtime.maxMemory()` ([pull #365](https://github.com/bytedeco/javacpp/pull/365))
  * Prevent `Parser` from considering `constexpr operator` declarations as `const` types
  * Fix on `Loader.load()` the default library name of classes without `@Properties(target=..., global=...)`
