@@ -1,4 +1,5 @@
 
+ * Let `Parser` rename types using `Info.javaNames` in addition to `valueTypes` and `pointerTypes` ([pull #367](https://github.com/bytedeco/javacpp/pull/367))
  * Consider `Pointer` values `maxBytes` or `maxPhysicalBytes` suffixed with `%` as relative to `Runtime.maxMemory()` ([pull #365](https://github.com/bytedeco/javacpp/pull/365))
  * Prevent `Parser` from considering `constexpr operator` declarations as `const` types
  * Fix on `Loader.load()` the default library name of classes without `@Properties(target=..., global=...)`
