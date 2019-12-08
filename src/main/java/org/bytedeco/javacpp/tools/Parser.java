@@ -835,7 +835,10 @@ public class Parser {
             } else if (info.pointerTypes != null && info.pointerTypes.length > 0) {
                 type.javaName = info.pointerTypes[0];
                 type.javaNames = info.pointerTypes;
-            }
+            } else if (info.javaNames != null && info.javaNames.length > 0) {
+                type.javaName = info.javaNames[0];
+                type.javaNames = info.javaNames;
+           }
         }
 
         if (type.operator) {

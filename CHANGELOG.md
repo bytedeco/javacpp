@@ -1,4 +1,5 @@
 
+ * Let `Parser` rename types using `Info.javaNames` in addition to `valueTypes` and `pointerTypes` ([pull #367](https://github.com/bytedeco/javacpp/pull/367))
  * Include in the defaults of `InfoMap` mappings missing for the `std::array` and `jchar` types
  * Fix various `Parser` failures with attributes on constructors, empty macros, enum classes, friend classes, inherited constructors, and keywords in parameter names
  * Add to `Parser` support for C++11 attributes found within `[[` and `]]` brackets
