@@ -268,6 +268,7 @@ public class Builder {
             String p = properties.getProperty("platform.sysroot.prefix", "");
             for (String s : properties.get("platform.sysroot")) {
                 if (new File(s).isDirectory()) {
+                    s = new File(s).getCanonicalPath();
                     if (p.endsWith(" ")) {
                         command.add(p.trim()); command.add(s);
                     } else {
@@ -281,6 +282,7 @@ public class Builder {
             String p = properties.getProperty("platform.toolchain.prefix", "");
             for (String s : properties.get("platform.toolchain")) {
                 if (new File(s).isDirectory()) {
+                    s = new File(s).getCanonicalPath();
                     if (p.endsWith(" ")) {
                         command.add(p.trim()); command.add(s);
                     } else {
@@ -294,6 +296,7 @@ public class Builder {
             String p = properties.getProperty("platform.includepath.prefix", "");
             for (String s : properties.get("platform.includepath")) {
                 if (new File(s).isDirectory()) {
+                    s = new File(s).getCanonicalPath();
                     if (p.endsWith(" ")) {
                         command.add(p.trim()); command.add(s);
                     } else {
@@ -356,6 +359,7 @@ public class Builder {
             String p2 = properties.getProperty("platform.linkpath.prefix2");
             for (String s : properties.get("platform.linkpath")) {
                 if (new File(s).isDirectory()) {
+                    s = new File(s).getCanonicalPath();
                     if (p.endsWith(" ")) {
                         command.add(p.trim()); command.add(s);
                     } else {
@@ -445,6 +449,7 @@ public class Builder {
             String p = properties.getProperty("platform.frameworkpath.prefix", "");
             for (String s : properties.get("platform.frameworkpath")) {
                 if (new File(s).isDirectory()) {
+                    s = new File(s).getCanonicalPath();
                     if (p.endsWith(" ")) {
                         command.add(p.trim()); command.add(s);
                     } else {
