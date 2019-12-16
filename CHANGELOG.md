@@ -1,4 +1,6 @@
 
+ * Pick up `Info` correctly in `Parser` also for anonymous function pointers with `const` parameters
+ * Make `Parser` apply `Info.translate` in the case of enumerators as well
  * Fix compiler failures in `Builder` with platform properties containing relative paths
  * Let `Parser` rename types using `Info.javaNames` in addition to `valueTypes` and `pointerTypes` ([pull #367](https://github.com/bytedeco/javacpp/pull/367))
  * Include in the defaults of `InfoMap` mappings missing for the `std::array` and `jchar` types

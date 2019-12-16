@@ -1364,26 +1364,40 @@ public class Parser {
                 }
                 String cppType = "";
                 if (dcl.type != null) {
-                    cppType += dcl.type.cppName;
+                    String s = dcl.type.cppName;
+                    if (dcl.type.constValue && !s.startsWith("const ")) {
+                        s = "const " + s;
+                    }
                     for (int i = 0; i < dcl.indirections; i++) {
-                        cppType += "*";
+                        s += "*";
                     }
                     if (dcl.reference) {
-                        cppType += "&";
+                        s += "&";
                     }
+                    if (dcl.type.constPointer && !s.endsWith(" const")) {
+                        s = s + " const";
+                    }
+                    cppType += s;
                 }
                 cppType += " (*)(";
                 String separator = "";
                 if (dcl.parameters != null) {
                     for (Declarator d : dcl.parameters.declarators) {
                         if (d != null) {
-                            cppType += separator + d.type.cppName;
+                            String s = d.type.cppName;
+                            if (d.type.constValue && !s.startsWith("const ")) {
+                                s = "const " + s;
+                            }
                             for (int i = 0; i < d.indirections; i++) {
-                                cppType += "*";
+                                s += "*";
                             }
                             if (d.reference) {
-                                cppType += "&";
+                                s += "&";
                             }
+                            if (d.type.constPointer && !s.endsWith(" const")) {
+                                s = s + " const";
+                            }
+                            cppType += separator + s;
                             separator = ", ";
                         }
                     }
@@ -3338,7 +3352,7 @@ public class Parser {
             if (info != null && info.javaNames != null && info.javaNames.length > 0) {
                 javaName = info.javaNames[0];
             } else if (info == null) {
-                infoMap.put(info = new Info(cppName).cppText(""));
+                infoMap.put(info = new Info(cppName).cppText("").translate());
             }
             String spacing2 = "";
             if (tokens.next().match('=')) {
@@ -3349,7 +3363,7 @@ public class Parser {
                 countPrefix = "";
                 int count2 = 0;
                 Token prevToken = new Token();
-                boolean translate = true;
+                boolean translate = info != null ? info.translate : true;
                 for (token = tokens.next(); !token.match(Token.EOF, '#', ',', '}') || count2 > 0; token = tokens.next()) {
                     if (token.match(Token.INTEGER) && token.value.endsWith("L")) {
                         longenum = true;
