@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Samuel Audet
+ * Copyright (C) 2017-2019 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -87,6 +87,7 @@ public class BuilderTest implements BuildEnabled, LoadEnabled {
         String filename = Loader.load(c);
         Loader.loadGlobal(filename);
         assertTrue(Loader.getLoadedLibraries().get("jniBuilderTest").contains("-ext1"));
+        Loader.foundLibraries.clear();
         Loader.loadedLibraries.clear();
 
         System.out.println("Builder");
@@ -98,6 +99,7 @@ public class BuilderTest implements BuildEnabled, LoadEnabled {
         filename = Loader.load(c);
         Loader.loadGlobal(filename);
         assertTrue(Loader.getLoadedLibraries().get("jniBuilderTest").contains("-ext2"));
+        Loader.foundLibraries.clear();
         Loader.loadedLibraries.clear();
 
         Loader.loadProperties().put("platform.extension", "-ext1");

@@ -1,4 +1,5 @@
 
+ * Speed up `Loader.load()` by caching results returned from `Loader.findLibrary()` ([issue #287](https://github.com/bytedeco/javacpp/issues/287))
  * Pick up `Info` correctly in `Parser` also for anonymous function pointers with `const` parameters
  * Make `Parser` apply `Info.translate` in the case of enumerators as well
  * Fix compiler failures in `Builder` with platform properties containing relative paths

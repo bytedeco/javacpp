@@ -886,6 +886,8 @@ public class Loader {
     static File cacheDir = null;
     /** Temporary directory set and returned by {@link #getTempDir()}. */
     static File tempDir = null;
+    /** Contains all the URLs of native libraries that we found to avoid searching for them again. */
+    static Map<String,URL[]> foundLibraries = new HashMap<String,URL[]>();
     /** Contains all the native libraries that we have loaded to avoid reloading them. */
     static Map<String,String> loadedLibraries = new HashMap<String,String>();
 
@@ -1197,7 +1199,10 @@ public class Loader {
                     loadGlobally = true;
                     preload = preload.substring(0, preload.length() - 1);
                 }
-                URL[] urls = findLibrary(cls, p, preload, pathsFirst);
+                URL[] urls = foundLibraries.get(preload);
+                if (urls == null) {
+                    foundLibraries.put(preload, urls = findLibrary(cls, p, preload, pathsFirst));
+                }
                 String filename = loadLibrary(cls, urls, preload, preloaded.toArray(new String[preloaded.size()]));
                 if (filename != null && new File(filename).exists()) {
                     preloaded.add(filename);
@@ -1246,7 +1251,10 @@ public class Loader {
                     // try to load the JNI library using a different name
                     library += "#" + library + librarySuffix;
                 }
-                URL[] urls = findLibrary(cls, p, library, pathsFirst);
+                URL[] urls = foundLibraries.get(library);
+                if (urls == null) {
+                    foundLibraries.put(library, urls = findLibrary(cls, p, library, pathsFirst));
+                }
                 String filename = loadLibrary(cls, urls, library, preloaded.toArray(new String[preloaded.size()]));
                 if (cacheDir != null && filename != null && filename.startsWith(cacheDir)) {
                     createLibraryLink(filename, p, library);
