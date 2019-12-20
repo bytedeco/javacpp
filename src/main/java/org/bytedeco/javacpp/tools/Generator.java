@@ -368,6 +368,11 @@ public class Generator {
         out.println("    #define JavaCPP_noinline");
         out.println("    #define JavaCPP_hidden");
         out.println("#endif");
+        out.println("#if __cplusplus >= 201103L");
+        out.println("    #define JavaCPP_override override");
+        out.println("#else");
+        out.println("    #define JavaCPP_override");
+        out.println("#endif");
         out.println();
 
         if (loadSuffix == null) {
@@ -2709,7 +2714,7 @@ public class Generator {
                     member += usingLine + "\n    ";
                 }
                 member += "virtual " + returnConvention[0] + (returnConvention.length > 1 ? returnConvention[1] : "")
-                       +  methodInfo.memberName[0] + parameterDeclaration + ";\n    "
+                       +  methodInfo.memberName[0] + parameterDeclaration + " JavaCPP_override;\n    "
                        +  returnConvention[0] + "super_" + methodInfo.memberName[0] + nonconstParamDeclaration + " { ";
                 if (methodInfo.method.getAnnotation(Virtual.class).value()) {
                     member += "throw JavaCPP_exception(\"Cannot call pure virtual function " + valueTypeName + "::" + methodInfo.memberName[0] + "().\"); }";
