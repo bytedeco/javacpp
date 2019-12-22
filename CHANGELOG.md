@@ -1,4 +1,6 @@
 
+ * Apply in `Parser` missing `const` to parameters of `@Virtual` functions using adapters
+ * Use in `Generator` C++11 `override` keyword for `@Virtual` functions ([pull #373](https://github.com/bytedeco/javacpp/pull/373))
  * Speed up `Loader.load()` by caching results returned from `Loader.findLibrary()` ([issue #287](https://github.com/bytedeco/javacpp/issues/287))
  * Pick up `Info` correctly in `Parser` also for anonymous function pointers with `const` parameters
  * Make `Parser` apply `Info.translate` in the case of enumerators as well
