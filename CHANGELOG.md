@@ -1,4 +1,5 @@
 
+ * Fix errors with `@Virtual @Name("operator ...")` in `Generator` by using Java names for C++ ([issue #362](https://github.com/bytedeco/javacpp/issues/362))
  * Apply in `Parser` missing `const` to parameters of `@Virtual` functions using adapters
  * Use in `Generator` C++11 `override` keyword for `@Virtual` functions ([pull #373](https://github.com/bytedeco/javacpp/pull/373))
  * Speed up `Loader.load()` by caching results returned from `Loader.findLibrary()` ([issue #287](https://github.com/bytedeco/javacpp/issues/287))

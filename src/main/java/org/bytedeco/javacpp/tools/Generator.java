@@ -2258,7 +2258,7 @@ public class Generator {
                         needSecondCall = true;
                     }
                     if (methodInfo.method.isAnnotationPresent(Virtual.class)) {
-                        name = "super_" + name;
+                        name = "super_" + methodInfo.name;
                     }
                     out.print("((" + subType + "*)ptr)->" + name);
                 } else if (index != null) {
@@ -2715,7 +2715,7 @@ public class Generator {
                 }
                 member += "virtual " + returnConvention[0] + (returnConvention.length > 1 ? returnConvention[1] : "")
                        +  methodInfo.memberName[0] + parameterDeclaration + " JavaCPP_override;\n    "
-                       +  returnConvention[0] + "super_" + methodInfo.memberName[0] + nonconstParamDeclaration + " { ";
+                       +  returnConvention[0] + "super_" + methodInfo.name + nonconstParamDeclaration + " { ";
                 if (methodInfo.method.getAnnotation(Virtual.class).value()) {
                     member += "throw JavaCPP_exception(\"Cannot call pure virtual function " + valueTypeName + "::" + methodInfo.memberName[0] + "().\"); }";
                 } else {
