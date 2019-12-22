@@ -922,6 +922,9 @@ public class Parser {
                 cast += "*";
             }
         }
+        if (type.constValue) {
+            cast = "const " + cast;
+        }
         if (type.constPointer) {
             dcl.constPointer = true;
             // ignore, const pointers are not useful in generated code
