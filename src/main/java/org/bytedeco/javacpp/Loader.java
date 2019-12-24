@@ -493,11 +493,16 @@ public class Loader {
             }
         } else if (resourceURL.getProtocol().equals("jrt")) {
             String p = resourceURL.getPath();
-            if (!p.startsWith("/modules")) p = "/modules" + p; // Work around bug JDK-8216553
             try {
                 // urlConnection.getContentLength() would work on jrt URL, but not getLastModified()
                 Path path = Paths.get(new URI("jrt", p, null)); // Remove fragment
-                size = Files.size(path);
+                try {
+                  size = Files.size(path);
+                } catch (java.nio.file.NoSuchFileException e) {
+                  // Work around bug JDK-8216553
+                  path = Paths.get(new URI("jrt", "/modules" + p, null));
+                  size = Files.size(path);
+                }
                 timestamp = Files.getLastModifiedTime(path).toMillis();
             } catch (URISyntaxException e) { // Should not happen
                 size = 0;
