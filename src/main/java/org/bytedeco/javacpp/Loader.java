@@ -500,7 +500,7 @@ public class Loader {
                   size = Files.size(path);
                 } catch (java.nio.file.NoSuchFileException e) {
                   // Work around bug JDK-8216553
-                  path = Paths.get(new URI("jrt", "/modules"+p, null));
+                  path = Paths.get(new URI("jrt", "/modules" + p, null));
                   size = Files.size(path);
                 }
                 timestamp = Files.getLastModifiedTime(path).toMillis();

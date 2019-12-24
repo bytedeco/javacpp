@@ -1,4 +1,5 @@
 
+ * Fix exception in `Loader` when running jlink image with JDK 13+ ([pull #375](https://github.com/bytedeco/javacpp/pull/375))
  * Fix errors with `@Virtual @Name("operator ...")` in `Generator` by using Java names for C++ ([issue #362](https://github.com/bytedeco/javacpp/issues/362))
  * Apply in `Parser` missing `const` to parameters of `@Virtual` functions using adapters
  * Use in `Generator` C++11 `override` keyword for `@Virtual` functions ([pull #373](https://github.com/bytedeco/javacpp/pull/373))
