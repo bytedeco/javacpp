@@ -94,18 +94,18 @@ class Context {
             }
             names.add(name);
 
+            for (String s : usingList) {
+                String prefix = infoMap.normalize(cppName, false, true);
+                int i = s.lastIndexOf("::") + 2;
+                String ns2 = ns.length() > 0 ? ns + "::" + s.substring(0, i) : s.substring(0, i);
+                String suffix = s.substring(i);
+                if (suffix.length() == 0 || prefix.equals(suffix)) {
+                    names.add(ns2 + cppName);
+                }
+            }
             ns = infoMap.normalize(ns, false, true);
             int i = ns.lastIndexOf("::");
             ns = i >= 0 ? ns.substring(0, i) : ns.length() > 0 ? "" : null;
-        }
-        for (String s : usingList) {
-            String prefix = infoMap.normalize(cppName, false, true);
-            int i = s.lastIndexOf("::") + 2;
-            ns = s.substring(0, i);
-            String suffix = s.substring(i);
-            if (suffix.length() == 0 || prefix.equals(suffix)) {
-                names.add(ns + cppName);
-            }
         }
         return names.toArray(new String[names.size()]);
     }
