@@ -1,4 +1,5 @@
 
+ * Provide `UIntIndexer`, treating array and buffer data as unsigned 32-bit integers, for convenience ([issue #376](https://github.com/bytedeco/javacpp/issues/376))
  * Fix `Parser` not evaluating `using namespace` with respect to the current block ([issue #370](https://github.com/bytedeco/javacpp/issues/370))
  * Fix exception in `Loader` when running jlink image with JDK 13+ ([pull #375](https://github.com/bytedeco/javacpp/pull/375))
  * Fix errors with `@Virtual @Name("operator ...")` in `Generator` by using Java names for C++ ([issue #362](https://github.com/bytedeco/javacpp/issues/362))
