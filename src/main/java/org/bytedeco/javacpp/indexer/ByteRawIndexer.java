@@ -174,45 +174,5 @@ public class ByteRawIndexer extends ByteIndexer {
         return this;
     }
 
-    @Override public int getUByte(long i) {
-        return RAW.getByte(base + checkIndex(i, size - 1)) & 0xFF;
-    }
-    @Override public ByteIndexer putUByte(long i, int b) {
-        RAW.putByte(base + checkIndex(i, size - 1), (byte)b);
-        return this;
-    }
-
-    @Override public int getUShort(long i) {
-        return RAW.getShort(base + checkIndex(i, size - 1)) & 0xFFFF;
-    }
-    @Override public ByteIndexer putUShort(long i, int s) {
-        RAW.putShort(base + checkIndex(i, size - 1), (short)s);
-        return this;
-    }
-
-    @Override public float getHalf(long i) {
-        return HalfIndexer.toFloat(RAW.getShort(base + checkIndex(i, size - 1)));
-    }
-    @Override public ByteIndexer putHalf(long i, float h) {
-        RAW.putShort(base + checkIndex(i, size - 1), (short)HalfIndexer.fromFloat(h));
-        return this;
-    }
-
-    @Override public float getBfloat16(long i) {
-        return Bfloat16Indexer.toFloat(RAW.getShort(base + checkIndex(i, size - 1)));
-    }
-    @Override public ByteIndexer putBfloat16(long i, float h) {
-        RAW.putShort(base + checkIndex(i, size - 1), (short)Bfloat16Indexer.fromFloat(h));
-        return this;
-    }
-
-    @Override public boolean getBoolean(long i) {
-        return RAW.getByte(base + checkIndex(i, size - 1)) != 0;
-    }
-    @Override public ByteIndexer putBoolean(long i, boolean b) {
-        RAW.putByte(base + checkIndex(i, size - 1), b ? (byte)1 : (byte)0);
-        return this;
-    }
-
     @Override public void release() { pointer = null; }
 }

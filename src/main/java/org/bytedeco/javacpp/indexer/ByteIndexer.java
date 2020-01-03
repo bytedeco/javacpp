@@ -22,6 +22,7 @@
 
 package org.bytedeco.javacpp.indexer;
 
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import org.bytedeco.javacpp.BytePointer;
 
@@ -173,29 +174,39 @@ public abstract class ByteIndexer extends Indexer {
     public abstract ByteIndexer putChar(long i, char c);
 
     /** Returns the {@code byte} value at {@code array/buffer[i]}, treated as unsigned */
-    public abstract int getUByte(long i);
+    public int getUByte(long i) { return get(i) & 0xFF; }
     /** Sets the {@code byte} value at {@code array/buffer[i]}, treated as unsigned */
-    public abstract ByteIndexer putUByte(long i, int b);
+    public ByteIndexer putUByte(long i, int b) { return put(i, (byte)b); }
 
     /** Returns the {@code short} value at {@code array/buffer[i]}, treated as unsigned */
-    public abstract int getUShort(long i);
+    public int getUShort(long i) { return getShort(i) & 0xFFFF; }
     /** Sets the {@code short} value at {@code array/buffer[i]}, treated as unsigned */
-    public abstract ByteIndexer putUShort(long i, int s);
+    public ByteIndexer putUShort(long i, int s) { return putShort(i, (short)s); }
+
+    /** Returns the {@code int} value at {@code array/buffer[i]}, treated as unsigned */
+    public long getUInt(long i) { return getInt(i) & 0xFFFFFFFFL; }
+    /** Sets the {@code int} value at {@code array/buffer[i]}, treated as unsigned */
+    public ByteIndexer putUInt(long i, long n) { return putInt(i, (int)n); }
+
+    /** Returns the {@code long} value at {@code array/buffer[i]}, treated as unsigned */
+    public BigInteger getULong(long i) { return ULongIndexer.toBigInteger(getLong(i)); }
+    /** Sets the {@code long} value at {@code array/buffer[i]}, treated as unsigned */
+    public ByteIndexer putULong(long i, BigInteger l) { return putLong(i, ULongIndexer.fromBigInteger(l)); }
 
     /** Returns the {@code short} value at {@code array/buffer[i]}, treated as half-precision float */
-    public abstract float getHalf(long i);
+    public float getHalf(long i) { return HalfIndexer.toFloat(getShort(i)); }
     /** Sets the {@code short} value at {@code array/buffer[i]}, treated as half-precision float */
-    public abstract ByteIndexer putHalf(long i, float h);
+    public ByteIndexer putHalf(long i, float h) { return putShort(i, (short)HalfIndexer.fromFloat(h)); }
 
     /** Returns the {@code short} value at {@code array/buffer[i]}, treated as bfloat16 */
-    public abstract float getBfloat16(long i);
+    public float getBfloat16(long i) { return Bfloat16Indexer.toFloat(getShort(i)); }
     /** Sets the {@code short} value at {@code array/buffer[i]}, treated as bfloat16 */
-    public abstract ByteIndexer putBfloat16(long i, float h);
+    public ByteIndexer putBfloat16(long i, float h) { return putShort(i, (short)Bfloat16Indexer.fromFloat(h)); }
 
     /** Returns the {@code boolean} value at {@code array/buffer[i]} */
-    public abstract boolean getBoolean(long i);
+    public boolean getBoolean(long i) { return get(i) != 0; }
     /** Sets the {@code boolean} value at {@code array/buffer[i]} */
-    public abstract ByteIndexer putBoolean(long i, boolean b);
+    public ByteIndexer putBoolean(long i, boolean b) { return put(i, b ? (byte)1 : (byte)0); }
 
     @Override public double getDouble(long... indices) { return get(indices); }
     @Override public ByteIndexer putDouble(long[] indices, double b) { return put(indices, (byte)b); }
