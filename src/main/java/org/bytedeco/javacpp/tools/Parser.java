@@ -462,7 +462,7 @@ public class Parser {
 
         tokens.next().expect('<');
         for (Token token = tokens.next(); !token.match(Token.EOF); token = tokens.next()) {
-            if (token.match(Token.IDENTIFIER)) {
+            if (token.match(Token.CLASS, Token.TYPENAME)) {
                 Token t = tokens.next();
                 if (t.match("...")) {
                     map.variadic = true;
@@ -473,6 +473,12 @@ public class Parser {
                     map.put(key, map.get(key));
                     token = tokens.next();
                 }
+            } else if (token.match(Token.IDENTIFIER)) {
+                Type type = type(context); // ignore?
+                Token t = tokens.get();
+                String key = t.value;
+                map.put(key, map.get(key));
+                token = tokens.next();
             }
             if (!token.match(',', '>')) {
                 // ignore default argument
@@ -2867,16 +2873,19 @@ public class Parser {
                 break;
             } else if (token.match(Token.FRIEND)) {
                 friend = true;
+                if (!tokens.get(1).match(prefixes)) {
+                    // assume group name follows
+                    foundGroup = true;
+                    break;
+                }
             } else if (!token.match(Token.IDENTIFIER)) {
                 break;
             }
         }
-        if (!foundGroup) {
+        if (!foundGroup || !tokens.next().match(Token.IDENTIFIER, '{', "::")) {
             tokens.index = backIndex;
             return false;
         }
-
-        tokens.next().expect(Token.IDENTIFIER, '{', "::");
         if (!tokens.get().match('{') && tokens.get(1).match(Token.IDENTIFIER)
                 && !tokens.get(1).match(Token.FINAL)
                 && (typedef || !tokens.get(2).match(';'))) {
@@ -3300,16 +3309,12 @@ public class Parser {
         String name = "";
         Token token = tokens.next().expect(Token.IDENTIFIER, '{', ':', ';');
         if (token.match(Token.IDENTIFIER)) {
-            while (tokens.get(1).match(Token.IDENTIFIER)) {
-                Attribute attr = attribute(true);
-                if (attr != null && attr.annotation) {
-                    // XXX: What to do with annotations here?
-                } else {
-                    break;
-                }
-                token = tokens.get();
+            Attribute attr = attribute(true);
+            while (attr != null && attr.annotation) {
+                // XXX: What to do with annotations here?
+                attr = attribute(true);
             }
-            name = token.value;
+            name = tokens.get().value;
             token = tokens.next();
         }
         if (token.match(':')) {
@@ -3489,10 +3494,8 @@ public class Parser {
         }
         String cppName = context.namespace != null ? context.namespace + "::" + name : name;
         Info info = infoMap.getFirst(cppName);
-        boolean enumerate = info != null ? info.enumerate : false;
-        for (Info i : infoMap.get(null)) {
-            enumerate |= i.enumerate;
-        }
+        Info info2 = infoMap.getFirst(null);
+        boolean enumerate = info != null ? info.enumerate : info2 != null ? info2.enumerate : false;
         if (info != null && info.skip) {
             decl.text = enumSpacing;
         } else {
@@ -3500,7 +3503,7 @@ public class Parser {
             String enumSpacing2 = newline < 0 ? enumSpacing : enumSpacing.substring(newline + 1);
             String javaName = info != null && info.valueTypes != null && info.valueTypes.length > 0 ? info.valueTypes[0] : name;
             if (enumerate && javaName != null && javaName.length() > 0 && !javaName.equals(javaType)) {
-                String fullName = context.namespace != null ? context.namespace + "::" + javaName : javaName;
+                String fullName = context.namespace != null ? context.namespace + "::" + name : name;
                 String annotations = "";
                 if (!fullName.equals(cppName)){
                     annotations += "@Name(\"" + cppName + "\") ";
@@ -3517,7 +3520,7 @@ public class Parser {
                           +  enumSpacing2 + "    public " + shortName + " intern() { for (" + shortName + " e : values()) if (e.value == value) return e; return this; }\n"
                           +  enumSpacing2 + "    @Override public String toString() { return intern().name(); }\n"
                           +  enumSpacing2 + "}";
-                Info info2 = new Info(infoMap.getFirst(cppType)).cppNames(cppName);
+                info2 = new Info(infoMap.getFirst(cppType)).cppNames(cppName);
                 info2.valueTypes = Arrays.copyOf(info2.valueTypes, info2.valueTypes.length + 1);
                 for (int i = 1; i < info2.valueTypes.length; i++) {
                     info2.valueTypes[i] = "@Cast(\"" + cppName + "\") " + info2.valueTypes[i - 1];
@@ -3532,7 +3535,7 @@ public class Parser {
                 decl.text += enumSpacing + "/** " + enumType + " " + cppName + " */\n"
                           +  enumSpacing2 + enumerators + token.expect(';').spacing + ";";
                 if (cppName.length() > 0) {
-                    Info info2 = infoMap.getFirst(cppType);
+                    info2 = infoMap.getFirst(cppType);
                     infoMap.put(new Info(info2).cast().cppNames(cppName));
                 }
                 decl.text += extraText + comment;

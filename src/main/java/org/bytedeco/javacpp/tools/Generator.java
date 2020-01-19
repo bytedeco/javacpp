@@ -309,7 +309,7 @@ public class Generator {
         out.println("    #include <dlfcn.h>");
         out.println("    #include <mach-o/dyld.h>");
         out.println("    #include <pthread.h>");
-        out.println("#elif defined(_WIN32)");
+        out.println("#elif defined(_WIN32) && !defined(NO_WINDOWS_H)");
         out.println("    #define NOMINMAX");
         out.println("    #include <windows.h>");
         out.println("    #include <psapi.h>");

@@ -1,4 +1,7 @@
 
+ * Let users override `Info.enumerate` on a per-`enum` basis and allow attributes after `enum class`
+ * Fix `Parser` not considering identifiers as type names when placed directly after `friend` or in `template<>`
+ * Check for defined `NO_WINDOWS_H` macro in `Generator` to skip `#include <windows.h>`
  * Provide `UIntIndexer` and `ULongIndexer`, treating array and buffer data as unsigned 32- or 64-bit integers, for convenience ([issue #376](https://github.com/bytedeco/javacpp/issues/376))
  * Fix `Parser` not evaluating `using namespace` with respect to the current block ([issue #370](https://github.com/bytedeco/javacpp/issues/370))
  * Fix exception in `Loader` when running jlink image with JDK 13+ ([pull #375](https://github.com/bytedeco/javacpp/pull/375))
