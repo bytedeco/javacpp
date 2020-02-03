@@ -1,4 +1,6 @@
 
+ * Allow `Parser` to inherit constructors from template classes with `using`
+ * Make `Parser` honor `Info.skip` for anonymous `struct` or `union` as well
  * Optimize `Pointer.sizeof()` method of subclasses for primitive types
  * Let users override `Info.enumerate` on a per-`enum` basis and allow attributes after `enum class`
  * Fix `Parser` not considering identifiers as type names when placed directly after `friend` or in `template<>`

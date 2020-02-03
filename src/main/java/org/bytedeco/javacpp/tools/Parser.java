@@ -1354,7 +1354,9 @@ public class Parser {
 
         if (info != null && info.annotations != null) {
             for (String s : info.annotations) {
-                type.annotations += s + " ";
+                if (!type.annotations.contains(s)) {
+                    type.annotations += s + " ";
+                }
             }
         }
 
@@ -2333,7 +2335,8 @@ public class Parser {
             cppName = context.namespace + "::" + cppName;
         }
         Info info = infoMap.getFirst(cppName);
-        if (dcl.cppName.length() == 0 || (info != null && info.skip)) {
+        Info info2 = context.variable != null ? infoMap.getFirst(context.variable.cppName) : null;
+        if (dcl.cppName.length() == 0 || (info != null && info.skip) || (info2 != null && info2.skip)) {
             decl.text = spacing;
             declList.add(decl);
             while (!tokens.get().match(Token.EOF, ';')) {
@@ -2342,7 +2345,7 @@ public class Parser {
             tokens.next();
             return true;
         } else if (info == null) {
-            Info info2 = infoMap.getFirst(dcl.cppName);
+            info2 = infoMap.getFirst(dcl.cppName);
             infoMap.put(info2 != null ? new Info(info2).cppNames(cppName) : new Info(cppName));
         }
         boolean first = true;
@@ -2845,7 +2848,14 @@ public class Parser {
         if (dcl.definition != null) {
             decl = dcl.definition;
         }
-        Info info = infoMap.getFirst(dcl.type.cppName);
+        String cppName = dcl.type.cppName;
+        String baseType = context.baseType;
+        int template = cppName.lastIndexOf('<');
+        int template2 = baseType != null ? baseType.lastIndexOf('<') : -1;
+        if (template < 0 && template2 >= 0 && cppName.startsWith(baseType.substring(0, template2))) {
+            cppName = baseType + cppName.substring(template2);
+        }
+        Info info = infoMap.getFirst(cppName);
         if (!context.inaccessible && info != null && info.javaText != null) {
             // inherit constructors
             decl.signature = decl.text = info.javaText;
@@ -3097,6 +3107,7 @@ public class Parser {
         if (info != null && info.virtualize) {
             ctx.virtualize = true;
         }
+        ctx.baseType = base.cppName;
 
         DeclarationList declList2 = new DeclarationList();
         if (variables.size() == 0) {
@@ -3122,6 +3133,11 @@ public class Parser {
                 implicitConstructor &= !d.text.contains("private native void allocate(");
                 String baseType = d.declarator.type.cppName;
                 baseType = baseType.substring(0, baseType.lastIndexOf("::"));
+                int template = baseType.lastIndexOf('<');
+                int template2 = base.cppName.lastIndexOf('<');
+                if (template < 0 && template2 >= 0 && baseType.equals(base.cppName.substring(0, template2))) {
+                    baseType = base.cppName;
+                }
                 List<Info> infoList = infoMap.get(baseType);
                 String[] pointerTypes = null;
                 for (Info info2 : infoList) {

@@ -38,6 +38,7 @@ class Context {
     }
     Context(Context c) {
         namespace = c.namespace;
+        baseType = c.baseType;
         cppName = c.cppName;
         javaName = c.javaName;
         inaccessible = c.inaccessible;
@@ -49,6 +50,7 @@ class Context {
     }
 
     String namespace = null;
+    String baseType = null;
     String cppName = null;
     String javaName = null;
     boolean inaccessible = false;
