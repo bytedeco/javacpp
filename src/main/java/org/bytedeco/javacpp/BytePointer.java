@@ -126,6 +126,9 @@ public class BytePointer extends Pointer {
     @Override public BytePointer capacity(long capacity) {
         return super.capacity(capacity);
     }
+    @Override public int sizeof() {
+        return 1;
+    }
 
     /** Returns the bytes, assuming a null-terminated string if {@code limit <= position}. */
     public byte[] getStringBytes() {

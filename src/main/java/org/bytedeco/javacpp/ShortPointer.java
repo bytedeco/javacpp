@@ -96,6 +96,9 @@ public class ShortPointer extends Pointer {
     @Override public ShortPointer capacity(long capacity) {
         return super.capacity(capacity);
     }
+    @Override public int sizeof() {
+        return Short.SIZE / Byte.SIZE;
+    }
 
     /** @return {@code get(0)} */
     public short get() { return get(0); }

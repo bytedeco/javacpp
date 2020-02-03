@@ -96,6 +96,9 @@ public class LongPointer extends Pointer {
     @Override public LongPointer capacity(long capacity) {
         return super.capacity(capacity);
     }
+    @Override public int sizeof() {
+        return Long.SIZE / Byte.SIZE;
+    }
 
     /** @return {@code get(0)} */
     public long get() { return get(0); }

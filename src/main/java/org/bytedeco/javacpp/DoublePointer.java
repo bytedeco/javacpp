@@ -96,6 +96,9 @@ public class DoublePointer extends Pointer {
     @Override public DoublePointer capacity(long capacity) {
         return super.capacity(capacity);
     }
+    @Override public int sizeof() {
+        return Double.SIZE / Byte.SIZE;
+    }
 
     /** @return {@code get(0)} */
     public double get() { return get(0); }

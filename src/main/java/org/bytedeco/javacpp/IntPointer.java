@@ -106,6 +106,9 @@ public class IntPointer extends Pointer {
     @Override public IntPointer capacity(long capacity) {
         return super.capacity(capacity);
     }
+    @Override public int sizeof() {
+        return Integer.SIZE / Byte.SIZE;
+    }
 
     /** Returns the code points, assuming a null-terminated string if {@code limit <= position}. */
     public int[] getStringCodePoints() {

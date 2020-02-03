@@ -1,4 +1,5 @@
 
+ * Optimize `Pointer.sizeof()` method of subclasses for primitive types
  * Let users override `Info.enumerate` on a per-`enum` basis and allow attributes after `enum class`
  * Fix `Parser` not considering identifiers as type names when placed directly after `friend` or in `template<>`
  * Check for defined `NO_WINDOWS_H` macro in `Generator` to skip `#include <windows.h>`

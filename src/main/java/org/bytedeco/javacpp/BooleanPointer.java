@@ -28,7 +28,7 @@ import java.nio.ByteBuffer;
  * The peer class to native pointers and arrays of {@code jboolean}.
  * All operations take into account the position and limit, when appropriate.
  * <p>
- * The {@code sizeof(jboolean)} is always 1 byte with {@code false == 0} and {@code true == 1}.
+ * Assumes {@code sizeof(jboolean)} is always 1 byte with {@code false == 0} and {@code true == 1}.
  *
  * @author Samuel Audet
  */
@@ -99,6 +99,9 @@ public class BooleanPointer extends Pointer {
     /** @see Pointer#capacity(long) */
     @Override public BooleanPointer capacity(long capacity) {
         return super.capacity(capacity);
+    }
+    @Override public int sizeof() {
+        return 1;
     }
 
     /** @return {@code get(0)} */

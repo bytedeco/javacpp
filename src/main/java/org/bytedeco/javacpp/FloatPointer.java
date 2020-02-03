@@ -96,6 +96,9 @@ public class FloatPointer extends Pointer {
     @Override public FloatPointer capacity(long capacity) {
         return super.capacity(capacity);
     }
+    @Override public int sizeof() {
+        return Float.SIZE / Byte.SIZE;
+    }
 
     /** @return {@code get(0)} */
     public float get() { return get(0); }

@@ -106,6 +106,9 @@ public class CharPointer extends Pointer {
     @Override public CharPointer capacity(long capacity) {
         return super.capacity(capacity);
     }
+    @Override public int sizeof() {
+        return Character.SIZE / Byte.SIZE;
+    }
 
     /** Returns the chars, assuming a null-terminated string if {@code limit <= position}. */
     public char[] getStringChars() {
