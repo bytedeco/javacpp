@@ -857,7 +857,7 @@ public class Parser {
                 type.annotations += "@ByRef ";
             }
             if (info != null && info.cast) {
-                type.annotations += "@Cast(\"" + type.cppName + (type.indirections == 0 && !type.value ? "*" : "") + "\") ";
+                type.annotations += "@Cast(\"" + type.cppName + (!type.value ? "*" : "") + "\") ";
             }
             type.annotations += "@Name(\"operator " + (type.constValue && !type.constExpr ? "const " : "")
                     + type.cppName + (type.indirections > 0 ? "*" : type.reference ? "&" : "") + "\") ";
