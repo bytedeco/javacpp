@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2019 Samuel Audet
+ * Copyright (C) 2013-2020 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -1784,6 +1784,10 @@ public class Parser {
         params.names = "(";
         int lastVarargs = -1;
         for (Token token = tokens.next(); !token.match(Token.EOF); token = tokens.get()) {
+            if (token.match("...")) {
+                // skip over varargs
+                token = tokens.next();
+            }
             String spacing = token.spacing;
             if (token.match(')')) {
                 params.list += spacing + ")";
@@ -2094,8 +2098,8 @@ public class Parser {
                 break;
             }
         }
-        if (type.friend || (context.javaName == null && localNamespace > 0) || (info != null && info.skip)) {
-            // this is a friend declaration, or a member function definition or specialization, skip over
+        if (type.friend || tokens.get().match("&&") || (context.javaName == null && localNamespace > 0) || (info != null && info.skip)) {
+            // this is a friend declaration, an rvalue function, or a member function definition or specialization, skip over
             while (!tokens.get().match(':', '{', ';', Token.EOF)) {
                 tokens.next();
             }
