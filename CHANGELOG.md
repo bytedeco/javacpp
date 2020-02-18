@@ -1,4 +1,7 @@
 
+ * Make sure `Parser` recognizes base classes of `struct` as `public` by default
+ * Fix `Parser` error on initializer lists containing C++11 style `{ ... }` for template instances
+ * Change the default mapping of `jboolean` to `BooleanPointer` instead of `BoolPointer`
  * Fix `Parser` error on function declarations with `...` varargs as single parameter
  * Make `Parser` skip over `&&`-qualified functions automatically since they cannot be supported
  * Fix `Parser` annotating pointer cast `operator` methods with incorrect `@Cast` ([issue #379](https://github.com/bytedeco/javacpp/issues/379))

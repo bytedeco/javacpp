@@ -88,7 +88,7 @@ public class InfoMap extends HashMap<String,List<Info>> {
             .pointerTypes("FloatPointer", "FloatBuffer", "float[]"))
         .put(new Info("std::complex<double>", "double _Complex", "double _Imaginary", "double complex", "double imaginary").cast()
             .pointerTypes("DoublePointer", "DoubleBuffer", "double[]"))
-        .put(new Info("jboolean").valueTypes("boolean").pointerTypes("BoolPointer", "boolean[]"))
+        .put(new Info("jboolean").valueTypes("boolean").pointerTypes("BooleanPointer", "boolean[]"))
         .put(new Info("_Bool", "bool").cast().valueTypes("boolean").pointerTypes("BoolPointer", "boolean[]"))
         .put(new Info("jchar").valueTypes("char").pointerTypes("CharPointer", "char[]"))
         .put(new Info("char16_t").cast().valueTypes("char").pointerTypes("CharPointer", "char[]"))

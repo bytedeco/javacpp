@@ -1977,8 +1977,8 @@ public class Parser {
                         count--;
                     }
 
-                    // consider { ... } preceded by an identifier as an initializer list
-                    if (count == 0 && !token.match(Token.IDENTIFIER) && tokens.get(1).match('{')) {
+                    // consider { ... } preceded by an identifier or `>` as an initializer list
+                    if (count == 0 && !token.match(Token.IDENTIFIER, '>') && tokens.get(1).match('{')) {
                         tokens.next();
                         break;
                     }
@@ -2117,8 +2117,8 @@ public class Parser {
                         count--;
                     }
 
-                    // consider { ... } preceded by an identifier as an initializer list
-                    if (count == 0 && !token.match(Token.IDENTIFIER) && tokens.get(1).match('{')) {
+                    // consider { ... } preceded by an identifier or `>` as an initializer list
+                    if (count == 0 && !token.match(Token.IDENTIFIER, '>') && tokens.get(1).match('{')) {
                         tokens.next();
                         break;
                     }
@@ -2182,8 +2182,8 @@ public class Parser {
                             count--;
                         }
 
-                        // consider { ... } preceded by an identifier as an initializer list
-                        if (count == 0 && !token.match(Token.IDENTIFIER) && tokens.get(1).match('{')) {
+                        // consider { ... } preceded by an identifier or `>` as an initializer list
+                        if (count == 0 && !token.match(Token.IDENTIFIER, '>') && tokens.get(1).match('{')) {
                             tokens.next();
                             break;
                         }
@@ -2914,7 +2914,7 @@ public class Parser {
         if (type.cppName.length() > 0 && tokens.get().match(':')) {
             derivedClass = true;
             for (Token token = tokens.next(); !token.match(Token.EOF); token = tokens.next()) {
-                boolean accessible = false;
+                boolean accessible = !ctx.inaccessible;
                 if (token.match(Token.VIRTUAL)) {
                     continue;
                 } else if (token.match(Token.PRIVATE, Token.PROTECTED, Token.PUBLIC)) {
