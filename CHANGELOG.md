@@ -1,4 +1,5 @@
 
+ * Remove unnecessary declared `Exception` from `Indexer.close()` signature ([pull #382](https://github.com/bytedeco/javacpp/pull/382))
  * Make sure `Parser` recognizes base classes of `struct` as `public` by default
  * Fix `Parser` error on initializer lists containing C++11 style `{ ... }` for template instances
  * Change the default mapping of `jboolean` to `BooleanPointer` instead of `BoolPointer`
