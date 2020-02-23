@@ -45,7 +45,7 @@ import org.bytedeco.javacpp.Pointer;
 public abstract class Indexer implements AutoCloseable {
 
     /** Calls {@link #release()}. */
-    @Override public void close() throws Exception {
+    @Override public void close() {
         release();
     }
 
