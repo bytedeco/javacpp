@@ -23,6 +23,11 @@ int *testIntString(int *str) {
     return str;
 }
 
+const std::string& getConstStdString() {
+    static std::string test("test");
+    return test;
+}
+
 int constructorCount = 0;
 int destructorCount = 0;
 

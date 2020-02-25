@@ -23,6 +23,7 @@ package org.bytedeco.javacpp;
 
 import java.io.File;
 import java.nio.IntBuffer;
+import org.bytedeco.javacpp.annotation.ByRef;
 import org.bytedeco.javacpp.annotation.Cast;
 import org.bytedeco.javacpp.annotation.Const;
 import org.bytedeco.javacpp.annotation.Function;
@@ -57,6 +58,8 @@ public class AdapterTest {
     static native CharPointer testShortString(CharPointer str);
 
     static native IntPointer testIntString(IntPointer str);
+
+    static native @Const @ByRef @StdString byte[] getConstStdString();
 
     static class SharedData extends Pointer {
         SharedData(Pointer p) { super(p); }
@@ -137,6 +140,9 @@ public class AdapterTest {
             assertEquals(textStr1, textIntPtr1.getString());
             assertEquals(textStr1, textIntPtr2.getString());
         }
+
+        byte[] test = getConstStdString();
+        assertEquals("test", new String(test));
         System.gc();
     }
 

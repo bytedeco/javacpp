@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2019 Samuel Audet
+ * Copyright (C) 2011-2020 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -889,7 +889,7 @@ public class Generator {
         out.println("}");
         out.println();
         out.println("static JavaCPP_noinline void JavaCPP_initPointer(JNIEnv* env, jobject obj, const void* ptr, jlong size, void* owner, void (*deallocator)(void*)) {");
-        out.println("    if (deallocator != NULL) {");
+        out.println("    if (owner != NULL && deallocator != NULL) {");
         out.println("        jvalue args[4];");
         out.println("        args[0].j = ptr_to_jlong(ptr);");
         out.println("        args[1].j = size;");
@@ -1104,9 +1104,9 @@ public class Generator {
             out.println("    }");
             out.println("    operator       signed   char*() { return (signed   char*)(operator char*)(); }");
             out.println("    operator       unsigned char*() { return (unsigned char*)(operator char*)(); }");
-            out.println("    operator const          char*() { return                 str.c_str(); }");
-            out.println("    operator const signed   char*() { return (signed   char*)str.c_str(); }");
-            out.println("    operator const unsigned char*() { return (unsigned char*)str.c_str(); }");
+            out.println("    operator const          char*() { size = str.size(); return                 str.c_str(); }");
+            out.println("    operator const signed   char*() { size = str.size(); return (signed   char*)str.c_str(); }");
+            out.println("    operator const unsigned char*() { size = str.size(); return (unsigned char*)str.c_str(); }");
             out.println("    operator wchar_t*() {");
             out.println("        const wchar_t* data = str.data();");
             out.println("        if (str.size() > size) {");
@@ -1123,9 +1123,9 @@ public class Generator {
             out.println("    }");
             out.println("    operator     unsigned   short*() { return (unsigned short*)(operator wchar_t*)(); }");
             out.println("    operator       signed     int*() { return (  signed   int*)(operator wchar_t*)(); }");
-            out.println("    operator const        wchar_t*() { return                  str.c_str(); }");
-            out.println("    operator const unsigned short*() { return (unsigned short*)str.c_str(); }");
-            out.println("    operator const   signed   int*() { return (  signed   int*)str.c_str(); }");
+            out.println("    operator const        wchar_t*() { size = str.size(); return                  str.c_str(); }");
+            out.println("    operator const unsigned short*() { size = str.size(); return (unsigned short*)str.c_str(); }");
+            out.println("    operator const   signed   int*() { size = str.size(); return (  signed   int*)str.c_str(); }");
             out.println("    operator         std::basic_string<T>&() { return str; }");
             out.println("    operator         std::basic_string<T>*() { return ptr ? &str : 0; }");
             out.println("    T* ptr;");
@@ -2470,11 +2470,9 @@ public class Generator {
                         out.println(indent + "jlong rcapacity = (jlong)radapter.size;");
                         if (Pointer.class.isAssignableFrom(methodInfo.returnType)) {
                             out.println(indent + "void* rowner = radapter.owner;");
-                        }
-                        if (typeName[0].startsWith("const ")) {
-                            out.println(indent + "void (*deallocator)(void*) = 0;");
+                            out.println(indent + "void (*deallocator)(void*) = rowner != NULL ? &" + adapterInfo.name + "::deallocate : 0;");
                         } else {
-                            out.println(indent + "void (*deallocator)(void*) = &" + adapterInfo.name + "::deallocate;");
+                            out.println(indent + "void (*deallocator)(void*) = 0;");
                         }
                     }
                     needInit = true;
