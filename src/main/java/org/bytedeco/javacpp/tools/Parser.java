@@ -570,7 +570,6 @@ public class Parser {
                         break;
                     }
                 }
-                type.cppName += token;
                 tokens.next();
                 break;
             } else if (token.match('<')) {
