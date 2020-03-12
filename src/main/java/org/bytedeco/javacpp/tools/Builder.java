@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2019 Samuel Audet
+ * Copyright (C) 2011-2020 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -982,13 +982,14 @@ public class Builder {
                 environmentVariables.put(key, value);
             }
 
+            paths = paths.replace(separator, File.pathSeparator);
             if (paths.length() > 0 || resources.length() > 0) {
                 // Extract the required resources.
                 for (String s : resources.split(separator)) {
                     for (File f : Loader.cacheResources(s)) {
                         String path = f.getCanonicalPath();
-                        if (paths.length() > 0 && !paths.endsWith(separator)) {
-                            paths += separator;
+                        if (paths.length() > 0 && !paths.endsWith(File.pathSeparator)) {
+                            paths += File.pathSeparator;
                         }
                         paths += path;
 
@@ -1016,7 +1017,7 @@ public class Builder {
                         environmentVariables = new LinkedHashMap<String,String>();
                     }
                     environmentVariables.put("BUILD_PATH", paths);
-                    environmentVariables.put("BUILD_PATH_SEPARATOR", separator);
+                    environmentVariables.put("BUILD_PATH_SEPARATOR", File.pathSeparator);
                 }
             }
             int exitValue = executeCommand(command, workingDirectory, environmentVariables);
@@ -1239,7 +1240,7 @@ public class Builder {
         }
         System.out.println(
             "JavaCPP version " + version + "\n" +
-            "Copyright (C) 2011-2019 Samuel Audet <samuel.audet@gmail.com>\n" +
+            "Copyright (C) 2011-2020 Samuel Audet <samuel.audet@gmail.com>\n" +
             "Project site: https://github.com/bytedeco/javacpp");
         System.out.println();
         System.out.println("Usage: java -jar javacpp.jar [options] [class or package (suffixed with .* or .**)] [commands]");
