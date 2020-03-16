@@ -1204,6 +1204,34 @@ public class Generator {
             out.println("    U& uniquePtr;");
             out.println("};");
             out.println("#endif");
+            out.println("");
+            out.println("#if __cplusplus >= 201103L");
+            out.println("#include <utility>");
+            out.println("template<class T> class MoveAdapter {");
+            out.println("public:");
+            out.println("    MoveAdapter(const T* ptr, size_t size, void* owner) : ptr(&movedPtr), size(size), owner(owner), movedPtr(std::move(*(T*)ptr)) { }");
+            out.println("    MoveAdapter(const T& ptr) : ptr(&movedPtr), size(0), owner(0), movedPtr(std::move((T&)ptr)) { }");
+            out.println("    MoveAdapter(T&& ptr) : ptr(&movedPtr), size(0), owner(0), movedPtr((T&&)ptr) { }");
+            out.println("    void assign(T* ptr, size_t size, void* owner) {");
+            out.println("        this->ptr = &this->movedPtr;");
+            out.println("        this->size = size;");
+            out.println("        this->owner = owner;");
+            out.println("        this->movedPtr = std::move(*ptr);");
+            out.println("    }");
+            out.println("    static void deallocate(void* owner) { delete (T*)owner; }");
+            out.println("    operator T*() {");
+            out.println("        ptr = new T(std::move(movedPtr));");
+            out.println("        owner = ptr;");
+            out.println("        return ptr;");
+            out.println("    }");
+            out.println("    operator const T*() { return ptr; }");
+            out.println("    operator T&&() { return std::move(movedPtr); }");
+            out.println("    T* ptr;");
+            out.println("    size_t size;");
+            out.println("    void* owner;");
+            out.println("    T movedPtr;");
+            out.println("};");
+            out.println("#endif");
             out.println();
         }
         if (!functions.isEmpty() || !virtualFunctions.isEmpty()) {

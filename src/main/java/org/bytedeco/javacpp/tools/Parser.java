@@ -229,6 +229,9 @@ public class Parser {
                 for (int i = 0; i < dim - 1; i++) {
                     arrayBrackets += "[]";
                 }
+                int annotation = containerType.javaName.lastIndexOf(' ');
+                containerType.annotations += containerType.javaName.substring(0, annotation + 1);
+                containerType.javaName = containerType.javaName.substring(annotation + 1); // get rid of any annotations
                 decl.type = new Type(containerType.javaName);
                 decl.text += (dim == 0 ? "\n@NoOffset " : "\n")
                         + "@Name(\"" + containerType.cppName + "\") public static class " + containerType.javaName + " extends Pointer {\n"
@@ -256,7 +259,7 @@ public class Parser {
                            : "    public " + containerType.javaName + "(long n) { allocate(n); }\n")
                            + "    private native void allocate();\n"                                + (!resizable ? ""
                            : "    private native void allocate(@Cast(\"size_t\") long n);\n")       + (constant   ? "\n\n"
-                           : "    public native @Name(\"operator=\") @ByRef " + containerType.javaName + " put(@ByRef " + containerType.javaName + " x);\n\n");
+                           : "    public native @Name(\"operator =\") @ByRef " + containerType.javaName + " put(@ByRef " + containerType.annotations + containerType.javaName + " x);\n\n");
 
                 for (int i = 0; i < dim; i++) {
                     String indexAnnotation = i > 0 ? ("@Index(" + (i > 1 ? "value = " + i + ", " : "" ) + "function = \"at\") ") : "";
@@ -327,13 +330,13 @@ public class Parser {
                                   +  "        public Iterator(Pointer p) { super(p); }\n"
                                   +  "        public Iterator() { }\n\n"
 
-                                  +  "        public native @Name(\"operator++\") @ByRef Iterator increment();\n"
-                                  +  "        public native @Name(\"operator==\") boolean equals(@ByRef Iterator it);\n"
+                                  +  "        public native @Name(\"operator ++\") @ByRef Iterator increment();\n"
+                                  +  "        public native @Name(\"operator ==\") boolean equals(@ByRef Iterator it);\n"
                                   +  (containerType.arguments.length > 1 ?
-                                         "        public native @Name(\"operator*().first\") @MemberGetter " + indexType.annotations + indexType.javaName + " first();\n"
-                                       + "        public native @Name(\"operator*().second\") @MemberGetter " + valueType.annotations + valueType.javaName + " second();\n"
+                                         "        public native @Name(\"operator *().first\") @MemberGetter " + indexType.annotations + indexType.javaName + " first();\n"
+                                       + "        public native @Name(\"operator *().second\") @MemberGetter " + valueType.annotations + valueType.javaName + " second();\n"
                                   :
-                                         "        public native @Name(\"operator*\") " + valueType.annotations + valueType.javaName + " get();\n")
+                                         "        public native @Name(\"operator *\") " + valueType.annotations + valueType.javaName + " get();\n")
                                   +  "    }\n";
                     }
                     if (resizable) {

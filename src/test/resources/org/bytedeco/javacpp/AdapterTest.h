@@ -95,3 +95,16 @@ std::vector<const char*> testStdVectorConstPointer(std::vector<const char*> v) {
     return v;
 }
 
+struct MovedData {
+    int data;
+    MovedData(int data) : data(data) { }
+};
+
+MovedData movedData(13);
+MovedData&& getMovedData() {
+    return std::move(movedData);
+}
+
+void putMovedData(MovedData&& m) {
+    movedData = m;
+}

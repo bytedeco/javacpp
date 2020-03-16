@@ -29,6 +29,7 @@ import org.bytedeco.javacpp.annotation.Const;
 import org.bytedeco.javacpp.annotation.Function;
 import org.bytedeco.javacpp.annotation.Platform;
 import org.bytedeco.javacpp.annotation.SharedPtr;
+import org.bytedeco.javacpp.annotation.StdMove;
 import org.bytedeco.javacpp.annotation.StdString;
 import org.bytedeco.javacpp.annotation.StdVector;
 import org.bytedeco.javacpp.annotation.StdWString;
@@ -93,6 +94,17 @@ public class AdapterTest {
     static native @StdVector IntPointer testStdVectorByRef(@StdVector IntBuffer v);
     static native @StdVector int[] testStdVectorByPtr(@StdVector int[] v);
     static native @Cast("const char**") @StdVector PointerPointer testStdVectorConstPointer(@Cast("const char**") @StdVector PointerPointer v);
+
+    static class MovedData extends Pointer {
+        MovedData(Pointer p) { super(p); }
+        MovedData(int data) { allocate(data); }
+        native void allocate(int data);
+
+        native int data(); native MovedData data(int data);
+    }
+
+    static native @StdMove MovedData getMovedData();
+    static native void putMovedData(@StdMove MovedData m);
 
     @BeforeClass public static void setUpClass() throws Exception {
         System.out.println("Builder");
@@ -243,5 +255,29 @@ public class AdapterTest {
             assertEquals(ptrptr.get(i), ptrptr2.get(i));
         }
         System.gc();
+    }
+
+    @Test public void testStdMove() {
+        System.out.println("StdMove");
+        MovedData m = getMovedData();
+        System.out.println(m);
+        System.out.println(m.data());
+        assertEquals(13, m.data());
+        assertNotNull(m.deallocator());
+        m.deallocate();
+
+        m = new MovedData(42);
+        putMovedData(m);
+        System.out.println(m);
+        System.out.println(m.data()); // probably 42, but undefined
+        MovedData m2 = getMovedData();
+        System.out.println(m2);
+        System.out.println(m2.data());
+        assertEquals(42, m2.data());
+        assertNotEquals(m.address(), m2.address());
+        assertNotNull(m.deallocator());
+        assertNotNull(m2.deallocator());
+        m.deallocate();
+        m2.deallocate();
     }
 }
