@@ -1,4 +1,5 @@
 
+ * Add static `Pointer.isNull(Pointer p)` helper method, for convenience
  * Add `MoveAdapter` and corresponding `@StdMove` annotation to support objects that require `std::move` from C++11
  * Always use `File.pathSeparator` when passing multiple paths via the `BUILD_PATH` environment variable
  * Fix `Parser` not picking up `Info` for declarations with `decltype()` specifier

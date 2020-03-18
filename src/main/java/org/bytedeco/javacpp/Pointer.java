@@ -551,6 +551,10 @@ public class Pointer implements AutoCloseable {
     /** The deallocator associated with this Pointer that should be called on garbage collection. */
     private Deallocator deallocator = null;
 
+    /** Returns {@code p == null || p.address == 0}. */
+    public static boolean isNull(Pointer p) {
+        return p == null || p.address == 0;
+    }
     /** Returns {@code address == 0}. */
     public boolean isNull() {
         return address == 0;
