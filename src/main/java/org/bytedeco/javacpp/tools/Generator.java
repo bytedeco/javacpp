@@ -368,7 +368,7 @@ public class Generator {
         out.println("    #define JavaCPP_noinline");
         out.println("    #define JavaCPP_hidden");
         out.println("#endif");
-        out.println("#if __cplusplus >= 201103L");
+        out.println("#if __cplusplus >= 201103L || _MSC_VER >= 1900");
         out.println("    #define JavaCPP_override override");
         out.println("#else");
         out.println("    #define JavaCPP_override");
@@ -1205,7 +1205,7 @@ public class Generator {
             out.println("};");
             out.println("#endif");
             out.println("");
-            out.println("#if __cplusplus >= 201103L");
+            out.println("#if __cplusplus >= 201103L || _MSC_VER >= 1900");
             out.println("#include <utility>");
             out.println("template<class T> class MoveAdapter {");
             out.println("public:");
