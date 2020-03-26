@@ -224,8 +224,10 @@ public class Loader {
         try {
             String javacppVersion = getVersion();
             String version = getVersion(groupId, artifactId, cls);
-            if (version == null && logWarnings && isLoadLibraries()) {
-                logger.warn("Version of " + groupId + ":" + artifactId + " could not be found.");
+            if (version == null) {
+                if (logWarnings && isLoadLibraries()) {
+                    logger.warn("Version of " + groupId + ":" + artifactId + " could not be found.");
+                }
                 return false;
             }
             String[] javacppVersions = javacppVersion.split(separator);
