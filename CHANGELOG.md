@@ -1,4 +1,6 @@
 
+ * Prevent potential `NullPointerException` in `Loader.checkVersion()` ([pull #385](https://github.com/bytedeco/javacpp/pull/385))
+ * Allow using `Charset` to avoid `UnsupportedEncodingException` from `BytePointer` ([pull #384](https://github.com/bytedeco/javacpp/pull/384))
  * Add static `Pointer.isNull(Pointer p)` helper method, for convenience
  * Add `MoveAdapter` and corresponding `@StdMove` annotation to support objects that require `std::move` from C++11
  * Always use `File.pathSeparator` when passing multiple paths via the `BUILD_PATH` environment variable

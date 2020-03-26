@@ -25,6 +25,8 @@ package org.bytedeco.javacpp;
 import java.io.UnsupportedEncodingException;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+
 import org.bytedeco.javacpp.annotation.Cast;
 import org.bytedeco.javacpp.annotation.ValueGetter;
 import org.bytedeco.javacpp.annotation.ValueSetter;
@@ -49,6 +51,18 @@ public class BytePointer extends Pointer {
             throws UnsupportedEncodingException {
         this(s.getBytes(charsetName).length + 1);
         putString(s, charsetName);
+    }
+    /**
+     * Allocates enough memory for the encoded string and actually encodes it
+     * in the given charset before copying it.
+     *
+     * @param s the String to encode and copy
+     * @param charset the charset in which the bytes are encoded
+     * @see #putString(String, Charset)
+     */
+    public BytePointer(String s, Charset charset) {
+        this(s.getBytes(charset).length + 1);
+        putString(s, charset);
     }
     /**
      * Allocates enough memory for the encoded string and actually encodes it
@@ -153,6 +167,16 @@ public class BytePointer extends Pointer {
         return new String(getStringBytes(), charsetName);
     }
     /**
+     * Decodes the native bytes assuming they are encoded in the given charset.
+     * Assumes a null-terminated string if {@code limit <= position}.
+     *
+     * @param charset the charset in which the bytes are encoded
+     * @return a String from the null-terminated string
+     */
+    public String getString(Charset charset) {
+        return new String(getStringBytes(), charset);
+    }
+    /**
      * Decodes the native bytes assuming they are encoded in the platform's default charset.
      * Assumes a null-terminated string if {@code limit <= position}.
      *
@@ -177,6 +201,21 @@ public class BytePointer extends Pointer {
     public BytePointer putString(String s, String charsetName)
             throws UnsupportedEncodingException {
         byte[] bytes = s.getBytes(charsetName);
+        return put(bytes).put(bytes.length, (byte)0).limit(bytes.length);
+    }
+    /**
+     * Encodes the String into the given charset and copies it in native memory,
+     * including a terminating null byte.
+     * Sets the limit to just before the terminating null byte.
+     *
+     * @param s the String to encode and copy
+     * @param charset the charset in which to encode the bytes
+     * @return this
+     * @see String#getBytes(Charset)
+     * @see #put(byte[])
+     */
+    public BytePointer putString(String s, Charset charset) {
+        byte[] bytes = s.getBytes(charset);
         return put(bytes).put(bytes.length, (byte)0).limit(bytes.length);
     }
     /**
