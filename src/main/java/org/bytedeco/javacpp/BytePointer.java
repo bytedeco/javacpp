@@ -54,11 +54,11 @@ public class BytePointer extends Pointer {
     }
     /**
      * Allocates enough memory for the encoded string and actually encodes it
-     * in the named charset before copying it.
+     * in the given charset before copying it.
      *
      * @param s the String to encode and copy
      * @param charset the charset in which the bytes are encoded
-     * @see #putString(String, String)
+     * @see #putString(String, Charset)
      */
     public BytePointer(String s, Charset charset) {
         this(s.getBytes(charset).length + 1);
@@ -167,7 +167,7 @@ public class BytePointer extends Pointer {
         return new String(getStringBytes(), charsetName);
     }
     /**
-     * Decodes the native bytes assuming they are encoded in the named charset.
+     * Decodes the native bytes assuming they are encoded in the given charset.
      * Assumes a null-terminated string if {@code limit <= position}.
      *
      * @param charset the charset in which the bytes are encoded
@@ -204,14 +204,14 @@ public class BytePointer extends Pointer {
         return put(bytes).put(bytes.length, (byte)0).limit(bytes.length);
     }
     /**
-     * Encodes the String into the named charset and copies it in native memory,
+     * Encodes the String into the given charset and copies it in native memory,
      * including a terminating null byte.
      * Sets the limit to just before the terminating null byte.
      *
      * @param s the String to encode and copy
      * @param charset the charset in which to encode the bytes
      * @return this
-     * @see String#getBytes(String)
+     * @see String#getBytes(Charset)
      * @see #put(byte[])
      */
     public BytePointer putString(String s, Charset charset) {
