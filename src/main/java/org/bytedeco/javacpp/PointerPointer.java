@@ -23,6 +23,7 @@
 package org.bytedeco.javacpp;
 
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
 
 /**
  * The peer class to native pointers and arrays of {@code void*}.
@@ -51,6 +52,16 @@ public class PointerPointer<P extends Pointer> extends Pointer {
      */
     public PointerPointer(String[] array, String charsetName) throws UnsupportedEncodingException {
         this(array.length); putString(array, charsetName);
+    }
+    /**
+     * Allocates enough memory for the array of strings and copies it.
+     *
+     * @param array the array of strings to copy
+     * @param charset the charset in which the bytes are encoded
+     * @see #putString(String[], String)
+     */
+    public PointerPointer(String[] array, Charset charset) {
+        this(array.length); putString(array, charset);
     }
     /**
      * Allocates enough memory for the array and copies it.
@@ -162,6 +173,12 @@ public class PointerPointer<P extends Pointer> extends Pointer {
         BytePointer p = (BytePointer)get((Class<P>)BytePointer.class, i);
         return p != null ? p.getString(charsetName) : null;
     }
+    /** @return {@code get(BytePointer.class, i).getString(charset)}
+     *  @see BytePointer#getString(Charset) */
+    public String getString(long i, Charset charset) {
+        BytePointer p = (BytePointer)get((Class<P>)BytePointer.class, i);
+        return p != null ? p.getString(charset) : null;
+    }
 
     /**
      * Creates one by one a new {@link BytePointer} for each {@link String},
@@ -190,6 +207,21 @@ public class PointerPointer<P extends Pointer> extends Pointer {
         pointerArray = (P[])new BytePointer[array.length];
         for (int i = 0; i < array.length; i++) {
             pointerArray[i] = array[i] != null ? (P)new BytePointer(array[i], charsetName) : null;
+        }
+        return put(pointerArray);
+    }
+    /**
+     * Creates one by one a new {@link BytePointer} for each {@link String},
+     * and writes them into the native {@code void*} array.
+     *
+     * @param array the array of {@link String} to read from
+     * @param charset the charset in which the bytes are encoded
+     * @return this
+     */
+    public PointerPointer<P> putString(String[] array, Charset charset) {
+        pointerArray = (P[])new BytePointer[array.length];
+        for (int i = 0; i < array.length; i++) {
+            pointerArray[i] = array[i] != null ? (P)new BytePointer(array[i], charset) : null;
         }
         return put(pointerArray);
     }
