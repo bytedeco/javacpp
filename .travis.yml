@@ -1,23 +1,93 @@
 dist: xenial
 cache:
   directories:
-    - $HOME/.m2
+    - $HOME/.m2/repository
+
+before_install:
+  - "echo '<settings><localRepository>${env.HOME}/.m2/repository</localRepository><servers><server><id>sonatype-nexus-snapshots</id><username>${env.CI_DEPLOY_USERNAME}</username><password>${env.CI_DEPLOY_PASSWORD}</password></server></servers></settings>' > $HOME/settings.xml"
+  - "[[ $TRAVIS_PULL_REQUEST == 'false' ]] && export MAVEN_PHASE=deploy || export MAVEN_PHASE=install"
 
 jobs:
   include:
-     - os: linux
-       addons:
-         apt:
-          packages: maven openjdk-8-jdk-headless
-       arch: arm64
-       language: java
-       script: 
-          - "mvn install -B -U"
-     - os: linux
-       arch: amd64
-       jdk: openjdk8
-       language: java
-       script:
-          - "echo '<settings><servers><server><id>sonatype-nexus-snapshots</id><username>${env.CI_DEPLOY_USERNAME}</username><password>${env.CI_DEPLOY_PASSWORD}</password></server></servers></settings>' > $HOME/settings.xml"
-          - "[[ $TRAVIS_PULL_REQUEST == 'false' ]] && export MAVEN_PHASE=deploy || export MAVEN_PHASE=install"
-          - "mvn $MAVEN_PHASE -B -U -s $HOME/settings.xml"
+    - os: linux
+      arch: arm64
+      language: java
+      addons:
+        apt:
+          packages: openjdk-8-jdk-headless maven
+      env: PLATFORMS="linux-arm64"
+      install:
+        - export JAVA_HOME="/usr/lib/jvm/java-8-openjdk-arm64"
+      script:
+        - mvn clean $MAVEN_PHASE -B -V -U -s $HOME/settings.xml -Djavacpp.platform=linux-arm64
+    - os: linux
+      arch: ppc64le
+      language: java
+      addons:
+        apt:
+          packages: openjdk-8-jdk-headless maven
+      env: PLATFORMS="linux-ppc64le"
+      install:
+        - export JAVA_HOME="/usr/lib/jvm/java-8-openjdk-ppc64el"
+      script:
+        - mvn clean $MAVEN_PHASE -B -V -U -s $HOME/settings.xml -Djavacpp.platform=linux-ppc64le
+    - os: linux
+      arch: amd64
+      language: java
+      jdk: openjdk8
+      env: PLATFORMS="android-arm android-arm64 android-x86 android-x86_64 linux-armhf linux-x86 linux-x86_64"
+      services:
+        - docker
+      install:
+        - curl -L https://dl.google.com/android/repository/android-ndk-r18b-linux-x86_64.zip -o $HOME/android-ndk-r18b.zip
+        - curl -L https://github.com/raspberrypi/tools/archive/master.tar.gz -o $HOME/tools-master.tar.gz
+        - unzip -q $HOME/android-ndk-r18b.zip -d $HOME
+        - tar xzf $HOME/tools-master.tar.gz -C $HOME
+        - export ANDROID_NDK="$HOME/android-ndk-r18b"
+        - export ANDROID_OPTIONS="-Djavacpp.platform.root=$ANDROID_NDK -Djava.library.path= -Djavacpp.platform.suffix=-clang"
+        - export TOOLS_PATH="$HOME/tools-master/arm-bcm2708/arm-rpi-4.9.3-linux-gnueabihf"
+        - export TOOLS_OPTIONS="-Djavacpp.platform.compiler=$TOOLS_PATH/bin/arm-linux-gnueabihf-g++ -Djava.library.path=$TOOLS_PATH/arm-linux-gnueabihf/lib/"
+      script:
+        - mvn clean $MAVEN_PHASE -B -V -U -s $HOME/settings.xml -Djavacpp.platform=android-arm $ANDROID_OPTIONS -Dmaven.javadoc.skip -Dmaven.test.skip -Dinvoker.skip
+        - mvn clean $MAVEN_PHASE -B -V -U -s $HOME/settings.xml -Djavacpp.platform=android-arm64 $ANDROID_OPTIONS -Dmaven.javadoc.skip -Dmaven.test.skip -Dinvoker.skip
+        - mvn clean $MAVEN_PHASE -B -V -U -s $HOME/settings.xml -Djavacpp.platform=android-x86 $ANDROID_OPTIONS -Dmaven.javadoc.skip -Dmaven.test.skip -Dinvoker.skip
+        - mvn clean $MAVEN_PHASE -B -V -U -s $HOME/settings.xml -Djavacpp.platform=android-x86_64 $ANDROID_OPTIONS -Dmaven.javadoc.skip -Dmaven.test.skip -Dinvoker.skip
+        - mvn clean $MAVEN_PHASE -B -V -U -s $HOME/settings.xml -Djavacpp.platform=linux-armhf $TOOLS_OPTIONS -Dmaven.javadoc.skip -Dmaven.test.skip -Dinvoker.skip
+        - >
+          docker run -e CI_DEPLOY_USERNAME -e CI_DEPLOY_PASSWORD -e GPG_PASSPHRASE -e STAGING_REPOSITORY -v $HOME:$HOME -v $TRAVIS_BUILD_DIR:$TRAVIS_BUILD_DIR centos:6 /bin/sh -c "
+            export HOME=$HOME;
+            cd $TRAVIS_BUILD_DIR;
+            yum -q -y install centos-release-scl-rh epel-release;
+            yum -q -y install devtoolset-7 java-1.8.0-openjdk-devel wget unzip tar bzip2 gzip xz;
+            wget --no-directories --no-parent --no-verbose -r https://www.repo.cloudlinux.com/cloudlinux/6/sclo/devtoolset-7/i386/ -P $HOME;
+            rpm -i --force --nodeps $HOME/*.rpm;
+            source scl_source enable devtoolset-7;
+            curl -L https://archive.apache.org/dist/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz -o $HOME/apache-maven-3.6.3-bin.tar.gz;
+            tar -xzf $HOME/apache-maven-3.6.3-bin.tar.gz -C /opt/;
+            ln -sf /opt/apache-maven-3.6.3/bin/mvn /usr/bin/mvn;
+            gcc --version;
+            gpg --version;
+            mvn clean $MAVEN_PHASE -B -V -U -s $HOME/settings.xml -Djavacpp.platform=linux-x86 -Dmaven.javadoc.skip -Dmaven.test.skip -Dinvoker.skip;
+            mvn clean $MAVEN_PHASE -B -V -U -s $HOME/settings.xml -Djavacpp.platform=linux-x86_64;
+          "
+    - os: osx
+      osx_image: xcode9.3
+      language: java
+      env: PLATFORMS="ios-arm64 ios-x86_64 macosx-x86_64"
+      install:
+        - brew install gpg1
+      script:
+        - mvn clean $MAVEN_PHASE -B -V -U -s $HOME/settings.xml -Djavacpp.platform=ios-arm64 -Dmaven.javadoc.skip -Dmaven.test.skip -Dinvoker.skip
+        - mvn clean $MAVEN_PHASE -B -V -U -s $HOME/settings.xml -Djavacpp.platform=ios-x86_64 -Dmaven.javadoc.skip -Dmaven.test.skip -Dinvoker.skip
+        - mvn clean $MAVEN_PHASE -B -V -U -s $HOME/settings.xml -Djavacpp.platform=macosx-x86_64
+    - os: windows
+      language: bash
+      env: PLATFORMS="windows-x86 windows-x86_64"
+      install:
+        - choco install jdk8 --params 'installdir=c:\\jdk8'
+        - choco install maven --version=3.6.3
+        - export JAVA_HOME="/c/jdk8/"
+        - export PATH="$PATH:/c/ProgramData/chocolatey/lib/maven/apache-maven-3.6.3/bin/:/c/Program Files (x86)/Microsoft Visual Studio/2017/BuildTools/VC/Auxiliary/Build/"
+      script:
+        - cmd.exe //C 'vcvarsall.bat x86 && mvn clean %MAVEN_PHASE% -B -V -U -s %HOME%/settings.xml -Djavacpp.platform=windows-x86 -Dmaven.javadoc.skip -Dmaven.test.skip -Dinvoker.skip'
+        - cmd.exe //C 'vcvarsall.bat amd64 && mvn clean %MAVEN_PHASE% -B -V -U -s %HOME%/settings.xml -Djavacpp.platform=windows-x86_64'
