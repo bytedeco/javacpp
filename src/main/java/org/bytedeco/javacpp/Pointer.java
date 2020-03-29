@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2019 Samuel Audet
+ * Copyright (C) 2011-2020 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -65,7 +65,7 @@ import org.bytedeco.javacpp.tools.Logger;
  *
  * @author Samuel Audet
  */
-@Platform
+@org.bytedeco.javacpp.annotation.Properties(inherit = org.bytedeco.javacpp.presets.javacpp.class)
 public class Pointer implements AutoCloseable {
     /** Default constructor that does nothing. */
     public Pointer() {}
@@ -500,6 +500,12 @@ public class Pointer implements AutoCloseable {
             }
         }
         maxRetries = n;
+
+        try {
+            Loader.load();
+        } catch (Throwable t) {
+            logger.warn("Could not load Pointer: " + t);
+        }
     }
 
     /** Clears, deallocates, and removes all garbage collected objects from the {@link #referenceQueue}. */

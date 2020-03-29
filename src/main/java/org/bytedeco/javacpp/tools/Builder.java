@@ -40,6 +40,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -1029,14 +1030,16 @@ public class Builder {
 
         List<File> outputFiles = new ArrayList<File>();
         List<String> allNames = new ArrayList<String>();
-        if (outputName != null && outputName.equals("jnijavacpp")) {
-            // the user only wants the "jnijavacpp" library
-            File[] files = generateAndCompile(null, outputName, true, true);
-            if (files != null && files.length > 0) {
-                outputFiles.addAll(Arrays.asList(files));
+        if (classScanner.getClasses().isEmpty()) {
+            if (outputName != null && outputName.equals("jnijavacpp")) {
+                // the user only wants the "jnijavacpp" library
+                File[] files = generateAndCompile(null, outputName, true, true);
+                if (files != null && files.length > 0) {
+                    outputFiles.addAll(Arrays.asList(files));
+                }
+            } else {
+                return null;
             }
-        } else if (classScanner.getClasses().isEmpty()) {
-            return null;
         }
 
         Map<String, LinkedHashSet<Class>> executableMap = new HashMap<String, LinkedHashSet<Class>>();
@@ -1266,6 +1269,7 @@ public class Builder {
         System.out.println();
         System.out.println("and where optional commands include:");
         System.out.println();
+        System.out.println("    -mod <file>            Output a module-info.java file for native JAR where module name is the package of the first class");
         System.out.println("    -exec [args...]        After build, call java command on the first class");
         System.out.println("    -print <property>      Print the given platform property, for example, \"platform.includepath\", and exit");
         System.out.println("                           \"platform.includepath\" has jni.h, jni_md.h, etc, and \"platform.linkpath\", the jvm library");
@@ -1282,6 +1286,7 @@ public class Builder {
         boolean addedClasses = false;
         Builder builder = new Builder();
         String[] execArgs = null;
+        String moduleFile = null;
         String printPath = null;
         for (int i = 0; i < args.length; i++) {
             if ("-help".equals(args[i]) || "--help".equals(args[i])) {
@@ -1319,6 +1324,8 @@ public class Builder {
                 builder.property(args[i]);
             } else if ("-Xcompiler".equals(args[i])) {
                 builder.compilerOptions(args[++i]);
+            } else if ("-mod".equals(args[i])) {
+                moduleFile = args[++i];
             } else if ("-exec".equals(args[i])) {
                 execArgs = Arrays.copyOfRange(args, i + 1, args.length);
                 i = args.length;
@@ -1363,6 +1370,19 @@ public class Builder {
         }
         File[] outputFiles = builder.build();
         Collection<Class> classes = builder.classScanner.getClasses();
+        if (moduleFile != null) {
+            Class c = classes.iterator().next();
+            String pkg = c.getPackage().getName();
+            String s = "open module " + pkg + "." + builder.properties.getProperty("platform").replace('-', '.') + " {\n"
+                     + "  requires transitive " + pkg + ";\n"
+                     + "}\n";
+            Path f = Paths.get(moduleFile);
+            Path d = f.getParent();
+            if (d != null) {
+                Files.createDirectories(d);
+            }
+            Files.write(f, s.getBytes(), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+        }
         if (outputFiles != null && outputFiles.length > 0 && !classes.isEmpty() && execArgs != null) {
             Class c = classes.iterator().next();
             ArrayList<String> command = new ArrayList<String>(Arrays.asList("java", "-cp"));

@@ -145,6 +145,12 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>javacpp</artifactId>
+      <version>${project.version}</version>
+      <classifier>${os.name}-${os.arch}</classifier>
+    </dependency>
+    <dependency>
       <groupId>org.apache.servicemix.bundles</groupId>
       <artifactId>org.apache.servicemix.bundles.junit</artifactId>
       <version>4.12_1</version>

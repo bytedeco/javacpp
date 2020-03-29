@@ -1,4 +1,5 @@
 
+ * Add presets for `jnijavacpp` and `javacpp-platform` artifact to fix issues at load time ([issue bytedeco/javacv#1305](https://github.com/bytedeco/javacv/issues/1305))
  * Prevent potential `NullPointerException` in `Loader.checkVersion()` ([pull #385](https://github.com/bytedeco/javacpp/pull/385))
  * Allow using `Charset` to avoid `UnsupportedEncodingException` from `BytePointer` ([pull #384](https://github.com/bytedeco/javacpp/pull/384))
  * Add static `Pointer.isNull(Pointer p)` helper method, for convenience

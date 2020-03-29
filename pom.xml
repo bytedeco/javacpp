@@ -58,6 +58,10 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.build.timestamp.format>yyyyMMddhhmm</maven.build.timestamp.format>
     <bnd.version>4.2.0</bnd.version>
+    <javacpp.platform.root></javacpp.platform.root>
+    <javacpp.platform.suffix></javacpp.platform.suffix>
+    <javacpp.platform.compiler></javacpp.platform.compiler>
+    <javacpp.platform.extension></javacpp.platform.extension>
   </properties>
 
   <dependencies>
@@ -183,6 +187,13 @@
               <Multi-Release>true</Multi-Release>
             </manifestEntries>
           </archive>
+          <excludes>
+            <exclude>lib/</exclude> <!-- for Android -->
+            <exclude>${javacpp.platform.library.path}/</exclude>
+            <exclude>${javacpp.platform}${javacpp.platform.extension}/</exclude>
+            <exclude>org/bytedeco/javacpp/${javacpp.platform}${javacpp.platform.extension}/</exclude>
+            <exclude>META-INF/MANIFEST.MF-*</exclude>
+          </excludes>
         </configuration>
       </plugin>
       <plugin>
@@ -315,6 +326,7 @@
 # unavailable then the indexers will fall back to
 # other implementations.
 
+Bundle-SymbolicName: org.bytedeco.javacpp
 Import-Package: \
  !org.apache.maven.*,\
  sun.misc;resolution:=optional,\
@@ -339,35 +351,6 @@ Import-Package: \
             </goals>
           </execution>
         </executions>
-      </plugin>
-      <plugin>
-        <artifactId>maven-invoker-plugin</artifactId>
-        <version>3.2.0</version>
-          <configuration>
-            <cloneProjectsTo>${project.build.directory}/integration-test/projects</cloneProjectsTo>
-            <cloneClean>true</cloneClean>
-            <projectsDirectory>src/it/</projectsDirectory>
-            <streamLogs>true</streamLogs>
-            <!-- With a clean <localRepositoryPath/>, it needs to redownload everything on each run!
-            <localRepositoryPath>${project.build.directory}/integration-test/repo</localRepositoryPath> -->
-            <properties>
-              <!-- <org.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener>warn</org.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener> -->
-              <maven.compiler.source>1.7</maven.compiler.source>
-              <maven.compiler.target>1.7</maven.compiler.target>
-            </properties>
-            <goals>
-              <goal>verify</goal>
-            </goals>
-          </configuration>
-          <executions>
-            <execution>
-              <id>integration-test</id>
-              <goals>
-                <goal>install</goal>
-                <goal>run</goal>
-              </goals>
-            </execution>
-          </executions>
       </plugin>
     </plugins>
   </build>
@@ -417,6 +400,162 @@ Import-Package: \
               <passphrase>${env.GPG_PASSPHRASE}</passphrase>
               <useAgent>false</useAgent>
             </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <!-- Builds native library (and runs integration test for OSGi) only when javacpp.platform is set explicitly -->
+    <profile>
+      <id>javacpp-platform</id>
+      <activation>
+        <property>
+          <name>javacpp.platform</name>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <version>1.6.0</version>
+            <executions>
+              <execution>
+                <phase>process-classes</phase>
+                <goals>
+                  <goal>java</goal>
+                </goals>
+              </execution>
+            </executions>
+            <configuration>
+              <mainClass>org.bytedeco.javacpp.tools.Builder</mainClass>
+              <arguments>
+                <argument>-classpath</argument>
+                <argument>${project.build.outputDirectory}</argument>
+                <argument>-copylibs</argument>
+                <argument>-properties</argument>
+                <argument>${javacpp.platform}${javacpp.platform.suffix}</argument>
+                <argument>-Dplatform.root=${javacpp.platform.root}</argument>
+                <argument>-Dplatform.compiler=${javacpp.platform.compiler}</argument>
+                <argument>org.bytedeco.javacpp.Pointer</argument>
+                <argument>org.bytedeco.javacpp.presets.javacpp</argument>
+                <argument>-mod</argument>
+                <argument>${project.build.directory}/generated-sources/java9/module-info.java</argument>
+              </arguments>
+            </configuration>
+          </plugin>
+          <plugin>
+            <artifactId>maven-jar-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>javacpp-${javacpp.platform}</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+                <configuration>
+                  <archive>
+                    <!-- Pull in the bnd generated manifest -->
+                    <manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF-${javacpp.platform}</manifestFile>
+                  </archive>
+                  <skipIfEmpty>true</skipIfEmpty>
+                  <classifier>${javacpp.platform}</classifier>
+                  <includes>
+                    <include>lib/</include> <!-- for Android -->
+                    <include>${javacpp.platform.library.path}/</include>
+                    <include>${javacpp.platform}${javacpp.platform.extension}/</include>
+                    <include>org/bytedeco/javacpp/${javacpp.platform}${javacpp.platform.extension}/</include>
+                  </includes>
+                  <excludes>
+                    <exclude>org/bytedeco/javacpp/windows-*/*.exp</exclude>
+                    <exclude>org/bytedeco/javacpp/windows-*/*.lib</exclude>
+                    <exclude>org/bytedeco/javacpp/windows-*/*.obj</exclude>
+                  </excludes>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.moditect</groupId>
+            <artifactId>moditect-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>add-module-info-${javacpp.platform}</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>add-module-info</goal>
+                </goals>
+                <configuration>
+                  <modules>
+                    <module>
+                      <file>${project.build.directory}/${project.artifactId}-${javacpp.platform}.jar</file>
+                      <moduleInfoFile>${project.build.directory}/generated-sources/java9/module-info.java</moduleInfoFile>
+                    </module>
+                  </modules>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>biz.aQute.bnd</groupId>
+            <artifactId>bnd-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>bnd-process-${javacpp.platform}</id>
+                <goals>
+                  <goal>bnd-process</goal>
+                </goals>
+                <configuration>
+                  <manifestPath>${project.build.outputDirectory}/META-INF/MANIFEST.MF-${javacpp.platform}</manifestPath>
+                  <bnd><![CDATA[
+# Avoid pulling in any imports for Maven packages.
+# Their usage is isolated to two types which are
+# excluded from export. If this changes in future
+# then this Import restriction will no longer be safe
+#
+# Also mark sun.misc as an optional import. If it is
+# unavailable then the indexers will fall back to
+# other implementations.
+
+Bundle-SymbolicName: org.bytedeco.javacpp.${javacpp.platform}
+Fragment-Host: org.bytedeco.javacpp
+Import-Package: \
+ !org.apache.maven.*,\
+ sun.misc;resolution:=optional,\
+ *
+              ]]></bnd>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <artifactId>maven-invoker-plugin</artifactId>
+            <version>3.2.0</version>
+              <configuration>
+                <cloneProjectsTo>${project.build.directory}/integration-test/projects</cloneProjectsTo>
+                <cloneClean>true</cloneClean>
+                <projectsDirectory>src/it/</projectsDirectory>
+                <streamLogs>true</streamLogs>
+                <!-- With a clean <localRepositoryPath/>, it needs to redownload everything on each run!
+                <localRepositoryPath>${project.build.directory}/integration-test/repo</localRepositoryPath> -->
+                <properties>
+                  <!-- <org.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener>warn</org.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener> -->
+                  <maven.compiler.source>1.7</maven.compiler.source>
+                  <maven.compiler.target>1.7</maven.compiler.target>
+                </properties>
+                <goals>
+                  <goal>verify</goal>
+                </goals>
+              </configuration>
+              <executions>
+                <execution>
+                  <id>integration-test</id>
+                  <goals>
+                    <goal>install</goal>
+                    <goal>run</goal>
+                  </goals>
+                </execution>
+              </executions>
           </plugin>
         </plugins>
       </build>

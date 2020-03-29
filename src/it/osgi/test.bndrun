@@ -2,7 +2,8 @@
 -runfw: org.apache.felix.framework;version='[6.0.2,6.0.2]'
 -runee: JavaSE-1.8
 -runbundles: \
-	javacpp;version='0.0.0',\
+	org.bytedeco.javacpp;version='0.0.0',\
+	org.bytedeco.javacpp.${os.name}-${os.arch};version='0.0.0',\
 	javacpp-tests-osgi;version='0.0.0',\
 	org.apache.servicemix.bundles.junit;version='[4.12.0,4.12.1)',\
 	slf4j.api;version='[1.7.25,1.7.26)',\

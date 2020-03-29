@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2016 Samuel Audet
+ * Copyright (C) 2011-2020 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -24,6 +24,7 @@ package org.bytedeco.javacpp;
 
 import org.bytedeco.javacpp.annotation.Cast;
 import org.bytedeco.javacpp.annotation.Name;
+import org.bytedeco.javacpp.tools.Logger;
 
 /**
  * The peer class to native pointers and arrays of {@code long}.
@@ -35,7 +36,18 @@ import org.bytedeco.javacpp.annotation.Name;
  * @author Samuel Audet
  */
 @Name("long")
+@org.bytedeco.javacpp.annotation.Properties(inherit = org.bytedeco.javacpp.presets.javacpp.class)
 public class CLongPointer extends Pointer {
+    private static final Logger logger = Logger.create(CLongPointer.class);
+
+    static {
+        try {
+            Loader.load();
+        } catch (Throwable t) {
+            logger.warn("Could not load CLongPointer: " + t);
+        }
+    }
+
     /**
      * Allocates enough memory for the array and copies it.
      *

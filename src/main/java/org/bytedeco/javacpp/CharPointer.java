@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2016 Samuel Audet
+ * Copyright (C) 2011-2020 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@
 package org.bytedeco.javacpp;
 
 import java.nio.CharBuffer;
+import org.bytedeco.javacpp.tools.Logger;
 
 /**
  * The peer class to native pointers and arrays of {@code short} for UTF-16.
@@ -30,7 +31,18 @@ import java.nio.CharBuffer;
  *
  * @author Samuel Audet
  */
+@org.bytedeco.javacpp.annotation.Properties(inherit = org.bytedeco.javacpp.presets.javacpp.class)
 public class CharPointer extends Pointer {
+    private static final Logger logger = Logger.create(CharPointer.class);
+
+    static {
+        try {
+            Loader.load();
+        } catch (Throwable t) {
+            logger.warn("Could not load CharPointer: " + t);
+        }
+    }
+
     /**
      * Allocates enough memory for the String and copies it.
      *

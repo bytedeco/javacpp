@@ -59,6 +59,8 @@ jobs:
             cd $TRAVIS_BUILD_DIR;
             yum -q -y install centos-release-scl-rh epel-release;
             yum -q -y install devtoolset-7 java-1.8.0-openjdk-devel wget unzip tar bzip2 gzip xz;
+            rpm -qa | sed s/.x86_64$/.i686/ | xargs yum -q -y install
+            find /var/cache/yum/ -name *.rpm | xargs rpm -i --force
             wget --no-directories --no-parent --no-verbose -r https://www.repo.cloudlinux.com/cloudlinux/6/sclo/devtoolset-7/i386/ -P $HOME;
             rpm -i --force --nodeps $HOME/*.rpm;
             source scl_source enable devtoolset-7;
@@ -69,6 +71,7 @@ jobs:
             gpg --version;
             mvn clean $MAVEN_PHASE -B -V -U -s $HOME/settings.xml -Djavacpp.platform=linux-x86 -Dmaven.javadoc.skip -Dmaven.test.skip -Dinvoker.skip;
             mvn clean $MAVEN_PHASE -B -V -U -s $HOME/settings.xml -Djavacpp.platform=linux-x86_64;
+            mvn clean $MAVEN_PHASE -B -V -U -s $HOME/settings.xml -f platform/pom.xml -Djavacpp.platform.host;
           "
     - os: osx
       osx_image: xcode9.3

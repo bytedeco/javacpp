@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2017 Samuel Audet
+ * Copyright (C) 2011-2020 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -30,6 +30,7 @@ import java.nio.charset.Charset;
 import org.bytedeco.javacpp.annotation.Cast;
 import org.bytedeco.javacpp.annotation.ValueGetter;
 import org.bytedeco.javacpp.annotation.ValueSetter;
+import org.bytedeco.javacpp.tools.Logger;
 
 /**
  * The peer class to native pointers and arrays of {@code signed char}, including strings.
@@ -37,7 +38,18 @@ import org.bytedeco.javacpp.annotation.ValueSetter;
  *
  * @author Samuel Audet
  */
+@org.bytedeco.javacpp.annotation.Properties(inherit = org.bytedeco.javacpp.presets.javacpp.class)
 public class BytePointer extends Pointer {
+    private static final Logger logger = Logger.create(BytePointer.class);
+
+    static {
+        try {
+            Loader.load();
+        } catch (Throwable t) {
+            logger.warn("Could not load BytePointer: " + t);
+        }
+    }
+
     /**
      * Allocates enough memory for the encoded string and actually encodes it
      * in the named charset before copying it.

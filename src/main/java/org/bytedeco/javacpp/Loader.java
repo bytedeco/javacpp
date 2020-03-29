@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2019 Samuel Audet
+ * Copyright (C) 2011-2020 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -71,8 +71,8 @@ import org.bytedeco.javacpp.tools.Logger;
  *
  * @author Samuel Audet
  */
+@org.bytedeco.javacpp.annotation.Properties(inherit = org.bytedeco.javacpp.presets.javacpp.class)
 public class Loader {
-
     private static final Logger logger = Logger.create(Loader.class);
 
     /** Value created out of "java.vm.name", "os.name", and "os.arch" system properties.
@@ -1427,6 +1427,20 @@ public class Loader {
         return urls.toArray(new URL[urls.size()]);
     }
 
+    /** Returns {@code loadLibrary(getCallerClass(2), libnameversion, preloaded)}. */
+    public static String loadLibrary(String libnameversion, String ... preloaded) {
+        return loadLibrary(getCallerClass(2), libnameversion, preloaded);
+    }
+
+    /** Returns {@code loadLibrary(findResources(cls, libnameversion), libnameversion, preloaded)}. */
+    public static String loadLibrary(Class<?> cls, String libnameversion, String ... preloaded) {
+        try {
+            return loadLibrary(findResources(cls, libnameversion), libnameversion, preloaded);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     /** Returns {@code loadLibrary(null, urls, libnameversion, preloaded)}. */
     public static String loadLibrary(URL[] urls, String libnameversion, String ... preloaded) {
         return loadLibrary(null, urls, libnameversion, preloaded);
@@ -1751,6 +1765,14 @@ public class Loader {
      */
     static WeakHashMap<Class<? extends Pointer>,HashMap<String,Integer>> memberOffsets =
             new WeakHashMap<Class<? extends Pointer>,HashMap<String,Integer>>();
+
+    static {
+        try {
+            Loader.load();
+        } catch (Throwable t) {
+            logger.warn("Could not load Loader: " + t);
+        }
+    }
 
     /**
      * Called by native libraries to put {@code offsetof()} and {@code sizeof()} values in {@link #memberOffsets}.

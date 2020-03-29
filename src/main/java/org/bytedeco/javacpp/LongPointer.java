@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2016 Samuel Audet
+ * Copyright (C) 2011-2020 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@
 package org.bytedeco.javacpp;
 
 import java.nio.LongBuffer;
+import org.bytedeco.javacpp.tools.Logger;
 
 /**
  * The peer class to native pointers and arrays of {@code long long}.
@@ -30,7 +31,18 @@ import java.nio.LongBuffer;
  *
  * @author Samuel Audet
  */
+@org.bytedeco.javacpp.annotation.Properties(inherit = org.bytedeco.javacpp.presets.javacpp.class)
 public class LongPointer extends Pointer {
+    private static final Logger logger = Logger.create(LongPointer.class);
+
+    static {
+        try {
+            Loader.load();
+        } catch (Throwable t) {
+            logger.warn("Could not load LongPointer: " + t);
+        }
+    }
+
     /**
      * Allocates enough memory for the array and copies it.
      *
