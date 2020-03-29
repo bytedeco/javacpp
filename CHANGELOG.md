@@ -1,4 +1,5 @@
 
+ * Pick up in `Generator` the `@Namespace` annotation from paired method too for global getters and setters ([issue #387](https://github.com/bytedeco/javacpp/issues/387))
  * Add presets for `jnijavacpp` and `javacpp-platform` artifact to fix issues at load time ([issue bytedeco/javacv#1305](https://github.com/bytedeco/javacv/issues/1305))
  * Prevent potential `NullPointerException` in `Loader.checkVersion()` ([pull #385](https://github.com/bytedeco/javacpp/pull/385))
  * Allow using `Charset` to avoid `UnsupportedEncodingException` from `BytePointer` ([pull #384](https://github.com/bytedeco/javacpp/pull/384))

@@ -3941,6 +3941,9 @@ public class Generator {
             scopeName = subType;
         }
         Namespace namespace = methodInfo.method.getAnnotation(Namespace.class);
+        if (namespace == null && methodInfo.pairedMethod != null) {
+            namespace = methodInfo.pairedMethod.getAnnotation(Namespace.class);
+        }
         String spaceName = namespace == null ? "" : namespace.value();
         if ((namespace != null && namespace.value().length() == 0) || spaceName.startsWith("::")) {
             scopeName = ""; // user wants to reset namespace here
