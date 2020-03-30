@@ -3459,7 +3459,7 @@ public class Parser {
                 spacing = " ";
             }
             String cast = javaType.equals("byte") || javaType.equals("short") ? "(" + javaType + ")" : "";
-            text += spacing + javaName + spacing2 + " = " + countPrefix;
+            text += spacing + javaName + spacing2 + " = " + cast + countPrefix;
             text2 += spacing + javaName + spacing2 + "(" + cast + countPrefix;
             if (countPrefix.trim().length() > 0) {
                 if (count > 0) {
@@ -3472,6 +3472,10 @@ public class Parser {
             } else {
                 text += count;
                 text2 += count;
+            }
+            if (javaType.equals("boolean") && ((!countPrefix.equals("true") && !countPrefix.equals("false")) || count > 0)) {
+                text += " != 0";
+                text2 += " != 0";
             }
             count++;
 
