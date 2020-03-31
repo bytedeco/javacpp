@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Samuel Audet
+ * Copyright (C) 2018-2020 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -37,6 +37,13 @@ import static org.junit.Assert.*;
  */
 @Platform(compiler = "cpp11", include = "EnumTest.h")
 public class EnumTest {
+
+    public static enum BoolEnum {
+        BOOL(true);
+
+        public final boolean value;
+        private BoolEnum(boolean v) { this.value = v; }
+    }
 
     @Name("CharEnum") public static enum ByteEnum {
         BYTE((byte)123);
@@ -77,6 +84,7 @@ public class EnumTest {
         }
     }
 
+    public static native BoolEnum Char2Bool(ByteEnum e);
     public static native ShortEnum Char2Short(ByteEnum e);
     public static native LongEnum Int2Long(IntEnum e);
     public static native LongEnum enumCallback(EnumCallback f);
@@ -94,6 +102,7 @@ public class EnumTest {
     @Test public void testEnum() {
         System.out.println("Enum");
 
+        assertEquals(true, Char2Bool(ByteEnum.BYTE).value);
         assertEquals(123, Char2Short(ByteEnum.BYTE).value);
         assertEquals(789, Int2Long(IntEnum.INT).value);
         assertEquals(101112, enumCallback(new EnumCallback()).value);

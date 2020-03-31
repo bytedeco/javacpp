@@ -144,6 +144,7 @@ public class Generator {
         this.encoding = encoding;
     }
 
+    static enum BooleanEnum { BOOLEAN; boolean value; }
     static enum ByteEnum { BYTE; byte value; }
     static enum ShortEnum { SHORT; short value; }
     static enum IntEnum { INT; int value; }
@@ -452,6 +453,7 @@ public class Generator {
         out.println("static jfieldID JavaCPP_deallocatorFID = NULL;");
         out.println("static jfieldID JavaCPP_ownerAddressFID = NULL;");
         if (declareEnums) {
+            out.println("static jfieldID JavaCPP_booleanValueFID = NULL;");
             out.println("static jfieldID JavaCPP_byteValueFID = NULL;");
             out.println("static jfieldID JavaCPP_shortValueFID = NULL;");
             out.println("static jfieldID JavaCPP_intValueFID = NULL;");
@@ -1570,6 +1572,11 @@ public class Generator {
         out.println("        return JNI_ERR;");
         out.println("    }");
         if (declareEnums) {
+            out.println("    JavaCPP_booleanValueFID = JavaCPP_getFieldID(env, \"" +
+                    BooleanEnum.class.getName().replace('.', '/') + "\", \"value\", \"Z\");");
+            out.println("    if (JavaCPP_booleanValueFID == NULL) {");
+            out.println("        return JNI_ERR;");
+            out.println("    }");
             out.println("    JavaCPP_byteValueFID = JavaCPP_getFieldID(env, \"" +
                     ByteEnum.class.getName().replace('.', '/') + "\", \"value\", \"B\");");
             out.println("    if (JavaCPP_byteValueFID == NULL) {");

@@ -1,4 +1,5 @@
 
+ * Add `Generator` support for `enum` classes with `boolean` values ([issue #388](https://github.com/bytedeco/javacpp/issues/388))
  * Fix `Parser` outputting invalid Java code for `enum` of `boolean`, `byte`, and `short` types ([issue #388](https://github.com/bytedeco/javacpp/issues/388))
  * Pick up in `Generator` the `@Namespace` annotation from paired method too for global getters and setters ([issue #387](https://github.com/bytedeco/javacpp/issues/387))
  * Add presets for `jnijavacpp` and `javacpp-platform` artifact to fix issues at load time ([issue bytedeco/javacv#1305](https://github.com/bytedeco/javacv/issues/1305))
