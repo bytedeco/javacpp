@@ -1,4 +1,5 @@
 
+ * Remove default compiler options from `linux-armhf.properties` that work mostly only for Raspberry Pi
  * Add `Generator` support for `enum` classes with `boolean` values ([issue #388](https://github.com/bytedeco/javacpp/issues/388))
  * Fix `Parser` outputting invalid Java code for `enum` of `boolean`, `byte`, and `short` types ([issue #388](https://github.com/bytedeco/javacpp/issues/388))
  * Pick up in `Generator` the `@Namespace` annotation from paired method too for global getters and setters ([issue #387](https://github.com/bytedeco/javacpp/issues/387))
