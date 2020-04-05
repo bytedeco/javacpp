@@ -1,4 +1,6 @@
 
+ * Fix `Parser` producing invalid wrappers for basic containers like `std::set<std::pair<...> >`
+ * Add compiler options for C++98, C++03, C++14, and C++17 to platform properties files ([pull #389](https://github.com/bytedeco/javacpp/pull/389))
  * Remove default compiler options from `linux-armhf.properties` that work mostly only for Raspberry Pi
  * Add `Generator` support for `enum` classes with `boolean` values ([issue #388](https://github.com/bytedeco/javacpp/issues/388))
  * Fix `Parser` outputting invalid Java code for `enum` of `boolean`, `byte`, and `short` types ([issue #388](https://github.com/bytedeco/javacpp/issues/388))

@@ -238,7 +238,7 @@ public class Parser {
                         + "    static { Loader.load(); }\n"
                         + "    /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */\n"
                         + "    public " + containerType.javaName + "(Pointer p) { super(p); }\n";
-                if (!constant && (dim == 0 || containerType.arguments.length == 1) && firstType != null && secondType != null) {
+                if (!constant && (dim == 0 || (containerType.arguments.length == 1 && indexType != null)) && firstType != null && secondType != null) {
                     String[] firstNames = firstType.javaNames != null ? firstType.javaNames : new String[] {firstType.javaName};
                     String[] secondNames = secondType.javaNames != null ? secondType.javaNames : new String[] {secondType.javaName};
                     String brackets = arrayBrackets + (dim > 0 ? "[]" : "");
@@ -282,7 +282,7 @@ public class Parser {
                     separator = ", ";
                 }
 
-                if (firstType != null && secondType != null) {
+                if ((dim == 0 || indexType != null) && firstType != null && secondType != null) {
                     String indexAnnotation = dim == 0 ? "@MemberGetter " : "@Index(" + (dim > 1 ? "value = " + dim + ", " : "") + "function = \"at\") ";
                     decl.text += "\n"
                               +  "    " + indexAnnotation + "public native " + firstType.annotations + firstType.javaName + " first(" + params + ");"
@@ -371,7 +371,7 @@ public class Parser {
                     }
                 }
 
-                if (!constant && (dim == 0 || containerType.arguments.length == 1) && firstType != null && secondType != null) {
+                if (!constant && (dim == 0 || (containerType.arguments.length == 1 && indexType != null)) && firstType != null && secondType != null) {
                     String[] firstNames = firstType.javaNames != null ? firstType.javaNames : new String[] {firstType.javaName};
                     String[] secondNames = secondType.javaNames != null ? secondType.javaNames : new String[] {secondType.javaName};
                     String brackets = arrayBrackets + (dim > 0 ? "[]" : "");
