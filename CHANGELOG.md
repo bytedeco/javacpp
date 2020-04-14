@@ -1,4 +1,5 @@
 
+ * Deprecate but also fix `Indexer.rows()`, `cols()`, `width()`, `height()`, and `channels()` ([pull #390](https://github.com/bytedeco/javacpp/pull/390))
  * Fix `Parser` producing invalid wrappers for basic containers like `std::set<std::pair<...> >`
  * Add compiler options for C++98, C++03, C++14, and C++17 to platform properties files ([pull #389](https://github.com/bytedeco/javacpp/pull/389))
  * Remove default compiler options from `linux-armhf.properties` that work mostly only for Raspberry Pi

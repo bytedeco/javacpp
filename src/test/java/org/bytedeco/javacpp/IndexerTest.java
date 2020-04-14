@@ -73,6 +73,13 @@ public class IndexerTest {
         Pointer.DeallocatorReference.totalBytes += 1L << 48;
     }
 
+    static class TestIndexer extends Indexer {
+        TestIndexer(long[] sizes) { super(sizes, Indexer.strides(sizes)); }
+        public void release() { }
+        public double getDouble(long... indices) { return 0; }
+        public Indexer putDouble(long[] indices, double value) { return this; }
+    }
+
     @Test public void testIndexer() {
         System.out.println("Indexer");
         long[] sizes = {640, 480, 3};
@@ -81,6 +88,27 @@ public class IndexerTest {
         assertEquals(1440, strides[0]);
         assertEquals(   3, strides[1]);
         assertEquals(   1, strides[2]);
+
+        TestIndexer indexer = new TestIndexer(sizes);
+        assertEquals(indexer.size(0), indexer.rows());
+        assertEquals(indexer.size(0), indexer.height());
+        assertEquals(indexer.size(1), indexer.cols());
+        assertEquals(indexer.size(1), indexer.width());
+        assertEquals(indexer.size(2), indexer.channels());
+
+        indexer = new TestIndexer(new long[] {640, 480});
+        assertEquals(indexer.size(0), indexer.rows());
+        assertEquals(indexer.size(0), indexer.height());
+        assertEquals(indexer.size(1), indexer.cols());
+        assertEquals(indexer.size(1), indexer.width());
+        assertEquals(-1, indexer.channels());
+
+        indexer = new TestIndexer(new long[] {640});
+        assertEquals(indexer.size(0), indexer.rows());
+        assertEquals(indexer.size(0), indexer.height());
+        assertEquals(-1, indexer.cols());
+        assertEquals(-1, indexer.width());
+        assertEquals(-1, indexer.channels());
     }
 
     @Test public void testByteIndexer() {
