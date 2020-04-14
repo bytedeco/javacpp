@@ -79,15 +79,15 @@ public abstract class Indexer implements AutoCloseable {
     public long stride(int i) { return strides[i]; }
 
     /** Returns {@code sizes[0]} if the number of dimensions is 3, else returns -1 */
-    public long rows() { return sizes.length == 3 ? sizes[0] : -1; }
+    @Deprecated public long rows() { return sizes.length == 3 ? sizes[0] : -1; }
     /** Returns {@code sizes[1]} if the number of dimensions is 3, else returns -1 */
-    public long cols() { return sizes.length == 3 ? sizes[1] : -1; }
+    @Deprecated public long cols() { return sizes.length == 3 ? sizes[1] : -1; }
     /** Returns {@code sizes[1]} if the number of dimensions is 3, else returns -1 */
-    public long width() { return sizes.length == 3 ? sizes[1] : -1; }
+    @Deprecated public long width() { return sizes.length == 3 ? sizes[1] : -1; }
     /** Returns {@code sizes[0]} if the number of dimensions is 3, else returns -1 */
-    public long height() { return sizes.length == 3 ? sizes[0] : -1; }
+    @Deprecated public long height() { return sizes.length == 3 ? sizes[0] : -1; }
     /** Returns {@code sizes[2]} if the number of dimensions is 3, else returns -1 */
-    public long channels() { return sizes.length == 3 ? sizes[2] : -1; }
+    @Deprecated public long channels() { return sizes.length == 3 ? sizes[2] : -1; }
 
     protected static final long checkIndex(long i, long size) {
         if (i < 0 || i >= size) {
