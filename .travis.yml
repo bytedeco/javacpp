@@ -4,8 +4,33 @@ cache:
     - $HOME/.m2/repository
 
 before_install:
-  - "echo '<settings><localRepository>${env.HOME}/.m2/repository</localRepository><servers><server><id>sonatype-nexus-snapshots</id><username>${env.CI_DEPLOY_USERNAME}</username><password>${env.CI_DEPLOY_PASSWORD}</password></server></servers></settings>' > $HOME/settings.xml"
-  - "[[ $TRAVIS_PULL_REQUEST == 'false' ]] && export MAVEN_PHASE=deploy || export MAVEN_PHASE=install"
+  - >
+    echo '<settings>
+            <localRepository>${env.HOME}/.m2/repository</localRepository>
+            <servers>
+              <server>
+                <id>sonatype-nexus-snapshots</id>
+                <username>${env.CI_DEPLOY_USERNAME}</username>
+                <password>${env.CI_DEPLOY_PASSWORD}</password>
+              </server>
+              <server>
+                <id>sonatype-nexus-staging</id>
+                <username>${env.CI_DEPLOY_USERNAME}</username>
+                <password>${env.CI_DEPLOY_PASSWORD}</password>
+              </server>
+            </servers>
+          </settings>' > $HOME/settings.xml
+  - >
+    if [[ "$TRAVIS_PULL_REQUEST" != "false" ]]; then
+        export MAVEN_PHASE="install";
+    elif [[ "$TRAVIS_BRANCH" != "release" ]]; then
+        export MAVEN_PHASE="deploy";
+    else
+        curl -L "https://drive.google.com/uc?export=download&id=$GDOWNLOAD_ID" -o $HOME/settings.tar.gz;
+        tar -xzf $HOME/settings.tar.gz -C $HOME;
+        export GNUPGHOME="$HOME/.gnupg/";
+        export MAVEN_PHASE="deploy -DperformRelease -DstagingRepositoryId=$STAGING_REPOSITORY";
+    fi
 
 jobs:
   include:
@@ -79,6 +104,7 @@ jobs:
       env: PLATFORMS="ios-arm64 ios-x86_64 macosx-x86_64"
       install:
         - brew install gpg1
+        - export PATH="/usr/local/opt/gpg1/libexec/gpgbin/:$PATH"
       script:
         - mvn clean $MAVEN_PHASE -B -V -U -s $HOME/settings.xml -Djavacpp.platform=ios-arm64 -Dmaven.javadoc.skip -Dmaven.test.skip -Dinvoker.skip
         - mvn clean $MAVEN_PHASE -B -V -U -s $HOME/settings.xml -Djavacpp.platform=ios-x86_64 -Dmaven.javadoc.skip -Dmaven.test.skip -Dinvoker.skip
@@ -88,9 +114,10 @@ jobs:
       env: PLATFORMS="windows-x86 windows-x86_64"
       install:
         - choco install jdk8 --params 'installdir=c:\\jdk8'
+        - choco install gnupg --version=2.2.20
         - choco install maven --version=3.6.3
         - export JAVA_HOME="/c/jdk8/"
-        - export PATH="$PATH:/c/ProgramData/chocolatey/lib/maven/apache-maven-3.6.3/bin/:/c/Program Files (x86)/Microsoft Visual Studio/2017/BuildTools/VC/Auxiliary/Build/"
+        - export PATH="/c/Program Files (x86)/gnupg/bin/:/c/ProgramData/chocolatey/lib/maven/apache-maven-3.6.3/bin/:/c/Program Files (x86)/Microsoft Visual Studio/2017/BuildTools/VC/Auxiliary/Build/:$PATH"
       script:
         - cmd.exe //C 'vcvarsall.bat x86 && mvn clean %MAVEN_PHASE% -B -V -U -s %HOME%/settings.xml -Djavacpp.platform=windows-x86 -Dmaven.javadoc.skip -Dmaven.test.skip -Dinvoker.skip'
         - cmd.exe //C 'vcvarsall.bat amd64 && mvn clean %MAVEN_PHASE% -B -V -U -s %HOME%/settings.xml -Djavacpp.platform=windows-x86_64'
