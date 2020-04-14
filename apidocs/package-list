@@ -1,4 +1,5 @@
 org.bytedeco.javacpp
 org.bytedeco.javacpp.annotation
 org.bytedeco.javacpp.indexer
+org.bytedeco.javacpp.presets
 org.bytedeco.javacpp.tools
