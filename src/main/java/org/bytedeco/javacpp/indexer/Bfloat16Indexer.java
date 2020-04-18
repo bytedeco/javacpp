@@ -112,48 +112,48 @@ public abstract class Bfloat16Indexer extends Indexer {
         return Float.floatToIntBits(h) >>> 16;
     }
 
-    /** Returns {@code array/buffer[i]} */
+    /** Returns {@code array/buffer[index(i)]} */
     public abstract float get(long i);
-    /** Returns {@code this} where {@code s = array/buffer[i]} */
+    /** Returns {@code this} where {@code h = array/buffer[index(i)]} */
     public Bfloat16Indexer get(long i, float[] h) { return get(i, h, 0, h.length); }
-    /** Returns {@code this} where {@code s[offset:offset + length] = array/buffer[i]} */
+    /** Returns {@code this} where {@code h[offset:offset + length] = array/buffer[index(i)]} */
     public abstract Bfloat16Indexer get(long i, float[] h, int offset, int length);
-    /** Returns {@code array/buffer[i * strides[0] + j]} */
+    /** Returns {@code array/buffer[index(i, j)]} */
     public abstract float get(long i, long j);
-    /** Returns {@code this} where {@code s = array/buffer[i * strides[0] + j]} */
+    /** Returns {@code this} where {@code h = array/buffer[index(i, j)]} */
     public Bfloat16Indexer get(long i, long j, float[] h) { return get(i, j, h, 0, h.length); }
-    /** Returns {@code this} where {@code s[offset:offset + length] = array/buffer[i * strides[0] + j]} */
+    /** Returns {@code this} where {@code h[offset:offset + length] = array/buffer[index(i, j)]} */
     public abstract Bfloat16Indexer get(long i, long j, float[] h, int offset, int length);
-    /** Returns {@code array/buffer[i * strides[0] + j * strides[1] + k]} */
+    /** Returns {@code array/buffer[index(i, j, k)]} */
     public abstract float get(long i, long j, long k);
     /** Returns {@code array/buffer[index(indices)]} */
     public abstract float get(long... indices);
-    /** Returns {@code this} where {@code s = array/buffer[index(indices)]} */
+    /** Returns {@code this} where {@code h = array/buffer[index(indices)]} */
     public Bfloat16Indexer get(long[] indices, float[] h) { return get(indices, h, 0, h.length); }
-    /** Returns {@code this} where {@code s[offset:offset + length] = array/buffer[index(indices)]} */
+    /** Returns {@code this} where {@code h[offset:offset + length] = array/buffer[index(indices)]} */
     public abstract Bfloat16Indexer get(long[] indices, float[] h, int offset, int length);
 
-    /** Returns {@code this} where {@code array/buffer[i] = s} */
+    /** Returns {@code this} where {@code array/buffer[index(i)] = h} */
     public abstract Bfloat16Indexer put(long i, float h);
-    /** Returns {@code this} where {@code array/buffer[i] = s} */
+    /** Returns {@code this} where {@code array/buffer[index(i)] = h} */
     public Bfloat16Indexer put(long i, float... h) { return put(i, h, 0, h.length); }
-    /** Returns {@code this} where {@code array/buffer[i] = s[offset:offset + length]} */
+    /** Returns {@code this} where {@code array/buffer[index(i)] = h[offset:offset + length]} */
     public abstract Bfloat16Indexer put(long i, float[] h, int offset, int length);
-    /** Returns {@code this} where {@code array/buffer[i * strides[0] + j] = s} */
+    /** Returns {@code this} where {@code array/buffer[index(i, j)] = h} */
     public abstract Bfloat16Indexer put(long i, long j, float h);
-    /** Returns {@code this} where {@code array/buffer[i * strides[0] + j] = s} */
+    /** Returns {@code this} where {@code array/buffer[index(i, j)] = h} */
     public Bfloat16Indexer put(long i, long j, float... h) { return put(i, j, h, 0, h.length); }
-    /** Returns {@code this} where {@code array/buffer[i * strides[0] + j] = s[offset:offset + length]} */
+    /** Returns {@code this} where {@code array/buffer[index(i, j)] = h[offset:offset + length]} */
     public abstract Bfloat16Indexer put(long i, long j, float[] h, int offset, int length);
-    /** Returns {@code this} where {@code array/buffer[i * strides[0] + j * strides[1] + k] = s} */
+    /** Returns {@code this} where {@code array/buffer[index(i, j, k)] = h} */
     public abstract Bfloat16Indexer put(long i, long j, long k, float h);
-    /** Returns {@code this} where {@code array/buffer[index(indices)] = s} */
+    /** Returns {@code this} where {@code array/buffer[index(indices)] = h} */
     public abstract Bfloat16Indexer put(long[] indices, float h);
-    /** Returns {@code this} where {@code array/buffer[index(indices)] = s} */
+    /** Returns {@code this} where {@code array/buffer[index(indices)] = h} */
     public Bfloat16Indexer put(long[] indices, float... h) { return put(indices, h, 0, h.length); }
-    /** Returns {@code this} where {@code array/buffer[index(indices)] = s[offset:offset + length]} */
+    /** Returns {@code this} where {@code array/buffer[index(indices)] = h[offset:offset + length]} */
     public abstract Bfloat16Indexer put(long[] indices, float[] h, int offset, int length);
 
     @Override public double getDouble(long... indices) { return get(indices); }
-    @Override public Bfloat16Indexer putDouble(long[] indices, double s) { return put(indices, (float)s); }
+    @Override public Bfloat16Indexer putDouble(long[] indices, double h) { return put(indices, (float)h); }
 }

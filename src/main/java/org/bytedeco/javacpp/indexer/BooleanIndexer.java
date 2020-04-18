@@ -100,19 +100,19 @@ public abstract class BooleanIndexer extends Indexer {
         }
     }
 
-    /** Returns {@code array/buffer[i]} */
+    /** Returns {@code array/buffer[index(i)]} */
     public abstract boolean get(long i);
-    /** Returns {@code this} where {@code b = array/buffer[i]} */
+    /** Returns {@code this} where {@code b = array/buffer[index(i)]} */
     public BooleanIndexer get(long i, boolean[] b) { return get(i, b, 0, b.length); }
-    /** Returns {@code this} where {@code b[offset:offset + length] = array/buffer[i]} */
+    /** Returns {@code this} where {@code b[offset:offset + length] = array/buffer[index(i)]} */
     public abstract BooleanIndexer get(long i, boolean[] b, int offset, int length);
-    /** Returns {@code array/buffer[i * strides[0] + j]} */
+    /** Returns {@code array/buffer[index(i, j)]} */
     public abstract boolean get(long i, long j);
-    /** Returns {@code this} where {@code b = array/buffer[i * strides[0] + j]} */
+    /** Returns {@code this} where {@code b = array/buffer[index(i, j)]} */
     public BooleanIndexer get(long i, long j, boolean[] b) { return get(i, j, b, 0, b.length); }
-    /** Returns {@code this} where {@code b[offset:offset + length] = array/buffer[i * strides[0] + j]} */
+    /** Returns {@code this} where {@code b[offset:offset + length] = array/buffer[index(i, j)]} */
     public abstract BooleanIndexer get(long i, long j, boolean[] b, int offset, int length);
-    /** Returns {@code array/buffer[i * strides[0] + j * strides[1] + k]} */
+    /** Returns {@code array/buffer[index(i, j, k)]} */
     public abstract boolean get(long i, long j, long k);
     /** Returns {@code array/buffer[index(indices)]} */
     public abstract boolean get(long... indices);
@@ -121,19 +121,19 @@ public abstract class BooleanIndexer extends Indexer {
     /** Returns {@code this} where {@code b[offset:offset + length] = array/buffer[index(indices)]} */
     public abstract BooleanIndexer get(long[] indices, boolean[] b, int offset, int length);
 
-    /** Returns {@code this} where {@code array/buffer[i] = b} */
+    /** Returns {@code this} where {@code array/buffer[index(i)] = b} */
     public abstract BooleanIndexer put(long i, boolean b);
-    /** Returns {@code this} where {@code array/buffer[i] = b} */
+    /** Returns {@code this} where {@code array/buffer[index(i)] = b} */
     public BooleanIndexer put(long i, boolean... b) { return put(i, b, 0, b.length); }
-    /** Returns {@code this} where {@code array/buffer[i] = b[offset:offset + length]} */
+    /** Returns {@code this} where {@code array/buffer[index(i)] = b[offset:offset + length]} */
     public abstract BooleanIndexer put(long i, boolean[] b, int offset, int length);
-    /** Returns {@code this} where {@code array/buffer[i * strides[0] + j] = b} */
+    /** Returns {@code this} where {@code array/buffer[index(i, j)] = b} */
     public abstract BooleanIndexer put(long i, long j, boolean b);
-    /** Returns {@code this} where {@code array/buffer[i * strides[0] + j] = b} */
+    /** Returns {@code this} where {@code array/buffer[index(i, j)] = b} */
     public BooleanIndexer put(long i, long j, boolean... b) { return put(i, j, b, 0, b.length); }
-    /** Returns {@code this} where {@code array/buffer[i * strides[0] + j] = b[offset:offset + length]} */
+    /** Returns {@code this} where {@code array/buffer[index(i, j)] = b[offset:offset + length]} */
     public abstract BooleanIndexer put(long i, long j, boolean[] b, int offset, int length);
-    /** Returns {@code this} where {@code array/buffer[i * strides[0] + j * strides[1] + k] = b} */
+    /** Returns {@code this} where {@code array/buffer[index(i, j, k)] = b} */
     public abstract BooleanIndexer put(long i, long j, long k, boolean b);
     /** Returns {@code this} where {@code array/buffer[index(indices)] = b} */
     public abstract BooleanIndexer put(long[] indices, boolean b);

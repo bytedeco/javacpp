@@ -60,69 +60,83 @@ public class ByteRawIndexer extends ByteIndexer {
         return pointer;
     }
 
-    @Override public byte get(long i) {
+    public byte getRaw(long i) {
         return RAW.getByte(base + checkIndex(i, size));
+    }
+    @Override public byte get(long i) {
+        return getRaw(index(i));
     }
     @Override public ByteIndexer get(long i, byte[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            b[offset + n] = get(i * strides[0] + n);
+            b[offset + n] = getRaw(index(i) + n);
         }
         return this;
     }
     @Override public byte get(long i, long j) {
-        return get(i * strides[0] + (int)j);
+        return getRaw(index(i, j));
     }
     @Override public ByteIndexer get(long i, long j, byte[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            b[offset + n] = get(i * strides[0] + j * strides[1] + n);
+            b[offset + n] = getRaw(index(i, j) + n);
         }
         return this;
     }
     @Override public byte get(long i, long j, long k) {
-        return get(i * strides[0] + j * strides[1] + k);
+        return getRaw(index(i, j, k));
     }
     @Override public byte get(long... indices) {
-        return get(index(indices));
+        return getRaw(index(indices));
     }
     @Override public ByteIndexer get(long[] indices, byte[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            b[offset + n] = get(index(indices) + n);
+            b[offset + n] = getRaw(index(indices) + n);
         }
         return this;
     }
 
-    @Override public ByteIndexer put(long i, byte b) {
+    public ByteIndexer putRaw(long i, byte b) {
         RAW.putByte(base + checkIndex(i, size), b);
         return this;
     }
+    @Override public ByteIndexer put(long i, byte b) {
+        return putRaw(index(i), b);
+    }
     @Override public ByteIndexer put(long i, byte[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            put(i * strides[0] + n, b[offset + n]);
+            putRaw(index(i) + n, b[offset + n]);
         }
         return this;
     }
     @Override public ByteIndexer put(long i, long j, byte b) {
-        put(i * strides[0] + j, b);
+        putRaw(index(i, j), b);
         return this;
     }
     @Override public ByteIndexer put(long i, long j, byte[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            put(i * strides[0] + j * strides[1] + n, b[offset + n]);
+            putRaw(index(i, j) + n, b[offset + n]);
         }
         return this;
     }
     @Override public ByteIndexer put(long i, long j, long k, byte b) {
-        put(i * strides[0] + j * strides[1] + k, b);
+        putRaw(index(i, j, k), b);
         return this;
     }
     @Override public ByteIndexer put(long[] indices, byte b) {
-        put(index(indices), b);
+        putRaw(index(indices), b);
         return this;
     }
     @Override public ByteIndexer put(long[] indices, byte[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            put(index(indices) + n, b[offset + n]);
+            putRaw(index(indices) + n, b[offset + n]);
         }
+        return this;
+    }
+
+    @Override public byte getByte(long i) {
+        return RAW.getByte(base + checkIndex(i, size - 1));
+    }
+    @Override public ByteIndexer putByte(long i, byte b) {
+        RAW.putByte(base + checkIndex(i, size - 1), b);
         return this;
     }
 

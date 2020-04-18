@@ -60,68 +60,74 @@ public class BooleanRawIndexer extends BooleanIndexer {
         return pointer;
     }
 
-    @Override public boolean get(long i) {
+    public boolean getRaw(long i) {
         return RAW.getBoolean(base + checkIndex(i, size) * VALUE_BYTES);
+    }
+    @Override public boolean get(long i) {
+        return getRaw(index(i));
     }
     @Override public BooleanIndexer get(long i, boolean[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            b[offset + n] = get(i * strides[0] + n);
+            b[offset + n] = getRaw(index(i) + n);
         }
         return this;
     }
     @Override public boolean get(long i, long j) {
-        return get(i * strides[0] + j);
+        return getRaw(index(i, j));
     }
     @Override public BooleanIndexer get(long i, long j, boolean[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            b[offset + n] = get(i * strides[0] + j * strides[1] + n);
+            b[offset + n] = getRaw(index(i, j) + n);
         }
         return this;
     }
     @Override public boolean get(long i, long j, long k) {
-        return get(i * strides[0] + j * strides[1] + k);
+        return getRaw(index(i, j, k));
     }
     @Override public boolean get(long... indices) {
-        return get(index(indices));
+        return getRaw(index(indices));
     }
     @Override public BooleanIndexer get(long[] indices, boolean[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            b[offset + n] = get(index(indices) + n);
+            b[offset + n] = getRaw(index(indices) + n);
         }
         return this;
     }
 
-    @Override public BooleanIndexer put(long i, boolean b) {
+    public BooleanIndexer putRaw(long i, boolean b) {
         RAW.putBoolean(base + checkIndex(i, size) * VALUE_BYTES, b);
         return this;
     }
+    @Override public BooleanIndexer put(long i, boolean b) {
+        return putRaw(index(i), b);
+    }
     @Override public BooleanIndexer put(long i, boolean[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            put(i * strides[0] + n, b[offset + n]);
+            putRaw(index(i) + n, b[offset + n]);
         }
         return this;
     }
     @Override public BooleanIndexer put(long i, long j, boolean b) {
-        put(i * strides[0] + j, b);
+        putRaw(index(i, j), b);
         return this;
     }
     @Override public BooleanIndexer put(long i, long j, boolean[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            put(i * strides[0] + j * strides[1] + n, b[offset + n]);
+            putRaw(index(i, j) + n, b[offset + n]);
         }
         return this;
     }
     @Override public BooleanIndexer put(long i, long j, long k, boolean b) {
-        put(i * strides[0] + j * strides[1] + k, b);
+        putRaw(index(i, j, k), b);
         return this;
     }
     @Override public BooleanIndexer put(long[] indices, boolean b) {
-        put(index(indices), b);
+        putRaw(index(indices), b);
         return this;
     }
     @Override public BooleanIndexer put(long[] indices, boolean[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            put(index(indices) + n, b[offset + n]);
+            putRaw(index(indices) + n, b[offset + n]);
         }
         return this;
     }

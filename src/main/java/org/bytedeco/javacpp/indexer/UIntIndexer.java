@@ -100,19 +100,19 @@ public abstract class UIntIndexer extends Indexer {
         }
     }
 
-    /** Returns {@code array/buffer[i]} */
+    /** Returns {@code array/buffer[index(i)]} */
     public abstract long get(long i);
-    /** Returns {@code this} where {@code n = array/buffer[i]} */
+    /** Returns {@code this} where {@code n = array/buffer[index(i)]} */
     public UIntIndexer get(long i, long[] n) { return get(i, n, 0, n.length); }
-    /** Returns {@code this} where {@code n[offset:offset + length] = array/buffer[i]} */
+    /** Returns {@code this} where {@code n[offset:offset + length] = array/buffer[index(i)]} */
     public abstract UIntIndexer get(long i, long[] n, int offset, int length);
-    /** Returns {@code array/buffer[i * strides[0] + j]} */
+    /** Returns {@code array/buffer[index(i, j)]} */
     public abstract long get(long i, long j);
-    /** Returns {@code this} where {@code n = array/buffer[i * strides[0] + j]} */
+    /** Returns {@code this} where {@code n = array/buffer[index(i, j)]} */
     public UIntIndexer get(long i, long j, long[] n) { return get(i, j, n, 0, n.length); }
-    /** Returns {@code this} where {@code n[offset:offset + length] = array/buffer[i * strides[0] + j]} */
+    /** Returns {@code this} where {@code n[offset:offset + length] = array/buffer[index(i, j)]} */
     public abstract UIntIndexer get(long i, long j, long[] n, int offset, int length);
-    /** Returns {@code array/buffer[i * strides[0] + j * strides[1] + k]} */
+    /** Returns {@code array/buffer[index(i, j, k)]} */
     public abstract long get(long i, long j, long k);
     /** Returns {@code array/buffer[index(indices)]} */
     public abstract long get(long... indices);
@@ -121,19 +121,19 @@ public abstract class UIntIndexer extends Indexer {
     /** Returns {@code this} where {@code n[offset:offset + length] = array/buffer[index(indices)]} */
     public abstract UIntIndexer get(long[] indices, long[] n, int offset, int length);
 
-    /** Returns {@code this} where {@code array/buffer[i] = n} */
+    /** Returns {@code this} where {@code array/buffer[index(i)] = n} */
     public abstract UIntIndexer put(long i, long n);
-    /** Returns {@code this} where {@code array/buffer[i] = n} */
+    /** Returns {@code this} where {@code array/buffer[index(i)] = n} */
     public UIntIndexer put(long i, long... n) { return put(i, n, 0, n.length); }
-    /** Returns {@code this} where {@code array/buffer[i] = n[offset:offset + length]} */
+    /** Returns {@code this} where {@code array/buffer[index(i)] = n[offset:offset + length]} */
     public abstract UIntIndexer put(long i, long[] n, int offset, int length);
-    /** Returns {@code this} where {@code array/buffer[i * strides[0] + j] = n} */
+    /** Returns {@code this} where {@code array/buffer[index(i, j)] = n} */
     public abstract UIntIndexer put(long i, long j, long n);
-    /** Returns {@code this} where {@code array/buffer[i * strides[0] + j] = n} */
+    /** Returns {@code this} where {@code array/buffer[index(i, j)] = n} */
     public UIntIndexer put(long i, long j, long... n) { return put(i, j, n, 0, n.length); }
-    /** Returns {@code this} where {@code array/buffer[i * strides[0] + j] = n[offset:offset + length]} */
+    /** Returns {@code this} where {@code array/buffer[index(i, j)] = n[offset:offset + length]} */
     public abstract UIntIndexer put(long i, long j, long[] n, int offset, int length);
-    /** Returns {@code this} where {@code array/buffer[i * strides[0] + j * strides[1] + k] = n} */
+    /** Returns {@code this} where {@code array/buffer[index(i, j, k)] = n} */
     public abstract UIntIndexer put(long i, long j, long k, long n);
     /** Returns {@code this} where {@code array/buffer[index(indices)] = n} */
     public abstract UIntIndexer put(long[] indices, long n);

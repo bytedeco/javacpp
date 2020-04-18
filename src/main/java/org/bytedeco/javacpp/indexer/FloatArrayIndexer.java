@@ -52,25 +52,25 @@ public class FloatArrayIndexer extends FloatIndexer {
     }
 
     @Override public float get(long i) {
-        return array[(int)i];
+        return array[(int)index(i)];
     }
     @Override public FloatIndexer get(long i, float[] f, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            f[offset + n] = array[(int)i * (int)strides[0] + n];
+            f[offset + n] = array[(int)index(i) + n];
         }
         return this;
     }
     @Override public float get(long i, long j) {
-        return array[(int)i * (int)strides[0] + (int)j];
+        return array[(int)index(i, j)];
     }
     @Override public FloatIndexer get(long i, long j, float[] f, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            f[offset + n] = array[(int)i * (int)strides[0] + (int)j * (int)strides[1] + n];
+            f[offset + n] = array[(int)index(i, j) + n];
         }
         return this;
     }
     @Override public float get(long i, long j, long k) {
-        return array[(int)i * (int)strides[0] + (int)j * (int)strides[1] + (int)k];
+        return array[(int)index(i, j, k)];
     }
     @Override public float get(long... indices) {
         return array[(int)index(indices)];
@@ -83,27 +83,27 @@ public class FloatArrayIndexer extends FloatIndexer {
     }
 
     @Override public FloatIndexer put(long i, float f) {
-        array[(int)i] = f;
+        array[(int)index(i)] = f;
         return this;
     }
     @Override public FloatIndexer put(long i, float[] f, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            array[(int)i * (int)strides[0] + n] = f[offset + n];
+            array[(int)index(i) + n] = f[offset + n];
         }
         return this;
     }
     @Override public FloatIndexer put(long i, long j, float f) {
-        array[(int)i * (int)strides[0] + (int)j] = f;
+        array[(int)index(i, j)] = f;
         return this;
     }
     @Override public FloatIndexer put(long i, long j, float[] f, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            array[(int)i * (int)strides[0] + (int)j * (int)strides[1] + n] = f[offset + n];
+            array[(int)index(i, j) + n] = f[offset + n];
         }
         return this;
     }
     @Override public FloatIndexer put(long i, long j, long k, float f) {
-        array[(int)i * (int)strides[0] + (int)j * (int)strides[1] + (int)k] = f;
+        array[(int)index(i, j, k)] = f;
         return this;
     }
     @Override public FloatIndexer put(long[] indices, float f) {

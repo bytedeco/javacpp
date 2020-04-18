@@ -55,25 +55,25 @@ public class UIntBufferIndexer extends UIntIndexer {
     }
 
     @Override public long get(long i) {
-        return buffer.get((int)i) & 0xFFFFFFFFL;
+        return buffer.get((int)index(i)) & 0xFFFFFFFFL;
     }
     @Override public UIntIndexer get(long i, long[] m, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            m[offset + n] = buffer.get((int)i * (int)strides[0] + n) & 0xFFFFFFFFL;
+            m[offset + n] = buffer.get((int)index(i) + n) & 0xFFFFFFFFL;
         }
         return this;
     }
     @Override public long get(long i, long j) {
-        return buffer.get((int)i * (int)strides[0] + (int)j) & 0xFFFFFFFFL;
+        return buffer.get((int)index(i, j)) & 0xFFFFFFFFL;
     }
     @Override public UIntIndexer get(long i, long j, long[] m, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            m[offset + n] = buffer.get((int)i * (int)strides[0] + (int)j * (int)strides[1] + n) & 0xFFFFFFFFL;
+            m[offset + n] = buffer.get((int)index(i, j) + n) & 0xFFFFFFFFL;
         }
         return this;
     }
     @Override public long get(long i, long j, long k) {
-        return buffer.get((int)i * (int)strides[0] + (int)j * (int)strides[1] + (int)k) & 0xFFFFFFFFL;
+        return buffer.get((int)index(i, j, k)) & 0xFFFFFFFFL;
     }
     @Override public long get(long... indices) {
         return buffer.get((int)index(indices)) & 0xFFFFFFFFL;
@@ -86,27 +86,27 @@ public class UIntBufferIndexer extends UIntIndexer {
     }
 
     @Override public UIntIndexer put(long i, long n) {
-        buffer.put((int)i, (int)n);
+        buffer.put((int)index(i), (int)n);
         return this;
     }
     @Override public UIntIndexer put(long i, long[] m, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            buffer.put((int)i * (int)strides[0] + n, (int)m[offset + n]);
+            buffer.put((int)index(i) + n, (int)m[offset + n]);
         }
         return this;
     }
     @Override public UIntIndexer put(long i, long j, long n) {
-        buffer.put((int)i * (int)strides[0] + (int)j, (int)n);
+        buffer.put((int)index(i, j), (int)n);
         return this;
     }
     @Override public UIntIndexer put(long i, long j, long[] m, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            buffer.put((int)i * (int)strides[0] + (int)j * (int)strides[1] + n, (int)m[offset + n]);
+            buffer.put((int)index(i, j) + n, (int)m[offset + n]);
         }
         return this;
     }
     @Override public UIntIndexer put(long i, long j, long k, long n) {
-        buffer.put((int)i * (int)strides[0] + (int)j * (int)strides[1] + (int)k, (int)n);
+        buffer.put((int)index(i, j, k), (int)n);
         return this;
     }
     @Override public UIntIndexer put(long[] indices, long n) {

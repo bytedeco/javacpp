@@ -55,25 +55,25 @@ public class BooleanBufferIndexer extends BooleanIndexer {
     }
 
     @Override public boolean get(long i) {
-        return buffer.get((int)i) != 0;
+        return buffer.get((int)index(i)) != 0;
     }
     @Override public BooleanIndexer get(long i, boolean[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            b[offset + n] = buffer.get((int)i * (int)strides[0] + n) != 0;
+            b[offset + n] = buffer.get((int)index(i) + n) != 0;
         }
         return this;
     }
     @Override public boolean get(long i, long j) {
-        return buffer.get((int)i * (int)strides[0] + (int)j) != 0;
+        return buffer.get((int)index(i, j)) != 0;
     }
     @Override public BooleanIndexer get(long i, long j, boolean[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            b[offset + n] = buffer.get((int)i * (int)strides[0] + (int)j * (int)strides[1] + n) != 0;
+            b[offset + n] = buffer.get((int)index(i, j) + n) != 0;
         }
         return this;
     }
     @Override public boolean get(long i, long j, long k) {
-        return buffer.get((int)i * (int)strides[0] + (int)j * (int)strides[1] + (int)k) != 0;
+        return buffer.get((int)index(i, j, k)) != 0;
     }
     @Override public boolean get(long... indices) {
         return buffer.get((int)index(indices)) != 0;
@@ -86,27 +86,27 @@ public class BooleanBufferIndexer extends BooleanIndexer {
     }
 
     @Override public BooleanIndexer put(long i, boolean b) {
-        buffer.put((int)i, b ? (byte)1 : (byte)0);
+        buffer.put((int)index(i), b ? (byte)1 : (byte)0);
         return this;
     }
     @Override public BooleanIndexer put(long i, boolean[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            buffer.put((int)i * (int)strides[0] + n, b[offset + n] ? (byte)1 : (byte)0);
+            buffer.put((int)index(i) + n, b[offset + n] ? (byte)1 : (byte)0);
         }
         return this;
     }
     @Override public BooleanIndexer put(long i, long j, boolean b) {
-        buffer.put((int)i * (int)strides[0] + (int)j, b ? (byte)1 : (byte)0);
+        buffer.put((int)index(i, j), b ? (byte)1 : (byte)0);
         return this;
     }
     @Override public BooleanIndexer put(long i, long j, boolean[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            buffer.put((int)i * (int)strides[0] + (int)j * (int)strides[1] + n, b[offset + n] ? (byte)1 : (byte)0);
+            buffer.put((int)index(i, j) + n, b[offset + n] ? (byte)1 : (byte)0);
         }
         return this;
     }
     @Override public BooleanIndexer put(long i, long j, long k, boolean b) {
-        buffer.put((int)i * (int)strides[0] + (int)j * (int)strides[1] + (int)k, b ? (byte)1 : (byte)0);
+        buffer.put((int)index(i, j, k), b ? (byte)1 : (byte)0);
         return this;
     }
     @Override public BooleanIndexer put(long[] indices, boolean b) {

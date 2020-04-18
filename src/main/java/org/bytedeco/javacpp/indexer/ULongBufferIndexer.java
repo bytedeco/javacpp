@@ -56,25 +56,25 @@ public class ULongBufferIndexer extends ULongIndexer {
     }
 
     @Override public BigInteger get(long i) {
-        return toBigInteger(buffer.get((int)i));
+        return toBigInteger(buffer.get((int)index(i)));
     }
     @Override public ULongIndexer get(long i, BigInteger[] l, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            l[offset + n] = toBigInteger(buffer.get((int)i * (int)strides[0] + n));
+            l[offset + n] = toBigInteger(buffer.get((int)index(i) + n));
         }
         return this;
     }
     @Override public BigInteger get(long i, long j) {
-        return toBigInteger(buffer.get((int)i * (int)strides[0] + (int)j));
+        return toBigInteger(buffer.get((int)index(i, j)));
     }
     @Override public ULongIndexer get(long i, long j, BigInteger[] l, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            l[offset + n] = toBigInteger(buffer.get((int)i * (int)strides[0] + (int)j * (int)strides[1] + n));
+            l[offset + n] = toBigInteger(buffer.get((int)index(i, j) + n));
         }
         return this;
     }
     @Override public BigInteger get(long i, long j, long k) {
-        return toBigInteger(buffer.get((int)i * (int)strides[0] + (int)j * (int)strides[1] + (int)k));
+        return toBigInteger(buffer.get((int)index(i, j, k)));
     }
     @Override public BigInteger get(long... indices) {
         return toBigInteger(buffer.get((int)index(indices)));
@@ -87,27 +87,27 @@ public class ULongBufferIndexer extends ULongIndexer {
     }
 
     @Override public ULongIndexer put(long i, BigInteger l) {
-        buffer.put((int)i, fromBigInteger(l));
+        buffer.put((int)index(i), fromBigInteger(l));
         return this;
     }
     @Override public ULongIndexer put(long i, BigInteger[] l, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            buffer.put((int)i * (int)strides[0] + n, fromBigInteger(l[offset + n]));
+            buffer.put((int)index(i) + n, fromBigInteger(l[offset + n]));
         }
         return this;
     }
     @Override public ULongIndexer put(long i, long j, BigInteger l) {
-        buffer.put((int)i * (int)strides[0] + (int)j, fromBigInteger(l));
+        buffer.put((int)index(i, j), fromBigInteger(l));
         return this;
     }
     @Override public ULongIndexer put(long i, long j, BigInteger[] l, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            buffer.put((int)i * (int)strides[0] + (int)j * (int)strides[1] + n, fromBigInteger(l[offset + n]));
+            buffer.put((int)index(i, j) + n, fromBigInteger(l[offset + n]));
         }
         return this;
     }
     @Override public ULongIndexer put(long i, long j, long k, BigInteger l) {
-        buffer.put((int)i * (int)strides[0] + (int)j * (int)strides[1] + (int)k, fromBigInteger(l));
+        buffer.put((int)index(i, j, k), fromBigInteger(l));
         return this;
     }
     @Override public ULongIndexer put(long[] indices, BigInteger l) {

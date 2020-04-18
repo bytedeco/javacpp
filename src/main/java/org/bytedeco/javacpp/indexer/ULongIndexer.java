@@ -114,19 +114,19 @@ public abstract class ULongIndexer extends Indexer {
         return l.longValue();
     }
 
-    /** Returns {@code array/buffer[i]} */
+    /** Returns {@code array/buffer[index(i)]} */
     public abstract BigInteger get(long i);
-    /** Returns {@code this} where {@code l = array/buffer[i]} */
+    /** Returns {@code this} where {@code l = array/buffer[index(i)]} */
     public ULongIndexer get(long i, BigInteger[] l) { return get(i, l, 0, l.length); }
-    /** Returns {@code this} where {@code l[offset:offset + length] = array/buffer[i]} */
+    /** Returns {@code this} where {@code l[offset:offset + length] = array/buffer[index(i)]} */
     public abstract ULongIndexer get(long i, BigInteger[] l, int offset, int length);
-    /** Returns {@code array/buffer[i * strides[0] + j]} */
+    /** Returns {@code array/buffer[index(i, j)]} */
     public abstract BigInteger get(long i, long j);
-    /** Returns {@code this} where {@code l = array/buffer[i * strides[0] + j]} */
+    /** Returns {@code this} where {@code l = array/buffer[index(i, j)]} */
     public ULongIndexer get(long i, long j, BigInteger[] l) { return get(i, j, l, 0, l.length); }
-    /** Returns {@code this} where {@code l[offset:offset + length] = array/buffer[i * strides[0] + j]} */
+    /** Returns {@code this} where {@code l[offset:offset + length] = array/buffer[index(i, j)]} */
     public abstract ULongIndexer get(long i, long j, BigInteger[] l, int offset, int length);
-    /** Returns {@code array/buffer[i * strides[0] + j * strides[1] + k]} */
+    /** Returns {@code array/buffer[index(i, j, k)]} */
     public abstract BigInteger get(long i, long j, long k);
     /** Returns {@code array/buffer[index(indices)]} */
     public abstract BigInteger get(long... indices);
@@ -135,19 +135,19 @@ public abstract class ULongIndexer extends Indexer {
     /** Returns {@code this} where {@code l[offset:offset + length] = array/buffer[index(indices)]} */
     public abstract ULongIndexer get(long[] indices, BigInteger[] l, int offset, int length);
 
-    /** Returns {@code this} where {@code array/buffer[i] = l} */
+    /** Returns {@code this} where {@code array/buffer[index(i)] = l} */
     public abstract ULongIndexer put(long i, BigInteger l);
-    /** Returns {@code this} where {@code array/buffer[i] = l} */
+    /** Returns {@code this} where {@code array/buffer[index(i)] = l} */
     public ULongIndexer put(long i, BigInteger... l) { return put(i, l, 0, l.length); }
-    /** Returns {@code this} where {@code array/buffer[i] = l[offset:offset + length]} */
+    /** Returns {@code this} where {@code array/buffer[index(i)] = l[offset:offset + length]} */
     public abstract ULongIndexer put(long i, BigInteger[] l, int offset, int length);
-    /** Returns {@code this} where {@code array/buffer[i * strides[0] + j] = l} */
+    /** Returns {@code this} where {@code array/buffer[index(i, j)] = l} */
     public abstract ULongIndexer put(long i, long j, BigInteger l);
-    /** Returns {@code this} where {@code array/buffer[i * strides[0] + j] = l} */
+    /** Returns {@code this} where {@code array/buffer[index(i, j)] = l} */
     public ULongIndexer put(long i, long j, BigInteger... l) { return put(i, j, l, 0, l.length); }
-    /** Returns {@code this} where {@code array/buffer[i * strides[0] + j] = l[offset:offset + length]} */
+    /** Returns {@code this} where {@code array/buffer[index(i, j)] = l[offset:offset + length]} */
     public abstract ULongIndexer put(long i, long j, BigInteger[] l, int offset, int length);
-    /** Returns {@code this} where {@code array/buffer[i * strides[0] + j * strides[1] + k] = l} */
+    /** Returns {@code this} where {@code array/buffer[index(i, j, k)] = l} */
     public abstract ULongIndexer put(long i, long j, long k, BigInteger l);
     /** Returns {@code this} where {@code array/buffer[index(indices)] = l} */
     public abstract ULongIndexer put(long[] indices, BigInteger l);

@@ -55,25 +55,25 @@ public class ShortBufferIndexer extends ShortIndexer {
     }
 
     @Override public short get(long i) {
-        return buffer.get((int)i);
+        return buffer.get((int)index(i));
     }
     @Override public ShortIndexer get(long i, short[] s, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            s[offset + n] = buffer.get((int)i * (int)strides[0] + n);
+            s[offset + n] = buffer.get((int)index(i) + n);
         }
         return this;
     }
     @Override public short get(long i, long j) {
-        return buffer.get((int)i * (int)strides[0] + (int)j);
+        return buffer.get((int)index(i, j));
     }
     @Override public ShortIndexer get(long i, long j, short[] s, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            s[offset + n] = buffer.get((int)i * (int)strides[0] + (int)j * (int)strides[1] + n);
+            s[offset + n] = buffer.get((int)index(i, j) + n);
         }
         return this;
     }
     @Override public short get(long i, long j, long k) {
-        return buffer.get((int)i * (int)strides[0] + (int)j * (int)strides[1] + (int)k);
+        return buffer.get((int)index(i, j, k));
     }
     @Override public short get(long... indices) {
         return buffer.get((int)index(indices));
@@ -86,27 +86,27 @@ public class ShortBufferIndexer extends ShortIndexer {
     }
 
     @Override public ShortIndexer put(long i, short s) {
-        buffer.put((int)i, s);
+        buffer.put((int)index(i), s);
         return this;
     }
     @Override public ShortIndexer put(long i, short[] s, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            buffer.put((int)i * (int)strides[0] + n, s[offset + n]);
+            buffer.put((int)index(i) + n, s[offset + n]);
         }
         return this;
     }
     @Override public ShortIndexer put(long i, long j, short s) {
-        buffer.put((int)i * (int)strides[0] + (int)j, s);
+        buffer.put((int)index(i, j), s);
         return this;
     }
     @Override public ShortIndexer put(long i, long j, short[] s, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            buffer.put((int)i * (int)strides[0] + (int)j * (int)strides[1] + n, s[offset + n]);
+            buffer.put((int)index(i, j) + n, s[offset + n]);
         }
         return this;
     }
     @Override public ShortIndexer put(long i, long j, long k, short s) {
-        buffer.put((int)i * (int)strides[0] + (int)j * (int)strides[1] + (int)k, s);
+        buffer.put((int)index(i, j, k), s);
         return this;
     }
     @Override public ShortIndexer put(long[] indices, short s) {

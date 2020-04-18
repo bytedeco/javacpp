@@ -60,68 +60,74 @@ public class UIntRawIndexer extends UIntIndexer {
         return pointer;
     }
 
-    @Override public long get(long i) {
+    public long getRaw(long i) {
         return RAW.getInt(base + checkIndex(i, size) * VALUE_BYTES) & 0xFFFFFFFFL;
+    }
+    @Override public long get(long i) {
+        return getRaw(index(i));
     }
     @Override public UIntIndexer get(long i, long[] m, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            m[offset + n] = get(i * strides[0] + n) & 0xFFFFFFFFL;
+            m[offset + n] = getRaw(index(i) + n) & 0xFFFFFFFFL;
         }
         return this;
     }
     @Override public long get(long i, long j) {
-        return get(i * strides[0] + j) & 0xFFFFFFFFL;
+        return getRaw(index(i, j)) & 0xFFFFFFFFL;
     }
     @Override public UIntIndexer get(long i, long j, long[] m, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            m[offset + n] = get(i * strides[0] + j * strides[1] + n) & 0xFFFFFFFFL;
+            m[offset + n] = getRaw(index(i, j) + n) & 0xFFFFFFFFL;
         }
         return this;
     }
     @Override public long get(long i, long j, long k) {
-        return get(i * strides[0] + j * strides[1] + k) & 0xFFFFFFFFL;
+        return getRaw(index(i, j, k)) & 0xFFFFFFFFL;
     }
     @Override public long get(long... indices) {
-        return get(index(indices)) & 0xFFFFFFFFL;
+        return getRaw(index(indices)) & 0xFFFFFFFFL;
     }
     @Override public UIntIndexer get(long[] indices, long[] m, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            m[offset + n] = get(index(indices) + n) & 0xFFFFFFFFL;
+            m[offset + n] = getRaw(index(indices) + n) & 0xFFFFFFFFL;
         }
         return this;
     }
 
-    @Override public UIntIndexer put(long i, long n) {
+    public UIntIndexer putRaw(long i, long n) {
         RAW.putInt(base + checkIndex(i, size) * VALUE_BYTES, (int)n);
         return this;
     }
+    @Override public UIntIndexer put(long i, long n) {
+        return putRaw(index(i), n);
+    }
     @Override public UIntIndexer put(long i, long[] m, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            put(i * strides[0] + n, (int)m[offset + n]);
+            putRaw(index(i) + n, (int)m[offset + n]);
         }
         return this;
     }
     @Override public UIntIndexer put(long i, long j, long n) {
-        put(i * strides[0] + j, (int)n);
+        putRaw(index(i, j), (int)n);
         return this;
     }
     @Override public UIntIndexer put(long i, long j, long[] m, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            put(i * strides[0] + j * strides[1] + n, (int)m[offset + n]);
+            putRaw(index(i, j) + n, (int)m[offset + n]);
         }
         return this;
     }
     @Override public UIntIndexer put(long i, long j, long k, long n) {
-        put(i * strides[0] + j * strides[1] + k, (int)n);
+        putRaw(index(i, j, k), (int)n);
         return this;
     }
     @Override public UIntIndexer put(long[] indices, long n) {
-        put(index(indices), (int)n);
+        putRaw(index(indices), (int)n);
         return this;
     }
     @Override public UIntIndexer put(long[] indices, long[] m, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            put(index(indices) + n, (int)m[offset + n]);
+            putRaw(index(indices) + n, (int)m[offset + n]);
         }
         return this;
     }

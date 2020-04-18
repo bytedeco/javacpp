@@ -60,68 +60,74 @@ public class HalfRawIndexer extends HalfIndexer {
         return pointer;
     }
 
-    @Override public float get(long i) {
+    public float getRaw(long i) {
         return toFloat(RAW.getShort(base + checkIndex(i, size) * VALUE_BYTES));
+    }
+    @Override public float get(long i) {
+        return getRaw(index(i));
     }
     @Override public HalfIndexer get(long i, float[] h, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            h[offset + n] = get(i * strides[0] + n);
+            h[offset + n] = getRaw(index(i) + n);
         }
         return this;
     }
     @Override public float get(long i, long j) {
-        return get(i * strides[0] + j);
+        return getRaw(index(i, j));
     }
     @Override public HalfIndexer get(long i, long j, float[] h, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            h[offset + n] = get(i * strides[0] + j * strides[1] + n);
+            h[offset + n] = getRaw(index(i, j) + n);
         }
         return this;
     }
     @Override public float get(long i, long j, long k) {
-        return get(i * strides[0] + j * strides[1] + k);
+        return getRaw(index(i, j, k));
     }
     @Override public float get(long... indices) {
-        return get(index(indices));
+        return getRaw(index(indices));
     }
     @Override public HalfIndexer get(long[] indices, float[] h, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            h[offset + n] = get(index(indices) + n);
+            h[offset + n] = getRaw(index(indices) + n);
         }
         return this;
     }
 
-    @Override public HalfIndexer put(long i, float h) {
+    public HalfIndexer putRaw(long i, float h) {
         RAW.putShort(base + checkIndex(i, size) * VALUE_BYTES, (short)fromFloat(h));
         return this;
     }
+    @Override public HalfIndexer put(long i, float h) {
+        return putRaw(index(i), h);
+    }
     @Override public HalfIndexer put(long i, float[] h, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            put(i * strides[0] + n, h[offset + n]);
+            putRaw(index(i) + n, h[offset + n]);
         }
         return this;
     }
     @Override public HalfIndexer put(long i, long j, float h) {
-        put(i * strides[0] + j, h);
+        putRaw(index(i, j), h);
         return this;
     }
     @Override public HalfIndexer put(long i, long j, float[] h, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            put(i * strides[0] + j * strides[1] + n, h[offset + n]);
+            putRaw(index(i, j) + n, h[offset + n]);
         }
         return this;
     }
     @Override public HalfIndexer put(long i, long j, long k, float h) {
-        put(i * strides[0] + j * strides[1] + k, h);
+        putRaw(index(i, j, k), h);
         return this;
     }
     @Override public HalfIndexer put(long[] indices, float h) {
-        put(index(indices), h);
+        putRaw(index(indices), h);
         return this;
     }
     @Override public HalfIndexer put(long[] indices, float[] h, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            put(index(indices) + n, h[offset + n]);
+            putRaw(index(indices) + n, h[offset + n]);
         }
         return this;
     }

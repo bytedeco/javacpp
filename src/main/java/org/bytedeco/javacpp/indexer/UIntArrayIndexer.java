@@ -52,25 +52,25 @@ public class UIntArrayIndexer extends UIntIndexer {
     }
 
     @Override public long get(long i) {
-        return array[(int)i] & 0xFFFFFFFFL;
+        return array[(int)index(i)] & 0xFFFFFFFFL;
     }
     @Override public UIntIndexer get(long i, long[] m, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            m[offset + n] = array[(int)i * (int)strides[0] + n] & 0xFFFFFFFFL;
+            m[offset + n] = array[(int)index(i) + n] & 0xFFFFFFFFL;
         }
         return this;
     }
     @Override public long get(long i, long j) {
-        return array[(int)i * (int)strides[0] + (int)j] & 0xFFFFFFFFL;
+        return array[(int)index(i, j)] & 0xFFFFFFFFL;
     }
     @Override public UIntIndexer get(long i, long j, long[] m, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            m[offset + n] = array[(int)i * (int)strides[0] + (int)j * (int)strides[1] + n] & 0xFFFFFFFFL;
+            m[offset + n] = array[(int)index(i, j) + n] & 0xFFFFFFFFL;
         }
         return this;
     }
     @Override public long get(long i, long j, long k) {
-        return array[(int)i * (int)strides[0] + (int)j * (int)strides[1] + (int)k] & 0xFFFFFFFFL;
+        return array[(int)index(i, j, k)] & 0xFFFFFFFFL;
     }
     @Override public long get(long... indices) {
         return array[(int)index(indices)] & 0xFFFFFFFFL;
@@ -83,27 +83,27 @@ public class UIntArrayIndexer extends UIntIndexer {
     }
 
     @Override public UIntIndexer put(long i, long n) {
-        array[(int)i] = (int)n;
+        array[(int)index(i)] = (int)n;
         return this;
     }
     @Override public UIntIndexer put(long i, long[] m, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            array[(int)i * (int)strides[0] + n] = (int)m[offset + n];
+            array[(int)index(i) + n] = (int)m[offset + n];
         }
         return this;
     }
     @Override public UIntIndexer put(long i, long j, long n) {
-        array[(int)i * (int)strides[0] + (int)j] = (int)n;
+        array[(int)index(i, j)] = (int)n;
         return this;
     }
     @Override public UIntIndexer put(long i, long j, long[] m, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            array[(int)i * (int)strides[0] + (int)j * (int)strides[1] + n] = (int)m[offset + n];
+            array[(int)index(i, j) + n] = (int)m[offset + n];
         }
         return this;
     }
     @Override public UIntIndexer put(long i, long j, long k, long n) {
-        array[(int)i * (int)strides[0] + (int)j * (int)strides[1] + (int)k] = (int)n;
+        array[(int)index(i, j, k)] = (int)n;
         return this;
     }
     @Override public UIntIndexer put(long[] indices, long n) {

@@ -55,25 +55,25 @@ public class UShortBufferIndexer extends UShortIndexer {
     }
 
     @Override public int get(long i) {
-        return buffer.get((int)i) & 0xFFFF;
+        return buffer.get((int)index(i)) & 0xFFFF;
     }
     @Override public UShortIndexer get(long i, int[] s, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            s[offset + n] = buffer.get((int)i * (int)strides[0] + n) & 0xFFFF;
+            s[offset + n] = buffer.get((int)index(i) + n) & 0xFFFF;
         }
         return this;
     }
     @Override public int get(long i, long j) {
-        return buffer.get((int)i * (int)strides[0] + (int)j) & 0xFFFF;
+        return buffer.get((int)index(i, j)) & 0xFFFF;
     }
     @Override public UShortIndexer get(long i, long j, int[] s, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            s[offset + n] = buffer.get((int)i * (int)strides[0] + (int)j * (int)strides[1] + n) & 0xFFFF;
+            s[offset + n] = buffer.get((int)index(i, j) + n) & 0xFFFF;
         }
         return this;
     }
     @Override public int get(long i, long j, long k) {
-        return buffer.get((int)i * (int)strides[0] + (int)j * (int)strides[1] + (int)k) & 0xFFFF;
+        return buffer.get((int)index(i, j, k)) & 0xFFFF;
     }
     @Override public int get(long... indices) {
         return buffer.get((int)index(indices)) & 0xFFFF;
@@ -86,27 +86,27 @@ public class UShortBufferIndexer extends UShortIndexer {
     }
 
     @Override public UShortIndexer put(long i, int s) {
-        buffer.put((int)i, (short)s);
+        buffer.put((int)index(i), (short)s);
         return this;
     }
     @Override public UShortIndexer put(long i, int[] s, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            buffer.put((int)i * (int)strides[0] + n, (short)s[offset + n]);
+            buffer.put((int)index(i) + n, (short)s[offset + n]);
         }
         return this;
     }
     @Override public UShortIndexer put(long i, long j, int s) {
-        buffer.put((int)i * (int)strides[0] + (int)j, (short)s);
+        buffer.put((int)index(i, j), (short)s);
         return this;
     }
     @Override public UShortIndexer put(long i, long j, int[] s, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            buffer.put((int)i * (int)strides[0] + (int)j * (int)strides[1] + n, (short)s[offset + n]);
+            buffer.put((int)index(i, j) + n, (short)s[offset + n]);
         }
         return this;
     }
     @Override public UShortIndexer put(long i, long j, long k, int s) {
-        buffer.put((int)i * (int)strides[0] + (int)j * (int)strides[1] + (int)k, (short)s);
+        buffer.put((int)index(i, j, k), (short)s);
         return this;
     }
     @Override public UShortIndexer put(long[] indices, int s) {

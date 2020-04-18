@@ -125,16 +125,16 @@ public class IndexerTest {
 
         int n = 0;
         for (int i = 0; i < sizes[0]; i++) {
-            assertEquals(n, arrayIndexer.get(i * strides[0]) & 0xFF);
-            assertEquals(n, directIndexer.get(i * strides[0]) & 0xFF);
+            assertEquals(n, arrayIndexer.get(i) & 0xFF);
+            assertEquals(n, directIndexer.get(i) & 0xFF);
             for (int j = 0; j < sizes[1]; j++) {
-                assertEquals(n, arrayIndexer.get(i, j * strides[1]) & 0xFF);
-                assertEquals(n, directIndexer.get(i, j * strides[1]) & 0xFF);
+                assertEquals(n, arrayIndexer.get(i, j) & 0xFF);
+                assertEquals(n, directIndexer.get(i, j) & 0xFF);
                 for (int k = 0; k < sizes[2]; k++) {
-                    assertEquals(n, arrayIndexer.get(i, j, k * strides[2]) & 0xFF);
-                    assertEquals(n, directIndexer.get(i, j, k * strides[2]) & 0xFF);
+                    assertEquals(n, arrayIndexer.get(i, j, k) & 0xFF);
+                    assertEquals(n, directIndexer.get(i, j, k) & 0xFF);
                     for (int m = 0; m < sizes[3]; m++) {
-                        long[] index = { i, j, k, m  * strides[3] };
+                        long[] index = { i, j, k, m };
                         assertEquals(n, arrayIndexer.get(index) & 0xFF);
                         assertEquals(n, directIndexer.get(index) & 0xFF);
                         arrayIndexer.put(index, (byte)(n + 1));
@@ -243,16 +243,16 @@ public class IndexerTest {
 
         int n = 0;
         for (int i = 0; i < sizes[0]; i++) {
-            assertEquals(n, arrayIndexer.get(i * strides[0]));
-            assertEquals(n, directIndexer.get(i * strides[0]));
+            assertEquals(n, arrayIndexer.get(i));
+            assertEquals(n, directIndexer.get(i));
             for (int j = 0; j < sizes[1]; j++) {
-                assertEquals(n, arrayIndexer.get(i, j * strides[1]));
-                assertEquals(n, directIndexer.get(i, j * strides[1]));
+                assertEquals(n, arrayIndexer.get(i, j));
+                assertEquals(n, directIndexer.get(i, j));
                 for (int k = 0; k < sizes[2]; k++) {
-                    assertEquals(n, arrayIndexer.get(i, j, k * strides[2]));
-                    assertEquals(n, directIndexer.get(i, j, k * strides[2]));
+                    assertEquals(n, arrayIndexer.get(i, j, k));
+                    assertEquals(n, directIndexer.get(i, j, k));
                     for (int m = 0; m < sizes[3]; m++) {
-                        long[] index = { i, j, k, m  * strides[3] };
+                        long[] index = { i, j, k, m };
                         assertEquals(n, arrayIndexer.get(index));
                         assertEquals(n, directIndexer.get(index));
                         arrayIndexer.put(index, (short)(2 * n));
@@ -317,16 +317,16 @@ public class IndexerTest {
 
         int n = 0;
         for (int i = 0; i < sizes[0]; i++) {
-            assertEquals(n, arrayIndexer.get(i * strides[0]));
-            assertEquals(n, directIndexer.get(i * strides[0]));
+            assertEquals(n, arrayIndexer.get(i));
+            assertEquals(n, directIndexer.get(i));
             for (int j = 0; j < sizes[1]; j++) {
-                assertEquals(n, arrayIndexer.get(i, j * strides[1]));
-                assertEquals(n, directIndexer.get(i, j * strides[1]));
+                assertEquals(n, arrayIndexer.get(i, j));
+                assertEquals(n, directIndexer.get(i, j));
                 for (int k = 0; k < sizes[2]; k++) {
-                    assertEquals(n, arrayIndexer.get(i, j, k * strides[2]));
-                    assertEquals(n, directIndexer.get(i, j, k * strides[2]));
+                    assertEquals(n, arrayIndexer.get(i, j, k));
+                    assertEquals(n, directIndexer.get(i, j, k));
                     for (int m = 0; m < sizes[3]; m++) {
-                        long[] index = { i, j, k, m  * strides[3] };
+                        long[] index = { i, j, k, m };
                         assertEquals(n, arrayIndexer.get(index));
                         assertEquals(n, directIndexer.get(index));
                         arrayIndexer.put(index, (int)(2 * n));
@@ -391,16 +391,16 @@ public class IndexerTest {
 
         int n = 0;
         for (int i = 0; i < sizes[0]; i++) {
-            assertEquals(n, arrayIndexer.get(i * strides[0]));
-            assertEquals(n, directIndexer.get(i * strides[0]));
+            assertEquals(n, arrayIndexer.get(i));
+            assertEquals(n, directIndexer.get(i));
             for (int j = 0; j < sizes[1]; j++) {
-                assertEquals(n, arrayIndexer.get(i, j * strides[1]));
-                assertEquals(n, directIndexer.get(i, j * strides[1]));
+                assertEquals(n, arrayIndexer.get(i, j));
+                assertEquals(n, directIndexer.get(i, j));
                 for (int k = 0; k < sizes[2]; k++) {
-                    assertEquals(n, arrayIndexer.get(i, j, k * strides[2]));
-                    assertEquals(n, directIndexer.get(i, j, k * strides[2]));
+                    assertEquals(n, arrayIndexer.get(i, j, k));
+                    assertEquals(n, directIndexer.get(i, j, k));
                     for (int m = 0; m < sizes[3]; m++) {
-                        long[] index = { i, j, k, m  * strides[3] };
+                        long[] index = { i, j, k, m };
                         assertEquals(n, arrayIndexer.get(index));
                         assertEquals(n, directIndexer.get(index));
                         arrayIndexer.put(index, (long)(2 * n));
@@ -465,16 +465,16 @@ public class IndexerTest {
 
         int n = 0;
         for (int i = 0; i < sizes[0]; i++) {
-            assertEquals(n, arrayIndexer.get(i * strides[0]), 0);
-            assertEquals(n, directIndexer.get(i * strides[0]), 0);
+            assertEquals(n, arrayIndexer.get(i), 0);
+            assertEquals(n, directIndexer.get(i), 0);
             for (int j = 0; j < sizes[1]; j++) {
-                assertEquals(n, arrayIndexer.get(i, j * strides[1]), 0);
-                assertEquals(n, directIndexer.get(i, j * strides[1]), 0);
+                assertEquals(n, arrayIndexer.get(i, j), 0);
+                assertEquals(n, directIndexer.get(i, j), 0);
                 for (int k = 0; k < sizes[2]; k++) {
-                    assertEquals(n, arrayIndexer.get(i, j, k * strides[2]), 0);
-                    assertEquals(n, directIndexer.get(i, j, k * strides[2]), 0);
+                    assertEquals(n, arrayIndexer.get(i, j, k), 0);
+                    assertEquals(n, directIndexer.get(i, j, k), 0);
                     for (int m = 0; m < sizes[3]; m++) {
-                        long[] index = { i, j, k, m  * strides[3] };
+                        long[] index = { i, j, k, m };
                         assertEquals(n, arrayIndexer.get(index), 0);
                         assertEquals(n, directIndexer.get(index), 0);
                         arrayIndexer.put(index, (float)(2 * n));
@@ -539,16 +539,16 @@ public class IndexerTest {
 
         int n = 0;
         for (int i = 0; i < sizes[0]; i++) {
-            assertEquals(n, arrayIndexer.get(i * strides[0]), 0);
-            assertEquals(n, directIndexer.get(i * strides[0]), 0);
+            assertEquals(n, arrayIndexer.get(i), 0);
+            assertEquals(n, directIndexer.get(i), 0);
             for (int j = 0; j < sizes[1]; j++) {
-                assertEquals(n, arrayIndexer.get(i, j * strides[1]), 0);
-                assertEquals(n, directIndexer.get(i, j * strides[1]), 0);
+                assertEquals(n, arrayIndexer.get(i, j), 0);
+                assertEquals(n, directIndexer.get(i, j), 0);
                 for (int k = 0; k < sizes[2]; k++) {
-                    assertEquals(n, arrayIndexer.get(i, j, k * strides[2]), 0);
-                    assertEquals(n, directIndexer.get(i, j, k * strides[2]), 0);
+                    assertEquals(n, arrayIndexer.get(i, j, k), 0);
+                    assertEquals(n, directIndexer.get(i, j, k), 0);
                     for (int m = 0; m < sizes[3]; m++) {
-                        long[] index = { i, j, k, m  * strides[3] };
+                        long[] index = { i, j, k, m };
                         assertEquals(n, arrayIndexer.get(index), 0);
                         assertEquals(n, directIndexer.get(index), 0);
                         arrayIndexer.put(index, (double)(2 * n));
@@ -613,16 +613,16 @@ public class IndexerTest {
 
         int n = 0;
         for (int i = 0; i < sizes[0]; i++) {
-            assertEquals(n, arrayIndexer.get(i * strides[0]));
-            assertEquals(n, directIndexer.get(i * strides[0]));
+            assertEquals(n, arrayIndexer.get(i));
+            assertEquals(n, directIndexer.get(i));
             for (int j = 0; j < sizes[1]; j++) {
-                assertEquals(n, arrayIndexer.get(i, j * strides[1]));
-                assertEquals(n, directIndexer.get(i, j * strides[1]));
+                assertEquals(n, arrayIndexer.get(i, j));
+                assertEquals(n, directIndexer.get(i, j));
                 for (int k = 0; k < sizes[2]; k++) {
-                    assertEquals(n, arrayIndexer.get(i, j, k * strides[2]));
-                    assertEquals(n, directIndexer.get(i, j, k * strides[2]));
+                    assertEquals(n, arrayIndexer.get(i, j, k));
+                    assertEquals(n, directIndexer.get(i, j, k));
                     for (int m = 0; m < sizes[3]; m++) {
-                        long[] index = { i, j, k, m  * strides[3] };
+                        long[] index = { i, j, k, m };
                         assertEquals(n, arrayIndexer.get(index));
                         assertEquals(n, directIndexer.get(index));
                         arrayIndexer.put(index, (char)(2 * n));
@@ -688,19 +688,19 @@ public class IndexerTest {
 
         int n = 0;
         for (int i = 0; i < sizes[0]; i++) {
-            assertEquals(n % 2 != 0, arrayIndexer.get(i * strides[0]));
-            assertEquals(n % 2 != 0, directIndexer.get(i * strides[0]));
-            assertEquals(n % 2 != 0 ? 1 : 0, byteIndexer.get(i * strides[0]));
+            assertEquals(n % 2 != 0, arrayIndexer.get(i));
+            assertEquals(n % 2 != 0, directIndexer.get(i));
+            assertEquals(n % 2 != 0 ? 1 : 0, byteIndexer.get(i));
             for (int j = 0; j < sizes[1]; j++) {
-                assertEquals(n % 2 != 0, arrayIndexer.get(i, j * strides[1]));
-                assertEquals(n % 2 != 0, directIndexer.get(i, j * strides[1]));
-                assertEquals(n % 2 != 0 ? 1 : 0, byteIndexer.get(i, j * strides[1]));
+                assertEquals(n % 2 != 0, arrayIndexer.get(i, j));
+                assertEquals(n % 2 != 0, directIndexer.get(i, j));
+                assertEquals(n % 2 != 0 ? 1 : 0, byteIndexer.get(i, j));
                 for (int k = 0; k < sizes[2]; k++) {
-                    assertEquals(n % 2 != 0, arrayIndexer.get(i, j, k * strides[2]));
-                    assertEquals(n % 2 != 0, directIndexer.get(i, j, k * strides[2]));
-                    assertEquals(n % 2 != 0 ? 1 : 0, byteIndexer.get(i, j, k * strides[2]));
+                    assertEquals(n % 2 != 0, arrayIndexer.get(i, j, k));
+                    assertEquals(n % 2 != 0, directIndexer.get(i, j, k));
+                    assertEquals(n % 2 != 0 ? 1 : 0, byteIndexer.get(i, j, k));
                     for (int m = 0; m < sizes[3]; m++) {
-                        long[] index = { i, j, k, m  * strides[3] };
+                        long[] index = { i, j, k, m };
                         assertEquals(n % 2 != 0, arrayIndexer.get(index));
                         assertEquals(n % 2 != 0, directIndexer.get(index));
                         assertEquals(n % 2 != 0 ? 1 : 0, byteIndexer.get(index));
@@ -767,16 +767,16 @@ public class IndexerTest {
 
         int n = start;
         for (int i = 0; i < sizes[0]; i++) {
-            assertEquals(n, arrayIndexer.get(i * strides[0]));
-            assertEquals(n, directIndexer.get(i * strides[0]));
+            assertEquals(n, arrayIndexer.get(i));
+            assertEquals(n, directIndexer.get(i));
             for (int j = 0; j < sizes[1]; j++) {
-                assertEquals(n, arrayIndexer.get(i, j * strides[1]));
-                assertEquals(n, directIndexer.get(i, j * strides[1]));
+                assertEquals(n, arrayIndexer.get(i, j));
+                assertEquals(n, directIndexer.get(i, j));
                 for (int k = 0; k < sizes[2]; k++) {
-                    assertEquals(n, arrayIndexer.get(i, j, k * strides[2]));
-                    assertEquals(n, directIndexer.get(i, j, k * strides[2]));
+                    assertEquals(n, arrayIndexer.get(i, j, k));
+                    assertEquals(n, directIndexer.get(i, j, k));
                     for (int m = 0; m < sizes[3]; m++) {
-                        long[] index = { i, j, k, m  * strides[3] };
+                        long[] index = { i, j, k, m };
                         assertEquals(n, arrayIndexer.get(index));
                         assertEquals(n, directIndexer.get(index));
                         arrayIndexer.put(index, n + 1);
@@ -842,16 +842,16 @@ public class IndexerTest {
 
         int n = start;
         for (int i = 0; i < sizes[0]; i++) {
-            assertEquals(n, arrayIndexer.get(i * strides[0]));
-            assertEquals(n, directIndexer.get(i * strides[0]));
+            assertEquals(n, arrayIndexer.get(i));
+            assertEquals(n, directIndexer.get(i));
             for (int j = 0; j < sizes[1]; j++) {
-                assertEquals(n, arrayIndexer.get(i, j * strides[1]));
-                assertEquals(n, directIndexer.get(i, j * strides[1]));
+                assertEquals(n, arrayIndexer.get(i, j));
+                assertEquals(n, directIndexer.get(i, j));
                 for (int k = 0; k < sizes[2]; k++) {
-                    assertEquals(n, arrayIndexer.get(i, j, k * strides[2]));
-                    assertEquals(n, directIndexer.get(i, j, k * strides[2]));
+                    assertEquals(n, arrayIndexer.get(i, j, k));
+                    assertEquals(n, directIndexer.get(i, j, k));
                     for (int m = 0; m < sizes[3]; m++) {
-                        long[] index = { i, j, k, m  * strides[3] };
+                        long[] index = { i, j, k, m };
                         assertEquals(n, arrayIndexer.get(index));
                         assertEquals(n, directIndexer.get(index));
                         arrayIndexer.put(index, 2 * n);
@@ -917,16 +917,16 @@ public class IndexerTest {
 
         long n = start;
         for (int i = 0; i < sizes[0]; i++) {
-            assertEquals(n, arrayIndexer.get(i * strides[0]));
-            assertEquals(n, directIndexer.get(i * strides[0]));
+            assertEquals(n, arrayIndexer.get(i));
+            assertEquals(n, directIndexer.get(i));
             for (int j = 0; j < sizes[1]; j++) {
-                assertEquals(n, arrayIndexer.get(i, j * strides[1]));
-                assertEquals(n, directIndexer.get(i, j * strides[1]));
+                assertEquals(n, arrayIndexer.get(i, j));
+                assertEquals(n, directIndexer.get(i, j));
                 for (int k = 0; k < sizes[2]; k++) {
-                    assertEquals(n, arrayIndexer.get(i, j, k * strides[2]));
-                    assertEquals(n, directIndexer.get(i, j, k * strides[2]));
+                    assertEquals(n, arrayIndexer.get(i, j, k));
+                    assertEquals(n, directIndexer.get(i, j, k));
                     for (int m = 0; m < sizes[3]; m++) {
-                        long[] index = { i, j, k, m  * strides[3] };
+                        long[] index = { i, j, k, m };
                         assertEquals(n, arrayIndexer.get(index));
                         assertEquals(n, directIndexer.get(index));
                         arrayIndexer.put(index, 2 * n);
@@ -992,16 +992,16 @@ public class IndexerTest {
 
         BigInteger n = BigInteger.valueOf(start);
         for (int i = 0; i < sizes[0]; i++) {
-            assertEquals(n, arrayIndexer.get(i * strides[0]));
-            assertEquals(n, directIndexer.get(i * strides[0]));
+            assertEquals(n, arrayIndexer.get(i));
+            assertEquals(n, directIndexer.get(i));
             for (int j = 0; j < sizes[1]; j++) {
-                assertEquals(n, arrayIndexer.get(i, j * strides[1]));
-                assertEquals(n, directIndexer.get(i, j * strides[1]));
+                assertEquals(n, arrayIndexer.get(i, j));
+                assertEquals(n, directIndexer.get(i, j));
                 for (int k = 0; k < sizes[2]; k++) {
-                    assertEquals(n, arrayIndexer.get(i, j, k * strides[2]));
-                    assertEquals(n, directIndexer.get(i, j, k * strides[2]));
+                    assertEquals(n, arrayIndexer.get(i, j, k));
+                    assertEquals(n, directIndexer.get(i, j, k));
                     for (int m = 0; m < sizes[3]; m++) {
-                        long[] index = { i, j, k, m  * strides[3] };
+                        long[] index = { i, j, k, m };
                         assertEquals(n, arrayIndexer.get(index));
                         assertEquals(n, directIndexer.get(index));
                         arrayIndexer.put(index, BigInteger.valueOf(2).multiply(n));
@@ -1080,16 +1080,16 @@ public class IndexerTest {
 
         int n = 0;
         for (int i = 0; i < sizes[0]; i++) {
-            assertEquals(n, arrayIndexer.get(i * strides[0]), 0);
-            assertEquals(n, directIndexer.get(i * strides[0]), 0);
+            assertEquals(n, arrayIndexer.get(i), 0);
+            assertEquals(n, directIndexer.get(i), 0);
             for (int j = 0; j < sizes[1]; j++) {
-                assertEquals(n, arrayIndexer.get(i, j * strides[1]), 0);
-                assertEquals(n, directIndexer.get(i, j * strides[1]), 0);
+                assertEquals(n, arrayIndexer.get(i, j), 0);
+                assertEquals(n, directIndexer.get(i, j), 0);
                 for (int k = 0; k < sizes[2]; k++) {
-                    assertEquals(n, arrayIndexer.get(i, j, k * strides[2]), 0);
-                    assertEquals(n, directIndexer.get(i, j, k * strides[2]), 0);
+                    assertEquals(n, arrayIndexer.get(i, j, k), 0);
+                    assertEquals(n, directIndexer.get(i, j, k), 0);
                     for (int m = 0; m < sizes[3]; m++) {
-                        long[] index = { i, j, k, m  * strides[3] };
+                        long[] index = { i, j, k, m };
                         assertEquals(n, arrayIndexer.get(index), 0);
                         assertEquals(n, directIndexer.get(index), 0);
                         arrayIndexer.put(index, 2 * n);
@@ -1168,16 +1168,16 @@ public class IndexerTest {
 
         int n = 0;
         for (int i = 0; i < sizes[0]; i++) {
-            assertEquals(n, arrayIndexer.get(i * strides[0]), 0);
-            assertEquals(n, directIndexer.get(i * strides[0]), 0);
+            assertEquals(n, arrayIndexer.get(i), 0);
+            assertEquals(n, directIndexer.get(i), 0);
             for (int j = 0; j < sizes[1]; j++) {
-                assertEquals(n, arrayIndexer.get(i, j * strides[1]), 0);
-                assertEquals(n, directIndexer.get(i, j * strides[1]), 0);
+                assertEquals(n, arrayIndexer.get(i, j), 0);
+                assertEquals(n, directIndexer.get(i, j), 0);
                 for (int k = 0; k < sizes[2]; k++) {
-                    assertEquals(n, arrayIndexer.get(i, j, k * strides[2]), 0);
-                    assertEquals(n, directIndexer.get(i, j, k * strides[2]), 0);
+                    assertEquals(n, arrayIndexer.get(i, j, k), 0);
+                    assertEquals(n, directIndexer.get(i, j, k), 0);
                     for (int m = 0; m < sizes[3]; m++) {
-                        long[] index = { i, j, k, m  * strides[3] };
+                        long[] index = { i, j, k, m };
                         assertEquals(n, arrayIndexer.get(index), 0);
                         assertEquals(n, directIndexer.get(index), 0);
                         arrayIndexer.put(index, 2 * n);

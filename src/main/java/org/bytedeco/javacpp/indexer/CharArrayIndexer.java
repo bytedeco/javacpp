@@ -52,25 +52,25 @@ public class CharArrayIndexer extends CharIndexer {
     }
 
     @Override public char get(long i) {
-        return array[(int)i];
+        return array[(int)index(i)];
     }
     @Override public CharIndexer get(long i, char[] c, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            c[offset + n] = array[(int)i * (int)strides[0] + n];
+            c[offset + n] = array[(int)index(i) + n];
         }
         return this;
     }
     @Override public char get(long i, long j) {
-        return array[(int)i * (int)strides[0] + (int)j];
+        return array[(int)index(i, j)];
     }
     @Override public CharIndexer get(long i, long j, char[] c, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            c[offset + n] = array[(int)i * (int)strides[0] + (int)j * (int)strides[1] + n];
+            c[offset + n] = array[(int)index(i, j) + n];
         }
         return this;
     }
     @Override public char get(long i, long j, long k) {
-        return array[(int)i * (int)strides[0] + (int)j * (int)strides[1] + (int)k];
+        return array[(int)index(i, j, k)];
     }
     @Override public char get(long... indices) {
         return array[(int)index(indices)];
@@ -83,27 +83,27 @@ public class CharArrayIndexer extends CharIndexer {
     }
 
     @Override public CharIndexer put(long i, char c) {
-        array[(int)i] = c;
+        array[(int)index(i)] = c;
         return this;
     }
     @Override public CharIndexer put(long i, char[] c, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            array[(int)i * (int)strides[0] + n] = c[offset + n];
+            array[(int)index(i) + n] = c[offset + n];
         }
         return this;
     }
     @Override public CharIndexer put(long i, long j, char c) {
-        array[(int)i * (int)strides[0] + (int)j] = c;
+        array[(int)index(i, j)] = c;
         return this;
     }
     @Override public CharIndexer put(long i, long j, char[] c, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            array[(int)i * (int)strides[0] + (int)j * (int)strides[1] + n] = c[offset + n];
+            array[(int)index(i, j) + n] = c[offset + n];
         }
         return this;
     }
     @Override public CharIndexer put(long i, long j, long k, char c) {
-        array[(int)i * (int)strides[0] + (int)j * (int)strides[1] + (int)k] = c;
+        array[(int)index(i, j, k)] = c;
         return this;
     }
     @Override public CharIndexer put(long[] indices, char c) {

@@ -55,25 +55,25 @@ public class UByteBufferIndexer extends UByteIndexer {
     }
 
     @Override public int get(long i) {
-        return buffer.get((int)i) & 0xFF;
+        return buffer.get((int)index(i)) & 0xFF;
     }
     @Override public UByteIndexer get(long i, int[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            b[offset + n] = buffer.get((int)i * (int)strides[0] + n) & 0xFF;
+            b[offset + n] = buffer.get((int)index(i) + n) & 0xFF;
         }
         return this;
     }
     @Override public int get(long i, long j) {
-        return buffer.get((int)i * (int)strides[0] + (int)j) & 0xFF;
+        return buffer.get((int)index(i, j)) & 0xFF;
     }
     @Override public UByteIndexer get(long i, long j, int[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            b[offset + n] = buffer.get((int)i * (int)strides[0] + (int)j * (int)strides[1] + n) & 0xFF;
+            b[offset + n] = buffer.get((int)index(i, j) + n) & 0xFF;
         }
         return this;
     }
     @Override public int get(long i, long j, long k) {
-        return buffer.get((int)i * (int)strides[0] + (int)j * (int)strides[1] + (int)k) & 0xFF;
+        return buffer.get((int)index(i, j, k)) & 0xFF;
     }
     @Override public int get(long... indices) {
         return buffer.get((int)index(indices)) & 0xFF;
@@ -86,27 +86,27 @@ public class UByteBufferIndexer extends UByteIndexer {
     }
 
     @Override public UByteIndexer put(long i, int b) {
-        buffer.put((int)i, (byte)b);
+        buffer.put((int)index(i), (byte)b);
         return this;
     }
     @Override public UByteIndexer put(long i, int[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            buffer.put((int)i * (int)strides[0] + n, (byte)b[offset + n]);
+            buffer.put((int)index(i) + n, (byte)b[offset + n]);
         }
         return this;
     }
     @Override public UByteIndexer put(long i, long j, int b) {
-        buffer.put((int)i * (int)strides[0] + (int)j, (byte)b);
+        buffer.put((int)index(i, j), (byte)b);
         return this;
     }
     @Override public UByteIndexer put(long i, long j, int[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            buffer.put((int)i * (int)strides[0] + (int)j * (int)strides[1] + n, (byte)b[offset + n]);
+            buffer.put((int)index(i, j) + n, (byte)b[offset + n]);
         }
         return this;
     }
     @Override public UByteIndexer put(long i, long j, long k, int b) {
-        buffer.put((int)i * (int)strides[0] + (int)j * (int)strides[1] + (int)k, (byte)b);
+        buffer.put((int)index(i, j, k), (byte)b);
         return this;
     }
     @Override public UByteIndexer put(long[] indices, int b) {

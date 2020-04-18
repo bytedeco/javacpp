@@ -60,68 +60,74 @@ public class CharRawIndexer extends CharIndexer {
         return pointer;
     }
 
-    @Override public char get(long i) {
+    public char getRaw(long i) {
         return RAW.getChar(base + checkIndex(i, size) * VALUE_BYTES);
+    }
+    @Override public char get(long i) {
+        return getRaw(index(i));
     }
     @Override public CharIndexer get(long i, char[] c, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            c[offset + n] = get(i * strides[0] + n);
+            c[offset + n] = getRaw(index(i) + n);
         }
         return this;
     }
     @Override public char get(long i, long j) {
-        return get(i * strides[0] + j);
+        return getRaw(index(i, j));
     }
     @Override public CharIndexer get(long i, long j, char[] c, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            c[offset + n] = get(i * strides[0] + j * strides[1] + n);
+            c[offset + n] = getRaw(index(i, j) + n);
         }
         return this;
     }
     @Override public char get(long i, long j, long k) {
-        return get(i * strides[0] + j * strides[1] + k);
+        return getRaw(index(i, j, k));
     }
     @Override public char get(long... indices) {
-        return get(index(indices));
+        return getRaw(index(indices));
     }
     @Override public CharIndexer get(long[] indices, char[] c, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            c[offset + n] = get(index(indices) + n);
+            c[offset + n] = getRaw(index(indices) + n);
         }
         return this;
     }
 
-    @Override public CharIndexer put(long i, char c) {
+    public CharIndexer putRaw(long i, char c) {
         RAW.putChar(base + checkIndex(i, size) * VALUE_BYTES, c);
         return this;
     }
+    @Override public CharIndexer put(long i, char c) {
+        return putRaw(index(i), c);
+    }
     @Override public CharIndexer put(long i, char[] c, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            put(i * strides[0] + n, c[offset + n]);
+            putRaw(index(i) + n, c[offset + n]);
         }
         return this;
     }
     @Override public CharIndexer put(long i, long j, char c) {
-        put(i * strides[0] + j, c);
+        putRaw(index(i, j), c);
         return this;
     }
     @Override public CharIndexer put(long i, long j, char[] c, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            put(i * strides[0] + j * strides[1] + n, c[offset + n]);
+            putRaw(index(i, j) + n, c[offset + n]);
         }
         return this;
     }
     @Override public CharIndexer put(long i, long j, long k, char c) {
-        put(i * strides[0] + j * strides[1] + k, c);
+        putRaw(index(i, j, k), c);
         return this;
     }
     @Override public CharIndexer put(long[] indices, char c) {
-        put(index(indices), c);
+        putRaw(index(indices), c);
         return this;
     }
     @Override public CharIndexer put(long[] indices, char[] c, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            put(index(indices) + n, c[offset + n]);
+            putRaw(index(indices) + n, c[offset + n]);
         }
         return this;
     }

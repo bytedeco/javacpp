@@ -1,4 +1,6 @@
 
+ * Add `Indexer.Index` nested class to allow overriding how the index is calculated ([issue #391](https://github.com/bytedeco/javacpp/issues/391))
+
 ### April 14, 2020 version 1.5.3
  * Deprecate but also fix `Indexer.rows()`, `cols()`, `width()`, `height()`, and `channels()` ([pull #390](https://github.com/bytedeco/javacpp/pull/390))
  * Fix `Parser` producing invalid wrappers for basic containers like `std::set<std::pair<...> >`

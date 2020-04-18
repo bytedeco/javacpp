@@ -108,18 +108,54 @@ public abstract class Indexer implements AutoCloseable {
         return strides;
     }
 
-    /**
-     * Computes the linear index as the dot product of indices and strides.
-     *
-     * @param indices of each dimension
-     * @return index to access array or buffer
-     */
-    public long index(long... indices) {
-        long index = 0;
-        for (int i = 0; i < indices.length && i < strides.length; i++) {
-            index += indices[i] * strides[i];
+    protected class Index {
+        public long index(long i) {
+            return i * strides[0];
         }
-        return index;
+
+        public long index(long i, long j) {
+            return i * strides[0] + j * strides[1];
+        }
+
+        public long index(long i, long j, long k) {
+            return i * strides[0] + j * strides[1] + k * strides[2];
+        }
+
+        /**
+         * Computes the linear index as the dot product of indices and strides.
+         *
+         * @param indices of each dimension
+         * @return index to access array or buffer
+         */
+        public long index(long... indices) {
+            long index = 0;
+            for (int i = 0; i < indices.length && i < strides.length; i++) {
+                index += indices[i] * strides[i];
+            }
+            return index;
+        }
+    }
+
+    protected Index index = new Index();
+
+    /** Returns {@code index.index(i)}. */
+    public long index(long i) {
+        return index.index(i);
+    }
+
+    /** Returns {@code index.index(i, j)}. */
+    public long index(long i, long j) {
+        return index.index(i, j);
+    }
+
+    /** Returns {@code index.index(i, j, k)}. */
+    public long index(long i, long j, long k) {
+        return index.index(i, j, k);
+    }
+
+    /** Returns {@code index.index(indices)}. */
+    public long index(long... indices) {
+        return index.index(indices);
     }
 
     /** The associated (optional) {@link Indexable}. */

@@ -52,25 +52,25 @@ public class DoubleArrayIndexer extends DoubleIndexer {
     }
 
     @Override public double get(long i) {
-        return array[(int)i];
+        return array[(int)index(i)];
     }
     @Override public DoubleIndexer get(long i, double[] d, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            d[offset + n] = array[(int)i * (int)strides[0] + n];
+            d[offset + n] = array[(int)index(i) + n];
         }
         return this;
     }
     @Override public double get(long i, long j) {
-        return array[(int)i * (int)strides[0] + (int)j];
+        return array[(int)index(i, j)];
     }
     @Override public DoubleIndexer get(long i, long j, double[] d, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            d[offset + n] = array[(int)i * (int)strides[0] + (int)j * (int)strides[1] + n];
+            d[offset + n] = array[(int)index(i, j) + n];
         }
         return this;
     }
     @Override public double get(long i, long j, long k) {
-        return array[(int)i * (int)strides[0] + (int)j * (int)strides[1] + (int)k];
+        return array[(int)index(i, j, k)];
     }
     @Override public double get(long... indices) {
         return array[(int)index(indices)];
@@ -83,27 +83,27 @@ public class DoubleArrayIndexer extends DoubleIndexer {
     }
 
     @Override public DoubleIndexer put(long i, double d) {
-        array[(int)i] = d;
+        array[(int)index(i)] = d;
         return this;
     }
     @Override public DoubleIndexer put(long i, double[] d, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            array[(int)i * (int)strides[0] + n] = d[offset + n];
+            array[(int)index(i) + n] = d[offset + n];
         }
         return this;
     }
     @Override public DoubleIndexer put(long i, long j, double d) {
-        array[(int)i * (int)strides[0] + (int)j] = d;
+        array[(int)index(i, j)] = d;
         return this;
     }
     @Override public DoubleIndexer put(long i, long j, double[] d, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            array[(int)i * (int)strides[0] + (int)j * (int)strides[1] + n] = d[offset + n];
+            array[(int)index(i, j) + n] = d[offset + n];
         }
         return this;
     }
     @Override public DoubleIndexer put(long i, long j, long k, double d) {
-        array[(int)i * (int)strides[0] + (int)j * (int)strides[1] + (int)k] = d;
+        array[(int)index(i, j, k)] = d;
         return this;
     }
     @Override public DoubleIndexer put(long[] indices, double d) {

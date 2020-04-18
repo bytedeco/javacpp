@@ -52,25 +52,25 @@ public class ShortArrayIndexer extends ShortIndexer {
     }
 
     @Override public short get(long i) {
-        return array[(int)i];
+        return array[(int)index(i)];
     }
     @Override public ShortIndexer get(long i, short[] s, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            s[offset + n] = array[(int)i * (int)strides[0] + n];
+            s[offset + n] = array[(int)index(i) + n];
         }
         return this;
     }
     @Override public short get(long i, long j) {
-        return array[(int)i * (int)strides[0] + (int)j];
+        return array[(int)index(i, j)];
     }
     @Override public ShortIndexer get(long i, long j, short[] s, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            s[offset + n] = array[(int)i * (int)strides[0] + (int)j * (int)strides[1] + n];
+            s[offset + n] = array[(int)index(i, j) + n];
         }
         return this;
     }
     @Override public short get(long i, long j, long k) {
-        return array[(int)i * (int)strides[0] + (int)j * (int)strides[1] + (int)k];
+        return array[(int)index(i, j, k)];
     }
     @Override public short get(long... indices) {
         return array[(int)index(indices)];
@@ -83,27 +83,27 @@ public class ShortArrayIndexer extends ShortIndexer {
     }
 
     @Override public ShortIndexer put(long i, short s) {
-        array[(int)i] = s;
+        array[(int)index(i)] = s;
         return this;
     }
     @Override public ShortIndexer put(long i, short[] s, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            array[(int)i * (int)strides[0] + n] = s[offset + n];
+            array[(int)index(i) + n] = s[offset + n];
         }
         return this;
     }
     @Override public ShortIndexer put(long i, long j, short s) {
-        array[(int)i * (int)strides[0] + (int)j] = s;
+        array[(int)index(i, j)] = s;
         return this;
     }
     @Override public ShortIndexer put(long i, long j, short[] s, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            array[(int)i * (int)strides[0] + (int)j * (int)strides[1] + n] = s[offset + n];
+            array[(int)index(i, j) + n] = s[offset + n];
         }
         return this;
     }
     @Override public ShortIndexer put(long i, long j, long k, short s) {
-        array[(int)i * (int)strides[0] + (int)j * (int)strides[1] + (int)k] = s;
+        array[(int)index(i, j, k)] = s;
         return this;
     }
     @Override public ShortIndexer put(long[] indices, short s) {

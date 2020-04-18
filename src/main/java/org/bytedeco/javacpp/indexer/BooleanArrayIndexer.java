@@ -52,25 +52,25 @@ public class BooleanArrayIndexer extends BooleanIndexer {
     }
 
     @Override public boolean get(long i) {
-        return array[(int)i];
+        return array[(int)index(i)];
     }
     @Override public BooleanIndexer get(long i, boolean[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            b[offset + n] = array[(int)i * (int)strides[0] + n];
+            b[offset + n] = array[(int)index(i) + n];
         }
         return this;
     }
     @Override public boolean get(long i, long j) {
-        return array[(int)i * (int)strides[0] + (int)j];
+        return array[(int)index(i, j)];
     }
     @Override public BooleanIndexer get(long i, long j, boolean[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            b[offset + n] = array[(int)i * (int)strides[0] + (int)j * (int)strides[1] + n];
+            b[offset + n] = array[(int)index(i, j) + n];
         }
         return this;
     }
     @Override public boolean get(long i, long j, long k) {
-        return array[(int)i * (int)strides[0] + (int)j * (int)strides[1] + (int)k];
+        return array[(int)index(i, j, k)];
     }
     @Override public boolean get(long... indices) {
         return array[(int)index(indices)];
@@ -83,27 +83,27 @@ public class BooleanArrayIndexer extends BooleanIndexer {
     }
 
     @Override public BooleanIndexer put(long i, boolean b) {
-        array[(int)i] = b;
+        array[(int)index(i)] = b;
         return this;
     }
     @Override public BooleanIndexer put(long i, boolean[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            array[(int)i * (int)strides[0] + n] = b[offset + n];
+            array[(int)index(i) + n] = b[offset + n];
         }
         return this;
     }
     @Override public BooleanIndexer put(long i, long j, boolean b) {
-        array[(int)i * (int)strides[0] + (int)j] = b;
+        array[(int)index(i, j)] = b;
         return this;
     }
     @Override public BooleanIndexer put(long i, long j, boolean[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            array[(int)i * (int)strides[0] + (int)j * (int)strides[1] + n] = b[offset + n];
+            array[(int)index(i, j) + n] = b[offset + n];
         }
         return this;
     }
     @Override public BooleanIndexer put(long i, long j, long k, boolean b) {
-        array[(int)i * (int)strides[0] + (int)j * (int)strides[1] + (int)k] = b;
+        array[(int)index(i, j, k)] = b;
         return this;
     }
     @Override public BooleanIndexer put(long[] indices, boolean b) {

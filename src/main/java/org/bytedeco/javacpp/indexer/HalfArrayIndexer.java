@@ -52,25 +52,25 @@ public class HalfArrayIndexer extends HalfIndexer {
     }
 
     @Override public float get(long i) {
-        return toFloat(array[(int)i]);
+        return toFloat(array[(int)index(i)]);
     }
     @Override public HalfIndexer get(long i, float[] h, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            h[offset + n] = toFloat(array[(int)i * (int)strides[0] + n]);
+            h[offset + n] = toFloat(array[(int)index(i) + n]);
         }
         return this;
     }
     @Override public float get(long i, long j) {
-        return toFloat(array[(int)i * (int)strides[0] + (int)j]);
+        return toFloat(array[(int)index(i, j)]);
     }
     @Override public HalfIndexer get(long i, long j, float[] h, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            h[offset + n] = toFloat(array[(int)i * (int)strides[0] + (int)j * (int)strides[1] + n]);
+            h[offset + n] = toFloat(array[(int)index(i, j) + n]);
         }
         return this;
     }
     @Override public float get(long i, long j, long k) {
-        return toFloat(array[(int)i * (int)strides[0] + (int)j * (int)strides[1] + (int)k]);
+        return toFloat(array[(int)index(i, j, k)]);
     }
     @Override public float get(long... indices) {
         return toFloat(array[(int)index(indices)]);
@@ -83,27 +83,27 @@ public class HalfArrayIndexer extends HalfIndexer {
     }
 
     @Override public HalfIndexer put(long i, float h) {
-        array[(int)i] = (short)fromFloat(h);
+        array[(int)index(i)] = (short)fromFloat(h);
         return this;
     }
     @Override public HalfIndexer put(long i, float[] h, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            array[(int)i * (int)strides[0] + n] = (short)fromFloat(h[offset + n]);
+            array[(int)index(i) + n] = (short)fromFloat(h[offset + n]);
         }
         return this;
     }
     @Override public HalfIndexer put(long i, long j, float h) {
-        array[(int)i * (int)strides[0] + (int)j] = (short)fromFloat(h);
+        array[(int)index(i, j)] = (short)fromFloat(h);
         return this;
     }
     @Override public HalfIndexer put(long i, long j, float[] h, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            array[(int)i * (int)strides[0] + (int)j * (int)strides[1] + n] = (short)fromFloat(h[offset + n]);
+            array[(int)index(i, j) + n] = (short)fromFloat(h[offset + n]);
         }
         return this;
     }
     @Override public HalfIndexer put(long i, long j, long k, float h) {
-        array[(int)i * (int)strides[0] + (int)j * (int)strides[1] + (int)k] = (short)fromFloat(h);
+        array[(int)index(i, j, k)] = (short)fromFloat(h);
         return this;
     }
     @Override public HalfIndexer put(long[] indices, float h) {

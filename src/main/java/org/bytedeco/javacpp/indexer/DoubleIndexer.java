@@ -100,19 +100,19 @@ public abstract class DoubleIndexer extends Indexer {
         }
     }
 
-    /** Returns {@code array/buffer[i]} */
+    /** Returns {@code array/buffer[index(i)]} */
     public abstract double get(long i);
-    /** Returns {@code this} where {@code d = array/buffer[i]} */
+    /** Returns {@code this} where {@code d = array/buffer[index(i)]} */
     public DoubleIndexer get(long i, double[] d) { return get(i, d, 0, d.length); }
-    /** Returns {@code this} where {@code d[offset:offset + length] = array/buffer[i]} */
+    /** Returns {@code this} where {@code d[offset:offset + length] = array/buffer[index(i)]} */
     public abstract DoubleIndexer get(long i, double[] d, int offset, int length);
-    /** Returns {@code array/buffer[i * strides[0] + j]} */
+    /** Returns {@code array/buffer[index(i, j)]} */
     public abstract double get(long i, long j);
-    /** Returns {@code this} where {@code d = array/buffer[i * strides[0] + j]} */
+    /** Returns {@code this} where {@code d = array/buffer[index(i, j)]} */
     public DoubleIndexer get(long i, long j, double[] d) { return get(i, j, d, 0, d.length); }
-    /** Returns {@code this} where {@code d[offset:offset + length] = array/buffer[i * strides[0] + j]} */
+    /** Returns {@code this} where {@code d[offset:offset + length] = array/buffer[index(i, j)]} */
     public abstract DoubleIndexer get(long i, long j, double[] d, int offset, int length);
-    /** Returns {@code array/buffer[i * strides[0] + j * strides[1] + k]} */
+    /** Returns {@code array/buffer[index(i, j, k)]} */
     public abstract double get(long i, long j, long k);
     /** Returns {@code array/buffer[index(indices)]} */
     public abstract double get(long... indices);
@@ -121,19 +121,19 @@ public abstract class DoubleIndexer extends Indexer {
     /** Returns {@code this} where {@code d[offset:offset + length] = array/buffer[index(indices)]} */
     public abstract DoubleIndexer get(long[] indices, double[] d, int offset, int length);
 
-    /** Returns {@code this} where {@code array/buffer[i] = d} */
+    /** Returns {@code this} where {@code array/buffer[index(i)] = d} */
     public abstract DoubleIndexer put(long i, double d);
-    /** Returns {@code this} where {@code array/buffer[i] = d} */
+    /** Returns {@code this} where {@code array/buffer[index(i)] = d} */
     public DoubleIndexer put(long i, double... d) { return put(i, d, 0, d.length); }
-    /** Returns {@code this} where {@code array/buffer[i] = d[offset:offset + length]} */
+    /** Returns {@code this} where {@code array/buffer[index(i)] = d[offset:offset + length]} */
     public abstract DoubleIndexer put(long i, double[] d, int offset, int length);
-    /** Returns {@code this} where {@code array/buffer[i * strides[0] + j] = d} */
+    /** Returns {@code this} where {@code array/buffer[index(i, j)] = d} */
     public abstract DoubleIndexer put(long i, long j, double d);
-    /** Returns {@code this} where {@code array/buffer[i * strides[0] + j] = d} */
+    /** Returns {@code this} where {@code array/buffer[index(i, j)] = d} */
     public DoubleIndexer put(long i, long j, double... d) { return put(i, j, d, 0, d.length); }
-    /** Returns {@code this} where {@code array/buffer[i * strides[0] + j] = d[offset:offset + length]} */
+    /** Returns {@code this} where {@code array/buffer[index(i, j)] = d[offset:offset + length]} */
     public abstract DoubleIndexer put(long i, long j, double[] d, int offset, int length);
-    /** Returns {@code this} where {@code array/buffer[i * strides[0] + j * strides[1] + k] = d} */
+    /** Returns {@code this} where {@code array/buffer[index(i, j, k)] = d} */
     public abstract DoubleIndexer put(long i, long j, long k, double d);
     /** Returns {@code this} where {@code array/buffer[index(indices)] = d} */
     public abstract DoubleIndexer put(long[] indices, double d);

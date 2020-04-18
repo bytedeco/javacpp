@@ -55,25 +55,25 @@ public class LongBufferIndexer extends LongIndexer {
     }
 
     @Override public long get(long i) {
-        return buffer.get((int)i);
+        return buffer.get((int)index(i));
     }
     @Override public LongIndexer get(long i, long[] l, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            l[offset + n] = buffer.get((int)i * (int)strides[0] + n);
+            l[offset + n] = buffer.get((int)index(i) + n);
         }
         return this;
     }
     @Override public long get(long i, long j) {
-        return buffer.get((int)i * (int)strides[0] + (int)j);
+        return buffer.get((int)index(i, j));
     }
     @Override public LongIndexer get(long i, long j, long[] l, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            l[offset + n] = buffer.get((int)i * (int)strides[0] + (int)j * (int)strides[1] + n);
+            l[offset + n] = buffer.get((int)index(i, j) + n);
         }
         return this;
     }
     @Override public long get(long i, long j, long k) {
-        return buffer.get((int)i * (int)strides[0] + (int)j * (int)strides[1] + (int)k);
+        return buffer.get((int)index(i, j, k));
     }
     @Override public long get(long... indices) {
         return buffer.get((int)index(indices));
@@ -86,27 +86,27 @@ public class LongBufferIndexer extends LongIndexer {
     }
 
     @Override public LongIndexer put(long i, long l) {
-        buffer.put((int)i, l);
+        buffer.put((int)index(i), l);
         return this;
     }
     @Override public LongIndexer put(long i, long[] l, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            buffer.put((int)i * (int)strides[0] + n, l[offset + n]);
+            buffer.put((int)index(i) + n, l[offset + n]);
         }
         return this;
     }
     @Override public LongIndexer put(long i, long j, long l) {
-        buffer.put((int)i * (int)strides[0] + (int)j, l);
+        buffer.put((int)index(i, j), l);
         return this;
     }
     @Override public LongIndexer put(long i, long j, long[] l, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            buffer.put((int)i * (int)strides[0] + (int)j * (int)strides[1] + n, l[offset + n]);
+            buffer.put((int)index(i, j) + n, l[offset + n]);
         }
         return this;
     }
     @Override public LongIndexer put(long i, long j, long k, long l) {
-        buffer.put((int)i * (int)strides[0] + (int)j * (int)strides[1] + (int)k, l);
+        buffer.put((int)index(i, j, k), l);
         return this;
     }
     @Override public LongIndexer put(long[] indices, long l) {

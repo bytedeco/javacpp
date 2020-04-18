@@ -60,68 +60,74 @@ public class LongRawIndexer extends LongIndexer {
         return pointer;
     }
 
-    @Override public long get(long i) {
+    public long getRaw(long i) {
         return RAW.getLong(base + checkIndex(i, size) * VALUE_BYTES);
+    }
+    @Override public long get(long i) {
+        return getRaw(index(i));
     }
     @Override public LongIndexer get(long i, long[] l, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            l[offset + n] = get(i * strides[0] + n);
+            l[offset + n] = getRaw(index(i) + n);
         }
         return this;
     }
     @Override public long get(long i, long j) {
-        return get(i * strides[0] + j);
+        return getRaw(index(i, j));
     }
     @Override public LongIndexer get(long i, long j, long[] l, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            l[offset + n] = get(i * strides[0] + j * strides[1] + n);
+            l[offset + n] = getRaw(index(i, j) + n);
         }
         return this;
     }
     @Override public long get(long i, long j, long k) {
-        return get(i * strides[0] + j * strides[1] + k);
+        return getRaw(index(i, j, k));
     }
     @Override public long get(long... indices) {
-        return get(index(indices));
+        return getRaw(index(indices));
     }
     @Override public LongIndexer get(long[] indices, long[] l, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            l[offset + n] = get(index(indices) + n);
+            l[offset + n] = getRaw(index(indices) + n);
         }
         return this;
     }
 
-    @Override public LongIndexer put(long i, long l) {
+    public LongIndexer putRaw(long i, long l) {
         RAW.putLong(base + checkIndex(i, size) * VALUE_BYTES, l);
         return this;
     }
+    @Override public LongIndexer put(long i, long l) {
+        return putRaw(index(i), l);
+    }
     @Override public LongIndexer put(long i, long[] l, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            put(i * strides[0] + n, l[offset + n]);
+            putRaw(index(i) + n, l[offset + n]);
         }
         return this;
     }
     @Override public LongIndexer put(long i, long j, long l) {
-        put(i * strides[0] + j, l);
+        putRaw(index(i, j), l);
         return this;
     }
     @Override public LongIndexer put(long i, long j, long[] l, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            put(i * strides[0] + j * strides[1] + n, l[offset + n]);
+            putRaw(index(i, j) + n, l[offset + n]);
         }
         return this;
     }
     @Override public LongIndexer put(long i, long j, long k, long l) {
-        put(i * strides[0] + j * strides[1] + k, l);
+        putRaw(index(i, j, k), l);
         return this;
     }
     @Override public LongIndexer put(long[] indices, long l) {
-        put(index(indices), l);
+        putRaw(index(indices), l);
         return this;
     }
     @Override public LongIndexer put(long[] indices, long[] l, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            put(index(indices) + n, l[offset + n]);
+            putRaw(index(indices) + n, l[offset + n]);
         }
         return this;
     }
