@@ -22,8 +22,11 @@
 
 package org.bytedeco.javacpp.indexer;
 
-import java.nio.Buffer;
 import org.bytedeco.javacpp.Pointer;
+
+import java.nio.Buffer;
+
+import static org.bytedeco.javacpp.indexer.CustomStridesIndex.customStrides;
 
 /**
  * Top-level class of all data indexers, providing easy-to-use and efficient
@@ -49,34 +52,46 @@ public abstract class Indexer implements AutoCloseable {
         release();
     }
 
-    protected static final long[] ONE_STRIDE = { 1 };
+    @Deprecated protected static final long[] ONE_STRIDE = { 1 };
 
     /**
      * The number of elements in each dimension.
      * These values are not typically used by the indexer.
      */
-    protected long[] sizes;
+    @Deprecated protected long[] sizes;
     /**
      * The number of elements to skip to reach the next element in a given dimension.
      * {@code strides[i] > strides[i + 1] && strides[strides.length - 1] == 1} preferred.
      */
-    protected long[] strides;
+    @Deprecated protected long[] strides;
+    /**
+     * TODO
+     */
+    protected Index index;
+
+    /** Constructor to set the {@link #index}. */
+    protected Indexer(Index index) {
+        this.index = index;
+        this.sizes = index.sizes();
+        this.strides = index.strides();
+    }
 
     /** Constructor to set the {@link #sizes} and {@link #strides}. */
-    protected Indexer(long[] sizes, long[] strides) {
+    @Deprecated protected Indexer(long[] sizes, long[] strides) {
+        this(customStrides(sizes, strides));
         this.sizes = sizes;
         this.strides = strides;
     }
 
     /** Returns {@link #sizes} */
-    public long[] sizes() { return sizes; }
+    @Deprecated public long[] sizes() { return sizes; }
     /** Returns {@link #strides} */
-    public long[] strides() { return strides; }
+    @Deprecated public long[] strides() { return strides; }
 
     /** Returns {@code sizes[i]} */
-    public long size(int i) { return sizes[i]; }
+    @Deprecated public long size(int i) { return sizes[i]; }
     /** Returns {@code strides[i]} */
-    public long stride(int i) { return strides[i]; }
+    @Deprecated public long stride(int i) { return strides[i]; }
 
     /** Returns {@code sizes.length > 0 && sizes.length < 4 ? sizes[0] : -1} */
     @Deprecated public long rows() { return sizes.length > 0 && sizes.length < 4 ? sizes[0] : -1; }
@@ -99,44 +114,10 @@ public abstract class Indexer implements AutoCloseable {
     /**
      * Returns default (row-major contiguous) strides for the given sizes.
      */
+    @Deprecated
     public static long[] strides(long... sizes) {
-        long[] strides = new long[sizes.length];
-        strides[sizes.length - 1] = 1;
-        for (int i = sizes.length - 2; i >= 0; i--) {
-            strides[i] = strides[i + 1] * sizes[i + 1];
-        }
-        return strides;
+        return DefaultIndex.strides(sizes);
     }
-
-    protected class Index {
-        public long index(long i) {
-            return i * strides[0];
-        }
-
-        public long index(long i, long j) {
-            return i * strides[0] + j * strides[1];
-        }
-
-        public long index(long i, long j, long k) {
-            return i * strides[0] + j * strides[1] + k * strides[2];
-        }
-
-        /**
-         * Computes the linear index as the dot product of indices and strides.
-         *
-         * @param indices of each dimension
-         * @return index to access array or buffer
-         */
-        public long index(long... indices) {
-            long index = 0;
-            for (int i = 0; i < indices.length && i < strides.length; i++) {
-                index += indices[i] * strides[i];
-            }
-            return index;
-        }
-    }
-
-    protected Index index = new Index();
 
     /** Returns {@code index.index(i)}. */
     public long index(long i) {

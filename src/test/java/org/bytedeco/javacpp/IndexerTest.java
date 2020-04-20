@@ -31,6 +31,8 @@ import org.bytedeco.javacpp.indexer.Bfloat16Indexer;
 import org.bytedeco.javacpp.indexer.BooleanIndexer;
 import org.bytedeco.javacpp.indexer.ByteIndexer;
 import org.bytedeco.javacpp.indexer.CharIndexer;
+import org.bytedeco.javacpp.indexer.CustomStridesIndex;
+import static org.bytedeco.javacpp.indexer.CustomStridesIndex.customStrides;
 import org.bytedeco.javacpp.indexer.DoubleIndexer;
 import org.bytedeco.javacpp.indexer.FloatIndexer;
 import org.bytedeco.javacpp.indexer.HalfIndexer;
@@ -42,6 +44,9 @@ import org.bytedeco.javacpp.indexer.UByteIndexer;
 import org.bytedeco.javacpp.indexer.UShortIndexer;
 import org.bytedeco.javacpp.indexer.UIntIndexer;
 import org.bytedeco.javacpp.indexer.ULongIndexer;
+import org.bytedeco.javacpp.indexer.DefaultIndex;
+import static org.bytedeco.javacpp.indexer.DefaultIndex.defaultIndex;
+import org.bytedeco.javacpp.indexer.Index;
 import org.bytedeco.javacpp.tools.Builder;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -74,36 +79,40 @@ public class IndexerTest {
     }
 
     static class TestIndexer extends Indexer {
-        TestIndexer(long[] sizes) { super(sizes, Indexer.strides(sizes)); }
+        TestIndexer(Index index) { super(index); }
         public void release() { }
         public double getDouble(long... indices) { return 0; }
         public Indexer putDouble(long[] indices, double value) { return this; }
     }
 
-    @Test public void testIndexer() {
-        System.out.println("Indexer");
+    @Test public void testDefaultStrides() {
         long[] sizes = {640, 480, 3};
-        long[] strides = Indexer.strides(sizes);
+        long[] strides = DefaultIndex.strides(sizes);
         System.out.println(Arrays.toString(strides));
         assertEquals(1440, strides[0]);
         assertEquals(   3, strides[1]);
         assertEquals(   1, strides[2]);
+    }
 
-        TestIndexer indexer = new TestIndexer(sizes);
+    @Test public void testIndexer() {
+        System.out.println("Indexer");
+        long[] sizes = {640, 480, 3};
+
+        TestIndexer indexer = new TestIndexer(defaultIndex(sizes));
         assertEquals(indexer.size(0), indexer.rows());
         assertEquals(indexer.size(0), indexer.height());
         assertEquals(indexer.size(1), indexer.cols());
         assertEquals(indexer.size(1), indexer.width());
         assertEquals(indexer.size(2), indexer.channels());
 
-        indexer = new TestIndexer(new long[] {640, 480});
+        indexer = new TestIndexer(defaultIndex(new long[] {640, 480}));
         assertEquals(indexer.size(0), indexer.rows());
         assertEquals(indexer.size(0), indexer.height());
         assertEquals(indexer.size(1), indexer.cols());
         assertEquals(indexer.size(1), indexer.width());
         assertEquals(-1, indexer.channels());
 
-        indexer = new TestIndexer(new long[] {640});
+        indexer = new TestIndexer(defaultIndex(new long[] {640}));
         assertEquals(indexer.size(0), indexer.rows());
         assertEquals(indexer.size(0), indexer.height());
         assertEquals(-1, indexer.cols());
