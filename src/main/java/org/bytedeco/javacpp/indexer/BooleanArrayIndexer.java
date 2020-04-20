@@ -22,6 +22,9 @@
 
 package org.bytedeco.javacpp.indexer;
 
+import static org.bytedeco.javacpp.indexer.CustomStridesIndex.customStrides;
+import static org.bytedeco.javacpp.indexer.DefaultIndex.defaultIndex;
+
 /**
  * An indexer for a {@code boolean[]} array.
  *
@@ -31,24 +34,34 @@ public class BooleanArrayIndexer extends BooleanIndexer {
     /** The backing array. */
     protected boolean[] array;
 
-    /** Calls {@code BooleanArrayIndexer(array, { array.length }, { 1 })}. */
+    /** Calls {@code BooleanArrayIndexer(array, defaultIndex({ array.length }))}. */
     public BooleanArrayIndexer(boolean[] array) {
-        this(array, new long[] { array.length }, ONE_STRIDE);
+        this(array, defaultIndex(array.length));
     }
 
-    /** Calls {@code BooleanArrayIndexer(array, sizes, strides(sizes))}. */
-    public BooleanArrayIndexer(boolean[] array, long... sizes) {
-        this(array, sizes, strides(sizes));
+    /** Calls {@code BooleanArrayIndexer(array, sizes)}. */
+    @Deprecated public BooleanArrayIndexer(boolean[] array, long... sizes) {
+        this(array, defaultIndex(sizes));
     }
 
     /** Constructor to set the {@link #array}, {@link #sizes} and {@link #strides}. */
-    public BooleanArrayIndexer(boolean[] array, long[] sizes, long[] strides) {
-        super(sizes, strides);
+    @Deprecated public BooleanArrayIndexer(boolean[] array, long[] sizes, long[] strides) {
+        this(array, customStrides(sizes, strides));
+    }
+
+    /** Constructor to set the {@link #array} and {@link #index}. */
+    public BooleanArrayIndexer(boolean[] array, Index index) {
+        super(index);
         this.array = array;
     }
 
     @Override public boolean[] array() {
         return array;
+    }
+
+    @Override
+    public BooleanIndexer slice(Index index) {
+        return new BooleanArrayIndexer(array, index);
     }
 
     @Override public boolean get(long i) {

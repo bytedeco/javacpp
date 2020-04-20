@@ -22,6 +22,9 @@
 
 package org.bytedeco.javacpp.indexer;
 
+import static org.bytedeco.javacpp.indexer.CustomStridesIndex.customStrides;
+import static org.bytedeco.javacpp.indexer.DefaultIndex.defaultIndex;
+
 /**
  * An indexer for a {@code char[]} array.
  *
@@ -31,24 +34,34 @@ public class CharArrayIndexer extends CharIndexer {
     /** The backing array. */
     protected char[] array;
 
-    /** Calls {@code CharArrayIndexer(array, { array.length }, { 1 })}. */
+    /** Calls {@code CharArrayIndexer(array, defaultIndex({ array.length }))}. */
     public CharArrayIndexer(char[] array) {
-        this(array, new long[] { array.length }, ONE_STRIDE);
+        this(array, defaultIndex(array.length));
     }
 
-    /** Calls {@code CharArrayIndexer(array, sizes, strides(sizes))}. */
-    public CharArrayIndexer(char[] array, long... sizes) {
-        this(array, sizes, strides(sizes));
+    /** Calls {@code CharArrayIndexer(array, sizes)}. */
+    @Deprecated public CharArrayIndexer(char[] array, long... sizes) {
+        this(array, defaultIndex(sizes));
     }
 
     /** Constructor to set the {@link #array}, {@link #sizes} and {@link #strides}. */
-    public CharArrayIndexer(char[] array, long[] sizes, long[] strides) {
-        super(sizes, strides);
+    @Deprecated public CharArrayIndexer(char[] array, long[] sizes, long[] strides) {
+        this(array, customStrides(sizes, strides));
+    }
+
+    /** Constructor to set the {@link #array} and {@link #index}. */
+    public CharArrayIndexer(char[] array, Index index) {
+        super(index);
         this.array = array;
     }
 
     @Override public char[] array() {
         return array;
+    }
+
+    @Override
+    public CharIndexer slice(Index index) {
+        return new CharArrayIndexer(array, index);
     }
 
     @Override public char get(long i) {

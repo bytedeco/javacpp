@@ -24,6 +24,8 @@ package org.bytedeco.javacpp.indexer;
 
 import org.bytedeco.javacpp.DoublePointer;
 import org.bytedeco.javacpp.Pointer;
+import static org.bytedeco.javacpp.indexer.CustomStridesIndex.customStrides;
+import static org.bytedeco.javacpp.indexer.DefaultIndex.defaultIndex;
 
 /**
  * An indexer for a {@link DoublePointer} using the {@link Raw} instance.
@@ -38,19 +40,24 @@ public class DoubleRawIndexer extends DoubleIndexer {
     /** Base address and number of elements accessible. */
     final long base, size;
 
-    /** Calls {@code DoubleRawIndexer(pointer, { pointer.limit() - pointer.position() }, { 1 })}. */
+    /** Calls {@code DoubleRawIndexer(pointer, defaultIndex({ pointer.limit() - pointer.position() }))}. */
     public DoubleRawIndexer(DoublePointer pointer) {
-        this(pointer, new long[] { pointer.limit() - pointer.position() }, ONE_STRIDE);
+        this(pointer, defaultIndex( pointer.limit() - pointer.position() ));
     }
 
-    /** Calls {@code DoubleRawIndexer(pointer, sizes, strides(sizes))}. */
-    public DoubleRawIndexer(DoublePointer pointer, long... sizes) {
-        this(pointer, sizes, strides(sizes));
+    /** Calls {@code DoubleRawIndexer(pointer, defaultIndex(sizes))}. */
+    @Deprecated public DoubleRawIndexer(DoublePointer pointer, long... sizes) {
+        this(pointer, defaultIndex(sizes));
     }
 
     /** Constructor to set the {@link #pointer}, {@link #sizes} and {@link #strides}. */
-    public DoubleRawIndexer(DoublePointer pointer, long[] sizes, long[] strides) {
-        super(sizes, strides);
+    @Deprecated public DoubleRawIndexer(DoublePointer pointer, long[] sizes, long[] strides) {
+        this(pointer, customStrides(sizes, strides));
+    }
+
+    /** Constructor to set the {@link #pointer} and {@link #index}. */
+    public DoubleRawIndexer(DoublePointer pointer, Index index) {
+        super(index);
         this.pointer = pointer;
         base = pointer.address() + pointer.position() * VALUE_BYTES;
         size = pointer.limit() - pointer.position();
@@ -58,6 +65,11 @@ public class DoubleRawIndexer extends DoubleIndexer {
 
     @Override public Pointer pointer() {
         return pointer;
+    }
+
+    @Override
+    public DoubleIndexer slice(Index index) {
+        return new DoubleRawIndexer(pointer, index);
     }
 
     public double getRaw(long i) {

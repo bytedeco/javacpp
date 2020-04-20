@@ -24,6 +24,8 @@ package org.bytedeco.javacpp.indexer;
 
 import org.bytedeco.javacpp.FloatPointer;
 import org.bytedeco.javacpp.Pointer;
+import static org.bytedeco.javacpp.indexer.CustomStridesIndex.customStrides;
+import static org.bytedeco.javacpp.indexer.DefaultIndex.defaultIndex;
 
 /**
  * An indexer for a {@link FloatPointer} using the {@link Raw} instance.
@@ -38,19 +40,24 @@ public class FloatRawIndexer extends FloatIndexer {
     /** Base address and number of elements accessible. */
     final long base, size;
 
-    /** Calls {@code FloatRawIndexer(pointer, { pointer.limit() - pointer.position() }, { 1 })}. */
+    /** Calls {@code FloatRawIndexer(pointer, defaultIndex({ pointer.limit() - pointer.position() }))}. */
     public FloatRawIndexer(FloatPointer pointer) {
-        this(pointer, new long[] { pointer.limit() - pointer.position() }, ONE_STRIDE);
+        this(pointer, defaultIndex( pointer.limit() - pointer.position() ));
     }
 
-    /** Calls {@code FloatRawIndexer(pointer, sizes, strides(sizes))}. */
-    public FloatRawIndexer(FloatPointer pointer, long... sizes) {
-        this(pointer, sizes, strides(sizes));
+    /** Calls {@code FloatRawIndexer(pointer, defaultIndex(sizes))}. */
+    @Deprecated public FloatRawIndexer(FloatPointer pointer, long... sizes) {
+        this(pointer, defaultIndex(sizes));
     }
 
     /** Constructor to set the {@link #pointer}, {@link #sizes} and {@link #strides}. */
-    public FloatRawIndexer(FloatPointer pointer, long[] sizes, long[] strides) {
-        super(sizes, strides);
+    @Deprecated public FloatRawIndexer(FloatPointer pointer, long[] sizes, long[] strides) {
+        this(pointer, customStrides(sizes, strides));
+    }
+
+    /** Constructor to set the {@link #pointer} and {@link #index}. */
+    public FloatRawIndexer(FloatPointer pointer, Index index) {
+        super(index);
         this.pointer = pointer;
         base = pointer.address() + pointer.position() * VALUE_BYTES;
         size = pointer.limit() - pointer.position();
@@ -58,6 +65,11 @@ public class FloatRawIndexer extends FloatIndexer {
 
     @Override public Pointer pointer() {
         return pointer;
+    }
+    
+    @Override
+    public FloatIndexer slice(Index index) {
+        return new FloatRawIndexer(pointer, index);
     }
 
     public float getRaw(long i) {

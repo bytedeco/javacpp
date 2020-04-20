@@ -22,6 +22,9 @@
 
 package org.bytedeco.javacpp.indexer;
 
+import static org.bytedeco.javacpp.indexer.CustomStridesIndex.customStrides;
+import static org.bytedeco.javacpp.indexer.DefaultIndex.defaultIndex;
+
 /**
  * An indexer for a {@code short[]} array, treated as half-precision float.
  *
@@ -31,24 +34,34 @@ public class HalfArrayIndexer extends HalfIndexer {
     /** The backing array. */
     protected short[] array;
 
-    /** Calls {@code HalfArrayIndexer(array, { array.length }, { 1 })}. */
+    /** Calls {@code HalfArrayIndexer(array, defaultIndex({ array.length }))}. */
     public HalfArrayIndexer(short[] array) {
-        this(array, new long[] { array.length }, ONE_STRIDE);
+        this(array, defaultIndex(array.length));
     }
 
-    /** Calls {@code HalfArrayIndexer(array, sizes, strides(sizes))}. */
-    public HalfArrayIndexer(short[] array, long... sizes) {
-        this(array, sizes, strides(sizes));
+    /** Calls {@code HalfArrayIndexer(array, sizes)}. */
+    @Deprecated public HalfArrayIndexer(short[] array, long... sizes) {
+        this(array, defaultIndex(sizes));
     }
 
     /** Constructor to set the {@link #array}, {@link #sizes} and {@link #strides}. */
-    public HalfArrayIndexer(short[] array, long[] sizes, long[] strides) {
-        super(sizes, strides);
+    @Deprecated public HalfArrayIndexer(short[] array, long[] sizes, long[] strides) {
+        this(array, customStrides(sizes, strides));
+    }
+
+    /** Constructor to set the {@link #array} and {@link #index}. */
+    public HalfArrayIndexer(short[] array, Index index) {
+        super(index);
         this.array = array;
     }
 
     @Override public short[] array() {
         return array;
+    }
+
+    @Override
+    public HalfIndexer slice(Index index) {
+        return new HalfArrayIndexer(array, index);
     }
 
     @Override public float get(long i) {

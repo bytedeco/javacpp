@@ -22,6 +22,9 @@
 
 package org.bytedeco.javacpp.indexer;
 
+import static org.bytedeco.javacpp.indexer.CustomStridesIndex.customStrides;
+import static org.bytedeco.javacpp.indexer.DefaultIndex.defaultIndex;
+
 /**
  * An indexer for a {@code int[]} array, treated as unsigned.
  *
@@ -31,24 +34,34 @@ public class UIntArrayIndexer extends UIntIndexer {
     /** The backing array. */
     protected int[] array;
 
-    /** Calls {@code UIntArrayIndexer(array, { array.length }, { 1 })}. */
+    /** Calls {@code UIntArrayIndexer(array, defaultIndex({ array.length }))}. */
     public UIntArrayIndexer(int[] array) {
-        this(array, new long[] { array.length }, ONE_STRIDE);
+        this(array, defaultIndex(array.length));
     }
 
-    /** Calls {@code UIntArrayIndexer(array, sizes, strides(sizes))}. */
-    public UIntArrayIndexer(int[] array, long... sizes) {
-        this(array, sizes, strides(sizes));
+    /** Calls {@code UIntArrayIndexer(array, sizes)}. */
+    @Deprecated public UIntArrayIndexer(int[] array, long... sizes) {
+        this(array, defaultIndex(sizes));
     }
 
     /** Constructor to set the {@link #array}, {@link #sizes} and {@link #strides}. */
-    public UIntArrayIndexer(int[] array, long[] sizes, long[] strides) {
-        super(sizes, strides);
+    @Deprecated public UIntArrayIndexer(int[] array, long[] sizes, long[] strides) {
+        this(array, customStrides(sizes, strides));
+    }
+
+    /** Constructor to set the {@link #array} and {@link #index}. */
+    public UIntArrayIndexer(int[] array, Index index) {
+        super(index);
         this.array = array;
     }
 
     @Override public int[] array() {
         return array;
+    }
+
+    @Override
+    public UIntIndexer slice(Index index) {
+        return new UIntArrayIndexer(array, index);
     }
 
     @Override public long get(long i) {

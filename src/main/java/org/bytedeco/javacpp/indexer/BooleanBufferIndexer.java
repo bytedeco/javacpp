@@ -24,6 +24,8 @@ package org.bytedeco.javacpp.indexer;
 
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
+import static org.bytedeco.javacpp.indexer.CustomStridesIndex.customStrides;
+import static org.bytedeco.javacpp.indexer.DefaultIndex.defaultIndex;
 
 /**
  * An indexer for a {@link ByteBuffer} as {@code boolean} values.
@@ -34,24 +36,34 @@ public class BooleanBufferIndexer extends BooleanIndexer {
     /** The backing buffer. */
     protected ByteBuffer buffer;
 
-    /** Calls {@code BooleanBufferIndexer(buffer, { buffer.limit() }, { 1 })}. */
+    /** Calls {@code BooleanBufferIndexer(buffer, defaultIndex({ buffer.limit() }))}. */
     public BooleanBufferIndexer(ByteBuffer buffer) {
-        this(buffer, new long[] { buffer.limit() }, ONE_STRIDE);
+        this(buffer, defaultIndex(buffer.limit()));
     }
 
-    /** Calls {@code BooleanBufferIndexer(buffer, sizes, strides(sizes))}. */
-    public BooleanBufferIndexer(ByteBuffer buffer, long... sizes) {
-        this(buffer, sizes, strides(sizes));
+    /** Calls {@code BooleanBufferIndexer(buffer, defaultIndex(sizes))}. */
+    @Deprecated public BooleanBufferIndexer(ByteBuffer buffer, long... sizes) {
+        this(buffer, defaultIndex(sizes));
     }
 
     /** Constructor to set the {@link #buffer}, {@link #sizes} and {@link #strides}. */
-    public BooleanBufferIndexer(ByteBuffer buffer, long[] sizes, long[] strides) {
-        super(sizes, strides);
+    @Deprecated public BooleanBufferIndexer(ByteBuffer buffer, long[] sizes, long[] strides) {
+        this(buffer, customStrides(sizes, strides));
+    }
+
+    /** Constructor to set the {@link #buffer} and {@link #index}. */
+    public BooleanBufferIndexer(ByteBuffer buffer, Index index) {
+        super(index);
         this.buffer = buffer;
     }
 
     @Override public Buffer buffer() {
         return buffer;
+    }
+
+    @Override
+    public BooleanIndexer slice(Index index) {
+        return new BooleanBufferIndexer(buffer, index);
     }
 
     @Override public boolean get(long i) {

@@ -24,6 +24,7 @@ package org.bytedeco.javacpp.indexer;
 
 import java.nio.IntBuffer;
 import org.bytedeco.javacpp.IntPointer;
+import static org.bytedeco.javacpp.indexer.CustomStridesIndex.customStrides;
 
 /**
  * Abstract indexer for the {@code int} primitive type, treated as unsigned.
@@ -34,6 +35,11 @@ public abstract class UIntIndexer extends Indexer {
     /** The number of bytes used to represent an int. */
     public static final int VALUE_BYTES = 4;
 
+    protected UIntIndexer(Index index) {
+        super(index);
+    }
+
+    @Deprecated
     protected UIntIndexer(long[] sizes, long[] strides) {
         super(sizes, strides);
     }
@@ -46,35 +52,48 @@ public abstract class UIntIndexer extends Indexer {
     public static UIntIndexer create(IntBuffer buffer) {
         return new UIntBufferIndexer(buffer);
     }
-    /** Returns {@code create(pointer, { pointer.limit() - pointer.position() }, { 1 }, true)} */
+    /** Returns {@code new UIntRawIndexer(pointer} */
     public static UIntIndexer create(IntPointer pointer) {
-        return create(pointer, new long[] { pointer.limit() - pointer.position() }, ONE_STRIDE);
+        return new UIntRawIndexer(pointer);
+    }
+
+    /** Returns {@code new UIntArrayIndexer(array, index)} */
+    public static UIntIndexer create(int[] array, Index index) {
+        return new UIntArrayIndexer(array, index);
+    }
+    /** Returns {@code new UIntBufferIndexer(buffer, index)} */
+    public static UIntIndexer create(IntBuffer buffer, Index index) {
+        return new UIntBufferIndexer(buffer, index);
+    }
+    /** Returns {@code new UIntRawIndexer(pointer, index)} */
+    public static UIntIndexer create(IntPointer pointer, Index index) {
+        return new UIntRawIndexer(pointer, index);
     }
 
     /** Returns {@code new UIntArrayIndexer(array, sizes)} */
-    public static UIntIndexer create(int[] array, long... sizes) {
+    @Deprecated public static UIntIndexer create(int[] array, long... sizes) {
         return new UIntArrayIndexer(array, sizes);
     }
     /** Returns {@code new UIntBufferIndexer(buffer, sizes)} */
-    public static UIntIndexer create(IntBuffer buffer, long... sizes) {
+    @Deprecated public static UIntIndexer create(IntBuffer buffer, long... sizes) {
         return new UIntBufferIndexer(buffer, sizes);
     }
-    /** Returns {@code create(pointer, sizes, strides(sizes))} */
-    public static UIntIndexer create(IntPointer pointer, long... sizes) {
-        return create(pointer, sizes, strides(sizes));
+    /** Returns {@code new UIntRawIndexer(pointer, sizes)} */
+    @Deprecated public static UIntIndexer create(IntPointer pointer, long... sizes) {
+        return new UIntRawIndexer(pointer, sizes);
     }
 
     /** Returns {@code new UIntArrayIndexer(array, sizes, strides)} */
-    public static UIntIndexer create(int[] array, long[] sizes, long[] strides) {
+    @Deprecated public static UIntIndexer create(int[] array, long[] sizes, long[] strides) {
         return new UIntArrayIndexer(array, sizes, strides);
     }
     /** Returns {@code new UIntBufferIndexer(buffer, sizes, strides)} */
-    public static UIntIndexer create(IntBuffer buffer, long[] sizes, long[] strides) {
+    @Deprecated public static UIntIndexer create(IntBuffer buffer, long[] sizes, long[] strides) {
         return new UIntBufferIndexer(buffer, sizes, strides);
     }
-    /** Returns {@code create(pointer, sizes, strides, true)} */
-    public static UIntIndexer create(IntPointer pointer, long[] sizes, long[] strides) {
-        return create(pointer, sizes, strides, true);
+    /** Returns {@code new UIntRawIndexer(pointer, sizes, strides)} */
+    @Deprecated public static UIntIndexer create(IntPointer pointer, long[] sizes, long[] strides) {
+        return new UIntRawIndexer(pointer, sizes, strides);
     }
     /**
      * Creates a int indexer to access efficiently the data of a pointer.
@@ -83,15 +102,27 @@ public abstract class UIntIndexer extends Indexer {
      * @param direct {@code true} to use a direct buffer, see {@link Indexer} for details
      * @return the new int indexer backed by the raw memory interface, a buffer, or an array
      */
-    public static UIntIndexer create(final IntPointer pointer, long[] sizes, long[] strides, boolean direct) {
+    @Deprecated public static UIntIndexer create(final IntPointer pointer, long[] sizes, long[] strides, boolean direct) {
+        return create(pointer, customStrides(sizes, strides), direct);
+    }
+
+    /**
+     * Creates a int indexer to access efficiently the data of a pointer.
+     *
+     * @param pointer data to access via a buffer or to copy to an array
+     * @param index TODO
+     * @param direct {@code true} to use a direct buffer, see {@link Indexer} for details
+     * @return the new int indexer backed by the raw memory interface, a buffer, or an array
+     */
+    public static UIntIndexer create(final IntPointer pointer, Index index, boolean direct) {
         if (direct) {
-            return Raw.getInstance() != null ? new UIntRawIndexer(pointer, sizes, strides)
-                                             : new UIntBufferIndexer(pointer.asBuffer(), sizes, strides);
+            return Raw.getInstance() != null ? new UIntRawIndexer(pointer, index)
+                                             : new UIntBufferIndexer(pointer.asBuffer(), index);
         } else {
             final long position = pointer.position();
             int[] array = new int[(int)Math.min(pointer.limit() - position, Integer.MAX_VALUE)];
             pointer.get(array);
-            return new UIntArrayIndexer(array, sizes, strides) {
+            return new UIntArrayIndexer(array, index) {
                 @Override public void release() {
                     pointer.position(position).put(array);
                     super.release();

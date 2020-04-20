@@ -25,6 +25,7 @@ package org.bytedeco.javacpp.indexer;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import org.bytedeco.javacpp.BytePointer;
+import static org.bytedeco.javacpp.indexer.CustomStridesIndex.customStrides;
 
 /**
  * Abstract indexer for the {@code byte} primitive type.
@@ -35,6 +36,11 @@ public abstract class ByteIndexer extends Indexer {
     /** The number of bytes used to represent a byte. */
     public static final int VALUE_BYTES = 1;
 
+    protected ByteIndexer(Index index) {
+        super(index);
+    }
+
+    @Deprecated
     protected ByteIndexer(long[] sizes, long[] strides) {
         super(sizes, strides);
     }
@@ -47,35 +53,48 @@ public abstract class ByteIndexer extends Indexer {
     public static ByteIndexer create(ByteBuffer buffer) {
         return new ByteBufferIndexer(buffer);
     }
-    /** Returns {@code create(pointer, { pointer.limit() - pointer.position() }, { 1 }, true)} */
+    /** Returns {@code new ByteRawIndexer(pointer} */
     public static ByteIndexer create(BytePointer pointer) {
-        return create(pointer, new long[] { pointer.limit() - pointer.position() }, ONE_STRIDE);
+        return new ByteRawIndexer(pointer);
+    }
+
+    /** Returns {@code new ByteArrayIndexer(array, index)} */
+    public static ByteIndexer create(byte[] array, Index index) {
+        return new ByteArrayIndexer(array, index);
+    }
+    /** Returns {@code new ByteBufferIndexer(buffer, index)} */
+    public static ByteIndexer create(ByteBuffer buffer, Index index) {
+        return new ByteBufferIndexer(buffer, index);
+    }
+    /** Returns {@code new ByteRawIndexer(pointer, index)} */
+    public static ByteIndexer create(BytePointer pointer, Index index) {
+        return new ByteRawIndexer(pointer, index);
     }
 
     /** Returns {@code new ByteArrayIndexer(array, sizes)} */
-    public static ByteIndexer create(byte[] array, long... sizes) {
+    @Deprecated public static ByteIndexer create(byte[] array, long... sizes) {
         return new ByteArrayIndexer(array, sizes);
     }
     /** Returns {@code new ByteBufferIndexer(buffer, sizes)} */
-    public static ByteIndexer create(ByteBuffer buffer, long... sizes) {
+    @Deprecated public static ByteIndexer create(ByteBuffer buffer, long... sizes) {
         return new ByteBufferIndexer(buffer, sizes);
     }
-    /** Returns {@code create(pointer, sizes, strides(sizes))} */
-    public static ByteIndexer create(BytePointer pointer, long... sizes) {
-        return create(pointer, sizes, strides(sizes));
+    /** Returns {@code new ByteRawIndexer(pointer, index)} */
+    @Deprecated public static ByteIndexer create(BytePointer pointer, long... sizes) {
+        return new ByteRawIndexer(pointer, sizes);
     }
 
     /** Returns {@code new ByteArrayIndexer(array, sizes, strides)} */
-    public static ByteIndexer create(byte[] array, long[] sizes, long[] strides) {
+    @Deprecated public static ByteIndexer create(byte[] array, long[] sizes, long[] strides) {
         return new ByteArrayIndexer(array, sizes, strides);
     }
     /** Returns {@code new ByteBufferIndexer(buffer, sizes, strides)} */
-    public static ByteIndexer create(ByteBuffer buffer, long[] sizes, long[] strides) {
+    @Deprecated public static ByteIndexer create(ByteBuffer buffer, long[] sizes, long[] strides) {
         return new ByteBufferIndexer(buffer, sizes, strides);
     }
-    /** Returns {@code create(pointer, sizes, strides, true)} */
-    public static ByteIndexer create(BytePointer pointer, long[] sizes, long[] strides) {
-        return create(pointer, sizes, strides, true);
+    /** Returns {@code new ByteRawIndexer(pointer, sizes, strides)} */
+    @Deprecated public static ByteIndexer create(BytePointer pointer, long[] sizes, long[] strides) {
+        return new ByteRawIndexer(pointer, sizes, strides);
     }
     /**
      * Creates a byte indexer to access efficiently the data of a pointer.
@@ -84,15 +103,27 @@ public abstract class ByteIndexer extends Indexer {
      * @param direct {@code true} to use a direct buffer, see {@link Indexer} for details
      * @return the new byte indexer backed by the raw memory interface, a buffer, or an array
      */
-    public static ByteIndexer create(final BytePointer pointer, long[] sizes, long[] strides, boolean direct) {
+    @Deprecated public static ByteIndexer create(final BytePointer pointer, long[] sizes, long[] strides, boolean direct) {
+        return create(pointer, customStrides(sizes, strides), direct);
+    }
+
+    /**
+     * Creates a byte indexer to access efficiently the data of a pointer.
+     *
+     * @param pointer data to access via a buffer or to copy to an array
+     * @param index TODO
+     * @param direct {@code true} to use a direct buffer, see {@link Indexer} for details
+     * @return the new byte indexer backed by the raw memory interface, a buffer, or an array
+     */
+    public static ByteIndexer create(final BytePointer pointer, Index index, boolean direct) {
         if (direct) {
-            return Raw.getInstance() != null ? new ByteRawIndexer(pointer, sizes, strides)
-                                             : new ByteBufferIndexer(pointer.asBuffer(), sizes, strides);
+            return Raw.getInstance() != null ? new ByteRawIndexer(pointer, index)
+                                             : new ByteBufferIndexer(pointer.asBuffer(), index);
         } else {
             final long position = pointer.position();
             byte[] array = new byte[(int)Math.min(pointer.limit() - position, Integer.MAX_VALUE)];
             pointer.get(array);
-            return new ByteArrayIndexer(array, sizes, strides) {
+            return new ByteArrayIndexer(array, index) {
                 @Override public void release() {
                     pointer.position(position).put(array);
                     super.release();

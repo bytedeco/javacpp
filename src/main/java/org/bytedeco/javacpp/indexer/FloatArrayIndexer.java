@@ -22,6 +22,9 @@
 
 package org.bytedeco.javacpp.indexer;
 
+import static org.bytedeco.javacpp.indexer.CustomStridesIndex.customStrides;
+import static org.bytedeco.javacpp.indexer.DefaultIndex.defaultIndex;
+
 /**
  * An indexer for a {@code float[]} array.
  *
@@ -31,24 +34,34 @@ public class FloatArrayIndexer extends FloatIndexer {
     /** The backing array. */
     protected float[] array;
 
-    /** Calls {@code FloatArrayIndexer(array, { array.length }, { 1 })}. */
+    /** Calls {@code FloatArrayIndexer(array, defaultIndex({ array.length }))}. */
     public FloatArrayIndexer(float[] array) {
-        this(array, new long[] { array.length }, ONE_STRIDE);
+        this(array, defaultIndex(array.length));
     }
 
-    /** Calls {@code FloatArrayIndexer(array, sizes, strides(sizes))}. */
-    public FloatArrayIndexer(float[] array, long... sizes) {
-        this(array, sizes, strides(sizes));
+    /** Calls {@code FloatArrayIndexer(array, sizes)}. */
+    @Deprecated public FloatArrayIndexer(float[] array, long... sizes) {
+        this(array, defaultIndex(sizes));
     }
 
     /** Constructor to set the {@link #array}, {@link #sizes} and {@link #strides}. */
-    public FloatArrayIndexer(float[] array, long[] sizes, long[] strides) {
-        super(sizes, strides);
+    @Deprecated public FloatArrayIndexer(float[] array, long[] sizes, long[] strides) {
+        this(array, customStrides(sizes, strides));
+    }
+
+    /** Constructor to set the {@link #array} and {@link #index}. */
+    public FloatArrayIndexer(float[] array, Index index) {
+        super(index);
         this.array = array;
     }
 
     @Override public float[] array() {
         return array;
+    }
+
+    @Override
+    public FloatIndexer slice(Index index) {
+        return new FloatArrayIndexer(array, index);
     }
 
     @Override public float get(long i) {

@@ -24,6 +24,8 @@ package org.bytedeco.javacpp.indexer;
 
 import org.bytedeco.javacpp.BytePointer;
 import org.bytedeco.javacpp.Pointer;
+import static org.bytedeco.javacpp.indexer.CustomStridesIndex.customStrides;
+import static org.bytedeco.javacpp.indexer.DefaultIndex.defaultIndex;
 
 /**
  * An indexer for a {@link BytePointer} using the {@link Raw} instance, treated as unsigned.
@@ -38,19 +40,24 @@ public class UByteRawIndexer extends UByteIndexer {
     /** Base address and number of elements accessible. */
     final long base, size;
 
-    /** Calls {@code UByteRawIndexer(pointer, { pointer.limit() - pointer.position() }, { 1 })}. */
+    /** Calls {@code UByteRawIndexer(pointer, defaultIndex({ pointer.limit() - pointer.position() }))}. */
     public UByteRawIndexer(BytePointer pointer) {
-        this(pointer, new long[] { pointer.limit() - pointer.position() }, ONE_STRIDE);
+        this(pointer, defaultIndex( pointer.limit() - pointer.position() ));
     }
 
-    /** Calls {@code UByteRawIndexer(pointer, sizes, strides(sizes))}. */
-    public UByteRawIndexer(BytePointer pointer, long... sizes) {
+    /** Calls {@code UByteRawIndexer(pointer, defaultIndex(sizes))}. */
+    @Deprecated public UByteRawIndexer(BytePointer pointer, long... sizes) {
         this(pointer, sizes, strides(sizes));
     }
 
     /** Constructor to set the {@link #pointer}, {@link #sizes} and {@link #strides}. */
-    public UByteRawIndexer(BytePointer pointer, long[] sizes, long[] strides) {
-        super(sizes, strides);
+    @Deprecated public UByteRawIndexer(BytePointer pointer, long[] sizes, long[] strides) {
+        this(pointer, customStrides(sizes, strides));
+    }
+
+    /** Constructor to set the {@link #pointer} and {@link #index}. */
+    public UByteRawIndexer(BytePointer pointer, Index index) {
+        super(index);
         this.pointer = pointer;
         base = pointer.address() + pointer.position();
         size = pointer.limit() - pointer.position();
@@ -58,6 +65,11 @@ public class UByteRawIndexer extends UByteIndexer {
 
     @Override public Pointer pointer() {
         return pointer;
+    }
+
+    @Override
+    public UByteIndexer slice(Index index) {
+        return new UByteRawIndexer(pointer, index);
     }
 
     public int getRaw(long i) {

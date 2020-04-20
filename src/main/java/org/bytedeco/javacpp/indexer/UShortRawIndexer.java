@@ -24,6 +24,8 @@ package org.bytedeco.javacpp.indexer;
 
 import org.bytedeco.javacpp.Pointer;
 import org.bytedeco.javacpp.ShortPointer;
+import static org.bytedeco.javacpp.indexer.CustomStridesIndex.customStrides;
+import static org.bytedeco.javacpp.indexer.DefaultIndex.defaultIndex;
 
 /**
  * An indexer for a {@link ShortPointer} using the {@link Raw} instance, treated as unsigned.
@@ -38,19 +40,24 @@ public class UShortRawIndexer extends UShortIndexer {
     /** Base address and number of elements accessible. */
     final long base, size;
 
-    /** Calls {@code UShortRawIndexer(pointer, { pointer.limit() - pointer.position() }, { 1 })}. */
+    /** Calls {@code UShortRawIndexer(pointer, defaultIndex({ pointer.limit() - pointer.position() }))}. */
     public UShortRawIndexer(ShortPointer pointer) {
-        this(pointer, new long[] { pointer.limit() - pointer.position() }, ONE_STRIDE);
+        this(pointer, defaultIndex( pointer.limit() - pointer.position() ));
     }
 
-    /** Calls {@code UShortRawIndexer(pointer, sizes, strides(sizes))}. */
-    public UShortRawIndexer(ShortPointer pointer, long... sizes) {
-        this(pointer, sizes, strides(sizes));
+    /** Calls {@code UShortRawIndexer(pointer, defaultIndex(sizes))}. */
+    @Deprecated public UShortRawIndexer(ShortPointer pointer, long... sizes) {
+        this(pointer, defaultIndex(sizes));
     }
 
     /** Constructor to set the {@link #pointer}, {@link #sizes} and {@link #strides}. */
-    public UShortRawIndexer(ShortPointer pointer, long[] sizes, long[] strides) {
-        super(sizes, strides);
+    @Deprecated public UShortRawIndexer(ShortPointer pointer, long[] sizes, long[] strides) {
+        this(pointer, customStrides(sizes, strides));
+    }
+
+    /** Constructor to set the {@link #pointer} and {@link #index}. */
+    public UShortRawIndexer(ShortPointer pointer, Index index) {
+        super(index);
         this.pointer = pointer;
         base = pointer.address() + pointer.position() * VALUE_BYTES;
         size = pointer.limit() - pointer.position();
@@ -58,6 +65,11 @@ public class UShortRawIndexer extends UShortIndexer {
 
     @Override public Pointer pointer() {
         return pointer;
+    }
+
+    @Override
+    public UShortIndexer slice(Index index) {
+        return new UShortRawIndexer(pointer, index);
     }
 
     public int getRaw(long i) {

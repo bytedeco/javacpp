@@ -24,6 +24,8 @@ package org.bytedeco.javacpp.indexer;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import static org.bytedeco.javacpp.indexer.CustomStridesIndex.customStrides;
+import static org.bytedeco.javacpp.indexer.DefaultIndex.defaultIndex;
 
 /**
  * An indexer for a {@code byte[]} array.
@@ -38,24 +40,34 @@ public class ByteArrayIndexer extends ByteIndexer {
     /** The backing array. */
     protected byte[] array;
 
-    /** Calls {@code ByteArrayIndexer(array, { array.length }, { 1 })}. */
+    /** Calls {@code ByteArrayIndexer(array, defaultIndex({ array.length }))}. */
     public ByteArrayIndexer(byte[] array) {
-        this(array, new long[] { array.length }, ONE_STRIDE);
+        this(array, defaultIndex(array.length));
     }
 
-    /** Calls {@code ByteArrayIndexer(array, sizes, strides(sizes))}. */
-    public ByteArrayIndexer(byte[] array, long... sizes) {
-        this(array, sizes, strides(sizes));
+    /** Calls {@code ByteArrayIndexer(array, sizes)}. */
+    @Deprecated public ByteArrayIndexer(byte[] array, long... sizes) {
+        this(array, defaultIndex(sizes));
     }
 
     /** Constructor to set the {@link #array}, {@link #sizes} and {@link #strides}. */
-    public ByteArrayIndexer(byte[] array, long[] sizes, long[] strides) {
-        super(sizes, strides);
+    @Deprecated public ByteArrayIndexer(byte[] array, long[] sizes, long[] strides) {
+        this(array, customStrides(sizes, strides));
+    }
+
+    /** Constructor to set the {@link #array} and {@link #index}. */
+    public ByteArrayIndexer(byte[] array, Index index) {
+        super(index);
         this.array = array;
     }
 
     @Override public byte[] array() {
         return array;
+    }
+
+    @Override
+    public ByteIndexer slice(Index index) {
+        return new ByteArrayIndexer(array, index);
     }
 
     @Override public byte get(long i) {

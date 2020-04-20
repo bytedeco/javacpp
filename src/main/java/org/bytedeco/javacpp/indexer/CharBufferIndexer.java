@@ -24,6 +24,8 @@ package org.bytedeco.javacpp.indexer;
 
 import java.nio.Buffer;
 import java.nio.CharBuffer;
+import static org.bytedeco.javacpp.indexer.CustomStridesIndex.customStrides;
+import static org.bytedeco.javacpp.indexer.DefaultIndex.defaultIndex;
 
 /**
  * An indexer for a {@link CharBuffer}.
@@ -34,24 +36,34 @@ public class CharBufferIndexer extends CharIndexer {
     /** The backing buffer. */
     protected CharBuffer buffer;
 
-    /** Calls {@code CharBufferIndexer(buffer, { buffer.limit() }, { 1 })}. */
+    /** Calls {@code CharBufferIndexer(buffer, defaultIndex({ buffer.limit() }))}. */
     public CharBufferIndexer(CharBuffer buffer) {
-        this(buffer, new long[] { buffer.limit() }, ONE_STRIDE);
+        this(buffer, defaultIndex(buffer.limit()));
     }
 
-    /** Calls {@code CharBufferIndexer(buffer, sizes, strides(sizes))}. */
+    /** Calls {@code CharBufferIndexer(buffer, defaultIndex(sizes))}. */
     public CharBufferIndexer(CharBuffer buffer, long... sizes) {
-        this(buffer, sizes, strides(sizes));
+        this(buffer, defaultIndex(sizes));
     }
 
     /** Constructor to set the {@link #buffer}, {@link #sizes} and {@link #strides}. */
     public CharBufferIndexer(CharBuffer buffer, long[] sizes, long[] strides) {
-        super(sizes, strides);
+        this(buffer, customStrides(sizes, strides));
+    }
+
+    /** Constructor to set the {@link #buffer} and {@link #index}. */
+    public CharBufferIndexer(CharBuffer buffer, Index index) {
+        super(index);
         this.buffer = buffer;
     }
 
     @Override public Buffer buffer() {
         return buffer;
+    }
+
+    @Override
+    public CharIndexer slice(Index index) {
+        return new CharBufferIndexer(buffer, index);
     }
 
     @Override public char get(long i) {

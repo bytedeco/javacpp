@@ -24,6 +24,9 @@ package org.bytedeco.javacpp.indexer;
 
 import java.math.BigInteger;
 
+import static org.bytedeco.javacpp.indexer.CustomStridesIndex.customStrides;
+import static org.bytedeco.javacpp.indexer.DefaultIndex.defaultIndex;
+
 /**
  * An indexer for a {@code long[]} array, treated as unsigned.
  *
@@ -33,24 +36,34 @@ public class ULongArrayIndexer extends ULongIndexer {
     /** The backing array. */
     protected long[] array;
 
-    /** Calls {@code ULongArrayIndexer(array, { array.length }, { 1 })}. */
+    /** Calls {@code ULongArrayIndexer(array, defaultIndex({ array.length }))}. */
     public ULongArrayIndexer(long[] array) {
-        this(array, new long[] { array.length }, ONE_STRIDE);
+        this(array, defaultIndex(array.length));
     }
 
-    /** Calls {@code ULongArrayIndexer(array, sizes, strides(sizes))}. */
-    public ULongArrayIndexer(long[] array, long... sizes) {
-        this(array, sizes, strides(sizes));
+    /** Calls {@code ULongArrayIndexer(array, sizes)}. */
+    @Deprecated public ULongArrayIndexer(long[] array, long... sizes) {
+        this(array, defaultIndex(sizes));
     }
 
     /** Constructor to set the {@link #array}, {@link #sizes} and {@link #strides}. */
-    public ULongArrayIndexer(long[] array, long[] sizes, long[] strides) {
-        super(sizes, strides);
+    @Deprecated public ULongArrayIndexer(long[] array, long[] sizes, long[] strides) {
+        this(array, customStrides(sizes, strides));
+    }
+
+    /** Constructor to set the {@link #array} and {@link #index}. */
+    public ULongArrayIndexer(long[] array, Index index) {
+        super(index);
         this.array = array;
     }
 
     @Override public long[] array() {
         return array;
+    }
+
+    @Override
+    public ULongIndexer slice(Index index) {
+        return new ULongArrayIndexer(array, index);
     }
 
     @Override public BigInteger get(long i) {

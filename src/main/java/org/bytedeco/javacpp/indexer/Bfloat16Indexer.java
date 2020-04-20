@@ -24,6 +24,7 @@ package org.bytedeco.javacpp.indexer;
 
 import java.nio.ShortBuffer;
 import org.bytedeco.javacpp.ShortPointer;
+import static org.bytedeco.javacpp.indexer.CustomStridesIndex.customStrides;
 
 /**
  * Abstract indexer for the {@code short} primitive type, treated as bfloat16.
@@ -36,6 +37,11 @@ public abstract class Bfloat16Indexer extends Indexer {
     /** The number of bytes used to represent a short. */
     public static final int VALUE_BYTES = 2;
 
+    protected Bfloat16Indexer(Index index) {
+        super(index);
+    }
+
+    @Deprecated
     protected Bfloat16Indexer(long[] sizes, long[] strides) {
         super(sizes, strides);
     }
@@ -48,35 +54,48 @@ public abstract class Bfloat16Indexer extends Indexer {
     public static Bfloat16Indexer create(ShortBuffer buffer) {
         return new Bfloat16BufferIndexer(buffer);
     }
-    /** Returns {@code create(pointer, { pointer.limit() - pointer.position() }, { 1 }, true)} */
+    /** Returns {@code new Bfloat16RawIndexer(pointer} */
     public static Bfloat16Indexer create(ShortPointer pointer) {
-        return create(pointer, new long[] { pointer.limit() - pointer.position() }, ONE_STRIDE);
+        return new Bfloat16RawIndexer(pointer);
+    }
+
+    /** Returns {@code new Bfloat16ArrayIndexer(array, index)} */
+    public static Bfloat16Indexer create(short[] array, Index index) {
+        return new Bfloat16ArrayIndexer(array, index);
+    }
+    /** Returns {@code new Bfloat16BufferIndexer(buffer, index)} */
+    public static Bfloat16Indexer create(ShortBuffer buffer, Index index) {
+        return new Bfloat16BufferIndexer(buffer, index);
+    }
+    /** Returns {@code new Bfloat16RawIndexer(pointer, index)} */
+    public static Bfloat16Indexer create(ShortPointer pointer, Index index) {
+        return new Bfloat16RawIndexer(pointer, index);
     }
 
     /** Returns {@code new Bfloat16ArrayIndexer(array, sizes)} */
-    public static Bfloat16Indexer create(short[] array, long... sizes) {
+    @Deprecated public static Bfloat16Indexer create(short[] array, long... sizes) {
         return new Bfloat16ArrayIndexer(array, sizes);
     }
     /** Returns {@code new Bfloat16BufferIndexer(buffer, sizes)} */
-    public static Bfloat16Indexer create(ShortBuffer buffer, long... sizes) {
+    @Deprecated public static Bfloat16Indexer create(ShortBuffer buffer, long... sizes) {
         return new Bfloat16BufferIndexer(buffer, sizes);
     }
-    /** Returns {@code create(pointer, sizes, strides(sizes))} */
-    public static Bfloat16Indexer create(ShortPointer pointer, long... sizes) {
-        return create(pointer, sizes, strides(sizes));
+    /** Returns {@code new Bfloat16RawIndexer(pointer, sizes)} */
+    @Deprecated public static Bfloat16Indexer create(ShortPointer pointer, long... sizes) {
+        return new Bfloat16RawIndexer(pointer, sizes);
     }
 
     /** Returns {@code new Bfloat16ArrayIndexer(array, sizes, strides)} */
-    public static Bfloat16Indexer create(short[] array, long[] sizes, long[] strides) {
+    @Deprecated public static Bfloat16Indexer create(short[] array, long[] sizes, long[] strides) {
         return new Bfloat16ArrayIndexer(array, sizes, strides);
     }
     /** Returns {@code new Bfloat16BufferIndexer(buffer, sizes, strides)} */
-    public static Bfloat16Indexer create(ShortBuffer buffer, long[] sizes, long[] strides) {
+    @Deprecated public static Bfloat16Indexer create(ShortBuffer buffer, long[] sizes, long[] strides) {
         return new Bfloat16BufferIndexer(buffer, sizes, strides);
     }
-    /** Returns {@code create(pointer, sizes, strides, true)} */
-    public static Bfloat16Indexer create(ShortPointer pointer, long[] sizes, long[] strides) {
-        return create(pointer, sizes, strides, true);
+    /** Returns {@code new Bfloat16RawIndexer(pointer, sizes, strides)} */
+    @Deprecated public static Bfloat16Indexer create(ShortPointer pointer, long[] sizes, long[] strides) {
+        return new Bfloat16RawIndexer(pointer, sizes, strides);
     }
     /**
      * Creates a bfloat16 indexer to access efficiently the data of a pointer.
@@ -85,15 +104,27 @@ public abstract class Bfloat16Indexer extends Indexer {
      * @param direct {@code true} to use a direct buffer, see {@link Indexer} for details
      * @return the new bfloat16 indexer backed by the raw memory interface, a buffer, or an array
      */
-    public static Bfloat16Indexer create(final ShortPointer pointer, long[] sizes, long[] strides, boolean direct) {
+    @Deprecated public static Bfloat16Indexer create(final ShortPointer pointer, long[] sizes, long[] strides, boolean direct) {
+        return create(pointer, customStrides(sizes, strides), direct);
+    }
+
+    /**
+     * Creates a bfloat16 indexer to access efficiently the data of a pointer.
+     *
+     * @param pointer data to access via a buffer or to copy to an array
+     * @param index TODO
+     * @param direct {@code true} to use a direct buffer, see {@link Indexer} for details
+     * @return the new bfloat16 indexer backed by the raw memory interface, a buffer, or an array
+     */
+    public static Bfloat16Indexer create(final ShortPointer pointer, Index index, boolean direct) {
         if (direct) {
-            return Raw.getInstance() != null ? new Bfloat16RawIndexer(pointer, sizes, strides)
-                                             : new Bfloat16BufferIndexer(pointer.asBuffer(), sizes, strides);
+            return Raw.getInstance() != null ? new Bfloat16RawIndexer(pointer, index)
+                                             : new Bfloat16BufferIndexer(pointer.asBuffer(), index);
         } else {
             final long position = pointer.position();
             short[] array = new short[(int)Math.min(pointer.limit() - position, Integer.MAX_VALUE)];
             pointer.get(array);
-            return new Bfloat16ArrayIndexer(array, sizes, strides) {
+            return new Bfloat16ArrayIndexer(array, index) {
                 @Override public void release() {
                     pointer.position(position).put(array);
                     super.release();

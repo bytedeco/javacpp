@@ -24,6 +24,8 @@ package org.bytedeco.javacpp.indexer;
 
 import org.bytedeco.javacpp.LongPointer;
 import org.bytedeco.javacpp.Pointer;
+import static org.bytedeco.javacpp.indexer.CustomStridesIndex.customStrides;
+import static org.bytedeco.javacpp.indexer.DefaultIndex.defaultIndex;
 
 /**
  * An indexer for a {@link LongPointer} using the {@link Raw} instance.
@@ -38,19 +40,24 @@ public class LongRawIndexer extends LongIndexer {
     /** Base address and number of elements accessible. */
     final long base, size;
 
-    /** Calls {@code LongRawIndexer(pointer, { pointer.limit() - pointer.position() }, { 1 })}. */
+    /** Calls {@code LongRawIndexer(pointer, defaultIndex({ pointer.limit() - pointer.position() }))}. */
     public LongRawIndexer(LongPointer pointer) {
-        this(pointer, new long[] { pointer.limit() - pointer.position() }, ONE_STRIDE);
+        this(pointer, defaultIndex( pointer.limit() - pointer.position() ));
     }
 
-    /** Calls {@code LongRawIndexer(pointer, sizes, strides(sizes))}. */
-    public LongRawIndexer(LongPointer pointer, long... sizes) {
-        this(pointer, sizes, strides(sizes));
+    /** Calls {@code LongRawIndexer(pointer, defaultIndex(sizes))}. */
+    @Deprecated public LongRawIndexer(LongPointer pointer, long... sizes) {
+        this(pointer, defaultIndex(sizes));
     }
 
     /** Constructor to set the {@link #pointer}, {@link #sizes} and {@link #strides}. */
-    public LongRawIndexer(LongPointer pointer, long[] sizes, long[] strides) {
-        super(sizes, strides);
+    @Deprecated public LongRawIndexer(LongPointer pointer, long[] sizes, long[] strides) {
+        this(pointer, customStrides(sizes, strides));
+    }
+
+    /** Constructor to set the {@link #pointer} and {@link #index}. */
+    public LongRawIndexer(LongPointer pointer, Index index) {
+        super(index);
         this.pointer = pointer;
         base = pointer.address() + pointer.position() * VALUE_BYTES;
         size = pointer.limit() - pointer.position();
@@ -58,6 +65,11 @@ public class LongRawIndexer extends LongIndexer {
 
     @Override public Pointer pointer() {
         return pointer;
+    }
+
+    @Override
+    public LongIndexer slice(Index index) {
+        return new LongRawIndexer(pointer, index);
     }
 
     public long getRaw(long i) {

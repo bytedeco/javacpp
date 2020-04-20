@@ -24,6 +24,8 @@ package org.bytedeco.javacpp.indexer;
 
 import org.bytedeco.javacpp.BooleanPointer;
 import org.bytedeco.javacpp.Pointer;
+import static org.bytedeco.javacpp.indexer.CustomStridesIndex.customStrides;
+import static org.bytedeco.javacpp.indexer.DefaultIndex.defaultIndex;
 
 /**
  * An indexer for a {@link BooleanPointer} using the {@link Raw} instance.
@@ -38,19 +40,24 @@ public class BooleanRawIndexer extends BooleanIndexer {
     /** Base address and number of elements accessible. */
     final long base, size;
 
-    /** Calls {@code BooleanRawIndexer(pointer, { pointer.limit() - pointer.position() }, { 1 })}. */
+    /** Calls {@code BooleanRawIndexer(pointer, defaultIndex({ pointer.limit() - pointer.position() }))}. */
     public BooleanRawIndexer(BooleanPointer pointer) {
-        this(pointer, new long[] { pointer.limit() - pointer.position() }, ONE_STRIDE);
+        this(pointer, defaultIndex( pointer.limit() - pointer.position() ));
     }
 
-    /** Calls {@code BooleanRawIndexer(pointer, sizes, strides(sizes))}. */
-    public BooleanRawIndexer(BooleanPointer pointer, long... sizes) {
+    /** Calls {@code BooleanRawIndexer(pointer, defaultIndex(sizes))}. */
+    @Deprecated public BooleanRawIndexer(BooleanPointer pointer, long... sizes) {
         this(pointer, sizes, strides(sizes));
     }
 
     /** Constructor to set the {@link #pointer}, {@link #sizes} and {@link #strides}. */
-    public BooleanRawIndexer(BooleanPointer pointer, long[] sizes, long[] strides) {
-        super(sizes, strides);
+    @Deprecated public BooleanRawIndexer(BooleanPointer pointer, long[] sizes, long[] strides) {
+        this(pointer, customStrides(sizes, strides));
+    }
+
+    /** Constructor to set the {@link #pointer} and {@link #index}. */
+    public BooleanRawIndexer(BooleanPointer pointer, Index index) {
+        super(index);
         this.pointer = pointer;
         base = pointer.address() + pointer.position() * VALUE_BYTES;
         size = pointer.limit() - pointer.position();
@@ -58,6 +65,11 @@ public class BooleanRawIndexer extends BooleanIndexer {
 
     @Override public Pointer pointer() {
         return pointer;
+    }
+
+    @Override
+    public BooleanIndexer slice(Index index) {
+        return new BooleanRawIndexer(pointer, index);
     }
 
     public boolean getRaw(long i) {

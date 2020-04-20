@@ -24,6 +24,8 @@ package org.bytedeco.javacpp.indexer;
 
 import java.nio.Buffer;
 import java.nio.IntBuffer;
+import static org.bytedeco.javacpp.indexer.CustomStridesIndex.customStrides;
+import static org.bytedeco.javacpp.indexer.DefaultIndex.defaultIndex;
 
 /**
  * An indexer for an {@link IntBuffer}.
@@ -34,24 +36,34 @@ public class IntBufferIndexer extends IntIndexer {
     /** The backing buffer. */
     protected IntBuffer buffer;
 
-    /** Calls {@code IntBufferIndexer(buffer, { buffer.limit() }, { 1 })}. */
+    /** Calls {@code IntBufferIndexer(buffer, defaultIndex({ buffer.limit() }))}. */
     public IntBufferIndexer(IntBuffer buffer) {
-        this(buffer, new long[] { buffer.limit() }, ONE_STRIDE);
+        this(buffer, defaultIndex(buffer.limit()));
     }
 
-    /** Calls {@code IntBufferIndexer(buffer, sizes, strides(sizes))}. */
-    public IntBufferIndexer(IntBuffer buffer, long... sizes) {
-        this(buffer, sizes, strides(sizes));
+    /** Calls {@code IntBufferIndexer(buffer, defaultIndex(sizes))}. */
+    @Deprecated public IntBufferIndexer(IntBuffer buffer, long... sizes) {
+        this(buffer, defaultIndex(sizes));
     }
 
     /** Constructor to set the {@link #buffer}, {@link #sizes} and {@link #strides}. */
-    public IntBufferIndexer(IntBuffer buffer, long[] sizes, long[] strides) {
-        super(sizes, strides);
+    @Deprecated public IntBufferIndexer(IntBuffer buffer, long[] sizes, long[] strides) {
+        this(buffer, customStrides(sizes, strides));
+    }
+
+    /** Constructor to set the {@link #buffer} and {@link #index}. */
+    public IntBufferIndexer(IntBuffer buffer, Index index) {
+        super(index);
         this.buffer = buffer;
     }
 
     @Override public Buffer buffer() {
         return buffer;
+    }
+
+    @Override
+    public IntIndexer slice(Index index) {
+        return new IntBufferIndexer(buffer, index);
     }
 
     @Override public int get(long i) {

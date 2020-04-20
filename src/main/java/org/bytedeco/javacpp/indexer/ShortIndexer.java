@@ -24,6 +24,7 @@ package org.bytedeco.javacpp.indexer;
 
 import java.nio.ShortBuffer;
 import org.bytedeco.javacpp.ShortPointer;
+import static org.bytedeco.javacpp.indexer.CustomStridesIndex.customStrides;
 
 /**
  * Abstract indexer for the {@code short} primitive type.
@@ -34,6 +35,11 @@ public abstract class ShortIndexer extends Indexer {
     /** The number of bytes used to represent a short. */
     public static final int VALUE_BYTES = 2;
 
+    protected ShortIndexer(Index index) {
+        super(index);
+    }
+
+    @Deprecated
     protected ShortIndexer(long[] sizes, long[] strides) {
         super(sizes, strides);
     }
@@ -46,35 +52,48 @@ public abstract class ShortIndexer extends Indexer {
     public static ShortIndexer create(ShortBuffer buffer) {
         return new ShortBufferIndexer(buffer);
     }
-    /** Returns {@code create(pointer, { pointer.limit() - pointer.position() }, { 1 }, true)} */
+    /** Returns {@code new ShortRawIndexer(pointer} */
     public static ShortIndexer create(ShortPointer pointer) {
-        return create(pointer, new long[] { pointer.limit() - pointer.position() }, ONE_STRIDE);
+        return new ShortRawIndexer(pointer);
+    }
+
+    /** Returns {@code new ShortArrayIndexer(array, index)} */
+    public static ShortIndexer create(short[] array, Index index) {
+        return new ShortArrayIndexer(array, index);
+    }
+    /** Returns {@code new ShortBufferIndexer(buffer, index)} */
+    public static ShortIndexer create(ShortBuffer buffer, Index index) {
+        return new ShortBufferIndexer(buffer, index);
+    }
+    /** Returns {@code new ShortRawIndexer(pointer, index)} */
+    public static ShortIndexer create(ShortPointer pointer, Index index) {
+        return new ShortRawIndexer(pointer, index);
     }
 
     /** Returns {@code new ShortArrayIndexer(array, sizes)} */
-    public static ShortIndexer create(short[] array, long... sizes) {
+    @Deprecated public static ShortIndexer create(short[] array, long... sizes) {
         return new ShortArrayIndexer(array, sizes);
     }
     /** Returns {@code new ShortBufferIndexer(buffer, sizes)} */
-    public static ShortIndexer create(ShortBuffer buffer, long... sizes) {
+    @Deprecated public static ShortIndexer create(ShortBuffer buffer, long... sizes) {
         return new ShortBufferIndexer(buffer, sizes);
     }
-    /** Returns {@code create(pointer, sizes, strides(sizes))} */
-    public static ShortIndexer create(ShortPointer pointer, long... sizes) {
-        return create(pointer, sizes, strides(sizes));
+    /** Returns {@code new ShortRawIndexer(pointer, sizes)} */
+    @Deprecated public static ShortIndexer create(ShortPointer pointer, long... sizes) {
+        return new ShortRawIndexer(pointer, sizes);
     }
 
     /** Returns {@code new ShortArrayIndexer(array, sizes, strides)} */
-    public static ShortIndexer create(short[] array, long[] sizes, long[] strides) {
+    @Deprecated public static ShortIndexer create(short[] array, long[] sizes, long[] strides) {
         return new ShortArrayIndexer(array, sizes, strides);
     }
     /** Returns {@code new ShortBufferIndexer(buffer, sizes, strides)} */
-    public static ShortIndexer create(ShortBuffer buffer, long[] sizes, long[] strides) {
+    @Deprecated public static ShortIndexer create(ShortBuffer buffer, long[] sizes, long[] strides) {
         return new ShortBufferIndexer(buffer, sizes, strides);
     }
-    /** Returns {@code create(pointer, sizes, strides, true)} */
-    public static ShortIndexer create(ShortPointer pointer, long[] sizes, long[] strides) {
-        return create(pointer, sizes, strides, true);
+    /** Returns {@code new ShortRawIndexer(pointer, sizes, strides)} */
+    @Deprecated public static ShortIndexer create(ShortPointer pointer, long[] sizes, long[] strides) {
+        return new ShortRawIndexer(pointer, sizes, strides);
     }
     /**
      * Creates a short indexer to access efficiently the data of a pointer.
@@ -83,15 +102,27 @@ public abstract class ShortIndexer extends Indexer {
      * @param direct {@code true} to use a direct buffer, see {@link Indexer} for details
      * @return the new short indexer backed by the raw memory interface, a buffer, or an array
      */
-    public static ShortIndexer create(final ShortPointer pointer, long[] sizes, long[] strides, boolean direct) {
+    @Deprecated public static ShortIndexer create(final ShortPointer pointer, long[] sizes, long[] strides, boolean direct) {
+        return create(pointer, customStrides(sizes, strides), direct);
+    }
+
+    /**
+     * Creates a short indexer to access efficiently the data of a pointer.
+     *
+     * @param pointer data to access via a buffer or to copy to an array
+     * @param index TODO
+     * @param direct {@code true} to use a direct buffer, see {@link Indexer} for details
+     * @return the new short indexer backed by the raw memory interface, a buffer, or an array
+     */
+    public static ShortIndexer create(final ShortPointer pointer, Index index, boolean direct) {
         if (direct) {
-            return Raw.getInstance() != null ? new ShortRawIndexer(pointer, sizes, strides)
-                                             : new ShortBufferIndexer(pointer.asBuffer(), sizes, strides);
+            return Raw.getInstance() != null ? new ShortRawIndexer(pointer, index)
+                                             : new ShortBufferIndexer(pointer.asBuffer(), index);
         } else {
             final long position = pointer.position();
             short[] array = new short[(int)Math.min(pointer.limit() - position, Integer.MAX_VALUE)];
             pointer.get(array);
-            return new ShortArrayIndexer(array, sizes, strides) {
+            return new ShortArrayIndexer(array, index) {
                 @Override public void release() {
                     pointer.position(position).put(array);
                     super.release();

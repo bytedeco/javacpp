@@ -24,6 +24,8 @@ package org.bytedeco.javacpp.indexer;
 
 import org.bytedeco.javacpp.Pointer;
 import org.bytedeco.javacpp.ShortPointer;
+import static org.bytedeco.javacpp.indexer.CustomStridesIndex.customStrides;
+import static org.bytedeco.javacpp.indexer.DefaultIndex.defaultIndex;
 
 /**
  * An indexer for a {@link ShortPointer} using the {@link Raw} instance, treated as half-precision float.
@@ -38,19 +40,24 @@ public class HalfRawIndexer extends HalfIndexer {
     /** Base address and number of elements accessible. */
     final long base, size;
 
-    /** Calls {@code HalfRawIndexer(pointer, { pointer.limit() - pointer.position() }, { 1 })}. */
+    /** Calls {@code HalfRawIndexer(pointer, defaultIndex({ pointer.limit() - pointer.position() }))}. */
     public HalfRawIndexer(ShortPointer pointer) {
-        this(pointer, new long[] { pointer.limit() - pointer.position() }, ONE_STRIDE);
+        this(pointer, defaultIndex( pointer.limit() - pointer.position() ));
     }
 
-    /** Calls {@code HalfRawIndexer(pointer, sizes, strides(sizes))}. */
-    public HalfRawIndexer(ShortPointer pointer, long... sizes) {
-        this(pointer, sizes, strides(sizes));
+    /** Calls {@code HalfRawIndexer(pointer, defaultIndex(sizes))}. */
+    @Deprecated public HalfRawIndexer(ShortPointer pointer, long... sizes) {
+        this(pointer, defaultIndex(sizes));
     }
 
     /** Constructor to set the {@link #pointer}, {@link #sizes} and {@link #strides}. */
-    public HalfRawIndexer(ShortPointer pointer, long[] sizes, long[] strides) {
-        super(sizes, strides);
+    @Deprecated public HalfRawIndexer(ShortPointer pointer, long[] sizes, long[] strides) {
+        this(pointer, customStrides(sizes, strides));
+    }
+
+    /** Constructor to set the {@link #pointer} and {@link #index}. */
+    public HalfRawIndexer(ShortPointer pointer, Index index) {
+        super(index);
         this.pointer = pointer;
         base = pointer.address() + pointer.position() * VALUE_BYTES;
         size = pointer.limit() - pointer.position();
@@ -58,6 +65,11 @@ public class HalfRawIndexer extends HalfIndexer {
 
     @Override public Pointer pointer() {
         return pointer;
+    }
+
+    @Override
+    public HalfIndexer slice(Index index) {
+        return new HalfRawIndexer(pointer, index);
     }
 
     public float getRaw(long i) {

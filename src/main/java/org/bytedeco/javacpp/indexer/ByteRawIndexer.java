@@ -24,6 +24,8 @@ package org.bytedeco.javacpp.indexer;
 
 import org.bytedeco.javacpp.BytePointer;
 import org.bytedeco.javacpp.Pointer;
+import static org.bytedeco.javacpp.indexer.CustomStridesIndex.customStrides;
+import static org.bytedeco.javacpp.indexer.DefaultIndex.defaultIndex;
 
 /**
  * An indexer for a {@link BytePointer} using the {@link Raw} instance.
@@ -38,19 +40,24 @@ public class ByteRawIndexer extends ByteIndexer {
     /** Base address and number of elements accessible. */
     final long base, size;
 
-    /** Calls {@code ByteRawIndexer(pointer, { pointer.limit() - pointer.position() }, { 1 })}. */
+    /** Calls {@code ByteRawIndexer(pointer, defaultIndex({ pointer.limit() - pointer.position() }))}. */
     public ByteRawIndexer(BytePointer pointer) {
-        this(pointer, new long[] { pointer.limit() - pointer.position() }, ONE_STRIDE);
+        this(pointer, defaultIndex( pointer.limit() - pointer.position() ));
     }
 
-    /** Calls {@code ByteRawIndexer(pointer, sizes, strides(sizes))}. */
-    public ByteRawIndexer(BytePointer pointer, long... sizes) {
+    /** Calls {@code ByteRawIndexer(pointer, defaultIndex(sizes))}. */
+    @Deprecated public ByteRawIndexer(BytePointer pointer, long... sizes) {
         this(pointer, sizes, strides(sizes));
     }
 
     /** Constructor to set the {@link #pointer}, {@link #sizes} and {@link #strides}. */
-    public ByteRawIndexer(BytePointer pointer, long[] sizes, long[] strides) {
-        super(sizes, strides);
+    @Deprecated public ByteRawIndexer(BytePointer pointer, long[] sizes, long[] strides) {
+        this(pointer, customStrides(sizes, strides));
+    }
+
+    /** Constructor to set the {@link #pointer} and {@link #index}. */
+    public ByteRawIndexer(BytePointer pointer, Index index) {
+        super(index);
         this.pointer = pointer;
         base = pointer.address() + pointer.position();
         size = pointer.limit() - pointer.position();
@@ -58,6 +65,11 @@ public class ByteRawIndexer extends ByteIndexer {
 
     @Override public Pointer pointer() {
         return pointer;
+    }
+
+    @Override
+    public ByteIndexer slice(Index index) {
+        return new ByteRawIndexer(pointer, index);
     }
 
     public byte getRaw(long i) {

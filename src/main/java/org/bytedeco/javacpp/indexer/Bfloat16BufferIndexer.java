@@ -24,6 +24,8 @@ package org.bytedeco.javacpp.indexer;
 
 import java.nio.Buffer;
 import java.nio.ShortBuffer;
+import static org.bytedeco.javacpp.indexer.CustomStridesIndex.customStrides;
+import static org.bytedeco.javacpp.indexer.DefaultIndex.defaultIndex;
 
 /**
  * An indexer for a {@link ShortBuffer}, treated as bfloat16.
@@ -34,24 +36,34 @@ public class Bfloat16BufferIndexer extends Bfloat16Indexer {
     /** The backing buffer. */
     protected ShortBuffer buffer;
 
-    /** Calls {@code Bfloat16BufferIndexer(buffer, { buffer.limit() }, { 1 })}. */
+    /** Calls {@code Bfloat16BufferIndexer(buffer, defaultIndex({ buffer.limit() }))}. */
     public Bfloat16BufferIndexer(ShortBuffer buffer) {
-        this(buffer, new long[] { buffer.limit() }, ONE_STRIDE);
+        this(buffer, defaultIndex(buffer.limit()));
     }
 
-    /** Calls {@code Bfloat16BufferIndexer(buffer, sizes, strides(sizes))}. */
-    public Bfloat16BufferIndexer(ShortBuffer buffer, long... sizes) {
-        this(buffer, sizes, strides(sizes));
+    /** Calls {@code Bfloat16BufferIndexer(buffer, defaultIndex(sizes))}. */
+    @Deprecated public Bfloat16BufferIndexer(ShortBuffer buffer, long... sizes) {
+        this(buffer, defaultIndex(sizes));
     }
 
     /** Constructor to set the {@link #buffer}, {@link #sizes} and {@link #strides}. */
-    public Bfloat16BufferIndexer(ShortBuffer buffer, long[] sizes, long[] strides) {
-        super(sizes, strides);
+    @Deprecated public Bfloat16BufferIndexer(ShortBuffer buffer, long[] sizes, long[] strides) {
+        this(buffer, customStrides(sizes, strides));
+    }
+
+    /** Constructor to set the {@link #buffer} and {@link #index}. */
+    public Bfloat16BufferIndexer(ShortBuffer buffer, Index index) {
+        super(index);
         this.buffer = buffer;
     }
 
     @Override public Buffer buffer() {
         return buffer;
+    }
+
+    @Override
+    public Bfloat16Indexer slice(Index index) {
+        return new Bfloat16BufferIndexer(buffer, index);
     }
 
     @Override public float get(long i) {

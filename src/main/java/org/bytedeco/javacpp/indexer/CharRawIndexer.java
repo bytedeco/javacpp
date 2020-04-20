@@ -23,7 +23,10 @@
 package org.bytedeco.javacpp.indexer;
 
 import org.bytedeco.javacpp.CharPointer;
+import org.bytedeco.javacpp.IntPointer;
 import org.bytedeco.javacpp.Pointer;
+import static org.bytedeco.javacpp.indexer.CustomStridesIndex.customStrides;
+import static org.bytedeco.javacpp.indexer.DefaultIndex.defaultIndex;
 
 /**
  * An indexer for a {@link CharPointer} using the {@link Raw} instance.
@@ -38,19 +41,24 @@ public class CharRawIndexer extends CharIndexer {
     /** Base address and number of elements accessible. */
     final long base, size;
 
-    /** Calls {@code CharRawIndexer(pointer, { pointer.limit() - pointer.position() }, { 1 })}. */
+    /** Calls {@code CharRawIndexer(pointer, defaultIndex({ pointer.limit() - pointer.position() }))}. */
     public CharRawIndexer(CharPointer pointer) {
-        this(pointer, new long[] { pointer.limit() - pointer.position() }, ONE_STRIDE);
+        this(pointer, defaultIndex( pointer.limit() - pointer.position() ));
     }
 
-    /** Calls {@code CharRawIndexer(pointer, sizes, strides(sizes))}. */
-    public CharRawIndexer(CharPointer pointer, long... sizes) {
-        this(pointer, sizes, strides(sizes));
+    /** Calls {@code CharRawIndexer(pointer, defaultIndex(sizes))}. */
+    @Deprecated public CharRawIndexer(CharPointer pointer, long... sizes) {
+        this(pointer, defaultIndex(sizes));
     }
 
     /** Constructor to set the {@link #pointer}, {@link #sizes} and {@link #strides}. */
-    public CharRawIndexer(CharPointer pointer, long[] sizes, long[] strides) {
-        super(sizes, strides);
+    @Deprecated public CharRawIndexer(CharPointer pointer, long[] sizes, long[] strides) {
+        this(pointer, customStrides(sizes, strides));
+    }
+
+    /** Constructor to set the {@link #pointer} and {@link #index}. */
+    public CharRawIndexer(CharPointer pointer, Index index) {
+        super(index);
         this.pointer = pointer;
         base = pointer.address() + pointer.position() * VALUE_BYTES;
         size = pointer.limit() - pointer.position();
@@ -58,6 +66,11 @@ public class CharRawIndexer extends CharIndexer {
 
     @Override public Pointer pointer() {
         return pointer;
+    }
+
+    @Override
+    public CharIndexer slice(Index index) {
+        return new CharRawIndexer(pointer, index);
     }
 
     public char getRaw(long i) {

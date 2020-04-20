@@ -24,6 +24,8 @@ package org.bytedeco.javacpp.indexer;
 
 import org.bytedeco.javacpp.IntPointer;
 import org.bytedeco.javacpp.Pointer;
+import static org.bytedeco.javacpp.indexer.CustomStridesIndex.customStrides;
+import static org.bytedeco.javacpp.indexer.DefaultIndex.defaultIndex;
 
 /**
  * An indexer for an {@link IntPointer} using the {@link Raw} instance.
@@ -38,19 +40,24 @@ public class IntRawIndexer extends IntIndexer {
     /** Base address and number of elements accessible. */
     final long base, size;
 
-    /** Calls {@code IntRawIndexer(pointer, { pointer.limit() - pointer.position() }, { 1 })}. */
+    /** Calls {@code IntRawIndexer(pointer, defaultIndex({ pointer.limit() - pointer.position() }))}. */
     public IntRawIndexer(IntPointer pointer) {
-        this(pointer, new long[] { pointer.limit() - pointer.position() }, ONE_STRIDE);
+        this(pointer, defaultIndex( pointer.limit() - pointer.position() ));
     }
 
-    /** Calls {@code IntRawIndexer(pointer, sizes, strides(sizes))}. */
-    public IntRawIndexer(IntPointer pointer, long... sizes) {
-        this(pointer, sizes, strides(sizes));
+    /** Calls {@code IntRawIndexer(pointer, defaultIndex(sizes))}. */
+    @Deprecated public IntRawIndexer(IntPointer pointer, long... sizes) {
+        this(pointer, defaultIndex(sizes));
     }
 
     /** Constructor to set the {@link #pointer}, {@link #sizes} and {@link #strides}. */
-    public IntRawIndexer(IntPointer pointer, long[] sizes, long[] strides) {
-        super(sizes, strides);
+    @Deprecated public IntRawIndexer(IntPointer pointer, long[] sizes, long[] strides) {
+        this(pointer, customStrides(sizes, strides));
+    }
+
+    /** Constructor to set the {@link #pointer} and {@link #index}. */
+    public IntRawIndexer(IntPointer pointer, Index index) {
+        super(index);
         this.pointer = pointer;
         base = pointer.address() + pointer.position() * VALUE_BYTES;
         size = pointer.limit() - pointer.position();
@@ -58,6 +65,11 @@ public class IntRawIndexer extends IntIndexer {
 
     @Override public Pointer pointer() {
         return pointer;
+    }
+
+    @Override
+    public IntIndexer slice(Index index) {
+        return new IntRawIndexer(pointer, index);
     }
 
     public int getRaw(long i) {

@@ -24,6 +24,8 @@ package org.bytedeco.javacpp.indexer;
 
 import java.nio.Buffer;
 import java.nio.ShortBuffer;
+import static org.bytedeco.javacpp.indexer.CustomStridesIndex.customStrides;
+import static org.bytedeco.javacpp.indexer.DefaultIndex.defaultIndex;
 
 /**
  * An indexer for a {@link ShortBuffer}, treated as unsigned.
@@ -34,24 +36,34 @@ public class UShortBufferIndexer extends UShortIndexer {
     /** The backing buffer. */
     protected ShortBuffer buffer;
 
-    /** Calls {@code UShortBufferIndexer(buffer, { buffer.limit() }, { 1 })}. */
+    /** Calls {@code UShortBufferIndexer(buffer, defaultIndex({ buffer.limit() }))}. */
     public UShortBufferIndexer(ShortBuffer buffer) {
-        this(buffer, new long[] { buffer.limit() }, ONE_STRIDE);
+        this(buffer, defaultIndex(buffer.limit()));
     }
 
-    /** Calls {@code UShortBufferIndexer(buffer, sizes, strides(sizes))}. */
-    public UShortBufferIndexer(ShortBuffer buffer, long... sizes) {
-        this(buffer, sizes, strides(sizes));
+    /** Calls {@code UShortBufferIndexer(buffer, defaultIndex(sizes))}. */
+    @Deprecated public UShortBufferIndexer(ShortBuffer buffer, long... sizes) {
+        this(buffer, defaultIndex(sizes));
     }
 
     /** Constructor to set the {@link #buffer}, {@link #sizes} and {@link #strides}. */
-    public UShortBufferIndexer(ShortBuffer buffer, long[] sizes, long[] strides) {
-        super(sizes, strides);
+    @Deprecated public UShortBufferIndexer(ShortBuffer buffer, long[] sizes, long[] strides) {
+        this(buffer, customStrides(sizes, strides));
+    }
+
+    /** Constructor to set the {@link #buffer} and {@link #index}. */
+    public UShortBufferIndexer(ShortBuffer buffer, Index index) {
+        super(index);
         this.buffer = buffer;
     }
 
     @Override public Buffer buffer() {
         return buffer;
+    }
+
+    @Override
+    public UShortIndexer slice(Index index) {
+        return new UShortBufferIndexer(buffer, index);
     }
 
     @Override public int get(long i) {

@@ -22,6 +22,9 @@
 
 package org.bytedeco.javacpp.indexer;
 
+import static org.bytedeco.javacpp.indexer.CustomStridesIndex.customStrides;
+import static org.bytedeco.javacpp.indexer.DefaultIndex.defaultIndex;
+
 /**
  * An indexer for a {@code double[]} array.
  *
@@ -31,24 +34,34 @@ public class DoubleArrayIndexer extends DoubleIndexer {
     /** The backing array. */
     protected double[] array;
 
-    /** Calls {@code DoubleArrayIndexer(array, { array.length }, { 1 })}. */
+    /** Calls {@code DoubleArrayIndexer(array, defaultIndex({ array.length }))}. */
     public DoubleArrayIndexer(double[] array) {
-        this(array, new long[] { array.length }, ONE_STRIDE);
+        this(array, defaultIndex(array.length));
     }
 
-    /** Calls {@code DoubleArrayIndexer(array, sizes, strides(sizes))}. */
-    public DoubleArrayIndexer(double[] array, long... sizes) {
-        this(array, sizes, strides(sizes));
+    /** Calls {@code DoubleArrayIndexer(array, sizes)}. */
+    @Deprecated public DoubleArrayIndexer(double[] array, long... sizes) {
+        this(array, defaultIndex(sizes));
     }
 
     /** Constructor to set the {@link #array}, {@link #sizes} and {@link #strides}. */
-    public DoubleArrayIndexer(double[] array, long[] sizes, long[] strides) {
-        super(sizes, strides);
+    @Deprecated public DoubleArrayIndexer(double[] array, long[] sizes, long[] strides) {
+        this(array, customStrides(sizes, strides));
+    }
+
+    /** Constructor to set the {@link #array} and {@link #index}. */
+    public DoubleArrayIndexer(double[] array, Index index) {
+        super(index);
         this.array = array;
     }
 
     @Override public double[] array() {
         return array;
+    }
+
+    @Override
+    public DoubleIndexer slice(Index index) {
+        return new DoubleArrayIndexer(array, index);
     }
 
     @Override public double get(long i) {

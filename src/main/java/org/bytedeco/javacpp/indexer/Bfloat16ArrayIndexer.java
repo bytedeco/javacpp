@@ -22,6 +22,9 @@
 
 package org.bytedeco.javacpp.indexer;
 
+import static org.bytedeco.javacpp.indexer.CustomStridesIndex.customStrides;
+import static org.bytedeco.javacpp.indexer.DefaultIndex.defaultIndex;
+
 /**
  * An indexer for a {@code short[]} array, treated as bfloat16.
  *
@@ -31,24 +34,34 @@ public class Bfloat16ArrayIndexer extends Bfloat16Indexer {
     /** The backing array. */
     protected short[] array;
 
-    /** Calls {@code Bfloat16ArrayIndexer(array, { array.length }, { 1 })}. */
+    /** Calls {@code Bfloat16ArrayIndexer(array, defaultIndex({ array.length }))}. */
     public Bfloat16ArrayIndexer(short[] array) {
-        this(array, new long[] { array.length }, ONE_STRIDE);
+        this(array, defaultIndex(array.length));
     }
 
-    /** Calls {@code Bfloat16ArrayIndexer(array, sizes, strides(sizes))}. */
-    public Bfloat16ArrayIndexer(short[] array, long... sizes) {
-        this(array, sizes, strides(sizes));
+    /** Calls {@code Bfloat16ArrayIndexer(array, sizes)}. */
+    @Deprecated public Bfloat16ArrayIndexer(short[] array, long... sizes) {
+        this(array, defaultIndex(sizes));
     }
 
     /** Constructor to set the {@link #array}, {@link #sizes} and {@link #strides}. */
-    public Bfloat16ArrayIndexer(short[] array, long[] sizes, long[] strides) {
-        super(sizes, strides);
+    @Deprecated public Bfloat16ArrayIndexer(short[] array, long[] sizes, long[] strides) {
+        this(array, customStrides(sizes, strides));
+    }
+
+    /** Constructor to set the {@link #array} and {@link #index}. */
+    public Bfloat16ArrayIndexer(short[] array, Index index) {
+        super(index);
         this.array = array;
     }
 
     @Override public short[] array() {
         return array;
+    }
+
+    @Override
+    public Bfloat16Indexer slice(Index index) {
+        return new Bfloat16ArrayIndexer(array, index);
     }
 
     @Override public float get(long i) {
