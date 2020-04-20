@@ -83,6 +83,7 @@ public class IndexerTest {
         public void release() { }
         public double getDouble(long... indices) { return 0; }
         public Indexer putDouble(long[] indices, double value) { return this; }
+        public Indexer slice(Index index) { return new TestIndexer(index); }
     }
 
     @Test public void testDefaultStrides() {

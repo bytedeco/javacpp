@@ -161,6 +161,13 @@ public abstract class Indexer implements AutoCloseable {
     /** Casts value to primitive type and calls {@code put(long[] indices, <type> value)}. */
     public abstract Indexer putDouble(long[] indices, double value);
 
+    /**
+     * TODO
+     * @param index
+     * @return 
+     */
+    public abstract Indexer slice(Index index);
+
     @Override public String toString() {
         long rows     = sizes.length > 0 ? sizes[0] : 1,
              cols     = sizes.length > 1 ? sizes[1] : 1,
