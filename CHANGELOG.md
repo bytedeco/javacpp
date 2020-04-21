@@ -1,4 +1,5 @@
 
+ * Move init code for `Loader.getPlatform()` to `Detector` to avoid warning messages ([issue #393](https://github.com/bytedeco/javacpp/issues/393))
  * Add `Indexer.Index` nested class to allow overriding how the index is calculated ([issue #391](https://github.com/bytedeco/javacpp/issues/391))
 
 ### April 14, 2020 version 1.5.3

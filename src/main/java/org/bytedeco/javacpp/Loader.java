@@ -76,8 +76,8 @@ public class Loader {
     private static final Logger logger = Logger.create(Loader.class);
 
     /** Value created out of "java.vm.name", "os.name", and "os.arch" system properties.
-     *  Returned by {@link #getPlatform()} as default. */
-    private static final String PLATFORM;
+     *  Returned by {@link #getPlatform()} as default and initialized with {@link Detector#getPlatform()}. */
+    private static final String PLATFORM = Detector.getPlatform();
     /** Default platform properties loaded and returned by {@link #loadProperties()}. */
     private static Properties platformProperties = null;
     /** The stack of classes currently being loaded to support more than one class loader. */
@@ -87,37 +87,39 @@ public class Loader {
         }
     };
 
-    static {
-        String jvmName = System.getProperty("java.vm.name", "").toLowerCase();
-        String osName  = System.getProperty("os.name", "").toLowerCase();
-        String osArch  = System.getProperty("os.arch", "").toLowerCase();
-        String abiType = System.getProperty("sun.arch.abi", "").toLowerCase();
-        String libPath = System.getProperty("sun.boot.library.path", "").toLowerCase();
-        if (jvmName.startsWith("dalvik") && osName.startsWith("linux")) {
-            osName = "android";
-        } else if (jvmName.startsWith("robovm") && osName.startsWith("darwin")) {
-            osName = "ios";
-            osArch = "arm";
-        } else if (osName.startsWith("mac os x") || osName.startsWith("darwin")) {
-            osName = "macosx";
-        } else {
-            int spaceIndex = osName.indexOf(' ');
-            if (spaceIndex > 0) {
-                osName = osName.substring(0, spaceIndex);
+    public static class Detector {
+        public static String getPlatform() {
+            String jvmName = System.getProperty("java.vm.name", "").toLowerCase();
+            String osName  = System.getProperty("os.name", "").toLowerCase();
+            String osArch  = System.getProperty("os.arch", "").toLowerCase();
+            String abiType = System.getProperty("sun.arch.abi", "").toLowerCase();
+            String libPath = System.getProperty("sun.boot.library.path", "").toLowerCase();
+            if (jvmName.startsWith("dalvik") && osName.startsWith("linux")) {
+                osName = "android";
+            } else if (jvmName.startsWith("robovm") && osName.startsWith("darwin")) {
+                osName = "ios";
+                osArch = "arm";
+            } else if (osName.startsWith("mac os x") || osName.startsWith("darwin")) {
+                osName = "macosx";
+            } else {
+                int spaceIndex = osName.indexOf(' ');
+                if (spaceIndex > 0) {
+                    osName = osName.substring(0, spaceIndex);
+                }
             }
+            if (osArch.equals("i386") || osArch.equals("i486") || osArch.equals("i586") || osArch.equals("i686")) {
+                osArch = "x86";
+            } else if (osArch.equals("amd64") || osArch.equals("x86-64") || osArch.equals("x64")) {
+                osArch = "x86_64";
+            } else if (osArch.startsWith("aarch64") || osArch.startsWith("armv8") || osArch.startsWith("arm64")) {
+                osArch = "arm64";
+            } else if ((osArch.startsWith("arm")) && ((abiType.equals("gnueabihf")) || (libPath.contains("openjdk-armhf")))) {
+                osArch = "armhf";
+            } else if (osArch.startsWith("arm")) {
+                osArch = "arm";
+            }
+            return osName + "-" + osArch;
         }
-        if (osArch.equals("i386") || osArch.equals("i486") || osArch.equals("i586") || osArch.equals("i686")) {
-            osArch = "x86";
-        } else if (osArch.equals("amd64") || osArch.equals("x86-64") || osArch.equals("x64")) {
-            osArch = "x86_64";
-        } else if (osArch.startsWith("aarch64") || osArch.startsWith("armv8") || osArch.startsWith("arm64")) {
-            osArch = "arm64";
-        } else if ((osArch.startsWith("arm")) && ((abiType.equals("gnueabihf")) || (libPath.contains("openjdk-armhf")))) {
-            osArch = "armhf";
-        } else if (osArch.startsWith("arm")) {
-            osArch = "arm";
-        }
-        PLATFORM = osName + "-" + osArch;
     }
 
     /**
