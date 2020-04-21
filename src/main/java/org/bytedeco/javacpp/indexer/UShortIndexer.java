@@ -24,7 +24,7 @@ package org.bytedeco.javacpp.indexer;
 
 import java.nio.ShortBuffer;
 import org.bytedeco.javacpp.ShortPointer;
-import static org.bytedeco.javacpp.indexer.CustomStridesIndex.customStrides;
+import static org.bytedeco.javacpp.indexer.StrideIndex.customStrides;
 
 /**
  * Abstract indexer for the {@code short} primitive type, treated as unsigned.

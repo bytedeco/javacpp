@@ -43,45 +43,41 @@ package org.bytedeco.javacpp.indexer;
  * @see <a href="https://portal.hdfgroup.org/display/HDF5/H5S_SELECT_HYPERSLAB">H5S_SELECT_HYPERSLAB</a>
  * @see <a href="https://support.hdfgroup.org/HDF5/doc1.6/UG/12_Dataspaces.html">Dataspaces</a>
  */
-public class HyperslabIndex implements Index {
+public class HyperslabIndex extends StrideIndex {
 
-    protected long[] sizes;
-    private final long[] physicalStrides;
-    //
-    protected long[] starts;
-    protected long[] strides;
-    protected long[] counts;
-    protected long[] blocks;
+    protected long[] offset;
+    protected long[] hyperslabStride;
+    protected long[] count;
+    protected long[] block;
 
-    protected HyperslabIndex(long[] sizes, long[] starts, long[] strides, long[] counts, long[] blocks) {
-        this.sizes = sizes;
-        this.starts = starts;
-        this.strides = strides;
-        this.counts = counts;
-        this.blocks = blocks;
-        this.physicalStrides = DefaultIndex.strides(sizes);
+    protected HyperslabIndex(long[] sizes, long[] offset, long[] hyperslabStride, long[] count, long[] block) {
+        super(sizes, StrideIndex.strides(sizes));
+        this.offset = offset;
+        this.hyperslabStride = hyperslabStride;
+        this.count = count;
+        this.block = block;
     }
 
-    public static Index hyperslab(long[] sizes, long[] starts, long[] strides, long[] counts, long[] blocks) {
-        return new HyperslabIndex(sizes, starts, strides, counts, blocks);
+    public static Index hyperslab(long[] sizes, long[] offsets, long[] hyperslabStride, long[] count, long[] block) {
+        return new HyperslabIndex(sizes, offsets, hyperslabStride, count, block);
     }
 
     @Override
     public long index(long i) {
-        return (starts[0] + strides[0] * (i / blocks[0]) + (i % blocks[0])) * physicalStrides[0];
+        return (offset[0] + hyperslabStride[0] * (i / block[0]) + (i % block[0])) * strides[0];
     }
 
     @Override
     public long index(long i, long j) {
-        return (starts[0] + strides[0] * (i / blocks[0]) + (i % blocks[0])) * physicalStrides[0]
-                + (starts[1] + strides[1] * (j / blocks[1]) + (j % blocks[1])) * physicalStrides[1];
+        return (offset[0] + hyperslabStride[0] * (i / block[0]) + (i % block[0])) * strides[0]
+                + (offset[1] + hyperslabStride[1] * (j / block[1]) + (j % block[1])) * strides[1];
     }
 
     @Override
     public long index(long i, long j, long k) {
-        return (starts[0] + strides[0] * (i / blocks[0]) + (i % blocks[0])) * physicalStrides[0]
-                + (starts[1] + strides[1] * (j / blocks[1]) + (j % blocks[1])) * physicalStrides[1]
-                + (starts[2] + strides[2] * (k / blocks[2]) + (k % blocks[2])) * physicalStrides[2];
+        return (offset[0] + hyperslabStride[0] * (i / block[0]) + (i % block[0])) * strides[0]
+                + (offset[1] + hyperslabStride[1] * (j / block[1]) + (j % block[1])) * strides[1]
+                + (offset[2] + hyperslabStride[2] * (k / block[2]) + (k % block[2])) * strides[2];
     }
 
     @Override
@@ -89,8 +85,8 @@ public class HyperslabIndex implements Index {
         long index = 0;
         for (int i = 0; i < indices.length; i++) {
             long coordinate = indices[i];
-            long mappedCoordinate = starts[i] + strides[i] * (coordinate / blocks[i]) + (coordinate % blocks[i]);
-            index += mappedCoordinate * physicalStrides[i];
+            long mappedCoordinate = offset[i] + hyperslabStride[i] * (coordinate / block[i]) + (coordinate % block[i]);
+            index += mappedCoordinate * strides[i];
         }
         return index;
     }
@@ -102,6 +98,6 @@ public class HyperslabIndex implements Index {
 
     @Override
     public long[] strides() {
-        return physicalStrides;
+        return strides;
     }
 }

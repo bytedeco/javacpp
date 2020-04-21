@@ -25,14 +25,11 @@ import java.io.File;
 import java.math.BigInteger;
 import java.nio.ByteOrder;
 import java.util.Arrays;
-
 import org.bytedeco.javacpp.annotation.Platform;
 import org.bytedeco.javacpp.indexer.Bfloat16Indexer;
 import org.bytedeco.javacpp.indexer.BooleanIndexer;
 import org.bytedeco.javacpp.indexer.ByteIndexer;
 import org.bytedeco.javacpp.indexer.CharIndexer;
-import org.bytedeco.javacpp.indexer.CustomStridesIndex;
-import static org.bytedeco.javacpp.indexer.CustomStridesIndex.customStrides;
 import org.bytedeco.javacpp.indexer.DoubleIndexer;
 import org.bytedeco.javacpp.indexer.FloatIndexer;
 import org.bytedeco.javacpp.indexer.HalfIndexer;
@@ -40,17 +37,18 @@ import org.bytedeco.javacpp.indexer.Indexer;
 import org.bytedeco.javacpp.indexer.IntIndexer;
 import org.bytedeco.javacpp.indexer.LongIndexer;
 import org.bytedeco.javacpp.indexer.ShortIndexer;
+import org.bytedeco.javacpp.indexer.StrideIndex;
 import org.bytedeco.javacpp.indexer.UByteIndexer;
 import org.bytedeco.javacpp.indexer.UShortIndexer;
 import org.bytedeco.javacpp.indexer.UIntIndexer;
 import org.bytedeco.javacpp.indexer.ULongIndexer;
-import org.bytedeco.javacpp.indexer.DefaultIndex;
-import static org.bytedeco.javacpp.indexer.DefaultIndex.defaultIndex;
 import org.bytedeco.javacpp.indexer.Index;
 import org.bytedeco.javacpp.tools.Builder;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import static org.bytedeco.javacpp.indexer.StrideIndex.defaultIndex;
 import static org.junit.Assert.*;
 
 /**
@@ -88,7 +86,7 @@ public class IndexerTest {
 
     @Test public void testDefaultStrides() {
         long[] sizes = {640, 480, 3};
-        long[] strides = DefaultIndex.strides(sizes);
+        long[] strides = StrideIndex.strides(sizes);
         System.out.println(Arrays.toString(strides));
         assertEquals(1440, strides[0]);
         assertEquals(   3, strides[1]);

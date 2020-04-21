@@ -24,8 +24,8 @@ package org.bytedeco.javacpp.indexer;
 
 import org.bytedeco.javacpp.FloatPointer;
 import org.bytedeco.javacpp.Pointer;
-import static org.bytedeco.javacpp.indexer.CustomStridesIndex.customStrides;
-import static org.bytedeco.javacpp.indexer.DefaultIndex.defaultIndex;
+import static org.bytedeco.javacpp.indexer.StrideIndex.customStrides;
+import static org.bytedeco.javacpp.indexer.StrideIndex.defaultIndex;
 
 /**
  * An indexer for a {@link FloatPointer} using the {@link Raw} instance.

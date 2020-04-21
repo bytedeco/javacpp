@@ -26,7 +26,7 @@ package org.bytedeco.javacpp.indexer;
  *
  * @author Matteo Di Giovinazzo
  */
-public class CustomStridesIndex implements Index {
+public class StrideIndex implements Index {
 
     protected final long[] sizes;
 
@@ -39,13 +39,29 @@ public class CustomStridesIndex implements Index {
      * @param strides The number of elements to skip to reach the next element in a given dimension.
      *                {@code strides[i] > strides[i + 1] && strides[strides.length - 1] == 1} preferred.
      */
-    protected CustomStridesIndex(long[] sizes, long[] strides) {
+    protected StrideIndex(long[] sizes, long[] strides) {
         this.sizes = sizes;
         this.strides = strides;
     }
 
     public static Index customStrides(long[] sizes, long[] strides) {
-        return new CustomStridesIndex(sizes, strides);
+        return new StrideIndex(sizes, strides);
+    }
+
+    public static Index defaultIndex(long... sizes) {
+        return new StrideIndex(sizes, strides(sizes));
+    }
+
+    /**
+     * Returns default (row-major contiguous) strides for the given sizes.
+     */
+    public static long[] strides(long... sizes) {
+        long[] strides = new long[sizes.length];
+        strides[sizes.length - 1] = 1;
+        for (int i = sizes.length - 2; i >= 0; i--) {
+            strides[i] = strides[i + 1] * sizes[i + 1];
+        }
+        return strides;
     }
 
     @Override

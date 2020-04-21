@@ -24,7 +24,7 @@ package org.bytedeco.javacpp.indexer;
 
 import java.nio.DoubleBuffer;
 import org.bytedeco.javacpp.DoublePointer;
-import static org.bytedeco.javacpp.indexer.CustomStridesIndex.customStrides;
+import static org.bytedeco.javacpp.indexer.StrideIndex.customStrides;
 
 /**
  * Abstract indexer for the {@code double} primitive type.

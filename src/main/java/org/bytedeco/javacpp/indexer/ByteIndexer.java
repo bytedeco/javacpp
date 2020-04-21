@@ -25,7 +25,7 @@ package org.bytedeco.javacpp.indexer;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import org.bytedeco.javacpp.BytePointer;
-import static org.bytedeco.javacpp.indexer.CustomStridesIndex.customStrides;
+import static org.bytedeco.javacpp.indexer.StrideIndex.customStrides;
 
 /**
  * Abstract indexer for the {@code byte} primitive type.

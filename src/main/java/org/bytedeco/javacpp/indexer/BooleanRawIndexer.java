@@ -24,8 +24,8 @@ package org.bytedeco.javacpp.indexer;
 
 import org.bytedeco.javacpp.BooleanPointer;
 import org.bytedeco.javacpp.Pointer;
-import static org.bytedeco.javacpp.indexer.CustomStridesIndex.customStrides;
-import static org.bytedeco.javacpp.indexer.DefaultIndex.defaultIndex;
+import static org.bytedeco.javacpp.indexer.StrideIndex.customStrides;
+import static org.bytedeco.javacpp.indexer.StrideIndex.defaultIndex;
 
 /**
  * An indexer for a {@link BooleanPointer} using the {@link Raw} instance.

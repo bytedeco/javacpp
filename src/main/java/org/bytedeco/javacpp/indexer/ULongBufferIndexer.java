@@ -25,8 +25,8 @@ package org.bytedeco.javacpp.indexer;
 import java.math.BigInteger;
 import java.nio.Buffer;
 import java.nio.LongBuffer;
-import static org.bytedeco.javacpp.indexer.CustomStridesIndex.customStrides;
-import static org.bytedeco.javacpp.indexer.DefaultIndex.defaultIndex;
+import static org.bytedeco.javacpp.indexer.StrideIndex.customStrides;
+import static org.bytedeco.javacpp.indexer.StrideIndex.defaultIndex;
 
 /**
  * An indexer for a {@link LongBuffer}, treated as unsigned.

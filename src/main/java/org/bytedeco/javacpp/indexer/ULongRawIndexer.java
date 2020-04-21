@@ -25,8 +25,8 @@ package org.bytedeco.javacpp.indexer;
 import java.math.BigInteger;
 import org.bytedeco.javacpp.Pointer;
 import org.bytedeco.javacpp.LongPointer;
-import static org.bytedeco.javacpp.indexer.CustomStridesIndex.customStrides;
-import static org.bytedeco.javacpp.indexer.DefaultIndex.defaultIndex;
+import static org.bytedeco.javacpp.indexer.StrideIndex.customStrides;
+import static org.bytedeco.javacpp.indexer.StrideIndex.defaultIndex;
 
 /**
  * An indexer for a {@link LongPointer} using the {@link Raw} instance, treated as unsigned.

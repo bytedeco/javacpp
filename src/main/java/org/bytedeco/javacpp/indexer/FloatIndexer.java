@@ -24,7 +24,7 @@ package org.bytedeco.javacpp.indexer;
 
 import java.nio.FloatBuffer;
 import org.bytedeco.javacpp.FloatPointer;
-import static org.bytedeco.javacpp.indexer.CustomStridesIndex.customStrides;
+import static org.bytedeco.javacpp.indexer.StrideIndex.customStrides;
 
 /**
  * Abstract indexer for the {@code float} primitive type.
