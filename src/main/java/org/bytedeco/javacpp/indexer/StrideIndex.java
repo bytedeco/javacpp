@@ -26,7 +26,7 @@ package org.bytedeco.javacpp.indexer;
  *
  * @author Matteo Di Giovinazzo
  */
-public class StrideIndex implements Index {
+class StrideIndex extends Index {
 
     protected final long[] sizes;
 
@@ -44,32 +44,12 @@ public class StrideIndex implements Index {
         this.strides = strides;
     }
 
-    public static Index customStrides(long[] sizes, long[] strides) {
-        return new StrideIndex(sizes, strides);
-    }
-
-    public static Index defaultIndex(long... sizes) {
-        return new StrideIndex(sizes, strides(sizes));
-    }
-
-    /**
-     * Returns default (row-major contiguous) strides for the given sizes.
-     */
-    public static long[] strides(long... sizes) {
-        long[] strides = new long[sizes.length];
-        strides[sizes.length - 1] = 1;
-        for (int i = sizes.length - 2; i >= 0; i--) {
-            strides[i] = strides[i + 1] * sizes[i + 1];
-        }
-        return strides;
-    }
-
     @Override
     public long[] sizes() { return sizes; }
 
     @Deprecated
     @Override
-    public long[] strides() { return strides; }
+    long[] strides() { return strides; }
 
     @Override
     public long index(long i) {

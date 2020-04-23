@@ -24,8 +24,6 @@ package org.bytedeco.javacpp.indexer;
 
 import org.bytedeco.javacpp.Pointer;
 import org.bytedeco.javacpp.ShortPointer;
-import static org.bytedeco.javacpp.indexer.StrideIndex.customStrides;
-import static org.bytedeco.javacpp.indexer.StrideIndex.defaultIndex;
 
 /**
  * An indexer for a {@link ShortPointer} using the {@link Raw} instance, treated as half-precision float.
@@ -42,17 +40,17 @@ public class HalfRawIndexer extends HalfIndexer {
 
     /** Calls {@code HalfRawIndexer(pointer, defaultIndex({ pointer.limit() - pointer.position() }))}. */
     public HalfRawIndexer(ShortPointer pointer) {
-        this(pointer, defaultIndex( pointer.limit() - pointer.position() ));
+        this(pointer, Index.create( pointer.limit() - pointer.position() ));
     }
 
     /** Calls {@code HalfRawIndexer(pointer, defaultIndex(sizes))}. */
     @Deprecated public HalfRawIndexer(ShortPointer pointer, long... sizes) {
-        this(pointer, defaultIndex(sizes));
+        this(pointer, Index.create(sizes));
     }
 
     /** Constructor to set the {@link #pointer}, {@link #sizes} and {@link #strides}. */
     @Deprecated public HalfRawIndexer(ShortPointer pointer, long[] sizes, long[] strides) {
-        this(pointer, customStrides(sizes, strides));
+        this(pointer, Index.create(sizes, strides));
     }
 
     /** Constructor to set the {@link #pointer} and {@link #index}. */

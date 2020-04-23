@@ -24,8 +24,6 @@ package org.bytedeco.javacpp.indexer;
 
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
-import static org.bytedeco.javacpp.indexer.StrideIndex.customStrides;
-import static org.bytedeco.javacpp.indexer.StrideIndex.defaultIndex;
 
 /**
  * An indexer for a {@link ByteBuffer} as {@code boolean} values.
@@ -38,17 +36,17 @@ public class BooleanBufferIndexer extends BooleanIndexer {
 
     /** Calls {@code BooleanBufferIndexer(buffer, defaultIndex({ buffer.limit() }))}. */
     public BooleanBufferIndexer(ByteBuffer buffer) {
-        this(buffer, defaultIndex(buffer.limit()));
+        this(buffer, Index.create(buffer.limit()));
     }
 
     /** Calls {@code BooleanBufferIndexer(buffer, defaultIndex(sizes))}. */
     @Deprecated public BooleanBufferIndexer(ByteBuffer buffer, long... sizes) {
-        this(buffer, defaultIndex(sizes));
+        this(buffer, Index.create(sizes));
     }
 
     /** Constructor to set the {@link #buffer}, {@link #sizes} and {@link #strides}. */
     @Deprecated public BooleanBufferIndexer(ByteBuffer buffer, long[] sizes, long[] strides) {
-        this(buffer, customStrides(sizes, strides));
+        this(buffer, Index.create(sizes, strides));
     }
 
     /** Constructor to set the {@link #buffer} and {@link #index}. */

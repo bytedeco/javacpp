@@ -22,11 +22,10 @@
 
 package org.bytedeco.javacpp.indexer;
 
-import java.math.BigInteger;
-import org.bytedeco.javacpp.Pointer;
 import org.bytedeco.javacpp.LongPointer;
-import static org.bytedeco.javacpp.indexer.StrideIndex.customStrides;
-import static org.bytedeco.javacpp.indexer.StrideIndex.defaultIndex;
+import org.bytedeco.javacpp.Pointer;
+
+import java.math.BigInteger;
 
 /**
  * An indexer for a {@link LongPointer} using the {@link Raw} instance, treated as unsigned.
@@ -43,17 +42,17 @@ public class ULongRawIndexer extends ULongIndexer {
 
     /** Calls {@code ULongRawIndexer(pointer, defaultIndex({ pointer.limit() - pointer.position() }))}. */
     public ULongRawIndexer(LongPointer pointer) {
-        this(pointer, defaultIndex( pointer.limit() - pointer.position() ));
+        this(pointer, Index.create( pointer.limit() - pointer.position() ));
     }
 
     /** Calls {@code ULongRawIndexer(pointer, defaultIndex(sizes))}. */
     @Deprecated public ULongRawIndexer(LongPointer pointer, long... sizes) {
-        this(pointer, defaultIndex(sizes));
+        this(pointer, Index.create(sizes));
     }
 
     /** Constructor to set the {@link #pointer}, {@link #sizes} and {@link #strides}. */
     @Deprecated public ULongRawIndexer(LongPointer pointer, long[] sizes, long[] strides) {
-        this(pointer, customStrides(sizes, strides));
+        this(pointer, Index.create(sizes, strides));
     }
 
     /** Constructor to set the {@link #pointer} and {@link #index}. */

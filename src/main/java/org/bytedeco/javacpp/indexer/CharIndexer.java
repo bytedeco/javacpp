@@ -22,9 +22,9 @@
 
 package org.bytedeco.javacpp.indexer;
 
-import java.nio.CharBuffer;
 import org.bytedeco.javacpp.CharPointer;
-import static org.bytedeco.javacpp.indexer.StrideIndex.customStrides;
+
+import java.nio.CharBuffer;
 
 /**
  * Abstract indexer for the {@code char} primitive type.
@@ -103,7 +103,7 @@ public abstract class CharIndexer extends Indexer {
      * @return the new char indexer backed by the raw memory interface, a buffer, or an array
      */
     @Deprecated public static CharIndexer create(final CharPointer pointer, long[] sizes, long[] strides, boolean direct) {
-        return create(pointer, customStrides(sizes, strides), direct);
+        return create(pointer, Index.create(sizes, strides), direct);
     }
 
     /**

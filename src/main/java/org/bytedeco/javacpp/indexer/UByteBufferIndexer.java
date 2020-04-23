@@ -24,8 +24,6 @@ package org.bytedeco.javacpp.indexer;
 
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
-import static org.bytedeco.javacpp.indexer.StrideIndex.customStrides;
-import static org.bytedeco.javacpp.indexer.StrideIndex.defaultIndex;
 
 /**
  * An indexer for a {@link ByteBuffer}, treated as unsigned.
@@ -38,17 +36,17 @@ public class UByteBufferIndexer extends UByteIndexer {
 
     /** Calls {@code UByteBufferIndexer(buffer, defaultIndex({ buffer.limit() }))}. */
     public UByteBufferIndexer(ByteBuffer buffer) {
-        this(buffer, defaultIndex(buffer.limit()));
+        this(buffer, Index.create(buffer.limit()));
     }
 
     /** Calls {@code UByteBufferIndexer(buffer, defaultIndex(sizes))}. */
     public UByteBufferIndexer(ByteBuffer buffer, long... sizes) {
-        this(buffer, defaultIndex(sizes));
+        this(buffer, Index.create(sizes));
     }
 
     /** Constructor to set the {@link #buffer}, {@link #sizes} and {@link #strides}. */
     public UByteBufferIndexer(ByteBuffer buffer, long[] sizes, long[] strides) {
-        this(buffer, customStrides(sizes, strides));
+        this(buffer, Index.create(sizes, strides));
     }
 
     /** Constructor to set the {@link #buffer} and {@link #index}. */

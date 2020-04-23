@@ -26,7 +26,31 @@ package org.bytedeco.javacpp.indexer;
  *
  * @author Matteo Di Giovinazzo
  */
-public interface Index {
+public abstract class Index {
+
+    public static Index create(long... sizes) {
+        return new StrideIndex(sizes, defaultStrides(sizes));
+    }
+
+    public static Index create(long[] sizes, long[] strides) {
+        return new StrideIndex(sizes, strides);
+    }
+
+    public static Index create(long[] sizes, long[] offsets, long[] hyperslabStrides, long[] counts, long[] blocks) {
+        return new HyperslabIndex(sizes, offsets, hyperslabStrides, counts, blocks);
+    }
+
+    /**
+     * Returns default (row-major contiguous) strides for the given sizes.
+     */
+    public static long[] defaultStrides(long... sizes) {
+        long[] strides = new long[sizes.length];
+        strides[sizes.length - 1] = 1;
+        for (int i = sizes.length - 2; i >= 0; i--) {
+            strides[i] = strides[i + 1] * sizes[i + 1];
+        }
+        return strides;
+    }
 
     /**
      * TODO
@@ -34,7 +58,7 @@ public interface Index {
      * @param i
      * @return
      */
-    long index(long i);
+    public abstract long index(long i);
 
     /**
      * TODO
@@ -43,7 +67,7 @@ public interface Index {
      * @param j
      * @return
      */
-    long index(long i, long j);
+    public abstract long index(long i, long j);
 
     /**
      * TODO
@@ -53,7 +77,7 @@ public interface Index {
      * @param k
      * @return
      */
-    long index(long i, long j, long k);
+    public abstract long index(long i, long j, long k);
 
     /**
      * TODO
@@ -61,10 +85,15 @@ public interface Index {
      * @param indices
      * @return
      */
-    long index(long... indices);
+    public abstract long index(long... indices);
 
-    long[] sizes();
-    
+    /** Returns {@link #sizes} */
+    public abstract long[] sizes();
+
+    /**
+     * Needed for backward compatibility with {@link Indexer#strides()}
+     * @return
+     */
     @Deprecated
-    long[] strides();
+    abstract long[] strides();
 }

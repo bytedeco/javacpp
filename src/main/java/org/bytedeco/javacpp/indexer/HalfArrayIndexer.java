@@ -22,9 +22,6 @@
 
 package org.bytedeco.javacpp.indexer;
 
-import static org.bytedeco.javacpp.indexer.StrideIndex.customStrides;
-import static org.bytedeco.javacpp.indexer.StrideIndex.defaultIndex;
-
 /**
  * An indexer for a {@code short[]} array, treated as half-precision float.
  *
@@ -36,17 +33,17 @@ public class HalfArrayIndexer extends HalfIndexer {
 
     /** Calls {@code HalfArrayIndexer(array, defaultIndex({ array.length }))}. */
     public HalfArrayIndexer(short[] array) {
-        this(array, defaultIndex(array.length));
+        this(array, Index.create(array.length));
     }
 
     /** Calls {@code HalfArrayIndexer(array, sizes)}. */
     @Deprecated public HalfArrayIndexer(short[] array, long... sizes) {
-        this(array, defaultIndex(sizes));
+        this(array, Index.create(sizes));
     }
 
     /** Constructor to set the {@link #array}, {@link #sizes} and {@link #strides}. */
     @Deprecated public HalfArrayIndexer(short[] array, long[] sizes, long[] strides) {
-        this(array, customStrides(sizes, strides));
+        this(array, Index.create(sizes, strides));
     }
 
     /** Constructor to set the {@link #array} and {@link #index}. */

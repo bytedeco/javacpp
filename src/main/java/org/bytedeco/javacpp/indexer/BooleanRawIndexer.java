@@ -24,8 +24,6 @@ package org.bytedeco.javacpp.indexer;
 
 import org.bytedeco.javacpp.BooleanPointer;
 import org.bytedeco.javacpp.Pointer;
-import static org.bytedeco.javacpp.indexer.StrideIndex.customStrides;
-import static org.bytedeco.javacpp.indexer.StrideIndex.defaultIndex;
 
 /**
  * An indexer for a {@link BooleanPointer} using the {@link Raw} instance.
@@ -42,7 +40,7 @@ public class BooleanRawIndexer extends BooleanIndexer {
 
     /** Calls {@code BooleanRawIndexer(pointer, defaultIndex({ pointer.limit() - pointer.position() }))}. */
     public BooleanRawIndexer(BooleanPointer pointer) {
-        this(pointer, defaultIndex( pointer.limit() - pointer.position() ));
+        this(pointer, Index.create( pointer.limit() - pointer.position() ));
     }
 
     /** Calls {@code BooleanRawIndexer(pointer, defaultIndex(sizes))}. */
@@ -52,7 +50,7 @@ public class BooleanRawIndexer extends BooleanIndexer {
 
     /** Constructor to set the {@link #pointer}, {@link #sizes} and {@link #strides}. */
     @Deprecated public BooleanRawIndexer(BooleanPointer pointer, long[] sizes, long[] strides) {
-        this(pointer, customStrides(sizes, strides));
+        this(pointer, Index.create(sizes, strides));
     }
 
     /** Constructor to set the {@link #pointer} and {@link #index}. */

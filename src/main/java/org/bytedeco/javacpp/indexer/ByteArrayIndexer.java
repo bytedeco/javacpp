@@ -24,8 +24,6 @@ package org.bytedeco.javacpp.indexer;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import static org.bytedeco.javacpp.indexer.StrideIndex.customStrides;
-import static org.bytedeco.javacpp.indexer.StrideIndex.defaultIndex;
 
 /**
  * An indexer for a {@code byte[]} array.
@@ -42,17 +40,17 @@ public class ByteArrayIndexer extends ByteIndexer {
 
     /** Calls {@code ByteArrayIndexer(array, defaultIndex({ array.length }))}. */
     public ByteArrayIndexer(byte[] array) {
-        this(array, defaultIndex(array.length));
+        this(array, Index.create(array.length));
     }
 
     /** Calls {@code ByteArrayIndexer(array, sizes)}. */
     @Deprecated public ByteArrayIndexer(byte[] array, long... sizes) {
-        this(array, defaultIndex(sizes));
+        this(array, Index.create(sizes));
     }
 
     /** Constructor to set the {@link #array}, {@link #sizes} and {@link #strides}. */
     @Deprecated public ByteArrayIndexer(byte[] array, long[] sizes, long[] strides) {
-        this(array, customStrides(sizes, strides));
+        this(array, Index.create(sizes, strides));
     }
 
     /** Constructor to set the {@link #array} and {@link #index}. */

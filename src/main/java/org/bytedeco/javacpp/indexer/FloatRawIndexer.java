@@ -24,8 +24,6 @@ package org.bytedeco.javacpp.indexer;
 
 import org.bytedeco.javacpp.FloatPointer;
 import org.bytedeco.javacpp.Pointer;
-import static org.bytedeco.javacpp.indexer.StrideIndex.customStrides;
-import static org.bytedeco.javacpp.indexer.StrideIndex.defaultIndex;
 
 /**
  * An indexer for a {@link FloatPointer} using the {@link Raw} instance.
@@ -42,17 +40,17 @@ public class FloatRawIndexer extends FloatIndexer {
 
     /** Calls {@code FloatRawIndexer(pointer, defaultIndex({ pointer.limit() - pointer.position() }))}. */
     public FloatRawIndexer(FloatPointer pointer) {
-        this(pointer, defaultIndex( pointer.limit() - pointer.position() ));
+        this(pointer, Index.create( pointer.limit() - pointer.position() ));
     }
 
     /** Calls {@code FloatRawIndexer(pointer, defaultIndex(sizes))}. */
     @Deprecated public FloatRawIndexer(FloatPointer pointer, long... sizes) {
-        this(pointer, defaultIndex(sizes));
+        this(pointer, Index.create(sizes));
     }
 
     /** Constructor to set the {@link #pointer}, {@link #sizes} and {@link #strides}. */
     @Deprecated public FloatRawIndexer(FloatPointer pointer, long[] sizes, long[] strides) {
-        this(pointer, customStrides(sizes, strides));
+        this(pointer, Index.create(sizes, strides));
     }
 
     /** Constructor to set the {@link #pointer} and {@link #index}. */

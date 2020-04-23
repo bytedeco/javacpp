@@ -22,9 +22,9 @@
 
 package org.bytedeco.javacpp.indexer;
 
-import java.nio.DoubleBuffer;
 import org.bytedeco.javacpp.DoublePointer;
-import static org.bytedeco.javacpp.indexer.StrideIndex.customStrides;
+
+import java.nio.DoubleBuffer;
 
 /**
  * Abstract indexer for the {@code double} primitive type.
@@ -103,7 +103,7 @@ public abstract class DoubleIndexer extends Indexer {
      * @return the new double indexer backed by the raw memory interface, a buffer, or an array
      */
     @Deprecated public static DoubleIndexer create(final DoublePointer pointer, long[] sizes, long[] strides, boolean direct) {
-        return create(pointer, customStrides(sizes, strides), direct);
+        return create(pointer, Index.create(sizes, strides), direct);
     }
 
     /**

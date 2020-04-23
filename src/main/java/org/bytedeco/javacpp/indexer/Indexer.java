@@ -26,7 +26,6 @@ import org.bytedeco.javacpp.Pointer;
 
 import java.nio.Buffer;
 
-import static org.bytedeco.javacpp.indexer.StrideIndex.customStrides;
 
 /**
  * Top-level class of all data indexers, providing easy-to-use and efficient
@@ -78,7 +77,7 @@ public abstract class Indexer implements AutoCloseable {
 
     /** Constructor to set the {@link #sizes} and {@link #strides}. */
     @Deprecated protected Indexer(long[] sizes, long[] strides) {
-        this(customStrides(sizes, strides));
+        this(Index.create(sizes, strides));
         this.sizes = sizes;
         this.strides = strides;
     }
@@ -116,7 +115,7 @@ public abstract class Indexer implements AutoCloseable {
      */
     @Deprecated
     public static long[] strides(long... sizes) {
-        return StrideIndex.strides(sizes);
+        return Index.defaultStrides(sizes);
     }
 
     /** Returns {@code index.index(i)}. */

@@ -24,8 +24,6 @@ package org.bytedeco.javacpp.indexer;
 
 import org.bytedeco.javacpp.CharPointer;
 import org.bytedeco.javacpp.Pointer;
-import static org.bytedeco.javacpp.indexer.StrideIndex.customStrides;
-import static org.bytedeco.javacpp.indexer.StrideIndex.defaultIndex;
 
 /**
  * An indexer for a {@link CharPointer} using the {@link Raw} instance.
@@ -42,17 +40,17 @@ public class CharRawIndexer extends CharIndexer {
 
     /** Calls {@code CharRawIndexer(pointer, defaultIndex({ pointer.limit() - pointer.position() }))}. */
     public CharRawIndexer(CharPointer pointer) {
-        this(pointer, defaultIndex( pointer.limit() - pointer.position() ));
+        this(pointer, Index.create( pointer.limit() - pointer.position() ));
     }
 
     /** Calls {@code CharRawIndexer(pointer, defaultIndex(sizes))}. */
     @Deprecated public CharRawIndexer(CharPointer pointer, long... sizes) {
-        this(pointer, defaultIndex(sizes));
+        this(pointer, Index.create(sizes));
     }
 
     /** Constructor to set the {@link #pointer}, {@link #sizes} and {@link #strides}. */
     @Deprecated public CharRawIndexer(CharPointer pointer, long[] sizes, long[] strides) {
-        this(pointer, customStrides(sizes, strides));
+        this(pointer, Index.create(sizes, strides));
     }
 
     /** Constructor to set the {@link #pointer} and {@link #index}. */

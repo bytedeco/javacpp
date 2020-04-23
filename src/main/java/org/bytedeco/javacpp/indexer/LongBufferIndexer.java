@@ -24,8 +24,6 @@ package org.bytedeco.javacpp.indexer;
 
 import java.nio.Buffer;
 import java.nio.LongBuffer;
-import static org.bytedeco.javacpp.indexer.StrideIndex.customStrides;
-import static org.bytedeco.javacpp.indexer.StrideIndex.defaultIndex;
 
 /**
  * An indexer for a {@link LongBuffer}.
@@ -38,17 +36,17 @@ public class LongBufferIndexer extends LongIndexer {
 
     /** Calls {@code LongBufferIndexer(buffer, defaultIndex({ buffer.limit() }))}. */
     public LongBufferIndexer(LongBuffer buffer) {
-        this(buffer, defaultIndex(buffer.limit()));
+        this(buffer, Index.create(buffer.limit()));
     }
 
     /** Calls {@code LongBufferIndexer(buffer, defaultIndex(sizes))}. */
     @Deprecated public LongBufferIndexer(LongBuffer buffer, long... sizes) {
-        this(buffer, defaultIndex(sizes));
+        this(buffer, Index.create(sizes));
     }
 
     /** Constructor to set the {@link #buffer}, {@link #sizes} and {@link #strides}. */
     @Deprecated public LongBufferIndexer(LongBuffer buffer, long[] sizes, long[] strides) {
-        this(buffer, customStrides(sizes, strides));
+        this(buffer, Index.create(sizes, strides));
     }
 
     /** Constructor to set the {@link #buffer} and {@link #index}. */

@@ -22,9 +22,6 @@
 
 package org.bytedeco.javacpp.indexer;
 
-import static org.bytedeco.javacpp.indexer.StrideIndex.customStrides;
-import static org.bytedeco.javacpp.indexer.StrideIndex.defaultIndex;
-
 /**
  * An indexer for a {@code byte[]} array, treated as unsigned.
  *
@@ -36,17 +33,17 @@ public class UByteArrayIndexer extends UByteIndexer {
 
     /** Calls {@code UByteArrayIndexer(array, defaultIndex({ array.length }))}. */
     public UByteArrayIndexer(byte[] array) {
-        this(array, defaultIndex(array.length));
+        this(array, Index.create(array.length));
     }
 
     /** Calls {@code UByteArrayIndexer(array, sizes)}. */
     @Deprecated public UByteArrayIndexer(byte[] array, long... sizes) {
-        this(array, defaultIndex(sizes));
+        this(array, Index.create(sizes));
     }
 
     /** Constructor to set the {@link #array}, {@link #sizes} and {@link #strides}. */
     @Deprecated public UByteArrayIndexer(byte[] array, long[] sizes, long[] strides) {
-        this(array, customStrides(sizes, strides));
+        this(array, Index.create(sizes, strides));
     }
 
     /** Constructor to set the {@link #array} and {@link #index}. */

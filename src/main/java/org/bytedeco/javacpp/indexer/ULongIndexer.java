@@ -22,11 +22,11 @@
 
 package org.bytedeco.javacpp.indexer;
 
+import org.bytedeco.javacpp.LongPointer;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.LongBuffer;
-import org.bytedeco.javacpp.LongPointer;
-import static org.bytedeco.javacpp.indexer.StrideIndex.customStrides;
 
 /**
  * Abstract indexer for the {@code long} primitive type, treated as unsigned.
@@ -105,7 +105,7 @@ public abstract class ULongIndexer extends Indexer {
      * @return the new long indexer backed by the raw memory interface, a buffer, or an array
      */
     @Deprecated public static ULongIndexer create(final LongPointer pointer, long[] sizes, long[] strides, boolean direct) {
-        return create(pointer, customStrides(sizes, strides), direct);
+        return create(pointer, Index.create(sizes, strides), direct);
     }
 
     /**

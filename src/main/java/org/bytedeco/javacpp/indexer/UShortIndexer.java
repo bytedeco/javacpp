@@ -22,9 +22,9 @@
 
 package org.bytedeco.javacpp.indexer;
 
-import java.nio.ShortBuffer;
 import org.bytedeco.javacpp.ShortPointer;
-import static org.bytedeco.javacpp.indexer.StrideIndex.customStrides;
+
+import java.nio.ShortBuffer;
 
 /**
  * Abstract indexer for the {@code short} primitive type, treated as unsigned.
@@ -103,7 +103,7 @@ public abstract class UShortIndexer extends Indexer {
      * @return the new short indexer backed by the raw memory interface, a buffer, or an array
      */
     @Deprecated public static UShortIndexer create(final ShortPointer pointer, long[] sizes, long[] strides, boolean direct) {
-        return create(pointer, customStrides(sizes, strides), direct);
+        return create(pointer, Index.create(sizes, strides), direct);
     }
 
     /**

@@ -22,9 +22,9 @@
 
 package org.bytedeco.javacpp.indexer;
 
-import java.nio.ByteBuffer;
 import org.bytedeco.javacpp.BytePointer;
-import static org.bytedeco.javacpp.indexer.StrideIndex.customStrides;
+
+import java.nio.ByteBuffer;
 
 /**
  * Abstract indexer for the {@code byte} primitive type, treated as unsigned.
@@ -103,7 +103,7 @@ public abstract class UByteIndexer extends Indexer {
      * @return the new byte indexer backed by the raw memory interface, a buffer, or an array
      */
     @Deprecated public static UByteIndexer create(final BytePointer pointer, long[] sizes, long[] strides, boolean direct) {
-        return create(pointer, customStrides(sizes, strides), direct);
+        return create(pointer, Index.create(sizes, strides), direct);
     }
 
     /**

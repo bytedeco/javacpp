@@ -22,9 +22,9 @@
 
 package org.bytedeco.javacpp.indexer;
 
-import java.nio.FloatBuffer;
 import org.bytedeco.javacpp.FloatPointer;
-import static org.bytedeco.javacpp.indexer.StrideIndex.customStrides;
+
+import java.nio.FloatBuffer;
 
 /**
  * Abstract indexer for the {@code float} primitive type.
@@ -103,7 +103,7 @@ public abstract class FloatIndexer extends Indexer {
      * @return the new float indexer backed by the raw memory interface, a buffer, or an array
      */
     @Deprecated public static FloatIndexer create(final FloatPointer pointer, long[] sizes, long[] strides, boolean direct) {
-        return create(pointer, customStrides(sizes, strides), direct);
+        return create(pointer, Index.create(sizes, strides), direct);
     }
 
     /**

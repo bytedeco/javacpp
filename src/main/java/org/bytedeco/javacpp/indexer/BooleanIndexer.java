@@ -22,9 +22,9 @@
 
 package org.bytedeco.javacpp.indexer;
 
-import java.nio.ByteBuffer;
 import org.bytedeco.javacpp.BooleanPointer;
-import static org.bytedeco.javacpp.indexer.StrideIndex.customStrides;
+
+import java.nio.ByteBuffer;
 
 /**
  * Abstract indexer for the {@code boolean} primitive type.
@@ -103,7 +103,7 @@ public abstract class BooleanIndexer extends Indexer {
      * @return the new boolean indexer backed by the raw memory interface, a buffer, or an array
      */
     @Deprecated public static BooleanIndexer create(final BooleanPointer pointer, long[] sizes, long[] strides, boolean direct) {
-        return create(pointer, customStrides(sizes, strides), direct);
+        return create(pointer, Index.create(sizes, strides), direct);
     }
 
     /**

@@ -24,7 +24,7 @@ package org.bytedeco.javacpp.indexer;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import static org.bytedeco.javacpp.indexer.HyperslabIndex.hyperslab;
+import static org.bytedeco.javacpp.indexer.Index.create;
 import static org.junit.Assert.assertEquals;
 
 public class HyperslabIndexTest {
@@ -49,7 +49,7 @@ public class HyperslabIndexTest {
     @Test
     public void testIndexI() {
         long[] sizes = new long[]{120};
-        Index index = hyperslab(
+        Index index = create(
                 sizes,
                 new long[]{1},
                 new long[]{4},
@@ -69,7 +69,7 @@ public class HyperslabIndexTest {
     @Test
     public void testIndexIJ() {
         long[] sizes = new long[]{12, 10};
-        Index index = hyperslab(
+        Index index = create(
                 sizes,
                 new long[]{1, 1},
                 new long[]{4, 3},
