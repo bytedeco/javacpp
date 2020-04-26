@@ -66,7 +66,7 @@ public class HalfRawIndexer extends HalfIndexer {
     }
 
     @Override
-    public HalfIndexer slice(Index index) {
+    public HalfIndexer reindex(Index index) {
         return new HalfRawIndexer(pointer, index);
     }
 

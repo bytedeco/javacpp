@@ -66,7 +66,7 @@ public class FloatRawIndexer extends FloatIndexer {
     }
     
     @Override
-    public FloatIndexer slice(Index index) {
+    public FloatIndexer reindex(Index index) {
         return new FloatRawIndexer(pointer, index);
     }
 

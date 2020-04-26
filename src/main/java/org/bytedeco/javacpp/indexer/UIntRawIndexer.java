@@ -66,7 +66,7 @@ public class UIntRawIndexer extends UIntIndexer {
     }
 
     @Override
-    public UIntIndexer slice(Index index) {
+    public UIntIndexer reindex(Index index) {
         return new UIntRawIndexer(pointer, index);
     }
 

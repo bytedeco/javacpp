@@ -60,7 +60,7 @@ public class UShortBufferIndexer extends UShortIndexer {
     }
 
     @Override
-    public UShortIndexer slice(Index index) {
+    public UShortIndexer reindex(Index index) {
         return new UShortBufferIndexer(buffer, index);
     }
 

@@ -60,7 +60,7 @@ public class UByteBufferIndexer extends UByteIndexer {
     }
 
     @Override
-    public UByteIndexer slice(Index index) {
+    public UByteIndexer reindex(Index index) {
         return new UByteBufferIndexer(buffer, index);
     }
 

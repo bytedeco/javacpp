@@ -57,7 +57,7 @@ public class ShortArrayIndexer extends ShortIndexer {
     }
 
     @Override
-    public ShortIndexer slice(Index index) {
+    public ShortIndexer reindex(Index index) {
         return new ShortArrayIndexer(array, index);
     }
 

@@ -60,7 +60,7 @@ public class FloatBufferIndexer extends FloatIndexer {
     }
 
     @Override
-    public FloatIndexer slice(Index index) {
+    public FloatIndexer reindex(Index index) {
         return new FloatBufferIndexer(buffer, index);
     }
 

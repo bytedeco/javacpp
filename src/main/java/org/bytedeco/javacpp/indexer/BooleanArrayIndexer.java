@@ -57,7 +57,7 @@ public class BooleanArrayIndexer extends BooleanIndexer {
     }
 
     @Override
-    public BooleanIndexer slice(Index index) {
+    public BooleanIndexer reindex(Index index) {
         return new BooleanArrayIndexer(array, index);
     }
 

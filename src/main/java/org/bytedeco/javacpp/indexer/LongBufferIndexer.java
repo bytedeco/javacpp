@@ -60,7 +60,7 @@ public class LongBufferIndexer extends LongIndexer {
     }
 
     @Override
-    public LongIndexer slice(Index index) {
+    public LongIndexer reindex(Index index) {
         return new LongBufferIndexer(buffer, index);
     }
 

@@ -57,7 +57,7 @@ public class IntArrayIndexer extends IntIndexer {
     }
 
     @Override
-    public IntIndexer slice(Index index) {
+    public IntIndexer reindex(Index index) {
         return new IntArrayIndexer(array, index);
     }
 

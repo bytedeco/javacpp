@@ -66,7 +66,7 @@ public class Bfloat16RawIndexer extends Bfloat16Indexer {
     }
 
     @Override
-    public Bfloat16Indexer slice(Index index) {
+    public Bfloat16Indexer reindex(Index index) {
         return new Bfloat16RawIndexer(pointer, index);
     }
 

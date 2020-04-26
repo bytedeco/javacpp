@@ -57,7 +57,7 @@ public class LongArrayIndexer extends LongIndexer {
     }
 
     @Override
-    public LongIndexer slice(Index index) {
+    public LongIndexer reindex(Index index) {
         return new LongArrayIndexer(array, index);
     }
 

@@ -60,7 +60,7 @@ public class IntBufferIndexer extends IntIndexer {
     }
 
     @Override
-    public IntIndexer slice(Index index) {
+    public IntIndexer reindex(Index index) {
         return new IntBufferIndexer(buffer, index);
     }
 

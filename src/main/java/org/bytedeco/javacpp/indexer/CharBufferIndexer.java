@@ -60,7 +60,7 @@ public class CharBufferIndexer extends CharIndexer {
     }
 
     @Override
-    public CharIndexer slice(Index index) {
+    public CharIndexer reindex(Index index) {
         return new CharBufferIndexer(buffer, index);
     }
 

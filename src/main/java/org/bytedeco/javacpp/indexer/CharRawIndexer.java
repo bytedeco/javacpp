@@ -66,7 +66,7 @@ public class CharRawIndexer extends CharIndexer {
     }
 
     @Override
-    public CharIndexer slice(Index index) {
+    public CharIndexer reindex(Index index) {
         return new CharRawIndexer(pointer, index);
     }
 

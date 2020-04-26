@@ -60,7 +60,7 @@ public class ShortBufferIndexer extends ShortIndexer {
     }
 
     @Override
-    public ShortIndexer slice(Index index) {
+    public ShortIndexer reindex(Index index) {
         return new ShortBufferIndexer(buffer, index);
     }
 

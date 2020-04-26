@@ -66,7 +66,7 @@ public class ShortRawIndexer extends ShortIndexer {
     }
 
     @Override
-    public ShortIndexer slice(Index index) {
+    public ShortIndexer reindex(Index index) {
         return new ShortRawIndexer(pointer, index);
     }
 

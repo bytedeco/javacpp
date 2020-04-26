@@ -66,7 +66,7 @@ public class BooleanRawIndexer extends BooleanIndexer {
     }
 
     @Override
-    public BooleanIndexer slice(Index index) {
+    public BooleanIndexer reindex(Index index) {
         return new BooleanRawIndexer(pointer, index);
     }
 

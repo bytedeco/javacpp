@@ -61,7 +61,7 @@ public class ULongBufferIndexer extends ULongIndexer {
     }
 
     @Override
-    public ULongIndexer slice(Index index) {
+    public ULongIndexer reindex(Index index) {
         return new ULongBufferIndexer(buffer, index);
     }
 

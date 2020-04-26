@@ -28,6 +28,8 @@ package org.bytedeco.javacpp.indexer;
  */
 public abstract class Index {
 
+    public static Index ONE = create(1);
+
     public static Index create(long... sizes) {
         return new StrideIndex(sizes, defaultStrides(sizes));
     }
@@ -89,11 +91,4 @@ public abstract class Index {
 
     /** Returns {@link #sizes} */
     public abstract long[] sizes();
-
-    /**
-     * Needed for backward compatibility with {@link Indexer#strides()}
-     * @return
-     */
-    @Deprecated
-    abstract long[] strides();
 }

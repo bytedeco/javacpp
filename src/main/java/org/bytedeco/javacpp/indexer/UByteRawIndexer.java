@@ -66,7 +66,7 @@ public class UByteRawIndexer extends UByteIndexer {
     }
 
     @Override
-    public UByteIndexer slice(Index index) {
+    public UByteIndexer reindex(Index index) {
         return new UByteRawIndexer(pointer, index);
     }
 

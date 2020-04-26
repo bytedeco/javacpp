@@ -51,8 +51,6 @@ public abstract class Indexer implements AutoCloseable {
         release();
     }
 
-    @Deprecated protected static final long[] ONE_STRIDE = { 1 };
-
     /**
      * The number of elements in each dimension.
      * These values are not typically used by the indexer.
@@ -72,7 +70,9 @@ public abstract class Indexer implements AutoCloseable {
     protected Indexer(Index index) {
         this.index = index;
         this.sizes = index.sizes();
-        this.strides = index.strides();
+        if (index instanceof StrideIndex) {
+            this.strides = ((StrideIndex) index).strides();
+        }
     }
 
     /** Constructor to set the {@link #sizes} and {@link #strides}. */
@@ -84,13 +84,13 @@ public abstract class Indexer implements AutoCloseable {
 
     /** Returns {@link #sizes} */
     @Deprecated public long[] sizes() { return sizes; }
-    /** Returns {@link #strides} */
+    /** Returns {@link #strides} or {@code null} if there are no strides. */
     @Deprecated public long[] strides() { return strides; }
 
     /** Returns {@code sizes[i]} */
     @Deprecated public long size(int i) { return sizes[i]; }
-    /** Returns {@code strides[i]} */
-    @Deprecated public long stride(int i) { return strides[i]; }
+    /** Returns {@code strides[i]} or {@code -1} if there are no strides */
+    @Deprecated public long stride(int i) { return strides != null ? strides[i] : -1; }
 
     /** Returns {@code sizes.length > 0 && sizes.length < 4 ? sizes[0] : -1} */
     @Deprecated public long rows() { return sizes.length > 0 && sizes.length < 4 ? sizes[0] : -1; }
@@ -165,7 +165,7 @@ public abstract class Indexer implements AutoCloseable {
      * @param index
      * @return 
      */
-    public abstract Indexer slice(Index index);
+    public abstract Indexer reindex(Index index);
 
     @Override public String toString() {
         long rows     = sizes.length > 0 ? sizes[0] : 1,

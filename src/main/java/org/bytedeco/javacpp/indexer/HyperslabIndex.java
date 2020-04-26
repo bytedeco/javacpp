@@ -91,9 +91,4 @@ class HyperslabIndex extends StrideIndex {
     public long[] sizes() {
         return sizes;
     }
-
-    @Override
-    long[] strides() {
-        return strides;
-    }
 }

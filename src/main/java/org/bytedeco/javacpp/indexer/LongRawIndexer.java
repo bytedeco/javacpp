@@ -66,7 +66,7 @@ public class LongRawIndexer extends LongIndexer {
     }
 
     @Override
-    public LongIndexer slice(Index index) {
+    public LongIndexer reindex(Index index) {
         return new LongRawIndexer(pointer, index);
     }
 

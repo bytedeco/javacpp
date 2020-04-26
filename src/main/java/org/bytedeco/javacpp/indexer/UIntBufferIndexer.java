@@ -60,7 +60,7 @@ public class UIntBufferIndexer extends UIntIndexer {
     }
 
     @Override
-    public UIntIndexer slice(Index index) {
+    public UIntIndexer reindex(Index index) {
         return new UIntBufferIndexer(buffer, index);
     }
 

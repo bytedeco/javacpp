@@ -60,7 +60,7 @@ public class HalfBufferIndexer extends HalfIndexer {
     }
 
     @Override
-    public HalfIndexer slice(Index index) {
+    public HalfIndexer reindex(Index index) {
         return new HalfBufferIndexer(buffer, index);
     }
 

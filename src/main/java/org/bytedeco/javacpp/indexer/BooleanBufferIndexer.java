@@ -60,7 +60,7 @@ public class BooleanBufferIndexer extends BooleanIndexer {
     }
 
     @Override
-    public BooleanIndexer slice(Index index) {
+    public BooleanIndexer reindex(Index index) {
         return new BooleanBufferIndexer(buffer, index);
     }
 

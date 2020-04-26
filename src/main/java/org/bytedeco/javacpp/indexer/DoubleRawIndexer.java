@@ -66,7 +66,7 @@ public class DoubleRawIndexer extends DoubleIndexer {
     }
 
     @Override
-    public DoubleIndexer slice(Index index) {
+    public DoubleIndexer reindex(Index index) {
         return new DoubleRawIndexer(pointer, index);
     }
 

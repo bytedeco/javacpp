@@ -64,7 +64,7 @@ public class ByteArrayIndexer extends ByteIndexer {
     }
 
     @Override
-    public ByteIndexer slice(Index index) {
+    public ByteIndexer reindex(Index index) {
         return new ByteArrayIndexer(array, index);
     }
 

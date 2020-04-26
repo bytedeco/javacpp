@@ -57,7 +57,7 @@ public class FloatArrayIndexer extends FloatIndexer {
     }
 
     @Override
-    public FloatIndexer slice(Index index) {
+    public FloatIndexer reindex(Index index) {
         return new FloatArrayIndexer(array, index);
     }
 

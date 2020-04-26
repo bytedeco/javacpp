@@ -57,7 +57,7 @@ public class HalfArrayIndexer extends HalfIndexer {
     }
 
     @Override
-    public HalfIndexer slice(Index index) {
+    public HalfIndexer reindex(Index index) {
         return new HalfArrayIndexer(array, index);
     }
 

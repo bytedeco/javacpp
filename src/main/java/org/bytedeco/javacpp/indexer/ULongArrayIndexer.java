@@ -59,7 +59,7 @@ public class ULongArrayIndexer extends ULongIndexer {
     }
 
     @Override
-    public ULongIndexer slice(Index index) {
+    public ULongIndexer reindex(Index index) {
         return new ULongArrayIndexer(array, index);
     }
 

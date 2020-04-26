@@ -60,7 +60,7 @@ public class DoubleBufferIndexer extends DoubleIndexer {
     }
 
     @Override
-    public DoubleIndexer slice(Index index) {
+    public DoubleIndexer reindex(Index index) {
         return new DoubleBufferIndexer(buffer, index);
     }
 

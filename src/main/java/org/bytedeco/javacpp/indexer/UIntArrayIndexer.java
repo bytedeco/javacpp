@@ -57,7 +57,7 @@ public class UIntArrayIndexer extends UIntIndexer {
     }
 
     @Override
-    public UIntIndexer slice(Index index) {
+    public UIntIndexer reindex(Index index) {
         return new UIntArrayIndexer(array, index);
     }
 

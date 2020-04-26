@@ -66,7 +66,7 @@ public class ByteRawIndexer extends ByteIndexer {
     }
 
     @Override
-    public ByteIndexer slice(Index index) {
+    public ByteIndexer reindex(Index index) {
         return new ByteRawIndexer(pointer, index);
     }
 

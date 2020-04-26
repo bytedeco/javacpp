@@ -47,9 +47,9 @@ class StrideIndex extends Index {
     @Override
     public long[] sizes() { return sizes; }
 
-    @Deprecated
-    @Override
-    long[] strides() { return strides; }
+    public long[] strides() {
+        return strides;
+    }
 
     @Override
     public long index(long i) {
