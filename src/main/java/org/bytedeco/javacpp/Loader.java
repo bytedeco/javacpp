@@ -1234,11 +1234,12 @@ public class Loader {
             String prefix = p.getProperty("platform.executable.prefix", "");
             String suffix = p.getProperty("platform.executable.suffix", "");
             String filename = prefix + executable + suffix;
+            String libraryPath  = p.getProperty("platform.library.path", "");
             try {
                 for (int i = extensions.length - 1; i >= -1; i--) {
                     // iterate extensions in reverse to be consistent with the overriding of properties
                     String extension = i >= 0 ? extensions[i] : "";
-                    String subdir = platform + (extension == null ? "" : extension) + "/";
+                    String subdir = (libraryPath.length() > 0 ? "/" + libraryPath : platform + (extension == null ? "" : extension)) + "/";
                     File f = cacheResource(cls, subdir + filename);
                     if (f != null) {
                         f.setExecutable(true);

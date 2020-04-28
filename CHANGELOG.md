@@ -1,4 +1,5 @@
 
+ * Take into account `platform.library.path` when extracting executables on `Loader.load()` ([issue bytedeco/javacv#1410](https://github.com/bytedeco/javacv/issues/1410))
  * Move init code for `Loader.getPlatform()` to `Detector` to avoid warning messages ([issue #393](https://github.com/bytedeco/javacpp/issues/393))
  * Add `Indexer.Index` nested class to allow overriding how the index is calculated ([issue #391](https://github.com/bytedeco/javacpp/issues/391))
 
