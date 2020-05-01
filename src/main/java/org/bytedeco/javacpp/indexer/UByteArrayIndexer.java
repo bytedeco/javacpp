@@ -31,18 +31,18 @@ public class UByteArrayIndexer extends UByteIndexer {
     /** The backing array. */
     protected byte[] array;
 
-    /** Calls {@code UByteArrayIndexer(array, defaultIndex({ array.length }))}. */
+    /** Calls {@code UByteArrayIndexer(array, Index.create(array.length))}. */
     public UByteArrayIndexer(byte[] array) {
         this(array, Index.create(array.length));
     }
 
-    /** Calls {@code UByteArrayIndexer(array, sizes)}. */
-    @Deprecated public UByteArrayIndexer(byte[] array, long... sizes) {
+    /** Calls {@code UByteArrayIndexer(array, Index.create(sizes))}. */
+    public UByteArrayIndexer(byte[] array, long... sizes) {
         this(array, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #array}, {@link #sizes} and {@link #strides}. */
-    @Deprecated public UByteArrayIndexer(byte[] array, long[] sizes, long[] strides) {
+    /** Calls {@code UByteArrayIndexer(array, Index.create(sizes, strides))}. */
+    public UByteArrayIndexer(byte[] array, long[] sizes, long[] strides) {
         this(array, Index.create(sizes, strides));
     }
 
@@ -56,8 +56,7 @@ public class UByteArrayIndexer extends UByteIndexer {
         return array;
     }
 
-    @Override
-    public UByteIndexer reindex(Index index) {
+    @Override public UByteIndexer reindex(Index index) {
         return new UByteArrayIndexer(array, index);
     }
 

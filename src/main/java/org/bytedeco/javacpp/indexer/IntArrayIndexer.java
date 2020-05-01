@@ -31,18 +31,18 @@ public class IntArrayIndexer extends IntIndexer {
     /** The backing array. */
     protected int[] array;
 
-    /** Calls {@code IntArrayIndexer(array, defaultIndex({ array.length }))}. */
+    /** Calls {@code IntArrayIndexer(array, Index.create(array.length))}. */
     public IntArrayIndexer(int[] array) {
         this(array, Index.create(array.length));
     }
 
-    /** Calls {@code IntArrayIndexer(array, sizes)}. */
-    @Deprecated public IntArrayIndexer(int[] array, long... sizes) {
+    /** Calls {@code IntArrayIndexer(array, Index.create(sizes))}. */
+    public IntArrayIndexer(int[] array, long... sizes) {
         this(array, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #array}, {@link #sizes} and {@link #strides}. */
-    @Deprecated public IntArrayIndexer(int[] array, long[] sizes, long[] strides) {
+    /** Calls {@code IntArrayIndexer(array, Index.create(sizes, strides))}. */
+    public IntArrayIndexer(int[] array, long[] sizes, long[] strides) {
         this(array, Index.create(sizes, strides));
     }
 
@@ -56,8 +56,7 @@ public class IntArrayIndexer extends IntIndexer {
         return array;
     }
 
-    @Override
-    public IntIndexer reindex(Index index) {
+    @Override public IntIndexer reindex(Index index) {
         return new IntArrayIndexer(array, index);
     }
 

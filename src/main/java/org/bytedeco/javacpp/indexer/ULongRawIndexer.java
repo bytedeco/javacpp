@@ -22,10 +22,9 @@
 
 package org.bytedeco.javacpp.indexer;
 
+import java.math.BigInteger;
 import org.bytedeco.javacpp.LongPointer;
 import org.bytedeco.javacpp.Pointer;
-
-import java.math.BigInteger;
 
 /**
  * An indexer for a {@link LongPointer} using the {@link Raw} instance, treated as unsigned.
@@ -40,18 +39,18 @@ public class ULongRawIndexer extends ULongIndexer {
     /** Base address and number of elements accessible. */
     final long base, size;
 
-    /** Calls {@code ULongRawIndexer(pointer, defaultIndex({ pointer.limit() - pointer.position() }))}. */
+    /** Calls {@code ULongRawIndexer(pointer, Index.create(pointer.limit() - pointer.position()))}. */
     public ULongRawIndexer(LongPointer pointer) {
-        this(pointer, Index.create( pointer.limit() - pointer.position() ));
+        this(pointer, Index.create(pointer.limit() - pointer.position()));
     }
 
-    /** Calls {@code ULongRawIndexer(pointer, defaultIndex(sizes))}. */
-    @Deprecated public ULongRawIndexer(LongPointer pointer, long... sizes) {
+    /** Calls {@code ULongRawIndexer(pointer, Index.create(sizes))}. */
+    public ULongRawIndexer(LongPointer pointer, long... sizes) {
         this(pointer, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #pointer}, {@link #sizes} and {@link #strides}. */
-    @Deprecated public ULongRawIndexer(LongPointer pointer, long[] sizes, long[] strides) {
+    /** Calls {@code ULongRawIndexer(pointer, Index.create(sizes, strides))}. */
+    public ULongRawIndexer(LongPointer pointer, long[] sizes, long[] strides) {
         this(pointer, Index.create(sizes, strides));
     }
 
@@ -59,16 +58,15 @@ public class ULongRawIndexer extends ULongIndexer {
     public ULongRawIndexer(LongPointer pointer, Index index) {
         super(index);
         this.pointer = pointer;
-        base = pointer.address() + pointer.position() * VALUE_BYTES;
-        size = pointer.limit() - pointer.position();
+        this.base = pointer.address() + pointer.position() * VALUE_BYTES;
+        this.size = pointer.limit() - pointer.position();
     }
 
     @Override public Pointer pointer() {
         return pointer;
     }
 
-    @Override
-    public ULongIndexer reindex(Index index) {
+    @Override public ULongIndexer reindex(Index index) {
         return new ULongRawIndexer(pointer, index);
     }
 

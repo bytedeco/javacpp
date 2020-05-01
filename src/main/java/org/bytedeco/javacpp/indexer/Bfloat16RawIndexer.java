@@ -38,18 +38,18 @@ public class Bfloat16RawIndexer extends Bfloat16Indexer {
     /** Base address and number of elements accessible. */
     final long base, size;
 
-    /** Calls {@code Bfloat16RawIndexer(pointer, defaultIndex({ pointer.limit() - pointer.position() }))}. */
+    /** Calls {@code Bfloat16RawIndexer(pointer, Index.create(pointer.limit() - pointer.position()))}. */
     public Bfloat16RawIndexer(ShortPointer pointer) {
-        this(pointer, Index.create( pointer.limit() - pointer.position() ));
+        this(pointer, Index.create(pointer.limit() - pointer.position()));
     }
 
-    /** Calls {@code Bfloat16RawIndexer(pointer, defaultIndex(sizes))}. */
-    @Deprecated public Bfloat16RawIndexer(ShortPointer pointer, long... sizes) {
+    /** Calls {@code Bfloat16RawIndexer(pointer, Index.create(sizes))}. */
+    public Bfloat16RawIndexer(ShortPointer pointer, long... sizes) {
         this(pointer, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #pointer}, {@link #sizes} and {@link #strides}. */
-    @Deprecated public Bfloat16RawIndexer(ShortPointer pointer, long[] sizes, long[] strides) {
+    /** Calls {@code Bfloat16RawIndexer(pointer, Index.create(sizes, strides))}. */
+    public Bfloat16RawIndexer(ShortPointer pointer, long[] sizes, long[] strides) {
         this(pointer, Index.create(sizes, strides));
     }
 
@@ -57,16 +57,15 @@ public class Bfloat16RawIndexer extends Bfloat16Indexer {
     public Bfloat16RawIndexer(ShortPointer pointer, Index index) {
         super(index);
         this.pointer = pointer;
-        base = pointer.address() + pointer.position() * VALUE_BYTES;
-        size = pointer.limit() - pointer.position();
+        this.base = pointer.address() + pointer.position() * VALUE_BYTES;
+        this.size = pointer.limit() - pointer.position();
     }
 
     @Override public Pointer pointer() {
         return pointer;
     }
 
-    @Override
-    public Bfloat16Indexer reindex(Index index) {
+    @Override public Bfloat16Indexer reindex(Index index) {
         return new Bfloat16RawIndexer(pointer, index);
     }
 

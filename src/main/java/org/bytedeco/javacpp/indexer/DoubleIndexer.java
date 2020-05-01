@@ -22,9 +22,8 @@
 
 package org.bytedeco.javacpp.indexer;
 
-import org.bytedeco.javacpp.DoublePointer;
-
 import java.nio.DoubleBuffer;
+import org.bytedeco.javacpp.DoublePointer;
 
 /**
  * Abstract indexer for the {@code double} primitive type.
@@ -39,7 +38,6 @@ public abstract class DoubleIndexer extends Indexer {
         super(index);
     }
 
-    @Deprecated
     protected DoubleIndexer(long[] sizes, long[] strides) {
         super(sizes, strides);
     }
@@ -52,7 +50,7 @@ public abstract class DoubleIndexer extends Indexer {
     public static DoubleIndexer create(DoubleBuffer buffer) {
         return new DoubleBufferIndexer(buffer);
     }
-    /** Returns {@code new DoubleRawIndexer(pointer} */
+    /** Returns {@code new DoubleRawIndexer(pointer)} */
     public static DoubleIndexer create(DoublePointer pointer) {
         return new DoubleRawIndexer(pointer);
     }
@@ -71,48 +69,41 @@ public abstract class DoubleIndexer extends Indexer {
     }
 
     /** Returns {@code new DoubleArrayIndexer(array, sizes)} */
-    @Deprecated public static DoubleIndexer create(double[] array, long... sizes) {
+    public static DoubleIndexer create(double[] array, long... sizes) {
         return new DoubleArrayIndexer(array, sizes);
     }
     /** Returns {@code new DoubleBufferIndexer(buffer, sizes)} */
-    @Deprecated public static DoubleIndexer create(DoubleBuffer buffer, long... sizes) {
+    public static DoubleIndexer create(DoubleBuffer buffer, long... sizes) {
         return new DoubleBufferIndexer(buffer, sizes);
     }
     /** Returns {@code new DoubleRawIndexer(pointer, index)} */
-    @Deprecated public static DoubleIndexer create(DoublePointer pointer, long... sizes) {
+    public static DoubleIndexer create(DoublePointer pointer, long... sizes) {
         return new DoubleRawIndexer(pointer, sizes);
     }
 
     /** Returns {@code new DoubleArrayIndexer(array, sizes, strides)} */
-    @Deprecated public static DoubleIndexer create(double[] array, long[] sizes, long[] strides) {
+    public static DoubleIndexer create(double[] array, long[] sizes, long[] strides) {
         return new DoubleArrayIndexer(array, sizes, strides);
     }
     /** Returns {@code new DoubleBufferIndexer(buffer, sizes, strides)} */
-    @Deprecated public static DoubleIndexer create(DoubleBuffer buffer, long[] sizes, long[] strides) {
+    public static DoubleIndexer create(DoubleBuffer buffer, long[] sizes, long[] strides) {
         return new DoubleBufferIndexer(buffer, sizes, strides);
     }
     /** Returns {@code new DoubleRawIndexer(pointer, sizes, strides)} */
-    @Deprecated public static DoubleIndexer create(DoublePointer pointer, long[] sizes, long[] strides) {
+    public static DoubleIndexer create(DoublePointer pointer, long[] sizes, long[] strides) {
         return new DoubleRawIndexer(pointer, sizes, strides);
     }
-    /**
-     * Creates a double indexer to access efficiently the data of a pointer.
-     *
-     * @param pointer data to access via a buffer or to copy to an array
-     * @param direct {@code true} to use a direct buffer, see {@link Indexer} for details
-     * @return the new double indexer backed by the raw memory interface, a buffer, or an array
-     */
-    @Deprecated public static DoubleIndexer create(final DoublePointer pointer, long[] sizes, long[] strides, boolean direct) {
+    /** Returns {@code create(pointer, Index.create(sizes, strides), direct)} */
+    public static DoubleIndexer create(final DoublePointer pointer, long[] sizes, long[] strides, boolean direct) {
         return create(pointer, Index.create(sizes, strides), direct);
     }
-
     /**
      * Creates a double indexer to access efficiently the data of a pointer.
      *
      * @param pointer data to access via a buffer or to copy to an array
-     * @param index TODO
+     * @param index to use
      * @param direct {@code true} to use a direct buffer, see {@link Indexer} for details
-     * @return the new float indexer backed by the raw memory interface, a buffer, or an array
+     * @return the new double indexer backed by the raw memory interface, a buffer, or an array
      */
     public static DoubleIndexer create(final DoublePointer pointer, Index index, boolean direct) {
         if (direct) {

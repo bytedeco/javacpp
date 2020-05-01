@@ -34,18 +34,18 @@ public class UIntBufferIndexer extends UIntIndexer {
     /** The backing buffer. */
     protected IntBuffer buffer;
 
-    /** Calls {@code UIntBufferIndexer(buffer, defaultIndex({ buffer.limit() }))}. */
+    /** Calls {@code UIntBufferIndexer(buffer, Index.create(buffer.limit()))}. */
     public UIntBufferIndexer(IntBuffer buffer) {
         this(buffer, Index.create(buffer.limit()));
     }
 
-    /** Calls {@code UIntBufferIndexer(buffer, defaultIndex(sizes))}. */
-    @Deprecated public UIntBufferIndexer(IntBuffer buffer, long... sizes) {
+    /** Calls {@code UIntBufferIndexer(buffer, Index.create(sizes))}. */
+    public UIntBufferIndexer(IntBuffer buffer, long... sizes) {
         this(buffer, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #buffer}, {@link #sizes} and {@link #strides}. */
-    @Deprecated public UIntBufferIndexer(IntBuffer buffer, long[] sizes, long[] strides) {
+    /** Calls {@code UIntBufferIndexer(buffer, Index.create(sizes, strides))}. */
+    public UIntBufferIndexer(IntBuffer buffer, long[] sizes, long[] strides) {
         this(buffer, Index.create(sizes, strides));
     }
 
@@ -59,8 +59,7 @@ public class UIntBufferIndexer extends UIntIndexer {
         return buffer;
     }
 
-    @Override
-    public UIntIndexer reindex(Index index) {
+    @Override public UIntIndexer reindex(Index index) {
         return new UIntBufferIndexer(buffer, index);
     }
 

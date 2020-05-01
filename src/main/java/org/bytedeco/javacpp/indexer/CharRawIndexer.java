@@ -38,18 +38,18 @@ public class CharRawIndexer extends CharIndexer {
     /** Base address and number of elements accessible. */
     final long base, size;
 
-    /** Calls {@code CharRawIndexer(pointer, defaultIndex({ pointer.limit() - pointer.position() }))}. */
+    /** Calls {@code CharRawIndexer(pointer, Index.create(pointer.limit() - pointer.position()))}. */
     public CharRawIndexer(CharPointer pointer) {
-        this(pointer, Index.create( pointer.limit() - pointer.position() ));
+        this(pointer, Index.create(pointer.limit() - pointer.position()));
     }
 
-    /** Calls {@code CharRawIndexer(pointer, defaultIndex(sizes))}. */
-    @Deprecated public CharRawIndexer(CharPointer pointer, long... sizes) {
+    /** Calls {@code CharRawIndexer(pointer, Index.create(sizes))}. */
+    public CharRawIndexer(CharPointer pointer, long... sizes) {
         this(pointer, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #pointer}, {@link #sizes} and {@link #strides}. */
-    @Deprecated public CharRawIndexer(CharPointer pointer, long[] sizes, long[] strides) {
+    /** Calls {@code CharRawIndexer(pointer, Index.create(sizes, strides))}. */
+    public CharRawIndexer(CharPointer pointer, long[] sizes, long[] strides) {
         this(pointer, Index.create(sizes, strides));
     }
 
@@ -57,16 +57,15 @@ public class CharRawIndexer extends CharIndexer {
     public CharRawIndexer(CharPointer pointer, Index index) {
         super(index);
         this.pointer = pointer;
-        base = pointer.address() + pointer.position() * VALUE_BYTES;
-        size = pointer.limit() - pointer.position();
+        this.base = pointer.address() + pointer.position() * VALUE_BYTES;
+        this.size = pointer.limit() - pointer.position();
     }
 
     @Override public Pointer pointer() {
         return pointer;
     }
 
-    @Override
-    public CharIndexer reindex(Index index) {
+    @Override public CharIndexer reindex(Index index) {
         return new CharRawIndexer(pointer, index);
     }
 

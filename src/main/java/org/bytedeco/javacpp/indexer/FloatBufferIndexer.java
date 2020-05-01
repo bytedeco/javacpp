@@ -34,18 +34,18 @@ public class FloatBufferIndexer extends FloatIndexer {
     /** The backing buffer. */
     protected FloatBuffer buffer;
 
-    /** Calls {@code FloatBufferIndexer(buffer, defaultIndex({ buffer.limit() }))}. */
+    /** Calls {@code FloatBufferIndexer(buffer, Index.create(buffer.limit()))}. */
     public FloatBufferIndexer(FloatBuffer buffer) {
         this(buffer, Index.create(buffer.limit()));
     }
 
-    /** Calls {@code FloatBufferIndexer(buffer, defaultIndex(sizes))}. */
-    @Deprecated public FloatBufferIndexer(FloatBuffer buffer, long... sizes) {
+    /** Calls {@code FloatBufferIndexer(buffer, Index.create(sizes))}. */
+    public FloatBufferIndexer(FloatBuffer buffer, long... sizes) {
         this(buffer, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #buffer}, {@link #sizes} and {@link #strides}. */
-    @Deprecated public FloatBufferIndexer(FloatBuffer buffer, long[] sizes, long[] strides) {
+    /** Calls {@code FloatBufferIndexer(buffer, Index.create(sizes, strides))}. */
+    public FloatBufferIndexer(FloatBuffer buffer, long[] sizes, long[] strides) {
         this(buffer, Index.create(sizes, strides));
     }
 
@@ -59,8 +59,7 @@ public class FloatBufferIndexer extends FloatIndexer {
         return buffer;
     }
 
-    @Override
-    public FloatIndexer reindex(Index index) {
+    @Override public FloatIndexer reindex(Index index) {
         return new FloatBufferIndexer(buffer, index);
     }
 

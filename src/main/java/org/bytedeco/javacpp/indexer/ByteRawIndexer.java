@@ -38,18 +38,18 @@ public class ByteRawIndexer extends ByteIndexer {
     /** Base address and number of elements accessible. */
     final long base, size;
 
-    /** Calls {@code ByteRawIndexer(pointer, defaultIndex({ pointer.limit() - pointer.position() }))}. */
+    /** Calls {@code ByteRawIndexer(pointer, Index.create(pointer.limit() - pointer.position()))}. */
     public ByteRawIndexer(BytePointer pointer) {
-        this(pointer, Index.create( pointer.limit() - pointer.position() ));
+        this(pointer, Index.create(pointer.limit() - pointer.position()));
     }
 
-    /** Calls {@code ByteRawIndexer(pointer, defaultIndex(sizes))}. */
-    @Deprecated public ByteRawIndexer(BytePointer pointer, long... sizes) {
+    /** Calls {@code ByteRawIndexer(pointer, Index.create(sizes))}. */
+    public ByteRawIndexer(BytePointer pointer, long... sizes) {
         this(pointer, sizes, strides(sizes));
     }
 
-    /** Constructor to set the {@link #pointer}, {@link #sizes} and {@link #strides}. */
-    @Deprecated public ByteRawIndexer(BytePointer pointer, long[] sizes, long[] strides) {
+    /** Calls {@code ByteRawIndexer(pointer, Index.create(sizes, strides))}. */
+    public ByteRawIndexer(BytePointer pointer, long[] sizes, long[] strides) {
         this(pointer, Index.create(sizes, strides));
     }
 
@@ -57,16 +57,15 @@ public class ByteRawIndexer extends ByteIndexer {
     public ByteRawIndexer(BytePointer pointer, Index index) {
         super(index);
         this.pointer = pointer;
-        base = pointer.address() + pointer.position();
-        size = pointer.limit() - pointer.position();
+        this.base = pointer.address() + pointer.position();
+        this.size = pointer.limit() - pointer.position();
     }
 
     @Override public Pointer pointer() {
         return pointer;
     }
 
-    @Override
-    public ByteIndexer reindex(Index index) {
+    @Override public ByteIndexer reindex(Index index) {
         return new ByteRawIndexer(pointer, index);
     }
 

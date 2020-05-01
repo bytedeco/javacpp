@@ -35,18 +35,18 @@ public class ULongBufferIndexer extends ULongIndexer {
     /** The backing buffer. */
     protected LongBuffer buffer;
 
-    /** Calls {@code ULongBufferIndexer(buffer, defaultIndex({ buffer.limit() }))}. */
+    /** Calls {@code ULongBufferIndexer(buffer, Index.create(buffer.limit()))}. */
     public ULongBufferIndexer(LongBuffer buffer) {
         this(buffer, Index.create(buffer.limit()));
     }
 
-    /** Calls {@code ULongBufferIndexer(buffer, defaultIndex(sizes))}. */
-    @Deprecated public ULongBufferIndexer(LongBuffer buffer, long... sizes) {
+    /** Calls {@code ULongBufferIndexer(buffer, Index.create(sizes))}. */
+    public ULongBufferIndexer(LongBuffer buffer, long... sizes) {
         this(buffer, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #buffer}, {@link #sizes} and {@link #strides}. */
-    @Deprecated public ULongBufferIndexer(LongBuffer buffer, long[] sizes, long[] strides) {
+    /** Calls {@code ULongBufferIndexer(buffer, Index.create(sizes, strides))}. */
+    public ULongBufferIndexer(LongBuffer buffer, long[] sizes, long[] strides) {
         this(buffer, Index.create(sizes, strides));
     }
 
@@ -60,8 +60,7 @@ public class ULongBufferIndexer extends ULongIndexer {
         return buffer;
     }
 
-    @Override
-    public ULongIndexer reindex(Index index) {
+    @Override public ULongIndexer reindex(Index index) {
         return new ULongBufferIndexer(buffer, index);
     }
 

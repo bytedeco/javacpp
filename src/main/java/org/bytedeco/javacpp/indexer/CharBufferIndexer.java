@@ -34,17 +34,17 @@ public class CharBufferIndexer extends CharIndexer {
     /** The backing buffer. */
     protected CharBuffer buffer;
 
-    /** Calls {@code CharBufferIndexer(buffer, defaultIndex({ buffer.limit() }))}. */
+    /** Calls {@code CharBufferIndexer(buffer, Index.create(buffer.limit()))}. */
     public CharBufferIndexer(CharBuffer buffer) {
         this(buffer, Index.create(buffer.limit()));
     }
 
-    /** Calls {@code CharBufferIndexer(buffer, defaultIndex(sizes))}. */
+    /** Calls {@code CharBufferIndexer(buffer, Index.create(sizes))}. */
     public CharBufferIndexer(CharBuffer buffer, long... sizes) {
         this(buffer, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #buffer}, {@link #sizes} and {@link #strides}. */
+    /** Calls {@code CharBufferIndexer(buffer, Index.create(sizes, strides))}. */
     public CharBufferIndexer(CharBuffer buffer, long[] sizes, long[] strides) {
         this(buffer, Index.create(sizes, strides));
     }
@@ -59,8 +59,7 @@ public class CharBufferIndexer extends CharIndexer {
         return buffer;
     }
 
-    @Override
-    public CharIndexer reindex(Index index) {
+    @Override public CharIndexer reindex(Index index) {
         return new CharBufferIndexer(buffer, index);
     }
 

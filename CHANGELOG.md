@@ -1,7 +1,8 @@
 
  * Take into account `platform.library.path` when extracting executables on `Loader.load()` ([issue bytedeco/javacv#1410](https://github.com/bytedeco/javacv/issues/1410))
  * Move init code for `Loader.getPlatform()` to `Detector` to avoid warning messages ([issue #393](https://github.com/bytedeco/javacpp/issues/393))
- * Add `Indexer.Index` nested class to allow overriding how the index is calculated ([issue #391](https://github.com/bytedeco/javacpp/issues/391))
+ * Add `HyperslabIndex` class with `offsets`, `strides`, `counts`, and `blocks` parameters ([pull #392](https://github.com/bytedeco/javacpp/pull/392))
+ * Add `Index` class to allow overriding how the index is calculated in `Indexer` ([issue #391](https://github.com/bytedeco/javacpp/issues/391))
 
 ### April 14, 2020 version 1.5.3
  * Deprecate but also fix `Indexer.rows()`, `cols()`, `width()`, `height()`, and `channels()` ([pull #390](https://github.com/bytedeco/javacpp/pull/390))

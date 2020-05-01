@@ -38,18 +38,18 @@ public class LongRawIndexer extends LongIndexer {
     /** Base address and number of elements accessible. */
     final long base, size;
 
-    /** Calls {@code LongRawIndexer(pointer, defaultIndex({ pointer.limit() - pointer.position() }))}. */
+    /** Calls {@code LongRawIndexer(pointer, Index.create(pointer.limit() - pointer.position()))}. */
     public LongRawIndexer(LongPointer pointer) {
-        this(pointer, Index.create( pointer.limit() - pointer.position() ));
+        this(pointer, Index.create(pointer.limit() - pointer.position()));
     }
 
-    /** Calls {@code LongRawIndexer(pointer, defaultIndex(sizes))}. */
-    @Deprecated public LongRawIndexer(LongPointer pointer, long... sizes) {
+    /** Calls {@code LongRawIndexer(pointer, Index.create(sizes))}. */
+    public LongRawIndexer(LongPointer pointer, long... sizes) {
         this(pointer, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #pointer}, {@link #sizes} and {@link #strides}. */
-    @Deprecated public LongRawIndexer(LongPointer pointer, long[] sizes, long[] strides) {
+    /** Calls {@code LongRawIndexer(pointer, Index.create(sizes, strides))}. */
+    public LongRawIndexer(LongPointer pointer, long[] sizes, long[] strides) {
         this(pointer, Index.create(sizes, strides));
     }
 
@@ -57,16 +57,15 @@ public class LongRawIndexer extends LongIndexer {
     public LongRawIndexer(LongPointer pointer, Index index) {
         super(index);
         this.pointer = pointer;
-        base = pointer.address() + pointer.position() * VALUE_BYTES;
-        size = pointer.limit() - pointer.position();
+        this.base = pointer.address() + pointer.position() * VALUE_BYTES;
+        this.size = pointer.limit() - pointer.position();
     }
 
     @Override public Pointer pointer() {
         return pointer;
     }
 
-    @Override
-    public LongIndexer reindex(Index index) {
+    @Override public LongIndexer reindex(Index index) {
         return new LongRawIndexer(pointer, index);
     }
 

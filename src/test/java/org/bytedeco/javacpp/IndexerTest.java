@@ -33,15 +33,16 @@ import org.bytedeco.javacpp.indexer.CharIndexer;
 import org.bytedeco.javacpp.indexer.DoubleIndexer;
 import org.bytedeco.javacpp.indexer.FloatIndexer;
 import org.bytedeco.javacpp.indexer.HalfIndexer;
+import org.bytedeco.javacpp.indexer.Index;
 import org.bytedeco.javacpp.indexer.Indexer;
 import org.bytedeco.javacpp.indexer.IntIndexer;
 import org.bytedeco.javacpp.indexer.LongIndexer;
 import org.bytedeco.javacpp.indexer.ShortIndexer;
+import org.bytedeco.javacpp.indexer.StrideIndex;
 import org.bytedeco.javacpp.indexer.UByteIndexer;
 import org.bytedeco.javacpp.indexer.UShortIndexer;
 import org.bytedeco.javacpp.indexer.UIntIndexer;
 import org.bytedeco.javacpp.indexer.ULongIndexer;
-import org.bytedeco.javacpp.indexer.Index;
 import org.bytedeco.javacpp.tools.Builder;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -84,7 +85,7 @@ public class IndexerTest {
 
     @Test public void testDefaultStrides() {
         long[] sizes = {640, 480, 3};
-        long[] strides = Index.defaultStrides(sizes);
+        long[] strides = StrideIndex.defaultStrides(sizes);
         System.out.println(Arrays.toString(strides));
         assertEquals(1440, strides[0]);
         assertEquals(   3, strides[1]);

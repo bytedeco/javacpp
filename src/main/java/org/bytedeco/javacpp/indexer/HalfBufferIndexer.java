@@ -34,18 +34,18 @@ public class HalfBufferIndexer extends HalfIndexer {
     /** The backing buffer. */
     protected ShortBuffer buffer;
 
-    /** Calls {@code HalfBufferIndexer(buffer, defaultIndex({ buffer.limit() }))}. */
+    /** Calls {@code HalfBufferIndexer(buffer, Index.create(buffer.limit()))}. */
     public HalfBufferIndexer(ShortBuffer buffer) {
         this(buffer, Index.create(buffer.limit()));
     }
 
-    /** Calls {@code HalfBufferIndexer(buffer, defaultIndex(sizes))}. */
-    @Deprecated public HalfBufferIndexer(ShortBuffer buffer, long... sizes) {
+    /** Calls {@code HalfBufferIndexer(buffer, Index.create(sizes))}. */
+    public HalfBufferIndexer(ShortBuffer buffer, long... sizes) {
         this(buffer, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #buffer}, {@link #sizes} and {@link #strides}. */
-    @Deprecated public HalfBufferIndexer(ShortBuffer buffer, long[] sizes, long[] strides) {
+    /** Calls {@code HalfBufferIndexer(buffer, Index.create(sizes, strides))}. */
+    public HalfBufferIndexer(ShortBuffer buffer, long[] sizes, long[] strides) {
         this(buffer, Index.create(sizes, strides));
     }
 
@@ -59,8 +59,7 @@ public class HalfBufferIndexer extends HalfIndexer {
         return buffer;
     }
 
-    @Override
-    public HalfIndexer reindex(Index index) {
+    @Override public HalfIndexer reindex(Index index) {
         return new HalfBufferIndexer(buffer, index);
     }
 

@@ -31,18 +31,18 @@ public class UIntArrayIndexer extends UIntIndexer {
     /** The backing array. */
     protected int[] array;
 
-    /** Calls {@code UIntArrayIndexer(array, defaultIndex({ array.length }))}. */
+    /** Calls {@code UIntArrayIndexer(array, Index.create(array.length))}. */
     public UIntArrayIndexer(int[] array) {
         this(array, Index.create(array.length));
     }
 
-    /** Calls {@code UIntArrayIndexer(array, sizes)}. */
-    @Deprecated public UIntArrayIndexer(int[] array, long... sizes) {
+    /** Calls {@code UIntArrayIndexer(array, Index.create(sizes))}. */
+    public UIntArrayIndexer(int[] array, long... sizes) {
         this(array, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #array}, {@link #sizes} and {@link #strides}. */
-    @Deprecated public UIntArrayIndexer(int[] array, long[] sizes, long[] strides) {
+    /** Calls {@code UIntArrayIndexer(array, Index.create(sizes, strides))}. */
+    public UIntArrayIndexer(int[] array, long[] sizes, long[] strides) {
         this(array, Index.create(sizes, strides));
     }
 
@@ -56,8 +56,7 @@ public class UIntArrayIndexer extends UIntIndexer {
         return array;
     }
 
-    @Override
-    public UIntIndexer reindex(Index index) {
+    @Override public UIntIndexer reindex(Index index) {
         return new UIntArrayIndexer(array, index);
     }
 

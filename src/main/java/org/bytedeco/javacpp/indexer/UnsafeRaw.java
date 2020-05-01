@@ -21,9 +21,8 @@
  */
 package org.bytedeco.javacpp.indexer;
 
-import sun.misc.Unsafe;
-
 import java.lang.reflect.Field;
+import sun.misc.Unsafe;
 
 /**
  * The raw memory interface based on {@link Unsafe}.

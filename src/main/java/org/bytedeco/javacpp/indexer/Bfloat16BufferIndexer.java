@@ -34,18 +34,18 @@ public class Bfloat16BufferIndexer extends Bfloat16Indexer {
     /** The backing buffer. */
     protected ShortBuffer buffer;
 
-    /** Calls {@code Bfloat16BufferIndexer(buffer, defaultIndex({ buffer.limit() }))}. */
+    /** Calls {@code Bfloat16BufferIndexer(buffer, Index.create(buffer.limit()))}. */
     public Bfloat16BufferIndexer(ShortBuffer buffer) {
         this(buffer, Index.create(buffer.limit()));
     }
 
-    /** Calls {@code Bfloat16BufferIndexer(buffer, defaultIndex(sizes))}. */
-    @Deprecated public Bfloat16BufferIndexer(ShortBuffer buffer, long... sizes) {
+    /** Calls {@code Bfloat16BufferIndexer(buffer, Index.create(sizes))}. */
+    public Bfloat16BufferIndexer(ShortBuffer buffer, long... sizes) {
         this(buffer, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #buffer}, {@link #sizes} and {@link #strides}. */
-    @Deprecated public Bfloat16BufferIndexer(ShortBuffer buffer, long[] sizes, long[] strides) {
+    /** Calls {@code Bfloat16BufferIndexer(buffer, Index.create(sizes, strides))}. */
+    public Bfloat16BufferIndexer(ShortBuffer buffer, long[] sizes, long[] strides) {
         this(buffer, Index.create(sizes, strides));
     }
 
@@ -59,8 +59,7 @@ public class Bfloat16BufferIndexer extends Bfloat16Indexer {
         return buffer;
     }
 
-    @Override
-    public Bfloat16Indexer reindex(Index index) {
+    @Override public Bfloat16Indexer reindex(Index index) {
         return new Bfloat16BufferIndexer(buffer, index);
     }
 

@@ -31,18 +31,18 @@ public class DoubleArrayIndexer extends DoubleIndexer {
     /** The backing array. */
     protected double[] array;
 
-    /** Calls {@code DoubleArrayIndexer(array, defaultIndex({ array.length }))}. */
+    /** Calls {@code DoubleArrayIndexer(array, Index.create(array.length))}. */
     public DoubleArrayIndexer(double[] array) {
         this(array, Index.create(array.length));
     }
 
-    /** Calls {@code DoubleArrayIndexer(array, sizes)}. */
-    @Deprecated public DoubleArrayIndexer(double[] array, long... sizes) {
+    /** Calls {@code DoubleArrayIndexer(array, Index.create(sizes))}. */
+    public DoubleArrayIndexer(double[] array, long... sizes) {
         this(array, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #array}, {@link #sizes} and {@link #strides}. */
-    @Deprecated public DoubleArrayIndexer(double[] array, long[] sizes, long[] strides) {
+    /** Calls {@code DoubleArrayIndexer(array, Index.create(sizes, strides))}. */
+    public DoubleArrayIndexer(double[] array, long[] sizes, long[] strides) {
         this(array, Index.create(sizes, strides));
     }
 
@@ -56,8 +56,7 @@ public class DoubleArrayIndexer extends DoubleIndexer {
         return array;
     }
 
-    @Override
-    public DoubleIndexer reindex(Index index) {
+    @Override public DoubleIndexer reindex(Index index) {
         return new DoubleArrayIndexer(array, index);
     }
 

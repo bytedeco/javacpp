@@ -38,18 +38,18 @@ public class UShortRawIndexer extends UShortIndexer {
     /** Base address and number of elements accessible. */
     final long base, size;
 
-    /** Calls {@code UShortRawIndexer(pointer, defaultIndex({ pointer.limit() - pointer.position() }))}. */
+    /** Calls {@code UShortRawIndexer(pointer, Index.create(pointer.limit() - pointer.position()))}. */
     public UShortRawIndexer(ShortPointer pointer) {
-        this(pointer, Index.create( pointer.limit() - pointer.position() ));
+        this(pointer, Index.create(pointer.limit() - pointer.position()));
     }
 
-    /** Calls {@code UShortRawIndexer(pointer, defaultIndex(sizes))}. */
-    @Deprecated public UShortRawIndexer(ShortPointer pointer, long... sizes) {
+    /** Calls {@code UShortRawIndexer(pointer, Index.create(sizes))}. */
+    public UShortRawIndexer(ShortPointer pointer, long... sizes) {
         this(pointer, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #pointer}, {@link #sizes} and {@link #strides}. */
-    @Deprecated public UShortRawIndexer(ShortPointer pointer, long[] sizes, long[] strides) {
+    /** Calls {@code UShortRawIndexer(pointer, Index.create(sizes, strides))}. */
+    public UShortRawIndexer(ShortPointer pointer, long[] sizes, long[] strides) {
         this(pointer, Index.create(sizes, strides));
     }
 
@@ -57,16 +57,15 @@ public class UShortRawIndexer extends UShortIndexer {
     public UShortRawIndexer(ShortPointer pointer, Index index) {
         super(index);
         this.pointer = pointer;
-        base = pointer.address() + pointer.position() * VALUE_BYTES;
-        size = pointer.limit() - pointer.position();
+        this.base = pointer.address() + pointer.position() * VALUE_BYTES;
+        this.size = pointer.limit() - pointer.position();
     }
 
     @Override public Pointer pointer() {
         return pointer;
     }
 
-    @Override
-    public UShortIndexer reindex(Index index) {
+    @Override public UShortIndexer reindex(Index index) {
         return new UShortRawIndexer(pointer, index);
     }
 

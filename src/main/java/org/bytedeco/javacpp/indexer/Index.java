@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2019 Samuel Audet
+ * Copyright (C) 2020 Matteo Di Giovinazzo, Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -19,78 +19,60 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.bytedeco.javacpp.indexer;
 
 /**
- * TODO
+ * Provides an interface for classes that compute a linear index from given array sizes.
+ *
+ * @see OneIndex
+ * @see StrideIndex
+ * @see HyperslabIndex
  *
  * @author Matteo Di Giovinazzo
  */
 public abstract class Index {
 
+    /** Returns {@code new OneIndex(size)}. */
     public static Index create(long size) {
         return new OneIndex(size);
     }
 
+    /** Returns {@code new StrideIndex(sizes)}. */
     public static Index create(long... sizes) {
-        return new StrideIndex(sizes, defaultStrides(sizes));
+        return new StrideIndex(sizes);
     }
 
+    /** Returns {@code new StrideIndex(sizes, strides)}. */
     public static Index create(long[] sizes, long[] strides) {
         return new StrideIndex(sizes, strides);
     }
 
+    /** Returns {@code new HyperslabIndex(sizes, offsets, hyperslabStrides, counts, blocks)}. */
     public static Index create(long[] sizes, long[] offsets, long[] hyperslabStrides, long[] counts, long[] blocks) {
         return new HyperslabIndex(sizes, offsets, hyperslabStrides, counts, blocks);
     }
 
-    /**
-     * Returns default (row-major contiguous) strides for the given sizes.
-     */
-    public static long[] defaultStrides(long... sizes) {
-        long[] strides = new long[sizes.length];
-        strides[sizes.length - 1] = 1;
-        for (int i = sizes.length - 2; i >= 0; i--) {
-            strides[i] = strides[i + 1] * sizes[i + 1];
-        }
-        return strides;
+    /** Returns {@code index(new long[] {i})}. */
+    public long index(long i) {
+        return index(new long[] {i});
+    }
+
+    /** Returns {@code index(new long[] {i, j})}. */
+    public long index(long i, long j) {
+        return index(new long[] {i, j});
+    }
+
+    /** Returns {@code index(new long[] {i, j, k})}. */
+    public long index(long i, long j, long k) {
+        return index(new long[] {i, j, k});
     }
 
     /**
-     * TODO
+     * Computes the linear index.
      *
-     * @param i
-     * @return
-     */
-    public abstract long index(long i);
-
-    /**
-     * TODO
-     *
-     * @param i
-     * @param j
-     * @return
-     */
-    public abstract long index(long i, long j);
-
-    /**
-     * TODO
-     *
-     * @param i
-     * @param j
-     * @param k
-     * @return
-     */
-    public abstract long index(long i, long j, long k);
-
-    /**
-     * TODO
-     *
-     * @param indices
-     * @return
+     * @param indices of each dimension
+     * @return index to access array or buffer
      */
     public abstract long index(long... indices);
-
-    /** Returns {@link #sizes} */
-    public abstract long[] sizes();
 }

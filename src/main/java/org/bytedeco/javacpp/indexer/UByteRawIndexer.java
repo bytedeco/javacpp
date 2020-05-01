@@ -38,18 +38,18 @@ public class UByteRawIndexer extends UByteIndexer {
     /** Base address and number of elements accessible. */
     final long base, size;
 
-    /** Calls {@code UByteRawIndexer(pointer, defaultIndex({ pointer.limit() - pointer.position() }))}. */
+    /** Calls {@code UByteRawIndexer(pointer, Index.create(pointer.limit() - pointer.position()))}. */
     public UByteRawIndexer(BytePointer pointer) {
-        this(pointer, Index.create( pointer.limit() - pointer.position() ));
+        this(pointer, Index.create(pointer.limit() - pointer.position()));
     }
 
-    /** Calls {@code UByteRawIndexer(pointer, defaultIndex(sizes))}. */
-    @Deprecated public UByteRawIndexer(BytePointer pointer, long... sizes) {
+    /** Calls {@code UByteRawIndexer(pointer, Index.create(sizes))}. */
+    public UByteRawIndexer(BytePointer pointer, long... sizes) {
         this(pointer, sizes, strides(sizes));
     }
 
-    /** Constructor to set the {@link #pointer}, {@link #sizes} and {@link #strides}. */
-    @Deprecated public UByteRawIndexer(BytePointer pointer, long[] sizes, long[] strides) {
+    /** Calls {@code UByteRawIndexer(pointer, Index.create(sizes, strides))}. */
+    public UByteRawIndexer(BytePointer pointer, long[] sizes, long[] strides) {
         this(pointer, Index.create(sizes, strides));
     }
 
@@ -57,16 +57,15 @@ public class UByteRawIndexer extends UByteIndexer {
     public UByteRawIndexer(BytePointer pointer, Index index) {
         super(index);
         this.pointer = pointer;
-        base = pointer.address() + pointer.position();
-        size = pointer.limit() - pointer.position();
+        this.base = pointer.address() + pointer.position();
+        this.size = pointer.limit() - pointer.position();
     }
 
     @Override public Pointer pointer() {
         return pointer;
     }
 
-    @Override
-    public UByteIndexer reindex(Index index) {
+    @Override public UByteIndexer reindex(Index index) {
         return new UByteRawIndexer(pointer, index);
     }
 

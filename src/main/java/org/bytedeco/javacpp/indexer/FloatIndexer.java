@@ -22,9 +22,8 @@
 
 package org.bytedeco.javacpp.indexer;
 
-import org.bytedeco.javacpp.FloatPointer;
-
 import java.nio.FloatBuffer;
+import org.bytedeco.javacpp.FloatPointer;
 
 /**
  * Abstract indexer for the {@code float} primitive type.
@@ -39,7 +38,6 @@ public abstract class FloatIndexer extends Indexer {
         super(index);
     }
 
-    @Deprecated
     protected FloatIndexer(long[] sizes, long[] strides) {
         super(sizes, strides);
     }
@@ -52,7 +50,7 @@ public abstract class FloatIndexer extends Indexer {
     public static FloatIndexer create(FloatBuffer buffer) {
         return new FloatBufferIndexer(buffer);
     }
-    /** Returns {@code new FloatRawIndexer(pointer} */
+    /** Returns {@code new FloatRawIndexer(pointer)} */
     public static FloatIndexer create(FloatPointer pointer) {
         return new FloatRawIndexer(pointer);
     }
@@ -71,46 +69,39 @@ public abstract class FloatIndexer extends Indexer {
     }
 
     /** Returns {@code new FloatArrayIndexer(array, sizes)} */
-    @Deprecated public static FloatIndexer create(float[] array, long... sizes) {
+    public static FloatIndexer create(float[] array, long... sizes) {
         return new FloatArrayIndexer(array, sizes);
     }
     /** Returns {@code new FloatBufferIndexer(buffer, sizes)} */
-    @Deprecated public static FloatIndexer create(FloatBuffer buffer, long... sizes) {
+    public static FloatIndexer create(FloatBuffer buffer, long... sizes) {
         return new FloatBufferIndexer(buffer, sizes);
     }
     /** Returns {@code new FloatRawIndexer(pointer, sizes)} */
-    @Deprecated public static FloatIndexer create(FloatPointer pointer, long... sizes) {
+    public static FloatIndexer create(FloatPointer pointer, long... sizes) {
         return new FloatRawIndexer(pointer, sizes);
     }
 
     /** Returns {@code new FloatArrayIndexer(array, sizes, strides)} */
-    @Deprecated public static FloatIndexer create(float[] array, long[] sizes, long[] strides) {
+    public static FloatIndexer create(float[] array, long[] sizes, long[] strides) {
         return new FloatArrayIndexer(array, sizes, strides);
     }
     /** Returns {@code new FloatBufferIndexer(buffer, sizes, strides)} */
-    @Deprecated public static FloatIndexer create(FloatBuffer buffer, long[] sizes, long[] strides) {
+    public static FloatIndexer create(FloatBuffer buffer, long[] sizes, long[] strides) {
         return new FloatBufferIndexer(buffer, sizes, strides);
     }
     /** Returns {@code new FloatRawIndexer(pointer, sizes, strides)} */
-    @Deprecated public static FloatIndexer create(FloatPointer pointer, long[] sizes, long[] strides) {
+    public static FloatIndexer create(FloatPointer pointer, long[] sizes, long[] strides) {
         return new FloatRawIndexer(pointer, sizes, strides);
     }
-    /**
-     * Creates a float indexer to access efficiently the data of a pointer.
-     *
-     * @param pointer data to access via a buffer or to copy to an array
-     * @param direct {@code true} to use a direct buffer, see {@link Indexer} for details
-     * @return the new float indexer backed by the raw memory interface, a buffer, or an array
-     */
-    @Deprecated public static FloatIndexer create(final FloatPointer pointer, long[] sizes, long[] strides, boolean direct) {
+    /** Returns {@code create(pointer, Index.create(sizes, strides), direct)} */
+    public static FloatIndexer create(final FloatPointer pointer, long[] sizes, long[] strides, boolean direct) {
         return create(pointer, Index.create(sizes, strides), direct);
     }
-
     /**
      * Creates a float indexer to access efficiently the data of a pointer.
      *
      * @param pointer data to access via a buffer or to copy to an array
-     * @param index TODO
+     * @param index to use
      * @param direct {@code true} to use a direct buffer, see {@link Indexer} for details
      * @return the new float indexer backed by the raw memory interface, a buffer, or an array
      */

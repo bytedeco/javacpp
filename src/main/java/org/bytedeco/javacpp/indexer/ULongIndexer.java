@@ -22,11 +22,10 @@
 
 package org.bytedeco.javacpp.indexer;
 
-import org.bytedeco.javacpp.LongPointer;
-
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.LongBuffer;
+import org.bytedeco.javacpp.LongPointer;
 
 /**
  * Abstract indexer for the {@code long} primitive type, treated as unsigned.
@@ -41,7 +40,6 @@ public abstract class ULongIndexer extends Indexer {
         super(index);
     }
 
-    @Deprecated
     protected ULongIndexer(long[] sizes, long[] strides) {
         super(sizes, strides);
     }
@@ -54,7 +52,7 @@ public abstract class ULongIndexer extends Indexer {
     public static ULongIndexer create(LongBuffer buffer) {
         return new ULongBufferIndexer(buffer);
     }
-    /** Returns {@code new ULongRawIndexer(pointer} */
+    /** Returns {@code new ULongRawIndexer(pointer)} */
     public static ULongIndexer create(LongPointer pointer) {
         return new ULongRawIndexer(pointer);
     }
@@ -73,46 +71,39 @@ public abstract class ULongIndexer extends Indexer {
     }
 
     /** Returns {@code new ULongArrayIndexer(array, sizes)} */
-    @Deprecated public static ULongIndexer create(long[] array, long... sizes) {
+    public static ULongIndexer create(long[] array, long... sizes) {
         return new ULongArrayIndexer(array, sizes);
     }
     /** Returns {@code new ULongBufferIndexer(buffer, sizes)} */
-    @Deprecated public static ULongIndexer create(LongBuffer buffer, long... sizes) {
+    public static ULongIndexer create(LongBuffer buffer, long... sizes) {
         return new ULongBufferIndexer(buffer, sizes);
     }
     /** Returns {@code new ULongRawIndexer(pointer, sizes)} */
-    @Deprecated public static ULongIndexer create(LongPointer pointer, long... sizes) {
+    public static ULongIndexer create(LongPointer pointer, long... sizes) {
         return new ULongRawIndexer(pointer, sizes);
     }
 
     /** Returns {@code new ULongArrayIndexer(array, sizes, strides)} */
-    @Deprecated public static ULongIndexer create(long[] array, long[] sizes, long[] strides) {
+    public static ULongIndexer create(long[] array, long[] sizes, long[] strides) {
         return new ULongArrayIndexer(array, sizes, strides);
     }
     /** Returns {@code new ULongBufferIndexer(buffer, sizes, strides)} */
-    @Deprecated public static ULongIndexer create(LongBuffer buffer, long[] sizes, long[] strides) {
+    public static ULongIndexer create(LongBuffer buffer, long[] sizes, long[] strides) {
         return new ULongBufferIndexer(buffer, sizes, strides);
     }
-    /** Returns {@code create(pointer, sizes, strides, true)} */
-    @Deprecated public static ULongIndexer create(LongPointer pointer, long[] sizes, long[] strides) {
-        return create(pointer, sizes, strides, true);
+    /** Returns {@code new ULongRawIndexer(pointer, sizes, strides)} */
+    public static ULongIndexer create(LongPointer pointer, long[] sizes, long[] strides) {
+        return new ULongRawIndexer(pointer, sizes, strides);
     }
-    /**
-     * Creates a long indexer to access efficiently the data of a pointer.
-     *
-     * @param pointer data to access via a buffer or to copy to an array
-     * @param direct {@code true} to use a direct buffer, see {@link Indexer} for details
-     * @return the new long indexer backed by the raw memory interface, a buffer, or an array
-     */
-    @Deprecated public static ULongIndexer create(final LongPointer pointer, long[] sizes, long[] strides, boolean direct) {
+    /** Returns {@code create(pointer, Index.create(sizes, strides), direct)} */
+    public static ULongIndexer create(final LongPointer pointer, long[] sizes, long[] strides, boolean direct) {
         return create(pointer, Index.create(sizes, strides), direct);
     }
-
     /**
      * Creates a long indexer to access efficiently the data of a pointer.
      *
      * @param pointer data to access via a buffer or to copy to an array
-     * @param index TODO
+     * @param index to use
      * @param direct {@code true} to use a direct buffer, see {@link Indexer} for details
      * @return the new long indexer backed by the raw memory interface, a buffer, or an array
      */

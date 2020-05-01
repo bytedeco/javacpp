@@ -31,18 +31,18 @@ public class LongArrayIndexer extends LongIndexer {
     /** The backing array. */
     protected long[] array;
 
-    /** Calls {@code LongArrayIndexer(array, defaultIndex({ array.length }))}. */
+    /** Calls {@code LongArrayIndexer(array, Index.create(array.length))}. */
     public LongArrayIndexer(long[] array) {
         this(array, Index.create(array.length));
     }
 
-    /** Calls {@code LongArrayIndexer(array, sizes)}. */
-    @Deprecated public LongArrayIndexer(long[] array, long... sizes) {
+    /** Calls {@code LongArrayIndexer(array, Index.create(sizes))}. */
+    public LongArrayIndexer(long[] array, long... sizes) {
         this(array, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #array}, {@link #sizes} and {@link #strides}. */
-    @Deprecated public LongArrayIndexer(long[] array, long[] sizes, long[] strides) {
+    /** Calls {@code LongArrayIndexer(array, Index.create(sizes, strides))}. */
+    public LongArrayIndexer(long[] array, long[] sizes, long[] strides) {
         this(array, Index.create(sizes, strides));
     }
 
@@ -56,8 +56,7 @@ public class LongArrayIndexer extends LongIndexer {
         return array;
     }
 
-    @Override
-    public LongIndexer reindex(Index index) {
+    @Override public LongIndexer reindex(Index index) {
         return new LongArrayIndexer(array, index);
     }
 

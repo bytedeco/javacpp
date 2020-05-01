@@ -22,9 +22,8 @@
 
 package org.bytedeco.javacpp.indexer;
 
-import org.bytedeco.javacpp.LongPointer;
-
 import java.nio.LongBuffer;
+import org.bytedeco.javacpp.LongPointer;
 
 /**
  * Abstract indexer for the {@code long} primitive type.
@@ -39,7 +38,6 @@ public abstract class LongIndexer extends Indexer {
         super(index);
     }
 
-    @Deprecated
     protected LongIndexer(long[] sizes, long[] strides) {
         super(sizes, strides);
     }
@@ -52,7 +50,7 @@ public abstract class LongIndexer extends Indexer {
     public static LongIndexer create(LongBuffer buffer) {
         return new LongBufferIndexer(buffer);
     }
-    /** Returns {@code new LongRawIndexer(pointer} */
+    /** Returns {@code new LongRawIndexer(pointer)} */
     public static LongIndexer create(LongPointer pointer) {
         return new LongRawIndexer(pointer);
     }
@@ -71,46 +69,39 @@ public abstract class LongIndexer extends Indexer {
     }
 
     /** Returns {@code new LongArrayIndexer(array, sizes)} */
-    @Deprecated public static LongIndexer create(long[] array, long... sizes) {
+    public static LongIndexer create(long[] array, long... sizes) {
         return new LongArrayIndexer(array, sizes);
     }
     /** Returns {@code new LongBufferIndexer(buffer, sizes)} */
-    @Deprecated public static LongIndexer create(LongBuffer buffer, long... sizes) {
+    public static LongIndexer create(LongBuffer buffer, long... sizes) {
         return new LongBufferIndexer(buffer, sizes);
     }
     /** Returns {@code new LongRawIndexer(pointer, sizes)} */
-    @Deprecated public static LongIndexer create(LongPointer pointer, long... sizes) {
+    public static LongIndexer create(LongPointer pointer, long... sizes) {
         return new LongRawIndexer(pointer, sizes);
     }
 
     /** Returns {@code new LongArrayIndexer(array, sizes, strides)} */
-    @Deprecated public static LongIndexer create(long[] array, long[] sizes, long[] strides) {
+    public static LongIndexer create(long[] array, long[] sizes, long[] strides) {
         return new LongArrayIndexer(array, sizes, strides);
     }
     /** Returns {@code new LongBufferIndexer(buffer, sizes, strides)} */
-    @Deprecated public static LongIndexer create(LongBuffer buffer, long[] sizes, long[] strides) {
+    public static LongIndexer create(LongBuffer buffer, long[] sizes, long[] strides) {
         return new LongBufferIndexer(buffer, sizes, strides);
     }
     /** Returns {@code new LongRawIndexer(pointer, sizes, strides)} */
-    @Deprecated public static LongIndexer create(LongPointer pointer, long[] sizes, long[] strides) {
+    public static LongIndexer create(LongPointer pointer, long[] sizes, long[] strides) {
         return new LongRawIndexer(pointer, sizes, strides);
     }
-    /**
-     * Creates a long indexer to access efficiently the data of a pointer.
-     *
-     * @param pointer data to access via a buffer or to copy to an array
-     * @param direct {@code true} to use a direct buffer, see {@link Indexer} for details
-     * @return the new long indexer backed by the raw memory interface, a buffer, or an array
-     */
-    @Deprecated public static LongIndexer create(final LongPointer pointer, long[] sizes, long[] strides, boolean direct) {
+    /** Returns {@code create(pointer, Index.create(sizes, strides), direct)} */
+    public static LongIndexer create(final LongPointer pointer, long[] sizes, long[] strides, boolean direct) {
         return create(pointer, Index.create(sizes, strides), direct);
     }
-
     /**
      * Creates a long indexer to access efficiently the data of a pointer.
      *
      * @param pointer data to access via a buffer or to copy to an array
-     * @param index TODO
+     * @param index to use
      * @param direct {@code true} to use a direct buffer, see {@link Indexer} for details
      * @return the new long indexer backed by the raw memory interface, a buffer, or an array
      */

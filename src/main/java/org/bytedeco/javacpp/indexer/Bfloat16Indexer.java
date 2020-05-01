@@ -22,9 +22,8 @@
 
 package org.bytedeco.javacpp.indexer;
 
-import org.bytedeco.javacpp.ShortPointer;
-
 import java.nio.ShortBuffer;
+import org.bytedeco.javacpp.ShortPointer;
 
 /**
  * Abstract indexer for the {@code short} primitive type, treated as bfloat16.
@@ -41,7 +40,6 @@ public abstract class Bfloat16Indexer extends Indexer {
         super(index);
     }
 
-    @Deprecated
     protected Bfloat16Indexer(long[] sizes, long[] strides) {
         super(sizes, strides);
     }
@@ -54,7 +52,7 @@ public abstract class Bfloat16Indexer extends Indexer {
     public static Bfloat16Indexer create(ShortBuffer buffer) {
         return new Bfloat16BufferIndexer(buffer);
     }
-    /** Returns {@code new Bfloat16RawIndexer(pointer} */
+    /** Returns {@code new Bfloat16RawIndexer(pointer)} */
     public static Bfloat16Indexer create(ShortPointer pointer) {
         return new Bfloat16RawIndexer(pointer);
     }
@@ -73,46 +71,39 @@ public abstract class Bfloat16Indexer extends Indexer {
     }
 
     /** Returns {@code new Bfloat16ArrayIndexer(array, sizes)} */
-    @Deprecated public static Bfloat16Indexer create(short[] array, long... sizes) {
+    public static Bfloat16Indexer create(short[] array, long... sizes) {
         return new Bfloat16ArrayIndexer(array, sizes);
     }
     /** Returns {@code new Bfloat16BufferIndexer(buffer, sizes)} */
-    @Deprecated public static Bfloat16Indexer create(ShortBuffer buffer, long... sizes) {
+    public static Bfloat16Indexer create(ShortBuffer buffer, long... sizes) {
         return new Bfloat16BufferIndexer(buffer, sizes);
     }
     /** Returns {@code new Bfloat16RawIndexer(pointer, sizes)} */
-    @Deprecated public static Bfloat16Indexer create(ShortPointer pointer, long... sizes) {
+    public static Bfloat16Indexer create(ShortPointer pointer, long... sizes) {
         return new Bfloat16RawIndexer(pointer, sizes);
     }
 
     /** Returns {@code new Bfloat16ArrayIndexer(array, sizes, strides)} */
-    @Deprecated public static Bfloat16Indexer create(short[] array, long[] sizes, long[] strides) {
+    public static Bfloat16Indexer create(short[] array, long[] sizes, long[] strides) {
         return new Bfloat16ArrayIndexer(array, sizes, strides);
     }
     /** Returns {@code new Bfloat16BufferIndexer(buffer, sizes, strides)} */
-    @Deprecated public static Bfloat16Indexer create(ShortBuffer buffer, long[] sizes, long[] strides) {
+    public static Bfloat16Indexer create(ShortBuffer buffer, long[] sizes, long[] strides) {
         return new Bfloat16BufferIndexer(buffer, sizes, strides);
     }
     /** Returns {@code new Bfloat16RawIndexer(pointer, sizes, strides)} */
-    @Deprecated public static Bfloat16Indexer create(ShortPointer pointer, long[] sizes, long[] strides) {
+    public static Bfloat16Indexer create(ShortPointer pointer, long[] sizes, long[] strides) {
         return new Bfloat16RawIndexer(pointer, sizes, strides);
     }
-    /**
-     * Creates a bfloat16 indexer to access efficiently the data of a pointer.
-     *
-     * @param pointer data to access via a buffer or to copy to an array
-     * @param direct {@code true} to use a direct buffer, see {@link Indexer} for details
-     * @return the new bfloat16 indexer backed by the raw memory interface, a buffer, or an array
-     */
-    @Deprecated public static Bfloat16Indexer create(final ShortPointer pointer, long[] sizes, long[] strides, boolean direct) {
+    /** Returns {@code create(pointer, Index.create(sizes, strides), direct)} */
+    public static Bfloat16Indexer create(final ShortPointer pointer, long[] sizes, long[] strides, boolean direct) {
         return create(pointer, Index.create(sizes, strides), direct);
     }
-
     /**
      * Creates a bfloat16 indexer to access efficiently the data of a pointer.
      *
      * @param pointer data to access via a buffer or to copy to an array
-     * @param index TODO
+     * @param index to use
      * @param direct {@code true} to use a direct buffer, see {@link Indexer} for details
      * @return the new bfloat16 indexer backed by the raw memory interface, a buffer, or an array
      */

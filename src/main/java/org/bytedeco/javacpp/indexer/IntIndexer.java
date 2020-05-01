@@ -22,9 +22,8 @@
 
 package org.bytedeco.javacpp.indexer;
 
-import org.bytedeco.javacpp.IntPointer;
-
 import java.nio.IntBuffer;
+import org.bytedeco.javacpp.IntPointer;
 
 /**
  * Abstract indexer for the {@code int} primitive type.
@@ -39,7 +38,6 @@ public abstract class IntIndexer extends Indexer {
         super(index);
     }
 
-    @Deprecated
     protected IntIndexer(long[] sizes, long[] strides) {
         super(sizes, strides);
     }
@@ -52,7 +50,7 @@ public abstract class IntIndexer extends Indexer {
     public static IntIndexer create(IntBuffer buffer) {
         return new IntBufferIndexer(buffer);
     }
-    /** Returns {@code new IntRawIndexer(pointer} */
+    /** Returns {@code new IntRawIndexer(pointer)} */
     public static IntIndexer create(IntPointer pointer) {
         return new IntRawIndexer(pointer);
     }
@@ -71,46 +69,39 @@ public abstract class IntIndexer extends Indexer {
     }
 
     /** Returns {@code new IntArrayIndexer(array, sizes)} */
-    @Deprecated public static IntIndexer create(int[] array, long... sizes) {
+    public static IntIndexer create(int[] array, long... sizes) {
         return new IntArrayIndexer(array, sizes);
     }
     /** Returns {@code new IntBufferIndexer(buffer, sizes)} */
-    @Deprecated public static IntIndexer create(IntBuffer buffer, long... sizes) {
+    public static IntIndexer create(IntBuffer buffer, long... sizes) {
         return new IntBufferIndexer(buffer, sizes);
     }
     /** Returns {@code new IntRawIndexer(pointer, sizes)} */
-    @Deprecated public static IntIndexer create(IntPointer pointer, long... sizes) {
+    public static IntIndexer create(IntPointer pointer, long... sizes) {
         return new IntRawIndexer(pointer, sizes);
     }
 
     /** Returns {@code new IntArrayIndexer(array, sizes, strides)} */
-    @Deprecated public static IntIndexer create(int[] array, long[] sizes, long[] strides) {
+    public static IntIndexer create(int[] array, long[] sizes, long[] strides) {
         return new IntArrayIndexer(array, sizes, strides);
     }
     /** Returns {@code new IntBufferIndexer(buffer, sizes, strides)} */
-    @Deprecated public static IntIndexer create(IntBuffer buffer, long[] sizes, long[] strides) {
+    public static IntIndexer create(IntBuffer buffer, long[] sizes, long[] strides) {
         return new IntBufferIndexer(buffer, sizes, strides);
     }
     /** Returns {@code new IntRawIndexer(pointer, sizes, strides)} */
-    @Deprecated public static IntIndexer create(IntPointer pointer, long[] sizes, long[] strides) {
+    public static IntIndexer create(IntPointer pointer, long[] sizes, long[] strides) {
         return new IntRawIndexer(pointer, sizes, strides);
     }
-    /**
-     * Creates a int indexer to access efficiently the data of a pointer.
-     *
-     * @param pointer data to access via a buffer or to copy to an array
-     * @param direct {@code true} to use a direct buffer, see {@link Indexer} for details
-     * @return the new int indexer backed by the raw memory interface, a buffer, or an array
-     */
-    @Deprecated public static IntIndexer create(final IntPointer pointer, long[] sizes, long[] strides, boolean direct) {
+    /** Returns {@code create(pointer, Index.create(sizes, strides), direct)} */
+    public static IntIndexer create(final IntPointer pointer, long[] sizes, long[] strides, boolean direct) {
         return create(pointer, Index.create(sizes, strides), direct);
     }
-
     /**
      * Creates a int indexer to access efficiently the data of a pointer.
      *
      * @param pointer data to access via a buffer or to copy to an array
-     * @param index TODO
+     * @param index to use
      * @param direct {@code true} to use a direct buffer, see {@link Indexer} for details
      * @return the new int indexer backed by the raw memory interface, a buffer, or an array
      */

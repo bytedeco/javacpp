@@ -31,18 +31,18 @@ public class UShortArrayIndexer extends UShortIndexer {
     /** The backing array. */
     protected short[] array;
 
-    /** Calls {@code UShortArrayIndexer(array, defaultIndex({ array.length }))}. */
+    /** Calls {@code UShortArrayIndexer(array, Index.create(array.length))}. */
     public UShortArrayIndexer(short[] array) {
         this(array, Index.create(array.length));
     }
 
-    /** Calls {@code UShortArrayIndexer(array, sizes)}. */
-    @Deprecated public UShortArrayIndexer(short[] array, long... sizes) {
+    /** Calls {@code UShortArrayIndexer(array, Index.create(sizes))}. */
+    public UShortArrayIndexer(short[] array, long... sizes) {
         this(array, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #array}, {@link #sizes} and {@link #strides}. */
-    @Deprecated public UShortArrayIndexer(short[] array, long[] sizes, long[] strides) {
+    /** Calls {@code UShortArrayIndexer(array, Index.create(sizes, strides))}. */
+    public UShortArrayIndexer(short[] array, long[] sizes, long[] strides) {
         this(array, Index.create(sizes, strides));
     }
 
@@ -56,8 +56,7 @@ public class UShortArrayIndexer extends UShortIndexer {
         return array;
     }
 
-    @Override
-    public UShortIndexer reindex(Index index) {
+    @Override public UShortIndexer reindex(Index index) {
         return new UShortArrayIndexer(array, index);
     }
 

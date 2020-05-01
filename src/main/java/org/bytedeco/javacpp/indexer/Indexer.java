@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2019 Samuel Audet
+ * Copyright (C) 2014-2020 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -22,10 +22,8 @@
 
 package org.bytedeco.javacpp.indexer;
 
-import org.bytedeco.javacpp.Pointer;
-
 import java.nio.Buffer;
-
+import org.bytedeco.javacpp.Pointer;
 
 /**
  * Top-level class of all data indexers, providing easy-to-use and efficient
@@ -51,56 +49,48 @@ public abstract class Indexer implements AutoCloseable {
         release();
     }
 
-    /**
-     * The number of elements in each dimension.
-     * These values are not typically used by the indexer.
-     */
+    /** See {@link StrideIndex#sizes}. */
     @Deprecated protected long[] sizes;
-    /**
-     * The number of elements to skip to reach the next element in a given dimension.
-     * {@code strides[i] > strides[i + 1] && strides[strides.length - 1] == 1} preferred.
-     */
+
+    /** See {@link StrideIndex#strides}. */
     @Deprecated protected long[] strides;
-    /**
-     * TODO
-     */
-    protected Index index;
+
+    /** The Index to be used for {@link #index(long...)}. */
+    protected final Index index;
 
     /** Constructor to set the {@link #index}. */
     protected Indexer(Index index) {
         this.index = index;
-        this.sizes = index.sizes();
         if (index instanceof StrideIndex) {
-            this.strides = ((StrideIndex) index).strides();
+            this.sizes = ((StrideIndex)index).sizes();
+            this.strides = ((StrideIndex)index).strides();
         }
     }
 
-    /** Constructor to set the {@link #sizes} and {@link #strides}. */
-    @Deprecated protected Indexer(long[] sizes, long[] strides) {
+    /** Calls {@code Indexer(Index.create(sizes, strides))}. */
+    protected Indexer(long[] sizes, long[] strides) {
         this(Index.create(sizes, strides));
-        this.sizes = sizes;
-        this.strides = strides;
     }
 
-    /** Returns {@link #sizes} */
+    /** Returns {@link #sizes} or {@code null} if there are no sizes. */
     @Deprecated public long[] sizes() { return sizes; }
     /** Returns {@link #strides} or {@code null} if there are no strides. */
     @Deprecated public long[] strides() { return strides; }
 
-    /** Returns {@code sizes[i]} */
-    @Deprecated public long size(int i) { return sizes[i]; }
-    /** Returns {@code strides[i]} or {@code -1} if there are no strides */
+    /** Returns {@code sizes[i]} or {@code -1} if there are no sizes. */
+    @Deprecated public long size(int i) { return sizes != null ? sizes[i] : -1; }
+    /** Returns {@code strides[i]} or {@code -1} if there are no strides. */
     @Deprecated public long stride(int i) { return strides != null ? strides[i] : -1; }
 
-    /** Returns {@code sizes.length > 0 && sizes.length < 4 ? sizes[0] : -1} */
+    /** Returns {@code sizes.length > 0 && sizes.length < 4 ? sizes[0] : -1}. */
     @Deprecated public long rows() { return sizes.length > 0 && sizes.length < 4 ? sizes[0] : -1; }
-    /** Returns {@code sizes.length > 1 && sizes.length < 4 ? sizes[1] : -1} */
+    /** Returns {@code sizes.length > 1 && sizes.length < 4 ? sizes[1] : -1}. */
     @Deprecated public long cols() { return sizes.length > 1 && sizes.length < 4 ? sizes[1] : -1; }
-    /** Returns {@code sizes.length > 1 && sizes.length < 4 ? sizes[1] : -1} */
+    /** Returns {@code sizes.length > 1 && sizes.length < 4 ? sizes[1] : -1}. */
     @Deprecated public long width() { return sizes.length > 1 && sizes.length < 4 ? sizes[1] : -1; }
-    /** Returns {@code sizes.length > 0 && sizes.length < 4 ? sizes[0] : -1} */
+    /** Returns {@code sizes.length > 0 && sizes.length < 4 ? sizes[0] : -1}. */
     @Deprecated public long height() { return sizes.length > 0 && sizes.length < 4 ? sizes[0] : -1; }
-    /** Returns {@code sizes.length > 2 && sizes.length < 4 ? sizes[2] : -1} */
+    /** Returns {@code sizes.length > 2 && sizes.length < 4 ? sizes[2] : -1}. */
     @Deprecated public long channels() { return sizes.length > 2 && sizes.length < 4 ? sizes[2] : -1; }
 
     protected static final long checkIndex(long i, long size) {
@@ -110,12 +100,9 @@ public abstract class Indexer implements AutoCloseable {
         return i;
     }
 
-    /**
-     * Returns default (row-major contiguous) strides for the given sizes.
-     */
-    @Deprecated
-    public static long[] strides(long... sizes) {
-        return Index.defaultStrides(sizes);
+    /** See {@link StrideIndex#defaultStrides(long...)}. */
+    @Deprecated public static long[] strides(long... sizes) {
+        return StrideIndex.defaultStrides(sizes);
     }
 
     /** Returns {@code index.index(i)}. */
@@ -160,11 +147,7 @@ public abstract class Indexer implements AutoCloseable {
     /** Casts value to primitive type and calls {@code put(long[] indices, <type> value)}. */
     public abstract Indexer putDouble(long[] indices, double value);
 
-    /**
-     * TODO
-     * @param index
-     * @return 
-     */
+    /** Returns a new Indexer using the same data, but with a different Index. */
     public abstract Indexer reindex(Index index);
 
     @Override public String toString() {

@@ -34,17 +34,17 @@ public class UByteBufferIndexer extends UByteIndexer {
     /** The backing buffer. */
     protected ByteBuffer buffer;
 
-    /** Calls {@code UByteBufferIndexer(buffer, defaultIndex({ buffer.limit() }))}. */
+    /** Calls {@code UByteBufferIndexer(buffer, Index.create(buffer.limit()))}. */
     public UByteBufferIndexer(ByteBuffer buffer) {
         this(buffer, Index.create(buffer.limit()));
     }
 
-    /** Calls {@code UByteBufferIndexer(buffer, defaultIndex(sizes))}. */
+    /** Calls {@code UByteBufferIndexer(buffer, Index.create(sizes))}. */
     public UByteBufferIndexer(ByteBuffer buffer, long... sizes) {
         this(buffer, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #buffer}, {@link #sizes} and {@link #strides}. */
+    /** Calls {@code UByteBufferIndexer(buffer, Index.create(sizes, strides))}. */
     public UByteBufferIndexer(ByteBuffer buffer, long[] sizes, long[] strides) {
         this(buffer, Index.create(sizes, strides));
     }
@@ -59,8 +59,7 @@ public class UByteBufferIndexer extends UByteIndexer {
         return buffer;
     }
 
-    @Override
-    public UByteIndexer reindex(Index index) {
+    @Override public UByteIndexer reindex(Index index) {
         return new UByteBufferIndexer(buffer, index);
     }
 

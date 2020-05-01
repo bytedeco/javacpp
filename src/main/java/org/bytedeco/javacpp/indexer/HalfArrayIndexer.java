@@ -31,18 +31,18 @@ public class HalfArrayIndexer extends HalfIndexer {
     /** The backing array. */
     protected short[] array;
 
-    /** Calls {@code HalfArrayIndexer(array, defaultIndex({ array.length }))}. */
+    /** Calls {@code HalfArrayIndexer(array, Index.create(array.length))}. */
     public HalfArrayIndexer(short[] array) {
         this(array, Index.create(array.length));
     }
 
-    /** Calls {@code HalfArrayIndexer(array, sizes)}. */
-    @Deprecated public HalfArrayIndexer(short[] array, long... sizes) {
+    /** Calls {@code HalfArrayIndexer(array, Index.create(sizes))}. */
+    public HalfArrayIndexer(short[] array, long... sizes) {
         this(array, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #array}, {@link #sizes} and {@link #strides}. */
-    @Deprecated public HalfArrayIndexer(short[] array, long[] sizes, long[] strides) {
+    /** Calls {@code HalfArrayIndexer(array, Index.create(sizes, strides))}. */
+    public HalfArrayIndexer(short[] array, long[] sizes, long[] strides) {
         this(array, Index.create(sizes, strides));
     }
 
@@ -56,8 +56,7 @@ public class HalfArrayIndexer extends HalfIndexer {
         return array;
     }
 
-    @Override
-    public HalfIndexer reindex(Index index) {
+    @Override public HalfIndexer reindex(Index index) {
         return new HalfArrayIndexer(array, index);
     }
 

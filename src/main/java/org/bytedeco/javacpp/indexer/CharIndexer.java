@@ -22,9 +22,8 @@
 
 package org.bytedeco.javacpp.indexer;
 
-import org.bytedeco.javacpp.CharPointer;
-
 import java.nio.CharBuffer;
+import org.bytedeco.javacpp.CharPointer;
 
 /**
  * Abstract indexer for the {@code char} primitive type.
@@ -39,7 +38,6 @@ public abstract class CharIndexer extends Indexer {
         super(index);
     }
 
-    @Deprecated
     protected CharIndexer(long[] sizes, long[] strides) {
         super(sizes, strides);
     }
@@ -52,7 +50,7 @@ public abstract class CharIndexer extends Indexer {
     public static CharIndexer create(CharBuffer buffer) {
         return new CharBufferIndexer(buffer);
     }
-    /** Returns {@code new CharRawIndexer(pointer} */
+    /** Returns {@code new CharRawIndexer(pointer)} */
     public static CharIndexer create(CharPointer pointer) {
         return new CharRawIndexer(pointer);
     }
@@ -71,46 +69,39 @@ public abstract class CharIndexer extends Indexer {
     }
 
     /** Returns {@code new CharArrayIndexer(array, sizes)} */
-    @Deprecated public static CharIndexer create(char[] array, long... sizes) {
+    public static CharIndexer create(char[] array, long... sizes) {
         return new CharArrayIndexer(array, sizes);
     }
     /** Returns {@code new CharBufferIndexer(buffer, sizes)} */
-    @Deprecated public static CharIndexer create(CharBuffer buffer, long... sizes) {
+    public static CharIndexer create(CharBuffer buffer, long... sizes) {
         return new CharBufferIndexer(buffer, sizes);
     }
     /** Returns {@code new CharRawIndexer(pointer, sizes)} */
-    @Deprecated public static CharIndexer create(CharPointer pointer, long... sizes) {
+    public static CharIndexer create(CharPointer pointer, long... sizes) {
         return new CharRawIndexer(pointer, sizes);
     }
 
     /** Returns {@code new CharArrayIndexer(array, sizes, strides)} */
-    @Deprecated public static CharIndexer create(char[] array, long[] sizes, long[] strides) {
+    public static CharIndexer create(char[] array, long[] sizes, long[] strides) {
         return new CharArrayIndexer(array, sizes, strides);
     }
     /** Returns {@code new CharBufferIndexer(buffer, sizes, strides)} */
-    @Deprecated public static CharIndexer create(CharBuffer buffer, long[] sizes, long[] strides) {
+    public static CharIndexer create(CharBuffer buffer, long[] sizes, long[] strides) {
         return new CharBufferIndexer(buffer, sizes, strides);
     }
     /** Returns {@code new CharRawIndexer(pointer, sizes, strides)} */
-    @Deprecated public static CharIndexer create(CharPointer pointer, long[] sizes, long[] strides) {
+    public static CharIndexer create(CharPointer pointer, long[] sizes, long[] strides) {
         return new CharRawIndexer(pointer, sizes, strides);
     }
-    /**
-     * Creates a char indexer to access efficiently the data of a pointer.
-     *
-     * @param pointer data to access via a buffer or to copy to an array
-     * @param direct {@code true} to use a direct buffer, see {@link Indexer} for details
-     * @return the new char indexer backed by the raw memory interface, a buffer, or an array
-     */
-    @Deprecated public static CharIndexer create(final CharPointer pointer, long[] sizes, long[] strides, boolean direct) {
+    /** Returns {@code create(pointer, Index.create(sizes, strides), direct)} */
+    public static CharIndexer create(final CharPointer pointer, long[] sizes, long[] strides, boolean direct) {
         return create(pointer, Index.create(sizes, strides), direct);
     }
-
     /**
      * Creates a char indexer to access efficiently the data of a pointer.
      *
      * @param pointer data to access via a buffer or to copy to an array
-     * @param index TODO
+     * @param index to use
      * @param direct {@code true} to use a direct buffer, see {@link Indexer} for details
      * @return the new char indexer backed by the raw memory interface, a buffer, or an array
      */

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2019 Samuel Audet
+ * Copyright (C) 2020 Matteo Di Giovinazzo
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.bytedeco.javacpp.indexer;
 
 /**
@@ -43,15 +44,15 @@ package org.bytedeco.javacpp.indexer;
  * @see <a href="https://portal.hdfgroup.org/display/HDF5/H5S_SELECT_HYPERSLAB">H5S_SELECT_HYPERSLAB</a>
  * @see <a href="https://support.hdfgroup.org/HDF5/doc1.6/UG/12_Dataspaces.html">Dataspaces</a>
  */
-class HyperslabIndex extends StrideIndex {
+public class HyperslabIndex extends StrideIndex {
 
     protected long[] offsets;
     protected long[] hyperslabStrides;
     protected long[] counts;
     protected long[] blocks;
 
-    protected HyperslabIndex(long[] sizes, long[] offsets, long[] hyperslabStrides, long[] counts, long[] blocks) {
-        super(sizes, Index.defaultStrides(sizes));
+    public HyperslabIndex(long[] sizes, long[] offsets, long[] hyperslabStrides, long[] counts, long[] blocks) {
+        super(sizes);
         this.offsets = offsets;
         this.hyperslabStrides = hyperslabStrides;
         this.counts = counts;
@@ -85,10 +86,5 @@ class HyperslabIndex extends StrideIndex {
             index += mappedCoordinate * strides[i];
         }
         return index;
-    }
-
-    @Override
-    public long[] sizes() {
-        return sizes;
     }
 }

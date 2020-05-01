@@ -38,18 +38,18 @@ public class ByteArrayIndexer extends ByteIndexer {
     /** The backing array. */
     protected byte[] array;
 
-    /** Calls {@code ByteArrayIndexer(array, defaultIndex({ array.length }))}. */
+    /** Calls {@code ByteArrayIndexer(array, Index.create(array.length))}. */
     public ByteArrayIndexer(byte[] array) {
         this(array, Index.create(array.length));
     }
 
-    /** Calls {@code ByteArrayIndexer(array, sizes)}. */
-    @Deprecated public ByteArrayIndexer(byte[] array, long... sizes) {
+    /** Calls {@code ByteArrayIndexer(array, Index.create(sizes))}. */
+    public ByteArrayIndexer(byte[] array, long... sizes) {
         this(array, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #array}, {@link #sizes} and {@link #strides}. */
-    @Deprecated public ByteArrayIndexer(byte[] array, long[] sizes, long[] strides) {
+    /** Calls {@code ByteArrayIndexer(array, Index.create(sizes, strides))}. */
+    public ByteArrayIndexer(byte[] array, long[] sizes, long[] strides) {
         this(array, Index.create(sizes, strides));
     }
 
@@ -63,8 +63,7 @@ public class ByteArrayIndexer extends ByteIndexer {
         return array;
     }
 
-    @Override
-    public ByteIndexer reindex(Index index) {
+    @Override public ByteIndexer reindex(Index index) {
         return new ByteArrayIndexer(array, index);
     }
 

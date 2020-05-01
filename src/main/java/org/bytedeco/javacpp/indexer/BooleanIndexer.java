@@ -22,9 +22,8 @@
 
 package org.bytedeco.javacpp.indexer;
 
-import org.bytedeco.javacpp.BooleanPointer;
-
 import java.nio.ByteBuffer;
+import org.bytedeco.javacpp.BooleanPointer;
 
 /**
  * Abstract indexer for the {@code boolean} primitive type.
@@ -39,7 +38,6 @@ public abstract class BooleanIndexer extends Indexer {
         super(index);
     }
 
-    @Deprecated
     protected BooleanIndexer(long[] sizes, long[] strides) {
         super(sizes, strides);
     }
@@ -52,7 +50,7 @@ public abstract class BooleanIndexer extends Indexer {
     public static BooleanIndexer create(ByteBuffer buffer) {
         return new BooleanBufferIndexer(buffer);
     }
-    /** Returns {@code new BooleanRawIndexer(pointer} */
+    /** Returns {@code new BooleanRawIndexer(pointer)} */
     public static BooleanIndexer create(BooleanPointer pointer) {
         return new BooleanRawIndexer(pointer);
     }
@@ -71,46 +69,39 @@ public abstract class BooleanIndexer extends Indexer {
     }
 
     /** Returns {@code new BooleanArrayIndexer(array, sizes)} */
-    @Deprecated public static BooleanIndexer create(boolean[] array, long... sizes) {
+    public static BooleanIndexer create(boolean[] array, long... sizes) {
         return new BooleanArrayIndexer(array, sizes);
     }
     /** Returns {@code new BooleanBufferIndexer(buffer, sizes)} */
-    @Deprecated public static BooleanIndexer create(ByteBuffer buffer, long... sizes) {
+    public static BooleanIndexer create(ByteBuffer buffer, long... sizes) {
         return new BooleanBufferIndexer(buffer, sizes);
     }
     /** Returns {@code new BooleanRawIndexer(pointer, index)} */
-    @Deprecated public static BooleanIndexer create(BooleanPointer pointer, long... sizes) {
+    public static BooleanIndexer create(BooleanPointer pointer, long... sizes) {
         return new BooleanRawIndexer(pointer, sizes);
     }
 
     /** Returns {@code new BooleanArrayIndexer(array, sizes, strides)} */
-    @Deprecated public static BooleanIndexer create(boolean[] array, long[] sizes, long[] strides) {
+    public static BooleanIndexer create(boolean[] array, long[] sizes, long[] strides) {
         return new BooleanArrayIndexer(array, sizes, strides);
     }
     /** Returns {@code new BooleanBufferIndexer(buffer, sizes, strides)} */
-    @Deprecated public static BooleanIndexer create(ByteBuffer buffer, long[] sizes, long[] strides) {
+    public static BooleanIndexer create(ByteBuffer buffer, long[] sizes, long[] strides) {
         return new BooleanBufferIndexer(buffer, sizes, strides);
     }
     /** Returns {@code new BooleanRawIndexer(pointer, sizes, strides)} */
-    @Deprecated public static BooleanIndexer create(BooleanPointer pointer, long[] sizes, long[] strides) {
+    public static BooleanIndexer create(BooleanPointer pointer, long[] sizes, long[] strides) {
         return new BooleanRawIndexer(pointer, sizes, strides);
     }
-    /**
-     * Creates a boolean indexer to access efficiently the data of a pointer.
-     *
-     * @param pointer data to access via a buffer or to copy to an array
-     * @param direct {@code true} to use a direct buffer, see {@link Indexer} for details
-     * @return the new boolean indexer backed by the raw memory interface, a buffer, or an array
-     */
-    @Deprecated public static BooleanIndexer create(final BooleanPointer pointer, long[] sizes, long[] strides, boolean direct) {
+    /** Returns {@code create(pointer, Index.create(sizes, strides), direct)} */
+    public static BooleanIndexer create(final BooleanPointer pointer, long[] sizes, long[] strides, boolean direct) {
         return create(pointer, Index.create(sizes, strides), direct);
     }
-
     /**
      * Creates a boolean indexer to access efficiently the data of a pointer.
      *
      * @param pointer data to access via a buffer or to copy to an array
-     * @param index TODO
+     * @param index to use
      * @param direct {@code true} to use a direct buffer, see {@link Indexer} for details
      * @return the new boolean indexer backed by the raw memory interface, a buffer, or an array
      */

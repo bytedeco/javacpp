@@ -34,18 +34,18 @@ public class IntBufferIndexer extends IntIndexer {
     /** The backing buffer. */
     protected IntBuffer buffer;
 
-    /** Calls {@code IntBufferIndexer(buffer, defaultIndex({ buffer.limit() }))}. */
+    /** Calls {@code IntBufferIndexer(buffer, Index.create(buffer.limit()))}. */
     public IntBufferIndexer(IntBuffer buffer) {
         this(buffer, Index.create(buffer.limit()));
     }
 
-    /** Calls {@code IntBufferIndexer(buffer, defaultIndex(sizes))}. */
-    @Deprecated public IntBufferIndexer(IntBuffer buffer, long... sizes) {
+    /** Calls {@code IntBufferIndexer(buffer, Index.create(sizes))}. */
+    public IntBufferIndexer(IntBuffer buffer, long... sizes) {
         this(buffer, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #buffer}, {@link #sizes} and {@link #strides}. */
-    @Deprecated public IntBufferIndexer(IntBuffer buffer, long[] sizes, long[] strides) {
+    /** Calls {@code IntBufferIndexer(buffer, Index.create(sizes, strides))}. */
+    public IntBufferIndexer(IntBuffer buffer, long[] sizes, long[] strides) {
         this(buffer, Index.create(sizes, strides));
     }
 
@@ -59,8 +59,7 @@ public class IntBufferIndexer extends IntIndexer {
         return buffer;
     }
 
-    @Override
-    public IntIndexer reindex(Index index) {
+    @Override public IntIndexer reindex(Index index) {
         return new IntBufferIndexer(buffer, index);
     }
 

@@ -34,18 +34,18 @@ public class UShortBufferIndexer extends UShortIndexer {
     /** The backing buffer. */
     protected ShortBuffer buffer;
 
-    /** Calls {@code UShortBufferIndexer(buffer, defaultIndex({ buffer.limit() }))}. */
+    /** Calls {@code UShortBufferIndexer(buffer, Index.create(buffer.limit()))}. */
     public UShortBufferIndexer(ShortBuffer buffer) {
         this(buffer, Index.create(buffer.limit()));
     }
 
-    /** Calls {@code UShortBufferIndexer(buffer, defaultIndex(sizes))}. */
-    @Deprecated public UShortBufferIndexer(ShortBuffer buffer, long... sizes) {
+    /** Calls {@code UShortBufferIndexer(buffer, Index.create(sizes))}. */
+    public UShortBufferIndexer(ShortBuffer buffer, long... sizes) {
         this(buffer, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #buffer}, {@link #sizes} and {@link #strides}. */
-    @Deprecated public UShortBufferIndexer(ShortBuffer buffer, long[] sizes, long[] strides) {
+    /** Calls {@code UShortBufferIndexer(buffer, Index.create(sizes, strides))}. */
+    public UShortBufferIndexer(ShortBuffer buffer, long[] sizes, long[] strides) {
         this(buffer, Index.create(sizes, strides));
     }
 
@@ -59,8 +59,7 @@ public class UShortBufferIndexer extends UShortIndexer {
         return buffer;
     }
 
-    @Override
-    public UShortIndexer reindex(Index index) {
+    @Override public UShortIndexer reindex(Index index) {
         return new UShortBufferIndexer(buffer, index);
     }
 

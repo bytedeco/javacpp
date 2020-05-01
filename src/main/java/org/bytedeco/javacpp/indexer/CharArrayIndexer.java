@@ -31,18 +31,18 @@ public class CharArrayIndexer extends CharIndexer {
     /** The backing array. */
     protected char[] array;
 
-    /** Calls {@code CharArrayIndexer(array, defaultIndex({ array.length }))}. */
+    /** Calls {@code CharArrayIndexer(array, Index.create(array.length))}. */
     public CharArrayIndexer(char[] array) {
         this(array, Index.create(array.length));
     }
 
-    /** Calls {@code CharArrayIndexer(array, sizes)}. */
-    @Deprecated public CharArrayIndexer(char[] array, long... sizes) {
+    /** Calls {@code CharArrayIndexer(array, Index.create(sizes))}. */
+    public CharArrayIndexer(char[] array, long... sizes) {
         this(array, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #array}, {@link #sizes} and {@link #strides}. */
-    @Deprecated public CharArrayIndexer(char[] array, long[] sizes, long[] strides) {
+    /** Calls {@code CharArrayIndexer(array, Index.create(sizes, strides))}. */
+    public CharArrayIndexer(char[] array, long[] sizes, long[] strides) {
         this(array, Index.create(sizes, strides));
     }
 
@@ -56,8 +56,7 @@ public class CharArrayIndexer extends CharIndexer {
         return array;
     }
 
-    @Override
-    public CharIndexer reindex(Index index) {
+    @Override public CharIndexer reindex(Index index) {
         return new CharArrayIndexer(array, index);
     }
 

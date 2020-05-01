@@ -34,18 +34,18 @@ public class DoubleBufferIndexer extends DoubleIndexer {
     /** The backing buffer. */
     protected DoubleBuffer buffer;
 
-    /** Calls {@code DoubleBufferIndexer(buffer, defaultIndex({ buffer.limit() }))}. */
+    /** Calls {@code DoubleBufferIndexer(buffer, Index.create(buffer.limit()))}. */
     public DoubleBufferIndexer(DoubleBuffer buffer) {
         this(buffer, Index.create(buffer.limit()));
     }
 
-    /** Calls {@code DoubleBufferIndexer(buffer, defaultIndex(sizes))}. */
-    @Deprecated public DoubleBufferIndexer(DoubleBuffer buffer, long... sizes) {
+    /** Calls {@code DoubleBufferIndexer(buffer, Index.create(sizes))}. */
+    public DoubleBufferIndexer(DoubleBuffer buffer, long... sizes) {
         this(buffer, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #buffer}, {@link #sizes} and {@link #strides}. */
-    @Deprecated public DoubleBufferIndexer(DoubleBuffer buffer, long[] sizes, long[] strides) {
+    /** Calls {@code DoubleBufferIndexer(buffer, Index.create(sizes, strides))}. */
+    public DoubleBufferIndexer(DoubleBuffer buffer, long[] sizes, long[] strides) {
         this(buffer, Index.create(sizes, strides));
     }
 
@@ -59,8 +59,7 @@ public class DoubleBufferIndexer extends DoubleIndexer {
         return buffer;
     }
 
-    @Override
-    public DoubleIndexer reindex(Index index) {
+    @Override public DoubleIndexer reindex(Index index) {
         return new DoubleBufferIndexer(buffer, index);
     }
 

@@ -22,9 +22,8 @@
 
 package org.bytedeco.javacpp.indexer;
 
-import org.bytedeco.javacpp.ShortPointer;
-
 import java.nio.ShortBuffer;
+import org.bytedeco.javacpp.ShortPointer;
 
 /**
  * Abstract indexer for the {@code short} primitive type, treated as half-precision float.
@@ -39,7 +38,6 @@ public abstract class HalfIndexer extends Indexer {
         super(index);
     }
 
-    @Deprecated
     protected HalfIndexer(long[] sizes, long[] strides) {
         super(sizes, strides);
     }
@@ -52,7 +50,7 @@ public abstract class HalfIndexer extends Indexer {
     public static HalfIndexer create(ShortBuffer buffer) {
         return new HalfBufferIndexer(buffer);
     }
-    /** Returns {@code new HalfRawIndexer(pointer} */
+    /** Returns {@code new HalfRawIndexer(pointer)} */
     public static HalfIndexer create(ShortPointer pointer) {
         return new HalfRawIndexer(pointer);
     }
@@ -71,46 +69,39 @@ public abstract class HalfIndexer extends Indexer {
     }
 
     /** Returns {@code new HalfArrayIndexer(array, sizes)} */
-    @Deprecated public static HalfIndexer create(short[] array, long... sizes) {
+    public static HalfIndexer create(short[] array, long... sizes) {
         return new HalfArrayIndexer(array, sizes);
     }
     /** Returns {@code new HalfBufferIndexer(buffer, sizes)} */
-    @Deprecated public static HalfIndexer create(ShortBuffer buffer, long... sizes) {
+    public static HalfIndexer create(ShortBuffer buffer, long... sizes) {
         return new HalfBufferIndexer(buffer, sizes);
     }
     /** Returns {@code new HalfRawIndexer(pointer, sizes)} */
-    @Deprecated public static HalfIndexer create(ShortPointer pointer, long... sizes) {
+    public static HalfIndexer create(ShortPointer pointer, long... sizes) {
         return new HalfRawIndexer(pointer, sizes);
     }
 
     /** Returns {@code new HalfArrayIndexer(array, sizes, strides)} */
-    @Deprecated public static HalfIndexer create(short[] array, long[] sizes, long[] strides) {
+    public static HalfIndexer create(short[] array, long[] sizes, long[] strides) {
         return new HalfArrayIndexer(array, sizes, strides);
     }
     /** Returns {@code new HalfBufferIndexer(buffer, sizes, strides)} */
-    @Deprecated public static HalfIndexer create(ShortBuffer buffer, long[] sizes, long[] strides) {
+    public static HalfIndexer create(ShortBuffer buffer, long[] sizes, long[] strides) {
         return new HalfBufferIndexer(buffer, sizes, strides);
     }
     /** Returns {@code new HalfRawIndexer(pointer, sizes, strides)} */
-    @Deprecated public static HalfIndexer create(ShortPointer pointer, long[] sizes, long[] strides) {
+    public static HalfIndexer create(ShortPointer pointer, long[] sizes, long[] strides) {
         return new HalfRawIndexer(pointer, sizes, strides);
     }
-    /**
-     * Creates a half float indexer to access efficiently the data of a pointer.
-     *
-     * @param pointer data to access via a buffer or to copy to an array
-     * @param direct {@code true} to use a direct buffer, see {@link Indexer} for details
-     * @return the new half indexer backed by the raw memory interface, a buffer, or an array
-     */
-    @Deprecated public static HalfIndexer create(final ShortPointer pointer, long[] sizes, long[] strides, boolean direct) {
+    /** Returns {@code create(pointer, Index.create(sizes, strides), direct)} */
+    public static HalfIndexer create(final ShortPointer pointer, long[] sizes, long[] strides, boolean direct) {
         return create(pointer, Index.create(sizes, strides), direct);
     }
-
     /**
      * Creates a half float indexer to access efficiently the data of a pointer.
      *
      * @param pointer data to access via a buffer or to copy to an array
-     * @param index TODO
+     * @param index to use
      * @param direct {@code true} to use a direct buffer, see {@link Indexer} for details
      * @return the new half indexer backed by the raw memory interface, a buffer, or an array
      */

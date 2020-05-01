@@ -31,18 +31,18 @@ public class ShortArrayIndexer extends ShortIndexer {
     /** The backing array. */
     protected short[] array;
 
-    /** Calls {@code ShortArrayIndexer(array, defaultIndex({ array.length }))}. */
+    /** Calls {@code ShortArrayIndexer(array, Index.create(array.length))}. */
     public ShortArrayIndexer(short[] array) {
         this(array, Index.create(array.length));
     }
 
-    /** Calls {@code ShortArrayIndexer(array, sizes)}. */
-    @Deprecated public ShortArrayIndexer(short[] array, long... sizes) {
+    /** Calls {@code ShortArrayIndexer(array, Index.create(sizes))}. */
+    public ShortArrayIndexer(short[] array, long... sizes) {
         this(array, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #array}, {@link #sizes} and {@link #strides}. */
-    @Deprecated public ShortArrayIndexer(short[] array, long[] sizes, long[] strides) {
+    /** Calls {@code ShortArrayIndexer(array, Index.create(sizes, strides))}. */
+    public ShortArrayIndexer(short[] array, long[] sizes, long[] strides) {
         this(array, Index.create(sizes, strides));
     }
 
@@ -56,8 +56,7 @@ public class ShortArrayIndexer extends ShortIndexer {
         return array;
     }
 
-    @Override
-    public ShortIndexer reindex(Index index) {
+    @Override public ShortIndexer reindex(Index index) {
         return new ShortArrayIndexer(array, index);
     }
 

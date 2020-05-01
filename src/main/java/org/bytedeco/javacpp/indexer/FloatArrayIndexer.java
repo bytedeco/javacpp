@@ -31,18 +31,18 @@ public class FloatArrayIndexer extends FloatIndexer {
     /** The backing array. */
     protected float[] array;
 
-    /** Calls {@code FloatArrayIndexer(array, defaultIndex({ array.length }))}. */
+    /** Calls {@code FloatArrayIndexer(array, Index.create(array.length))}. */
     public FloatArrayIndexer(float[] array) {
         this(array, Index.create(array.length));
     }
 
-    /** Calls {@code FloatArrayIndexer(array, sizes)}. */
-    @Deprecated public FloatArrayIndexer(float[] array, long... sizes) {
+    /** Calls {@code FloatArrayIndexer(array, Index.create(sizes))}. */
+    public FloatArrayIndexer(float[] array, long... sizes) {
         this(array, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #array}, {@link #sizes} and {@link #strides}. */
-    @Deprecated public FloatArrayIndexer(float[] array, long[] sizes, long[] strides) {
+    /** Calls {@code FloatArrayIndexer(array, Index.create(sizes, strides))}. */
+    public FloatArrayIndexer(float[] array, long[] sizes, long[] strides) {
         this(array, Index.create(sizes, strides));
     }
 
@@ -56,8 +56,7 @@ public class FloatArrayIndexer extends FloatIndexer {
         return array;
     }
 
-    @Override
-    public FloatIndexer reindex(Index index) {
+    @Override public FloatIndexer reindex(Index index) {
         return new FloatArrayIndexer(array, index);
     }
 

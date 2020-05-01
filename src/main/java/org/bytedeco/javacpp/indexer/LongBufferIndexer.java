@@ -34,18 +34,18 @@ public class LongBufferIndexer extends LongIndexer {
     /** The backing buffer. */
     protected LongBuffer buffer;
 
-    /** Calls {@code LongBufferIndexer(buffer, defaultIndex({ buffer.limit() }))}. */
+    /** Calls {@code LongBufferIndexer(buffer, Index.create(buffer.limit()))}. */
     public LongBufferIndexer(LongBuffer buffer) {
         this(buffer, Index.create(buffer.limit()));
     }
 
-    /** Calls {@code LongBufferIndexer(buffer, defaultIndex(sizes))}. */
-    @Deprecated public LongBufferIndexer(LongBuffer buffer, long... sizes) {
+    /** Calls {@code LongBufferIndexer(buffer, Index.create(sizes))}. */
+    public LongBufferIndexer(LongBuffer buffer, long... sizes) {
         this(buffer, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #buffer}, {@link #sizes} and {@link #strides}. */
-    @Deprecated public LongBufferIndexer(LongBuffer buffer, long[] sizes, long[] strides) {
+    /** Calls {@code LongBufferIndexer(buffer, Index.create(sizes, strides))}. */
+    public LongBufferIndexer(LongBuffer buffer, long[] sizes, long[] strides) {
         this(buffer, Index.create(sizes, strides));
     }
 
@@ -59,8 +59,7 @@ public class LongBufferIndexer extends LongIndexer {
         return buffer;
     }
 
-    @Override
-    public LongIndexer reindex(Index index) {
+    @Override public LongIndexer reindex(Index index) {
         return new LongBufferIndexer(buffer, index);
     }
 

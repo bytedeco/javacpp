@@ -38,18 +38,18 @@ public class BooleanRawIndexer extends BooleanIndexer {
     /** Base address and number of elements accessible. */
     final long base, size;
 
-    /** Calls {@code BooleanRawIndexer(pointer, defaultIndex({ pointer.limit() - pointer.position() }))}. */
+    /** Calls {@code BooleanRawIndexer(pointer, Index.create(pointer.limit() - pointer.position()))}. */
     public BooleanRawIndexer(BooleanPointer pointer) {
-        this(pointer, Index.create( pointer.limit() - pointer.position() ));
+        this(pointer, Index.create(pointer.limit() - pointer.position()));
     }
 
-    /** Calls {@code BooleanRawIndexer(pointer, defaultIndex(sizes))}. */
-    @Deprecated public BooleanRawIndexer(BooleanPointer pointer, long... sizes) {
+    /** Calls {@code BooleanRawIndexer(pointer, Index.create(sizes))}. */
+    public BooleanRawIndexer(BooleanPointer pointer, long... sizes) {
         this(pointer, sizes, strides(sizes));
     }
 
-    /** Constructor to set the {@link #pointer}, {@link #sizes} and {@link #strides}. */
-    @Deprecated public BooleanRawIndexer(BooleanPointer pointer, long[] sizes, long[] strides) {
+    /** Calls {@code BooleanRawIndexer(pointer, Index.create(sizes, strides))}. */
+    public BooleanRawIndexer(BooleanPointer pointer, long[] sizes, long[] strides) {
         this(pointer, Index.create(sizes, strides));
     }
 
@@ -57,16 +57,15 @@ public class BooleanRawIndexer extends BooleanIndexer {
     public BooleanRawIndexer(BooleanPointer pointer, Index index) {
         super(index);
         this.pointer = pointer;
-        base = pointer.address() + pointer.position() * VALUE_BYTES;
-        size = pointer.limit() - pointer.position();
+        this.base = pointer.address() + pointer.position() * VALUE_BYTES;
+        this.size = pointer.limit() - pointer.position();
     }
 
     @Override public Pointer pointer() {
         return pointer;
     }
 
-    @Override
-    public BooleanIndexer reindex(Index index) {
+    @Override public BooleanIndexer reindex(Index index) {
         return new BooleanRawIndexer(pointer, index);
     }
 

@@ -38,18 +38,18 @@ public class DoubleRawIndexer extends DoubleIndexer {
     /** Base address and number of elements accessible. */
     final long base, size;
 
-    /** Calls {@code DoubleRawIndexer(pointer, defaultIndex({ pointer.limit() - pointer.position() }))}. */
+    /** Calls {@code DoubleRawIndexer(pointer, Index.create(pointer.limit() - pointer.position()))}. */
     public DoubleRawIndexer(DoublePointer pointer) {
-        this(pointer, Index.create( pointer.limit() - pointer.position() ));
+        this(pointer, Index.create(pointer.limit() - pointer.position()));
     }
 
-    /** Calls {@code DoubleRawIndexer(pointer, defaultIndex(sizes))}. */
-    @Deprecated public DoubleRawIndexer(DoublePointer pointer, long... sizes) {
+    /** Calls {@code DoubleRawIndexer(pointer, Index.create(sizes))}. */
+    public DoubleRawIndexer(DoublePointer pointer, long... sizes) {
         this(pointer, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #pointer}, {@link #sizes} and {@link #strides}. */
-    @Deprecated public DoubleRawIndexer(DoublePointer pointer, long[] sizes, long[] strides) {
+    /** Calls {@code DoubleRawIndexer(pointer, Index.create(sizes, strides))}. */
+    public DoubleRawIndexer(DoublePointer pointer, long[] sizes, long[] strides) {
         this(pointer, Index.create(sizes, strides));
     }
 
@@ -57,16 +57,15 @@ public class DoubleRawIndexer extends DoubleIndexer {
     public DoubleRawIndexer(DoublePointer pointer, Index index) {
         super(index);
         this.pointer = pointer;
-        base = pointer.address() + pointer.position() * VALUE_BYTES;
-        size = pointer.limit() - pointer.position();
+        this.base = pointer.address() + pointer.position() * VALUE_BYTES;
+        this.size = pointer.limit() - pointer.position();
     }
 
     @Override public Pointer pointer() {
         return pointer;
     }
 
-    @Override
-    public DoubleIndexer reindex(Index index) {
+    @Override public DoubleIndexer reindex(Index index) {
         return new DoubleRawIndexer(pointer, index);
     }
 

@@ -33,18 +33,18 @@ public class ULongArrayIndexer extends ULongIndexer {
     /** The backing array. */
     protected long[] array;
 
-    /** Calls {@code ULongArrayIndexer(array, defaultIndex({ array.length }))}. */
+    /** Calls {@code ULongArrayIndexer(array, Index.create(array.length))}. */
     public ULongArrayIndexer(long[] array) {
         this(array, Index.create(array.length));
     }
 
-    /** Calls {@code ULongArrayIndexer(array, sizes)}. */
-    @Deprecated public ULongArrayIndexer(long[] array, long... sizes) {
+    /** Calls {@code ULongArrayIndexer(array, Index.create(sizes))}. */
+    public ULongArrayIndexer(long[] array, long... sizes) {
         this(array, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #array}, {@link #sizes} and {@link #strides}. */
-    @Deprecated public ULongArrayIndexer(long[] array, long[] sizes, long[] strides) {
+    /** Calls {@code ULongArrayIndexer(array, Index.create(sizes, strides))}. */
+    public ULongArrayIndexer(long[] array, long[] sizes, long[] strides) {
         this(array, Index.create(sizes, strides));
     }
 
@@ -58,8 +58,7 @@ public class ULongArrayIndexer extends ULongIndexer {
         return array;
     }
 
-    @Override
-    public ULongIndexer reindex(Index index) {
+    @Override public ULongIndexer reindex(Index index) {
         return new ULongArrayIndexer(array, index);
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2019 Samuel Audet
+ * Copyright (C) 2020 Matteo Di Giovinazzo, Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -19,50 +19,73 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.bytedeco.javacpp.indexer;
 
 /**
- * TODO
+ * An Index that computes a linear index from given array sizes and strides.
  *
  * @author Matteo Di Giovinazzo
  */
-class StrideIndex extends Index {
-
-    protected final long[] sizes;
-
-    protected final long[] strides;
+public class StrideIndex extends Index {
 
     /**
-     * TODO
-     *
-     * @param sizes
-     * @param strides The number of elements to skip to reach the next element in a given dimension.
-     *                {@code strides[i] > strides[i + 1] && strides[strides.length - 1] == 1} preferred.
+     * Returns default (row-major contiguous) strides for the given sizes.
      */
-    protected StrideIndex(long[] sizes, long[] strides) {
+    public static long[] defaultStrides(long... sizes) {
+        long[] strides = new long[sizes.length];
+        strides[sizes.length - 1] = 1;
+        for (int i = sizes.length - 2; i >= 0; i--) {
+            strides[i] = strides[i + 1] * sizes[i + 1];
+        }
+        return strides;
+    }
+
+    /**
+     * The number of elements in each dimension.
+     * These values are not typically used by the indexer.
+     */
+    protected final long[] sizes;
+
+    /**
+     * The number of elements to skip to reach the next element in a given dimension.
+     * {@code strides[i] > strides[i + 1] && strides[strides.length - 1] == 1} preferred.
+     */
+    protected final long[] strides;
+
+    /** Calls {@code StrideIndex(sizes, defaultStrides(sizes))}. */
+    public StrideIndex(long... sizes) {
+        this(sizes, defaultStrides(sizes));
+    }
+
+    /** Constructor to set the {@link #sizes} and {@link #strides}. */
+    public StrideIndex(long[] sizes, long[] strides) {
         this.sizes = sizes;
         this.strides = strides;
     }
 
-    @Override
-    public long[] sizes() { return sizes; }
+    /** Returns {@link #sizes}. */
+    public long[] sizes() {
+        return sizes;
+    }
 
+    /** Returns {@link #strides}. */
     public long[] strides() {
         return strides;
     }
 
-    @Override
-    public long index(long i) {
+    /** Returns {@code i * strides[0]}. */
+    @Override public long index(long i) {
         return i * strides[0];
     }
 
-    @Override
-    public long index(long i, long j) {
+    /** Returns {@code i * strides[0] + j * strides[1]}. */
+    @Override public long index(long i, long j) {
         return i * strides[0] + j * strides[1];
     }
 
-    @Override
-    public long index(long i, long j, long k) {
+    /** Returns {@code i * strides[0] + j * strides[1] + k * strides[2]}. */
+    @Override public long index(long i, long j, long k) {
         return i * strides[0] + j * strides[1] + k * strides[2];
     }
 
@@ -72,8 +95,7 @@ class StrideIndex extends Index {
      * @param indices of each dimension
      * @return index to access array or buffer
      */
-    @Override
-    public long index(long... indices) {
+    @Override public long index(long... indices) {
         long index = 0;
         for (int i = 0; i < indices.length && i < strides.length; i++) {
             index += indices[i] * strides[i];

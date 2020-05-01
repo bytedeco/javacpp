@@ -31,18 +31,18 @@ public class BooleanArrayIndexer extends BooleanIndexer {
     /** The backing array. */
     protected boolean[] array;
 
-    /** Calls {@code BooleanArrayIndexer(array, defaultIndex({ array.length }))}. */
+    /** Calls {@code BooleanArrayIndexer(array, Index.create(array.length))}. */
     public BooleanArrayIndexer(boolean[] array) {
         this(array, Index.create(array.length));
     }
 
-    /** Calls {@code BooleanArrayIndexer(array, sizes)}. */
-    @Deprecated public BooleanArrayIndexer(boolean[] array, long... sizes) {
+    /** Calls {@code BooleanArrayIndexer(array, Index.create(sizes))}. */
+    public BooleanArrayIndexer(boolean[] array, long... sizes) {
         this(array, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #array}, {@link #sizes} and {@link #strides}. */
-    @Deprecated public BooleanArrayIndexer(boolean[] array, long[] sizes, long[] strides) {
+    /** Calls {@code BooleanArrayIndexer(array, Index.create(sizes, strides))}. */
+    public BooleanArrayIndexer(boolean[] array, long[] sizes, long[] strides) {
         this(array, Index.create(sizes, strides));
     }
 
@@ -56,8 +56,7 @@ public class BooleanArrayIndexer extends BooleanIndexer {
         return array;
     }
 
-    @Override
-    public BooleanIndexer reindex(Index index) {
+    @Override public BooleanIndexer reindex(Index index) {
         return new BooleanArrayIndexer(array, index);
     }
 

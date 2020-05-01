@@ -34,18 +34,18 @@ public class BooleanBufferIndexer extends BooleanIndexer {
     /** The backing buffer. */
     protected ByteBuffer buffer;
 
-    /** Calls {@code BooleanBufferIndexer(buffer, defaultIndex({ buffer.limit() }))}. */
+    /** Calls {@code BooleanBufferIndexer(buffer, Index.create(buffer.limit()))}. */
     public BooleanBufferIndexer(ByteBuffer buffer) {
         this(buffer, Index.create(buffer.limit()));
     }
 
-    /** Calls {@code BooleanBufferIndexer(buffer, defaultIndex(sizes))}. */
-    @Deprecated public BooleanBufferIndexer(ByteBuffer buffer, long... sizes) {
+    /** Calls {@code BooleanBufferIndexer(buffer, Index.create(sizes))}. */
+    public BooleanBufferIndexer(ByteBuffer buffer, long... sizes) {
         this(buffer, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #buffer}, {@link #sizes} and {@link #strides}. */
-    @Deprecated public BooleanBufferIndexer(ByteBuffer buffer, long[] sizes, long[] strides) {
+    /** Calls {@code BooleanBufferIndexer(buffer, Index.create(sizes, strides))}. */
+    public BooleanBufferIndexer(ByteBuffer buffer, long[] sizes, long[] strides) {
         this(buffer, Index.create(sizes, strides));
     }
 
@@ -59,8 +59,7 @@ public class BooleanBufferIndexer extends BooleanIndexer {
         return buffer;
     }
 
-    @Override
-    public BooleanIndexer reindex(Index index) {
+    @Override public BooleanIndexer reindex(Index index) {
         return new BooleanBufferIndexer(buffer, index);
     }
 

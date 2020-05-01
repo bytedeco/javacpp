@@ -22,9 +22,8 @@
 
 package org.bytedeco.javacpp.indexer;
 
-import org.bytedeco.javacpp.ShortPointer;
-
 import java.nio.ShortBuffer;
+import org.bytedeco.javacpp.ShortPointer;
 
 /**
  * Abstract indexer for the {@code short} primitive type, treated as unsigned.
@@ -39,7 +38,6 @@ public abstract class UShortIndexer extends Indexer {
         super(index);
     }
 
-    @Deprecated
     protected UShortIndexer(long[] sizes, long[] strides) {
         super(sizes, strides);
     }
@@ -52,7 +50,7 @@ public abstract class UShortIndexer extends Indexer {
     public static UShortIndexer create(ShortBuffer buffer) {
         return new UShortBufferIndexer(buffer);
     }
-    /** Returns {@code new UShortRawIndexer(pointer} */
+    /** Returns {@code new UShortRawIndexer(pointer)} */
     public static UShortIndexer create(ShortPointer pointer) {
         return new UShortRawIndexer(pointer);
     }
@@ -71,46 +69,39 @@ public abstract class UShortIndexer extends Indexer {
     }
 
     /** Returns {@code new UShortArrayIndexer(array, sizes)} */
-    @Deprecated public static UShortIndexer create(short[] array, long... sizes) {
+    public static UShortIndexer create(short[] array, long... sizes) {
         return new UShortArrayIndexer(array, sizes);
     }
     /** Returns {@code new UShortBufferIndexer(buffer, sizes)} */
-    @Deprecated public static UShortIndexer create(ShortBuffer buffer, long... sizes) {
+    public static UShortIndexer create(ShortBuffer buffer, long... sizes) {
         return new UShortBufferIndexer(buffer, sizes);
     }
     /** Returns {@code new UShortRawIndexer(pointer, sizes)} */
-    @Deprecated public static UShortIndexer create(ShortPointer pointer, long... sizes) {
+    public static UShortIndexer create(ShortPointer pointer, long... sizes) {
         return new UShortRawIndexer(pointer, sizes);
     }
 
     /** Returns {@code new UShortArrayIndexer(array, sizes, strides)} */
-    @Deprecated public static UShortIndexer create(short[] array, long[] sizes, long[] strides) {
+    public static UShortIndexer create(short[] array, long[] sizes, long[] strides) {
         return new UShortArrayIndexer(array, sizes, strides);
     }
     /** Returns {@code new UShortBufferIndexer(buffer, sizes, strides)} */
-    @Deprecated public static UShortIndexer create(ShortBuffer buffer, long[] sizes, long[] strides) {
+    public static UShortIndexer create(ShortBuffer buffer, long[] sizes, long[] strides) {
         return new UShortBufferIndexer(buffer, sizes, strides);
     }
     /** Returns {@code new UShortRawIndexer(pointer, sizes, strides)} */
-    @Deprecated public static UShortIndexer create(ShortPointer pointer, long[] sizes, long[] strides) {
+    public static UShortIndexer create(ShortPointer pointer, long[] sizes, long[] strides) {
         return new UShortRawIndexer(pointer, sizes, strides);
     }
-    /**
-     * Creates a short indexer to access efficiently the data of a pointer.
-     *
-     * @param pointer data to access via a buffer or to copy to an array
-     * @param direct {@code true} to use a direct buffer, see {@link Indexer} for details
-     * @return the new short indexer backed by the raw memory interface, a buffer, or an array
-     */
-    @Deprecated public static UShortIndexer create(final ShortPointer pointer, long[] sizes, long[] strides, boolean direct) {
+    /** Returns {@code create(pointer, Index.create(sizes, strides), direct)} */
+    public static UShortIndexer create(final ShortPointer pointer, long[] sizes, long[] strides, boolean direct) {
         return create(pointer, Index.create(sizes, strides), direct);
     }
-
     /**
      * Creates a short indexer to access efficiently the data of a pointer.
      *
      * @param pointer data to access via a buffer or to copy to an array
-     * @param index TODO
+     * @param index to use
      * @param direct {@code true} to use a direct buffer, see {@link Indexer} for details
      * @return the new short indexer backed by the raw memory interface, a buffer, or an array
      */

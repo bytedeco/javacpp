@@ -34,18 +34,18 @@ public class ShortBufferIndexer extends ShortIndexer {
     /** The backing buffer. */
     protected ShortBuffer buffer;
 
-    /** Calls {@code ShortBufferIndexer(buffer, defaultIndex({ buffer.limit() }))}. */
+    /** Calls {@code ShortBufferIndexer(buffer, Index.create(buffer.limit()))}. */
     public ShortBufferIndexer(ShortBuffer buffer) {
         this(buffer, Index.create(buffer.limit()));
     }
 
-    /** Calls {@code ShortBufferIndexer(buffer, defaultIndex(sizes))}. */
-    @Deprecated public ShortBufferIndexer(ShortBuffer buffer, long... sizes) {
+    /** Calls {@code ShortBufferIndexer(buffer, Index.create(sizes))}. */
+    public ShortBufferIndexer(ShortBuffer buffer, long... sizes) {
         this(buffer, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #buffer}, {@link #sizes} and {@link #strides}. */
-    @Deprecated public ShortBufferIndexer(ShortBuffer buffer, long[] sizes, long[] strides) {
+    /** Calls {@code ShortBufferIndexer(buffer, Index.create(sizes, strides))}. */
+    public ShortBufferIndexer(ShortBuffer buffer, long[] sizes, long[] strides) {
         this(buffer, Index.create(sizes, strides));
     }
 
@@ -59,8 +59,7 @@ public class ShortBufferIndexer extends ShortIndexer {
         return buffer;
     }
 
-    @Override
-    public ShortIndexer reindex(Index index) {
+    @Override public ShortIndexer reindex(Index index) {
         return new ShortBufferIndexer(buffer, index);
     }
 
