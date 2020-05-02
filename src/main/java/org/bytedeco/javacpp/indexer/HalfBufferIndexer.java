@@ -34,24 +34,33 @@ public class HalfBufferIndexer extends HalfIndexer {
     /** The backing buffer. */
     protected ShortBuffer buffer;
 
-    /** Calls {@code HalfBufferIndexer(buffer, { buffer.limit() }, { 1 })}. */
+    /** Calls {@code HalfBufferIndexer(buffer, Index.create(buffer.limit()))}. */
     public HalfBufferIndexer(ShortBuffer buffer) {
-        this(buffer, new long[] { buffer.limit() }, ONE_STRIDE);
+        this(buffer, Index.create(buffer.limit()));
     }
 
-    /** Calls {@code HalfBufferIndexer(buffer, sizes, strides(sizes))}. */
+    /** Calls {@code HalfBufferIndexer(buffer, Index.create(sizes))}. */
     public HalfBufferIndexer(ShortBuffer buffer, long... sizes) {
-        this(buffer, sizes, strides(sizes));
+        this(buffer, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #buffer}, {@link #sizes} and {@link #strides}. */
+    /** Calls {@code HalfBufferIndexer(buffer, Index.create(sizes, strides))}. */
     public HalfBufferIndexer(ShortBuffer buffer, long[] sizes, long[] strides) {
-        super(sizes, strides);
+        this(buffer, Index.create(sizes, strides));
+    }
+
+    /** Constructor to set the {@link #buffer} and {@link #index}. */
+    public HalfBufferIndexer(ShortBuffer buffer, Index index) {
+        super(index);
         this.buffer = buffer;
     }
 
     @Override public Buffer buffer() {
         return buffer;
+    }
+
+    @Override public HalfIndexer reindex(Index index) {
+        return new HalfBufferIndexer(buffer, index);
     }
 
     @Override public float get(long i) {

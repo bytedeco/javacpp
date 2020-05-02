@@ -25,7 +25,6 @@ import java.io.File;
 import java.math.BigInteger;
 import java.nio.ByteOrder;
 import java.util.Arrays;
-
 import org.bytedeco.javacpp.annotation.Platform;
 import org.bytedeco.javacpp.indexer.Bfloat16Indexer;
 import org.bytedeco.javacpp.indexer.BooleanIndexer;
@@ -34,10 +33,12 @@ import org.bytedeco.javacpp.indexer.CharIndexer;
 import org.bytedeco.javacpp.indexer.DoubleIndexer;
 import org.bytedeco.javacpp.indexer.FloatIndexer;
 import org.bytedeco.javacpp.indexer.HalfIndexer;
+import org.bytedeco.javacpp.indexer.Index;
 import org.bytedeco.javacpp.indexer.Indexer;
 import org.bytedeco.javacpp.indexer.IntIndexer;
 import org.bytedeco.javacpp.indexer.LongIndexer;
 import org.bytedeco.javacpp.indexer.ShortIndexer;
+import org.bytedeco.javacpp.indexer.StrideIndex;
 import org.bytedeco.javacpp.indexer.UByteIndexer;
 import org.bytedeco.javacpp.indexer.UShortIndexer;
 import org.bytedeco.javacpp.indexer.UIntIndexer;
@@ -46,6 +47,7 @@ import org.bytedeco.javacpp.tools.Builder;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
 import static org.junit.Assert.*;
 
 /**
@@ -74,36 +76,41 @@ public class IndexerTest {
     }
 
     static class TestIndexer extends Indexer {
-        TestIndexer(long[] sizes) { super(sizes, Indexer.strides(sizes)); }
+        TestIndexer(Index index) { super(index); }
         public void release() { }
         public double getDouble(long... indices) { return 0; }
         public Indexer putDouble(long[] indices, double value) { return this; }
+        public Indexer reindex(Index index) { return new TestIndexer(index); }
+    }
+
+    @Test public void testDefaultStrides() {
+        long[] sizes = {640, 480, 3};
+        long[] strides = StrideIndex.defaultStrides(sizes);
+        System.out.println(Arrays.toString(strides));
+        assertEquals(1440, strides[0]);
+        assertEquals(   3, strides[1]);
+        assertEquals(   1, strides[2]);
     }
 
     @Test public void testIndexer() {
         System.out.println("Indexer");
         long[] sizes = {640, 480, 3};
-        long[] strides = Indexer.strides(sizes);
-        System.out.println(Arrays.toString(strides));
-        assertEquals(1440, strides[0]);
-        assertEquals(   3, strides[1]);
-        assertEquals(   1, strides[2]);
 
-        TestIndexer indexer = new TestIndexer(sizes);
+        TestIndexer indexer = new TestIndexer(Index.create(sizes));
         assertEquals(indexer.size(0), indexer.rows());
         assertEquals(indexer.size(0), indexer.height());
         assertEquals(indexer.size(1), indexer.cols());
         assertEquals(indexer.size(1), indexer.width());
         assertEquals(indexer.size(2), indexer.channels());
 
-        indexer = new TestIndexer(new long[] {640, 480});
+        indexer = new TestIndexer(Index.create(new long[] {640, 480}));
         assertEquals(indexer.size(0), indexer.rows());
         assertEquals(indexer.size(0), indexer.height());
         assertEquals(indexer.size(1), indexer.cols());
         assertEquals(indexer.size(1), indexer.width());
         assertEquals(-1, indexer.channels());
 
-        indexer = new TestIndexer(new long[] {640});
+        indexer = new TestIndexer(Index.create(new long[] {640}));
         assertEquals(indexer.size(0), indexer.rows());
         assertEquals(indexer.size(0), indexer.height());
         assertEquals(-1, indexer.cols());

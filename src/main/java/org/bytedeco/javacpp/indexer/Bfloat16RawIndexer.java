@@ -38,26 +38,35 @@ public class Bfloat16RawIndexer extends Bfloat16Indexer {
     /** Base address and number of elements accessible. */
     final long base, size;
 
-    /** Calls {@code Bfloat16RawIndexer(pointer, { pointer.limit() - pointer.position() }, { 1 })}. */
+    /** Calls {@code Bfloat16RawIndexer(pointer, Index.create(pointer.limit() - pointer.position()))}. */
     public Bfloat16RawIndexer(ShortPointer pointer) {
-        this(pointer, new long[] { pointer.limit() - pointer.position() }, ONE_STRIDE);
+        this(pointer, Index.create(pointer.limit() - pointer.position()));
     }
 
-    /** Calls {@code Bfloat16RawIndexer(pointer, sizes, strides(sizes))}. */
+    /** Calls {@code Bfloat16RawIndexer(pointer, Index.create(sizes))}. */
     public Bfloat16RawIndexer(ShortPointer pointer, long... sizes) {
-        this(pointer, sizes, strides(sizes));
+        this(pointer, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #pointer}, {@link #sizes} and {@link #strides}. */
+    /** Calls {@code Bfloat16RawIndexer(pointer, Index.create(sizes, strides))}. */
     public Bfloat16RawIndexer(ShortPointer pointer, long[] sizes, long[] strides) {
-        super(sizes, strides);
+        this(pointer, Index.create(sizes, strides));
+    }
+
+    /** Constructor to set the {@link #pointer} and {@link #index}. */
+    public Bfloat16RawIndexer(ShortPointer pointer, Index index) {
+        super(index);
         this.pointer = pointer;
-        base = pointer.address() + pointer.position() * VALUE_BYTES;
-        size = pointer.limit() - pointer.position();
+        this.base = pointer.address() + pointer.position() * VALUE_BYTES;
+        this.size = pointer.limit() - pointer.position();
     }
 
     @Override public Pointer pointer() {
         return pointer;
+    }
+
+    @Override public Bfloat16Indexer reindex(Index index) {
+        return new Bfloat16RawIndexer(pointer, index);
     }
 
     public float getRaw(long i) {

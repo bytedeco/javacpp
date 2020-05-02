@@ -38,26 +38,35 @@ public class IntRawIndexer extends IntIndexer {
     /** Base address and number of elements accessible. */
     final long base, size;
 
-    /** Calls {@code IntRawIndexer(pointer, { pointer.limit() - pointer.position() }, { 1 })}. */
+    /** Calls {@code IntRawIndexer(pointer, Index.create(pointer.limit() - pointer.position()))}. */
     public IntRawIndexer(IntPointer pointer) {
-        this(pointer, new long[] { pointer.limit() - pointer.position() }, ONE_STRIDE);
+        this(pointer, Index.create(pointer.limit() - pointer.position()));
     }
 
-    /** Calls {@code IntRawIndexer(pointer, sizes, strides(sizes))}. */
+    /** Calls {@code IntRawIndexer(pointer, Index.create(sizes))}. */
     public IntRawIndexer(IntPointer pointer, long... sizes) {
-        this(pointer, sizes, strides(sizes));
+        this(pointer, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #pointer}, {@link #sizes} and {@link #strides}. */
+    /** Calls {@code IntRawIndexer(pointer, Index.create(sizes, strides))}. */
     public IntRawIndexer(IntPointer pointer, long[] sizes, long[] strides) {
-        super(sizes, strides);
+        this(pointer, Index.create(sizes, strides));
+    }
+
+    /** Constructor to set the {@link #pointer} and {@link #index}. */
+    public IntRawIndexer(IntPointer pointer, Index index) {
+        super(index);
         this.pointer = pointer;
-        base = pointer.address() + pointer.position() * VALUE_BYTES;
-        size = pointer.limit() - pointer.position();
+        this.base = pointer.address() + pointer.position() * VALUE_BYTES;
+        this.size = pointer.limit() - pointer.position();
     }
 
     @Override public Pointer pointer() {
         return pointer;
+    }
+
+    @Override public IntIndexer reindex(Index index) {
+        return new IntRawIndexer(pointer, index);
     }
 
     public int getRaw(long i) {

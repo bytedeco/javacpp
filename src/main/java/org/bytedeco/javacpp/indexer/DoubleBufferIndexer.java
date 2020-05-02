@@ -34,24 +34,33 @@ public class DoubleBufferIndexer extends DoubleIndexer {
     /** The backing buffer. */
     protected DoubleBuffer buffer;
 
-    /** Calls {@code DoubleBufferIndexer(buffer, { buffer.limit() }, { 1 })}. */
+    /** Calls {@code DoubleBufferIndexer(buffer, Index.create(buffer.limit()))}. */
     public DoubleBufferIndexer(DoubleBuffer buffer) {
-        this(buffer, new long[] { buffer.limit() }, ONE_STRIDE);
+        this(buffer, Index.create(buffer.limit()));
     }
 
-    /** Calls {@code DoubleBufferIndexer(buffer, sizes, strides(sizes))}. */
+    /** Calls {@code DoubleBufferIndexer(buffer, Index.create(sizes))}. */
     public DoubleBufferIndexer(DoubleBuffer buffer, long... sizes) {
-        this(buffer, sizes, strides(sizes));
+        this(buffer, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #buffer}, {@link #sizes} and {@link #strides}. */
+    /** Calls {@code DoubleBufferIndexer(buffer, Index.create(sizes, strides))}. */
     public DoubleBufferIndexer(DoubleBuffer buffer, long[] sizes, long[] strides) {
-        super(sizes, strides);
+        this(buffer, Index.create(sizes, strides));
+    }
+
+    /** Constructor to set the {@link #buffer} and {@link #index}. */
+    public DoubleBufferIndexer(DoubleBuffer buffer, Index index) {
+        super(index);
         this.buffer = buffer;
     }
 
     @Override public Buffer buffer() {
         return buffer;
+    }
+
+    @Override public DoubleIndexer reindex(Index index) {
+        return new DoubleBufferIndexer(buffer, index);
     }
 
     @Override public double get(long i) {

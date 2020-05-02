@@ -31,24 +31,33 @@ public class ShortArrayIndexer extends ShortIndexer {
     /** The backing array. */
     protected short[] array;
 
-    /** Calls {@code ShortArrayIndexer(array, { array.length }, { 1 })}. */
+    /** Calls {@code ShortArrayIndexer(array, Index.create(array.length))}. */
     public ShortArrayIndexer(short[] array) {
-        this(array, new long[] { array.length }, ONE_STRIDE);
+        this(array, Index.create(array.length));
     }
 
-    /** Calls {@code ShortArrayIndexer(array, sizes, strides(sizes))}. */
+    /** Calls {@code ShortArrayIndexer(array, Index.create(sizes))}. */
     public ShortArrayIndexer(short[] array, long... sizes) {
-        this(array, sizes, strides(sizes));
+        this(array, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #array}, {@link #sizes} and {@link #strides}. */
+    /** Calls {@code ShortArrayIndexer(array, Index.create(sizes, strides))}. */
     public ShortArrayIndexer(short[] array, long[] sizes, long[] strides) {
-        super(sizes, strides);
+        this(array, Index.create(sizes, strides));
+    }
+
+    /** Constructor to set the {@link #array} and {@link #index}. */
+    public ShortArrayIndexer(short[] array, Index index) {
+        super(index);
         this.array = array;
     }
 
     @Override public short[] array() {
         return array;
+    }
+
+    @Override public ShortIndexer reindex(Index index) {
+        return new ShortArrayIndexer(array, index);
     }
 
     @Override public short get(long i) {

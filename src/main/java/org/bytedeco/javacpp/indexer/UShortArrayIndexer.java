@@ -31,24 +31,33 @@ public class UShortArrayIndexer extends UShortIndexer {
     /** The backing array. */
     protected short[] array;
 
-    /** Calls {@code UShortArrayIndexer(array, { array.length }, { 1 })}. */
+    /** Calls {@code UShortArrayIndexer(array, Index.create(array.length))}. */
     public UShortArrayIndexer(short[] array) {
-        this(array, new long[] { array.length }, ONE_STRIDE);
+        this(array, Index.create(array.length));
     }
 
-    /** Calls {@code UShortArrayIndexer(array, sizes, strides(sizes))}. */
+    /** Calls {@code UShortArrayIndexer(array, Index.create(sizes))}. */
     public UShortArrayIndexer(short[] array, long... sizes) {
-        this(array, sizes, strides(sizes));
+        this(array, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #array}, {@link #sizes} and {@link #strides}. */
+    /** Calls {@code UShortArrayIndexer(array, Index.create(sizes, strides))}. */
     public UShortArrayIndexer(short[] array, long[] sizes, long[] strides) {
-        super(sizes, strides);
+        this(array, Index.create(sizes, strides));
+    }
+
+    /** Constructor to set the {@link #array} and {@link #index}. */
+    public UShortArrayIndexer(short[] array, Index index) {
+        super(index);
         this.array = array;
     }
 
     @Override public short[] array() {
         return array;
+    }
+
+    @Override public UShortIndexer reindex(Index index) {
+        return new UShortArrayIndexer(array, index);
     }
 
     @Override public int get(long i) {

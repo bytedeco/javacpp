@@ -31,24 +31,33 @@ public class DoubleArrayIndexer extends DoubleIndexer {
     /** The backing array. */
     protected double[] array;
 
-    /** Calls {@code DoubleArrayIndexer(array, { array.length }, { 1 })}. */
+    /** Calls {@code DoubleArrayIndexer(array, Index.create(array.length))}. */
     public DoubleArrayIndexer(double[] array) {
-        this(array, new long[] { array.length }, ONE_STRIDE);
+        this(array, Index.create(array.length));
     }
 
-    /** Calls {@code DoubleArrayIndexer(array, sizes, strides(sizes))}. */
+    /** Calls {@code DoubleArrayIndexer(array, Index.create(sizes))}. */
     public DoubleArrayIndexer(double[] array, long... sizes) {
-        this(array, sizes, strides(sizes));
+        this(array, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #array}, {@link #sizes} and {@link #strides}. */
+    /** Calls {@code DoubleArrayIndexer(array, Index.create(sizes, strides))}. */
     public DoubleArrayIndexer(double[] array, long[] sizes, long[] strides) {
-        super(sizes, strides);
+        this(array, Index.create(sizes, strides));
+    }
+
+    /** Constructor to set the {@link #array} and {@link #index}. */
+    public DoubleArrayIndexer(double[] array, Index index) {
+        super(index);
         this.array = array;
     }
 
     @Override public double[] array() {
         return array;
+    }
+
+    @Override public DoubleIndexer reindex(Index index) {
+        return new DoubleArrayIndexer(array, index);
     }
 
     @Override public double get(long i) {

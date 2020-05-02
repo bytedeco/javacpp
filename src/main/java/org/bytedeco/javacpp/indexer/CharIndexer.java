@@ -34,6 +34,10 @@ public abstract class CharIndexer extends Indexer {
     /** The number of bytes used to represent a char. */
     public static final int VALUE_BYTES = 2;
 
+    protected CharIndexer(Index index) {
+        super(index);
+    }
+
     protected CharIndexer(long[] sizes, long[] strides) {
         super(sizes, strides);
     }
@@ -46,9 +50,22 @@ public abstract class CharIndexer extends Indexer {
     public static CharIndexer create(CharBuffer buffer) {
         return new CharBufferIndexer(buffer);
     }
-    /** Returns {@code create(pointer, { pointer.limit() - pointer.position() }, { 1 }, true)} */
+    /** Returns {@code new CharRawIndexer(pointer)} */
     public static CharIndexer create(CharPointer pointer) {
-        return create(pointer, new long[] { pointer.limit() - pointer.position() }, ONE_STRIDE);
+        return new CharRawIndexer(pointer);
+    }
+
+    /** Returns {@code new CharArrayIndexer(array, index)} */
+    public static CharIndexer create(char[] array, Index index) {
+        return new CharArrayIndexer(array, index);
+    }
+    /** Returns {@code new CharBufferIndexer(buffer, index)} */
+    public static CharIndexer create(CharBuffer buffer, Index index) {
+        return new CharBufferIndexer(buffer, index);
+    }
+    /** Returns {@code new CharRawIndexer(pointer, index)} */
+    public static CharIndexer create(CharPointer pointer, Index index) {
+        return new CharRawIndexer(pointer, index);
     }
 
     /** Returns {@code new CharArrayIndexer(array, sizes)} */
@@ -59,9 +76,9 @@ public abstract class CharIndexer extends Indexer {
     public static CharIndexer create(CharBuffer buffer, long... sizes) {
         return new CharBufferIndexer(buffer, sizes);
     }
-    /** Returns {@code create(pointer, sizes, strides(sizes))} */
+    /** Returns {@code new CharRawIndexer(pointer, sizes)} */
     public static CharIndexer create(CharPointer pointer, long... sizes) {
-        return create(pointer, sizes, strides(sizes));
+        return new CharRawIndexer(pointer, sizes);
     }
 
     /** Returns {@code new CharArrayIndexer(array, sizes, strides)} */
@@ -72,26 +89,31 @@ public abstract class CharIndexer extends Indexer {
     public static CharIndexer create(CharBuffer buffer, long[] sizes, long[] strides) {
         return new CharBufferIndexer(buffer, sizes, strides);
     }
-    /** Returns {@code create(pointer, sizes, strides, true)} */
+    /** Returns {@code new CharRawIndexer(pointer, sizes, strides)} */
     public static CharIndexer create(CharPointer pointer, long[] sizes, long[] strides) {
-        return create(pointer, sizes, strides, true);
+        return new CharRawIndexer(pointer, sizes, strides);
+    }
+    /** Returns {@code create(pointer, Index.create(sizes, strides), direct)} */
+    public static CharIndexer create(final CharPointer pointer, long[] sizes, long[] strides, boolean direct) {
+        return create(pointer, Index.create(sizes, strides), direct);
     }
     /**
      * Creates a char indexer to access efficiently the data of a pointer.
      *
      * @param pointer data to access via a buffer or to copy to an array
+     * @param index to use
      * @param direct {@code true} to use a direct buffer, see {@link Indexer} for details
      * @return the new char indexer backed by the raw memory interface, a buffer, or an array
      */
-    public static CharIndexer create(final CharPointer pointer, long[] sizes, long[] strides, boolean direct) {
+    public static CharIndexer create(final CharPointer pointer, Index index, boolean direct) {
         if (direct) {
-            return Raw.getInstance() != null ? new CharRawIndexer(pointer, sizes, strides)
-                                             : new CharBufferIndexer(pointer.asBuffer(), sizes, strides);
+            return Raw.getInstance() != null ? new CharRawIndexer(pointer, index)
+                                             : new CharBufferIndexer(pointer.asBuffer(), index);
         } else {
             final long position = pointer.position();
             char[] array = new char[(int)Math.min(pointer.limit() - position, Integer.MAX_VALUE)];
             pointer.get(array);
-            return new CharArrayIndexer(array, sizes, strides) {
+            return new CharArrayIndexer(array, index) {
                 @Override public void release() {
                     pointer.position(position).put(array);
                     super.release();

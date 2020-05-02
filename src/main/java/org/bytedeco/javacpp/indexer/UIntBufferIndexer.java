@@ -34,24 +34,33 @@ public class UIntBufferIndexer extends UIntIndexer {
     /** The backing buffer. */
     protected IntBuffer buffer;
 
-    /** Calls {@code UIntBufferIndexer(buffer, { buffer.limit() }, { 1 })}. */
+    /** Calls {@code UIntBufferIndexer(buffer, Index.create(buffer.limit()))}. */
     public UIntBufferIndexer(IntBuffer buffer) {
-        this(buffer, new long[] { buffer.limit() }, ONE_STRIDE);
+        this(buffer, Index.create(buffer.limit()));
     }
 
-    /** Calls {@code UIntBufferIndexer(buffer, sizes, strides(sizes))}. */
+    /** Calls {@code UIntBufferIndexer(buffer, Index.create(sizes))}. */
     public UIntBufferIndexer(IntBuffer buffer, long... sizes) {
-        this(buffer, sizes, strides(sizes));
+        this(buffer, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #buffer}, {@link #sizes} and {@link #strides}. */
+    /** Calls {@code UIntBufferIndexer(buffer, Index.create(sizes, strides))}. */
     public UIntBufferIndexer(IntBuffer buffer, long[] sizes, long[] strides) {
-        super(sizes, strides);
+        this(buffer, Index.create(sizes, strides));
+    }
+
+    /** Constructor to set the {@link #buffer} and {@link #index}. */
+    public UIntBufferIndexer(IntBuffer buffer, Index index) {
+        super(index);
         this.buffer = buffer;
     }
 
     @Override public Buffer buffer() {
         return buffer;
+    }
+
+    @Override public UIntIndexer reindex(Index index) {
+        return new UIntBufferIndexer(buffer, index);
     }
 
     @Override public long get(long i) {

@@ -34,6 +34,10 @@ public abstract class FloatIndexer extends Indexer {
     /** The number of bytes used to represent a float. */
     public static final int VALUE_BYTES = 4;
 
+    protected FloatIndexer(Index index) {
+        super(index);
+    }
+
     protected FloatIndexer(long[] sizes, long[] strides) {
         super(sizes, strides);
     }
@@ -46,9 +50,22 @@ public abstract class FloatIndexer extends Indexer {
     public static FloatIndexer create(FloatBuffer buffer) {
         return new FloatBufferIndexer(buffer);
     }
-    /** Returns {@code create(pointer, { pointer.limit() - pointer.position() }, { 1 }, true)} */
+    /** Returns {@code new FloatRawIndexer(pointer)} */
     public static FloatIndexer create(FloatPointer pointer) {
-        return create(pointer, new long[] { pointer.limit() - pointer.position() }, ONE_STRIDE);
+        return new FloatRawIndexer(pointer);
+    }
+
+    /** Returns {@code new FloatArrayIndexer(array, index)} */
+    public static FloatIndexer create(float[] array, Index index) {
+        return new FloatArrayIndexer(array, index);
+    }
+    /** Returns {@code new FloatBufferIndexer(buffer, index)} */
+    public static FloatIndexer create(FloatBuffer buffer, Index index) {
+        return new FloatBufferIndexer(buffer, index);
+    }
+    /** Returns {@code new FloatRawIndexer(pointer, index)} */
+    public static FloatIndexer create(FloatPointer pointer, Index index) {
+        return new FloatRawIndexer(pointer, index);
     }
 
     /** Returns {@code new FloatArrayIndexer(array, sizes)} */
@@ -59,9 +76,9 @@ public abstract class FloatIndexer extends Indexer {
     public static FloatIndexer create(FloatBuffer buffer, long... sizes) {
         return new FloatBufferIndexer(buffer, sizes);
     }
-    /** Returns {@code create(pointer, sizes, strides(sizes))} */
+    /** Returns {@code new FloatRawIndexer(pointer, sizes)} */
     public static FloatIndexer create(FloatPointer pointer, long... sizes) {
-        return create(pointer, sizes, strides(sizes));
+        return new FloatRawIndexer(pointer, sizes);
     }
 
     /** Returns {@code new FloatArrayIndexer(array, sizes, strides)} */
@@ -72,26 +89,31 @@ public abstract class FloatIndexer extends Indexer {
     public static FloatIndexer create(FloatBuffer buffer, long[] sizes, long[] strides) {
         return new FloatBufferIndexer(buffer, sizes, strides);
     }
-    /** Returns {@code create(pointer, sizes, strides, true)} */
+    /** Returns {@code new FloatRawIndexer(pointer, sizes, strides)} */
     public static FloatIndexer create(FloatPointer pointer, long[] sizes, long[] strides) {
-        return create(pointer, sizes, strides, true);
+        return new FloatRawIndexer(pointer, sizes, strides);
+    }
+    /** Returns {@code create(pointer, Index.create(sizes, strides), direct)} */
+    public static FloatIndexer create(final FloatPointer pointer, long[] sizes, long[] strides, boolean direct) {
+        return create(pointer, Index.create(sizes, strides), direct);
     }
     /**
      * Creates a float indexer to access efficiently the data of a pointer.
      *
      * @param pointer data to access via a buffer or to copy to an array
+     * @param index to use
      * @param direct {@code true} to use a direct buffer, see {@link Indexer} for details
      * @return the new float indexer backed by the raw memory interface, a buffer, or an array
      */
-    public static FloatIndexer create(final FloatPointer pointer, long[] sizes, long[] strides, boolean direct) {
+    public static FloatIndexer create(final FloatPointer pointer, Index index, boolean direct) {
         if (direct) {
-            return Raw.getInstance() != null ? new FloatRawIndexer(pointer, sizes, strides)
-                                             : new FloatBufferIndexer(pointer.asBuffer(), sizes, strides);
+            return Raw.getInstance() != null ? new FloatRawIndexer(pointer, index)
+                                             : new FloatBufferIndexer(pointer.asBuffer(), index);
         } else {
             final long position = pointer.position();
             float[] array = new float[(int)Math.min(pointer.limit() - position, Integer.MAX_VALUE)];
             pointer.get(array);
-            return new FloatArrayIndexer(array, sizes, strides) {
+            return new FloatArrayIndexer(array, index) {
                 @Override public void release() {
                     pointer.position(position).put(array);
                     super.release();

@@ -34,6 +34,10 @@ public abstract class UShortIndexer extends Indexer {
     /** The number of bytes used to represent a short. */
     public static final int VALUE_BYTES = 2;
 
+    protected UShortIndexer(Index index) {
+        super(index);
+    }
+
     protected UShortIndexer(long[] sizes, long[] strides) {
         super(sizes, strides);
     }
@@ -46,9 +50,22 @@ public abstract class UShortIndexer extends Indexer {
     public static UShortIndexer create(ShortBuffer buffer) {
         return new UShortBufferIndexer(buffer);
     }
-    /** Returns {@code create(pointer, { pointer.limit() - pointer.position() }, { 1 }, true)} */
+    /** Returns {@code new UShortRawIndexer(pointer)} */
     public static UShortIndexer create(ShortPointer pointer) {
-        return create(pointer, new long[] { pointer.limit() - pointer.position() }, ONE_STRIDE);
+        return new UShortRawIndexer(pointer);
+    }
+
+    /** Returns {@code new UShortArrayIndexer(array, index)} */
+    public static UShortIndexer create(short[] array, Index index) {
+        return new UShortArrayIndexer(array, index);
+    }
+    /** Returns {@code new UShortBufferIndexer(buffer, index)} */
+    public static UShortIndexer create(ShortBuffer buffer, Index index) {
+        return new UShortBufferIndexer(buffer, index);
+    }
+    /** Returns {@code new UShortRawIndexer(pointer, index)} */
+    public static UShortIndexer create(ShortPointer pointer, Index index) {
+        return new UShortRawIndexer(pointer, index);
     }
 
     /** Returns {@code new UShortArrayIndexer(array, sizes)} */
@@ -59,9 +76,9 @@ public abstract class UShortIndexer extends Indexer {
     public static UShortIndexer create(ShortBuffer buffer, long... sizes) {
         return new UShortBufferIndexer(buffer, sizes);
     }
-    /** Returns {@code create(pointer, sizes, strides(sizes))} */
+    /** Returns {@code new UShortRawIndexer(pointer, sizes)} */
     public static UShortIndexer create(ShortPointer pointer, long... sizes) {
-        return create(pointer, sizes, strides(sizes));
+        return new UShortRawIndexer(pointer, sizes);
     }
 
     /** Returns {@code new UShortArrayIndexer(array, sizes, strides)} */
@@ -72,26 +89,31 @@ public abstract class UShortIndexer extends Indexer {
     public static UShortIndexer create(ShortBuffer buffer, long[] sizes, long[] strides) {
         return new UShortBufferIndexer(buffer, sizes, strides);
     }
-    /** Returns {@code create(pointer, sizes, strides, true)} */
+    /** Returns {@code new UShortRawIndexer(pointer, sizes, strides)} */
     public static UShortIndexer create(ShortPointer pointer, long[] sizes, long[] strides) {
-        return create(pointer, sizes, strides, true);
+        return new UShortRawIndexer(pointer, sizes, strides);
+    }
+    /** Returns {@code create(pointer, Index.create(sizes, strides), direct)} */
+    public static UShortIndexer create(final ShortPointer pointer, long[] sizes, long[] strides, boolean direct) {
+        return create(pointer, Index.create(sizes, strides), direct);
     }
     /**
      * Creates a short indexer to access efficiently the data of a pointer.
      *
      * @param pointer data to access via a buffer or to copy to an array
+     * @param index to use
      * @param direct {@code true} to use a direct buffer, see {@link Indexer} for details
      * @return the new short indexer backed by the raw memory interface, a buffer, or an array
      */
-    public static UShortIndexer create(final ShortPointer pointer, long[] sizes, long[] strides, boolean direct) {
+    public static UShortIndexer create(final ShortPointer pointer, Index index, boolean direct) {
         if (direct) {
-            return Raw.getInstance() != null ? new UShortRawIndexer(pointer, sizes, strides)
-                                             : new UShortBufferIndexer(pointer.asBuffer(), sizes, strides);
+            return Raw.getInstance() != null ? new UShortRawIndexer(pointer, index)
+                                             : new UShortBufferIndexer(pointer.asBuffer(), index);
         } else {
             final long position = pointer.position();
             short[] array = new short[(int)Math.min(pointer.limit() - position, Integer.MAX_VALUE)];
             pointer.get(array);
-            return new UShortArrayIndexer(array, sizes, strides) {
+            return new UShortArrayIndexer(array, index) {
                 @Override public void release() {
                     pointer.position(position).put(array);
                     super.release();

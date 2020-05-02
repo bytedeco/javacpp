@@ -34,24 +34,33 @@ public class IntBufferIndexer extends IntIndexer {
     /** The backing buffer. */
     protected IntBuffer buffer;
 
-    /** Calls {@code IntBufferIndexer(buffer, { buffer.limit() }, { 1 })}. */
+    /** Calls {@code IntBufferIndexer(buffer, Index.create(buffer.limit()))}. */
     public IntBufferIndexer(IntBuffer buffer) {
-        this(buffer, new long[] { buffer.limit() }, ONE_STRIDE);
+        this(buffer, Index.create(buffer.limit()));
     }
 
-    /** Calls {@code IntBufferIndexer(buffer, sizes, strides(sizes))}. */
+    /** Calls {@code IntBufferIndexer(buffer, Index.create(sizes))}. */
     public IntBufferIndexer(IntBuffer buffer, long... sizes) {
-        this(buffer, sizes, strides(sizes));
+        this(buffer, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #buffer}, {@link #sizes} and {@link #strides}. */
+    /** Calls {@code IntBufferIndexer(buffer, Index.create(sizes, strides))}. */
     public IntBufferIndexer(IntBuffer buffer, long[] sizes, long[] strides) {
-        super(sizes, strides);
+        this(buffer, Index.create(sizes, strides));
+    }
+
+    /** Constructor to set the {@link #buffer} and {@link #index}. */
+    public IntBufferIndexer(IntBuffer buffer, Index index) {
+        super(index);
         this.buffer = buffer;
     }
 
     @Override public Buffer buffer() {
         return buffer;
+    }
+
+    @Override public IntIndexer reindex(Index index) {
+        return new IntBufferIndexer(buffer, index);
     }
 
     @Override public int get(long i) {

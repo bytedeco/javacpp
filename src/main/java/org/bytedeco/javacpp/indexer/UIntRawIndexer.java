@@ -22,8 +22,8 @@
 
 package org.bytedeco.javacpp.indexer;
 
-import org.bytedeco.javacpp.Pointer;
 import org.bytedeco.javacpp.IntPointer;
+import org.bytedeco.javacpp.Pointer;
 
 /**
  * An indexer for a {@link IntPointer} using the {@link Raw} instance, treated as unsigned.
@@ -38,26 +38,35 @@ public class UIntRawIndexer extends UIntIndexer {
     /** Base address and number of elements accessible. */
     final long base, size;
 
-    /** Calls {@code UIntRawIndexer(pointer, { pointer.limit() - pointer.position() }, { 1 })}. */
+    /** Calls {@code UIntRawIndexer(pointer, Index.create(pointer.limit() - pointer.position()))}. */
     public UIntRawIndexer(IntPointer pointer) {
-        this(pointer, new long[] { pointer.limit() - pointer.position() }, ONE_STRIDE);
+        this(pointer, Index.create(pointer.limit() - pointer.position()));
     }
 
-    /** Calls {@code UIntRawIndexer(pointer, sizes, strides(sizes))}. */
+    /** Calls {@code UIntRawIndexer(pointer, Index.create(sizes))}. */
     public UIntRawIndexer(IntPointer pointer, long... sizes) {
-        this(pointer, sizes, strides(sizes));
+        this(pointer, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #pointer}, {@link #sizes} and {@link #strides}. */
+    /** Calls {@code UIntRawIndexer(pointer, Index.create(sizes, strides))}. */
     public UIntRawIndexer(IntPointer pointer, long[] sizes, long[] strides) {
-        super(sizes, strides);
+        this(pointer, Index.create(sizes, strides));
+    }
+
+    /** Constructor to set the {@link #pointer} and {@link #index}. */
+    public UIntRawIndexer(IntPointer pointer, Index index) {
+        super(index);
         this.pointer = pointer;
-        base = pointer.address() + pointer.position() * VALUE_BYTES;
-        size = pointer.limit() - pointer.position();
+        this.base = pointer.address() + pointer.position() * VALUE_BYTES;
+        this.size = pointer.limit() - pointer.position();
     }
 
     @Override public Pointer pointer() {
         return pointer;
+    }
+
+    @Override public UIntIndexer reindex(Index index) {
+        return new UIntRawIndexer(pointer, index);
     }
 
     public long getRaw(long i) {

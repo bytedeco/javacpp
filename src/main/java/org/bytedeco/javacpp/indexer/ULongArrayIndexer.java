@@ -33,24 +33,33 @@ public class ULongArrayIndexer extends ULongIndexer {
     /** The backing array. */
     protected long[] array;
 
-    /** Calls {@code ULongArrayIndexer(array, { array.length }, { 1 })}. */
+    /** Calls {@code ULongArrayIndexer(array, Index.create(array.length))}. */
     public ULongArrayIndexer(long[] array) {
-        this(array, new long[] { array.length }, ONE_STRIDE);
+        this(array, Index.create(array.length));
     }
 
-    /** Calls {@code ULongArrayIndexer(array, sizes, strides(sizes))}. */
+    /** Calls {@code ULongArrayIndexer(array, Index.create(sizes))}. */
     public ULongArrayIndexer(long[] array, long... sizes) {
-        this(array, sizes, strides(sizes));
+        this(array, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #array}, {@link #sizes} and {@link #strides}. */
+    /** Calls {@code ULongArrayIndexer(array, Index.create(sizes, strides))}. */
     public ULongArrayIndexer(long[] array, long[] sizes, long[] strides) {
-        super(sizes, strides);
+        this(array, Index.create(sizes, strides));
+    }
+
+    /** Constructor to set the {@link #array} and {@link #index}. */
+    public ULongArrayIndexer(long[] array, Index index) {
+        super(index);
         this.array = array;
     }
 
     @Override public long[] array() {
         return array;
+    }
+
+    @Override public ULongIndexer reindex(Index index) {
+        return new ULongArrayIndexer(array, index);
     }
 
     @Override public BigInteger get(long i) {

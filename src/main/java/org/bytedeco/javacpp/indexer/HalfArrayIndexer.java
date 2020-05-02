@@ -31,24 +31,33 @@ public class HalfArrayIndexer extends HalfIndexer {
     /** The backing array. */
     protected short[] array;
 
-    /** Calls {@code HalfArrayIndexer(array, { array.length }, { 1 })}. */
+    /** Calls {@code HalfArrayIndexer(array, Index.create(array.length))}. */
     public HalfArrayIndexer(short[] array) {
-        this(array, new long[] { array.length }, ONE_STRIDE);
+        this(array, Index.create(array.length));
     }
 
-    /** Calls {@code HalfArrayIndexer(array, sizes, strides(sizes))}. */
+    /** Calls {@code HalfArrayIndexer(array, Index.create(sizes))}. */
     public HalfArrayIndexer(short[] array, long... sizes) {
-        this(array, sizes, strides(sizes));
+        this(array, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #array}, {@link #sizes} and {@link #strides}. */
+    /** Calls {@code HalfArrayIndexer(array, Index.create(sizes, strides))}. */
     public HalfArrayIndexer(short[] array, long[] sizes, long[] strides) {
-        super(sizes, strides);
+        this(array, Index.create(sizes, strides));
+    }
+
+    /** Constructor to set the {@link #array} and {@link #index}. */
+    public HalfArrayIndexer(short[] array, Index index) {
+        super(index);
         this.array = array;
     }
 
     @Override public short[] array() {
         return array;
+    }
+
+    @Override public HalfIndexer reindex(Index index) {
+        return new HalfArrayIndexer(array, index);
     }
 
     @Override public float get(long i) {

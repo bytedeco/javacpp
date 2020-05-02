@@ -34,24 +34,33 @@ public class ByteBufferIndexer extends ByteIndexer {
     /** The backing buffer. */
     protected ByteBuffer buffer;
 
-    /** Calls {@code ByteBufferIndexer(buffer, { buffer.limit() }, { 1 })}. */
+    /** Calls {@code ByteBufferIndexer(buffer, Index.create(buffer.limit()))}. */
     public ByteBufferIndexer(ByteBuffer buffer) {
-        this(buffer, new long[] { buffer.limit() }, ONE_STRIDE);
+        this(buffer, Index.create(buffer.limit()));
     }
 
-    /** Calls {@code ByteBufferIndexer(buffer, sizes, strides(sizes))}. */
+    /** Calls {@code ByteBufferIndexer(buffer, Index.create(sizes))}. */
     public ByteBufferIndexer(ByteBuffer buffer, long... sizes) {
-        this(buffer, sizes, strides(sizes));
+        this(buffer, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #buffer}, {@link #sizes} and {@link #strides}. */
+    /** Calls {@code ByteBufferIndexer(buffer, Index.create(sizes, strides))}. */
     public ByteBufferIndexer(ByteBuffer buffer, long[] sizes, long[] strides) {
-        super(sizes, strides);
+        this(buffer, Index.create(sizes, strides));
+    }
+
+    /** Constructor to set the {@link #buffer} and {@link #index}. */
+    public ByteBufferIndexer(ByteBuffer buffer, Index index) {
+        super(index);
         this.buffer = buffer;
     }
 
     @Override public Buffer buffer() {
         return buffer;
+    }
+
+    @Override public ByteIndexer reindex(Index index) {
+        return new ByteBufferIndexer(buffer, index);
     }
 
     @Override public byte get(long i) {

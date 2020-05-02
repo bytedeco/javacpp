@@ -34,6 +34,10 @@ public abstract class DoubleIndexer extends Indexer {
     /** The number of bytes used to represent a double. */
     public static final int VALUE_BYTES = 8;
 
+    protected DoubleIndexer(Index index) {
+        super(index);
+    }
+
     protected DoubleIndexer(long[] sizes, long[] strides) {
         super(sizes, strides);
     }
@@ -46,9 +50,22 @@ public abstract class DoubleIndexer extends Indexer {
     public static DoubleIndexer create(DoubleBuffer buffer) {
         return new DoubleBufferIndexer(buffer);
     }
-    /** Returns {@code create(pointer, { pointer.limit() - pointer.position() }, { 1 }, true)} */
+    /** Returns {@code new DoubleRawIndexer(pointer)} */
     public static DoubleIndexer create(DoublePointer pointer) {
-        return create(pointer, new long[] { pointer.limit() - pointer.position() }, ONE_STRIDE);
+        return new DoubleRawIndexer(pointer);
+    }
+
+    /** Returns {@code new DoubleArrayIndexer(array, index)} */
+    public static DoubleIndexer create(double[] array, Index index) {
+        return new DoubleArrayIndexer(array, index);
+    }
+    /** Returns {@code new DoubleBufferIndexer(buffer, index)} */
+    public static DoubleIndexer create(DoubleBuffer buffer, Index index) {
+        return new DoubleBufferIndexer(buffer, index);
+    }
+    /** Returns {@code new DoubleRawIndexer(pointer, index)} */
+    public static DoubleIndexer create(DoublePointer pointer, Index index) {
+        return new DoubleRawIndexer(pointer, index);
     }
 
     /** Returns {@code new DoubleArrayIndexer(array, sizes)} */
@@ -59,9 +76,9 @@ public abstract class DoubleIndexer extends Indexer {
     public static DoubleIndexer create(DoubleBuffer buffer, long... sizes) {
         return new DoubleBufferIndexer(buffer, sizes);
     }
-    /** Returns {@code create(pointer, sizes, strides(sizes))} */
+    /** Returns {@code new DoubleRawIndexer(pointer, index)} */
     public static DoubleIndexer create(DoublePointer pointer, long... sizes) {
-        return create(pointer, sizes, strides(sizes));
+        return new DoubleRawIndexer(pointer, sizes);
     }
 
     /** Returns {@code new DoubleArrayIndexer(array, sizes, strides)} */
@@ -72,26 +89,31 @@ public abstract class DoubleIndexer extends Indexer {
     public static DoubleIndexer create(DoubleBuffer buffer, long[] sizes, long[] strides) {
         return new DoubleBufferIndexer(buffer, sizes, strides);
     }
-    /** Returns {@code create(pointer, sizes, strides, true)} */
+    /** Returns {@code new DoubleRawIndexer(pointer, sizes, strides)} */
     public static DoubleIndexer create(DoublePointer pointer, long[] sizes, long[] strides) {
-        return create(pointer, sizes, strides, true);
+        return new DoubleRawIndexer(pointer, sizes, strides);
+    }
+    /** Returns {@code create(pointer, Index.create(sizes, strides), direct)} */
+    public static DoubleIndexer create(final DoublePointer pointer, long[] sizes, long[] strides, boolean direct) {
+        return create(pointer, Index.create(sizes, strides), direct);
     }
     /**
      * Creates a double indexer to access efficiently the data of a pointer.
      *
      * @param pointer data to access via a buffer or to copy to an array
+     * @param index to use
      * @param direct {@code true} to use a direct buffer, see {@link Indexer} for details
      * @return the new double indexer backed by the raw memory interface, a buffer, or an array
      */
-    public static DoubleIndexer create(final DoublePointer pointer, long[] sizes, long[] strides, boolean direct) {
+    public static DoubleIndexer create(final DoublePointer pointer, Index index, boolean direct) {
         if (direct) {
-            return Raw.getInstance() != null ? new DoubleRawIndexer(pointer, sizes, strides)
-                                             : new DoubleBufferIndexer(pointer.asBuffer(), sizes, strides);
+            return Raw.getInstance() != null ? new DoubleRawIndexer(pointer, index)
+                                             : new DoubleBufferIndexer(pointer.asBuffer(), index);
         } else {
             final long position = pointer.position();
             double[] array = new double[(int)Math.min(pointer.limit() - position, Integer.MAX_VALUE)];
             pointer.get(array);
-            return new DoubleArrayIndexer(array, sizes, strides) {
+            return new DoubleArrayIndexer(array, index) {
                 @Override public void release() {
                     pointer.position(position).put(array);
                     super.release();

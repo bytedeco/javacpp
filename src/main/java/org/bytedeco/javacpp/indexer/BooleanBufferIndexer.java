@@ -34,24 +34,33 @@ public class BooleanBufferIndexer extends BooleanIndexer {
     /** The backing buffer. */
     protected ByteBuffer buffer;
 
-    /** Calls {@code BooleanBufferIndexer(buffer, { buffer.limit() }, { 1 })}. */
+    /** Calls {@code BooleanBufferIndexer(buffer, Index.create(buffer.limit()))}. */
     public BooleanBufferIndexer(ByteBuffer buffer) {
-        this(buffer, new long[] { buffer.limit() }, ONE_STRIDE);
+        this(buffer, Index.create(buffer.limit()));
     }
 
-    /** Calls {@code BooleanBufferIndexer(buffer, sizes, strides(sizes))}. */
+    /** Calls {@code BooleanBufferIndexer(buffer, Index.create(sizes))}. */
     public BooleanBufferIndexer(ByteBuffer buffer, long... sizes) {
-        this(buffer, sizes, strides(sizes));
+        this(buffer, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #buffer}, {@link #sizes} and {@link #strides}. */
+    /** Calls {@code BooleanBufferIndexer(buffer, Index.create(sizes, strides))}. */
     public BooleanBufferIndexer(ByteBuffer buffer, long[] sizes, long[] strides) {
-        super(sizes, strides);
+        this(buffer, Index.create(sizes, strides));
+    }
+
+    /** Constructor to set the {@link #buffer} and {@link #index}. */
+    public BooleanBufferIndexer(ByteBuffer buffer, Index index) {
+        super(index);
         this.buffer = buffer;
     }
 
     @Override public Buffer buffer() {
         return buffer;
+    }
+
+    @Override public BooleanIndexer reindex(Index index) {
+        return new BooleanBufferIndexer(buffer, index);
     }
 
     @Override public boolean get(long i) {

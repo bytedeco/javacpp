@@ -34,6 +34,10 @@ public abstract class IntIndexer extends Indexer {
     /** The number of bytes used to represent an int. */
     public static final int VALUE_BYTES = 4;
 
+    protected IntIndexer(Index index) {
+        super(index);
+    }
+
     protected IntIndexer(long[] sizes, long[] strides) {
         super(sizes, strides);
     }
@@ -46,9 +50,22 @@ public abstract class IntIndexer extends Indexer {
     public static IntIndexer create(IntBuffer buffer) {
         return new IntBufferIndexer(buffer);
     }
-    /** Returns {@code create(pointer, { pointer.limit() - pointer.position() }, { 1 }, true)} */
+    /** Returns {@code new IntRawIndexer(pointer)} */
     public static IntIndexer create(IntPointer pointer) {
-        return create(pointer, new long[] { pointer.limit() - pointer.position() }, ONE_STRIDE);
+        return new IntRawIndexer(pointer);
+    }
+
+    /** Returns {@code new IntArrayIndexer(array, index)} */
+    public static IntIndexer create(int[] array, Index index) {
+        return new IntArrayIndexer(array, index);
+    }
+    /** Returns {@code new IntBufferIndexer(buffer, index)} */
+    public static IntIndexer create(IntBuffer buffer, Index index) {
+        return new IntBufferIndexer(buffer, index);
+    }
+    /** Returns {@code new IntRawIndexer(pointer, index)} */
+    public static IntIndexer create(IntPointer pointer, Index index) {
+        return new IntRawIndexer(pointer, index);
     }
 
     /** Returns {@code new IntArrayIndexer(array, sizes)} */
@@ -59,9 +76,9 @@ public abstract class IntIndexer extends Indexer {
     public static IntIndexer create(IntBuffer buffer, long... sizes) {
         return new IntBufferIndexer(buffer, sizes);
     }
-    /** Returns {@code create(pointer, sizes, strides(sizes))} */
+    /** Returns {@code new IntRawIndexer(pointer, sizes)} */
     public static IntIndexer create(IntPointer pointer, long... sizes) {
-        return create(pointer, sizes, strides(sizes));
+        return new IntRawIndexer(pointer, sizes);
     }
 
     /** Returns {@code new IntArrayIndexer(array, sizes, strides)} */
@@ -72,26 +89,31 @@ public abstract class IntIndexer extends Indexer {
     public static IntIndexer create(IntBuffer buffer, long[] sizes, long[] strides) {
         return new IntBufferIndexer(buffer, sizes, strides);
     }
-    /** Returns {@code create(pointer, sizes, strides, true)} */
+    /** Returns {@code new IntRawIndexer(pointer, sizes, strides)} */
     public static IntIndexer create(IntPointer pointer, long[] sizes, long[] strides) {
-        return create(pointer, sizes, strides, true);
+        return new IntRawIndexer(pointer, sizes, strides);
+    }
+    /** Returns {@code create(pointer, Index.create(sizes, strides), direct)} */
+    public static IntIndexer create(final IntPointer pointer, long[] sizes, long[] strides, boolean direct) {
+        return create(pointer, Index.create(sizes, strides), direct);
     }
     /**
      * Creates a int indexer to access efficiently the data of a pointer.
      *
      * @param pointer data to access via a buffer or to copy to an array
+     * @param index to use
      * @param direct {@code true} to use a direct buffer, see {@link Indexer} for details
      * @return the new int indexer backed by the raw memory interface, a buffer, or an array
      */
-    public static IntIndexer create(final IntPointer pointer, long[] sizes, long[] strides, boolean direct) {
+    public static IntIndexer create(final IntPointer pointer, Index index, boolean direct) {
         if (direct) {
-            return Raw.getInstance() != null ? new IntRawIndexer(pointer, sizes, strides)
-                                             : new IntBufferIndexer(pointer.asBuffer(), sizes, strides);
+            return Raw.getInstance() != null ? new IntRawIndexer(pointer, index)
+                                             : new IntBufferIndexer(pointer.asBuffer(), index);
         } else {
             final long position = pointer.position();
             int[] array = new int[(int)Math.min(pointer.limit() - position, Integer.MAX_VALUE)];
             pointer.get(array);
-            return new IntArrayIndexer(array, sizes, strides) {
+            return new IntArrayIndexer(array, index) {
                 @Override public void release() {
                     pointer.position(position).put(array);
                     super.release();

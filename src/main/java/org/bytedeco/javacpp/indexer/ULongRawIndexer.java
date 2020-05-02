@@ -23,8 +23,8 @@
 package org.bytedeco.javacpp.indexer;
 
 import java.math.BigInteger;
-import org.bytedeco.javacpp.Pointer;
 import org.bytedeco.javacpp.LongPointer;
+import org.bytedeco.javacpp.Pointer;
 
 /**
  * An indexer for a {@link LongPointer} using the {@link Raw} instance, treated as unsigned.
@@ -39,26 +39,35 @@ public class ULongRawIndexer extends ULongIndexer {
     /** Base address and number of elements accessible. */
     final long base, size;
 
-    /** Calls {@code ULongRawIndexer(pointer, { pointer.limit() - pointer.position() }, { 1 })}. */
+    /** Calls {@code ULongRawIndexer(pointer, Index.create(pointer.limit() - pointer.position()))}. */
     public ULongRawIndexer(LongPointer pointer) {
-        this(pointer, new long[] { pointer.limit() - pointer.position() }, ONE_STRIDE);
+        this(pointer, Index.create(pointer.limit() - pointer.position()));
     }
 
-    /** Calls {@code ULongRawIndexer(pointer, sizes, strides(sizes))}. */
+    /** Calls {@code ULongRawIndexer(pointer, Index.create(sizes))}. */
     public ULongRawIndexer(LongPointer pointer, long... sizes) {
-        this(pointer, sizes, strides(sizes));
+        this(pointer, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #pointer}, {@link #sizes} and {@link #strides}. */
+    /** Calls {@code ULongRawIndexer(pointer, Index.create(sizes, strides))}. */
     public ULongRawIndexer(LongPointer pointer, long[] sizes, long[] strides) {
-        super(sizes, strides);
+        this(pointer, Index.create(sizes, strides));
+    }
+
+    /** Constructor to set the {@link #pointer} and {@link #index}. */
+    public ULongRawIndexer(LongPointer pointer, Index index) {
+        super(index);
         this.pointer = pointer;
-        base = pointer.address() + pointer.position() * VALUE_BYTES;
-        size = pointer.limit() - pointer.position();
+        this.base = pointer.address() + pointer.position() * VALUE_BYTES;
+        this.size = pointer.limit() - pointer.position();
     }
 
     @Override public Pointer pointer() {
         return pointer;
+    }
+
+    @Override public ULongIndexer reindex(Index index) {
+        return new ULongRawIndexer(pointer, index);
     }
 
     public BigInteger getRaw(long i) {

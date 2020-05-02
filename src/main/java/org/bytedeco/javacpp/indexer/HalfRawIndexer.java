@@ -38,26 +38,35 @@ public class HalfRawIndexer extends HalfIndexer {
     /** Base address and number of elements accessible. */
     final long base, size;
 
-    /** Calls {@code HalfRawIndexer(pointer, { pointer.limit() - pointer.position() }, { 1 })}. */
+    /** Calls {@code HalfRawIndexer(pointer, Index.create(pointer.limit() - pointer.position()))}. */
     public HalfRawIndexer(ShortPointer pointer) {
-        this(pointer, new long[] { pointer.limit() - pointer.position() }, ONE_STRIDE);
+        this(pointer, Index.create(pointer.limit() - pointer.position()));
     }
 
-    /** Calls {@code HalfRawIndexer(pointer, sizes, strides(sizes))}. */
+    /** Calls {@code HalfRawIndexer(pointer, Index.create(sizes))}. */
     public HalfRawIndexer(ShortPointer pointer, long... sizes) {
-        this(pointer, sizes, strides(sizes));
+        this(pointer, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #pointer}, {@link #sizes} and {@link #strides}. */
+    /** Calls {@code HalfRawIndexer(pointer, Index.create(sizes, strides))}. */
     public HalfRawIndexer(ShortPointer pointer, long[] sizes, long[] strides) {
-        super(sizes, strides);
+        this(pointer, Index.create(sizes, strides));
+    }
+
+    /** Constructor to set the {@link #pointer} and {@link #index}. */
+    public HalfRawIndexer(ShortPointer pointer, Index index) {
+        super(index);
         this.pointer = pointer;
-        base = pointer.address() + pointer.position() * VALUE_BYTES;
-        size = pointer.limit() - pointer.position();
+        this.base = pointer.address() + pointer.position() * VALUE_BYTES;
+        this.size = pointer.limit() - pointer.position();
     }
 
     @Override public Pointer pointer() {
         return pointer;
+    }
+
+    @Override public HalfIndexer reindex(Index index) {
+        return new HalfRawIndexer(pointer, index);
     }
 
     public float getRaw(long i) {

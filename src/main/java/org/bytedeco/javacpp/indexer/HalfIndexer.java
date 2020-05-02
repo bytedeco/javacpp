@@ -34,6 +34,10 @@ public abstract class HalfIndexer extends Indexer {
     /** The number of bytes used to represent a short. */
     public static final int VALUE_BYTES = 2;
 
+    protected HalfIndexer(Index index) {
+        super(index);
+    }
+
     protected HalfIndexer(long[] sizes, long[] strides) {
         super(sizes, strides);
     }
@@ -46,9 +50,22 @@ public abstract class HalfIndexer extends Indexer {
     public static HalfIndexer create(ShortBuffer buffer) {
         return new HalfBufferIndexer(buffer);
     }
-    /** Returns {@code create(pointer, { pointer.limit() - pointer.position() }, { 1 }, true)} */
+    /** Returns {@code new HalfRawIndexer(pointer)} */
     public static HalfIndexer create(ShortPointer pointer) {
-        return create(pointer, new long[] { pointer.limit() - pointer.position() }, ONE_STRIDE);
+        return new HalfRawIndexer(pointer);
+    }
+
+    /** Returns {@code new HalfArrayIndexer(array, index)} */
+    public static HalfIndexer create(short[] array, Index index) {
+        return new HalfArrayIndexer(array, index);
+    }
+    /** Returns {@code new HalfBufferIndexer(buffer, index)} */
+    public static HalfIndexer create(ShortBuffer buffer, Index index) {
+        return new HalfBufferIndexer(buffer, index);
+    }
+    /** Returns {@code new HalfRawIndexer(pointer, index)} */
+    public static HalfIndexer create(ShortPointer pointer, Index index) {
+        return new HalfRawIndexer(pointer, index);
     }
 
     /** Returns {@code new HalfArrayIndexer(array, sizes)} */
@@ -59,9 +76,9 @@ public abstract class HalfIndexer extends Indexer {
     public static HalfIndexer create(ShortBuffer buffer, long... sizes) {
         return new HalfBufferIndexer(buffer, sizes);
     }
-    /** Returns {@code create(pointer, sizes, strides(sizes))} */
+    /** Returns {@code new HalfRawIndexer(pointer, sizes)} */
     public static HalfIndexer create(ShortPointer pointer, long... sizes) {
-        return create(pointer, sizes, strides(sizes));
+        return new HalfRawIndexer(pointer, sizes);
     }
 
     /** Returns {@code new HalfArrayIndexer(array, sizes, strides)} */
@@ -72,26 +89,31 @@ public abstract class HalfIndexer extends Indexer {
     public static HalfIndexer create(ShortBuffer buffer, long[] sizes, long[] strides) {
         return new HalfBufferIndexer(buffer, sizes, strides);
     }
-    /** Returns {@code create(pointer, sizes, strides, true)} */
+    /** Returns {@code new HalfRawIndexer(pointer, sizes, strides)} */
     public static HalfIndexer create(ShortPointer pointer, long[] sizes, long[] strides) {
-        return create(pointer, sizes, strides, true);
+        return new HalfRawIndexer(pointer, sizes, strides);
+    }
+    /** Returns {@code create(pointer, Index.create(sizes, strides), direct)} */
+    public static HalfIndexer create(final ShortPointer pointer, long[] sizes, long[] strides, boolean direct) {
+        return create(pointer, Index.create(sizes, strides), direct);
     }
     /**
      * Creates a half float indexer to access efficiently the data of a pointer.
      *
      * @param pointer data to access via a buffer or to copy to an array
+     * @param index to use
      * @param direct {@code true} to use a direct buffer, see {@link Indexer} for details
      * @return the new half indexer backed by the raw memory interface, a buffer, or an array
      */
-    public static HalfIndexer create(final ShortPointer pointer, long[] sizes, long[] strides, boolean direct) {
+    public static HalfIndexer create(final ShortPointer pointer, Index index, boolean direct) {
         if (direct) {
-            return Raw.getInstance() != null ? new HalfRawIndexer(pointer, sizes, strides)
-                                             : new HalfBufferIndexer(pointer.asBuffer(), sizes, strides);
+            return Raw.getInstance() != null ? new HalfRawIndexer(pointer, index)
+                                             : new HalfBufferIndexer(pointer.asBuffer(), index);
         } else {
             final long position = pointer.position();
             short[] array = new short[(int)Math.min(pointer.limit() - position, Integer.MAX_VALUE)];
             pointer.get(array);
-            return new HalfArrayIndexer(array, sizes, strides) {
+            return new HalfArrayIndexer(array, index) {
                 @Override public void release() {
                     pointer.position(position).put(array);
                     super.release();

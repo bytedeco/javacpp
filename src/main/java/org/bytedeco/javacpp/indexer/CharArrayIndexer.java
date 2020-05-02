@@ -31,24 +31,33 @@ public class CharArrayIndexer extends CharIndexer {
     /** The backing array. */
     protected char[] array;
 
-    /** Calls {@code CharArrayIndexer(array, { array.length }, { 1 })}. */
+    /** Calls {@code CharArrayIndexer(array, Index.create(array.length))}. */
     public CharArrayIndexer(char[] array) {
-        this(array, new long[] { array.length }, ONE_STRIDE);
+        this(array, Index.create(array.length));
     }
 
-    /** Calls {@code CharArrayIndexer(array, sizes, strides(sizes))}. */
+    /** Calls {@code CharArrayIndexer(array, Index.create(sizes))}. */
     public CharArrayIndexer(char[] array, long... sizes) {
-        this(array, sizes, strides(sizes));
+        this(array, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #array}, {@link #sizes} and {@link #strides}. */
+    /** Calls {@code CharArrayIndexer(array, Index.create(sizes, strides))}. */
     public CharArrayIndexer(char[] array, long[] sizes, long[] strides) {
-        super(sizes, strides);
+        this(array, Index.create(sizes, strides));
+    }
+
+    /** Constructor to set the {@link #array} and {@link #index}. */
+    public CharArrayIndexer(char[] array, Index index) {
+        super(index);
         this.array = array;
     }
 
     @Override public char[] array() {
         return array;
+    }
+
+    @Override public CharIndexer reindex(Index index) {
+        return new CharArrayIndexer(array, index);
     }
 
     @Override public char get(long i) {

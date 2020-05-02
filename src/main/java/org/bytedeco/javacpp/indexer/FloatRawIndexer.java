@@ -38,26 +38,35 @@ public class FloatRawIndexer extends FloatIndexer {
     /** Base address and number of elements accessible. */
     final long base, size;
 
-    /** Calls {@code FloatRawIndexer(pointer, { pointer.limit() - pointer.position() }, { 1 })}. */
+    /** Calls {@code FloatRawIndexer(pointer, Index.create(pointer.limit() - pointer.position()))}. */
     public FloatRawIndexer(FloatPointer pointer) {
-        this(pointer, new long[] { pointer.limit() - pointer.position() }, ONE_STRIDE);
+        this(pointer, Index.create(pointer.limit() - pointer.position()));
     }
 
-    /** Calls {@code FloatRawIndexer(pointer, sizes, strides(sizes))}. */
+    /** Calls {@code FloatRawIndexer(pointer, Index.create(sizes))}. */
     public FloatRawIndexer(FloatPointer pointer, long... sizes) {
-        this(pointer, sizes, strides(sizes));
+        this(pointer, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #pointer}, {@link #sizes} and {@link #strides}. */
+    /** Calls {@code FloatRawIndexer(pointer, Index.create(sizes, strides))}. */
     public FloatRawIndexer(FloatPointer pointer, long[] sizes, long[] strides) {
-        super(sizes, strides);
+        this(pointer, Index.create(sizes, strides));
+    }
+
+    /** Constructor to set the {@link #pointer} and {@link #index}. */
+    public FloatRawIndexer(FloatPointer pointer, Index index) {
+        super(index);
         this.pointer = pointer;
-        base = pointer.address() + pointer.position() * VALUE_BYTES;
-        size = pointer.limit() - pointer.position();
+        this.base = pointer.address() + pointer.position() * VALUE_BYTES;
+        this.size = pointer.limit() - pointer.position();
     }
 
     @Override public Pointer pointer() {
         return pointer;
+    }
+
+    @Override public FloatIndexer reindex(Index index) {
+        return new FloatRawIndexer(pointer, index);
     }
 
     public float getRaw(long i) {

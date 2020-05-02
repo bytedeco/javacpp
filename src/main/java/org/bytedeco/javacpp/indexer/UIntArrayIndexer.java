@@ -31,24 +31,33 @@ public class UIntArrayIndexer extends UIntIndexer {
     /** The backing array. */
     protected int[] array;
 
-    /** Calls {@code UIntArrayIndexer(array, { array.length }, { 1 })}. */
+    /** Calls {@code UIntArrayIndexer(array, Index.create(array.length))}. */
     public UIntArrayIndexer(int[] array) {
-        this(array, new long[] { array.length }, ONE_STRIDE);
+        this(array, Index.create(array.length));
     }
 
-    /** Calls {@code UIntArrayIndexer(array, sizes, strides(sizes))}. */
+    /** Calls {@code UIntArrayIndexer(array, Index.create(sizes))}. */
     public UIntArrayIndexer(int[] array, long... sizes) {
-        this(array, sizes, strides(sizes));
+        this(array, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #array}, {@link #sizes} and {@link #strides}. */
+    /** Calls {@code UIntArrayIndexer(array, Index.create(sizes, strides))}. */
     public UIntArrayIndexer(int[] array, long[] sizes, long[] strides) {
-        super(sizes, strides);
+        this(array, Index.create(sizes, strides));
+    }
+
+    /** Constructor to set the {@link #array} and {@link #index}. */
+    public UIntArrayIndexer(int[] array, Index index) {
+        super(index);
         this.array = array;
     }
 
     @Override public int[] array() {
         return array;
+    }
+
+    @Override public UIntIndexer reindex(Index index) {
+        return new UIntArrayIndexer(array, index);
     }
 
     @Override public long get(long i) {

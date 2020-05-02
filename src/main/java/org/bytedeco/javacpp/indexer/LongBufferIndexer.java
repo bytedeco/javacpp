@@ -34,24 +34,33 @@ public class LongBufferIndexer extends LongIndexer {
     /** The backing buffer. */
     protected LongBuffer buffer;
 
-    /** Calls {@code LongBufferIndexer(buffer, { buffer.limit() }, { 1 })}. */
+    /** Calls {@code LongBufferIndexer(buffer, Index.create(buffer.limit()))}. */
     public LongBufferIndexer(LongBuffer buffer) {
-        this(buffer, new long[] { buffer.limit() }, ONE_STRIDE);
+        this(buffer, Index.create(buffer.limit()));
     }
 
-    /** Calls {@code LongBufferIndexer(buffer, sizes, strides(sizes))}. */
+    /** Calls {@code LongBufferIndexer(buffer, Index.create(sizes))}. */
     public LongBufferIndexer(LongBuffer buffer, long... sizes) {
-        this(buffer, sizes, strides(sizes));
+        this(buffer, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #buffer}, {@link #sizes} and {@link #strides}. */
+    /** Calls {@code LongBufferIndexer(buffer, Index.create(sizes, strides))}. */
     public LongBufferIndexer(LongBuffer buffer, long[] sizes, long[] strides) {
-        super(sizes, strides);
+        this(buffer, Index.create(sizes, strides));
+    }
+
+    /** Constructor to set the {@link #buffer} and {@link #index}. */
+    public LongBufferIndexer(LongBuffer buffer, Index index) {
+        super(index);
         this.buffer = buffer;
     }
 
     @Override public Buffer buffer() {
         return buffer;
+    }
+
+    @Override public LongIndexer reindex(Index index) {
+        return new LongBufferIndexer(buffer, index);
     }
 
     @Override public long get(long i) {

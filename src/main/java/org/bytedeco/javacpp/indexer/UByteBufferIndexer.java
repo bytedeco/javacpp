@@ -34,24 +34,33 @@ public class UByteBufferIndexer extends UByteIndexer {
     /** The backing buffer. */
     protected ByteBuffer buffer;
 
-    /** Calls {@code UByteBufferIndexer(buffer, { buffer.limit() }, { 1 })}. */
+    /** Calls {@code UByteBufferIndexer(buffer, Index.create(buffer.limit()))}. */
     public UByteBufferIndexer(ByteBuffer buffer) {
-        this(buffer, new long[] { buffer.limit() }, ONE_STRIDE);
+        this(buffer, Index.create(buffer.limit()));
     }
 
-    /** Calls {@code UByteBufferIndexer(buffer, sizes, strides(sizes))}. */
+    /** Calls {@code UByteBufferIndexer(buffer, Index.create(sizes))}. */
     public UByteBufferIndexer(ByteBuffer buffer, long... sizes) {
-        this(buffer, sizes, strides(sizes));
+        this(buffer, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #buffer}, {@link #sizes} and {@link #strides}. */
+    /** Calls {@code UByteBufferIndexer(buffer, Index.create(sizes, strides))}. */
     public UByteBufferIndexer(ByteBuffer buffer, long[] sizes, long[] strides) {
-        super(sizes, strides);
+        this(buffer, Index.create(sizes, strides));
+    }
+
+    /** Constructor to set the {@link #buffer} and {@link #index}. */
+    public UByteBufferIndexer(ByteBuffer buffer, Index index) {
+        super(index);
         this.buffer = buffer;
     }
 
     @Override public Buffer buffer() {
         return buffer;
+    }
+
+    @Override public UByteIndexer reindex(Index index) {
+        return new UByteBufferIndexer(buffer, index);
     }
 
     @Override public int get(long i) {

@@ -38,26 +38,35 @@ public class UShortRawIndexer extends UShortIndexer {
     /** Base address and number of elements accessible. */
     final long base, size;
 
-    /** Calls {@code UShortRawIndexer(pointer, { pointer.limit() - pointer.position() }, { 1 })}. */
+    /** Calls {@code UShortRawIndexer(pointer, Index.create(pointer.limit() - pointer.position()))}. */
     public UShortRawIndexer(ShortPointer pointer) {
-        this(pointer, new long[] { pointer.limit() - pointer.position() }, ONE_STRIDE);
+        this(pointer, Index.create(pointer.limit() - pointer.position()));
     }
 
-    /** Calls {@code UShortRawIndexer(pointer, sizes, strides(sizes))}. */
+    /** Calls {@code UShortRawIndexer(pointer, Index.create(sizes))}. */
     public UShortRawIndexer(ShortPointer pointer, long... sizes) {
-        this(pointer, sizes, strides(sizes));
+        this(pointer, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #pointer}, {@link #sizes} and {@link #strides}. */
+    /** Calls {@code UShortRawIndexer(pointer, Index.create(sizes, strides))}. */
     public UShortRawIndexer(ShortPointer pointer, long[] sizes, long[] strides) {
-        super(sizes, strides);
+        this(pointer, Index.create(sizes, strides));
+    }
+
+    /** Constructor to set the {@link #pointer} and {@link #index}. */
+    public UShortRawIndexer(ShortPointer pointer, Index index) {
+        super(index);
         this.pointer = pointer;
-        base = pointer.address() + pointer.position() * VALUE_BYTES;
-        size = pointer.limit() - pointer.position();
+        this.base = pointer.address() + pointer.position() * VALUE_BYTES;
+        this.size = pointer.limit() - pointer.position();
     }
 
     @Override public Pointer pointer() {
         return pointer;
+    }
+
+    @Override public UShortIndexer reindex(Index index) {
+        return new UShortRawIndexer(pointer, index);
     }
 
     public int getRaw(long i) {

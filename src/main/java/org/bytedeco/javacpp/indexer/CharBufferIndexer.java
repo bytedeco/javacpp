@@ -34,24 +34,33 @@ public class CharBufferIndexer extends CharIndexer {
     /** The backing buffer. */
     protected CharBuffer buffer;
 
-    /** Calls {@code CharBufferIndexer(buffer, { buffer.limit() }, { 1 })}. */
+    /** Calls {@code CharBufferIndexer(buffer, Index.create(buffer.limit()))}. */
     public CharBufferIndexer(CharBuffer buffer) {
-        this(buffer, new long[] { buffer.limit() }, ONE_STRIDE);
+        this(buffer, Index.create(buffer.limit()));
     }
 
-    /** Calls {@code CharBufferIndexer(buffer, sizes, strides(sizes))}. */
+    /** Calls {@code CharBufferIndexer(buffer, Index.create(sizes))}. */
     public CharBufferIndexer(CharBuffer buffer, long... sizes) {
-        this(buffer, sizes, strides(sizes));
+        this(buffer, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #buffer}, {@link #sizes} and {@link #strides}. */
+    /** Calls {@code CharBufferIndexer(buffer, Index.create(sizes, strides))}. */
     public CharBufferIndexer(CharBuffer buffer, long[] sizes, long[] strides) {
-        super(sizes, strides);
+        this(buffer, Index.create(sizes, strides));
+    }
+
+    /** Constructor to set the {@link #buffer} and {@link #index}. */
+    public CharBufferIndexer(CharBuffer buffer, Index index) {
+        super(index);
         this.buffer = buffer;
     }
 
     @Override public Buffer buffer() {
         return buffer;
+    }
+
+    @Override public CharIndexer reindex(Index index) {
+        return new CharBufferIndexer(buffer, index);
     }
 
     @Override public char get(long i) {

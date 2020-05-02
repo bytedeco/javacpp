@@ -31,24 +31,33 @@ public class UByteArrayIndexer extends UByteIndexer {
     /** The backing array. */
     protected byte[] array;
 
-    /** Calls {@code UByteArrayIndexer(array, { array.length }, { 1 })}. */
+    /** Calls {@code UByteArrayIndexer(array, Index.create(array.length))}. */
     public UByteArrayIndexer(byte[] array) {
-        this(array, new long[] { array.length }, ONE_STRIDE);
+        this(array, Index.create(array.length));
     }
 
-    /** Calls {@code UByteArrayIndexer(array, sizes, strides(sizes))}. */
+    /** Calls {@code UByteArrayIndexer(array, Index.create(sizes))}. */
     public UByteArrayIndexer(byte[] array, long... sizes) {
-        this(array, sizes, strides(sizes));
+        this(array, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #array}, {@link #sizes} and {@link #strides}. */
+    /** Calls {@code UByteArrayIndexer(array, Index.create(sizes, strides))}. */
     public UByteArrayIndexer(byte[] array, long[] sizes, long[] strides) {
-        super(sizes, strides);
+        this(array, Index.create(sizes, strides));
+    }
+
+    /** Constructor to set the {@link #array} and {@link #index}. */
+    public UByteArrayIndexer(byte[] array, Index index) {
+        super(index);
         this.array = array;
     }
 
     @Override public byte[] array() {
         return array;
+    }
+
+    @Override public UByteIndexer reindex(Index index) {
+        return new UByteArrayIndexer(array, index);
     }
 
     @Override public int get(long i) {

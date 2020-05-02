@@ -34,24 +34,33 @@ public class UShortBufferIndexer extends UShortIndexer {
     /** The backing buffer. */
     protected ShortBuffer buffer;
 
-    /** Calls {@code UShortBufferIndexer(buffer, { buffer.limit() }, { 1 })}. */
+    /** Calls {@code UShortBufferIndexer(buffer, Index.create(buffer.limit()))}. */
     public UShortBufferIndexer(ShortBuffer buffer) {
-        this(buffer, new long[] { buffer.limit() }, ONE_STRIDE);
+        this(buffer, Index.create(buffer.limit()));
     }
 
-    /** Calls {@code UShortBufferIndexer(buffer, sizes, strides(sizes))}. */
+    /** Calls {@code UShortBufferIndexer(buffer, Index.create(sizes))}. */
     public UShortBufferIndexer(ShortBuffer buffer, long... sizes) {
-        this(buffer, sizes, strides(sizes));
+        this(buffer, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #buffer}, {@link #sizes} and {@link #strides}. */
+    /** Calls {@code UShortBufferIndexer(buffer, Index.create(sizes, strides))}. */
     public UShortBufferIndexer(ShortBuffer buffer, long[] sizes, long[] strides) {
-        super(sizes, strides);
+        this(buffer, Index.create(sizes, strides));
+    }
+
+    /** Constructor to set the {@link #buffer} and {@link #index}. */
+    public UShortBufferIndexer(ShortBuffer buffer, Index index) {
+        super(index);
         this.buffer = buffer;
     }
 
     @Override public Buffer buffer() {
         return buffer;
+    }
+
+    @Override public UShortIndexer reindex(Index index) {
+        return new UShortBufferIndexer(buffer, index);
     }
 
     @Override public int get(long i) {

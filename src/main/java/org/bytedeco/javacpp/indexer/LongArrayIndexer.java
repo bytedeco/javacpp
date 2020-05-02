@@ -31,24 +31,33 @@ public class LongArrayIndexer extends LongIndexer {
     /** The backing array. */
     protected long[] array;
 
-    /** Calls {@code LongArrayIndexer(array, { array.length }, { 1 })}. */
+    /** Calls {@code LongArrayIndexer(array, Index.create(array.length))}. */
     public LongArrayIndexer(long[] array) {
-        this(array, new long[] { array.length }, ONE_STRIDE);
+        this(array, Index.create(array.length));
     }
 
-    /** Calls {@code LongArrayIndexer(array, sizes, strides(sizes))}. */
+    /** Calls {@code LongArrayIndexer(array, Index.create(sizes))}. */
     public LongArrayIndexer(long[] array, long... sizes) {
-        this(array, sizes, strides(sizes));
+        this(array, Index.create(sizes));
     }
 
-    /** Constructor to set the {@link #array}, {@link #sizes} and {@link #strides}. */
+    /** Calls {@code LongArrayIndexer(array, Index.create(sizes, strides))}. */
     public LongArrayIndexer(long[] array, long[] sizes, long[] strides) {
-        super(sizes, strides);
+        this(array, Index.create(sizes, strides));
+    }
+
+    /** Constructor to set the {@link #array} and {@link #index}. */
+    public LongArrayIndexer(long[] array, Index index) {
+        super(index);
         this.array = array;
     }
 
     @Override public long[] array() {
         return array;
+    }
+
+    @Override public LongIndexer reindex(Index index) {
+        return new LongArrayIndexer(array, index);
     }
 
     @Override public long get(long i) {
