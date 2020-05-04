@@ -1236,11 +1236,25 @@ public class Loader {
             String filename = prefix + executable + suffix;
             String libraryPath  = p.getProperty("platform.library.path", "");
             try {
+                if (libraryPath.length() > 0) {
+                    // look for the libraries in system paths, and extract them in cache anyway,
+                    // since they cannot be used directly for executables on platforms like Android
+                    for (String preload : preloads) {
+                        URL[] urls = findLibrary(cls, p, preload, true);
+                        for (URL url : urls) {
+                            File f = cacheResource(url);
+                            if (f != null) {
+                                f.setExecutable(true);
+                                break;
+                            }
+                        }
+                    }
+                }
                 for (int i = extensions.length - 1; i >= -1; i--) {
                     // iterate extensions in reverse to be consistent with the overriding of properties
                     String extension = i >= 0 ? extensions[i] : "";
-                    String subdir = (libraryPath.length() > 0 ? "/" + libraryPath : platform + (extension == null ? "" : extension)) + "/";
-                    File f = cacheResource(cls, subdir + filename);
+                    String subdir = libraryPath.length() > 0 ? "/" + libraryPath : platform + (extension == null ? "" : extension);
+                    File f = cacheResource(cls, subdir + "/" + filename);
                     if (f != null) {
                         f.setExecutable(true);
                         return f.getAbsolutePath();
@@ -1372,7 +1386,14 @@ public class Loader {
         List<String> paths = new ArrayList<String>();
         paths.addAll(properties.get("platform.linkpath"));
         paths.addAll(properties.get("platform.preloadpath"));
-        String[] resources = properties.get("platform.preloadresource").toArray(new String[0]);
+        List<String> resources = properties.get("platform.preloadresource");
+        String libraryPath = properties.getProperty("platform.library.path", "");
+        if (libraryPath.length() > 0 && pathsFirst) {
+            // leave loading from "platform.library.path" to System.loadLibrary() as fallback,
+            // which works better on Android, unless the user wants to run an executable
+            resources.add(0, libraryPath);
+        }
+        resources.add(null);
         String libpath = System.getProperty("java.library.path", "");
         if (libpath.length() > 0 && (pathsFirst || !isLoadLibraries() || reference)) {
             // leave loading from "java.library.path" to System.loadLibrary() as fallback,
@@ -1385,14 +1406,14 @@ public class Loader {
             for (int j = extensions.length - 1; j >= -1; j--) {
                 // iterate extensions in reverse to be consistent with the overriding of properties
                 String extension = j >= 0 ? extensions[j] : "";
-                for (String resource : Arrays.copyOf(resources, resources.length + 1)) {
+                for (String resource : resources) {
                     if (resource != null && !resource.endsWith("/")) {
                         resource += "/";
                     }
-                    String subdir = (resource == null ? "" : "/" + resource) + platform
-                                  + (extension == null ? "" : extension) + "/";
+                    String subdir = libraryPath.length() > 0 && libraryPath.equals(resource) ? "/" + libraryPath
+                                  : (resource == null ? "" : "/" + resource) + platform + (extension == null ? "" : extension);
                     try {
-                        URL u = findResource(cls, subdir + styles[i]);
+                        URL u = findResource(cls, subdir + "/" + styles[i]);
                         if (u != null) {
                             if (reference) {
                                 u = new URL(u + "#" + styles2[i]);
