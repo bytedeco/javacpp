@@ -718,6 +718,7 @@ public class Pointer implements AutoCloseable {
      * @param deallocate if true, deallocates, else does not, but disables garbage collection
      */
     public void deallocate(boolean deallocate) {
+        DeallocatorReference r = (DeallocatorReference)deallocator;
         if (deallocate && deallocator != null) {
             if (logger.isDebugEnabled()) {
                 logger.debug("Deallocating " + this);
@@ -727,7 +728,6 @@ public class Pointer implements AutoCloseable {
             address = 0;
         }
         if (!deallocate || referenceQueue == null) {
-            DeallocatorReference r = (DeallocatorReference)deallocator;
             if (r != null) {
                 // remove from queue without calling the deallocator
                 Deallocator d = r.deallocator;
