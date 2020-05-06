@@ -29,11 +29,11 @@ package org.bytedeco.javacpp.indexer;
  */
 public class OneIndex extends Index {
 
-    protected final long size;
+    protected final long[] sizes;
 
-    /** Constructor to set the {@link #size}. */
+    /** Constructor to set the {@link #sizes} as {@code new long[]{size}}. */
     public OneIndex(long size) {
-        this.size = size;
+        this.sizes = new long[]{size};
     }
 
     /** Returns {@code i}. */
@@ -54,5 +54,10 @@ public class OneIndex extends Index {
     /** Throws {@code new UnsupportedOperationException()}. */
     @Override public long index(long... indices) {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public long[] sizes() {
+        return sizes;
     }
 }
