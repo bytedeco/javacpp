@@ -65,7 +65,7 @@ public class StrideIndex extends Index {
     }
 
     /** Returns {@link #sizes}. */
-    public long[] sizes() {
+    @Override public long[] sizes() {
         return sizes;
     }
 

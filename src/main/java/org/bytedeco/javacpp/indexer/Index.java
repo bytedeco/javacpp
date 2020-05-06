@@ -75,4 +75,7 @@ public abstract class Index {
      * @return index to access array or buffer
      */
     public abstract long index(long... indices);
+
+    /** Returns resulting sizes */
+    public abstract long[] sizes();
 }

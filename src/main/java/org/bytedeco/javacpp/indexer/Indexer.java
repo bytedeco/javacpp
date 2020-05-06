@@ -61,8 +61,8 @@ public abstract class Indexer implements AutoCloseable {
     /** Constructor to set the {@link #index}. */
     protected Indexer(Index index) {
         this.index = index;
+        this.sizes = index.sizes();
         if (index instanceof StrideIndex) {
-            this.sizes = ((StrideIndex)index).sizes();
             this.strides = ((StrideIndex)index).strides();
         }
     }

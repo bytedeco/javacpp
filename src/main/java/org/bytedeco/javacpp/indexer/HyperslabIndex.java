@@ -50,6 +50,7 @@ public class HyperslabIndex extends StrideIndex {
     protected long[] hyperslabStrides;
     protected long[] counts;
     protected long[] blocks;
+    protected long[] resultingSizes;
 
     public HyperslabIndex(long[] sizes, long[] offsets, long[] hyperslabStrides, long[] counts, long[] blocks) {
         super(sizes);
@@ -57,6 +58,11 @@ public class HyperslabIndex extends StrideIndex {
         this.hyperslabStrides = hyperslabStrides;
         this.counts = counts;
         this.blocks = blocks;
+
+        this.resultingSizes = new long[counts.length];
+        for (int i = 0; i < counts.length; i++) {
+            resultingSizes[i] = counts[i] * blocks[i];
+        }
     }
 
     @Override
@@ -86,5 +92,10 @@ public class HyperslabIndex extends StrideIndex {
             index += mappedCoordinate * strides[i];
         }
         return index;
+    }
+
+    @Override
+    public long[] sizes() {
+        return resultingSizes;
     }
 }
