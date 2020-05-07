@@ -53,6 +53,9 @@ public class OneIndex extends Index {
 
     /** Throws {@code new UnsupportedOperationException()}. */
     @Override public long index(long... indices) {
+        if (indices.length == 1) {
+            return indices[0];
+        }
         throw new UnsupportedOperationException();
     }
 
