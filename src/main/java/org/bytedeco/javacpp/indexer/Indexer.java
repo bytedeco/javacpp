@@ -50,7 +50,7 @@ public abstract class Indexer implements AutoCloseable {
     }
 
     /** See {@link StrideIndex#sizes}. */
-    @Deprecated protected long[] sizes;
+    protected long[] sizes;
 
     /** See {@link StrideIndex#strides}. */
     @Deprecated protected long[] strides;
@@ -73,12 +73,12 @@ public abstract class Indexer implements AutoCloseable {
     }
 
     /** Returns {@link #sizes} or {@code null} if there are no sizes. */
-    @Deprecated public long[] sizes() { return sizes; }
+    public long[] sizes() { return sizes; }
     /** Returns {@link #strides} or {@code null} if there are no strides. */
     @Deprecated public long[] strides() { return strides; }
 
     /** Returns {@code sizes[i]} or {@code -1} if there are no sizes. */
-    @Deprecated public long size(int i) { return sizes != null ? sizes[i] : -1; }
+    public long size(int i) { return sizes != null ? sizes[i] : -1; }
     /** Returns {@code strides[i]} or {@code -1} if there are no strides. */
     @Deprecated public long stride(int i) { return strides != null ? strides[i] : -1; }
 
