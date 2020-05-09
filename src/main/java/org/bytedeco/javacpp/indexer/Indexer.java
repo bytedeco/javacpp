@@ -151,7 +151,7 @@ public abstract class Indexer implements AutoCloseable {
     public abstract Indexer putDouble(long[] indices, double value);
 
     /** Returns a new Indexer using the same data, but with a different Index. */
-    public abstract Indexer reindex(Index index);
+    public abstract <I extends Indexer> I reindex(Index index);
 
     @Override public String toString() {
         long rows     = sizes.length > 0 ? sizes[0] : 1,
