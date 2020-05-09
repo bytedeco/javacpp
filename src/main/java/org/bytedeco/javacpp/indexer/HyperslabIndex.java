@@ -46,41 +46,51 @@ package org.bytedeco.javacpp.indexer;
  */
 public class HyperslabIndex extends StrideIndex {
 
-    protected long[] offsets;
-    protected long[] hyperslabStrides;
-    protected long[] counts;
-    protected long[] blocks;
-    protected long[] resultingSizes;
+    protected long[] selectionSizes;
+    protected long[] selectionOffsets;
+    protected long[] selectionStrides;
+    protected long[] selectionCounts;
+    protected long[] selectionBlocks;
 
-    public HyperslabIndex(long[] sizes, long[] offsets, long[] hyperslabStrides, long[] counts, long[] blocks) {
-        super(sizes);
-        this.offsets = offsets;
-        this.hyperslabStrides = hyperslabStrides;
-        this.counts = counts;
-        this.blocks = blocks;
+    public HyperslabIndex(long[] sizes,
+                          long[] selectionOffsets, long[] selectionStrides, long[] selectionCounts, long[] selectionBlocks) {
 
-        this.resultingSizes = new long[counts.length];
-        for (int i = 0; i < counts.length; i++) {
-            resultingSizes[i] = counts[i] * blocks[i];
+        this(sizes,defaultStrides(sizes),
+                selectionOffsets, selectionStrides, selectionCounts, selectionBlocks);
+    }
+
+    public HyperslabIndex(long[] sizes,
+                          long[] strides,
+                          long[] selectionOffsets, long[] selectionStrides, long[] selectionCounts, long[] selectionBlocks) {
+
+        super(sizes, strides);
+        this.selectionOffsets = selectionOffsets;
+        this.selectionStrides = selectionStrides;
+        this.selectionCounts = selectionCounts;
+        this.selectionBlocks = selectionBlocks;
+
+        this.selectionSizes = new long[selectionCounts.length];
+        for (int i = 0; i < selectionCounts.length; i++) {
+            this.selectionSizes[i] = selectionCounts[i] * selectionBlocks[i];
         }
     }
 
     @Override
     public long index(long i) {
-        return (offsets[0] + hyperslabStrides[0] * (i / blocks[0]) + (i % blocks[0])) * strides[0];
+        return (selectionOffsets[0] + selectionStrides[0] * (i / selectionBlocks[0]) + (i % selectionBlocks[0])) * selectionStrides[0];
     }
 
     @Override
     public long index(long i, long j) {
-        return (offsets[0] + hyperslabStrides[0] * (i / blocks[0]) + (i % blocks[0])) * strides[0]
-                + (offsets[1] + hyperslabStrides[1] * (j / blocks[1]) + (j % blocks[1])) * strides[1];
+        return (selectionOffsets[0] + selectionStrides[0] * (i / selectionBlocks[0]) + (i % selectionBlocks[0])) * selectionStrides[0]
+                + (selectionOffsets[1] + selectionStrides[1] * (j / selectionBlocks[1]) + (j % selectionBlocks[1])) * selectionStrides[1];
     }
 
     @Override
     public long index(long i, long j, long k) {
-        return (offsets[0] + hyperslabStrides[0] * (i / blocks[0]) + (i % blocks[0])) * strides[0]
-                + (offsets[1] + hyperslabStrides[1] * (j / blocks[1]) + (j % blocks[1])) * strides[1]
-                + (offsets[2] + hyperslabStrides[2] * (k / blocks[2]) + (k % blocks[2])) * strides[2];
+        return (selectionOffsets[0] + selectionStrides[0] * (i / selectionBlocks[0]) + (i % selectionBlocks[0])) * selectionStrides[0]
+                + (selectionOffsets[1] + selectionStrides[1] * (j / selectionBlocks[1]) + (j % selectionBlocks[1])) * selectionStrides[1]
+                + (selectionOffsets[2] + selectionStrides[2] * (k / selectionBlocks[2]) + (k % selectionBlocks[2])) * selectionStrides[2];
     }
 
     @Override
@@ -88,14 +98,14 @@ public class HyperslabIndex extends StrideIndex {
         long index = 0;
         for (int i = 0; i < indices.length; i++) {
             long coordinate = indices[i];
-            long mappedCoordinate = offsets[i] + hyperslabStrides[i] * (coordinate / blocks[i]) + (coordinate % blocks[i]);
-            index += mappedCoordinate * strides[i];
+            long mappedCoordinate = selectionOffsets[i] + selectionStrides[i] * (coordinate / selectionBlocks[i]) + (coordinate % selectionBlocks[i]);
+            index += mappedCoordinate * selectionStrides[i];
         }
         return index;
     }
 
     @Override
     public long[] sizes() {
-        return resultingSizes;
+        return selectionSizes;
     }
 }
