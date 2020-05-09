@@ -72,6 +72,8 @@ public abstract class Indexer implements AutoCloseable {
         this(Index.create(sizes, strides));
     }
 
+    public int rank() { return sizes.length; }
+
     /** Returns {@link #sizes} or {@code null} if there are no sizes. */
     public long[] sizes() { return sizes; }
     /** Returns {@link #strides} or {@code null} if there are no strides. */
