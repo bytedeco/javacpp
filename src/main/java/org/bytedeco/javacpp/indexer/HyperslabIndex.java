@@ -55,7 +55,7 @@ public class HyperslabIndex extends StrideIndex {
     public HyperslabIndex(long[] sizes,
                           long[] selectionOffsets, long[] selectionStrides, long[] selectionCounts, long[] selectionBlocks) {
 
-        this(sizes,defaultStrides(sizes),
+        this(sizes, defaultStrides(sizes),
                 selectionOffsets, selectionStrides, selectionCounts, selectionBlocks);
     }
 
@@ -77,20 +77,20 @@ public class HyperslabIndex extends StrideIndex {
 
     @Override
     public long index(long i) {
-        return (selectionOffsets[0] + selectionStrides[0] * (i / selectionBlocks[0]) + (i % selectionBlocks[0])) * selectionStrides[0];
+        return (selectionOffsets[0] + selectionStrides[0] * (i / selectionBlocks[0]) + (i % selectionBlocks[0])) * strides[0];
     }
 
     @Override
     public long index(long i, long j) {
-        return (selectionOffsets[0] + selectionStrides[0] * (i / selectionBlocks[0]) + (i % selectionBlocks[0])) * selectionStrides[0]
-                + (selectionOffsets[1] + selectionStrides[1] * (j / selectionBlocks[1]) + (j % selectionBlocks[1])) * selectionStrides[1];
+        return (selectionOffsets[0] + selectionStrides[0] * (i / selectionBlocks[0]) + (i % selectionBlocks[0])) * strides[0]
+                + (selectionOffsets[1] + selectionStrides[1] * (j / selectionBlocks[1]) + (j % selectionBlocks[1])) * strides[1];
     }
 
     @Override
     public long index(long i, long j, long k) {
-        return (selectionOffsets[0] + selectionStrides[0] * (i / selectionBlocks[0]) + (i % selectionBlocks[0])) * selectionStrides[0]
-                + (selectionOffsets[1] + selectionStrides[1] * (j / selectionBlocks[1]) + (j % selectionBlocks[1])) * selectionStrides[1]
-                + (selectionOffsets[2] + selectionStrides[2] * (k / selectionBlocks[2]) + (k % selectionBlocks[2])) * selectionStrides[2];
+        return (selectionOffsets[0] + selectionStrides[0] * (i / selectionBlocks[0]) + (i % selectionBlocks[0])) * strides[0]
+                + (selectionOffsets[1] + selectionStrides[1] * (j / selectionBlocks[1]) + (j % selectionBlocks[1])) * strides[1]
+                + (selectionOffsets[2] + selectionStrides[2] * (k / selectionBlocks[2]) + (k % selectionBlocks[2])) * strides[2];
     }
 
     @Override
@@ -99,7 +99,7 @@ public class HyperslabIndex extends StrideIndex {
         for (int i = 0; i < indices.length; i++) {
             long coordinate = indices[i];
             long mappedCoordinate = selectionOffsets[i] + selectionStrides[i] * (coordinate / selectionBlocks[i]) + (coordinate % selectionBlocks[i]);
-            index += mappedCoordinate * selectionStrides[i];
+            index += mappedCoordinate * strides[i];
         }
         return index;
     }
