@@ -1,4 +1,5 @@
 
+ * Log as warnings `SecurityException` thrown on `Loader.getCacheDir()` instead of swallowing them
  * Fix memory leak that occurs with "org.bytedeco.javacpp.nopointergc" ([issue bytedeco/javacpp-presets#878](https://github.com/bytedeco/javacpp-presets/issues/878))
  * Take into account `platform.library.path` when extracting executables and their libraries on `Loader.load()` ([issue bytedeco/javacv#1410](https://github.com/bytedeco/javacv/issues/1410))
  * Move init code for `Loader.getPlatform()` to `Detector` to avoid warning messages ([issue #393](https://github.com/bytedeco/javacpp/issues/393))

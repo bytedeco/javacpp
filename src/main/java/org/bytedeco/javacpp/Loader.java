@@ -916,13 +916,14 @@ public class Loader {
                                  System.getProperty("java.io.tmpdir") + "/.javacpp-" + System.getProperty("user.name") + "/cache/"};
             for (String dirName : dirNames) {
                 if (dirName != null) {
+                    File f = new File(dirName);
                     try {
-                        File f = new File(dirName);
                         if ((f.exists() || f.mkdirs()) && f.canRead() && f.canWrite() && f.canExecute()) {
                             cacheDir = f;
                             break;
                         }
                     } catch (SecurityException e) {
+                        logger.warn("Could not access " + f + ": " + e.getMessage());
                         // No access, try the next option.
                     }
                 }
