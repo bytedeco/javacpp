@@ -46,32 +46,29 @@ package org.bytedeco.javacpp.indexer;
  */
 public class HyperslabIndex extends StrideIndex {
 
-    protected long[] selectionSizes;
     protected long[] selectionOffsets;
     protected long[] selectionStrides;
     protected long[] selectionCounts;
     protected long[] selectionBlocks;
 
-    public HyperslabIndex(long[] sizes,
-                          long[] selectionOffsets, long[] selectionStrides, long[] selectionCounts, long[] selectionBlocks) {
-
-        this(sizes, defaultStrides(sizes),
-                selectionOffsets, selectionStrides, selectionCounts, selectionBlocks);
+    /** Calls {@code HyperslabIndex(sizes, defaultStrides(sizes), selectionOffsets, selectionStrides, selectionCounts, selectionBlocks)}. */
+    public HyperslabIndex(long[] sizes, long[] selectionOffsets, long[] selectionStrides,
+            long[] selectionCounts, long[] selectionBlocks) {
+        this(sizes, defaultStrides(sizes), selectionOffsets, selectionStrides, selectionCounts, selectionBlocks);
     }
 
-    public HyperslabIndex(long[] sizes,
-                          long[] strides,
-                          long[] selectionOffsets, long[] selectionStrides, long[] selectionCounts, long[] selectionBlocks) {
-
+    /** Constructor to set the {@link #sizes}, {@link #strides}, {@link #selectionOffsets}, {@link #selectionStrides},
+     * {@link #selectionCounts}, and {@link #selectionBlocks}. Also updates the {@link #sizes} for the resulting selection. */
+    public HyperslabIndex(long[] sizes, long[] strides, long[] selectionOffsets, long[] selectionStrides,
+            long[] selectionCounts, long[] selectionBlocks) {
         super(sizes, strides);
         this.selectionOffsets = selectionOffsets;
         this.selectionStrides = selectionStrides;
         this.selectionCounts = selectionCounts;
         this.selectionBlocks = selectionBlocks;
 
-        this.selectionSizes = new long[selectionCounts.length];
         for (int i = 0; i < selectionCounts.length; i++) {
-            this.selectionSizes[i] = selectionCounts[i] * selectionBlocks[i];
+            this.sizes[i] = selectionCounts[i] * selectionBlocks[i];
         }
     }
 
@@ -83,14 +80,14 @@ public class HyperslabIndex extends StrideIndex {
     @Override
     public long index(long i, long j) {
         return (selectionOffsets[0] + selectionStrides[0] * (i / selectionBlocks[0]) + (i % selectionBlocks[0])) * strides[0]
-                + (selectionOffsets[1] + selectionStrides[1] * (j / selectionBlocks[1]) + (j % selectionBlocks[1])) * strides[1];
+             + (selectionOffsets[1] + selectionStrides[1] * (j / selectionBlocks[1]) + (j % selectionBlocks[1])) * strides[1];
     }
 
     @Override
     public long index(long i, long j, long k) {
         return (selectionOffsets[0] + selectionStrides[0] * (i / selectionBlocks[0]) + (i % selectionBlocks[0])) * strides[0]
-                + (selectionOffsets[1] + selectionStrides[1] * (j / selectionBlocks[1]) + (j % selectionBlocks[1])) * strides[1]
-                + (selectionOffsets[2] + selectionStrides[2] * (k / selectionBlocks[2]) + (k % selectionBlocks[2])) * strides[2];
+             + (selectionOffsets[1] + selectionStrides[1] * (j / selectionBlocks[1]) + (j % selectionBlocks[1])) * strides[1]
+             + (selectionOffsets[2] + selectionStrides[2] * (k / selectionBlocks[2]) + (k % selectionBlocks[2])) * strides[2];
     }
 
     @Override
@@ -102,10 +99,5 @@ public class HyperslabIndex extends StrideIndex {
             index += mappedCoordinate * strides[i];
         }
         return index;
-    }
-
-    @Override
-    public long[] sizes() {
-        return selectionSizes;
     }
 }
