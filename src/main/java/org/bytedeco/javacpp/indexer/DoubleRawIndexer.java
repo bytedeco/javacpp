@@ -108,7 +108,7 @@ public class DoubleRawIndexer extends DoubleIndexer {
         return this;
     }
     @Override public DoubleIndexer put(long i, double d) {
-        return put(index(i), d);
+        return putRaw(index(i), d);
     }
     @Override public DoubleIndexer put(long i, double[] d, int offset, int length) {
         for (int n = 0; n < length; n++) {

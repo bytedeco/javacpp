@@ -108,36 +108,36 @@ public class UByteRawIndexer extends UByteIndexer {
         return this;
     }
     @Override public UByteIndexer put(long i, int b) {
-        RAW.putByte(base + checkIndex(i, size), (byte)b);
+        putRaw(index(i), b);
         return this;
     }
     @Override public UByteIndexer put(long i, int[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            putRaw(index(i) + n, (byte)b[offset + n]);
+            putRaw(index(i) + n, b[offset + n]);
         }
         return this;
     }
     @Override public UByteIndexer put(long i, long j, int b) {
-        putRaw(index(i, j), (byte)b);
+        putRaw(index(i, j), b);
         return this;
     }
     @Override public UByteIndexer put(long i, long j, int[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            putRaw(index(i, j) + n, (byte)b[offset + n]);
+            putRaw(index(i, j) + n, b[offset + n]);
         }
         return this;
     }
     @Override public UByteIndexer put(long i, long j, long k, int b) {
-        putRaw(index(i, j, k), (byte)b);
+        putRaw(index(i, j, k), b);
         return this;
     }
     @Override public UByteIndexer put(long[] indices, int b) {
-        putRaw(index(indices), (byte)b);
+        putRaw(index(indices), b);
         return this;
     }
     @Override public UByteIndexer put(long[] indices, int[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            putRaw(index(indices) + n, (byte)b[offset + n]);
+            putRaw(index(indices) + n, b[offset + n]);
         }
         return this;
     }

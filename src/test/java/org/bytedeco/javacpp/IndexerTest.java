@@ -23,7 +23,14 @@ package org.bytedeco.javacpp;
 
 import java.io.File;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.CharBuffer;
+import java.nio.DoubleBuffer;
+import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
+import java.nio.LongBuffer;
+import java.nio.ShortBuffer;
 import java.util.Arrays;
 import org.bytedeco.javacpp.annotation.Platform;
 import org.bytedeco.javacpp.indexer.Bfloat16Indexer;
@@ -1235,4 +1242,101 @@ public class IndexerTest {
         System.out.println();
     }
 
+    @Test public void testBfloat16IndexerPutGet() {
+        float value = 1f;
+        assertEquals(value, Bfloat16Indexer.create(new short[1]).put(0, value).get(0), 0f);
+        assertEquals(value, Bfloat16Indexer.create(ShortBuffer.allocate(1)).put(0, value).get(0), 0f);
+        assertEquals(value, Bfloat16Indexer.create(new ShortPointer(1)).put(0, value).get(0), 0f);
+    }
+
+    @Test public void testBooleanIndexerPutGet() {
+        boolean value = true;
+        assertEquals(value, BooleanIndexer.create(new boolean[1]).put(0, value).get(0));
+        assertEquals(value, BooleanIndexer.create(ByteBuffer.allocate(1)).put(0, value).get(0));
+        assertEquals(value, BooleanIndexer.create(new BooleanPointer(1)).put(0, value).get(0));
+    }
+
+    @Test public void testByteIndexerPutGet() {
+        byte value = (byte) 0x01;
+        assertEquals(value, ByteIndexer.create(new byte[1]).put(0, value).get(0));
+        assertEquals(value, ByteIndexer.create(ByteBuffer.allocate(1)).put(0, value).get(0));
+        assertEquals(value, ByteIndexer.create(new BytePointer(1)).put(0, value).get(0));
+    }
+
+    @Test public void testCharIndexerPutGet() {
+        char value = 'A';
+        assertEquals(value, CharIndexer.create(new char[1]).put(0, value).get(0));
+        assertEquals(value, CharIndexer.create(CharBuffer.allocate(1)).put(0, value).get(0));
+        assertEquals(value, CharIndexer.create(new CharPointer(1)).put(0, value).get(0));
+    }
+
+    @Test public void testDoubleIndexerPutGet() {
+        double value = 1.0;
+        assertEquals(value, DoubleIndexer.create(new double[1]).put(0, value).get(0), 0.0);
+        assertEquals(value, DoubleIndexer.create(DoubleBuffer.allocate(1)).put(0, value).get(0), 0.0);
+        assertEquals(value, DoubleIndexer.create(new DoublePointer(1)).put(0, value).get(0), 0.0);
+    }
+
+    @Test public void testFloatIndexerPutGet() {
+        float value = 1f;
+        assertEquals(value, FloatIndexer.create(new float[1]).put(0, value).get(0), 0f);
+        assertEquals(value, FloatIndexer.create(FloatBuffer.allocate(1)).put(0, value).get(0), 0f);
+        assertEquals(value, FloatIndexer.create(new FloatPointer(1)).put(0, value).get(0), 0f);
+    }
+
+    @Test public void testHalfIndexerPutGet() {
+        float value = 1f;
+        assertEquals(value, HalfIndexer.create(new short[1]).put(0, value).get(0), 0f);
+        assertEquals(value, HalfIndexer.create(ShortBuffer.allocate(1)).put(0, value).get(0), 0f);
+        assertEquals(value, HalfIndexer.create(new ShortPointer(1)).put(0, value).get(0), 0f);
+    }
+
+    @Test public void testIntIndexerPutGet() {
+        int value = 1;
+        assertEquals(value, IntIndexer.create(new int[1]).put(0, value).get(0));
+        assertEquals(value, IntIndexer.create(IntBuffer.allocate(1)).put(0, value).get(0));
+        assertEquals(value, IntIndexer.create(new IntPointer(1)).put(0, value).get(0));
+    }
+
+    @Test public void testLongIndexerPutGet() {
+        long value = 1L;
+        assertEquals(value, LongIndexer.create(new long[1]).put(0, value).get(0));
+        assertEquals(value, LongIndexer.create(LongBuffer.allocate(1)).put(0, value).get(0));
+        assertEquals(value, LongIndexer.create(new LongPointer(1)).put(0, value).get(0));
+    }
+
+    @Test public void testShortIndexerPutGet() {
+        short value = 1;
+        assertEquals(value, ShortIndexer.create(new short[1]).put(0, value).get(0));
+        assertEquals(value, ShortIndexer.create(ShortBuffer.allocate(1)).put(0, value).get(0));
+        assertEquals(value, ShortIndexer.create(new ShortPointer(1)).put(0, value).get(0));
+    }
+
+    @Test public void testUByteIndexerPutGet() {
+        int value = (int) Byte.MAX_VALUE + 1;
+        assertEquals(value, UByteIndexer.create(new byte[1]).put(0, value).get(0));
+        assertEquals(value, UByteIndexer.create(ByteBuffer.allocate(1)).put(0, value).get(0));
+        assertEquals(value, UByteIndexer.create(new BytePointer(1)).put(0, value).get(0));
+    }
+
+    @Test public void testUIntIndexerPutGet() {
+        long value = (long) Integer.MAX_VALUE + 1L;
+        assertEquals(value, UIntIndexer.create(new int[1]).put(0, value).get(0));
+        assertEquals(value, UIntIndexer.create(IntBuffer.allocate(1)).put(0, value).get(0));
+        assertEquals(value, UIntIndexer.create(new IntPointer(1)).put(0, value).get(0));
+    }
+
+    @Test public void testULongIndexerPutGet() {
+        BigInteger value = BigInteger.valueOf(Long.MAX_VALUE).add(BigInteger.ONE);
+        assertEquals(value, ULongIndexer.create(new long[1]).put(0, value).get(0));
+        assertEquals(value, ULongIndexer.create(LongBuffer.allocate(1)).put(0, value).get(0));
+        assertEquals(value, ULongIndexer.create(new LongPointer(1)).put(0, value).get(0));
+    }
+
+    @Test public void testUShortIndexerPutGet() {
+        int value = (int) Short.MAX_VALUE + 1;
+        assertEquals(value, UShortIndexer.create(new short[1]).put(0, value).get(0));
+        assertEquals(value, UShortIndexer.create(ShortBuffer.allocate(1)).put(0, value).get(0));
+        assertEquals(value, UShortIndexer.create(new ShortPointer(1)).put(0, value).get(0));
+    }
 }
