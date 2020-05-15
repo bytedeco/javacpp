@@ -112,31 +112,31 @@ public class UShortRawIndexer extends UShortIndexer {
     }
     @Override public UShortIndexer put(long i, int[] s, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            putRaw(index(i) + n, (short)s[offset + n]);
+            putRaw(index(i) + n, s[offset + n]);
         }
         return this;
     }
     @Override public UShortIndexer put(long i, long j, int s) {
-        putRaw(index(i, j), (short)s);
+        putRaw(index(i, j), s);
         return this;
     }
     @Override public UShortIndexer put(long i, long j, int[] s, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            putRaw(index(i, j) + n, (short)s[offset + n]);
+            putRaw(index(i, j) + n, s[offset + n]);
         }
         return this;
     }
     @Override public UShortIndexer put(long i, long j, long k, int s) {
-        putRaw(index(i, j, k), (short)s);
+        putRaw(index(i, j, k), s);
         return this;
     }
     @Override public UShortIndexer put(long[] indices, int s) {
-        putRaw(index(indices), (short)s);
+        putRaw(index(indices), s);
         return this;
     }
     @Override public UShortIndexer put(long[] indices, int[] s, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            putRaw(index(indices) + n, (short)s[offset + n]);
+            putRaw(index(indices) + n, s[offset + n]);
         }
         return this;
     }

@@ -112,31 +112,31 @@ public class UIntRawIndexer extends UIntIndexer {
     }
     @Override public UIntIndexer put(long i, long[] m, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            putRaw(index(i) + n, (int)m[offset + n]);
+            putRaw(index(i) + n, m[offset + n]);
         }
         return this;
     }
     @Override public UIntIndexer put(long i, long j, long n) {
-        putRaw(index(i, j), (int)n);
+        putRaw(index(i, j), n);
         return this;
     }
     @Override public UIntIndexer put(long i, long j, long[] m, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            putRaw(index(i, j) + n, (int)m[offset + n]);
+            putRaw(index(i, j) + n, m[offset + n]);
         }
         return this;
     }
     @Override public UIntIndexer put(long i, long j, long k, long n) {
-        putRaw(index(i, j, k), (int)n);
+        putRaw(index(i, j, k), n);
         return this;
     }
     @Override public UIntIndexer put(long[] indices, long n) {
-        putRaw(index(indices), (int)n);
+        putRaw(index(indices), n);
         return this;
     }
     @Override public UIntIndexer put(long[] indices, long[] m, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            putRaw(index(indices) + n, (int)m[offset + n]);
+            putRaw(index(indices) + n, m[offset + n]);
         }
         return this;
     }
