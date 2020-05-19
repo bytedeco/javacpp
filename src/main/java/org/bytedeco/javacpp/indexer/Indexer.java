@@ -49,7 +49,7 @@ public abstract class Indexer implements AutoCloseable {
         release();
     }
 
-    /** See {@link StrideIndex#sizes}. */
+    /** See {@link Index#sizes}. */
     @Deprecated protected long[] sizes;
 
     /** See {@link StrideIndex#strides}. */
@@ -61,8 +61,8 @@ public abstract class Indexer implements AutoCloseable {
     /** Constructor to set the {@link #index}. */
     protected Indexer(Index index) {
         this.index = index;
+        this.sizes = index.sizes();
         if (index instanceof StrideIndex) {
-            this.sizes = ((StrideIndex)index).sizes();
             this.strides = ((StrideIndex)index).strides();
         }
     }
@@ -72,13 +72,16 @@ public abstract class Indexer implements AutoCloseable {
         this(Index.create(sizes, strides));
     }
 
-    /** Returns {@link #sizes} or {@code null} if there are no sizes. */
-    @Deprecated public long[] sizes() { return sizes; }
+    /** Returns {@code index.rank()}. */
+    public int rank() { return index.rank(); }
+
+    /** Returns {@code index.sizes()}. */
+    public long[] sizes() { return index.sizes(); }
     /** Returns {@link #strides} or {@code null} if there are no strides. */
     @Deprecated public long[] strides() { return strides; }
 
-    /** Returns {@code sizes[i]} or {@code -1} if there are no sizes. */
-    @Deprecated public long size(int i) { return sizes != null ? sizes[i] : -1; }
+    /** Returns {@code index.size(i)}. */
+    public long size(int i) { return index.size(i); }
     /** Returns {@code strides[i]} or {@code -1} if there are no strides. */
     @Deprecated public long stride(int i) { return strides != null ? strides[i] : -1; }
 
@@ -148,7 +151,7 @@ public abstract class Indexer implements AutoCloseable {
     public abstract Indexer putDouble(long[] indices, double value);
 
     /** Returns a new Indexer using the same data, but with a different Index. */
-    public abstract Indexer reindex(Index index);
+    public abstract <I extends Indexer> I reindex(Index index);
 
     @Override public String toString() {
         long rows     = sizes.length > 0 ? sizes[0] : 1,

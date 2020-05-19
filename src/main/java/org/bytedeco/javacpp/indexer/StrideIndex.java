@@ -42,12 +42,6 @@ public class StrideIndex extends Index {
     }
 
     /**
-     * The number of elements in each dimension.
-     * These values are not typically used by the indexer.
-     */
-    protected final long[] sizes;
-
-    /**
      * The number of elements to skip to reach the next element in a given dimension.
      * {@code strides[i] > strides[i + 1] && strides[strides.length - 1] == 1} preferred.
      */
@@ -60,13 +54,8 @@ public class StrideIndex extends Index {
 
     /** Constructor to set the {@link #sizes} and {@link #strides}. */
     public StrideIndex(long[] sizes, long[] strides) {
-        this.sizes = sizes;
+        super(sizes);
         this.strides = strides;
-    }
-
-    /** Returns {@link #sizes}. */
-    public long[] sizes() {
-        return sizes;
     }
 
     /** Returns {@link #strides}. */

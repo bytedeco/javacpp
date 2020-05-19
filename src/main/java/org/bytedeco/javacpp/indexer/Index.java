@@ -48,9 +48,42 @@ public abstract class Index {
         return new StrideIndex(sizes, strides);
     }
 
-    /** Returns {@code new HyperslabIndex(sizes, offsets, hyperslabStrides, counts, blocks)}. */
-    public static Index create(long[] sizes, long[] offsets, long[] hyperslabStrides, long[] counts, long[] blocks) {
-        return new HyperslabIndex(sizes, offsets, hyperslabStrides, counts, blocks);
+    /** Returns {@code new HyperslabIndex(sizes, selectionOffsets, selectionStrides, selectionCounts, selectionBlocks)}. */
+    public static Index create(long[] sizes, long[] selectionOffsets, long[] selectionStrides,
+            long[] selectionCounts, long[] selectionBlocks) {
+        return new HyperslabIndex(sizes, selectionOffsets, selectionStrides, selectionCounts, selectionBlocks);
+    }
+
+    /** Returns {@code new HyperslabIndex(sizes, strides, selectionOffsets, selectionStrides, selectionCounts, selectionBlocks)}. */
+    public static Index create(long[] sizes, long[] strides, long[] selectionOffsets, long[] selectionStrides,
+            long[] selectionCounts, long[] selectionBlocks) {
+        return new HyperslabIndex(sizes, strides, selectionOffsets, selectionStrides, selectionCounts, selectionBlocks);
+    }
+
+    /**
+     * The number of elements in each dimension.
+     * These values are not typically used by the indexer.
+     */
+    protected final long[] sizes;
+
+    /** Constructor to set the {@link #sizes}. */
+    public Index(long... sizes) {
+        this.sizes = sizes;
+    }
+
+    /** Returns {@code sizes.length}. */
+    public int rank() {
+        return sizes.length;
+    }
+
+    /** Returns {@link #sizes}. */
+    public long[] sizes() {
+        return sizes;
+    }
+
+    /** Returns {@code sizes[i]}. */
+    public long size(int i) {
+        return sizes[i];
     }
 
     /** Returns {@code index(new long[] {i})}. */
