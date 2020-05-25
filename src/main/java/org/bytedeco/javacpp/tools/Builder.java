@@ -191,61 +191,6 @@ public class Builder {
     }
 
     /**
-     * Executes a command with {@link ProcessBuilder}, but also logs the call
-     * and redirects its input and output to our process.
-     *
-     * @param command to have {@link ProcessBuilder} execute
-     * @param workingDirectory to pass to {@link ProcessBuilder#directory()}
-     * @param environmentVariables to put in {@link ProcessBuilder#environment()}
-     * @return the exit value of the command
-     * @throws IOException
-     * @throws InterruptedException
-     */
-    int executeCommand(List<String> command, File workingDirectory,
-            Map<String,String> environmentVariables) throws IOException, InterruptedException {
-        String platform = Loader.getPlatform();
-        boolean windows = platform.startsWith("windows");
-        for (int i = 0; i < command.size(); i++) {
-            String arg = command.get(i);
-            if (arg == null) {
-                arg = "";
-            }
-            if (arg.trim().isEmpty() && windows) {
-                // seems to be the only way to pass empty arguments on Windows?
-                arg = "\"\"";
-            }
-            command.set(i, arg);
-        }
-
-        String text = "";
-        for (String s : command) {
-            boolean hasSpaces = s.indexOf(" ") > 0 || s.isEmpty();
-            if (hasSpaces) {
-                text += windows ? "\"" : "'";
-            }
-            text += s;
-            if (hasSpaces) {
-                text += windows ? "\"" : "'";
-            }
-            text += " ";
-        }
-        logger.info(text);
-
-        ProcessBuilder pb = new ProcessBuilder(command);
-        if (workingDirectory != null) {
-            pb.directory(workingDirectory);
-        }
-        if (environmentVariables != null) {
-            for (Map.Entry<String,String> e : environmentVariables.entrySet()) {
-                if (e.getKey() != null && e.getValue() != null) {
-                    pb.environment().put(e.getKey(), e.getValue());
-                }
-            }
-        }
-        return pb.inheritIO().start().waitFor();
-    }
-
-    /**
      * Launches and waits for the native compiler to produce a native shared library.
      *
      * @param sourceFilenames the C++ source filenames
@@ -491,7 +436,7 @@ public class Builder {
 
         // Use the library output path as the working directory so that all
         // build files, including intermediate ones from MSVC, are dumped there
-        return executeCommand(command, workingDirectory, environmentVariables);
+        return commandExecutor.executeCommand(command, workingDirectory, environmentVariables);
     }
 
     /**
@@ -734,6 +679,7 @@ public class Builder {
         classScanner = new ClassScanner(logger, new ArrayList<Class>(),
                 new UserClassLoader(Thread.currentThread().getContextClassLoader()));
         compilerOptions = new ArrayList<String>();
+        commandExecutor = new CommandExecutor(logger);
     }
 
     /** Logger where to send debug, info, warning, and error messages. */
@@ -774,6 +720,8 @@ public class Builder {
     Map<String,String> environmentVariables = null;
     /** Contains additional command line options from the user for the native compiler. */
     Collection<String> compilerOptions = null;
+    /** An alternative CommandExecutor to use to execute commands. */
+    CommandExecutor commandExecutor = null;
 
     /** Splits argument with {@link File#pathSeparator} and appends result to paths of the {@link #classScanner}. */
     public Builder classPaths(String classPaths) {
@@ -898,6 +846,26 @@ public class Builder {
         }
         return this;
     }
+    /** Returns {@code properties}. */
+    public Properties getProperties() {
+        return properties;
+    }
+    /** Returns {@code properties.getProperty(key)}. */
+    public String getProperty(String key) {
+        return properties.getProperty(key);
+    }
+    /** Adds values to a given property key, seperating them with "platform.path.separator". */
+    public Builder addProperty(String key, String... values) {
+        if (values != null && values.length > 0) {
+            String separator = properties.getProperty("platform.path.separator");
+            String v = properties.getProperty(key, "");
+            for (String s : values) {
+                v += v.length() == 0 || v.endsWith(separator) ? v + s : v + separator + s;
+            }
+            properties.setProperty(key, v);
+        }
+        return this;
+    }
     /** Requests the {@link #classScanner} to add a class or all classes from a package.
      *  A {@code null} argument indicates the unnamed package. */
     public Builder classesOrPackages(String ... classesOrPackages) throws IOException, ClassNotFoundException, NoClassDefFoundError {
@@ -933,6 +901,11 @@ public class Builder {
         if (options != null) {
             compilerOptions.addAll(Arrays.asList(options));
         }
+        return this;
+    }
+    /** Sets the {@link #commandExecutor} field to the argument. */
+    public Builder commandExecutor(CommandExecutor commandExecutor) {
+        this.commandExecutor = commandExecutor;
         return this;
     }
 
@@ -971,6 +944,9 @@ public class Builder {
                 libProperties = new ClassProperties(properties);
             }
             includeJavaPaths(libProperties, header);
+            if (environmentVariables == null) {
+                environmentVariables = new HashMap<String,String>();
+            }
             for (Map.Entry<String, List<String>> entry : libProperties.entrySet()) {
                 String key = entry.getKey();
                 key = key.toUpperCase().replace('.', '_');
@@ -1021,7 +997,7 @@ public class Builder {
                     environmentVariables.put("BUILD_PATH_SEPARATOR", File.pathSeparator);
                 }
             }
-            int exitValue = executeCommand(command, workingDirectory, environmentVariables);
+            int exitValue = commandExecutor.executeCommand(command, workingDirectory, environmentVariables);
             if (exitValue != 0) {
                 throw new RuntimeException("Process exited with an error: " + exitValue);
             }
@@ -1346,7 +1322,7 @@ public class Builder {
                     }
                     command.add(paths);
                     command.add(arg);
-                    int exitValue = builder.executeCommand(command, builder.workingDirectory, builder.environmentVariables);
+                    int exitValue = builder.commandExecutor.executeCommand(command, builder.workingDirectory, builder.environmentVariables);
                     if (exitValue != 0) {
                         throw new RuntimeException("Could not compile " + arg + ": " + exitValue);
                     }
@@ -1393,7 +1369,7 @@ public class Builder {
             command.add(paths);
             command.add(c.getCanonicalName());
             command.addAll(Arrays.asList(execArgs));
-            System.exit(builder.executeCommand(command, builder.workingDirectory, builder.environmentVariables));
+            System.exit(builder.commandExecutor.executeCommand(command, builder.workingDirectory, builder.environmentVariables));
         }
     }
 }
