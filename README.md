@@ -49,7 +49,7 @@ We can also have everything downloaded and installed automatically with:
   libraryDependencies += "org.bytedeco" % "javacpp" % "1.5.3"
 ```
 
-Another option available for Scala users is [sbt-javacpp](https://github.com/bytedeco/sbt-javacpp).
+Another option available to Gradle users is [Gradle JavaCPP](https://github.com/bytedeco/gradle-javacpp), and similarly for Scala users there is [SBT-JavaCPP](https://github.com/bytedeco/sbt-javacpp).
 
 
 Required Software
