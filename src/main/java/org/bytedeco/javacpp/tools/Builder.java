@@ -126,6 +126,7 @@ public class Builder {
                        "jvm" + properties.getProperty("platform.library.suffix", "");
         final HashSet<String> jnipath = new HashSet<>();
         final HashSet<String> jvmpath = new HashSet<>();
+
         FilenameFilter filter = new FilenameFilter() {
             @Override public boolean accept(File dir, String name) {
                 if (new File(dir, "jni.h").exists()) {
@@ -143,6 +144,7 @@ public class Builder {
                 return new File(dir, name).isDirectory();
             }
         };
+
         // Java home dir is the one returned by "java.home" or parent dir of it in older JDKs.
         File[] javaHomes= new File[2];
         try {
@@ -152,7 +154,11 @@ public class Builder {
             logger.warn("Could not include header files from java.home:" + e);
             return;
         }
+
         for (File javaHome : javaHomes) {
+            jnipath.clear();
+            jvmpath.clear();
+
             ArrayList<File> dirs = new ArrayList<File>(Arrays.asList(javaHome.listFiles(filter)));
             while (!dirs.isEmpty()) {
                 File d = dirs.remove(dirs.size() - 1);
@@ -170,17 +176,19 @@ public class Builder {
                     }
                 }
             }
-            if (jnipath.isEmpty()) {
-                String macpath = "/System/Library/Frameworks/JavaVM.framework/Headers/";
-                if (new File(macpath).isDirectory()) {
-                    jnipath.add(macpath);
-                }
-            }
+
             // Break searching if all needed paths are found
             if (!jnipath.isEmpty() && !jvmpath.isEmpty()) break;
-            jnipath.clear();
-            jvmpath.clear();
         }
+
+        // Try to set default path for Mac OS if above step failed.
+        if (jnipath.isEmpty()) {
+            String macpath = "/System/Library/Frameworks/JavaVM.framework/Headers/";
+            if (new File(macpath).isDirectory()) {
+                jnipath.add(macpath);
+            }
+        }
+
         properties.addAll("platform.includepath", jnipath);
         if (platform.equals(properties.getProperty("platform", platform))) {
             if (header) {
