@@ -124,8 +124,8 @@ public class Builder {
                        "jvm" + properties.getProperty("platform.link.suffix", "");
         final String jvmlib  = properties.getProperty("platform.library.prefix", "") +
                        "jvm" + properties.getProperty("platform.library.suffix", "");
-        final HashSet<String> jnipath = new HashSet<>();
-        final HashSet<String> jvmpath = new HashSet<>();
+        final HashSet<String> jnipath = new HashSet<String>();
+        final HashSet<String> jvmpath = new HashSet<String>();
 
         FilenameFilter filter = new FilenameFilter() {
             @Override public boolean accept(File dir, String name) {
@@ -146,7 +146,7 @@ public class Builder {
         };
 
         // Java home dir is the one returned by "java.home" or parent dir of it in older JDKs.
-        File[] javaHomes= new File[2];
+        File[] javaHomes = new File[2];
         try {
             javaHomes[0] = new File(System.getProperty("java.home")).getCanonicalFile();
             javaHomes[1] = javaHomes[0].getParentFile().getCanonicalFile();
@@ -170,7 +170,9 @@ public class Builder {
                 for (File f : files) {
                     try {
                         f = f.getCanonicalFile();
-                    } catch (IOException e) { }
+                    } catch (IOException e) {
+                        f = f.getAbsoluteFile();
+                    }
                     if (!dpath.startsWith(f.getPath())) {
                         dirs.add(f);
                     }
