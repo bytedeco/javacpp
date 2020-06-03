@@ -1,4 +1,5 @@
 
+ * Fix `Builder` for different "java.home" path returned by latest JDKs from Oracle ([pull #400](https://github.com/bytedeco/javacpp/pull/400))
  * Refactor `Builder` a little to work around issues with Gradle
  * Log as warnings `SecurityException` thrown on `Loader.getCacheDir()` instead of swallowing them
  * Fix memory leak that occurs with "org.bytedeco.javacpp.nopointergc" ([issue bytedeco/javacpp-presets#878](https://github.com/bytedeco/javacpp-presets/issues/878))

@@ -47,6 +47,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -123,60 +124,73 @@ public class Builder {
                        "jvm" + properties.getProperty("platform.link.suffix", "");
         final String jvmlib  = properties.getProperty("platform.library.prefix", "") +
                        "jvm" + properties.getProperty("platform.library.suffix", "");
-        final String[] jnipath = new String[2];
-        final String[] jvmpath = new String[2];
+        final HashSet<String> jnipath = new HashSet<String>();
+        final HashSet<String> jvmpath = new HashSet<String>();
+
         FilenameFilter filter = new FilenameFilter() {
             @Override public boolean accept(File dir, String name) {
                 if (new File(dir, "jni.h").exists()) {
-                    jnipath[0] = dir.getAbsolutePath();
+                    jnipath.add(dir.getAbsolutePath());
                 }
                 if (new File(dir, "jni_md.h").exists()) {
-                    jnipath[1] = dir.getAbsolutePath();
+                    jnipath.add(dir.getAbsolutePath());
                 }
                 if (new File(dir, jvmlink).exists()) {
-                    jvmpath[0] = dir.getAbsolutePath();
+                    jvmpath.add(dir.getAbsolutePath());
                 }
                 if (new File(dir, jvmlib).exists()) {
-                    jvmpath[1] = dir.getAbsolutePath();
+                    jvmpath.add(dir.getAbsolutePath());
                 }
                 return new File(dir, name).isDirectory();
             }
         };
-        File javaHome;
+
+        // Java home dir is the one returned by "java.home" or parent dir of it in older JDKs.
+        File[] javaHomes = new File[2];
         try {
-            javaHome = new File(System.getProperty("java.home")).getParentFile().getCanonicalFile();
+            javaHomes[0] = new File(System.getProperty("java.home")).getCanonicalFile();
+            javaHomes[1] = javaHomes[0].getParentFile().getCanonicalFile();
         } catch (IOException | NullPointerException e) {
             logger.warn("Could not include header files from java.home:" + e);
             return;
         }
-        ArrayList<File> dirs = new ArrayList<File>(Arrays.asList(javaHome.listFiles(filter)));
-        while (!dirs.isEmpty()) {
-            File d = dirs.remove(dirs.size() - 1);
-            String dpath = d.getPath();
-            File[] files = d.listFiles(filter);
-            if (dpath == null || files == null) {
-                continue;
-            }
-            for (File f : files) {
-                try {
-                    f = f.getCanonicalFile();
-                } catch (IOException e) { }
-                if (!dpath.startsWith(f.getPath())) {
-                    dirs.add(f);
+
+        for (File javaHome : javaHomes) {
+            jnipath.clear();
+            jvmpath.clear();
+
+            ArrayList<File> dirs = new ArrayList<File>(Arrays.asList(javaHome.listFiles(filter)));
+            while (!dirs.isEmpty()) {
+                File d = dirs.remove(dirs.size() - 1);
+                String dpath = d.getPath();
+                File[] files = d.listFiles(filter);
+                if (dpath == null || files == null) {
+                    continue;
+                }
+                for (File f : files) {
+                    try {
+                        f = f.getCanonicalFile();
+                    } catch (IOException e) {
+                        f = f.getAbsoluteFile();
+                    }
+                    if (!dpath.startsWith(f.getPath())) {
+                        dirs.add(f);
+                    }
                 }
             }
+
+            // Break searching if all needed paths are found
+            if (!jnipath.isEmpty() && !jvmpath.isEmpty()) break;
         }
-        if (jnipath[0] != null && jnipath[0].equals(jnipath[1])) {
-            jnipath[1] = null;
-        } else if (jnipath[0] == null) {
+
+        // Try to set default path for Mac OS if above step failed.
+        if (jnipath.isEmpty()) {
             String macpath = "/System/Library/Frameworks/JavaVM.framework/Headers/";
             if (new File(macpath).isDirectory()) {
-                jnipath[0] = macpath;
+                jnipath.add(macpath);
             }
         }
-        if (jvmpath[0] != null && jvmpath[0].equals(jvmpath[1])) {
-            jvmpath[1] = null;
-        }
+
         properties.addAll("platform.includepath", jnipath);
         if (platform.equals(properties.getProperty("platform", platform))) {
             if (header) {
