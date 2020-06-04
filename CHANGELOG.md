@@ -1,4 +1,5 @@
 
+ * Bundle also the `vcruntime140_1.dll` and `msvcp140_1.dll` redist files from Visual Studio
  * Fix `Builder` for different "java.home" path returned by latest JDKs from Oracle ([pull #400](https://github.com/bytedeco/javacpp/pull/400))
  * Refactor `Builder` a little to work around issues with Gradle
  * Log as warnings `SecurityException` thrown on `Loader.getCacheDir()` instead of swallowing them
