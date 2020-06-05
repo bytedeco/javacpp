@@ -76,7 +76,7 @@ public class Loader {
     private static final Logger logger = Logger.create(Loader.class);
 
     /** Value created out of "java.vm.name", "os.name", and "os.arch" system properties.
-     *  Returned by {@link #getPlatform()} as default and initialized with {@link Detector#getPlatform()}. */
+     *  Returned by {@link #getPlatform()} and initialized with {@link Detector#getPlatform()}. */
     private static final String PLATFORM = Detector.getPlatform();
     /** Default platform properties loaded and returned by {@link #loadProperties()}. */
     private static Properties platformProperties = null;
@@ -88,6 +88,12 @@ public class Loader {
     };
 
     public static class Detector {
+        /**
+         * Returns either the value of the "org.bytedeco.javacpp.platform"
+         * system property, or the host platform when the former is not set.
+         *
+         * @return {@code System.getProperty("org.bytedeco.javacpp.platform", platform)}
+         */
         public static String getPlatform() {
             String jvmName = System.getProperty("java.vm.name", "").toLowerCase();
             String osName  = System.getProperty("os.name", "").toLowerCase();
@@ -118,19 +124,15 @@ public class Loader {
             } else if (osArch.startsWith("arm")) {
                 osArch = "arm";
             }
-            return osName + "-" + osArch;
+            return System.getProperty("org.bytedeco.javacpp.platform", osName + "-" + osArch);
         }
     }
 
     /**
-     * Returns either the value of the "org.bytedeco.javacpp.platform"
-     * system property, or {@link #PLATFORM} when the former is not set.
-     *
-     * @return {@code System.getProperty("org.bytedeco.javacpp.platform", platform)}
-     * @see #PLATFORM
+     * Returns {@link #PLATFORM}.
      */
     public static String getPlatform() {
-        return System.getProperty("org.bytedeco.javacpp.platform", PLATFORM);
+        return PLATFORM;
     }
 
     /**
