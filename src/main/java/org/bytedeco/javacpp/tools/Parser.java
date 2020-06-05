@@ -479,9 +479,14 @@ public class Parser {
             } else if (token.match(Token.IDENTIFIER)) {
                 Type type = type(context); // ignore?
                 Token t = tokens.get();
-                String key = t.value;
-                map.put(key, map.get(key));
-                token = tokens.next();
+                if (t.match(Token.IDENTIFIER)) {
+                    String key = t.value;
+                    map.put(key, map.get(key));
+                    token = tokens.next();
+                } else {
+                    String key = type.cppName;
+                    map.put(key, map.get(key));
+                }
             }
             if (!token.match(',', '>')) {
                 // ignore default argument
