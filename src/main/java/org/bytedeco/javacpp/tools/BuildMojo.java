@@ -176,6 +176,10 @@ public class BuildMojo extends AbstractMojo {
     @Parameter(property = "javacpp.copyResources", defaultValue = "false")
     boolean copyResources = false;
 
+    /** Also create config files for GraalVM native-image in directory. */
+    @Parameter(property = "javacpp.configDirectory")
+    String configDirectory = null;
+
     /** Also create a JAR file named {@code <jarPrefix>-<platform>.jar}. */
     @Parameter(property = "javacpp.jarPrefix")
     String jarPrefix = null;
@@ -280,6 +284,7 @@ public class BuildMojo extends AbstractMojo {
                 log.debug("header: " + header);
                 log.debug("copyLibs: " + copyLibs);
                 log.debug("copyResources: " + copyResources);
+                log.debug("configDirectory: " + configDirectory);
                 log.debug("jarPrefix: " + jarPrefix);
                 log.debug("properties: " + properties);
                 log.debug("propertyFile: " + propertyFile);
@@ -328,6 +333,7 @@ public class BuildMojo extends AbstractMojo {
                     .header(header)
                     .copyLibs(copyLibs)
                     .copyResources(copyResources)
+                    .configDirectory(configDirectory)
                     .jarPrefix(jarPrefix)
                     .properties(properties)
                     .propertyFile(propertyFile)
@@ -340,7 +346,7 @@ public class BuildMojo extends AbstractMojo {
             Properties properties = builder.properties;
             String extension = properties.getProperty("platform.extension");
             log.info("Detected platform \"" + Loader.getPlatform() + "\"");
-            log.info("Building for platform \"" + properties.get("platform") + "\""
+            log.info("Building platform \"" + properties.get("platform") + "\""
                     + (extension != null && extension.length() > 0 ? " with extension \"" + extension + "\"" : ""));
             properties.setProperty("platform.host", Loader.getPlatform());
             String module = properties.get("platform") + (extension != null ? extension : "");

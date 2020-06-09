@@ -192,6 +192,7 @@
             <exclude>${javacpp.platform.library.path}/</exclude>
             <exclude>${javacpp.platform}${javacpp.platform.extension}/</exclude>
             <exclude>org/bytedeco/javacpp/${javacpp.platform}${javacpp.platform.extension}/</exclude>
+            <exclude>META-INF/native-image/</exclude>
             <exclude>META-INF/MANIFEST.MF-*</exclude>
           </excludes>
         </configuration>
@@ -433,6 +434,8 @@ Import-Package: \
                 <argument>-classpath</argument>
                 <argument>${project.build.outputDirectory}</argument>
                 <argument>-copylibs</argument>
+                <argument>-configdir</argument>
+                <argument>${project.build.outputDirectory}/META-INF/native-image/${javacpp.platform}${javacpp.platform.extension}/</argument>
                 <argument>-properties</argument>
                 <argument>${javacpp.platform}${javacpp.platform.suffix}</argument>
                 <argument>-Dplatform.root=${javacpp.platform.root}</argument>
@@ -465,6 +468,7 @@ Import-Package: \
                     <include>${javacpp.platform.library.path}/</include>
                     <include>${javacpp.platform}${javacpp.platform.extension}/</include>
                     <include>org/bytedeco/javacpp/${javacpp.platform}${javacpp.platform.extension}/</include>
+                    <include>META-INF/native-image/${javacpp.platform}${javacpp.platform.extension}/</include>
                   </includes>
                   <excludes>
                     <exclude>org/bytedeco/javacpp/windows-*/*.exp</exclude>

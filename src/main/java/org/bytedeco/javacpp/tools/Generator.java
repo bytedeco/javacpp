@@ -170,15 +170,15 @@ public class Generator {
     final Logger logger;
     final Properties properties;
     final String encoding;
-    PrintWriter out, out2;
+    PrintWriter out, out2, jniConfigOut, reflectConfigOut;
     Map<String,String> callbacks;
     IndexedSet<Class> functions, deallocators, arrayDeallocators, jclasses;
     Map<Class,Set<String>> members, virtualFunctions, virtualMembers;
     Map<Method,MethodInformation> annotationCache;
     boolean mayThrowExceptions, usesAdapters, passesStrings, accessesEnums;
 
-    public boolean generate(String sourceFilename, String headerFilename, String loadSuffix,
-            String baseLoadSuffix, String classPath, Class<?> ... classes) throws IOException {
+    public boolean generate(String sourceFilename, String jniConfigFilename, String reflectConfigFilename, String headerFilename,
+            String loadSuffix, String baseLoadSuffix, String classPath, Class<?> ... classes) throws IOException {
         try {
             // first pass using a null writer to fill up the IndexedSet objects
             out = new PrintWriter(new Writer() {
@@ -186,7 +186,7 @@ public class Generator {
                 @Override public void flush() { }
                 @Override public void close() { }
             });
-            out2 = null;
+            out2 = jniConfigOut = reflectConfigOut= null;
             callbacks           = new LinkedHashMap<String,String>();
             functions           = new IndexedSet<Class>();
             deallocators        = new IndexedSet<Class>();
@@ -221,6 +221,24 @@ public class Generator {
                     }
                     out2 = encoding != null ? new PrintWriter(headerFile, encoding) : new PrintWriter(headerFile);
                 }
+                if (jniConfigFilename != null) {
+                    logger.info("Generating " + jniConfigFilename);
+                    File jniConfigFile = new File(jniConfigFilename);
+                    File jniConfigDir = jniConfigFile.getParentFile();
+                    if (jniConfigDir != null) {
+                        jniConfigDir.mkdirs();
+                    }
+                    jniConfigOut = encoding != null ? new PrintWriter(jniConfigFile, encoding) : new PrintWriter(jniConfigFile);
+                }
+                if (reflectConfigFilename != null) {
+                    logger.info("Generating " + reflectConfigFilename);
+                    File reflectConfigFile = new File(reflectConfigFilename);
+                    File reflectConfigDir = reflectConfigFile.getParentFile();
+                    if (reflectConfigDir != null) {
+                        reflectConfigDir.mkdirs();
+                    }
+                    reflectConfigOut = encoding != null ? new PrintWriter(reflectConfigFile, encoding) : new PrintWriter(reflectConfigFile);
+                }
                 return classes(mayThrowExceptions, usesAdapters, passesStrings, accessesEnums, loadSuffix, baseLoadSuffix, classPath, classes);
             } else {
                 return false;
@@ -231,6 +249,12 @@ public class Generator {
             }
             if (out2 != null) {
                 out2.close();
+            }
+            if (jniConfigOut != null) {
+                jniConfigOut.close();
+            }
+            if (reflectConfigOut != null) {
+                reflectConfigOut.close();
             }
         }
     }
@@ -1707,6 +1731,44 @@ public class Generator {
             out2.println("#ifdef __cplusplus");
             out2.println("}");
             out2.println("#endif");
+        }
+
+        for (PrintWriter o : new PrintWriter[] {jniConfigOut, reflectConfigOut}) {
+            allClasses.addAll(jclasses.keySet());
+
+            LinkedHashSet<Class> reflectClasses = new LinkedHashSet<Class>();
+            reflectClasses.addAll(baseClasses);
+            reflectClasses.add(Object.class);
+            reflectClasses.add(Buffer.class);
+            reflectClasses.add(String.class);
+
+            if (o != null) {
+                o.println("[");
+                String separator = "";
+                for (Class cls : allClasses) {
+                    do {
+                        o.println(separator + "  {");
+                        o.print("    \"name\" : \"" + cls.getName() + "\"");
+                        if (reflectClasses.contains(cls) || reflectClasses.contains(cls.getEnclosingClass())) {
+                            o.println(",");
+                            o.println("    \"allDeclaredConstructors\" : true,");
+                            o.println("    \"allPublicConstructors\" : true,");
+                            o.println("    \"allDeclaredMethods\" : true,");
+                            o.println("    \"allPublicMethods\" : true,");
+                            o.println("    \"allDeclaredFields\" : true,");
+                            o.println("    \"allPublicFields\" : true,");
+                            o.println("    \"allDeclaredClasses\" : true,");
+                            o.print("    \"allPublicClasses\" : true");
+                        }
+                        o.println();
+                        o.print("  }");
+                        separator = "," + System.lineSeparator();
+                        cls = cls.getEnclosingClass();
+                    } while (cls != null);
+                }
+                o.println();
+                o.println("]");
+            }
         }
 
         return supportedPlatform;

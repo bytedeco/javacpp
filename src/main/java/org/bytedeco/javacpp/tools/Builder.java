@@ -28,6 +28,7 @@ import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -547,6 +548,8 @@ public class Builder {
         Generator generator = new Generator(logger, properties, encoding);
         String[] sourceFilenames = {sourcePrefixes[0] + "jnijavacpp" + sourceSuffix,
                                     sourcePrefixes[1] + outputName + sourceSuffix};
+        String[] configDirectories = {configDirectory != null ? new File(configDirectory, "jnijavacpp").getPath() : null,
+                                      configDirectory != null ? new File(configDirectory, outputName).getPath() : null};
         String[] headerFilenames = {null, header ? sourcePrefixes[1] + outputName +  ".h" : null};
         String[] loadSuffixes = {"_jnijavacpp", null};
         String[] baseLoadSuffixes = {null, "_jnijavacpp"};
@@ -563,21 +566,26 @@ public class Builder {
         if (outputName.equals("jnijavacpp")) {
             // generate a single file if the user only wants "jnijavacpp"
             sourceFilenames = new String[] {sourcePrefixes[0] + outputName + sourceSuffix};
+            configDirectories = new String[] {configDirectory != null ? new File(configDirectory, outputName).getPath() : null};
             headerFilenames = new String[] {header ? sourcePrefixes[0] + outputName +  ".h" : null};
             loadSuffixes = new String[] {null};
             baseLoadSuffixes = new String[] {null};
-            classPaths = new String[] {null};
-            classesArray = new Class[][] {null};
+            classPaths = new String[] {classPath};
+            classesArray = new Class[][] {classes};
             libraryNames  = new String[] {libraryPrefix + outputName + librarySuffix};
         }
 
         boolean generated = true;
+        String[] jniConfigFilenames = new String[sourceFilenames.length];
+        String[] reflectConfigFilenames = new String[sourceFilenames.length];
         for (int i = 0; i < sourceFilenames.length; i++) {
             if (i == 0 && !first) {
                 continue;
             }
             logger.info("Generating " + sourceFilenames[i]);
-            if (!generator.generate(sourceFilenames[i], headerFilenames[i],
+            jniConfigFilenames[i] = configDirectories[i] != null ? configDirectories[i] + File.separator + "jni-config.json" : null;
+            reflectConfigFilenames[i] = configDirectories[i] != null ? configDirectories[i] + File.separator +  "reflect-config.json" : null;
+            if (!generator.generate(sourceFilenames[i], jniConfigFilenames[i], reflectConfigFilenames[i], headerFilenames[i],
                     loadSuffixes[i], baseLoadSuffixes[i], classPaths[i], classesArray[i])) {
                 logger.info("Nothing generated for " + sourceFilenames[i]);
                 generated = false;
@@ -623,6 +631,30 @@ public class Builder {
                 outputFiles = new File[sourceFilenames.length];
                 for (int i = 0; i < sourceFilenames.length; i++) {
                     outputFiles[i] = new File(sourceFilenames[i]);
+                }
+            }
+
+            if (header) {
+                for (String headerFilename : headerFilenames) {
+                    if (headerFilename != null) {
+                        outputFiles = Arrays.copyOf(outputFiles, outputFiles.length + 1);
+                        outputFiles[outputFiles.length - 1] = new File(headerFilename);
+                    }
+                }
+            }
+
+            if (configDirectory != null) {
+                for (String jniConfigFilename : jniConfigFilenames) {
+                    if (jniConfigFilename != null) {
+                        outputFiles = Arrays.copyOf(outputFiles, outputFiles.length + 1);
+                        outputFiles[outputFiles.length - 1] = new File(jniConfigFilename);
+                    }
+                }
+                for (String reflectConfigFilename : reflectConfigFilenames) {
+                    if (reflectConfigFilename != null) {
+                        outputFiles = Arrays.copyOf(outputFiles, outputFiles.length + 1);
+                        outputFiles[outputFiles.length - 1] = new File(reflectConfigFilename);
+                    }
                 }
             }
         }
@@ -706,6 +738,8 @@ public class Builder {
     /** The name of the output generated source file or shared library. This enables single-
      *  file output mode. By default, the top-level enclosing classes get one file each. */
     String outputName = null;
+    /** The name of the directory where to output config files for GraalVM native-image, if not {@code null}. */
+    File configDirectory = null;
     /** The name of the JAR file to create, if not {@code null}. */
     String jarPrefix = null;
     /** If true, deletes all files from {@link #outputDirectory} before writing anything in it. */
@@ -800,6 +834,16 @@ public class Builder {
     /** Sets the {@link #outputName} field to the argument. */
     public Builder outputName(String outputName) {
         this.outputName = outputName;
+        return this;
+    }
+    /** Sets the {@link #configDirectory} field to the argument. */
+    public Builder configDirectory(String configDirectory) {
+        configDirectory(configDirectory == null ? null : new File(configDirectory));
+        return this;
+    }
+    /** Sets the {@link #configDirectory} field to the argument. */
+    public Builder configDirectory(File configDirectory) {
+        this.configDirectory = configDirectory;
         return this;
     }
     /** Sets the {@link #jarPrefix} field to the argument. */
@@ -1128,7 +1172,13 @@ public class Builder {
 
             if (files != null && files.length > 0) {
                 // files[0] might be null if "jnijavacpp" was not generated and compiled
-                File directory = files[files.length - 1].getParentFile();
+                File directory = null;
+                for (File f : files) {
+                    if (f != null) {
+                        directory = f.getParentFile();
+                        break;
+                    }
+                }
                 outputFiles.addAll(Arrays.asList(files));
                 if (copyLibs) {
                     // Do not copy library files from inherit properties ...
@@ -1163,6 +1213,8 @@ public class Builder {
                             logger.info("Copying " + fi);
                             Files.copy(fi.toPath(), fo.toPath(), StandardCopyOption.REPLACE_EXISTING);
                             outputFiles.add(fo);
+                            files = Arrays.copyOf(files, files.length + 1);
+                            files[files.length - 1] = fo;
                         }
                     }
                 }
@@ -1205,6 +1257,29 @@ public class Builder {
                         }
                     }
                 }
+            }
+            if (configDirectory != null) {
+                File file = new File(configDirectory, name + "/resource-config.json");
+                File dir = file.getParentFile();
+                if (dir != null) {
+                    dir.mkdirs();
+                }
+                logger.info("Generating " + file);
+                try (PrintWriter out = encoding != null ? new PrintWriter(file, encoding) : new PrintWriter(file)) {
+                    out.println("{");
+                    out.println("  \"resources\": [");
+                    out.print("    {\"pattern\": \"META-INF/.*\"}");
+                    String separator = "," + System.lineSeparator();
+                    for (File f : files != null ? files : new File[0]) {
+                        if (f != null && !f.toPath().startsWith(configDirectory.toPath())) {
+                            out.print(separator + "    {\"pattern\": \".*/" + f.getName() + "\"}");
+                        }
+                    }
+                    out.println();
+                    out.println("  ]");
+                    out.println("}");
+                }
+                outputFiles.add(file);
             }
         }
 
@@ -1251,6 +1326,7 @@ public class Builder {
         System.out.println("    -header                Generate header file with declarations of callbacks functions");
         System.out.println("    -copylibs              Copy to output directory dependent libraries (link and preload)");
         System.out.println("    -copyresources         Copy to output directory resources listed in properties");
+        System.out.println("    -configdir <directory> Also create config files for GraalVM native-image in directory");
         System.out.println("    -jarprefix <prefix>    Also create a JAR file named \"<prefix>-<platform>.jar\"");
         System.out.println("    -properties <resource> Load all platform properties from resource");
         System.out.println("    -propertyfile <file>   Load all platform properties from file");
@@ -1304,6 +1380,8 @@ public class Builder {
                 builder.copyLibs(true);
             } else if ("-copyresources".equals(args[i])) {
                 builder.copyResources(true);
+            } else if ("-configdir".equals(args[i])) {
+                builder.configDirectory(args[++i]);
             } else if ("-jarprefix".equals(args[i])) {
                 builder.jarPrefix(args[++i]);
             } else if ("-properties".equals(args[i])) {
