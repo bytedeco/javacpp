@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.HttpURLConnection;
@@ -462,14 +463,17 @@ public class Loader {
     public static File cacheResource(URL resourceURL, String target) throws IOException {
         // Find appropriate subdirectory in cache for the resource ...
         File urlFile;
+        String[] splitURL = resourceURL.toString().split("#");
         try {
-            urlFile = new File(new URI(resourceURL.toString().split("#")[0]));
+            // ... remove fragment since some subclasses of URLConnection don't like it ...
+            resourceURL = new URL(splitURL[0]);
+            urlFile = new File(new URI(splitURL[0]));
         } catch (IllegalArgumentException | URISyntaxException e) {
             urlFile = new File(resourceURL.getPath());
         }
         String name = urlFile.getName();
         boolean reference = false;
-        long size, timestamp;
+        long size = 0, timestamp = 0;
         File cacheDir = getCacheDir();
         File cacheSubdir = cacheDir.getCanonicalFile();
         String s = System.getProperty("org.bytedeco.javacpp.cachedir.nosubdir", "false").toLowerCase();
@@ -518,15 +522,20 @@ public class Loader {
                 cacheSubdir = new File(cacheSubdir, urlFile.getParentFile().getName());
             }
         } else {
-            size = urlFile.length();
-            timestamp = urlFile.lastModified();
+            if (urlFile.exists()) {
+                size = urlFile.length();
+                timestamp = urlFile.lastModified();
+            } else if (urlConnection != null) {
+                size = urlConnection.getContentLengthLong();
+                timestamp = urlConnection.getLastModified();
+            }
             if (!noSubdir) {
                 cacheSubdir = new File(cacheSubdir, urlFile.getParentFile().getName());
             }
         }
-        if (resourceURL.getRef() != null) {
+        if (splitURL.length > 1 && splitURL[1] != null && splitURL[1].length() > 0) {
             // ... get the URL fragment to let users rename library files ...
-            String newName = resourceURL.getRef();
+            String newName = splitURL[1];
             // ... but create a symbolic link only if the name does not change ...
             reference = newName.equals(name);
             name = newName;
@@ -1420,12 +1429,17 @@ public class Loader {
                         if (u != null) {
                             if (reference) {
                                 u = new URL(u + "#" + styles2[i]);
+                                if (!u.toString().contains("#")) {
+                                    Field f = URL.class.getDeclaredField("ref");
+                                    f.setAccessible(true);
+                                    f.set(u, styles2[i]);
+                                }
                             }
                             if (!urls.contains(u)) {
                                 urls.add(u);
                             }
                         }
-                    } catch (IOException e) {
+                    } catch (IOException | NoSuchFieldException | IllegalAccessException e) {
                         throw new RuntimeException(e);
                     }
                 }
@@ -1441,11 +1455,16 @@ public class Loader {
                         URL u = file.toURI().toURL();
                         if (reference) {
                             u = new URL(u + "#" + styles2[i]);
+                            if (!u.toString().contains("#")) {
+                                Field f = URL.class.getDeclaredField("ref");
+                                f.setAccessible(true);
+                                f.set(u, styles2[i]);
+                            }
                         }
                         if (!urls.contains(u)) {
                             urls.add(k++, u);
                         }
-                    } catch (IOException ex) {
+                    } catch (IOException | NoSuchFieldException | IllegalAccessException ex) {
                         throw new RuntimeException(ex);
                     }
                 }

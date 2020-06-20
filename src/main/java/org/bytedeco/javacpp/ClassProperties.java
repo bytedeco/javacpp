@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import org.bytedeco.javacpp.annotation.Platform;
+import org.bytedeco.javacpp.tools.Logger;
 
 /**
  * Does the heavy lifting of collecting values off Properties annotations found
@@ -41,6 +42,8 @@ import org.bytedeco.javacpp.annotation.Platform;
  * @see Loader#loadProperties(Class, java.util.Properties, boolean)
  */
 public class ClassProperties extends HashMap<String,List<String>> {
+    private static final Logger logger = Logger.create(ClassProperties.class);
+
     public ClassProperties() { }
     public ClassProperties(Properties properties) {
         platform      = properties.getProperty("platform");
@@ -313,12 +316,12 @@ public class ClassProperties extends HashMap<String,List<String>> {
         setProperty("platform.executable", executable);
         setProperty("platform.library", library);
 
-        try {
-            if (LoadEnabled.class.isAssignableFrom(c)) {
+        if (LoadEnabled.class.isAssignableFrom(c)) {
+            try {
                 ((LoadEnabled)c.newInstance()).init(this);
+            } catch (ClassCastException | InstantiationException | IllegalAccessException e) {
+                logger.warn("Could not create an instance of " + c + ": " + e);
             }
-        } catch (ClassCastException | InstantiationException | IllegalAccessException e) {
-            // fail silently as if the interface wasn't implemented
         }
 
         // need platform information from both classProperties and classPlatform to be considered "loaded"

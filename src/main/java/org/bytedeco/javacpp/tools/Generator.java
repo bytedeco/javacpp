@@ -56,6 +56,7 @@ import org.bytedeco.javacpp.DoublePointer;
 import org.bytedeco.javacpp.FloatPointer;
 import org.bytedeco.javacpp.FunctionPointer;
 import org.bytedeco.javacpp.IntPointer;
+import org.bytedeco.javacpp.LoadEnabled;
 import org.bytedeco.javacpp.Loader;
 import org.bytedeco.javacpp.LongPointer;
 import org.bytedeco.javacpp.Pointer;
@@ -1733,42 +1734,51 @@ public class Generator {
             out2.println("#endif");
         }
 
+        allClasses.addAll(jclasses.keySet());
+
+        LinkedHashSet<Class> reflectClasses = new LinkedHashSet<Class>();
+        reflectClasses.addAll(baseClasses);
+        reflectClasses.add(Object.class);
+        reflectClasses.add(Buffer.class);
+        reflectClasses.add(String.class);
+
+        for (Class cls : new LinkedHashSet<Class>(allClasses)) {
+            while ((cls = cls.getEnclosingClass()) != null) {
+                allClasses.add(cls);
+            }
+        }
+
         for (PrintWriter o : new PrintWriter[] {jniConfigOut, reflectConfigOut}) {
-            allClasses.addAll(jclasses.keySet());
-
-            LinkedHashSet<Class> reflectClasses = new LinkedHashSet<Class>();
-            reflectClasses.addAll(baseClasses);
-            reflectClasses.add(Object.class);
-            reflectClasses.add(Buffer.class);
-            reflectClasses.add(String.class);
-
-            if (o != null) {
-                o.println("[");
-                String separator = "";
-                for (Class cls : allClasses) {
-                    do {
-                        o.println(separator + "  {");
-                        o.print("    \"name\" : \"" + cls.getName() + "\"");
-                        if (reflectClasses.contains(cls) || reflectClasses.contains(cls.getEnclosingClass())) {
-                            o.println(",");
-                            o.println("    \"allDeclaredConstructors\" : true,");
-                            o.println("    \"allPublicConstructors\" : true,");
-                            o.println("    \"allDeclaredMethods\" : true,");
-                            o.println("    \"allPublicMethods\" : true,");
-                            o.println("    \"allDeclaredFields\" : true,");
-                            o.println("    \"allPublicFields\" : true,");
-                            o.println("    \"allDeclaredClasses\" : true,");
-                            o.print("    \"allPublicClasses\" : true");
-                        }
-                        o.println();
-                        o.print("  }");
-                        separator = "," + System.lineSeparator();
-                        cls = cls.getEnclosingClass();
-                    } while (cls != null);
+            if (o == null) {
+                continue;
+            }
+            o.println("[");
+            String separator = "";
+            for (Class cls : allClasses) {
+                o.println(separator + "  {");
+                o.print("    \"name\" : \"" + cls.getName() + "\"");
+                if (reflectClasses.contains(cls) || reflectClasses.contains(cls.getEnclosingClass())) {
+                    o.println(",");
+                    o.println("    \"allDeclaredConstructors\" : true,");
+                    o.println("    \"allPublicConstructors\" : true,");
+                    o.println("    \"allDeclaredMethods\" : true,");
+                    o.println("    \"allPublicMethods\" : true,");
+                    o.println("    \"allDeclaredFields\" : true,");
+                    o.println("    \"allPublicFields\" : true,");
+                    o.println("    \"allDeclaredClasses\" : true,");
+                    o.print("    \"allPublicClasses\" : true");
+                } else if (LoadEnabled.class.isAssignableFrom(cls)) {
+                    o.println(",");
+                    o.println("    \"allDeclaredConstructors\" : true,");
+                    o.print("    \"allPublicConstructors\" : true");
                 }
                 o.println();
-                o.println("]");
+                o.print("  }");
+                separator = "," + System.lineSeparator();
+                cls = cls.getEnclosingClass();
             }
+            o.println();
+            o.println("]");
         }
 
         return supportedPlatform;

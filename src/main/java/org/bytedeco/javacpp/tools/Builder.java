@@ -1085,12 +1085,12 @@ public class Builder {
             // Do not inherit properties when parsing because it generates annotations itself
             ClassProperties p = Loader.loadProperties(c, properties, false);
             if (p.isLoaded()) {
-                try {
-                    if (Arrays.asList(c.getInterfaces()).contains(BuildEnabled.class)) {
+                if (Arrays.asList(c.getInterfaces()).contains(BuildEnabled.class)) {
+                    try {
                         ((BuildEnabled)c.newInstance()).init(logger, properties, encoding);
+                    } catch (ClassCastException | InstantiationException | IllegalAccessException e) {
+                        logger.warn("Could not create an instance of " + c + ": " + e);
                     }
-                } catch (ClassCastException | InstantiationException | IllegalAccessException e) {
-                    // fail silently as if the interface wasn't implemented
                 }
                 String target = p.getProperty("global");
                 if (target != null && !c.getName().equals(target)) {
