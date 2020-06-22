@@ -138,7 +138,6 @@ public class BytePointer extends Pointer {
     public BytePointer() { }
     /** @see Pointer#Pointer(Pointer) */
     public BytePointer(Pointer p) { super(p); }
-    private native void allocateArray(long size);
 
     /** @see Pointer#position(long) */
     @Override public BytePointer position(long position) {
@@ -248,7 +247,7 @@ public class BytePointer extends Pointer {
     /** @return {@code get(0)} */
     public byte get() { return get(0); }
     /** @return the i-th {@code byte} value of a native array */
-    public native byte get(long i);
+    public byte get(long i) { return Raw.getInstance().getByte(address + i * sizeof()); }
     /** @return {@code put(0, b)} */
     public BytePointer put(byte b) { return put(0, b); }
     /**
@@ -258,7 +257,10 @@ public class BytePointer extends Pointer {
      * @param b the {@code byte} value to copy
      * @return this
      */
-    public native BytePointer put(long i, byte b);
+    public BytePointer put(long i, byte b) {
+        Raw.getInstance().putByte(address + i * sizeof(), b);
+        return this;
+    }
 
     /** @return {@code get(array, 0, array.length)} */
     public BytePointer get(byte[] array) { return get(array, 0, array.length); }

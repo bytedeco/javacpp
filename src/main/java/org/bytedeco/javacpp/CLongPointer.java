@@ -82,7 +82,6 @@ public class CLongPointer extends Pointer {
     public CLongPointer() { }
     /** @see Pointer#Pointer(Pointer) */
     public CLongPointer(Pointer p) { super(p); }
-    private native void allocateArray(long size);
 
     /** @see Pointer#position(long) */
     @Override public CLongPointer position(long position) {
@@ -100,7 +99,7 @@ public class CLongPointer extends Pointer {
     /** @return {@code get(0)} */
     public long get() { return get(0); }
     /** @return the i-th {@code long} value of a native array */
-    @Cast("long") public native long get(long i);
+    @Cast("long") public long get(long i) { return Raw.getInstance().getCLong(address + i * sizeof()); }
     /** @return {@code put(0, l)} */
     public CLongPointer put(long l) { return put(0, l); }
     /**
@@ -110,7 +109,10 @@ public class CLongPointer extends Pointer {
      * @param l the {@code long} value to copy
      * @return this
      */
-    public native CLongPointer put(long i, long l);
+    public CLongPointer put(long i, long l) {
+        Raw.getInstance().putCLong(address + i * sizeof(), l);
+        return this;
+    }
 
     /** @return {@code get(array, 0, array.length)} */
     public CLongPointer get(long[] array) { return get(array, 0, array.length); }

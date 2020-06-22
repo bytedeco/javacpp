@@ -98,7 +98,6 @@ public class BooleanPointer extends Pointer {
     public BooleanPointer() { }
     /** @see Pointer#Pointer(Pointer) */
     public BooleanPointer(Pointer p) { super(p); }
-    private native void allocateArray(long size);
 
     /** @see Pointer#position(long) */
     @Override public BooleanPointer position(long position) {
@@ -119,7 +118,7 @@ public class BooleanPointer extends Pointer {
     /** @return {@code get(0)} */
     public boolean get() { return get(0); }
     /** @return the i-th {@code boolean} value of a native array */
-    public native boolean get(long i);
+    public boolean get(long i) { return Raw.getInstance().getByte(address + i * sizeof()) != 0; }
     /** @return {@code put(0, b)} */
     public BooleanPointer put(boolean b) { return put(0, b); }
     /**
@@ -129,7 +128,10 @@ public class BooleanPointer extends Pointer {
      * @param b the {@code boolean} value to copy
      * @return this
      */
-    public native BooleanPointer put(long i, boolean b);
+    public BooleanPointer put(long i, boolean b) {
+        Raw.getInstance().putByte(address + i * sizeof(), (byte) (b ? 1 : 0));
+        return this;
+    }
 
     /** @return {@code get(array, 0, array.length)} */
     public BooleanPointer get(boolean[] array) { return get(array, 0, array.length); }

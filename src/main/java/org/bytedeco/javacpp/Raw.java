@@ -19,7 +19,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.bytedeco.javacpp.indexer;
+package org.bytedeco.javacpp;
 
 /**
  * The raw memory interface supporting long indexing.
@@ -41,6 +41,9 @@ abstract class Raw {
         return INSTANCE;
     }
 
+    abstract long allocateMemory(long capacity);
+    abstract void freeMemory(long address);
+
     abstract byte getByte(long address);
     abstract void putByte(long address, byte b);
     abstract short getShort(long address);
@@ -57,6 +60,12 @@ abstract class Raw {
     abstract void putChar(long address, char c);
     abstract boolean getBoolean(long address);
     abstract void putBoolean(long address, boolean b);
+    abstract boolean getBool(long address);
+    abstract void putBool(long address, boolean b);
+    abstract long getCLong(long address);
+    abstract void putCLong(long address, long l);
+    abstract long getSizeT(long address);
+    abstract void putSizeT(long address, long st);
 
     abstract byte getByte(byte[] array, long offset);
     abstract void putByte(byte[] array, long offset, byte b);

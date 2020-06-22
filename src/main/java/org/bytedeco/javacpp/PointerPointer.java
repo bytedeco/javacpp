@@ -155,7 +155,6 @@ public class PointerPointer<P extends Pointer> extends Pointer {
     public PointerPointer() { }
     /** @see Pointer#Pointer(Pointer) */
     public PointerPointer(Pointer p) { super(p); }
-    private native void allocateArray(long size);
 
     /** This is just to keep references to Pointer objects and prevent premature deallocation. */
     private P[] pointerArray;

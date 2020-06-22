@@ -81,7 +81,6 @@ public class SizeTPointer extends Pointer {
     public SizeTPointer() { }
     /** @see Pointer#Pointer(Pointer) */
     public SizeTPointer(Pointer p) { super(p); }
-    private native void allocateArray(long size);
 
     /** @see Pointer#position(long) */
     @Override public SizeTPointer position(long position) {
@@ -99,7 +98,7 @@ public class SizeTPointer extends Pointer {
     /** @return {@code get(0)} */
     public long get() { return get(0); }
     /** @return the i-th {@code size_t} value of a native array */
-    @Cast("size_t") public native long get(long i);
+    @Cast("size_t") public long get(long i) { return Raw.getInstance().getSizeT(address + i * sizeof()); }
     /** @return {@code put(0, s)} */
     public SizeTPointer put(long s) { return put(0, s); }
     /**
@@ -109,7 +108,10 @@ public class SizeTPointer extends Pointer {
      * @param s the {@code size_t} value to copy
      * @return this
      */
-    public native SizeTPointer put(long i, long s);
+    public SizeTPointer put(long i, long s) {
+        Raw.getInstance().putSizeT(address + i * sizeof(), s);
+        return this;
+    }
 
     /** @return {@code get(array, 0, array.length)} */
     public SizeTPointer get(long[] array) { return get(array, 0, array.length); }
