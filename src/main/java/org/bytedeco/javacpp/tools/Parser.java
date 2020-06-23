@@ -1994,6 +1994,11 @@ public class Parser {
                     }
                 }
             }
+            if (tokens.get().match("->")) {
+                // auto type
+                tokens.next();
+                type = type(context);
+            }
             if (tokens.get().match('{')) {
                 body();
             } else {
@@ -2134,6 +2139,11 @@ public class Parser {
                     }
                 }
             }
+            if (tokens.get().match("->")) {
+                // auto type
+                tokens.next();
+                type = type(context);
+            }
             if (tokens.get().match('{')) {
                 body();
             } else {
@@ -2224,6 +2234,11 @@ public class Parser {
                 } else if (attr == null) {
                     break;
                 }
+            }
+            if (tokens.get().match("->")) {
+                // auto type
+                tokens.next();
+                type = type(context);
             }
             if (tokens.get().match('{')) {
                 body();

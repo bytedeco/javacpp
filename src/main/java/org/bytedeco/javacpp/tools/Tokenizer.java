@@ -167,6 +167,15 @@ class Tokenizer implements Closeable {
                 } else {
                     lastChar = c2;
                 }
+            } else if (c == '-') {
+                int c2 = readChar();
+                if (c2 == '>') {
+                    token.type = Token.SYMBOL;
+                    token.value = "->";
+                    return token;
+                } else {
+                    lastChar = c2;
+                }
             }
             token.type = c == '.' ? Token.FLOAT : Token.INTEGER;
             buffer.append((char)c);
