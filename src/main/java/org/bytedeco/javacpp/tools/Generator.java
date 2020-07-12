@@ -1353,15 +1353,20 @@ public class Generator {
         for (Class c : functions) {
             String[] typeName = cppTypeName(c);
             String[] returnConvention = typeName[0].split("\\(");
+            String[] returnType = {returnConvention[0] + (returnConvention.length > 2 ? "(*" : ""),
+                                                          returnConvention.length > 2 ? ")(" + returnConvention[2] : ""};
+            if (returnConvention.length > 2) {
+                returnConvention = Arrays.copyOfRange(returnConvention, 2, returnConvention.length);
+            }
             returnConvention[1] = constValueTypeName(returnConvention[1]);
             String parameterDeclaration = typeName[1].substring(1);
             String instanceTypeName = functionClassName(c);
             out.println("struct JavaCPP_hidden " + instanceTypeName + " {");
             out.println("    " + instanceTypeName + "() : ptr(NULL), obj(NULL) { }");
             if (parameterDeclaration != null && parameterDeclaration.length() > 0) {
-                out.println("    " + returnConvention[0] + "operator()" + parameterDeclaration + ";");
+                out.println("    " + returnType[0] + "operator()" + parameterDeclaration + returnType[1] + ";");
             }
-            out.println("    " + typeName[0] + "ptr" + typeName[1] + ";");
+            out.println("    " + returnType[0] + "(" + returnConvention[1] + "*ptr)" + parameterDeclaration + returnType[1] + ";");
             out.println("    jobject obj; static jmethodID mid;");
             out.println("};");
             out.println("jmethodID " + instanceTypeName + "::mid = NULL;");
@@ -2772,6 +2777,11 @@ public class Generator {
         String instanceTypeName = functionClassName(cls);
         String[] callbackTypeName = cppFunctionTypeName(callbackMethod);
         String[] returnConvention = callbackTypeName[0].split("\\(");
+        String[] returnType = {returnConvention[0] + (returnConvention.length > 2 ? "(*" : ""),
+                                                      returnConvention.length > 2 ? ")(" + returnConvention[2] : ""};
+        if (returnConvention.length > 2) {
+            returnConvention = Arrays.copyOfRange(returnConvention, 2, returnConvention.length);
+        }
         returnConvention[1] = constValueTypeName(returnConvention[1]);
         String parameterDeclaration = callbackTypeName[1].substring(1);
         String fieldName = mangle(callbackMethod.getName()) + "__" + mangle(signature(callbackMethod.getParameterTypes()));
@@ -2818,9 +2828,9 @@ public class Generator {
                 if (needUsing) {
                     member += usingLine + "\n    ";
                 }
-                member += "virtual " + returnConvention[0] + (returnConvention.length > 1 ? returnConvention[1] : "")
-                       +  methodInfo.memberName[0] + parameterDeclaration + " JavaCPP_override;\n    "
-                       +  returnConvention[0] + "super_" + methodInfo.name + nonconstParamDeclaration + " { ";
+                member += "virtual " + returnType[0] + (returnConvention.length > 1 ? returnConvention[1] : "")
+                       +  methodInfo.memberName[0] + parameterDeclaration + returnType[1] + " JavaCPP_override;\n    "
+                       +  returnType[0] + "super_" + methodInfo.name + nonconstParamDeclaration + returnType[1] + " { ";
                 if (methodInfo.method.getAnnotation(Virtual.class).value()) {
                     member += "throw JavaCPP_exception(\"Cannot call pure virtual function " + valueTypeName + "::" + methodInfo.memberName[0] + "().\"); }";
                 } else {
@@ -2833,8 +2843,8 @@ public class Generator {
                     }
                     member += "); }";
                 }
-                firstLine = returnConvention[0] + (returnConvention.length > 1 ? returnConvention[1] : "")
-                        + subType + "::" + methodInfo.memberName[0] + parameterDeclaration + " {";
+                firstLine = returnType[0] + (returnConvention.length > 1 ? returnConvention[1] : "")
+                        + subType + "::" + methodInfo.memberName[0] + parameterDeclaration + returnType[1] + " {";
                 functionList.add(fieldName);
             }
             memberList.add(member);
@@ -2849,11 +2859,11 @@ public class Generator {
             }
             for (int i = 0; i < allocatorMax; i++) {
                 if (out2 != null) {
-                    out2.println("JNIIMPORT " + returnConvention[0] + (returnConvention.length > 1 ?
-                            returnConvention[1] : "") + callbackName + (i > 0 ? i : "") + parameterDeclaration + ";");
+                    out2.println("JNIIMPORT " + returnType[0] + (returnConvention.length > 1 ?
+                            returnConvention[1] : "") + callbackName + (i > 0 ? i : "") + parameterDeclaration + returnType[1] + ";");
                 }
-                out.println("JNIEXPORT " + returnConvention[0] + (returnConvention.length > 1 ?
-                        returnConvention[1] : "") + callbackName + (i > 0 ? i : "") + parameterDeclaration + " {");
+                out.println("JNIEXPORT " + returnType[0] + (returnConvention.length > 1 ?
+                        returnConvention[1] : "") + callbackName + (i > 0 ? i : "") + parameterDeclaration + returnType[1] + " {");
                 out.print((callbackReturnType != void.class ? "    return " : "    ") + instanceTypeName + "_instances[" + i + "](");
                 for (int j = 0; j < callbackParameterTypes.length; j++) {
                     out.print("arg" + j);
@@ -2870,8 +2880,8 @@ public class Generator {
                     out2.println("}");
                 }
             }
-            out.println("static " + returnConvention[0] + "(" + (returnConvention.length > 1 ?
-                    returnConvention[1] : "") + "*" + callbackName + "s[" + allocatorMax + "])" + parameterDeclaration + " = {");
+            out.println("static " + returnType[0] + "(" + (returnConvention.length > 1 ?
+                    returnConvention[1] : "") + "*" + callbackName + "s[" + allocatorMax + "])" + parameterDeclaration + returnType[1] + " = {");
             for (int i = 0; i < allocatorMax; i++) {
                 out.print("        " + callbackName + (i > 0 ? i : ""));
                 if (i + 1 < allocatorMax) {
@@ -2880,7 +2890,7 @@ public class Generator {
             }
             out.println(" };");
 
-            firstLine = returnConvention[0] + instanceTypeName + "::operator()" + parameterDeclaration + " {";
+            firstLine = returnType[0] + instanceTypeName + "::operator()" + parameterDeclaration + returnType[1] + " {";
         }
 
         if (!needDefinition) {
@@ -3160,6 +3170,11 @@ public class Generator {
                             ")(rarg == NULL ? 0 : env->Get" + S + "Field(rarg, JavaCPP_" + s + "ValueFID));");
                 }
             } else if (Pointer.class.isAssignableFrom(callbackReturnType)) {
+                if (FunctionPointer.class.isAssignableFrom(callbackReturnType)) {
+                    functions.index(callbackReturnType);
+                    returnTypeName[0] = functionClassName(callbackReturnType) + "*";
+                    returnTypeName[1] = "";
+                }
                 out.println("    " + returnTypeName[0] + " rptr" + returnTypeName[1] + " = rarg == NULL ? NULL : (" +
                         returnTypeName[0] + returnTypeName[1] + ")jlong_to_ptr(env->GetLongField(rarg, JavaCPP_addressFID));");
                 if (returnAdapterInfo != null) {
@@ -3228,7 +3243,7 @@ public class Generator {
             } else if (returnBy instanceof ByVal || returnBy instanceof ByRef) {
                 out.println("    if (rptr == NULL) {");
                 out.println("        JavaCPP_log(\"Return pointer address is NULL in callback for " + cls.getCanonicalName() + ".\");");
-                out.println("        static " + constValueTypeName(returnConvention[0].trim()) + " empty" + returnTypeName[1] + ";");
+                out.println("        static " + constValueTypeName((returnType[0] + returnType[1]).trim()) + " empty" + returnTypeName[1] + ";");
                 out.println("        return empty;");
                 out.println("    } else {");
                 out.println("        return *" + callbackReturnCast + "rptr;");

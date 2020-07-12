@@ -1,4 +1,5 @@
 
+ * Fix `Generator` for cases when a `FunctionPointer` returns another `FunctionPointer`
  * Fix `Parser` failure with `auto` keyword of C++11 used as placeholder type specifier or for trailing return type ([issue #407](https://github.com/bytedeco/javacpp/issues/407))
  * Add `Builder.configDirectory` option to let `Generator` output files that GraalVM needs for AOT compilation ([issue eclipse/deeplearning4j#7362](https://github.com/eclipse/deeplearning4j/issues/7362))
  * Fix `Parser` error on `template<>` containing non-type parameters without names ([issue bytedeco/javacpp-presets#889](https://github.com/bytedeco/javacpp-presets/issues/889))
