@@ -405,7 +405,11 @@ public class Generator {
             loadSuffix = "";
             String p = clsProperties.getProperty("platform.library.static", "false").toLowerCase();
             if (p.equals("true") || p.equals("t") || p.equals("")) {
-                loadSuffix = "_" + clsProperties.getProperty("platform.library");
+                if (clsProperties.getProperty("platform").startsWith("ios")) {
+                    loadSuffix = ""; // onLoad for static libs not supported in RoboVM
+                } else {
+                    loadSuffix = "_" + clsProperties.getProperty("platform.library");
+                }
             }
         }
 
@@ -627,6 +631,13 @@ public class Generator {
             out.println("    total = info.dwNumberOfProcessors;");
             out.println("#endif");
             out.println("    return total;");
+            out.println("}");
+            out.println();
+            out.println("static inline void JavaCPP_robovmOnLoad(JNIEnv * env, jclass) {");
+            out.println("    JavaVM* tmp_vm = NULL;");
+            out.println("    env->GetJavaVM(&tmp_vm);");
+            out.println("    void* ptr;");
+            out.println("    JNI_OnLoad(tmp_vm, ptr);");
             out.println("}");
             out.println();
             out.println("static inline jint JavaCPP_totalCores() {");

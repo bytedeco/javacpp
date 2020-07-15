@@ -1239,6 +1239,12 @@ public class Loader {
             }
         }
 
+        if (properties.getProperty("platform").startsWith("ios") 
+        && Boolean.parseBoolean(properties.getProperty("platform.library.static", "false"))) {
+            Loader.robovmOnLoad();
+            return "roboVMstaticLib";
+        }
+
         String executable = p.getProperty("platform.executable");
         if (executable != null && executable.length() > 0) {
             String platform = p.getProperty("platform");
@@ -1910,4 +1916,7 @@ public class Loader {
 
     /** Returns the JavaVM JNI object, as required by some APIs for initialization. */
     @Name("JavaCPP_getJavaVM") public static native @Cast("JavaVM*") Pointer getJavaVM();
+
+    /** Custom wrapper function for calling onLoad with roboVM since it's not supported for static libs */
+    @Name("JavaCPP_robovmOnLoad") @Raw(withEnv = true) public static native void robovmOnLoad();
 }
