@@ -43,6 +43,11 @@ public class Logger {
     static {
         String s = System.getProperty("org.bytedeco.javacpp.logger.debug", "false").toLowerCase();
         debug = s.equals("true") || s.equals("t") || s.equals("");
+
+        String mx = System.getProperty("org.bytedeco.javacpp.mxbean", "false").toLowerCase();
+        if (mx.equals("true") || mx.equals("t") || mx.equals("")) {
+            PointersBufferPoolMXBean.register();
+        }
     }
 
     /** Returns the "org.bytedeco.javacpp.logger.debug" system property. */
