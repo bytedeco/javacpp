@@ -6,25 +6,25 @@ import javax.management.*;
 import java.lang.management.BufferPoolMXBean;
 import java.lang.management.ManagementFactory;
 
-public class PointersBufferPoolMXBean implements BufferPoolMXBean {
+public class PointerBufferPoolMXBean implements BufferPoolMXBean {
 
-    private static final Logger LOGGER = Logger.create(PointersBufferPoolMXBean.class);
-    private static final String POINTERS_MXBEAN_NAME = "pointers";
+    private static final Logger LOGGER = Logger.create(PointerBufferPoolMXBean.class);
+    private static final String JAVACPP_MXBEAN_NAME = "javacpp";
     private static final ObjectName OBJECT_NAME;
 
     static {
         ObjectName objectName = null;
         try {
-            objectName = new ObjectName("java.nio:type=BufferPool,name=" + POINTERS_MXBEAN_NAME);
+            objectName = new ObjectName("java.nio:type=BufferPool,name=" + JAVACPP_MXBEAN_NAME);
         } catch (MalformedObjectNameException e) {
-            LOGGER.warn("Could not create OBJECT_NAME for " + POINTERS_MXBEAN_NAME);
+            LOGGER.warn("Could not create OBJECT_NAME for " + JAVACPP_MXBEAN_NAME);
         }
         OBJECT_NAME = objectName;
     }
 
     @Override
     public String getName() {
-        return POINTERS_MXBEAN_NAME;
+        return JAVACPP_MXBEAN_NAME;
     }
 
     @Override
@@ -50,9 +50,9 @@ public class PointersBufferPoolMXBean implements BufferPoolMXBean {
     public static void register() {
         if (OBJECT_NAME != null) {
             try {
-                ManagementFactory.getPlatformMBeanServer().registerMBean(new PointersBufferPoolMXBean(), OBJECT_NAME);
+                ManagementFactory.getPlatformMBeanServer().registerMBean(new PointerBufferPoolMXBean(), OBJECT_NAME);
             } catch (InstanceAlreadyExistsException | MBeanRegistrationException | NotCompliantMBeanException e) {
-                LOGGER.warn("Could not register " + POINTERS_MXBEAN_NAME + " BufferPoolMXBean");
+                LOGGER.warn("Could not register " + JAVACPP_MXBEAN_NAME + " BufferPoolMXBean");
             }
         }
     }

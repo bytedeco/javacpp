@@ -34,8 +34,8 @@ import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import org.bytedeco.javacpp.annotation.Name;
-import org.bytedeco.javacpp.annotation.Platform;
 import org.bytedeco.javacpp.tools.Generator;
+import org.bytedeco.javacpp.tools.PointerBufferPoolMXBean;
 import org.bytedeco.javacpp.tools.Logger;
 
 /**
@@ -509,6 +509,11 @@ public class Pointer implements AutoCloseable {
             Loader.load();
         } catch (Throwable t) {
             logger.warn("Could not load Pointer: " + t);
+        }
+
+        String mx = System.getProperty("org.bytedeco.javacpp.mxbean", "false").toLowerCase();
+        if (mx.equals("true") || mx.equals("t") || mx.equals("")) {
+            PointerBufferPoolMXBean.register();
         }
     }
 
