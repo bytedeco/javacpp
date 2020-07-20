@@ -121,6 +121,9 @@ public class CharPointer extends Pointer {
     @Override public int sizeof() {
         return Character.SIZE / Byte.SIZE;
     }
+    @Override public CharPointer getPointer(long i) {
+        return new CharPointer(this).position(position + i);
+    }
 
     /** Returns the chars, assuming a null-terminated string if {@code limit <= position}. */
     public char[] getStringChars() {

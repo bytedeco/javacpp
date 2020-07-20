@@ -95,6 +95,9 @@ public class SizeTPointer extends Pointer {
     @Override public SizeTPointer capacity(long capacity) {
         return super.capacity(capacity);
     }
+    @Override public SizeTPointer getPointer(long i) {
+        return new SizeTPointer(this).position(position + i);
+    }
 
     /** @return {@code get(0)} */
     public long get() { return get(0); }

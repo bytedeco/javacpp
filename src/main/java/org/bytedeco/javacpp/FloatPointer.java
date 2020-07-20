@@ -111,6 +111,9 @@ public class FloatPointer extends Pointer {
     @Override public int sizeof() {
         return Float.SIZE / Byte.SIZE;
     }
+    @Override public FloatPointer getPointer(long i) {
+        return new FloatPointer(this).position(position + i);
+    }
 
     /** @return {@code get(0)} */
     public float get() { return get(0); }

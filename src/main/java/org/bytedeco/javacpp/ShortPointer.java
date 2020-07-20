@@ -111,6 +111,9 @@ public class ShortPointer extends Pointer {
     @Override public int sizeof() {
         return Short.SIZE / Byte.SIZE;
     }
+    @Override public ShortPointer getPointer(long i) {
+        return new ShortPointer(this).position(position + i);
+    }
 
     /** @return {@code get(0)} */
     public short get() { return get(0); }

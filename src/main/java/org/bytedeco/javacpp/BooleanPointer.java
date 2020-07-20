@@ -115,6 +115,9 @@ public class BooleanPointer extends Pointer {
     @Override public int sizeof() {
         return 1;
     }
+    @Override public BooleanPointer getPointer(long i) {
+        return new BooleanPointer(this).position(position + i);
+    }
 
     /** @return {@code get(0)} */
     public boolean get() { return get(0); }

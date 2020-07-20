@@ -190,7 +190,7 @@ public class PointerTest {
         assertEquals(false, pointer.getBool(0));
         assertEquals(true, pointer.getBool(1));
         assertEquals(shortValue, pointer.getChar(1));
-        assertEquals(Loader.sizeof(Pointer.class) == 4 ? intValue : longValue, pointer.getPointer(1).address);
+        assertEquals(Loader.sizeof(Pointer.class) == 4 ? intValue : longValue, pointer.getPointerValue(1).address);
 
         byte[] array2 = new byte[array.length];
         pointer.position(0).get(array2);

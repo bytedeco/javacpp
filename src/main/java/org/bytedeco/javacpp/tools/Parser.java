@@ -3227,6 +3227,9 @@ public class Parser {
                              "    private native void allocateArray(long size);\n" +
                              "    @Override public " + shortName + " position(long position) {\n" +
                              "        return (" + shortName + ")super.position(position);\n" +
+                             "    }\n" +
+                             "    @Override public " + shortName + " getPointer(long i) {\n" +
+                             "        return new " + shortName + "(this).position(position + i);\n" +
                              "    }\n";
             } else {
                 if ((info == null || !info.purify) && (!abstractClass || ctx.virtualize)) {
@@ -3243,6 +3246,9 @@ public class Parser {
                                  "    private native void allocateArray(long size);\n" +
                                  "    @Override public " + shortName + " position(long position) {\n" +
                                  "        return (" + shortName + ")super.position(position);\n" +
+                                 "    }\n" +
+                                 "    @Override public " + shortName + " getPointer(long i) {\n" +
+                                 "        return new " + shortName + "(this).position(position + i);\n" +
                                  "    }\n";
                 }
             }

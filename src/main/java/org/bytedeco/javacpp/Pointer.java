@@ -845,6 +845,32 @@ public class Pointer implements AutoCloseable {
     public static native Pointer memcpy(Pointer dst, Pointer src, long size);
     public static native Pointer memmove(Pointer dst, Pointer src, long size);
     public static native Pointer memset(Pointer dst, int ch, long size);
+
+    /** Returns {@code getPointer(0)}. */
+    public Pointer getPointer() {
+        return getPointer(0);
+    }
+
+    /** Returns {@code new Pointer(this).position((position + i) * sizeof()).capacity(capacity * sizeof()).limit(limit * sizeof())}. */
+    public Pointer getPointer(long i) {
+        long s = sizeof();
+        return new Pointer(this).position((position + i) * s).capacity(capacity * s).limit(limit *s);
+    }
+
+    /** Returns {@code getPointer(cls, 0)}. */
+    public <P extends Pointer> P getPointer(Class<P> cls) {
+        return getPointer(cls, 0);
+    }
+
+    /** Returns {@code new P(this).position(position + i)}. Throws RuntimeException if constructor is missing. */
+    public <P extends Pointer> P getPointer(Class<P> cls, long i) {
+        try {
+            return cls.getDeclaredConstructor(Pointer.class).newInstance(this).position(position + i);
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     /**
      * Calls in effect {@code memcpy(this.address + this.position, p.address + p.position, length)},
      * where {@code length = sizeof(p) * (p.limit - p.position)}.

@@ -155,6 +155,9 @@ public class BytePointer extends Pointer {
     @Override public int sizeof() {
         return 1;
     }
+    @Override public BytePointer getPointer(long i) {
+        return new BytePointer(this).position(position + i);
+    }
 
     /** Returns the bytes, assuming a null-terminated string if {@code limit <= position}. */
     public byte[] getStringBytes() {
@@ -351,14 +354,14 @@ public class BytePointer extends Pointer {
     /** Sets the {@code char} value at the i-th {@code byte} in the native array. */
     @ValueSetter @Cast("short") public native BytePointer putChar(long i, char c);
 
-    /** Returns {@code getPointer(0)}. */
-    public Pointer getPointer() { return getPointer(0); }
+    /** Returns {@code getPointerValue(0)}. */
+    public Pointer getPointerValue() { return getPointerValue(0); }
     /** Returns the {@code Pointer} value at the i-th {@code byte} in the native array. */
-    @ValueGetter @Cast("void*") public native Pointer getPointer(long i);
-    /** Returns {@code putPointer(0, s)}. */
-    public BytePointer putPointer(Pointer p) { return putPointer(0, p); }
+    @ValueGetter @Cast("void*") public native Pointer getPointerValue(long i);
+    /** Returns {@code putPointerValue(0, s)}. */
+    public BytePointer putPointerValue(Pointer p) { return putPointerValue(0, p); }
     /** Sets the {@code Pointer} value at the i-th {@code byte} in the native array. */
-    @ValueSetter @Cast("void*") public native BytePointer putPointer(long i, Pointer p);
+    @ValueSetter @Cast("void*") public native BytePointer putPointerValue(long i, Pointer p);
 
     public static native @Cast("char*") BytePointer strcat(@Cast("char*") BytePointer dst, @Cast("char*") BytePointer src);
     public static native @Cast("char*") BytePointer strchr(@Cast("char*") BytePointer str, int ch);

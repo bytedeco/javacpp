@@ -96,6 +96,9 @@ public class CLongPointer extends Pointer {
     @Override public CLongPointer capacity(long capacity) {
         return super.capacity(capacity);
     }
+    @Override public CLongPointer getPointer(long i) {
+        return new CLongPointer(this).position(position + i);
+    }
 
     /** @return {@code get(0)} */
     public long get() { return get(0); }

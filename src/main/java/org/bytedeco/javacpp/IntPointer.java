@@ -121,6 +121,9 @@ public class IntPointer extends Pointer {
     @Override public int sizeof() {
         return Integer.SIZE / Byte.SIZE;
     }
+    @Override public IntPointer getPointer(long i) {
+        return new IntPointer(this).position(position + i);
+    }
 
     /** Returns the code points, assuming a null-terminated string if {@code limit <= position}. */
     public int[] getStringCodePoints() {
