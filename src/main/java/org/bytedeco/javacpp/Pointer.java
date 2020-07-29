@@ -847,12 +847,12 @@ public class Pointer implements AutoCloseable {
     public static native Pointer memset(Pointer dst, int ch, long size);
 
     /** Returns {@code getPointer(0)}. */
-    public Pointer getPointer() {
+    public <P extends Pointer> P getPointer() {
         return getPointer(0);
     }
 
     /** Returns {@code new Pointer(this).position((position + i) * sizeof()).capacity(capacity * sizeof()).limit(limit * sizeof())}. */
-    public Pointer getPointer(long i) {
+    public <P extends Pointer> P getPointer(long i) {
         long s = sizeof();
         return new Pointer(this).position((position + i) * s).capacity(capacity * s).limit(limit *s);
     }
