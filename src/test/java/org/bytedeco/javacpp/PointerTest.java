@@ -233,7 +233,7 @@ public class PointerTest {
         for (int j = 0; j < chunks - 1; j++) {
             pointers[j] = new BytePointer(chunkSize);
         }
-        assertTrue(Pointer.DeallocatorReference.totalBytes >= (chunks - 1) * chunkSize * byteSize);
+        assertTrue(Pointer.totalBytes() >= (chunks - 1) * chunkSize * byteSize);
         try {
             fieldReference = pointers;
             System.out.println("Note: OutOfMemoryError should get thrown here and printed below.");
@@ -249,9 +249,9 @@ public class PointerTest {
         // make sure garbage collection runs
         fieldReference = null;
         pointers[0] = new BytePointer(chunkSize);
-        assertTrue(Pointer.DeallocatorReference.totalBytes < (chunks - 1) * chunkSize * byteSize);
-        assertTrue(Pointer.DeallocatorReference.totalBytes >= chunkSize * byteSize);
-        System.out.println(Pointer.DeallocatorReference.totalBytes + " " + chunkSize * byteSize);
+        assertTrue(Pointer.totalBytes() < (chunks - 1) * chunkSize * byteSize);
+        assertTrue(Pointer.totalBytes() >= chunkSize * byteSize);
+        System.out.println(Pointer.totalBytes() + " " + chunkSize * byteSize);
     }
 
     @Test public void testShortPointer() {
@@ -316,7 +316,7 @@ public class PointerTest {
         for (int j = 0; j < chunks - 1; j++) {
             pointers[j] = new ShortPointer(chunkSize);
         }
-        assertTrue(Pointer.DeallocatorReference.totalBytes >= (chunks - 1) * chunkSize * shortSize);
+        assertTrue(Pointer.totalBytes() >= (chunks - 1) * chunkSize * shortSize);
         try {
             fieldReference = pointers;
             System.out.println("Note: OutOfMemoryError should get thrown here and printed below.");
@@ -332,9 +332,9 @@ public class PointerTest {
         // make sure garbage collection runs
         fieldReference = null;
         pointers[0] = new ShortPointer(chunkSize);
-        assertTrue(Pointer.DeallocatorReference.totalBytes < (chunks - 1) * chunkSize * shortSize);
-        assertTrue(Pointer.DeallocatorReference.totalBytes >= chunkSize * shortSize);
-        System.out.println(Pointer.DeallocatorReference.totalBytes + " " + chunkSize * shortSize);
+        assertTrue(Pointer.totalBytes() < (chunks - 1) * chunkSize * shortSize);
+        assertTrue(Pointer.totalBytes() >= chunkSize * shortSize);
+        System.out.println(Pointer.totalBytes() + " " + chunkSize * shortSize);
     }
 
     @Test public void testIntPointer() {
@@ -399,7 +399,7 @@ public class PointerTest {
         for (int j = 0; j < chunks - 1; j++) {
             pointers[j] = new IntPointer(chunkSize);
         }
-        assertTrue(Pointer.DeallocatorReference.totalBytes >= (chunks - 1) * chunkSize * intSize);
+        assertTrue(Pointer.totalBytes() >= (chunks - 1) * chunkSize * intSize);
         try {
             fieldReference = pointers;
             System.out.println("Note: OutOfMemoryError should get thrown here and printed below.");
@@ -415,9 +415,9 @@ public class PointerTest {
         // make sure garbage collection runs
         fieldReference = null;
         pointers[0] = new IntPointer(chunkSize);
-        assertTrue(Pointer.DeallocatorReference.totalBytes < (chunks - 1) * chunkSize * intSize);
-        assertTrue(Pointer.DeallocatorReference.totalBytes >= chunkSize * intSize);
-        System.out.println(Pointer.DeallocatorReference.totalBytes + " " + chunkSize * intSize);
+        assertTrue(Pointer.totalBytes() < (chunks - 1) * chunkSize * intSize);
+        assertTrue(Pointer.totalBytes() >= chunkSize * intSize);
+        System.out.println(Pointer.totalBytes() + " " + chunkSize * intSize);
     }
 
     @Test public void testLongPointer() {
@@ -482,7 +482,7 @@ public class PointerTest {
         for (int j = 0; j < chunks - 1; j++) {
             pointers[j] = new LongPointer(chunkSize);
         }
-        assertTrue(Pointer.DeallocatorReference.totalBytes >= (chunks - 1) * chunkSize * longSize);
+        assertTrue(Pointer.totalBytes() >= (chunks - 1) * chunkSize * longSize);
         try {
             fieldReference = pointers;
             System.out.println("Note: OutOfMemoryError should get thrown here and printed below.");
@@ -498,9 +498,9 @@ public class PointerTest {
         // make sure garbage collection runs
         fieldReference = null;
         pointers[0] = new LongPointer(chunkSize);
-        assertTrue(Pointer.DeallocatorReference.totalBytes < (chunks - 1) * chunkSize * longSize);
-        assertTrue(Pointer.DeallocatorReference.totalBytes >= chunkSize * longSize);
-        System.out.println(Pointer.DeallocatorReference.totalBytes + " " + chunkSize * longSize);
+        assertTrue(Pointer.totalBytes() < (chunks - 1) * chunkSize * longSize);
+        assertTrue(Pointer.totalBytes() >= chunkSize * longSize);
+        System.out.println(Pointer.totalBytes() + " " + chunkSize * longSize);
     }
 
     @Test public void testFloatPointer() {
@@ -565,7 +565,7 @@ public class PointerTest {
         for (int j = 0; j < chunks - 1; j++) {
             pointers[j] = new FloatPointer(chunkSize);
         }
-        assertTrue(Pointer.DeallocatorReference.totalBytes >= (chunks - 1) * chunkSize * floatSize);
+        assertTrue(Pointer.totalBytes() >= (chunks - 1) * chunkSize * floatSize);
         try {
             fieldReference = pointers;
             System.out.println("Note: OutOfMemoryError should get thrown here and printed below.");
@@ -581,9 +581,9 @@ public class PointerTest {
         // make sure garbage collection runs
         fieldReference = null;
         pointers[0] = new FloatPointer(chunkSize);
-        assertTrue(Pointer.DeallocatorReference.totalBytes < (chunks - 1) * chunkSize * floatSize);
-        assertTrue(Pointer.DeallocatorReference.totalBytes >= chunkSize * floatSize);
-        System.out.println(Pointer.DeallocatorReference.totalBytes + " " + chunkSize * floatSize);
+        assertTrue(Pointer.totalBytes() < (chunks - 1) * chunkSize * floatSize);
+        assertTrue(Pointer.totalBytes() >= chunkSize * floatSize);
+        System.out.println(Pointer.totalBytes() + " " + chunkSize * floatSize);
     }
 
     @Test public void testDoublePointer() {
@@ -648,7 +648,7 @@ public class PointerTest {
         for (int j = 0; j < chunks - 1; j++) {
             pointers[j] = new DoublePointer(chunkSize);
         }
-        assertTrue(Pointer.DeallocatorReference.totalBytes >= (chunks - 1) * chunkSize * doubleSize);
+        assertTrue(Pointer.totalBytes() >= (chunks - 1) * chunkSize * doubleSize);
         try {
             fieldReference = pointers;
             System.out.println("Note: OutOfMemoryError should get thrown here and printed below.");
@@ -664,9 +664,9 @@ public class PointerTest {
         // make sure garbage collection runs
         fieldReference = null;
         pointers[0] = new DoublePointer(chunkSize);
-        assertTrue(Pointer.DeallocatorReference.totalBytes < (chunks - 1) * chunkSize * doubleSize);
-        assertTrue(Pointer.DeallocatorReference.totalBytes >= chunkSize * doubleSize);
-        System.out.println(Pointer.DeallocatorReference.totalBytes + " " + chunkSize * doubleSize);
+        assertTrue(Pointer.totalBytes() < (chunks - 1) * chunkSize * doubleSize);
+        assertTrue(Pointer.totalBytes() >= chunkSize * doubleSize);
+        System.out.println(Pointer.totalBytes() + " " + chunkSize * doubleSize);
     }
 
     @Test public void testCharPointer() {
@@ -731,7 +731,7 @@ public class PointerTest {
         for (int j = 0; j < chunks - 1; j++) {
             pointers[j] = new CharPointer(chunkSize);
         }
-        assertTrue(Pointer.DeallocatorReference.totalBytes >= (chunks - 1) * chunkSize * charSize);
+        assertTrue(Pointer.totalBytes() >= (chunks - 1) * chunkSize * charSize);
         try {
             fieldReference = pointers;
             System.out.println("Note: OutOfMemoryError should get thrown here and printed below.");
@@ -747,9 +747,9 @@ public class PointerTest {
         // make sure garbage collection runs
         fieldReference = null;
         pointers[0] = new CharPointer(chunkSize);
-        assertTrue(Pointer.DeallocatorReference.totalBytes < (chunks - 1) * chunkSize * charSize);
-        assertTrue(Pointer.DeallocatorReference.totalBytes >= chunkSize * charSize);
-        System.out.println(Pointer.DeallocatorReference.totalBytes + " " + chunkSize * charSize);
+        assertTrue(Pointer.totalBytes() < (chunks - 1) * chunkSize * charSize);
+        assertTrue(Pointer.totalBytes() >= chunkSize * charSize);
+        System.out.println(Pointer.totalBytes() + " " + chunkSize * charSize);
     }
 
     @Test public void testBooleanPointer() {
@@ -813,7 +813,7 @@ public class PointerTest {
         for (int j = 0; j < chunks - 1; j++) {
             pointers[j] = new BooleanPointer(chunkSize);
         }
-        assertTrue(Pointer.DeallocatorReference.totalBytes >= (chunks - 1) * chunkSize * booleanSize);
+        assertTrue(Pointer.totalBytes() >= (chunks - 1) * chunkSize * booleanSize);
         try {
             fieldReference = pointers;
             System.out.println("Note: OutOfMemoryError should get thrown here and printed below.");
@@ -829,9 +829,9 @@ public class PointerTest {
         // make sure garbage collection runs
         fieldReference = null;
         pointers[0] = new BooleanPointer(chunkSize);
-        assertTrue(Pointer.DeallocatorReference.totalBytes < (chunks - 1) * chunkSize * booleanSize);
-        assertTrue(Pointer.DeallocatorReference.totalBytes >= chunkSize * booleanSize);
-        System.out.println(Pointer.DeallocatorReference.totalBytes + " " + chunkSize * booleanSize);
+        assertTrue(Pointer.totalBytes() < (chunks - 1) * chunkSize * booleanSize);
+        assertTrue(Pointer.totalBytes() >= chunkSize * booleanSize);
+        System.out.println(Pointer.totalBytes() + " " + chunkSize * booleanSize);
     }
 
     @Test public void testPointerPointer() {
@@ -904,7 +904,7 @@ public class PointerTest {
         for (int j = 0; j < chunks - 1; j++) {
             pointers[j] = new PointerPointer(chunkSize);
         }
-        assertTrue(Pointer.DeallocatorReference.totalBytes >= (chunks - 1) * chunkSize * pointerSize);
+        assertTrue(Pointer.totalBytes() >= (chunks - 1) * chunkSize * pointerSize);
         try {
             fieldReference = pointers;
             System.out.println("Note: OutOfMemoryError should get thrown here and printed below.");
@@ -920,9 +920,9 @@ public class PointerTest {
         // make sure garbage collection runs
         fieldReference = null;
         pointers[0] = new PointerPointer(chunkSize);
-        assertTrue(Pointer.DeallocatorReference.totalBytes < (chunks - 1) * chunkSize * pointerSize);
-        assertTrue(Pointer.DeallocatorReference.totalBytes >= chunkSize * pointerSize);
-        System.out.println(Pointer.DeallocatorReference.totalBytes + " " + chunkSize * pointerSize);
+        assertTrue(Pointer.totalBytes() < (chunks - 1) * chunkSize * pointerSize);
+        assertTrue(Pointer.totalBytes() >= chunkSize * pointerSize);
+        System.out.println(Pointer.totalBytes() + " " + chunkSize * pointerSize);
     }
 
     @Test public void testDeallocator() throws InterruptedException {

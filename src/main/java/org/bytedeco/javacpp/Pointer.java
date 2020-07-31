@@ -285,11 +285,35 @@ public class Pointer implements AutoCloseable {
         volatile DeallocatorReference prev = null, next = null;
         Deallocator deallocator;
 
-        static volatile long totalBytes = 0;
-        static AtomicLong totalCount = new AtomicLong();
+        private static long totalBytes = 0;
+        private static long totalCount = 0;
         long bytes;
 
         AtomicInteger count;
+
+        public static long getTotalBytes() {
+            synchronized (DeallocatorReference.class) {
+                return DeallocatorReference.totalBytes;
+            }
+        }
+
+        static void incrementTotalBytes(long increment) {
+            synchronized (DeallocatorReference.class) {
+                DeallocatorReference.totalBytes += increment;
+            }
+        }
+
+        static void decrementTotalBytes(long decrement) {
+            synchronized (DeallocatorReference.class) {
+                DeallocatorReference.totalBytes -= decrement;
+            }
+        }
+
+        public static long getTotalCount() {
+            synchronized (DeallocatorReference.class) {
+                return DeallocatorReference.totalCount;
+            }
+        }
 
         final void add() {
             synchronized (DeallocatorReference.class) {
@@ -299,8 +323,8 @@ public class Pointer implements AutoCloseable {
                     next = head;
                     next.prev = head = this;
                 }
-                totalBytes += bytes;
-                totalCount.incrementAndGet();
+                incrementTotalBytes(bytes);
+                totalCount++;
             }
         }
 
@@ -318,8 +342,8 @@ public class Pointer implements AutoCloseable {
                     next.prev = prev;
                 }
                 prev = next = this;
-                totalBytes -= bytes;
-                totalCount.decrementAndGet();
+                decrementTotalBytes(bytes);
+                totalCount--;
             }
         }
 
@@ -531,14 +555,14 @@ public class Pointer implements AutoCloseable {
         return maxBytes;
     }
 
-    /** Returns {@link DeallocatorReference#totalBytes}, current amount of memory tracked by deallocators. */
+    /** Returns {@link DeallocatorReference#getTotalBytes()}, current amount of memory tracked by deallocators. */
     public static long totalBytes() {
-        return DeallocatorReference.totalBytes;
+        return DeallocatorReference.getTotalBytes();
     }
 
-    /** Returns {@link DeallocatorReference#totalCount}, current number of pointers tracked by deallocators. */
+    /** Returns {@link DeallocatorReference#getTotalCount()}, current number of pointers tracked by deallocators. */
     public static long totalCount() {
-        return DeallocatorReference.totalCount.get();
+        return DeallocatorReference.getTotalCount();
     }
 
     /** Returns {@link #maxPhysicalBytes}, the maximum amount of physical memory that should be used. */
@@ -666,7 +690,7 @@ public class Pointer implements AutoCloseable {
             long lastPhysicalBytes = maxPhysicalBytes > 0 ? physicalBytes() : 0;
             synchronized (DeallocatorThread.class) {
                 try {
-                    while (count++ < maxRetries && ((maxBytes > 0 && DeallocatorReference.totalBytes + r.bytes > maxBytes)
+                    while (count++ < maxRetries && ((maxBytes > 0 && DeallocatorReference.getTotalBytes() + r.bytes > maxBytes)
                                          || (maxPhysicalBytes > 0 && lastPhysicalBytes > maxPhysicalBytes))) {
                         if (logger.isDebugEnabled()) {
                             logger.debug("Calling System.gc() and Pointer.trimMemory() in " + this);
@@ -686,10 +710,10 @@ public class Pointer implements AutoCloseable {
                         logger.debug(e.getMessage());
                     }
                 }
-                if (maxBytes > 0 && DeallocatorReference.totalBytes + r.bytes > maxBytes) {
+                if (maxBytes > 0 && DeallocatorReference.getTotalBytes() + r.bytes > maxBytes) {
                     deallocate();
                     throw new OutOfMemoryError("Failed to allocate memory within limits: totalBytes ("
-                            + formatBytes(DeallocatorReference.totalBytes) + " + " + formatBytes(r.bytes) + ") > maxBytes (" + formatBytes(maxBytes) + ")");
+                            + formatBytes(DeallocatorReference.getTotalBytes()) + " + " + formatBytes(r.bytes) + ") > maxBytes (" + formatBytes(maxBytes) + ")");
                 } else if (maxPhysicalBytes > 0 && lastPhysicalBytes > maxPhysicalBytes) {
                     deallocate();
                     throw new OutOfMemoryError("Physical memory usage is too high: physicalBytes ("

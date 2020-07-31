@@ -75,11 +75,11 @@ public class IndexerTest {
         Loader.load(c);
 
         // work around OutOfMemoryError when testing long indexing
-        Pointer.DeallocatorReference.totalBytes -= 1L << 48;
+        Pointer.DeallocatorReference.decrementTotalBytes(1L << 48);
     }
 
     @AfterClass public static void tearDownClass() throws Exception {
-        Pointer.DeallocatorReference.totalBytes += 1L << 48;
+        Pointer.DeallocatorReference.incrementTotalBytes(1L << 48);
     }
 
     static class TestIndexer extends Indexer {
