@@ -32,7 +32,6 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import org.bytedeco.javacpp.annotation.Name;
 import org.bytedeco.javacpp.tools.Generator;
 import org.bytedeco.javacpp.tools.PointerBufferPoolMXBean;
@@ -286,7 +285,7 @@ public class Pointer implements AutoCloseable {
         Deallocator deallocator;
 
         static volatile long totalBytes = 0;
-        static AtomicLong totalCount = new AtomicLong();
+        static volatile long totalCount = 0;
         long bytes;
 
         AtomicInteger count;
@@ -300,7 +299,7 @@ public class Pointer implements AutoCloseable {
                     next.prev = head = this;
                 }
                 totalBytes += bytes;
-                totalCount.incrementAndGet();
+                totalCount++;
             }
         }
 
@@ -319,7 +318,7 @@ public class Pointer implements AutoCloseable {
                 }
                 prev = next = this;
                 totalBytes -= bytes;
-                totalCount.decrementAndGet();
+                totalCount--;
             }
         }
 
@@ -538,7 +537,7 @@ public class Pointer implements AutoCloseable {
 
     /** Returns {@link DeallocatorReference#totalCount}, current number of pointers tracked by deallocators. */
     public static long totalCount() {
-        return DeallocatorReference.totalCount.get();
+        return DeallocatorReference.totalCount;
     }
 
     /** Returns {@link #maxPhysicalBytes}, the maximum amount of physical memory that should be used. */
