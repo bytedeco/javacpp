@@ -96,8 +96,8 @@ public @interface Platform {
     String[] extension()   default {};
     /** A list of paths from which to copy executables from the {@link #executable()} value. */
     String[] executablepath() default {};
-    /** An executable to bundle at build time and extract at runtime on load, instead of a library. */
-    String   executable()     default "";
+    /** Executables to bundle at build time and extract at runtime on load, instead of a library. */
+    String[] executable()     default {};
     /** The native JNI library associated with this class that {@link Builder} should
      *  try to build and {@link Loader} should try to load. If left empty, this value
      *  defaults to "jni" + the name that {@link Class#getSimpleName()} returns for

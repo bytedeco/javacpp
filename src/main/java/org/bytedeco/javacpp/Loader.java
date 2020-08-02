@@ -1239,14 +1239,15 @@ public class Loader {
             }
         }
 
-        String executable = p.getProperty("platform.executable");
-        if (executable != null && executable.length() > 0) {
+        List<String> executables = p.get("platform.executable");
+        List<String> executablePaths = new ArrayList<String>();
+        if (executables.size() > 0) {
             String platform = p.getProperty("platform");
             String[] extensions = p.get("platform.extension").toArray(new String[0]);
             String prefix = p.getProperty("platform.executable.prefix", "");
             String suffix = p.getProperty("platform.executable.suffix", "");
-            String filename = prefix + executable + suffix;
-            String libraryPath  = p.getProperty("platform.library.path", "");
+            String filename = prefix + executables.get(0) + suffix;
+            String libraryPath = p.getProperty("platform.library.path", "");
             try {
                 if (libraryPath.length() > 0) {
                     // look for the libraries in system paths, and extract them in cache anyway,
@@ -1262,20 +1263,25 @@ public class Loader {
                         }
                     }
                 }
-                for (int i = extensions.length - 1; i >= -1; i--) {
-                    // iterate extensions in reverse to be consistent with the overriding of properties
-                    String extension = i >= 0 ? extensions[i] : "";
-                    String subdir = libraryPath.length() > 0 ? "/" + libraryPath : platform + (extension == null ? "" : extension);
-                    File f = cacheResource(cls, subdir + "/" + filename);
-                    if (f != null) {
-                        f.setExecutable(true);
-                        return f.getAbsolutePath();
+                for (String executable : executables) {
+                    filename = prefix + executable + suffix;
+                    for (int i = extensions.length - 1; i >= -1; i--) {
+                        // iterate extensions in reverse to be consistent with the overriding of properties
+                        String extension = i >= 0 ? extensions[i] : "";
+                        String subdir = libraryPath.length() > 0 ? "/" + libraryPath : platform + (extension == null ? "" : extension);
+                        File f = cacheResource(cls, subdir + "/" + filename);
+                        if (f != null) {
+                            f.setExecutable(true);
+                            executablePaths.add(f.getAbsolutePath());
+                        }
                     }
                 }
             } catch (IOException e) {
                 logger.error("Could not extract executable " + filename + ": " + e);
             }
-            return null;
+        }
+        if (executables.size() > 0) {
+            return executablePaths.size() > 0 ? executablePaths.get(0) : null;
         }
 
         int librarySuffix = -1;

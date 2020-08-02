@@ -1,4 +1,5 @@
 
+ * Change the `@Platform(executable=...` property to an array and allow bundling multiple files per class
  * Prevent `Builder` unnecessarily linking with `-framework JavaVM` to fix GraalVM Native Image on Mac ([issue #417](https://github.com/bytedeco/javacpp/issues/417))
  * Add `Pointer.getPointer()` methods as shortcuts for `new P(p).position(p.position + i)` ([issue #155](https://github.com/bytedeco/javacpp/issues/155))
  * Fix `Generator` for cases when a `FunctionPointer` returns another `FunctionPointer`

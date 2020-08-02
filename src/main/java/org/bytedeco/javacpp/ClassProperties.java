@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2018 Samuel Audet
+ * Copyright (C) 2011-2020 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -205,8 +205,7 @@ public class ClassProperties extends HashMap<String,List<String>> {
 
         String[] pragma = {}, define = {}, exclude = {}, include = {}, cinclude = {}, includepath = {}, includeresource = {}, compiler = {},
                  linkpath = {}, linkresource = {}, link = {}, frameworkpath = {}, framework = {}, preloadpath = {}, preloadresource = {}, preload = {},
-                 resourcepath = {}, resource = {}, extension = {}, executablepath = {};
-        String executable = "";
+                 resourcepath = {}, resource = {}, extension = {}, executablepath = {}, executable = {};
         String library = "jni" + c.getSimpleName();
         if (hasPlatformProperties) {
             if (ourTarget != null && ourTarget.length() > 0) {
@@ -262,7 +261,7 @@ public class ClassProperties extends HashMap<String,List<String>> {
                 if (p.resource()    .length > 0) { resource     = p.resource();     }
                 if (p.extension()   .length > 0) { extension    = p.extension();    }
                 if (p.executablepath().length > 0) { executablepath = p.executablepath(); }
-                if (p.executable().length() > 0) { executable   = p.executable();   }
+                if (p.executable()  .length > 0) { executable   = p.executable();   }
                 if (p.library().length() > 0)   { library     = p.library();     }
             }
         }
@@ -313,7 +312,7 @@ public class ClassProperties extends HashMap<String,List<String>> {
             addAll("platform.extension", extension);
         }
         addAll("platform.executablepath", executablepath);
-        setProperty("platform.executable", executable);
+        addAll("platform.executable", executable);
         setProperty("platform.library", library);
 
         if (LoadEnabled.class.isAssignableFrom(c)) {

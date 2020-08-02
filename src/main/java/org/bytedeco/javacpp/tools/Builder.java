@@ -1117,14 +1117,17 @@ public class Builder {
                 continue;
             }
 
-            String executableName = p.getProperty("platform.executable");
-            if (executableName != null && executableName.length() > 0) {
+            List<String> executableNames = p.get("platform.executable");
+            for (String executableName : executableNames) {
                 LinkedHashSet<Class> classList = executableMap.get(executableName);
                 if (classList == null) {
                     allNames.add(executableName);
                     executableMap.put(executableName, classList = new LinkedHashSet<Class>());
                 }
                 classList.addAll(p.getEffectiveClasses());
+            }
+            if (executableNames.size() > 0) {
+                // has executables -> skip over default libraryName
                 continue;
             }
 
