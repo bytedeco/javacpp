@@ -33,8 +33,8 @@ import java.nio.ByteOrder;
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.bytedeco.javacpp.annotation.Name;
-import org.bytedeco.javacpp.annotation.Platform;
 import org.bytedeco.javacpp.tools.Generator;
+import org.bytedeco.javacpp.tools.PointerBufferPoolMXBean;
 import org.bytedeco.javacpp.tools.Logger;
 
 /**
@@ -285,6 +285,7 @@ public class Pointer implements AutoCloseable {
         Deallocator deallocator;
 
         static volatile long totalBytes = 0;
+        static volatile long totalCount = 0;
         long bytes;
 
         AtomicInteger count;
@@ -298,6 +299,7 @@ public class Pointer implements AutoCloseable {
                     next.prev = head = this;
                 }
                 totalBytes += bytes;
+                totalCount++;
             }
         }
 
@@ -316,6 +318,7 @@ public class Pointer implements AutoCloseable {
                 }
                 prev = next = this;
                 totalBytes -= bytes;
+                totalCount--;
             }
         }
 
@@ -506,6 +509,11 @@ public class Pointer implements AutoCloseable {
         } catch (Throwable t) {
             logger.warn("Could not load Pointer: " + t);
         }
+
+        String mx = System.getProperty("org.bytedeco.javacpp.mxbean", "false").toLowerCase();
+        if (mx.equals("true") || mx.equals("t") || mx.equals("")) {
+            PointerBufferPoolMXBean.register();
+        }
     }
 
     /** Clears, deallocates, and removes all garbage collected objects from the {@link #referenceQueue}. */
@@ -525,6 +533,11 @@ public class Pointer implements AutoCloseable {
     /** Returns {@link DeallocatorReference#totalBytes}, current amount of memory tracked by deallocators. */
     public static long totalBytes() {
         return DeallocatorReference.totalBytes;
+    }
+
+    /** Returns {@link DeallocatorReference#totalCount}, current number of pointers tracked by deallocators. */
+    public static long totalCount() {
+        return DeallocatorReference.totalCount;
     }
 
     /** Returns {@link #maxPhysicalBytes}, the maximum amount of physical memory that should be used. */
