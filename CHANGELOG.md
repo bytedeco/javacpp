@@ -1,4 +1,6 @@
 
+ * Add missing values to `Info.Info(Info)` and fix incorrect `Info.skipDefaults(boolean)` ([issue #420](https://github.com/bytedeco/javacpp/issues/420))
+ * Add `PointerBufferPoolMXBean` to track allocations and deallocations of `Pointer` ([pull #413](https://github.com/bytedeco/javacpp/pull/413))
  * Change the `@Platform(executable=...` property to an array and allow bundling multiple files per class
  * Prevent `Builder` unnecessarily linking with `-framework JavaVM` to fix GraalVM Native Image on Mac ([issue #417](https://github.com/bytedeco/javacpp/issues/417))
  * Add `Pointer.getPointer()` methods as shortcuts for `new P(p).position(p.position + i)` ([issue #155](https://github.com/bytedeco/javacpp/issues/155))

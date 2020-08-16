@@ -48,12 +48,15 @@ public class Info {
         cppTypes = i.cppTypes != null ? i.cppTypes.clone() : null;
         valueTypes = i.valueTypes != null ? i.valueTypes.clone() : null;
         pointerTypes = i.pointerTypes != null ? i.pointerTypes.clone() : null;
+        linePatterns = i.linePatterns != null ? i.linePatterns.clone() : null;
         cast = i.cast;
         define = i.define;
+        enumerate = i.enumerate;
         flatten = i.flatten;
         objectify = i.objectify;
         translate = i.translate;
         skip = i.skip;
+        skipDefaults = i.skipDefaults;
         purify = i.purify;
         virtualize = i.virtualize;
         base = i.base;
@@ -134,7 +137,7 @@ public class Info {
     public Info skip() { this.skip = true; return this; }
     public Info skip(boolean skip) { this.skip = skip; return this; }
     public Info skipDefaults() { this.skipDefaults = true; return this; }
-    public Info skipDefaults(boolean skipDefaults) { this.skipDefaults = skip; return this; }
+    public Info skipDefaults(boolean skipDefaults) { this.skipDefaults = skipDefaults; return this; }
     public Info purify() { this.purify = true; return this; }
     public Info purify(boolean purify) { this.purify = purify; return this; }
     public Info virtualize() { this.virtualize = true; return this; }
