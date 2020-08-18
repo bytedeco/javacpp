@@ -2373,6 +2373,10 @@ public class Generator {
                         name = "super_" + methodInfo.name;
                     }
                     out.print("((" + subType + "*)ptr)->" + name);
+                } else if (secondCall && methodInfo.method.getDeclaringClass() != methodInfo.cls) {
+                    // we may have a protected virtual method that isn't protected in the superclass, so let's cast
+                    String[] typeName2 = cppTypeName(methodInfo.method.getDeclaringClass());
+                    out.print("((" + typeName2[0] + typeName2[1] + ")ptr)->" + name);
                 } else if (index != null) {
                     out.print("(*ptr)");
                     prefix = "." + name + prefix;

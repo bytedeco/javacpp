@@ -1,4 +1,5 @@
 
+ * Fix `Generator` for `@Virtual` methods protected in subclasses by casting to superclass ([issue #419](https://github.com/bytedeco/javacpp/issues/419))
  * Add missing values to `Info.Info(Info)` and fix incorrect `Info.skipDefaults(boolean)` ([issue #420](https://github.com/bytedeco/javacpp/issues/420))
  * Add `PointerBufferPoolMXBean` to track allocations and deallocations of `Pointer` ([pull #413](https://github.com/bytedeco/javacpp/pull/413))
  * Change the `@Platform(executable=...` property to an array and allow bundling multiple files per class
