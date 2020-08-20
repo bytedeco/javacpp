@@ -77,6 +77,33 @@ class DeclarationList extends ArrayList<Declaration> {
                 }
             }
             add = false;
+        } else if (infoMap != null && !decl.incomplete && decl.type != null && decl.type.cppName != null) {
+            // check if the user gave us different names for the same type with and without const
+            if (infoIterator == null) {
+                String constName = null, name = null;
+                List<Info> infoList = infoMap.get(decl.type.cppName);
+                List<Info> constInfoList = infoMap.get("const " + decl.type.cppName);
+                if (infoList != null && constInfoList != null && !infoList.equals(constInfoList)) {
+                    for (Info info : infoList) {
+                        if (info.pointerTypes != null && info.pointerTypes.length > 0) {
+                            name = info.pointerTypes[0].substring(info.pointerTypes[0].lastIndexOf(" ") + 1);
+                            break;
+                        }
+                    }
+                    for (Info info : constInfoList) {
+                        if (info.pointerTypes != null && info.pointerTypes.length > 0) {
+                            constName = info.pointerTypes[0].substring(info.pointerTypes[0].lastIndexOf(" ") + 1);
+                            break;
+                        }
+                    }
+                }
+                if (constName != null && name != null && !constName.equals(name)) {
+                    // if so, let's reparse this twice to create two Java peer classes
+                    infoList.addAll(constInfoList);
+                    infoIterator = infoList.size() > 0 ? infoList.listIterator() : null;
+                    add = false;
+                }
+            }
         }
         if (decl.declarator != null && decl.declarator.type != null) {
             // honor to skip over declarations when tagged as such

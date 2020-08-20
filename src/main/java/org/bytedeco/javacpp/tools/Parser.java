@@ -2258,6 +2258,13 @@ public class Parser {
                 tokens.next();
             }
 
+            // skip over non-const function within const class
+            if (!decl.constMember && context.constName != null) {
+                decl.text = spacing;
+                declList.add(decl);
+                return true;
+            }
+
             // add @Const annotation only for const virtual functions
             if (decl.constMember && type.virtual && context.virtualize) {
                 if (type.annotations.contains("@Const")) {
@@ -3038,7 +3045,7 @@ public class Parser {
             declList.add(decl);
             return true;
         } else if (info != null && info.pointerTypes != null && info.pointerTypes.length > 0) {
-            type.javaName = info.pointerTypes[0];
+            type.javaName = context.constName != null ? context.constName : info.pointerTypes[0];
             name = context.shorten(type.javaName);
         } else if (info == null && !friend) {
             if (type.javaName.length() > 0 && context.javaName != null) {
@@ -3091,7 +3098,7 @@ public class Parser {
                 declList.add(decl);
                 return true;
             } else if (info != null && info.base != null) {
-                base.javaName = info.base;
+                base.javaName = context.constName != null ? context.constBaseName : info.base;
             }
             if (name.equals("Pointer")) {
                 return true;
@@ -3211,7 +3218,7 @@ public class Parser {
                 decl.text += "@NoOffset ";
             }
             if (info != null && info.base != null) {
-                base.javaName = info.base;
+                base.javaName = context.constName != null ? context.constBaseName : info.base;
             }
             decl.text += modifiers + "class " + shortName + " extends " + base.javaName + " {\n" +
                          "    static { Loader.load(); }\n";
@@ -3690,6 +3697,7 @@ public class Parser {
             declList.spacing = null;
             do {
                 if (map != null && declList.infoIterator != null && declList.infoIterator.hasNext()) {
+                    // create all template instances provided by user
                     Info info = declList.infoIterator.next();
                     if (info == null) {
                         continue;
@@ -3720,6 +3728,19 @@ public class Parser {
                             t.cppName = s;
                             e.setValue(t);
                         }
+                    }
+                    tokens.index = startIndex;
+                } else if (declList.infoIterator != null && declList.infoIterator.hasNext()) {
+                    // create two Java classes for C++ types with names for both with and without const qualifier
+                    Info info = declList.infoIterator.next();
+                    if (info == null) {
+                        continue;
+                    }
+                    if (info.cppNames != null && info.cppNames.length > 0 && info.cppNames[0].startsWith("const ")
+                            && info.pointerTypes != null && info.pointerTypes.length > 0) {
+                        ctx = new Context(ctx);
+                        ctx.constName = info.pointerTypes[0].substring(info.pointerTypes[0].lastIndexOf(" ") + 1);
+                        ctx.constBaseName = info.base != null ? info.base : "Pointer";
                     }
                     tokens.index = startIndex;
                 }

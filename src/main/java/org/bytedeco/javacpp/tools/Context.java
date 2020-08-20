@@ -41,7 +41,11 @@ class Context {
         baseType = c.baseType;
         cppName = c.cppName;
         javaName = c.javaName;
+        constName = c.constName;
+        constBaseName = c.constBaseName;
         inaccessible = c.inaccessible;
+        objectify = c.objectify;
+        virtualize = c.virtualize;
         variable = c.variable;
         infoMap = c.infoMap;
         templateMap = c.templateMap;
@@ -53,6 +57,8 @@ class Context {
     String baseType = null;
     String cppName = null;
     String javaName = null;
+    String constName = null;
+    String constBaseName = null;
     boolean inaccessible = false;
     boolean objectify = false;
     boolean virtualize = false;
