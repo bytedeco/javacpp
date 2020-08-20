@@ -84,6 +84,7 @@ class Token implements Comparable<Token> {
             NEW       = new Token(IDENTIFIER, "new"),
             DELETE    = new Token(IDENTIFIER, "delete"),
             OPERATOR  = new Token(IDENTIFIER, "operator"),
+            OVERRIDE  = new Token(IDENTIFIER, "override"),
             PRIVATE   = new Token(IDENTIFIER, "private"),
             PROTECTED = new Token(IDENTIFIER, "protected"),
             PUBLIC    = new Token(IDENTIFIER, "public"),

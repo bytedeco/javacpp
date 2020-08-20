@@ -2223,6 +2223,9 @@ public class Parser {
                 if (token.match(Token.CONST, Token.__CONST, Token.CONSTEXPR)) {
                     decl.constMember = true;
                     token = tokens.next();
+                } else if (token.match(Token.OVERRIDE)) {
+                    type.virtual = true;
+                    token = tokens.next();
                 }
                 if (token.match('&', "&&")) {
                     // ignore?
