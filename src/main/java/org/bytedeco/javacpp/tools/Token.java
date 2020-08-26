@@ -63,6 +63,7 @@ class Token implements Comparable<Token> {
             ELIF      = new Token(IDENTIFIER, "elif"),
             ELSE      = new Token(IDENTIFIER, "else"),
             ENDIF     = new Token(IDENTIFIER, "endif"),
+            UNDEF     = new Token(IDENTIFIER, "undef"),
             ENUM      = new Token(IDENTIFIER, "enum"),
             EXPLICIT  = new Token(IDENTIFIER, "explicit"),
             EXTERN    = new Token(IDENTIFIER, "extern"),

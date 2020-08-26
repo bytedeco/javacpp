@@ -1,4 +1,5 @@
 
+ * Process `#undef` directives to allow redefining macros with `Parser` ([issue bytedeco/javacpp-presets#935](https://github.com/bytedeco/javacpp-presets/issues/935))
  * Pick up in `Parser` methods specified with `override`, in addition to `virtual` ([issue #419](https://github.com/bytedeco/javacpp/issues/419))
  * Let `Parser` create a separate Java peer class when `Info.pointerTypes` is different for types prefixed with `const `
  * Fix `Generator` for `@Virtual` methods protected in subclasses by casting to superclass ([issue #419](https://github.com/bytedeco/javacpp/issues/419))

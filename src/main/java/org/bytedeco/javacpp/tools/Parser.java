@@ -2715,6 +2715,19 @@ public class Parser {
                     break;
                 }
             }
+        } else if (keyword.match(Token.UNDEF)) {
+            tokens.index = beginIndex;
+            String macroName = tokens.get().value;
+            List<Info> infoList = infoMap.get(macroName);
+            for (Info info : infoList) {
+                if (info != null && info.skip) {
+                    break;
+                } else if (info != null && info.cppText != null && info.cppTypes == null) {
+                    // remove declaration for expansion
+                    infoList.remove(info);
+                    break;
+                }
+            }
         }
 
         if (decl.text.length() == 0) {
