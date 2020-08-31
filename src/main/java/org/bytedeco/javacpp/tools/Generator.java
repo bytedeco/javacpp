@@ -339,6 +339,8 @@ public class Generator {
         out.println("    #define NOMINMAX");
         out.println("    #include <windows.h>");
         out.println("    #include <psapi.h>");
+        out.println("#elif defined(_WIN32)");
+        out.println("    extern \"C\" unsigned long __stdcall GetCurrentThreadId();");
         out.println("#endif");
         out.println();
         out.println("#if defined(__ANDROID__) || TARGET_OS_IPHONE");
