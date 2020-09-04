@@ -1156,6 +1156,10 @@ public class Builder {
                 String filename = prefix + name + suffix;
                 for (String path : p.get("platform.executablepath")) {
                     Path in = Paths.get(path, filename);
+                    if (!Files.exists(in)) {
+                        // try without prefix and suffix
+                        in = Paths.get(path, name);
+                    }
                     if (Files.exists(in)) {
                         logger.info("Copying " + in);
                         File outputPath = getOutputPath(classArray, null);
