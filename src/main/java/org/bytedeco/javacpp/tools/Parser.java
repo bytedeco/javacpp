@@ -2024,7 +2024,7 @@ public class Parser {
             dcl.signature = dcl.javaName + params.signature;
         } else {
             tokens.index = startIndex;
-            dcl = declarator(context, null, 0, false, 0, false, false);
+            dcl = declarator(context, null, -1, false, 0, false, false);
             type = dcl.type;
         }
         if (dcl.cppName == null || type.javaName.length() == 0 || dcl.parameters == null) {
@@ -2225,7 +2225,8 @@ public class Parser {
                     token = tokens.next();
                 } else if (token.match(Token.OVERRIDE)) {
                     type.virtual = true;
-                    token = tokens.next();
+                    // token = tokens.next();
+                    // let through for user defined annotations
                 }
                 if (token.match('&', "&&")) {
                     // ignore?
@@ -2348,7 +2349,7 @@ public class Parser {
         String spacing = tokens.get().spacing;
         String modifiers = "public static native ";
         String setterType = "void ";
-        Declarator dcl = declarator(context, null, 0, false, 0, false, true);
+        Declarator dcl = declarator(context, null, -1, false, 0, false, true);
         Declaration decl = new Declaration();
         String cppName = dcl.cppName;
         String javaName = dcl.javaName;
@@ -2770,7 +2771,7 @@ public class Parser {
         for (int n = 0; n < Integer.MAX_VALUE; n++) {
             decl = new Declaration();
             tokens.index = backIndex;
-            Declarator dcl = declarator(context, null, 0, false, n, true, false);
+            Declarator dcl = declarator(context, null, -1, false, n, true, false);
             if (dcl == null) {
                 break;
             }
@@ -2888,7 +2889,7 @@ public class Parser {
         }
         String spacing = tokens.get().spacing;
         boolean namespace = tokens.get(1).match(Token.NAMESPACE);
-        Declarator dcl = declarator(context, null, 0, false, 0, true, false);
+        Declarator dcl = declarator(context, null, -1, false, 0, true, false);
         tokens.next();
 
         context.usingList.add(dcl.type.cppName + (namespace ? "::" : ""));

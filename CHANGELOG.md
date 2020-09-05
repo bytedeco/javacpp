@@ -1,4 +1,5 @@
 
+ * Fix `Parser` not producing `PointerPointer` parameters for `FunctionPointer` subclasses
  * Let `Builder` copy even those `platform.executable` files without prefix or suffix
  * Add missing declaration for `GetCurrentThreadId()` in `Generator` when `NO_WINDOWS_H` is defined
  * Process `#undef` directives to allow redefining macros with `Parser` ([issue bytedeco/javacpp-presets#935](https://github.com/bytedeco/javacpp-presets/issues/935))

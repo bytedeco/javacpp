@@ -785,6 +785,11 @@ public class Pointer implements AutoCloseable {
         return r != null ? r.count() : -1;
     }
 
+    /** Returns {@code Loader.offsetof(type, member)}. */
+    public static int offsetof(Class<? extends Pointer> type, String member) {
+        return Loader.offsetof(type, member);
+    }
+
     /** Returns {@code Loader.offsetof(getClass(), member)} or -1 on error. */
     public int offsetof(String member) {
         int offset = -1;
@@ -797,6 +802,11 @@ public class Pointer implements AutoCloseable {
             return offset;
         }
         return offset;
+    }
+
+    /** Returns {@code Loader.sizeof(type)}. */
+    public static int sizeof(Class<? extends Pointer> type) {
+        return Loader.sizeof(type);
     }
 
     /** Returns 1 for Pointer or BytePointer else {@code Loader.sizeof(getClass())} or -1 on error. */
