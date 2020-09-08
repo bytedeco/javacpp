@@ -1275,7 +1275,8 @@ public class Builder {
                 try (PrintWriter out = encoding != null ? new PrintWriter(file, encoding) : new PrintWriter(file)) {
                     out.println("{");
                     out.println("  \"resources\": [");
-                    out.print("    {\"pattern\": \"META-INF/.*\"}");
+                    out.println("    {\"pattern\": \"META-INF/.*\"},");
+                    out.print("    {\"pattern\": \"org/bytedeco/javacpp/properties/.*\"}");
                     String separator = "," + System.lineSeparator();
                     for (File f : files != null ? files : new File[0]) {
                         if (f != null && !f.toPath().startsWith(configDirectory.toPath())) {

@@ -90,6 +90,7 @@ import org.bytedeco.javacpp.annotation.Raw;
 import org.bytedeco.javacpp.annotation.ValueGetter;
 import org.bytedeco.javacpp.annotation.ValueSetter;
 import org.bytedeco.javacpp.annotation.Virtual;
+import sun.misc.Unsafe;
 
 /**
  * The Generator is where all the C++ source code that we need gets generated.
@@ -1748,12 +1749,14 @@ public class Generator {
         reflectClasses.add(Object.class);
         reflectClasses.add(Buffer.class);
         reflectClasses.add(String.class);
+        reflectClasses.add(Unsafe.class);
 
         for (Class cls : new LinkedHashSet<Class>(allClasses)) {
             while ((cls = cls.getEnclosingClass()) != null) {
                 allClasses.add(cls);
             }
         }
+        allClasses.add(Unsafe.class);
 
         for (PrintWriter o : new PrintWriter[] {jniConfigOut, reflectConfigOut}) {
             if (o == null) {
