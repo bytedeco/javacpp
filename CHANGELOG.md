@@ -1,4 +1,5 @@
 
+### September 9, 2020 version 1.5.4
  * Fix `Parser` not producing `PointerPointer` parameters for `FunctionPointer` subclasses
  * Let `Builder` copy even those `platform.executable` files without prefix or suffix
  * Add missing declaration for `GetCurrentThreadId()` in `Generator` when `NO_WINDOWS_H` is defined

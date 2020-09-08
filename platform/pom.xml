@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.bytedeco</groupId>
   <artifactId>javacpp-platform</artifactId>
-  <version>1.5.4-SNAPSHOT</version>
+  <version>1.5.4</version>
 
   <name>JavaCPP Platform</name>
   <description>The missing bridge between Java and native C++</description>
