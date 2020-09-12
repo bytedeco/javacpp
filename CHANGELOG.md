@@ -1,4 +1,6 @@
 
+ * Fix `Builder.addProperty()` incorrectly appending values together
+
 ### September 9, 2020 version 1.5.4
  * Fix `Parser` not producing `PointerPointer` parameters for `FunctionPointer` subclasses
  * Let `Builder` copy even those `platform.executable` files without prefix or suffix

@@ -918,7 +918,7 @@ public class Builder {
             String separator = properties.getProperty("platform.path.separator");
             String v = properties.getProperty(key, "");
             for (String s : values) {
-                v += v.length() == 0 || v.endsWith(separator) ? v + s : v + separator + s;
+                v += v.length() == 0 || v.endsWith(separator) ? s : separator + s;
             }
             properties.setProperty(key, v);
         }
