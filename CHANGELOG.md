@@ -1,4 +1,5 @@
 
+ * Let `Loader.load()` always succeed on optional libraries only available with extensions
  * Fix `Builder.addProperty()` incorrectly appending values together
 
 ### September 9, 2020 version 1.5.4

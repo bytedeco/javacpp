@@ -982,6 +982,9 @@ public class Loader {
     }
 
     public static boolean checkPlatform(Class<?> cls, Properties properties) {
+        return checkPlatform(cls, properties, false);
+    }
+    public static boolean checkPlatform(Class<?> cls, Properties properties, boolean acceptAllExtensions) {
         // check in priority this class for platform information, before the enclosing class
         Class<?> enclosingClass = Loader.getEnclosingClass(cls);
         while (!cls.isAnnotationPresent(org.bytedeco.javacpp.annotation.Properties.class)
@@ -1018,14 +1021,14 @@ public class Loader {
             Platform[] platforms = classProperties.value();
             if (platforms != null && platforms.length > 0) {
                 for (Platform p : platforms) {
-                    if (checkPlatform(p, properties, defaultNames)) {
+                    if (checkPlatform(p, properties, acceptAllExtensions, defaultNames)) {
                         supported = true;
                         break;
                     }
                 }
             } else if (classes != null && classes.length > 0) {
                 for (Class c : classes) {
-                    if (checkPlatform(c, properties)) {
+                    if (checkPlatform(c, properties, acceptAllExtensions)) {
                         supported = true;
                         break;
                     }
@@ -1033,12 +1036,15 @@ public class Loader {
             }
         }
         if (classPlatform != null) {
-            supported = checkPlatform(cls.getAnnotation(Platform.class), properties);
+            supported = checkPlatform(cls.getAnnotation(Platform.class), properties, acceptAllExtensions);
         }
         return supported;
     }
 
-    public static boolean checkPlatform(Platform platform, Properties properties, String... defaultNames) {
+    public static boolean checkPlatform(Platform platform, Properties properties) {
+        return checkPlatform(platform, properties, false);
+    }
+    public static boolean checkPlatform(Platform platform, Properties properties, boolean acceptAllExtensions, String... defaultNames) {
         if (platform == null) {
             return true;
         }
@@ -1058,8 +1064,7 @@ public class Loader {
             }
         }
         if ((names[0].length == 0 || matches[0]) && (names[1].length == 0 || !matches[1])) {
-            // when no extensions are given by user, but we are in library loading mode, try to load extensions anyway
-            boolean match = platform.extension().length == 0 || (Loader.isLoadLibraries() && platformExtension == null);
+            boolean match = platform.extension().length == 0 || acceptAllExtensions;
             for (String s : platform.extension()) {
                 if (platformExtension != null && platformExtension.length() > 0 && platformExtension.endsWith(s)) {
                     match = true;
@@ -1158,7 +1163,8 @@ public class Loader {
             return null;
         }
 
-        if (!checkPlatform(cls, properties)) {
+        // when no extensions are given by user, but we are in library loading mode, try to load extensions anyway
+        if (!checkPlatform(cls, properties, properties.getProperty("platform.extension") == null)) {
             throw new UnsatisfiedLinkError("Platform \"" + properties.getProperty("platform") + "\" not supported by " + cls);
         }
 
@@ -1318,7 +1324,12 @@ public class Loader {
                 if (preloadError != null && e.getCause() == null) {
                     e.initCause(preloadError);
                 }
-                throw e;
+                if (!checkPlatform(cls, properties, false)) {
+                    // this is an optional library
+                    return null;
+                } else {
+                    throw e;
+                }
             }
         }
     }
