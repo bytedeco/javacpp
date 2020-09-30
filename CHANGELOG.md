@@ -1,4 +1,5 @@
 
+ * Use pthreads in `Generator` to detach automatically native threads on exit for Linux and Mac as well
  * Let `Loader.load()` always succeed on optional libraries only available with extensions
  * Fix `Builder.addProperty()` incorrectly appending values together
 
