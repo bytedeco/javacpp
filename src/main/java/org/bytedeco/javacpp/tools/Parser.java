@@ -1212,7 +1212,7 @@ public class Parser {
         int infoLength = 1;
         boolean valueType = false, needCast = arrayAsPointer && dcl.indices > 1, implicitConst = false;
         Info constInfo = infoMap.getFirst("const " + type.cppName, false);
-        Info info = type.constValue && dcl.indirections < 2 && !dcl.reference ? constInfo
+        Info info = type.constValue && (dcl.indirections == 0 || (dcl.indirections < 2 && !dcl.reference)) ? constInfo
                   : infoMap.getFirst(type.cppName, false);
         if ((!typedef || dcl.parameters != null)
                 && (constInfo == null || (constInfo.cppTypes != null && constInfo.cppTypes.length > 0))
