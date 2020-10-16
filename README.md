@@ -406,7 +406,7 @@ $ java -jar libs/javacpp.jar -classpath bin/ -classpath bin/classes/ \
 > -properties <android-arm|android-x86> -Dplatform.root=/path/to/android-ndk/ \
 > -Dplatform.compiler=/path/to/<arm-linux-androideabi-g++|i686-linux-android-g++> -d libs/<armeabi|x86>/
 ```
-To make everything automatic, we may also insert that command into the `build.xml` file. Alternatively, for integration with Android Studio, we might be able to use the [Maven plugin](http://bytedeco.org/javacpp/apidocs/org/bytedeco/javacpp/tools/BuildMojo.html) with the [build system based on Gradle](http://tools.android.com/tech-docs/new-build-system/user-guide).
+To make everything automatic, we may also insert that command into the `build.xml` file. Alternatively, for integration with Android Studio, we can use [Gradle JavaCPP](https://github.com/bytedeco/gradle-javacpp).
 
 
 Similarly for RoboVM, assuming that the compiled classes are in the `classes` subdirectory:
