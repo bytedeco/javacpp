@@ -277,7 +277,7 @@
                 <link>http://maven.apache.org/plugin-tools/maven-plugin-annotations/apidocs</link>
                 <link>http://maven.apache.org/ref/3.0/maven-core/apidocs</link>
                 <link>http://www.slf4j.org/apidocs</link>
-                <link>http://junit.org/junit4/javadoc/4.12</link>
+                <link>http://junit.org/junit4/javadoc/4.13.1</link>
               </links>
               <show>private</show>
               <tagletArtifacts>
