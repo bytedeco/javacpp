@@ -3575,6 +3575,12 @@ public class Parser {
         if (info != null && info.skip) {
             decl.text = enumSpacing;
         } else {
+            if (info != null && info.cppTypes != null && info.cppTypes.length > 0) {
+                cppType = info.cppTypes[0];
+                String javaType2 = infoMap.getFirst(cppType).valueTypes[0];
+                enumerators = enumerators.replace(" " + javaType, " " + javaType2);
+                javaType = javaType2;
+            }
             int newline = enumSpacing.lastIndexOf('\n');
             String enumSpacing2 = newline < 0 ? enumSpacing : enumSpacing.substring(newline + 1);
             String javaName = info != null && info.valueTypes != null && info.valueTypes.length > 0 ? info.valueTypes[0] : name;

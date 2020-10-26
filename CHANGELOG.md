@@ -1,4 +1,5 @@
 
+ * Make `Parser` use `Info.cppTypes` to override the type of `enum` values
  * Fix `Parser` not using the correct `Info.pointerTypes` for `const&` declarations
  * Use pthreads in `Generator` to detach automatically native threads on exit for Linux and Mac as well
  * Let `Loader.load()` always succeed on optional libraries only available with extensions
