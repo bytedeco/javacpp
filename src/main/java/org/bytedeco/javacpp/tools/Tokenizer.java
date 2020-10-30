@@ -314,6 +314,24 @@ class Tokenizer implements Closeable {
                 token.type = c;
                 lastChar = c2;
             }
+        } else if (c == '<') {
+            int c2 = readChar();
+            if (c2 == '=') {
+                token.type = Token.SYMBOL;
+                token.value = "<=";
+            } else {
+                token.type = c;
+                lastChar = c2;
+            }
+        } else if (c == '>') {
+            int c2 = readChar();
+            if (c2 == '=') {
+                token.type = Token.SYMBOL;
+                token.value = ">=";
+            } else {
+                token.type = c;
+                lastChar = c2;
+            }
         } else {
             if (c == '\\') {
                 int c2 = readChar();

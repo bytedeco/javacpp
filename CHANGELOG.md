@@ -1,4 +1,5 @@
 
+ * Ensure `Parser` considers `>=` and `<=` as single tokens to prevent failures
  * Make `Parser` use `Info.cppTypes` to override the type of `enum` values
  * Fix `Parser` not using the correct `Info.pointerTypes` for `const&` declarations
  * Use pthreads in `Generator` to detach automatically native threads on exit for Linux and Mac as well
