@@ -2312,6 +2312,7 @@ public class Parser {
             if (info != null && info.javaText != null) {
                 if (first) {
                     decl.signature = decl.text = info.javaText;
+                    decl.custom = true;
                 } else {
                     break;
                 }
@@ -2489,6 +2490,7 @@ public class Parser {
             if (info != null && info.javaText != null) {
                 decl.signature = decl.text = info.javaText;
                 decl.declarator = null;
+                decl.custom = true;
             }
             while (!tokens.get().match(Token.EOF, ';')) {
                 tokens.next();
@@ -2713,6 +2715,7 @@ public class Parser {
                 }
                 if (info != null && info.javaText != null) {
                     decl.signature = decl.text = info.javaText;
+                    decl.custom = true;
                     break;
                 }
             }
@@ -2873,6 +2876,7 @@ public class Parser {
 
             if (info != null && info.javaText != null) {
                 decl.signature = decl.text = info.javaText;
+                decl.custom = true;
             }
             String comment = commentAfter();
             decl.text = comment + decl.text;
@@ -2910,6 +2914,7 @@ public class Parser {
             // inherit constructors
             decl.signature = decl.text = info.javaText;
             decl.declarator = dcl;
+            decl.custom = true;
         }
         String comment = commentAfter();
         decl.text = comment + decl.text;
@@ -3296,6 +3301,7 @@ public class Parser {
                 }
                 int end = text.lastIndexOf('}');
                 decl.text += text.substring(start, end).replace(base2.javaName, type.javaName);
+                decl.custom = true;
             }
         }
         for (Declaration d : declList2) {
@@ -3334,6 +3340,7 @@ public class Parser {
         decl.type = type;
         if (info != null && info.javaText != null) {
             decl.signature = decl.text = info.javaText;
+            decl.custom = true;
         } else if (info != null && info.flatten) {
             info.javaText = decl.text;
         }

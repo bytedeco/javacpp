@@ -61,7 +61,7 @@ class DeclarationList extends ArrayList<Declaration> {
 
     @Override public boolean add(Declaration decl) {
         boolean add = true;
-        if (templateMap != null && templateMap.empty() && (decl.type != null || decl.declarator != null)) {
+        if (templateMap != null && templateMap.empty() && !decl.custom && (decl.type != null || decl.declarator != null)) {
             // method templates cannot be declared in Java, but make sure to make their
             // info available on request (when Info.javaNames is set) to be able to create instances
             if (infoIterator == null) {

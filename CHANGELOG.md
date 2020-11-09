@@ -1,4 +1,6 @@
 
+ * Let `Parser` output `Info.javaText` even for template declarations with no instances
+ * Prevent `Tokenizer` from using `long` literals for unsigned integers of 16 bits or less
  * Ensure `Parser` considers `>=` and `<=` as single tokens to prevent failures
  * Make `Parser` use `Info.cppTypes` to override the type of `enum` values
  * Fix `Parser` not using the correct `Info.pointerTypes` for `const&` declarations

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2017 Samuel Audet
+ * Copyright (C) 2014-2020 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -180,7 +180,7 @@ class Tokenizer implements Closeable {
             token.type = c == '.' ? Token.FLOAT : Token.INTEGER;
             buffer.append((char)c);
             int prevc = 0;
-            boolean exp = false, large = false, unsigned = false, hex = false;
+            boolean exp = false, large = false, unsigned = false, hex = false, small = false;
             while ((c = readChar()) != -1 && (Character.isDigit(c) || c == '.' || c == '-' || c == '+' ||
                    (c >= 'a' && c <= 'f') || c == 'i' || c == 'l' || c == 'u' || c == 'x' ||
                    (c >= 'A' && c <= 'F') || c == 'I' || c == 'L' || c == 'U' || c == 'X')) {
@@ -201,7 +201,9 @@ class Tokenizer implements Closeable {
             }
             if (token.type == Token.INTEGER && !large) {
                 try {
-                    long high = Long.decode(buffer.toString()) >> 32;
+                    long high = Long.decode(buffer.toString()) >> 16L;
+                    small = high == 0 || high == -1;
+                    high >>= 16L;
                     large = high != 0 && high != -1;
                 } catch (NumberFormatException e) {
                     // set as large, for things like 0x8000000000000000L
@@ -214,7 +216,7 @@ class Tokenizer implements Closeable {
                 buffer.setLength(buffer.length() - 3);
                 large = true;
             }
-            if (token.type == Token.INTEGER && (large || (unsigned && !hex))) {
+            if (token.type == Token.INTEGER && (large || (unsigned && !hex && !small))) {
                 buffer.append('L');
             }
             token.value = buffer.toString();

@@ -30,6 +30,6 @@ class Declaration {
     Type type = null;
     Declarator declarator = null;
     boolean abstractMember = false, constMember = false, inaccessible = false,
-            incomplete = false, function = false, variable = false, comment = false;
+            incomplete = false, function = false, variable = false, comment = false, custom = false;
     String signature = "", text = "";
 }
