@@ -285,20 +285,20 @@
                   <moduleInfoSource>
                     module org.bytedeco.javacpp.platform {
                       requires transitive org.bytedeco.javacpp;
-//                      requires org.bytedeco.javacpp.android.arm;
-//                      requires org.bytedeco.javacpp.android.arm64;
-//                      requires org.bytedeco.javacpp.android.x86;
-//                      requires org.bytedeco.javacpp.android.x86_64;
-                      requires org.bytedeco.javacpp.ios.arm64;
-                      requires org.bytedeco.javacpp.ios.x86_64;
-                      requires org.bytedeco.javacpp.linux.armhf;
-                      requires org.bytedeco.javacpp.linux.arm64;
-                      requires org.bytedeco.javacpp.linux.ppc64le;
-                      requires org.bytedeco.javacpp.linux.x86;
-                      requires org.bytedeco.javacpp.linux.x86_64;
-                      requires org.bytedeco.javacpp.macosx.x86_64;
-                      requires org.bytedeco.javacpp.windows.x86;
-                      requires org.bytedeco.javacpp.windows.x86_64;
+//                      requires static org.bytedeco.javacpp.android.arm;
+//                      requires static org.bytedeco.javacpp.android.arm64;
+//                      requires static org.bytedeco.javacpp.android.x86;
+//                      requires static org.bytedeco.javacpp.android.x86_64;
+                      requires static org.bytedeco.javacpp.ios.arm64;
+                      requires static org.bytedeco.javacpp.ios.x86_64;
+                      requires static org.bytedeco.javacpp.linux.armhf;
+                      requires static org.bytedeco.javacpp.linux.arm64;
+                      requires static org.bytedeco.javacpp.linux.ppc64le;
+                      requires static org.bytedeco.javacpp.linux.x86;
+                      requires static org.bytedeco.javacpp.linux.x86_64;
+                      requires static org.bytedeco.javacpp.macosx.x86_64;
+                      requires static org.bytedeco.javacpp.windows.x86;
+                      requires static org.bytedeco.javacpp.windows.x86_64;
                     }
                   </moduleInfoSource>
                 </module>
