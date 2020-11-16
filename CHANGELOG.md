@@ -1,4 +1,5 @@
 
+ * Replace `requires` with `requires static` in JPMS `.platform` module ([pull #436](https://github.com/bytedeco/javacpp/pull/436))
  * Let `Parser` output `Info.javaText` even for template declarations with no instances
  * Prevent `Tokenizer` from using `long` literals for unsigned integers of 16 bits or less
  * Ensure `Parser` considers `>=` and `<=` as single tokens to prevent failures
