@@ -198,7 +198,7 @@ public class Builder {
                 // We only need libjvm for callbacks exported with the header file
                 properties.get("platform.link").add(0, "jvm");
                 properties.addAll("platform.linkpath", jvmpath);
-                if (platform.startsWith("macosx")) {
+                if (platform.startsWith("macosx") && jvmpath.isEmpty()) {
                     properties.addAll("platform.framework", "JavaVM");
                 }
             }
