@@ -34,7 +34,8 @@ before_install:
 
 jobs:
   include:
-    - os: linux
+    - stage: Deploy
+      os: linux
       arch: arm64
       language: java
       addons:
@@ -124,3 +125,61 @@ jobs:
       script:
         - cmd.exe //C 'vcvarsall.bat x86 && mvn clean %MAVEN_PHASE% -B -V -U -s %HOME%/settings.xml -Djavacpp.platform=windows-x86 -Dmaven.javadoc.skip -Dmaven.test.skip -Dinvoker.skip'
         - cmd.exe //C 'vcvarsall.bat amd64 && mvn clean %MAVEN_PHASE% -B -V -U -s %HOME%/settings.xml -Djavacpp.platform=windows-x86_64'
+
+    - stage: Redeploy
+      arch: amd64
+      language: java
+      jdk: openjdk8
+      install: true
+      script:
+        - |
+          # Redeploys in one shot main and secondary artifacts to get consistent timestamps among them as required by Gradle, sbt, etc
+          if [[ "$TRAVIS_PULL_REQUEST" != "false" ]] || [[ "$TRAVIS_BRANCH" == "release" ]]; then
+              # We are not deploying snapshots
+              exit 0
+          fi
+
+          git --version
+          mvn -version
+          df -h
+
+          GROUP="org.bytedeco"
+          REPOSITORY_ID="sonatype-nexus-snapshots"
+          REPOSITORY_URL="https://oss.sonatype.org/content/repositories/snapshots/"
+          MAVEN_OPTIONS="-N -B -V -U -e -s $HOME/settings.xml -Dhttp.keepAlive=false -Dmaven.wagon.http.pool=false -Dmaven.wagon.http.retryHandler.count=3"
+
+          rm -f dependencies.txt
+          for POM in $(find ./platform/ -iname pom.xml); do
+              mvn dependency:list $MAVEN_OPTIONS -DexcludeTransitive -DappendOutput -DoutputFile=$(pwd)/dependencies.txt -f $POM
+          done
+
+          for LINE in $(sort -u dependencies.txt); do
+              if [[ $LINE =~ $GROUP:([^:]*):jar:([^:]*):compile ]]; then
+                  ARTIFACT=${BASH_REMATCH[1]}
+                  VERSION=${BASH_REMATCH[2]}
+                  FILES=
+                  TYPES=
+                  CLASSIFIERS=
+                  for LINE2 in $(sort -u dependencies.txt); do
+                      if [[ $LINE2 =~ $GROUP:$ARTIFACT:jar:([^:]*):$VERSION:compile ]]; then
+                          CLASSIFIER=${BASH_REMATCH[1]}
+                          FILE=$ARTIFACT-$VERSION-$CLASSIFIER.jar
+                          cp -v $HOME/.m2/repository/${GROUP//.//}/$ARTIFACT/$VERSION/$FILE .
+                          [[ -n $FILES ]] && FILES=$FILES,$FILE || FILES=$FILE
+                          [[ -n $TYPES ]] && TYPES=$TYPES,jar || TYPES=jar
+                          [[ -n $CLASSIFIERS ]] && CLASSIFIERS=$CLASSIFIERS,$CLASSIFIER || CLASSIFIERS=$CLASSIFIER
+                      fi
+                  done
+                  if [[ -n $FILES ]]; then
+                      FILE=$ARTIFACT-$VERSION.jar
+                      cp -v $HOME/.m2/repository/${GROUP//.//}/$ARTIFACT/$VERSION/$FILE .
+                      unzip -o $FILE META-INF/maven/$GROUP/$ARTIFACT/pom.xml
+                      mvn deploy:deploy-file $MAVEN_OPTIONS -DrepositoryId=$REPOSITORY_ID -Durl=$REPOSITORY_URL -DpomFile=META-INF/maven/$GROUP/$ARTIFACT/pom.xml \
+                              -Dfile=$FILE -DgroupId=$GROUP -DartifactId=$ARTIFACT -Dversion=$VERSION -Dfiles=$FILES -Dtypes=$TYPES -Dclassifiers=$CLASSIFIERS
+                  fi
+              fi
+          done
+          df -h
+
+          # Prevent all this from getting cached by the CI server
+          rm -Rf $(find $HOME/.m2/repository -name '*SNAPSHOT*')
