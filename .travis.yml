@@ -83,7 +83,9 @@ jobs:
           docker run -e CI_DEPLOY_USERNAME -e CI_DEPLOY_PASSWORD -e GPG_PASSPHRASE -e STAGING_REPOSITORY -v $HOME:$HOME -v $TRAVIS_BUILD_DIR:$TRAVIS_BUILD_DIR centos:6 /bin/sh -c "
             export HOME=$HOME;
             cd $TRAVIS_BUILD_DIR;
+            find /etc/yum.repos.d/ -name *.repo | xargs -i sed -i 's/mirror\.centos\.org\/centos/vault.centos.org/g;s/\$releasever/6.10/g;s/mirrorlist/#mirrorlist/g;s/#baseurl/baseurl/g' {};
             yum -q -y install centos-release-scl-rh epel-release;
+            sed -i 's/mirror\.centos\.org\/centos/vault.centos.org/g;s/6\/sclo/6.10\/sclo/g;s/mirrorlist/#mirrorlist/g;s/#baseurl/baseurl/g' /etc/yum.repos.d/CentOS-SCLo-scl-rh.repo;
             yum -q -y install devtoolset-7 java-1.8.0-openjdk-devel wget unzip tar bzip2 gzip xz;
             rpm -qa | sed s/.x86_64$/.i686/ | xargs yum -q -y install
             find /var/cache/yum/ -name *.rpm | xargs rpm -i --force
