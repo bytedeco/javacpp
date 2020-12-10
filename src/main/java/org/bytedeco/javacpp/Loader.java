@@ -1226,9 +1226,10 @@ public class Loader {
                     loadGlobally = true;
                     preload = preload.substring(0, preload.length() - 1);
                 }
-                URL[] urls = foundLibraries.get(preload);
+                String key = cls.getName() + "/" + preload;
+                URL[] urls = foundLibraries.get(key);
                 if (urls == null) {
-                    foundLibraries.put(preload, urls = findLibrary(cls, p, preload, pathsFirst));
+                    foundLibraries.put(key, urls = findLibrary(cls, p, preload, pathsFirst));
                 }
                 String filename = loadLibrary(cls, urls, preload, preloaded.toArray(new String[preloaded.size()]));
                 if (filename != null && new File(filename).exists()) {
@@ -1299,9 +1300,10 @@ public class Loader {
                     // try to load the JNI library using a different name
                     library += "#" + library + librarySuffix;
                 }
-                URL[] urls = foundLibraries.get(library);
+                String key = cls.getName() + "/" + library;
+                URL[] urls = foundLibraries.get(key);
                 if (urls == null) {
-                    foundLibraries.put(library, urls = findLibrary(cls, p, library, pathsFirst));
+                    foundLibraries.put(key, urls = findLibrary(cls, p, library, pathsFirst));
                 }
                 String filename = loadLibrary(cls, urls, library, preloaded.toArray(new String[preloaded.size()]));
                 if (cacheDir != null && filename != null && filename.startsWith(cacheDir)) {
