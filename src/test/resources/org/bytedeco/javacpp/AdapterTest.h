@@ -31,6 +31,10 @@ char *testCharString(const char *str) {
     // memory leak...
 }
 
+const unsigned short *testShortString(const unsigned short *str) {
+    return str;
+}
+
 unsigned short *testShortString(unsigned short *str) {
     return str;
 }
