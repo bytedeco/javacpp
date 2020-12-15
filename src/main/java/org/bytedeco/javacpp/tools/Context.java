@@ -46,6 +46,7 @@ class Context {
         inaccessible = c.inaccessible;
         objectify = c.objectify;
         virtualize = c.virtualize;
+        readOnlyMembers = c.readOnlyMembers;
         variable = c.variable;
         infoMap = c.infoMap;
         templateMap = c.templateMap;
@@ -62,6 +63,7 @@ class Context {
     boolean inaccessible = false;
     boolean objectify = false;
     boolean virtualize = false;
+    boolean readOnlyMembers = false;
     Declarator variable = null;
     InfoMap infoMap = null;
     TemplateMap templateMap = null;
