@@ -102,18 +102,21 @@ jobs:
             mvn clean $MAVEN_PHASE -B -V -U -s $HOME/settings.xml -f platform/pom.xml -Djavacpp.platform.host;
           "
     - os: osx
-      osx_image: xcode10.1
+      osx_image: xcode12.2
       language: java
-      env: PLATFORMS="ios-arm64 ios-x86_64 macosx-x86_64"
+      env: PLATFORMS="ios-arm64 ios-x86_64 macosx-arm64 macosx-x86_64"
       install:
         - brew install gpg1
         - brew tap AdoptOpenJDK/openjdk
         - brew cask install adoptopenjdk8
         - export JAVA_HOME=$(/usr/libexec/java_home -v1.8)
+        - export MACOSX_DEPLOYMENT_TARGET=10.13
         - export PATH="/usr/local/opt/gpg1/libexec/gpgbin/:$PATH"
+        - sudo rm -Rf /Library/Developer/CommandLineTools/SDKs/* # Remove SDKs without ARM support
       script:
         - mvn clean $MAVEN_PHASE -B -V -U -s $HOME/settings.xml -Djavacpp.platform=ios-arm64 -Dmaven.javadoc.skip -Dmaven.test.skip -Dinvoker.skip
         - mvn clean $MAVEN_PHASE -B -V -U -s $HOME/settings.xml -Djavacpp.platform=ios-x86_64 -Dmaven.javadoc.skip -Dmaven.test.skip -Dinvoker.skip
+        - mvn clean $MAVEN_PHASE -B -V -U -s $HOME/settings.xml -Djavacpp.platform=macosx-arm64 -Dmaven.javadoc.skip -Dmaven.test.skip -Dinvoker.skip
         - mvn clean $MAVEN_PHASE -B -V -U -s $HOME/settings.xml -Djavacpp.platform=macosx-x86_64
     - os: windows
       language: bash

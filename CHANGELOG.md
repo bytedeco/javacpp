@@ -1,4 +1,5 @@
 
+ * Add support for Mac on ARM processors
  * Fix `Loader` not searching for libraries in more than one package
  * Prevent `Builder` from linking with `-framework JavaVM` when a path to the JVM library is found
  * Replace `requires` with `requires static` in JPMS `.platform` module ([pull #436](https://github.com/bytedeco/javacpp/pull/436))
