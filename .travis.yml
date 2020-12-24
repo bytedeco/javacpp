@@ -108,7 +108,7 @@ jobs:
       install:
         - brew install gpg1
         - brew tap AdoptOpenJDK/openjdk
-        - brew cask install adoptopenjdk8
+        - brew install --cask adoptopenjdk8
         - export JAVA_HOME=$(/usr/libexec/java_home -v1.8)
         - export MACOSX_DEPLOYMENT_TARGET=10.13
         - export PATH="/usr/local/opt/gpg1/libexec/gpgbin/:$PATH"
