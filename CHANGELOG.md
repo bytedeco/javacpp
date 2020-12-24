@@ -1,4 +1,5 @@
 
+ * Fix Android build properties for NDK r22 and move legacy to `android-*-gcc.properties` ([pull #444](https://github.com/bytedeco/javacpp/pull/444))
  * Add support for Mac on ARM processors
  * Fix `Loader` not searching for libraries in more than one package
  * Prevent `Builder` from linking with `-framework JavaVM` when a path to the JVM library is found
