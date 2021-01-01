@@ -512,10 +512,10 @@ public class Pointer implements AutoCloseable {
         String mx = System.getProperty("org.bytedeco.javacpp.mxbean", "false").toLowerCase();
         if (mx.equals("true") || mx.equals("t") || mx.equals("")) {
             try {
-                Class c = Class.forName("PointerBufferPoolMXBean");
+                Class c = Class.forName("org.bytedeco.javacpp.tools.PointerBufferPoolMXBean");
                 Method method = c.getDeclaredMethod("register");
                 method.invoke(null);
-            } catch (Throwable t) {
+            } catch (ReflectiveOperationException t) {
                 logger.warn("Could not load PointerBufferPoolMXBean: " + t);
             }
         }
