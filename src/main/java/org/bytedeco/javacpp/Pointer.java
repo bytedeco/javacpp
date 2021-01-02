@@ -515,8 +515,8 @@ public class Pointer implements AutoCloseable {
                 Class c = Class.forName("org.bytedeco.javacpp.tools.PointerBufferPoolMXBean");
                 Method method = c.getDeclaredMethod("register");
                 method.invoke(null);
-            } catch (ReflectiveOperationException t) {
-                logger.warn("Could not load PointerBufferPoolMXBean: " + t);
+            } catch (ReflectiveOperationException e) {
+                logger.warn("Could not register PointerBufferPoolMXBean: " + e);
             }
         }
     }
