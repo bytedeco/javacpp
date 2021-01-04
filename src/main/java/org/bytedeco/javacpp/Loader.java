@@ -544,21 +544,21 @@ public class Loader {
         File lockFile = new File(cacheDir, ".lock");
         FileChannel lockChannel = null;
         FileLock lock = null;
-        if (target != null && target.length() > 0) {
+        if (canCreateSymbolicLink && target != null && target.length() > 0) {
             // ... create symbolic link to already extracted library or ...
             synchronized (Runtime.getRuntime()) {
             try {
                 // file is already canonicalized, so normalized
                 Path path = file.toPath(), targetPath = Paths.get(target).normalize();
                 if ((!file.exists() || !Files.isSymbolicLink(path) || !Files.readSymbolicLink(path).equals(targetPath))
-                        && targetPath.isAbsolute() && !targetPath.equals(path)) {
+                        && targetPath.isAbsolute() && !targetPath.equals(path) && !targetPath.toRealPath().equals(path)) {
                     if (logger.isDebugEnabled()) {
                         logger.debug("Locking " + cacheDir + " to create symbolic link");
                     }
                     lockChannel = new FileOutputStream(lockFile).getChannel();
                     lock = lockChannel.lock();
                     if ((!file.exists() || !Files.isSymbolicLink(path) || !Files.readSymbolicLink(path).equals(targetPath))
-                            && targetPath.isAbsolute() && !targetPath.equals(path)) {
+                            && targetPath.isAbsolute() && !targetPath.equals(path) && !targetPath.toRealPath().equals(path)) {
                         if (logger.isDebugEnabled()) {
                             logger.debug("Creating symbolic link " + path + " to " + targetPath);
                         }
@@ -575,6 +575,7 @@ public class Loader {
                 // ... (probably an unsupported operation on Windows, but DLLs never need links,
                 // or other (filesystem?) exception: for example,
                 // "sun.nio.fs.UnixException: No such file or directory" on File.toPath()) ...
+                canCreateSymbolicLink = false;
                 if (logger.isDebugEnabled()) {
                     logger.debug("Failed to create symbolic link " + file + ": " + e);
                 }
@@ -589,21 +590,21 @@ public class Loader {
             }
             }
         } else {
-            if (urlFile.exists() && reference) {
+            if (canCreateSymbolicLink && urlFile.exists() && reference) {
                 // ... try to create a symbolic link to the existing file, if we can, ...
                 synchronized (Runtime.getRuntime()) {
                 try {
                     // file is already canonicalized, so normalized
                     Path path = file.toPath(), urlPath = urlFile.toPath().normalize();
                     if ((!file.exists() || !Files.isSymbolicLink(path) || !Files.readSymbolicLink(path).equals(urlPath))
-                            && urlPath.isAbsolute() && !urlPath.equals(path)) {
+                            && urlPath.isAbsolute() && !urlPath.equals(path) && !urlPath.toRealPath().equals(path)) {
                         if (logger.isDebugEnabled()) {
                             logger.debug("Locking " + cacheDir + " to create symbolic link");
                         }
                         lockChannel = new FileOutputStream(lockFile).getChannel();
                         lock = lockChannel.lock();
                         if ((!file.exists() || !Files.isSymbolicLink(path) || !Files.readSymbolicLink(path).equals(urlPath))
-                                && urlPath.isAbsolute() && !urlPath.equals(path)) {
+                                && urlPath.isAbsolute() && !urlPath.equals(path) && !urlPath.toRealPath().equals(path)) {
                             if (logger.isDebugEnabled()) {
                                 logger.debug("Creating symbolic link " + path + " to " + urlPath);
                             }
@@ -619,6 +620,7 @@ public class Loader {
                     return file;
                 } catch (IOException | RuntimeException e) {
                     // ... (let's try to copy the file instead, such as on Windows) ...
+                    canCreateSymbolicLink = false;
                     if (logger.isDebugEnabled()) {
                         logger.debug("Could not create symbolic link " + file + ": " + e);
                     }
@@ -910,6 +912,8 @@ public class Loader {
     static Map<String,URL[]> foundLibraries = new HashMap<String,URL[]>();
     /** Contains all the native libraries that we have loaded to avoid reloading them. */
     static Map<String,String> loadedLibraries = new HashMap<String,String>();
+    /** Will be set to false when symbolic link creation fails, such as on Windows. */
+    static boolean canCreateSymbolicLink = true;
 
     static boolean pathsFirst = false;
     static {
@@ -1226,12 +1230,14 @@ public class Loader {
                     loadGlobally = true;
                     preload = preload.substring(0, preload.length() - 1);
                 }
-                String key = cls.getName() + "/" + preload;
-                URL[] urls = foundLibraries.get(key);
+                URL[] urls = foundLibraries.get(preload), oldUrls = urls;
                 if (urls == null) {
-                    foundLibraries.put(key, urls = findLibrary(cls, p, preload, pathsFirst));
+                    foundLibraries.put(preload, urls = findLibrary(cls, p, preload, pathsFirst));
                 }
-                String filename = loadLibrary(cls, urls, preload, preloaded.toArray(new String[preloaded.size()]));
+                String filename = null;
+                if (oldUrls == null || urls.length > 0) {
+                    filename = loadLibrary(cls, urls, preload, preloaded.toArray(new String[preloaded.size()]));
+                }
                 if (filename != null && new File(filename).exists()) {
                     preloaded.add(filename);
                     if (loadGlobally) {
@@ -1300,12 +1306,14 @@ public class Loader {
                     // try to load the JNI library using a different name
                     library += "#" + library + librarySuffix;
                 }
-                String key = cls.getName() + "/" + library;
-                URL[] urls = foundLibraries.get(key);
+                URL[] urls = foundLibraries.get(library), oldUrls = urls;
                 if (urls == null) {
-                    foundLibraries.put(key, urls = findLibrary(cls, p, library, pathsFirst));
+                    foundLibraries.put(library, urls = findLibrary(cls, p, library, pathsFirst));
                 }
-                String filename = loadLibrary(cls, urls, library, preloaded.toArray(new String[preloaded.size()]));
+                String filename = null;
+                if (oldUrls == null || urls.length > 0) {
+                    filename = loadLibrary(cls, urls, library, preloaded.toArray(new String[preloaded.size()]));
+                }
                 if (cacheDir != null && filename != null && filename.startsWith(cacheDir)) {
                     createLibraryLink(filename, p, library);
                 }
@@ -1584,13 +1592,13 @@ public class Loader {
                         for (String s : preloaded) {
                             File file2 = new File(s);
                             File dir2 = file2.getParentFile();
-                            if (dir2 != null && !dir2.equals(dir)) {
+                            if (canCreateSymbolicLink && dir2 != null && !dir2.equals(dir)) {
                                 File linkFile = new File(dir, file2.getName());
                                 try {
                                     Path linkPath = linkFile.toPath().normalize();
                                     Path targetPath = file2.toPath().normalize();
                                     if ((!linkFile.exists() || !Files.isSymbolicLink(linkPath) || !Files.readSymbolicLink(linkPath).equals(targetPath))
-                                            && targetPath.isAbsolute() && !targetPath.equals(linkPath)) {
+                                            && targetPath.isAbsolute() && !targetPath.equals(linkPath) && !targetPath.toRealPath().equals(linkPath)) {
                                         if (logger.isDebugEnabled()) {
                                             logger.debug("Creating symbolic link " + linkPath + " to " + targetPath);
                                         }
@@ -1601,6 +1609,7 @@ public class Loader {
                                     // ... (probably an unsupported operation on Windows, but DLLs never need links,
                                     // or other (filesystem?) exception: for example,
                                     // "sun.nio.fs.UnixException: No such file or directory" on File.toPath()) ...
+                                    canCreateSymbolicLink = false;
                                     if (logger.isDebugEnabled()) {
                                         logger.debug("Failed to create symbolic link " + linkFile + " to " + file2 + ": " + e);
                                     }
@@ -1776,7 +1785,7 @@ public class Loader {
                 }
             }
         }
-        if (link != null && link.length() > 0) {
+        if (canCreateSymbolicLink && link != null && link.length() > 0) {
             File linkFile = new File(parent, link);
             try {
                 Path linkPath = linkFile.toPath();
@@ -1813,6 +1822,7 @@ public class Loader {
                 // ... (probably an unsupported operation on Windows, but DLLs never need links,
                 // or other (filesystem?) exception: for example,
                 // "sun.nio.fs.UnixException: No such file or directory" on File.toPath()) ...
+                canCreateSymbolicLink = false;
                 if (logger.isDebugEnabled()) {
                     logger.debug("Failed to create symbolic link " + linkFile + ": " + e);
                 }

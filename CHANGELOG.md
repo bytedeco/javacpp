@@ -1,4 +1,5 @@
 
+ * Prevent `Loader` from failing to find, load, or link libraries multiple times
  * Fix `Pointer.getPointer()` methods sometimes calling the wrong constructor ([issue bytedeco/javacv#1556](https://github.com/bytedeco/javacv/issues/1556))
  * Prevent Android from trying to load `PointerBufferPoolMXBean` by using it via reflection ([pull #447](https://github.com/bytedeco/javacpp/pull/447))
  * Fix Android build properties for NDK r22 and move legacy to `android-*-gcc.properties` ([pull #444](https://github.com/bytedeco/javacpp/pull/444))
