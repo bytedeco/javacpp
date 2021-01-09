@@ -29,8 +29,11 @@ import org.bytedeco.javacpp.annotation.Const;
 import org.bytedeco.javacpp.annotation.Function;
 import org.bytedeco.javacpp.annotation.Platform;
 import org.bytedeco.javacpp.annotation.SharedPtr;
+import org.bytedeco.javacpp.annotation.StdBasicString;
 import org.bytedeco.javacpp.annotation.StdMove;
 import org.bytedeco.javacpp.annotation.StdString;
+import org.bytedeco.javacpp.annotation.StdU16String;
+import org.bytedeco.javacpp.annotation.StdU32String;
 import org.bytedeco.javacpp.annotation.StdVector;
 import org.bytedeco.javacpp.annotation.StdWString;
 import org.bytedeco.javacpp.annotation.UniquePtr;
@@ -53,6 +56,14 @@ public class AdapterTest {
     static native @StdWString CharPointer testStdWString(@StdWString CharPointer str);
     static native @StdWString IntPointer testStdWString(@StdWString IntPointer str);
 
+    static native @StdBasicString("char") String testStdString2(@StdBasicString("char") String str);
+    static native @Cast("char*") @StdBasicString("char") BytePointer testStdString2(@Cast("char*") @StdBasicString("char") @StdString BytePointer str);
+    static native @Cast("wchar_t*") @StdBasicString("wchar_t") CharPointer testStdWString2(@Cast("wchar_t*") @StdBasicString("wchar_t") CharPointer str);
+    static native @Cast("wchar_t*") @StdBasicString("wchar_t") IntPointer testStdWString2(@Cast("wchar_t*") @StdBasicString("wchar_t") IntPointer str);
+
+    static native @StdU16String CharPointer testStdU16String(@StdU16String CharPointer str);
+    static native @StdU32String IntPointer testStdU32String(@StdU32String IntPointer str);
+
     static native String testCharString(String str);
     static native @Cast("char*") BytePointer testCharString(@Cast("char*") BytePointer str);
 
@@ -61,6 +72,7 @@ public class AdapterTest {
     static native IntPointer testIntString(IntPointer str);
 
     static native @Const @ByRef @StdString byte[] getConstStdString();
+    static native @Const @ByRef @Cast("char*") @StdBasicString("char") byte[] getConstStdString2();
 
     static class SharedData extends Pointer {
         SharedData(Pointer p) { super(p); }
@@ -133,28 +145,46 @@ public class AdapterTest {
         String textStr1 = "This is a normal ASCII string.";
         String textStr2 = testStdString(textStr1);
         assertEquals(textStr1, textStr2);
+        String textStr3 = testStdString2(textStr1);
+        assertEquals(textStr1, textStr3);
 
         BytePointer textPtr1 = new BytePointer(textStr1);
         BytePointer textPtr2 = testStdString(textPtr1);
         assertEquals(textStr1, textPtr1.getString());
         assertEquals(textStr1, textPtr2.getString());
+        BytePointer textPtr3 = testStdString2(textPtr1);
+        assertEquals(textStr1, textPtr3.getString());
+
+        CharPointer textCharPtr1 = new CharPointer(textStr1);
+        assertEquals(textStr1, textCharPtr1.getString());
+
+        IntPointer textIntPtr1 = new IntPointer(textStr1);
+        assertEquals(textStr1, textIntPtr1.getString());
 
         if (Loader.getPlatform().startsWith("windows")) {
             // UTF-16
-            CharPointer textCharPtr1 = new CharPointer(textStr1);
             CharPointer textCharPtr2 = testStdWString(textCharPtr1);
-            assertEquals(textStr1, textCharPtr1.getString());
             assertEquals(textStr1, textCharPtr2.getString());
+            CharPointer textCharPtr3 = testStdWString2(textCharPtr1);
+            assertEquals(textStr1, textCharPtr3.getString());
         } else {
             // UTF-32
-            IntPointer textIntPtr1 = new IntPointer(textStr1);
             IntPointer textIntPtr2 = testStdWString(textIntPtr1);
-            assertEquals(textStr1, textIntPtr1.getString());
             assertEquals(textStr1, textIntPtr2.getString());
+            IntPointer textIntPtr3 = testStdWString2(textIntPtr1);
+            assertEquals(textStr1, textIntPtr3.getString());
         }
+
+        CharPointer textCharPtr4 = testStdU16String(textCharPtr1);
+        assertEquals(textStr1, textCharPtr4.getString());
+
+        IntPointer textIntPtr4 = testStdU32String(textIntPtr1);
+        assertEquals(textStr1, textIntPtr4.getString());
 
         byte[] test = getConstStdString();
         assertEquals("test", new String(test));
+        byte[] test2 = getConstStdString2();
+        assertEquals("test", new String(test2));
         System.gc();
     }
 
