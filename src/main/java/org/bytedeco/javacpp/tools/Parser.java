@@ -483,7 +483,7 @@ public class Parser {
                     String key = t.value;
                     map.put(key, map.get(key));
                     token = tokens.next();
-                } else {
+                } else if (type != null) {
                     String key = type.cppName;
                     map.put(key, map.get(key));
                 }
@@ -684,6 +684,8 @@ public class Parser {
                     tokens.index = backIndex;
                     if (type.cppName.length() == 0 || type.cppName.endsWith("::") || type.cppName.endsWith("~")) {
                         type.cppName += token.value;
+                    } else if (type.cppName.endsWith("::template")) {
+                        type.cppName += " " + token.value;
                     } else {
                         Info info = infoMap.getFirst(tokens.get(1).value);
                         if ((info != null && info.annotations != null) ||
@@ -1763,12 +1765,21 @@ public class Parser {
         }
 
         int count = 1;
+        boolean catchBlock = false;
         tokens.raw = true;
         for (Token token = tokens.next(); !token.match(Token.EOF) && count > 0; token = tokens.next()) {
             if (token.match('{')) {
-                count++;
+                if (catchBlock) {
+                    catchBlock = false;
+                } else {
+                    count++;
+                }
             } else if (token.match('}')) {
                 count--;
+            }
+            if (count == 0 && tokens.get(1).match("catch")) {
+                count++;
+                catchBlock = true;
             }
             if (count > 0) {
                 text += token.spacing + token;
@@ -3650,7 +3661,9 @@ public class Parser {
         }
         if (tokens.get().match('=')) {
             // deal with namespace aliases
-            tokens.next();
+            if (tokens.next().match("::")) {
+                tokens.next();
+            }
             Type type = type(context);
             context.namespaceMap.put(name, type.cppName);
             tokens.get().expect(';');
