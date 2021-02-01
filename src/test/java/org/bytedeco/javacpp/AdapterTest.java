@@ -57,7 +57,7 @@ public class AdapterTest {
     static native @StdWString IntPointer testStdWString(@StdWString IntPointer str);
 
     static native @StdBasicString("char") String testStdString2(@StdBasicString("char") String str);
-    static native @Cast("char*") @StdBasicString("char") BytePointer testStdString2(@Cast("char*") @StdBasicString("char") @StdString BytePointer str);
+    static native @Cast("char*") @StdBasicString("char") BytePointer testStdString2(@Cast("char*") @StdBasicString("char") BytePointer str);
     static native @Cast("wchar_t*") @StdBasicString("wchar_t") CharPointer testStdWString2(@Cast("wchar_t*") @StdBasicString("wchar_t") CharPointer str);
     static native @Cast("wchar_t*") @StdBasicString("wchar_t") IntPointer testStdWString2(@Cast("wchar_t*") @StdBasicString("wchar_t") IntPointer str);
 
