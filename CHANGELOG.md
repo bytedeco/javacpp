@@ -1,4 +1,5 @@
 
+ * Add `BasicStringAdapter` and corresponding `@StdBasicString`, `@StdU16String`, and `@StdU32String` annotations ([pull #448](https://github.com/bytedeco/javacpp/pull/448))
  * Fix `Parser` failures on `try` blocks as function body, nested class templates, and aliases to namespaces starting with `::`
  * Prevent `Loader` from failing to find, load, or link libraries multiple times
  * Fix `Pointer.getPointer()` methods sometimes calling the wrong constructor ([issue bytedeco/javacv#1556](https://github.com/bytedeco/javacv/issues/1556))

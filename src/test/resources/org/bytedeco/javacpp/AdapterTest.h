@@ -10,6 +10,22 @@ std::wstring testStdWString(std::wstring str) {
     return str;
 }
 
+std::string testStdString2(std::string str) {
+    return str;
+}
+
+std::wstring testStdWString2(std::wstring str) {
+    return str;
+}
+
+std::u16string testStdU16String(std::u16string str) {
+    return str;
+}
+
+std::u32string testStdU32String(std::u32string str) {
+    return str;
+}
+
 char *testCharString(const char *str) {
     return strdup(str);
     // memory leak...
@@ -26,6 +42,10 @@ int *testIntString(int *str) {
 const std::string& getConstStdString() {
     static std::string test("test");
     return test;
+}
+
+const std::string& getConstStdString2() {
+    return getConstStdString();
 }
 
 int constructorCount = 0;
