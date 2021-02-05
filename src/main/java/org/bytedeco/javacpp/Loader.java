@@ -917,18 +917,11 @@ public class Loader {
 
     static boolean pathsFirst = false;
 
-    static boolean systemLoadLibrary = true;
     
     static {
         String s = System.getProperty("org.bytedeco.javacpp.pathsfirst", "false").toLowerCase();
         s = System.getProperty("org.bytedeco.javacpp.pathsFirst", s).toLowerCase();
 	pathsFirst = s.equals("true") || s.equals("t") || s.equals("");
-
-	/* Avoids System.loadLibrary load which searches through allow
-	 * all paths and delays overall load time */
-	String l = System.getProperty("org.bytedeco.javacpp.systemloadlibrary", "true").toLowerCase();
-	l = System.getProperty("org.bytedeco.javacpp.systemloadlibrary", l).toLowerCase();
-	systemLoadLibrary = l.equals("true") || l.equals("t") || l.equals("");
     }
 
     /** Creates and returns {@code System.getProperty("org.bytedeco.javacpp.cachedir")} or {@code ~/.javacpp/cache/} when not set. */
@@ -1710,7 +1703,7 @@ public class Loader {
                         }
                     }
                 }
-		if (!loadedByLoadLibrary0 && systemLoadLibrary) {
+		if (!loadedByLoadLibrary0 && System.getProperty("java.library.path", "").length() > 0) {
                     System.loadLibrary(libname);
                 }
                 return libname;
