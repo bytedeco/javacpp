@@ -37,6 +37,7 @@ import org.bytedeco.javacpp.annotation.StdU32String;
 import org.bytedeco.javacpp.annotation.StdVector;
 import org.bytedeco.javacpp.annotation.StdWString;
 import org.bytedeco.javacpp.annotation.UniquePtr;
+import org.bytedeco.javacpp.annotation.AsUtf16;
 import org.bytedeco.javacpp.tools.Builder;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -54,6 +55,7 @@ public class AdapterTest {
     static native @StdString BytePointer testStdString(@StdString BytePointer str);
 
     static native @StdWString CharPointer testStdWString(@StdWString CharPointer str);
+    static native @StdWString @AsUtf16 String testStdWString(@StdWString @AsUtf16 String str);
     static native @StdWString IntPointer testStdWString(@StdWString IntPointer str);
 
     static native @StdBasicString("char") String testStdString2(@StdBasicString("char") String str);
@@ -62,12 +64,14 @@ public class AdapterTest {
     static native @Cast("wchar_t*") @StdBasicString("wchar_t") IntPointer testStdWString2(@Cast("wchar_t*") @StdBasicString("wchar_t") IntPointer str);
 
     static native @StdU16String CharPointer testStdU16String(@StdU16String CharPointer str);
+    static native @StdU16String @AsUtf16 String testStdU16String(@StdU16String @AsUtf16 String str);
     static native @StdU32String IntPointer testStdU32String(@StdU32String IntPointer str);
 
     static native String testCharString(String str);
     static native @Cast("char*") BytePointer testCharString(@Cast("char*") BytePointer str);
 
     static native CharPointer testShortString(CharPointer str);
+    static native @AsUtf16 String testShortString(@AsUtf16 String str);
 
     static native IntPointer testIntString(IntPointer str);
 
@@ -165,8 +169,12 @@ public class AdapterTest {
             // UTF-16
             CharPointer textCharPtr2 = testStdWString(textCharPtr1);
             assertEquals(textStr1, textCharPtr2.getString());
+
             CharPointer textCharPtr3 = testStdWString2(textCharPtr1);
             assertEquals(textStr1, textCharPtr3.getString());
+
+            String textStr4 = testStdWString(textStr1);
+            assertEquals(textStr1, textStr4);
         } else {
             // UTF-32
             IntPointer textIntPtr2 = testStdWString(textIntPtr1);
@@ -177,6 +185,9 @@ public class AdapterTest {
 
         CharPointer textCharPtr4 = testStdU16String(textCharPtr1);
         assertEquals(textStr1, textCharPtr4.getString());
+
+        String textStr5 = testStdU16String(textStr1);
+        assertEquals(textStr1, textStr5);
 
         IntPointer textIntPtr4 = testStdU32String(textIntPtr1);
         assertEquals(textStr1, textIntPtr4.getString());
@@ -205,11 +216,15 @@ public class AdapterTest {
     @Test public void testShortString() {
         System.out.println("ShortString");
 
-        String textStr = "This is a normal ASCII string.";
-        CharPointer textPtr1 = new CharPointer(textStr);
+        String textStr1 = "This is a normal ASCII string.";
+        CharPointer textPtr1 = new CharPointer(textStr1);
         CharPointer textPtr2 = testShortString(textPtr1);
-        assertEquals(textStr, textPtr1.getString());
-        assertEquals(textStr, textPtr2.getString());
+        assertEquals(textStr1, textPtr1.getString());
+        assertEquals(textStr1, textPtr2.getString());
+
+        String textStr2 = testShortString(textStr1);
+        assertEquals(textStr1, textStr2);
+
         System.gc();
     }
 
