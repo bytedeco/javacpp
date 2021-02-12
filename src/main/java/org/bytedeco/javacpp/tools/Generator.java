@@ -959,18 +959,18 @@ public class Generator {
             out.println("    return JavaCPP_createStringFromBytes(env, ptr, std::char_traits<char>::length(ptr));");
             out.println("}");
             out.println();
-            out.println("static JavaCPP_noinline jstring JavaCPP_createStringFromUTF16CodeUnits(JNIEnv* env, const unsigned short* ptr, size_t length) {");
+            out.println("static JavaCPP_noinline jstring JavaCPP_createStringFromUTF16(JNIEnv* env, const unsigned short* ptr, size_t length) {");
             out.println("    if (ptr == NULL) {");
             out.println("        return NULL;");
             out.println("    }");
             out.println("    return env->NewString(ptr, length);");
             out.println("}");
             out.println();
-            out.println("static JavaCPP_noinline jstring JavaCPP_createStringFromUTF16CodeUnits(JNIEnv* env, const unsigned short* ptr) {");
+            out.println("static JavaCPP_noinline jstring JavaCPP_createStringFromUTF16(JNIEnv* env, const unsigned short* ptr) {");
             out.println("    if (ptr == NULL) {");
             out.println("        return NULL;");
             out.println("    }");
-            out.println("    return JavaCPP_createStringFromUTF16CodeUnits(env, ptr, std::char_traits<unsigned short>::length(ptr));");
+            out.println("    return JavaCPP_createStringFromUTF16(env, ptr, std::char_traits<unsigned short>::length(ptr));");
             out.println("}");
             out.println();
         }
@@ -1007,7 +1007,7 @@ public class Generator {
             out.println("#endif");
             out.println("}");
             out.println();
-            out.println("static JavaCPP_noinline const unsigned short* JavaCPP_getStringUTF16CodeUnits(JNIEnv* env, jstring str) {");
+            out.println("static JavaCPP_noinline const unsigned short* JavaCPP_getStringUTF16(JNIEnv* env, jstring str) {");
             out.println("    if (str == NULL) {");
             out.println("        return NULL;");
             out.println("    }");
@@ -1020,7 +1020,7 @@ public class Generator {
             out.println("    return ptr;");
             out.println("}");
             out.println();
-            out.println("static JavaCPP_noinline void JavaCPP_releaseStringUTF16CodeUnits(JNIEnv*, const unsigned short* ptr) {");
+            out.println("static JavaCPP_noinline void JavaCPP_releaseStringUTF16(JNIEnv*, const unsigned short* ptr) {");
             out.println("    delete[] ptr;");
             out.println("}");
             out.println();
@@ -3866,6 +3866,34 @@ public class Generator {
         }
     }
 
+    static boolean asUtf16(Annotation[] annotations) {
+        if (annotations == null) {
+            return false;
+        }
+        for (Annotation annotation : annotations) {
+            if (annotation instanceof AsUtf16) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    static String createString(String ptr, String adapter, Annotation[] annotations) {
+        return (asUtf16(annotations) ? "JavaCPP_createStringFromUTF16(env, "
+                                     : "JavaCPP_createStringFromBytes(env, ")
+                + ptr + (adapter != null ? ", " + adapter + ".size);" : ");");
+    }
+
+    static String getStringData(String str, Annotation[] annotations) {
+        return (asUtf16(annotations) ? "JavaCPP_getStringUTF16(env, "
+                                     : "JavaCPP_getStringBytes(env, ") + str + ");";
+    }
+
+    static String releaseStringData(String str, String ptr, Annotation[] annotations) {
+        return (asUtf16(annotations) ? "JavaCPP_releaseStringUTF16(env, "
+                                     : "JavaCPP_releaseStringBytes(env, " + str + ", ") + ptr + ");";
+    }
+
     static String constValueTypeName(String ... typeName) {
         String type = typeName[0];
         if (type.endsWith("*") || type.endsWith("&")) {
@@ -4007,6 +4035,10 @@ public class Generator {
         return typeName;
     }
 
+    String[] cppTypeName(Class<?> type) {
+        return cppTypeName(type, null);
+    }
+
     String[] cppTypeName(Class<?> type, Annotation[] annotations) {
         String prefix = "", suffix = "";
         if (type == Buffer.class || type == Pointer.class) {
@@ -4030,7 +4062,7 @@ public class Generator {
         } else if (type == PointerPointer.class) {
             prefix = "void**";
         } else if (type == String.class) {
-            if (asUtf16CodeUnits(annotations)) {
+            if (asUtf16(annotations)) {
                 prefix = "const unsigned short*";
             } else {
                 prefix = "const char*";
@@ -4061,10 +4093,6 @@ public class Generator {
             }
         }
         return new String[] { prefix, suffix };
-    }
-
-    String[] cppTypeName(Class<?> type) {
-        return cppTypeName(type, null);
     }
 
     String[] cppFunctionTypeName(Method... functionMethods) {
@@ -4302,35 +4330,5 @@ public class Generator {
             }
         }
         return mangledName.toString();
-    }
-
-    private static boolean asUtf16CodeUnits(Annotation[] annotations) {
-        if (annotations == null) {
-            return false;
-        }
-        for (Annotation annotation : annotations) {
-            if (annotation instanceof AsUtf16) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static String createString(String ptr, String adapter, Annotation[] annotations) {
-        return (asUtf16CodeUnits(annotations) ? "JavaCPP_createStringFromUTF16CodeUnits(env, "
-                                              : "JavaCPP_createStringFromBytes(env, ")
-                + ptr + (adapter != null ? ", " + adapter + ".size);" : ");");
-    }
-
-    private static String getStringData(String str, Annotation[] annotations) {
-        return (asUtf16CodeUnits(annotations) ? "JavaCPP_getStringUTF16CodeUnits(env, "
-                                              : "JavaCPP_getStringBytes(env, ")
-                + str + ");";
-    }
-
-    private static String releaseStringData(String str, String ptr, Annotation[] annotations) {
-        return (asUtf16CodeUnits(annotations) ? "JavaCPP_releaseStringUTF16CodeUnits(env, "
-                                              : "JavaCPP_releaseStringBytes(env, " + str + ", ")
-                + ptr + ");";
     }
 }
