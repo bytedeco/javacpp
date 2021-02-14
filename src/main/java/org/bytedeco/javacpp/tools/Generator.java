@@ -38,6 +38,7 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 import java.nio.ShortBuffer;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -497,6 +498,14 @@ public class Generator {
         out.println("static jmethodID JavaCPP_stringMID = NULL;");
         out.println("static jmethodID JavaCPP_getBytesMID = NULL;");
         out.println("static jmethodID JavaCPP_toStringMID = NULL;");
+        out.println("#ifdef STRING_BYTES_CHARSET");
+        out.println("#ifdef MODIFIED_UTF8_STRING");
+        out.println("#error \"STRING_BYTES_CHARSET and MODIFIED_UTF8_STRING must not be defined together\"");
+        out.println("#endif");
+        out.println("static jobject JavaCPP_stringBytesCharset = NULL;");
+        out.println("static jmethodID JavaCPP_stringWithCharsetMID = NULL;");
+        out.println("static jmethodID JavaCPP_getBytesWithCharsetMID = NULL;");
+        out.println("#endif");
         out.println();
         out.println("static inline void JavaCPP_log(const char* fmt, ...) {");
         out.println("    va_list ap;");
@@ -948,8 +957,12 @@ public class Generator {
             out.println("#else");
             out.println("    jbyteArray bytes = env->NewByteArray(length < INT_MAX ? length : INT_MAX);");
             out.println("    env->SetByteArrayRegion(bytes, 0, length < INT_MAX ? length : INT_MAX, (signed char*)ptr);");
+            out.println("#ifdef STRING_BYTES_CHARSET");
+            out.println("    return (jstring)env->NewObject(JavaCPP_getClass(env, " + jclasses.index(String.class) + "), JavaCPP_stringWithCharsetMID, bytes, JavaCPP_stringBytesCharset);");
+            out.println("#else");
             out.println("    return (jstring)env->NewObject(JavaCPP_getClass(env, " + jclasses.index(String.class) + "), JavaCPP_stringMID, bytes);");
-            out.println("#endif");
+            out.println("#endif // STRING_BYTES_CHARSET");
+            out.println("#endif // MODIFIED_UTF8_STRING");
             out.println("}");
             out.println();
             out.println("static JavaCPP_noinline jstring JavaCPP_createStringFromBytes(JNIEnv* env, const char* ptr) {");
@@ -982,7 +995,11 @@ public class Generator {
             out.println("#ifdef MODIFIED_UTF8_STRING");
             out.println("    return env->GetStringUTFChars(str, NULL);");
             out.println("#else");
+            out.println("#ifdef STRING_BYTES_CHARSET");
+            out.println("    jbyteArray bytes = (jbyteArray)env->CallObjectMethod(str, JavaCPP_getBytesWithCharsetMID, JavaCPP_stringBytesCharset);");
+            out.println("#else");
             out.println("    jbyteArray bytes = (jbyteArray)env->CallObjectMethod(str, JavaCPP_getBytesMID);");
+            out.println("#endif // STRING_BYTES_CHARSET");
             out.println("    if (bytes == NULL || env->ExceptionCheck()) {");
             out.println("        JavaCPP_log(\"Error getting bytes from string.\");");
             out.println("        return NULL;");
@@ -994,7 +1011,7 @@ public class Generator {
             out.println("        ptr[length] = 0;");
             out.println("    }");
             out.println("    return (const char*)ptr;");
-            out.println("#endif");
+            out.println("#endif // MODIFIED_UTF8_STRING");
             out.println("}");
             out.println();
             out.println("static JavaCPP_noinline void JavaCPP_releaseStringBytes(JNIEnv* env, jstring str, const char* ptr) {");
@@ -1764,6 +1781,37 @@ public class Generator {
         out.println("    if (JavaCPP_toStringMID == NULL) {");
         out.println("        return JNI_ERR;");
         out.println("    }");
+        out.println("#ifdef STRING_BYTES_CHARSET");
+        out.println("    jmethodID charsetForNameMID = JavaCPP_getStaticMethodID(env, " + jclasses.index(Charset.class) + ", \"forName\", \"(Ljava/lang/String;)Ljava/nio/charset/Charset;\");");
+        out.println("    if (charsetForNameMID == NULL) {");
+        out.println("        return JNI_ERR;");
+        out.println("    }");
+        out.println("    jstring charsetName = env->NewStringUTF(STRING_BYTES_CHARSET);");
+        out.println("    if (charsetName == NULL || env->ExceptionCheck()) {");
+        out.println("        JavaCPP_log(\"Error creating java.lang.String from '%s'\", STRING_BYTES_CHARSET);");
+        out.println("        return JNI_ERR;");
+        out.println("    }");
+        out.println("    JavaCPP_stringBytesCharset = env->CallStaticObjectMethod(JavaCPP_getClass(env, " + jclasses.index(Charset.class) + "), charsetForNameMID, charsetName);");
+        out.println("    if (JavaCPP_stringBytesCharset == NULL || env->ExceptionCheck()) {");
+        out.println("        JavaCPP_log(\"Error when calling Charset.forName() for '%s'\", STRING_BYTES_CHARSET);");
+        out.println("        return JNI_ERR;");
+        out.println("    }");
+        out.println("    JavaCPP_stringBytesCharset = env->NewGlobalRef(JavaCPP_stringBytesCharset);");
+        out.println("    if (JavaCPP_stringBytesCharset == NULL) {");
+        out.println("        JavaCPP_log(\"Error creating global reference for java.nio.charset.Charset instance\");");
+        out.println("        return JNI_ERR;");
+        out.println("    }");
+        out.println("    JavaCPP_stringWithCharsetMID = JavaCPP_getMethodID(env, " +
+                jclasses.index(String.class) + ", \"<init>\", \"([BLjava/nio/charset/Charset;)V\");");
+        out.println("    if (JavaCPP_stringWithCharsetMID == NULL) {");
+        out.println("        return JNI_ERR;");
+        out.println("    }");
+        out.println("    JavaCPP_getBytesWithCharsetMID = JavaCPP_getMethodID(env, " +
+                jclasses.index(String.class) + ", \"getBytes\", \"(Ljava/nio/charset/Charset;)[B\");");
+        out.println("    if (JavaCPP_getBytesWithCharsetMID == NULL) {");
+        out.println("        return JNI_ERR;");
+        out.println("    }");
+        out.println("#endif // STRING_BYTES_CHARSET");
         out.println("    return env->GetVersion();");
         out.println("}");
         out.println();
@@ -1791,6 +1839,10 @@ public class Generator {
         out.println("        env->DeleteWeakGlobalRef((jweak)JavaCPP_classes[i]);");
         out.println("        JavaCPP_classes[i] = NULL;");
         out.println("    }");
+        out.println("#ifdef STRING_BYTES_CHARSET");
+        out.println("    env->DeleteGlobalRef(JavaCPP_stringBytesCharset);");
+        out.println("    JavaCPP_stringBytesCharset = NULL;");
+        out.println("#endif");
         if (baseLoadSuffix != null && !baseLoadSuffix.isEmpty()) {
             out.println("    JNI_OnUnload" + baseLoadSuffix + "(vm, reserved);");
         }
