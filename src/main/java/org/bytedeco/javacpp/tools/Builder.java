@@ -1119,6 +1119,7 @@ public class Builder {
 
             List<String> executableNames = p.get("platform.executable");
             for (String executableName : executableNames) {
+                executableName = executableName.split("#")[0];
                 LinkedHashSet<Class> classList = executableMap.get(executableName);
                 if (classList == null) {
                     allNames.add(executableName);
