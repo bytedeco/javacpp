@@ -1277,19 +1277,32 @@ public class Loader {
                     }
                 }
                 for (String executable : executables) {
-                    filename = prefix + executable + suffix;
+                    String[] split = executable.split("#");
+                    filename = prefix + split[0] + suffix;
+                    String filename2 = split.length > 1 ? prefix + split[1] + suffix : null;
                     for (int i = extensions.length - 1; i >= -1; i--) {
                         // iterate extensions in reverse to be consistent with the overriding of properties
                         String extension = i >= 0 ? extensions[i] : "";
                         String subdir = libraryPath.length() > 0 ? "/" + libraryPath : platform + (extension == null ? "" : extension);
-                        File f = cacheResource(cls, subdir + "/" + filename);
-                        if (f != null) {
-                            f.setExecutable(true);
-                            executablePaths.add(f.getAbsolutePath());
+                        URL u = findResource(cls, subdir + "/" + filename);
+                        if (u != null) {
+                            if (filename2 != null) {
+                                u = new URL(u + "#" + filename2);
+                                if (!u.toString().contains("#")) {
+                                    Field f = URL.class.getDeclaredField("ref");
+                                    f.setAccessible(true);
+                                    f.set(u, filename2);
+                                }
+                            }
+                            File f = cacheResource(u);
+                            if (f != null) {
+                                f.setExecutable(true);
+                                executablePaths.add(f.getAbsolutePath());
+                            }
                         }
                     }
                 }
-            } catch (IOException e) {
+            } catch (IOException | NoSuchFieldException | IllegalAccessException e) {
                 logger.error("Could not extract executable " + filename + ": " + e);
             }
         }
