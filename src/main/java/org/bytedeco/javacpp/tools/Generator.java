@@ -500,7 +500,7 @@ public class Generator {
         out.println("static jmethodID JavaCPP_toStringMID = NULL;");
         out.println("#ifdef STRING_BYTES_CHARSET");
         out.println("#ifdef MODIFIED_UTF8_STRING");
-        out.println("#error \"STRING_BYTES_CHARSET and MODIFIED_UTF8_STRING must not be defined together\"");
+        out.println("#pragma message (\"warning: STRING_BYTES_CHARSET and MODIFIED_UTF8_STRING are mutually exclusive.\")");
         out.println("#endif");
         out.println("static jobject JavaCPP_stringBytesCharset = NULL;");
         out.println("static jmethodID JavaCPP_stringWithCharsetMID = NULL;");
