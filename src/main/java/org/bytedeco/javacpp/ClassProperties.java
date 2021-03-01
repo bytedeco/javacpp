@@ -111,9 +111,11 @@ public class ClassProperties extends HashMap<String,List<String>> {
                         new File(root + value).exists()) {
                     value = root + value;
                 }
-                if (!values2.contains(value)) {
-                    values2.add(value);
+                if (values2.contains(value)) {
+                    // remove existing values to allow overriding them
+                    values2.remove(value);
                 }
+                values2.add(value);
             }
         }
     }
