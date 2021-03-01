@@ -1,4 +1,5 @@
 
+ * Fix `Loader.ClassProperties` not always getting overridden correctly when defined multiple times
  * Allow `Loader.load()` to also rename executables on extraction to output filenames specified with the `#` character
  * Add `@AsUtf16` annotation to map `java.lang.String` to `unsigned short*` (array of UTF-16 code units) ([pull #442](https://github.com/bytedeco/javacpp/pull/442))
  * Add `BasicStringAdapter` and corresponding `@StdBasicString`, `@StdU16String`, and `@StdU32String` annotations ([pull #448](https://github.com/bytedeco/javacpp/pull/448))
