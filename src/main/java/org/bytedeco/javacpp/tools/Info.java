@@ -95,6 +95,8 @@ public class Info {
     /** Outputs declarations for this class into their subclasses as well.
      * Also adds methods for explicit casting, as done for multiple inheritance by default. */
     boolean flatten = false;
+    /** Disables generation of setters for public data members of a class */
+    boolean immutable = false;
     /** Map global functions to instance methods, without {@code static} modifier, to implement an interface, etc. */
     boolean objectify = false;
     /** Attempts to translate naively the statements of variable-like macros to Java. */
@@ -108,8 +110,6 @@ public class Info {
     boolean purify = false;
     /** Annotates virtual functions with @{@link Virtual} and adds appropriate constructors. */
     boolean virtualize = false;
-    /** Disables generation of setters for public data members of a class */
-    boolean readOnlyMembers = false;
     /** Allows to override the base class of {@link #pointerTypes}. Defaults to {@link Pointer}. */
     String base = null;
     /** Replaces the code associated with the declaration of C++ identifiers, before parsing. */
@@ -132,6 +132,8 @@ public class Info {
     public Info enumerate(boolean enumerate) { this.enumerate = enumerate; return this; }
     public Info flatten() { this.flatten = true; return this; }
     public Info flatten(boolean flatten) { this.flatten = flatten; return this; }
+    public Info immutable() { this.immutable = true; return this; }
+    public Info immutable(boolean immutable) { this.immutable = immutable; return this; }
     public Info objectify() { this.objectify = true; return this; }
     public Info objectify(boolean objectify) { this.objectify = objectify; return this; }
     public Info translate() { this.translate = true; return this; }
@@ -144,8 +146,6 @@ public class Info {
     public Info purify(boolean purify) { this.purify = purify; return this; }
     public Info virtualize() { this.virtualize = true; return this; }
     public Info virtualize(boolean virtualize) { this.virtualize = virtualize; return this; }
-    public Info readOnlyMembers() { this.readOnlyMembers = true; return this; }
-    public Info readOnlyMembers(boolean readOnly) { this.readOnlyMembers = readOnly; return this; }
     public Info base(String base) { this.base = base; return this; }
     public Info cppText(String cppText) { this.cppText = cppText; return this; }
     public Info javaText(String javaText) { this.javaText = javaText; return this; }

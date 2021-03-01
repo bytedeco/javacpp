@@ -43,10 +43,10 @@ class Context {
         javaName = c.javaName;
         constName = c.constName;
         constBaseName = c.constBaseName;
+        immutable = c.immutable;
         inaccessible = c.inaccessible;
         objectify = c.objectify;
         virtualize = c.virtualize;
-        readOnlyMembers = c.readOnlyMembers;
         variable = c.variable;
         infoMap = c.infoMap;
         templateMap = c.templateMap;
@@ -60,10 +60,10 @@ class Context {
     String javaName = null;
     String constName = null;
     String constBaseName = null;
+    boolean immutable = false;
     boolean inaccessible = false;
     boolean objectify = false;
     boolean virtualize = false;
-    boolean readOnlyMembers = false;
     Declarator variable = null;
     InfoMap infoMap = null;
     TemplateMap templateMap = null;

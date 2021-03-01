@@ -2439,7 +2439,7 @@ public class Parser {
                     dcl.type.annotations = dcl.type.annotations.replaceAll("@Name\\(.*\\) ", "");
                     javaName = metadcl.javaName + "_" + shortName;
                 }
-                final boolean hasSetter = !(dcl.type.constValue && dcl.indirections == 0) && !dcl.constPointer && !dcl.type.constExpr && !context.readOnlyMembers;
+                final boolean hasSetter = !(dcl.type.constValue && dcl.indirections == 0) && !dcl.constPointer && !dcl.type.constExpr && !context.immutable;
                 if (!hasSetter) {
                     decl.text += "@MemberGetter ";
                 }
@@ -2485,7 +2485,7 @@ public class Parser {
                 }
                 tokens.index = backIndex;
                 Declarator dcl2 = declarator(context, null, -1, false, n, false, false);
-                final boolean hasSetter = !dcl.type.constValue && !dcl.constPointer && !(dcl2.indirections < 2) && !dcl2.type.constExpr && !context.readOnlyMembers;
+                final boolean hasSetter = !dcl.type.constValue && !dcl.constPointer && !(dcl2.indirections < 2) && !dcl2.type.constExpr && !context.immutable;
                 if (!hasSetter) {
                     decl.text += "@MemberGetter ";
                 }
@@ -3175,8 +3175,8 @@ public class Parser {
         if (info != null) {
             if (info.virtualize)
                 ctx.virtualize = true;
-            if (info.readOnlyMembers)
-                ctx.readOnlyMembers = true;
+            if (info.immutable)
+                ctx.immutable = true;
         }
         ctx.baseType = base.cppName;
 
