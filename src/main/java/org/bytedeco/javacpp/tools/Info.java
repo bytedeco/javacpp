@@ -95,6 +95,8 @@ public class Info {
     /** Outputs declarations for this class into their subclasses as well.
      * Also adds methods for explicit casting, as done for multiple inheritance by default. */
     boolean flatten = false;
+    /** Disables generation of setters for public data members of a class */
+    boolean immutable = false;
     /** Map global functions to instance methods, without {@code static} modifier, to implement an interface, etc. */
     boolean objectify = false;
     /** Attempts to translate naively the statements of variable-like macros to Java. */
@@ -130,6 +132,8 @@ public class Info {
     public Info enumerate(boolean enumerate) { this.enumerate = enumerate; return this; }
     public Info flatten() { this.flatten = true; return this; }
     public Info flatten(boolean flatten) { this.flatten = flatten; return this; }
+    public Info immutable() { this.immutable = true; return this; }
+    public Info immutable(boolean immutable) { this.immutable = immutable; return this; }
     public Info objectify() { this.objectify = true; return this; }
     public Info objectify(boolean objectify) { this.objectify = objectify; return this; }
     public Info translate() { this.translate = true; return this; }
