@@ -671,7 +671,7 @@ public class Pointer implements AutoCloseable {
             synchronized (DeallocatorThread.class) {
                 try {
                     while (count++ < maxRetries && ((maxBytes > 0 && DeallocatorReference.totalBytes + r.bytes > maxBytes)
-                                         || (maxPhysicalBytes > 0 && lastPhysicalBytes > maxPhysicalBytes))) {
+                                         || (maxPhysicalBytes > 0 && lastPhysicalBytes > maxPhysicalBytes)) && referenceQueue != null) {
                         if (logger.isDebugEnabled()) {
                             logger.debug("Calling System.gc() and Pointer.trimMemory() in " + this);
                         }

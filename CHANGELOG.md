@@ -1,4 +1,5 @@
 
+ * Ensure `System.gc()` never gets called with "org.bytedeco.javacpp.nopointergc" ([issue tensorflow/java#208](https://github.com/tensorflow/java/issues/208))
  * Add `Info.immutable` to disable generating setters for public data members ([pull #461](https://github.com/bytedeco/javacpp/pull/461))
  * Map `String` to `char*` with `Charset.forName(STRING_BYTES_CHARSET)` when that macro is defined ([pull #460](https://github.com/bytedeco/javacpp/pull/460))
  * Fix `Loader.ClassProperties` not always getting overridden correctly when defined multiple times
