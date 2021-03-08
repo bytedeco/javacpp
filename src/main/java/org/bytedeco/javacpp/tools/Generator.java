@@ -2364,6 +2364,12 @@ public class Generator {
                         }
                     }
                 } else if (methodInfo.returnType == String.class) {
+                    if (returnBy instanceof ByPtrPtr) {
+                        typeName[0] = valueTypeName;
+                    }
+                    if (!typeName[0].startsWith("const ")) {
+                        typeName[0] = "const " + typeName[0];
+                    }
                     out.println("    jstring rarg = NULL;");
                     out.println("    " + typeName[0] + " rptr;");
                     if (returnBy instanceof ByRef) {
@@ -3179,6 +3185,12 @@ public class Generator {
                         out.println("    args[" + j + "].l = obj" + j + ";");
                     } else if (callbackParameterTypes[j] == String.class) {
                         passesStrings = true;
+                        if (passBy instanceof ByPtrPtr) {
+                            typeName[0] = valueTypeName;
+                        }
+                        if (!typeName[0].startsWith("const ")) {
+                            typeName[0] = "const " + typeName[0];
+                        }
                         if (adapterInfo != null) {
                             final String adapter = "adapter" + j;
                             out.println("    jstring obj" + j + " = " + createString("(" + typeName[0] + ") " + adapter, adapter, callbackParameterAnnotations[j]));
