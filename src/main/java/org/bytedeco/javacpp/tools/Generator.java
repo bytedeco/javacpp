@@ -1119,7 +1119,7 @@ public class Generator {
             out.println("            ptr = (P*)(operator new(sizeof(P) * vec.size(), std::nothrow_t()));");
             out.println("        }");
             out.println("        if (ptr) {");
-            out.println("            std::copy(vec.begin(), vec.end(), ptr);");
+            out.println("            std::uninitialized_copy(vec.begin(), vec.end(), ptr);");
             out.println("        }");
             out.println("        size = vec.size();");
             out.println("        owner = ptr;");
