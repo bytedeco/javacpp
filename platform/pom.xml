@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.bytedeco</groupId>
   <artifactId>javacpp-platform</artifactId>
-  <version>1.5.5</version>
+  <version>1.5.6-SNAPSHOT</version>
 
   <name>JavaCPP Platform</name>
   <description>The missing bridge between Java and native C++</description>
@@ -303,6 +303,7 @@
                       requires static org.bytedeco.javacpp.linux.ppc64le;
                       requires static org.bytedeco.javacpp.linux.x86;
                       requires static org.bytedeco.javacpp.linux.x86_64;
+                      requires static org.bytedeco.javacpp.macosx.arm64;
                       requires static org.bytedeco.javacpp.macosx.x86_64;
                       requires static org.bytedeco.javacpp.windows.x86;
                       requires static org.bytedeco.javacpp.windows.x86_64;
