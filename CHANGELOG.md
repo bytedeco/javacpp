@@ -1,4 +1,6 @@
 
+ * Use `std::uninitialized_copy` in `VectorAdapter` to make sure copy constructors get called ([pull #465](https://github.com/bytedeco/javacpp/pull/465))
+
 ### March 8, 2021 version 1.5.5
  * Ensure `System.gc()` never gets called with "org.bytedeco.javacpp.nopointergc" ([issue tensorflow/java#208](https://github.com/tensorflow/java/issues/208))
  * Add `Info.immutable` to disable generating setters for public data members ([pull #461](https://github.com/bytedeco/javacpp/pull/461))
