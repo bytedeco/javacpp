@@ -1,4 +1,5 @@
 
+ * Add parameter for `Loader.load()` to return path of a specific executable ([pull #466](https://github.com/bytedeco/javacpp/pull/466))
  * Use `std::uninitialized_copy` in `VectorAdapter` to make sure copy constructors get called ([pull #465](https://github.com/bytedeco/javacpp/pull/465))
 
 ### March 8, 2021 version 1.5.5

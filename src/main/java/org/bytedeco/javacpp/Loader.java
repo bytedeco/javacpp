@@ -1157,15 +1157,15 @@ public class Loader {
         return load(cls, properties, pathsFirst, null);
     }
     /**
-     * Loads native libraries associated with the given {@link Class} and initializes it.
+     * Loads native libraries or executables associated with the given {@link Class} and initializes it.
      *
-     * @param cls the Class to get native library information from and to initialize
+     * @param cls the Class to get native library and executable information from and to initialize
      * @param properties the platform Properties to inherit
      * @param pathsFirst search the paths first before bundled resources
-     * @param executable executable name to search for. Defaults to the first executable found
-     *                   or library path if not found
+     * @param executable the executable name whose path to return, or the first one found when null
      * @return the full path to the main file loaded, or the library name if unknown
-     *         (but {@code if (!isLoadLibraries() || cls == null) { return null; }})
+     *         (but {@code if (!isLoadLibraries() || cls == null) { return null; }}),
+     *         while in the case of optional libraries or executables, it may return null when not found
      * @throws NoClassDefFoundError on Class initialization failure
      * @throws UnsatisfiedLinkError on native library loading failure or when interrupted
      * @throws IllegalArgumentException when {@code executable} is specified for a class without executables
@@ -1320,13 +1320,10 @@ public class Loader {
             } catch (IOException | NoSuchFieldException | IllegalAccessException e) {
                 logger.error("Could not extract executable " + filename + ": " + e);
             }
-        }
-        if (executables.size() > 0) {
-            if (executable != null && executablePaths.containsKey(executable)) {
-                return executablePaths.get(executable);
-            }
-            String first = executablePaths.values().iterator().next();
-            return executablePaths.size() > 0 ? first : null;
+
+            return executable != null ? executablePaths.get(executable)
+                 : executablePaths.size() > 0 ? executablePaths.values().iterator().next()
+                 : null;
         }
 
         int librarySuffix = -1;
