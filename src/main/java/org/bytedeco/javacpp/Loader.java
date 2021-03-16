@@ -48,6 +48,7 @@ import java.util.Arrays;
 import java.util.Deque;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -1147,20 +1148,31 @@ public class Loader {
     public static String load(Class cls) {
         return load(cls, loadProperties(), Loader.pathsFirst);
     }
+    /** Returns {@code load(cls, loadProperties(), Loader.pathsFirst, executable)}. */
+    public static String load(Class cls, String executable) {
+        return load(cls, loadProperties(), Loader.pathsFirst, executable);
+    }
+    /** Returns {@code load(cls, properties, pathsFirst, null)}. */
+    public static String load(Class cls, Properties properties, boolean pathsFirst) {
+        return load(cls, properties, pathsFirst, null);
+    }
     /**
-     * Loads native libraries associated with the given {@link Class} and initializes it.
+     * Loads native libraries or executables associated with the given {@link Class} and initializes it.
      *
-     * @param cls the Class to get native library information from and to initialize
+     * @param cls the Class to get native library and executable information from and to initialize
      * @param properties the platform Properties to inherit
      * @param pathsFirst search the paths first before bundled resources
+     * @param executable the executable name whose path to return, or the first one found when null
      * @return the full path to the main file loaded, or the library name if unknown
-     *         (but {@code if (!isLoadLibraries() || cls == null) { return null; }})
+     *         (but {@code if (!isLoadLibraries() || cls == null) { return null; }}),
+     *         while in the case of optional libraries or executables, it may return null when not found
      * @throws NoClassDefFoundError on Class initialization failure
      * @throws UnsatisfiedLinkError on native library loading failure or when interrupted
+     * @throws IllegalArgumentException when {@code executable} is specified for a class without executables
      * @see #findLibrary(Class, ClassProperties, String, boolean)
      * @see #loadLibrary(URL[], String, String...)
      */
-    public static String load(Class cls, Properties properties, boolean pathsFirst) {
+    public static String load(Class cls, Properties properties, boolean pathsFirst, String executable) {
         Class classToLoad = cls;
 
         if (!isLoadLibraries() || cls == null) {
@@ -1253,8 +1265,11 @@ public class Loader {
         }
 
         List<String> executables = p.get("platform.executable");
-        List<String> executablePaths = new ArrayList<String>();
-        if (executables.size() > 0) {
+        LinkedHashMap<String, String> executablePaths = new LinkedHashMap<String, String>();
+        // the class has no executables, yet a specific executable is requested
+        if (executables.size() == 0 && executable != null) {
+            throw new IllegalArgumentException("executable specified for class which does not have any executables");
+        } else if (executables.size() > 0) {
             String platform = p.getProperty("platform");
             String[] extensions = p.get("platform.extension").toArray(new String[0]);
             String prefix = p.getProperty("platform.executable.prefix", "");
@@ -1276,8 +1291,8 @@ public class Loader {
                         }
                     }
                 }
-                for (String executable : executables) {
-                    String[] split = executable.split("#");
+                for (String e : executables) {
+                    String[] split = e.split("#");
                     filename = prefix + split[0] + suffix;
                     String filename2 = split.length > 1 ? prefix + split[1] + suffix : null;
                     for (int i = extensions.length - 1; i >= -1; i--) {
@@ -1297,7 +1312,7 @@ public class Loader {
                             File f = cacheResource(u);
                             if (f != null) {
                                 f.setExecutable(true);
-                                executablePaths.add(f.getAbsolutePath());
+                                executablePaths.put(e, f.getAbsolutePath());
                             }
                         }
                     }
@@ -1305,9 +1320,10 @@ public class Loader {
             } catch (IOException | NoSuchFieldException | IllegalAccessException e) {
                 logger.error("Could not extract executable " + filename + ": " + e);
             }
-        }
-        if (executables.size() > 0) {
-            return executablePaths.size() > 0 ? executablePaths.get(0) : null;
+
+            return executable != null ? executablePaths.get(executable)
+                 : executablePaths.size() > 0 ? executablePaths.values().iterator().next()
+                 : null;
         }
 
         int librarySuffix = -1;
