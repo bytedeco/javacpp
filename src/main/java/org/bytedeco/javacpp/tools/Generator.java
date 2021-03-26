@@ -3554,9 +3554,9 @@ public class Generator {
             boolean canBeValueSetter = false;
             boolean canBeMemberGetter = false;
             boolean canBeMemberSetter = false;
-            if (canBeGetter && "get".equals(info.name) && "put".equals(info2.name)) {
+            if (canBeGetter && "get".equals(info.name) && "put".equals(info2.name) && name == null) {
                 canBeValueGetter = true;
-            } else if (canBeSetter && "put".equals(info.name) && "get".equals(info2.name)) {
+            } else if (canBeSetter && "put".equals(info.name) && "get".equals(info2.name) && name == null) {
                 canBeValueSetter = true;
             } else if (info2.name.equals(info.name)) {
                 info.overloaded = true;
@@ -4049,7 +4049,7 @@ public class Generator {
                         templateCount++;
                     } else if (c == '>') {
                         templateCount--;
-                    } else if (templateCount == 0 && c == ')') {
+                    } else if (!prefix.contains("decltype(") && templateCount == 0 && c == ')') {
                         suffix = prefix.substring(i).trim();
                         prefix = prefix.substring(0, i).trim();
                         break;

@@ -67,7 +67,7 @@ public class ClassProperties extends HashMap<String,List<String>> {
                 || k.equals("platform.resourcepath") || k.equals("platform.resource")
                 || k.equals("platform.frameworkpath") || k.equals("platform.framework")
                 || k.equals("platform.executablepath") || k.equals("platform.executable")
-                || k.equals("platform.library.suffix") || k.equals("platform.extension")) {
+                || k.equals("platform.compiler.*") || k.equals("platform.library.suffix") || k.equals("platform.extension")) {
                 addAll(k, v.split(pathSeparator));
             } else {
                 setProperty(k, v);

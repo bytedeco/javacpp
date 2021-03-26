@@ -142,7 +142,9 @@ public class Parser {
                 if (info == null || info.skip || !info.define) {
                     continue;
                 }
-                int dim = containerName.toLowerCase().endsWith("pair") ? 0 : 1;
+                int dim = containerName.toLowerCase().endsWith("optional")
+                       || containerName.toLowerCase().endsWith("variant")
+                       || containerName.toLowerCase().endsWith("pair") ? 0 : 1;
                 boolean constant = info.cppNames[0].startsWith("const "), resizable = !constant;
                 Type containerType = new Parser(this, info.cppNames[0]).type(context),
                         indexType, valueType, firstType = null, secondType = null;
@@ -162,13 +164,27 @@ public class Parser {
                     valueType = containerType.arguments[0];
                 }
                 String indexFunction = "(function = \"at\")";
+                String iteratorType = "iterator";
+                String keyVariable = "first";
+                String valueVariable = "second";
                 boolean list = resizable; // also vector, etc
                 if (valueType.javaName == null || valueType.javaName.length() == 0
                         || containerName.toLowerCase().endsWith("bitset")) {
                     indexFunction = "";
                     valueType.javaName = "boolean";
                     resizable = false;
-                } else if (containerName.toLowerCase().endsWith("list") || containerName.toLowerCase().endsWith("set")) {
+                } else if (containerName.toLowerCase().endsWith("dict")) {
+                    indexFunction = "(function = \"operator []\")";
+                    iteratorType = "Iterator";
+                    keyVariable = "key()";
+                    valueVariable = "value()";
+                } else if (containerName.toLowerCase().endsWith("list")
+                        || containerName.toLowerCase().endsWith("optional")
+                        || containerName.toLowerCase().endsWith("variant")
+                        || containerName.toLowerCase().endsWith("set")) {
+                    if (containerType.arguments.length > 1) {
+                        valueType = indexType;
+                    }
                     indexType = null;
                     resizable = false;
                     list = containerName.toLowerCase().endsWith("list");
@@ -254,6 +270,12 @@ public class Parser {
                         }
                         decl.text += "    public " + containerType.javaName + "(" + javaName + arrayBrackets + " ... array) { this(array.length); put(array); }\n";
                     }
+                } else if (indexType == null && dim == 0 && !constant) {
+                    for (Type type : containerType.arguments) {
+                        for (String javaName : type.javaNames != null ? type.javaNames : new String[] {type.javaName}) {
+                            decl.text += "    public " + containerType.javaName + "(" + javaName + " value) { put(value); }\n";
+                        }
+                    }
                 }
                 decl.text += "    public " + containerType.javaName + "()       { allocate();  }\n" + (!resizable ? ""
                            : "    public " + containerType.javaName + "(long n) { allocate(n); }\n")
@@ -305,6 +327,21 @@ public class Parser {
                         for (int i = 1; !constant && valueType.javaNames != null && i < valueType.javaNames.length; i++) {
                             decl.text += "    @ValueSetter @Index" + indexFunction + " public native " + containerType.javaName + " put(" + params + separator + valueType.annotations + valueType.javaNames[i] + " value);\n";
                         }
+                    } else if (dim == 0) {
+                        for (Type type : containerType.arguments) {
+                            if (containerType.arguments.length == 1) {
+                                decl.text += "\n"
+                                          +  "    @Name(\"value\") public native " + type.annotations + type.javaName + " get();\n";
+                            } else {
+                                // ??
+                            }
+                            if (!constant) {
+                                decl.text += "    @ValueSetter public native " + containerType.javaName + " put(" + type.annotations + type.javaName + " value);\n";
+                            }
+                            for (int i = 1; !constant && type.javaNames != null && i < type.javaNames.length; i++) {
+                                decl.text += "    @ValueSetter public native " + containerType.javaName + " put(" + type.annotations + type.javaNames[i] + " value);\n";
+                            }
+                        }
                     }
                     if (dim == 1 && !containerName.toLowerCase().endsWith("bitset") && containerType.arguments.length >= 1 && containerType.arguments[containerType.arguments.length - 1].javaName.length() > 0) {
                         decl.text += "\n";
@@ -326,15 +363,15 @@ public class Parser {
                         }
                         decl.text += "    public native @ByVal Iterator begin();\n"
                                   +  "    public native @ByVal Iterator end();\n"
-                                  +  "    @NoOffset @Name(\"iterator\") public static class Iterator extends Pointer {\n"
+                                  +  "    @NoOffset @Name(\"" + iteratorType + "\") public static class Iterator extends Pointer {\n"
                                   +  "        public Iterator(Pointer p) { super(p); }\n"
                                   +  "        public Iterator() { }\n\n"
 
                                   +  "        public native @Name(\"operator ++\") @ByRef Iterator increment();\n"
                                   +  "        public native @Name(\"operator ==\") boolean equals(@ByRef Iterator it);\n"
-                                  +  (containerType.arguments.length > 1 ?
-                                         "        public native @Name(\"operator *().first\") @MemberGetter " + indexType.annotations + indexType.javaName + " first();\n"
-                                       + "        public native @Name(\"operator *().second\") @MemberGetter " + valueType.annotations + valueType.javaName + " second();\n"
+                                  +  (containerType.arguments.length > 1 && indexType != null ?
+                                         "        public native @Name(\"operator *()." + keyVariable + "\") @MemberGetter " + indexType.annotations + indexType.javaName + " first();\n"
+                                       + "        public native @Name(\"operator *()." + valueVariable + "\") @MemberGetter " + valueType.annotations + valueType.javaName + " second();\n"
                                   :
                                          "        public native @Name(\"operator *\") " + valueType.annotations + valueType.javaName + " get();\n")
                                   +  "    }\n";
@@ -532,6 +569,11 @@ public class Parser {
                     } else if (token.match('>', ')')) {
                         count--;
                     }
+                    for (int i = 0; i < type.indirections; i++) {
+                        // this is not actually a type -> add back the "*"
+                        type.cppName += "*";
+                    }
+                    type.indirections = 0;
                     type.cppName += token;
                     if (token.match(Token.CONST, Token.__CONST)) {
                         type.cppName += " ";
@@ -670,13 +712,13 @@ public class Parser {
                                    Token.TYPENAME, Token.REGISTER, Token.THREAD_LOCAL, Token.VOLATILE)) {
                 token = tokens.next();
                 continue;
-            } else if (token.match((Object[])infoMap.getFirst("basic/types").cppTypes) && (type.cppName.length() == 0 || type.simple)) {
+            } else if (token.match((Object[])infoMap.getFirst("basic/types").cppTypes) && !tokens.get(1).match('<') && (type.cppName.length() == 0 || type.simple)) {
                 type.cppName += token.value + " ";
                 type.simple = true;
-            } else if (token.match(Token.IDENTIFIER)) {
+            } else if (token.match(Token.IDENTIFIER, "[[")) {
                 int backIndex = tokens.index;
                 Attribute attr = attribute();
-                if (attr != null && attr.annotation) {
+                if (attr != null && (attr.annotation || token.match("[["))) {
                     type.annotations += attr.javaName;
                     attributes.add(attr);
                     continue;
@@ -1073,7 +1115,7 @@ public class Parser {
             }
         } else if (tokens.get().match(Token.IDENTIFIER, "::")) {
             for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.next()) {
-                if (dcl.cppName.length() > 0 && token.match('*')) {
+                if (dcl.cppName.length() > 1 && token.match('*')) {
                     // a data member pointer or something
                     dcl.cppName = dcl.cppName.substring(0, dcl.cppName.length() - 2);
                     for (String name : context.qualify(dcl.cppName)) {
@@ -1738,11 +1780,14 @@ public class Parser {
             return null;
         }
         int count = tokens.next().match('(') ? 1 : 0;
+        if (tokens.get().match("]]")) {
+            brackets = false;
+            tokens.next();
+        }
         if (!brackets && count <= 0) {
             return attr;
         }
 
-        tokens.raw = true;
         for (Token token = tokens.next(); !token.match(Token.EOF) && (brackets || count > 0); token = tokens.next()) {
             if (token.match('(')) {
                 count++;
@@ -1754,7 +1799,6 @@ public class Parser {
                 attr.arguments += token.value;
             }
         }
-        tokens.raw = false;
         return attr;
     }
 
@@ -1766,7 +1810,6 @@ public class Parser {
 
         int count = 1;
         boolean catchBlock = false;
-        tokens.raw = true;
         for (Token token = tokens.next(); !token.match(Token.EOF) && count > 0; token = tokens.next()) {
             if (token.match('{')) {
                 if (catchBlock) {
@@ -1785,7 +1828,6 @@ public class Parser {
                 text += token.spacing + token;
             }
         }
-        tokens.raw = false;
         return text;
     }
 
@@ -1886,7 +1928,7 @@ public class Parser {
                             return parameters(context, infoNumber, false);
                         }
                     } else {
-                        defaultValue = defaultValue.replaceAll("\"", "\\\\\"").replaceAll("\n(\\s*)", "\"\n$1 + \"");
+                        defaultValue = defaultValue.replaceAll("\"", "\\\\\"").replaceAll("\n(\\s*)", "\"\n$1 + \"").replaceAll("\\(\\{\\}\\)", "{}");
                         s = s.substring(0, n + 6) + "(nullValue = \"" + defaultValue + "\")" + s.substring(n + 6);
                     }
                 }
@@ -2499,7 +2541,7 @@ public class Parser {
                 }
                 decl.text += "\n";
             }
-            decl.signature = dcl.signature;
+            decl.signature = dcl.signature + "_";
             if (info != null && info.javaText != null) {
                 decl.signature = decl.text = info.javaText;
                 decl.declarator = null;
@@ -2739,7 +2781,7 @@ public class Parser {
             for (Info info : infoList) {
                 if (info != null && info.skip) {
                     break;
-                } else if (info != null && info.cppText != null && info.cppTypes == null) {
+                } else if (info != null && info.cppText != null && info.cppTypes == null && !info.define) {
                     // remove declaration for expansion
                     infoList.remove(info);
                     break;
@@ -3333,6 +3375,10 @@ public class Parser {
         int template2 = constructorName.lastIndexOf('<');
         if (template2 >= 0) {
             constructorName = constructorName.substring(0, template2);
+            template2 = constructorName.indexOf('<');
+            if (!constructorName.contains(">") && template2 >= 0) {
+                constructorName = constructorName.substring(0, template2);
+            }
         }
         int namespace2 = constructorName.lastIndexOf("::");
         if (namespace2 >= 0) {
@@ -3531,15 +3577,15 @@ public class Parser {
             if (spacing.length() == 0 && !text.endsWith(",")) {
                 spacing = " ";
             }
-            String cast = javaType.equals("byte") || javaType.equals("short") ? "(" + javaType + ")" : "";
+            String cast = javaType.equals("byte") || javaType.equals("short") ? "(" + javaType + ")(" : "";
             text += spacing + javaName + spacing2 + " = " + cast + countPrefix;
             text2 += spacing + javaName + spacing2 + "(" + cast + countPrefix;
+            if (enumeratorMap.containsKey(countPrefix)) {
+                text2 += ".value";
+            }
             if (countPrefix.trim().length() > 0) {
                 if (count > 0) {
                     text += " + " + count;
-                    if (enumeratorMap.containsKey(countPrefix)) {
-                        text2 += ".value";
-                    }
                     text2 += " + " + count;
                 }
             } else {
@@ -3549,6 +3595,10 @@ public class Parser {
             if (javaType.equals("boolean") && ((!countPrefix.equals("true") && !countPrefix.equals("false")) || count > 0)) {
                 text += " != 0";
                 text2 += " != 0";
+            }
+            if (cast.length() > 0) {
+                text += ")";
+                text2 += ")";
             }
             count++;
 

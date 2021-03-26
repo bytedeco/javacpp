@@ -43,7 +43,7 @@ public class InfoMap extends HashMap<String,List<Info>> {
     static final InfoMap defaults = new InfoMap(null)
         .put(new Info("basic/containers").cppTypes("std::array", "std::bitset", "std::deque", "std::list", "std::map", "std::queue", "std::set",
                                                    "std::stack", "std::vector", "std::valarray", "std::pair", "std::forward_list",
-                                                   "std::priority_queue", "std::unordered_map", "std::unordered_set"))
+                                                   "std::priority_queue", "std::unordered_map", "std::unordered_set", "std::optional", "std::variant"))
         .put(new Info("basic/types").cppTypes("signed", "unsigned", "char", "short", "int", "long", "bool", "float", "double",
                                               "_Bool", "_Complex", "_Imaginary", "complex", "imaginary"))
         .put(new Info("noexcept").annotations("@NoException"))
@@ -53,7 +53,7 @@ public class InfoMap extends HashMap<String,List<Info>> {
         .put(new Info("void").valueTypes("void").pointerTypes("Pointer"))
         .put(new Info("std::nullptr_t").valueTypes("Pointer").pointerTypes("PointerPointer"))
         .put(new Info("FILE", "time_t", "va_list", "std::exception", "std::istream", "std::ostream", "std::iostream",
-                "std::ifstream", "std::ofstream", "std::fstream").cast().pointerTypes("Pointer"))
+                "std::ifstream", "std::ofstream", "std::fstream", "std::stringstream").cast().pointerTypes("Pointer"))
 
         .put(new Info("int8_t", "__int8", "jbyte", "signed char")
             .valueTypes("byte").pointerTypes("BytePointer", "ByteBuffer", "byte[]"))

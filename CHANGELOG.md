@@ -1,4 +1,5 @@
 
+ * Add support for `std::optional` and `std::variant` basic containers and fix various `Parser` failures
  * Add parameter for `Loader.load()` to return path of a specific executable ([pull #466](https://github.com/bytedeco/javacpp/pull/466))
  * Use `std::uninitialized_copy` in `VectorAdapter` to make sure copy constructors get called ([pull #465](https://github.com/bytedeco/javacpp/pull/465))
 
