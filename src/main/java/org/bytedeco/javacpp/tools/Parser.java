@@ -833,6 +833,10 @@ public class Parser {
             int template2 = groupName2 != null ? groupName2.lastIndexOf('<') : -1;
             if (template2 >= 0) {
                 groupName2 = groupName2.substring(0, template2);
+                template2 = groupName2.indexOf('<');
+                if (!groupName2.contains(">") && template2 >= 0) {
+                    groupName2 = groupName2.substring(0, template2);
+                }
             }
             for (String name : names) {
                 if (groupName2 != null && groupName2.endsWith("::" + shortName) && name.equals(groupName + "::" + shortName)) {
@@ -924,6 +928,10 @@ public class Parser {
             int template2 = groupName != null ? groupName.lastIndexOf('<') : -1;
             if (template < 0 && template2 >= 0) {
                 groupName = groupName.substring(0, template2);
+                template2 = groupName.indexOf('<');
+                if (!groupName.contains(">") && template2 >= 0) {
+                    groupName = groupName.substring(0, template2);
+                }
             } else if (template >= 0 && template2 < 0) {
                 cppName = cppName.substring(0, template);
                 namespace = cppName.lastIndexOf("::");
@@ -3386,8 +3394,11 @@ public class Parser {
         }
         Info constructorInfo = infoMap.getFirst(type.cppName + "::" + constructorName);
         if (/*(context.templateMap == null || context.templateMap.full()) &&*/ constructorInfo == null) {
+            infoMap.put(constructorInfo = new Info(type.cppName + "::" + constructorName));
+        }
+        if (constructorInfo.javaText == null) {
             // save constructors to be able inherit them with C++11 "using" statements
-            infoMap.put(new Info(type.cppName + "::" + constructorName).javaText(inheritedConstructors));
+            constructorInfo.javaText(inheritedConstructors);
         }
         if (!anonymous) {
             decl.text += tokens.get().spacing + '}';
