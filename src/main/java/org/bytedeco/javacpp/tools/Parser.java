@@ -3130,7 +3130,7 @@ public class Parser {
             declList.add(decl);
             return true;
         } else if (info != null && info.pointerTypes != null && info.pointerTypes.length > 0) {
-            type.javaName = context.constName != null ? context.constName : info.pointerTypes[0];
+            type.javaName = context.constName != null ? context.constName : info.pointerTypes[0].substring(info.pointerTypes[0].lastIndexOf(" ") + 1);
             name = context.shorten(type.javaName);
         } else if (info == null && !friend) {
             if (type.javaName.length() > 0 && context.javaName != null) {
