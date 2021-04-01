@@ -166,6 +166,23 @@
             </property>
           </systemProperties>
         </configuration>
+        <executions>
+          <execution>
+            <id>nopointergc</id>
+            <goals>
+              <goal>test</goal>
+            </goals>
+            <configuration>
+              <systemProperties>
+                <property>
+                  <name>org.bytedeco.javacpp.nopointergc</name>
+                  <value>true</value>
+                </property>
+              </systemProperties>
+              <test>PointerTest#testDeallocator*</test>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
       <plugin>
         <artifactId>maven-jar-plugin</artifactId>

@@ -1,4 +1,5 @@
 
+ * Fix memory leak in `Pointer.releaseReference()` with "org.bytedeco.javacpp.nopointergc" ([issue awslabs/djl#690](https://github.com/awslabs/djl/issues/690))
  * Fix `Parser` not stripping annotations from `Info.pointerTypes` when creating Java peer classes
  * Fix `Parser` not inheriting constructors with existing `Info` or with nested templates
  * Add support for `std::optional` and `std::variant` basic containers and fix various `Parser` failures

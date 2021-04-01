@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2019 Samuel Audet
+ * Copyright (C) 2016-2021 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -938,7 +938,17 @@ public class PointerTest {
                 @Override public void run() {
                     try {
                         for (int i = 0; i < 2000; i++) {
-                            new BytePointer(2000000);
+                            BytePointer p = new BytePointer(2000000);
+                            if (i % 3 == 0) {
+                                p.retainReference();
+                            }
+                            if (Pointer.deallocatorThread == null) {
+                                if (i % 2 == 0) {
+                                    p.deallocate();
+                                } else {
+                                    p.releaseReference();
+                                }
+                            }
                         }
                     } catch (OutOfMemoryError e) {
                         failed[0] = true;
@@ -951,6 +961,9 @@ public class PointerTest {
         pool.awaitTermination(1, TimeUnit.MINUTES);
         if (failed[0]) {
             fail("OutOfMemoryError should not have been thrown.");
+        }
+        if (Pointer.deallocatorThread == null) {
+            assertEquals(0, Pointer.totalBytes());
         }
         System.out.println("Took " + (System.nanoTime() - time) / 1000000 + " ms");
     }

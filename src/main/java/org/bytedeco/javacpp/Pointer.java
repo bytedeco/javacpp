@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2020 Samuel Audet
+ * Copyright (C) 2011-2021 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -280,7 +280,7 @@ public class Pointer implements AutoCloseable {
         }
 
         static volatile DeallocatorReference head = null;
-        volatile DeallocatorReference prev = null, next = null;
+        volatile DeallocatorReference prev = this, next = this;
         Deallocator deallocator;
 
         static volatile long totalBytes = 0;
@@ -293,7 +293,9 @@ public class Pointer implements AutoCloseable {
             synchronized (DeallocatorReference.class) {
                 if (head == null) {
                     head = this;
+                    prev = next = null;
                 } else {
+                    prev = null;
                     next = head;
                     next.prev = head = this;
                 }
@@ -745,15 +747,12 @@ public class Pointer implements AutoCloseable {
             deallocator = null;
             address = 0;
         }
-        if (!deallocate || referenceQueue == null) {
-            if (r != null) {
-                // remove from queue without calling the deallocator
-                Deallocator d = r.deallocator;
-                r.deallocator = null;
-                r.clear();
-                r.remove();
-                r.deallocator = d;
-            }
+        if (r != null) {
+            // remove from queue without calling the deallocator
+            r.deallocator = null;
+            r.clear();
+            r.remove();
+            r.deallocator = deallocator;
         }
     }
 
@@ -776,10 +775,12 @@ public class Pointer implements AutoCloseable {
      * @return true when the count drops to 0 and deallocation has occurred
      */
     public boolean releaseReference() {
-        ReferenceCounter r = (ReferenceCounter)deallocator;
+        DeallocatorReference r = (DeallocatorReference)deallocator;
         if (r != null && r.release()) {
             deallocator = null;
             address = 0;
+            r.clear();
+            r.remove();
             return true;
         }
         return false;
