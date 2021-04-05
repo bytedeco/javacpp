@@ -43,7 +43,9 @@ public class PointerPointer<P extends Pointer> extends Pointer {
         try {
             Loader.load();
         } catch (Throwable t) {
-            logger.warn("Could not load PointerPointer: " + t);
+            if (logger.isDebugEnabled()) {
+                logger.debug("Could not load PointerPointer: " + t);
+            }
         }
     }
 

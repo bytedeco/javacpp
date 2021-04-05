@@ -39,7 +39,9 @@ public class DoublePointer extends Pointer {
         try {
             Loader.load();
         } catch (Throwable t) {
-            logger.warn("Could not load DoublePointer: " + t);
+            if (logger.isDebugEnabled()) {
+                logger.debug("Could not load DoublePointer: " + t);
+            }
         }
     }
 

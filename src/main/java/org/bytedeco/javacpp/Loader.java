@@ -1874,7 +1874,9 @@ public class Loader {
         try {
             Loader.load();
         } catch (Throwable t) {
-            logger.warn("Could not load Loader: " + t);
+            if (logger.isDebugEnabled()) {
+                logger.debug("Could not load Loader: " + t);
+            }
         }
     }
 

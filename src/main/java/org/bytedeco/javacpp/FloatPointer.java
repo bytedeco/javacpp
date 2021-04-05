@@ -39,7 +39,9 @@ public class FloatPointer extends Pointer {
         try {
             Loader.load();
         } catch (Throwable t) {
-            logger.warn("Could not load FloatPointer: " + t);
+            if (logger.isDebugEnabled()) {
+                logger.debug("Could not load FloatPointer: " + t);
+            }
         }
     }
 

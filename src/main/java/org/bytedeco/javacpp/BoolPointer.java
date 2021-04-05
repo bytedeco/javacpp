@@ -43,7 +43,9 @@ public class BoolPointer extends Pointer {
         try {
             Loader.load();
         } catch (Throwable t) {
-            logger.warn("Could not load BoolPointer: " + t);
+            if (logger.isDebugEnabled()) {
+                logger.debug("Could not load BoolPointer: " + t);
+            }
         }
     }
 

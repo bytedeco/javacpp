@@ -1,4 +1,5 @@
 
+ * Log loading errors of optional `jnijavacpp` as debug messages instead of warnings ([issue tensorflow/java#189](https://github.com/tensorflow/java/issues/189))
  * Fix memory leak in `Pointer.releaseReference()` with "org.bytedeco.javacpp.nopointergc" ([issue awslabs/djl#690](https://github.com/awslabs/djl/issues/690))
  * Fix `Parser` not stripping annotations from `Info.pointerTypes` when creating Java peer classes
  * Fix `Parser` not inheriting constructors with existing `Info` or with nested templates

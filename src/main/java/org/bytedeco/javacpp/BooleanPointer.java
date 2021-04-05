@@ -41,7 +41,9 @@ public class BooleanPointer extends Pointer {
         try {
             Loader.load();
         } catch (Throwable t) {
-            logger.warn("Could not load BooleanPointer: " + t);
+            if (logger.isDebugEnabled()) {
+                logger.debug("Could not load BooleanPointer: " + t);
+            }
         }
     }
 

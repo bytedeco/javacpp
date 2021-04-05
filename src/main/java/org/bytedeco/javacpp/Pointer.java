@@ -508,7 +508,9 @@ public class Pointer implements AutoCloseable {
         try {
             Loader.load();
         } catch (Throwable t) {
-            logger.warn("Could not load Pointer: " + t);
+            if (logger.isDebugEnabled()) {
+                logger.debug("Could not load Pointer: " + t);
+            }
         }
 
         String mx = System.getProperty("org.bytedeco.javacpp.mxbean", "false").toLowerCase();
