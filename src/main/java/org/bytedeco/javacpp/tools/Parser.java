@@ -1111,7 +1111,7 @@ public class Parser {
                     try {
                         dims[dcl.indices++] = n.match(Token.INTEGER) ? Integer.decode(n.value) : -1;
                     } catch (NumberFormatException e) {
-                        dims[dcl.indices++] = -1;
+                        dims[dcl.indices] = -1;
                     }
                 } else if (token.match('(', ')')) {
                     break;
@@ -1191,7 +1191,7 @@ public class Parser {
                 try {
                     dims[dcl.indices++] = n.match(Token.INTEGER) ? Integer.decode(n.value) : -1;
                 } catch (NumberFormatException e) {
-                    dims[dcl.indices++] = -1;
+                    dims[dcl.indices] = -1;
                 }
             } else if (!bracket) {
                 break;
