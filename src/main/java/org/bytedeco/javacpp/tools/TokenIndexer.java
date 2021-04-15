@@ -201,6 +201,8 @@ class TokenIndexer {
                                 count2++;
                             } else if (token2.match(')',']','}')) {
                                 count2--;
+                            } else if (token2.match("]]")) {
+                                count2-=2;
                             }
                             if (count < args.length) {
                                 if (args[count] == null) {

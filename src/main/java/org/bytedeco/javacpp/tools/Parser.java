@@ -969,6 +969,8 @@ public class Parser {
                 count++;
             } else if (token.match(')',']','}')) {
                 count--;
+            } else if (token.match("]]")) {
+                count-=2;
             } else if (count > 0) {
                 continue;
             } else if (token.match(',')) {

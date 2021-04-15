@@ -1,4 +1,5 @@
 
+ * Fix `Parser` failure on arguments containing multiple array accesses ending with `]]`
  * Fix `Parser` incorrectly considering some array definitions with expressions as multidimensional
  * Log loading errors of optional `jnijavacpp` as debug messages instead of warnings ([issue tensorflow/java#189](https://github.com/tensorflow/java/issues/189))
  * Fix memory leak in `Pointer.releaseReference()` with "org.bytedeco.javacpp.nopointergc" ([issue awslabs/djl#690](https://github.com/awslabs/djl/issues/690))
