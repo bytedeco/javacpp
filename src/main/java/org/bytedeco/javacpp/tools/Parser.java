@@ -273,7 +273,7 @@ public class Parser {
                 } else if (indexType == null && dim == 0 && !constant) {
                     for (Type type : containerType.arguments) {
                         for (String javaName : type.javaNames != null ? type.javaNames : new String[] {type.javaName}) {
-                            decl.text += "    public " + containerType.javaName + "(" + javaName + " value) { put(value); }\n";
+                            decl.text += "    public " + containerType.javaName + "(" + javaName + " value) { this(); put(value); }\n";
                         }
                     }
                 }
