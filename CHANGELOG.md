@@ -1,4 +1,6 @@
 
+ * Have `Parser` wrap the `erase()` methods of basic containers with iterators to allow removing from maps
+ * Let `Parser` output the content of `Info.javaText` in the case of basic containers as well
  * Fix `Parser` failure on arguments containing multiple array accesses ending with `]]`
  * Fix `Parser` incorrectly considering some array definitions with expressions as multidimensional
  * Log loading errors of optional `jnijavacpp` as debug messages instead of warnings ([issue tensorflow/java#189](https://github.com/tensorflow/java/issues/189))

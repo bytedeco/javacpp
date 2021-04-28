@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2020 Samuel Audet
+ * Copyright (C) 2013-2021 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -140,6 +140,11 @@ public class Parser {
             for (Info info : infoSet) {
                 Declaration decl = new Declaration();
                 if (info == null || info.skip || !info.define) {
+                    if (info != null && info.javaText != null) {
+                        decl.type = new Type(info.pointerTypes[0]);
+                        decl.text = info.javaText;
+                        declList.add(decl);
+                    }
                     continue;
                 }
                 int dim = containerName.toLowerCase().endsWith("optional")
@@ -167,6 +172,7 @@ public class Parser {
                 String iteratorType = "iterator";
                 String keyVariable = "first";
                 String valueVariable = "second";
+                boolean dict = false;
                 boolean list = resizable; // also vector, etc
                 if (valueType.javaName == null || valueType.javaName.length() == 0
                         || containerName.toLowerCase().endsWith("bitset")) {
@@ -178,6 +184,7 @@ public class Parser {
                     iteratorType = "Iterator";
                     keyVariable = "key()";
                     valueVariable = "value()";
+                    dict = true;
                 } else if (containerName.toLowerCase().endsWith("list")
                         || containerName.toLowerCase().endsWith("optional")
                         || containerName.toLowerCase().endsWith("variant")
@@ -352,8 +359,10 @@ public class Parser {
                             } else if (indexType == null) {
                                 decl.text += "    public native void insert(" + valueType.annotations + valueType.javaName + " value);\n"
                                           +  "    public native void erase(" + valueType.annotations + valueType.javaName + " value);\n";
+                            } else if (!dict) {
+                                 // XXX: need to figure out something for insert() on maps
+                                decl.text += "    public native void erase(@ByVal Iterator pos);\n";
                             }
-                            // XXX: else need to figure out something for maps
                         }
                         if (indexType != null && !indexType.annotations.contains("@Const") && !indexType.annotations.contains("@Cast") && !indexType.value) {
                             indexType.annotations += "@Const ";
@@ -487,6 +496,11 @@ public class Parser {
                                   +  "    }\n";
                         first = false;
                     }
+                }
+                if (info != null && info.javaText != null) {
+                    declList.spacing = "\n    ";
+                    decl.text += declList.rescan(info.javaText) + "\n";
+                    declList.spacing = null;
                 }
                 decl.text += "}\n";
                 declList.add(decl);
