@@ -1,4 +1,5 @@
 
+ * Fix potential infinite loop in `Parser` when processing `class`, `struct`, or `union` declarations
  * Have `Parser` wrap the `erase()` methods of basic containers with iterators to allow removing from maps
  * Let `Parser` output the content of `Info.javaText` in the case of basic containers as well
  * Fix `Parser` failure on arguments containing multiple array accesses ending with `]]`

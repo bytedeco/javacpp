@@ -360,7 +360,7 @@ public class Parser {
                                 decl.text += "    public native void insert(" + valueType.annotations + valueType.javaName + " value);\n"
                                           +  "    public native void erase(" + valueType.annotations + valueType.javaName + " value);\n";
                             } else if (!dict) {
-                                 // XXX: need to figure out something for insert() on maps
+                                // XXX: need to figure out something for insert() on maps
                                 decl.text += "    public native void erase(@ByVal Iterator pos);\n";
                             }
                         }
@@ -3121,7 +3121,7 @@ public class Parser {
                 for (int n = 0; n < Integer.MAX_VALUE; n++) {
                     tokens.index = index;
                     Declarator dcl = declarator(context, null, -1, false, n, false, true);
-                    if (dcl == null) {
+                    if (dcl == null || dcl.cppName == null) {
                         break;
                     } else {
                         // declares variable, treat as anonymous
