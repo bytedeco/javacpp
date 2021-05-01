@@ -114,7 +114,7 @@ public class LongPointer extends Pointer {
         return Long.SIZE / Byte.SIZE;
     }
     @Override public LongPointer getPointer(long i) {
-        return new LongPointer(this).position(position + i);
+        return new LongPointer(this).offsetAddress(i);
     }
 
     /** @return {@code get(0)} */

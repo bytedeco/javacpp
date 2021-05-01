@@ -114,7 +114,7 @@ public class DoublePointer extends Pointer {
         return Double.SIZE / Byte.SIZE;
     }
     @Override public DoublePointer getPointer(long i) {
-        return new DoublePointer(this).position(position + i);
+        return new DoublePointer(this).offsetAddress(i);
     }
 
     /** @return {@code get(0)} */

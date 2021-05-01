@@ -127,6 +127,14 @@ public class Pointer implements AutoCloseable {
         }
     }
 
+    /** Adds {@code i * sizeof()} to {@link #address} and subtracts {@code i} from {@link #limit} and {@link #capacity}. */
+    protected <P extends Pointer> P offsetAddress(long i) {
+        address += i * sizeof();
+        limit = Math.max(0, limit - i);
+        capacity = Math.max(0, capacity - i);
+        return (P)this;
+    }
+
     /** The interface to implement to produce a Deallocator usable by Pointer. */
     protected interface Deallocator {
         void deallocate();
@@ -882,10 +890,9 @@ public class Pointer implements AutoCloseable {
         return getPointer(0);
     }
 
-    /** Returns {@code new Pointer(this).position((position + i) * sizeof()).capacity(capacity * sizeof()).limit(limit * sizeof())}. */
+    /** Returns {@code getPointer(getClass(), i)}. */
     public <P extends Pointer> P getPointer(long i) {
-        long s = sizeof();
-        return new Pointer(this).position((position + i) * s).capacity(capacity * s).limit(limit *s);
+        return (P)getPointer(getClass(), i);
     }
 
     /** Returns {@code getPointer(cls, 0)}. */
@@ -893,10 +900,10 @@ public class Pointer implements AutoCloseable {
         return getPointer(cls, 0);
     }
 
-    /** Returns {@code new P(this).position(position + i)}. Throws RuntimeException if constructor is missing. */
+    /** Returns {@code new P(this).offset(i)}. Throws RuntimeException if constructor is missing. */
     public <P extends Pointer> P getPointer(Class<P> cls, long i) {
         try {
-            return cls.getDeclaredConstructor(Pointer.class).newInstance(this).position(position + i);
+            return cls.getDeclaredConstructor(Pointer.class).newInstance(this).offsetAddress(i);
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException(e);
         }

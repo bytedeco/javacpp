@@ -114,7 +114,7 @@ public class ShortPointer extends Pointer {
         return Short.SIZE / Byte.SIZE;
     }
     @Override public ShortPointer getPointer(long i) {
-        return new ShortPointer(this).position(position + i);
+        return new ShortPointer(this).offsetAddress(i);
     }
 
     /** @return {@code get(0)} */

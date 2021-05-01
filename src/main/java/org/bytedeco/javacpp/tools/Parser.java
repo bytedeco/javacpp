@@ -3340,7 +3340,7 @@ public class Parser {
                              "        return (" + shortName + ")super.position(position);\n" +
                              "    }\n" +
                              "    @Override public " + shortName + " getPointer(long i) {\n" +
-                             "        return new " + shortName + "((Pointer)this).position(position + i);\n" +
+                             "        return new " + shortName + "((Pointer)this).offsetAddress(i);\n" +
                              "    }\n";
             } else {
                 if ((info == null || !info.purify) && (!abstractClass || ctx.virtualize)) {
@@ -3359,7 +3359,7 @@ public class Parser {
                                  "        return (" + shortName + ")super.position(position);\n" +
                                  "    }\n" +
                                  "    @Override public " + shortName + " getPointer(long i) {\n" +
-                                 "        return new " + shortName + "((Pointer)this).position(position + i);\n" +
+                                 "        return new " + shortName + "((Pointer)this).offsetAddress(i);\n" +
                                  "    }\n";
                 }
             }

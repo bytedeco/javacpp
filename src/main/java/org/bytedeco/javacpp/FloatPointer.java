@@ -114,7 +114,7 @@ public class FloatPointer extends Pointer {
         return Float.SIZE / Byte.SIZE;
     }
     @Override public FloatPointer getPointer(long i) {
-        return new FloatPointer(this).position(position + i);
+        return new FloatPointer(this).offsetAddress(i);
     }
 
     /** @return {@code get(0)} */

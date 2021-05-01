@@ -130,6 +130,11 @@ public class PointerTest {
         Pointer p = new Pointer() { { address = 0xDEADBEEF; }};
         assertEquals(p, new Pointer(p));
 
+        Pointer p2 = p.getPointer(Pointer.class, 10);
+        assertEquals(p.address() + 10, p2.address());
+        assertEquals(0, p2.limit());
+        assertEquals(0, p2.capacity());
+
         long physicalBytes = Pointer.physicalBytes();
         long totalPhysicalBytes = Pointer.totalPhysicalBytes();
         long availablePhysicalBytes = Pointer.availablePhysicalBytes();
@@ -159,6 +164,11 @@ public class PointerTest {
         BytePointer pointer = new BytePointer(array);
         assertEquals(array.length, pointer.limit());
         assertEquals(array.length, pointer.capacity());
+
+        BytePointer p2 = pointer.getPointer(10);
+        assertEquals(pointer.address() + 10, p2.address());
+        assertEquals(array.length - 10, p2.limit());
+        assertEquals(array.length - 10, p2.capacity());
 
         for (int i = 0; i < array.length; i++) {
             array[i] = (byte)i;
@@ -265,6 +275,11 @@ public class PointerTest {
         assertEquals(array.length, pointer.limit());
         assertEquals(array.length, pointer.capacity());
 
+        ShortPointer p2 = pointer.getPointer(10);
+        assertEquals(pointer.address() + 20, p2.address());
+        assertEquals(array.length - 10, p2.limit());
+        assertEquals(array.length - 10, p2.capacity());
+
         for (int i = 0; i < array.length; i++) {
             array[i] = (short)i;
             pointer.put(i, (short)i);
@@ -347,6 +362,11 @@ public class PointerTest {
         IntPointer pointer = new IntPointer(array);
         assertEquals(array.length, pointer.limit());
         assertEquals(array.length, pointer.capacity());
+
+        IntPointer p2 = pointer.getPointer(10);
+        assertEquals(pointer.address() + 40, p2.address());
+        assertEquals(array.length - 10, p2.limit());
+        assertEquals(array.length - 10, p2.capacity());
 
         for (int i = 0; i < array.length; i++) {
             array[i] = i;
@@ -431,6 +451,11 @@ public class PointerTest {
         assertEquals(array.length, pointer.limit());
         assertEquals(array.length, pointer.capacity());
 
+        LongPointer p2 = pointer.getPointer(10);
+        assertEquals(pointer.address() + 80, p2.address());
+        assertEquals(array.length - 10, p2.limit());
+        assertEquals(array.length - 10, p2.capacity());
+
         for (int i = 0; i < array.length; i++) {
             array[i] = i;
             pointer.put(i, i);
@@ -513,6 +538,11 @@ public class PointerTest {
         FloatPointer pointer = new FloatPointer(array);
         assertEquals(array.length, pointer.limit());
         assertEquals(array.length, pointer.capacity());
+
+        FloatPointer p2 = pointer.getPointer(10);
+        assertEquals(pointer.address() + 40, p2.address());
+        assertEquals(array.length - 10, p2.limit());
+        assertEquals(array.length - 10, p2.capacity());
 
         for (int i = 0; i < array.length; i++) {
             array[i] = i;
@@ -597,6 +627,11 @@ public class PointerTest {
         assertEquals(array.length, pointer.limit());
         assertEquals(array.length, pointer.capacity());
 
+        DoublePointer p2 = pointer.getPointer(10);
+        assertEquals(pointer.address() + 80, p2.address());
+        assertEquals(array.length - 10, p2.limit());
+        assertEquals(array.length - 10, p2.capacity());
+
         for (int i = 0; i < array.length; i++) {
             array[i] = i;
             pointer.put(i, i);
@@ -679,6 +714,11 @@ public class PointerTest {
         CharPointer pointer = new CharPointer(array);
         assertEquals(array.length, pointer.limit());
         assertEquals(array.length, pointer.capacity());
+
+        CharPointer p2 = pointer.getPointer(10);
+        assertEquals(pointer.address() + 20, p2.address());
+        assertEquals(array.length - 10, p2.limit());
+        assertEquals(array.length - 10, p2.capacity());
 
         for (int i = 0; i < array.length; i++) {
             array[i] = (char)i;
@@ -763,6 +803,11 @@ public class PointerTest {
         assertEquals(array.length, pointer.limit());
         assertEquals(array.length, pointer.capacity());
 
+        BooleanPointer p2 = pointer.getPointer(10);
+        assertEquals(pointer.address() + 10, p2.address());
+        assertEquals(array.length - 10, p2.limit());
+        assertEquals(array.length - 10, p2.capacity());
+
         for (int i = 0; i < array.length; i++) {
             array[i] = i % 2 != 0;
             pointer.put(i, i % 2 != 0);
@@ -844,6 +889,11 @@ public class PointerTest {
         PointerPointer pointer = new PointerPointer(array);
         assertEquals(array.length, pointer.limit());
         assertEquals(array.length, pointer.capacity());
+
+        PointerPointer p2 = pointer.getPointer(10);
+        assertEquals(pointer.address() + 10 * pointerSize, p2.address());
+        assertEquals(array.length - 10, p2.limit());
+        assertEquals(array.length - 10, p2.capacity());
 
         for (int i = 0; i < array.length; i++) {
             final int j = i;
