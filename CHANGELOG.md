@@ -1,4 +1,5 @@
 
+ * Ensure `synchronized` code in `Pointer` gets skipped with "org.bytedeco.javacpp.nopointergc" ([issue tensorflow/java#313](https://github.com/tensorflow/java/issues/313))
  * Add `protected Pointer.offsetAddress()` and use it for `getPointer()` instead of `position()`
  * Fix potential infinite loop in `Parser` when processing `class`, `struct`, or `union` declarations
  * Have `Parser` wrap the `erase()` methods of basic containers with iterators to allow removing from maps

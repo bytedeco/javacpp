@@ -313,10 +313,10 @@ public class Pointer implements AutoCloseable {
         }
 
         final void remove() {
+            if (prev == this && next == this) {
+                return;
+            }
             synchronized (DeallocatorReference.class) {
-                if (prev == this && next == this) {
-                    return;
-                }
                 if (prev == null) {
                     head = next;
                 } else {
@@ -678,12 +678,12 @@ public class Pointer implements AutoCloseable {
             DeallocatorReference r = deallocator instanceof DeallocatorReference ?
                     (DeallocatorReference)deallocator : new DeallocatorReference(this, deallocator);
             this.deallocator = r;
-            int count = 0;
-            long lastPhysicalBytes = maxPhysicalBytes > 0 ? physicalBytes() : 0;
-            synchronized (DeallocatorThread.class) {
+            if (referenceQueue != null) synchronized (DeallocatorThread.class) {
+                int count = 0;
+                long lastPhysicalBytes = maxPhysicalBytes > 0 ? physicalBytes() : 0;
                 try {
                     while (count++ < maxRetries && ((maxBytes > 0 && DeallocatorReference.totalBytes + r.bytes > maxBytes)
-                                         || (maxPhysicalBytes > 0 && lastPhysicalBytes > maxPhysicalBytes)) && referenceQueue != null) {
+                                         || (maxPhysicalBytes > 0 && lastPhysicalBytes > maxPhysicalBytes))) {
                         if (logger.isDebugEnabled()) {
                             logger.debug("Calling System.gc() and Pointer.trimMemory() in " + this);
                         }
@@ -715,18 +715,18 @@ public class Pointer implements AutoCloseable {
                     logger.debug("Registering " + this);
                 }
                 r.add();
+            }
 
-                Iterator<PointerScope> it = PointerScope.getScopeIterator();
-                if (it != null) {
-                    while (it.hasNext()) {
-                        try {
-                            it.next().attach(this);
-                        } catch (IllegalArgumentException e) {
-                            // try the next scope down the stack
-                            continue;
-                        }
-                        break;
+            Iterator<PointerScope> it = PointerScope.getScopeIterator();
+            if (it != null) {
+                while (it.hasNext()) {
+                    try {
+                        it.next().attach(this);
+                    } catch (IllegalArgumentException e) {
+                        // try the next scope down the stack
+                        continue;
                     }
+                    break;
                 }
             }
         }
@@ -900,7 +900,7 @@ public class Pointer implements AutoCloseable {
         return getPointer(cls, 0);
     }
 
-    /** Returns {@code new P(this).offset(i)}. Throws RuntimeException if constructor is missing. */
+    /** Returns {@code new P(this).offsetAddress(i)}. Throws RuntimeException if constructor is missing. */
     public <P extends Pointer> P getPointer(Class<P> cls, long i) {
         try {
             return cls.getDeclaredConstructor(Pointer.class).newInstance(this).offsetAddress(i);
