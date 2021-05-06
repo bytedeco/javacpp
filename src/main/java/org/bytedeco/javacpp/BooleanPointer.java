@@ -118,7 +118,7 @@ public class BooleanPointer extends Pointer {
         return 1;
     }
     @Override public BooleanPointer getPointer(long i) {
-        return new BooleanPointer(this).position(position + i);
+        return new BooleanPointer(this).offsetAddress(i);
     }
 
     /** @return {@code get(0)} */

@@ -175,7 +175,7 @@ public class PointerPointer<P extends Pointer> extends Pointer {
         return super.capacity(capacity);
     }
     @Override public PointerPointer<P> getPointer(long i) {
-        return new PointerPointer<P>(this).position(position + i);
+        return new PointerPointer<P>(this).offsetAddress(i);
     }
 
     /** @return {@code get(BytePointer.class, i).getString()}

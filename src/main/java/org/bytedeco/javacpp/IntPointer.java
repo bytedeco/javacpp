@@ -124,7 +124,7 @@ public class IntPointer extends Pointer {
         return Integer.SIZE / Byte.SIZE;
     }
     @Override public IntPointer getPointer(long i) {
-        return new IntPointer(this).position(position + i);
+        return new IntPointer(this).offsetAddress(i);
     }
 
     /** Returns the code points, assuming a null-terminated string if {@code limit <= position}. */

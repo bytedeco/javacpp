@@ -1,4 +1,9 @@
 
+ * Ensure `synchronized` code in `Pointer` gets skipped with "org.bytedeco.javacpp.nopointergc" ([issue tensorflow/java#313](https://github.com/tensorflow/java/issues/313))
+ * Add `protected Pointer.offsetAddress()` and use it for `getPointer()` instead of `position()`
+ * Fix potential infinite loop in `Parser` when processing `class`, `struct`, or `union` declarations
+ * Have `Parser` wrap the `erase()` methods of basic containers with iterators to allow removing from maps
+ * Let `Parser` output the content of `Info.javaText` in the case of basic containers as well
  * Fix `Parser` failure on arguments containing multiple array accesses ending with `]]`
  * Fix `Parser` incorrectly considering some array definitions with expressions as multidimensional
  * Log loading errors of optional `jnijavacpp` as debug messages instead of warnings ([issue tensorflow/java#189](https://github.com/tensorflow/java/issues/189))

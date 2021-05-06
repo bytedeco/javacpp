@@ -158,7 +158,7 @@ public class BytePointer extends Pointer {
         return 1;
     }
     @Override public BytePointer getPointer(long i) {
-        return new BytePointer(this).position(position + i);
+        return new BytePointer(this).offsetAddress(i);
     }
 
     /** Returns the bytes, assuming a null-terminated string if {@code limit <= position}. */

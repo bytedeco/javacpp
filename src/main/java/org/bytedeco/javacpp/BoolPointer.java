@@ -88,7 +88,7 @@ public class BoolPointer extends Pointer {
         return super.capacity(capacity);
     }
     @Override public BoolPointer getPointer(long i) {
-        return new BoolPointer(this).position(position + i);
+        return new BoolPointer(this).offsetAddress(i);
     }
 
     /** @return {@code get(0)} */

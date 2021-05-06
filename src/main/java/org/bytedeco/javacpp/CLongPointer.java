@@ -99,7 +99,7 @@ public class CLongPointer extends Pointer {
         return super.capacity(capacity);
     }
     @Override public CLongPointer getPointer(long i) {
-        return new CLongPointer(this).position(position + i);
+        return new CLongPointer(this).offsetAddress(i);
     }
 
     /** @return {@code get(0)} */
