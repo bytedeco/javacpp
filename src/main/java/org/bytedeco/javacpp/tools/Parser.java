@@ -1700,7 +1700,7 @@ public class Parser {
         for (Token token = tokens.get(); token.match(Token.COMMENT); token = tokens.next()) {
             String s = token.value;
             if (s.startsWith("/**") || s.startsWith("/*!") || s.startsWith("///") || s.startsWith("//!")) {
-                if (s.startsWith("//") && s.contains("*/") && s.indexOf("*/") < s.length() - 2) {
+                if (s.startsWith("//") && s.contains("*/") && startDoc >= 0) {
                     s = s.replace("*/", "* /");
                 }
                 if (s.length() > 3 && s.charAt(3) == '<') {
@@ -1727,6 +1727,10 @@ public class Parser {
                 startDoc = comment.length();
             }
             comment += token.spacing + s;
+            if (startDoc >= 0 && comment.endsWith("*/")) {
+                comment = commentDoc(comment, startDoc);
+                startDoc = -1;
+            }
         }
         if (closeComment && !comment.endsWith("*/")) {
             comment += " */";
@@ -1768,6 +1772,10 @@ public class Parser {
                     startDoc = comment.length();
                 }
                 comment += spacing.substring(0, n) + s;
+                if (startDoc >= 0 && comment.endsWith("*/")) {
+                    comment = commentDoc(comment, startDoc);
+                    startDoc = -1;
+                }
             }
         }
         if (closeComment && !comment.endsWith("*/")) {
@@ -3672,7 +3680,7 @@ public class Parser {
         Info info = infoMap.getFirst(cppName);
         Info info2 = infoMap.getFirst(null);
         boolean enumerate = info != null ? info.enumerate : info2 != null ? info2.enumerate : false;
-        if (info != null && info.skip) {
+        if ((info != null && info.skip) || (enumerators.length() == 0 && enumerators2.length() == 0)) {
             decl.text = enumSpacing;
         } else {
             if (info != null && info.cppTypes != null && info.cppTypes.length > 0) {
