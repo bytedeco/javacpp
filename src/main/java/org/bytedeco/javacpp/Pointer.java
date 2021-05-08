@@ -603,12 +603,12 @@ public class Pointer implements AutoCloseable {
     }
 
     /** Returns {@link #address}. */
-    public final long address() {
+    public long address() {
         return address;
     }
 
     /** Returns {@link #position}. */
-    public final long position() {
+    public long position() {
         return position/sizeof();
     }
     /**
@@ -618,13 +618,13 @@ public class Pointer implements AutoCloseable {
      * @param position the new position
      * @return this
      */
-    public final <P extends Pointer> P position(long position) {
+    public <P extends Pointer> P position(long position) {
         this.position = position * sizeof();
         return (P)this;
     }
 
     /** Returns {@link #limit}. */
-    public final long limit() {
+    public long limit() {
         return limit/sizeof();
     }
     /**
@@ -634,13 +634,13 @@ public class Pointer implements AutoCloseable {
      * @param limit the new limit
      * @return this
      */
-    public final <P extends Pointer> P limit(long limit) {
+    public <P extends Pointer> P limit(long limit) {
         this.limit = limit * sizeof();
         return (P)this;
     }
 
     /** Returns {@link #capacity}. */
-    public final long capacity() {
+    public long capacity() {
         return capacity/sizeof();
     }
     /**
@@ -650,7 +650,7 @@ public class Pointer implements AutoCloseable {
      * @param capacity the new capacity
      * @return this
      */
-    public final <P extends Pointer> P capacity(long capacity) {
+    public <P extends Pointer> P capacity(long capacity) {
         this.capacity = this.limit = capacity * sizeof();
         return (P)this;
     }
