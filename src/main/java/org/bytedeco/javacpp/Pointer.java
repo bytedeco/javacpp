@@ -283,7 +283,7 @@ public class Pointer implements AutoCloseable {
         DeallocatorReference(Pointer p, Deallocator deallocator) {
             super(p, referenceQueue);
             this.deallocator = deallocator;
-            this.bytes = p.capacity * p.sizeof();
+            this.bytes = p.capacity != 0 && referenceQueue != null ? p.capacity * p.sizeof() : 0;
             this.count = new AtomicInteger(0);
         }
 
