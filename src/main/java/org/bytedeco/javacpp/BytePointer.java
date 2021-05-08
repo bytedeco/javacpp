@@ -163,7 +163,7 @@ public class BytePointer extends Pointer {
 
     /** Returns the bytes, assuming a null-terminated string if {@code limit <= position}. */
     public byte[] getStringBytes() {
-        long size = limit - position;
+        long size = limit() - position();
         if (size <= 0) {
             size = strlen(this);
         }

@@ -405,6 +405,8 @@ public class Generator {
         out.println("    #define JavaCPP_override");
         out.println("#endif");
         out.println();
+        out.println("#define JavaCPP_offsetBytes(ptr, o) ptr = (decltype(ptr)) ((char *)ptr + (o))");
+        out.println();
 
         if (loadSuffix == null) {
             loadSuffix = "";
@@ -926,11 +928,11 @@ public class Generator {
         out.println("    }");
         out.println("}");
         out.println();
-        out.println("static JavaCPP_noinline void JavaCPP_initPointer(JNIEnv* env, jobject obj, const void* ptr, jlong size, void* owner, void (*deallocator)(void*)) {");
+        out.println("static JavaCPP_noinline void JavaCPP_initPointer(JNIEnv* env, jobject obj, const void* ptr, jlong sizeBytes, void* owner, void (*deallocator)(void*)) {");
         out.println("    if (owner != NULL && deallocator != NULL) {");
         out.println("        jvalue args[4];");
         out.println("        args[0].j = ptr_to_jlong(ptr);");
-        out.println("        args[1].j = size;");
+        out.println("        args[1].j = sizeBytes;");
         out.println("        args[2].j = ptr_to_jlong(owner);");
         out.println("        args[3].j = ptr_to_jlong(deallocator);");
         out.println("        if (JavaCPP_haveNonvirtual) {");
@@ -941,8 +943,8 @@ public class Generator {
         out.println("        }");
         out.println("    } else {");
         out.println("        env->SetLongField(obj, JavaCPP_addressFID, ptr_to_jlong(ptr));");
-        out.println("        env->SetLongField(obj, JavaCPP_limitFID, (jlong)size);");
-        out.println("        env->SetLongField(obj, JavaCPP_capacityFID, (jlong)size);");
+        out.println("        env->SetLongField(obj, JavaCPP_limitFID, (jlong)sizeBytes);");
+        out.println("        env->SetLongField(obj, JavaCPP_capacityFID, (jlong)sizeBytes);");
         out.println("    }");
         out.println("}");
         out.println();
@@ -2082,12 +2084,12 @@ public class Generator {
                     out.println("    }");
                 }
                 if (!cls.isAnnotationPresent(Opaque.class)) {
-                    out.println("    jlong position = env->GetLongField(obj, JavaCPP_positionFID);");
+                    out.println("    jlong positionBytes = env->GetLongField(obj, JavaCPP_positionFID);");
                     if (methodInfo.bufferGetter) {
-                        out.println("    jlong limit = env->GetLongField(obj, JavaCPP_limitFID);");
-                        out.println("    jlong capacity = env->GetLongField(obj, JavaCPP_capacityFID);");
+                        out.println("    jlong limitBytes = env->GetLongField(obj, JavaCPP_limitFID);");
+                        out.println("    jlong capacityBytes = env->GetLongField(obj, JavaCPP_capacityFID);");
                     } else {
-                        out.println("    ptr += position;");
+                        out.println("    JavaCPP_offsetBytes(ptr, positionBytes);");
                     }
                 }
             }
@@ -2176,23 +2178,23 @@ public class Generator {
                         out.println("    }");
                     }
                     if (adapterInfo != null || prevAdapterInfo != null) {
-                        out.println("    jlong size" + j + " = arg" + j + " == NULL ? 0 : env->GetLongField(arg" + j +
+                        out.println("    jlong sizeBytes" + j + " = arg" + j + " == NULL ? 0 : env->GetLongField(arg" + j +
                                 ", JavaCPP_limitFID);");
                         out.println("    void* owner" + j + " = JavaCPP_getPointerOwner(env, arg" + j + ");");
                     }
                     if (!methodInfo.parameterTypes[j].isAnnotationPresent(Opaque.class)) {
-                        out.println("    jlong position" + j + " = arg" + j + " == NULL ? 0 : env->GetLongField(arg" + j +
+                        out.println("    jlong positionBytes" + j + " = arg" + j + " == NULL ? 0 : env->GetLongField(arg" + j +
                                 ", JavaCPP_positionFID);");
-                        out.println("    ptr"  + j + " += position" + j + ";");
+                        out.println("    JavaCPP_offsetBytes(ptr"  + j + ", positionBytes" + j + ");");
                         if (adapterInfo != null || prevAdapterInfo != null) {
-                            out.println("    size" + j + " -= position" + j + ";");
+                            out.println("    sizeBytes" + j + " -= positionBytes" + j + ";");
                         }
                     }
                 } else if (methodInfo.parameterTypes[j] == String.class) {
                     passesStrings = true;
                     out.println(getStringData("arg" + j, methodInfo.parameterAnnotations[j]));
                     if (adapterInfo != null || prevAdapterInfo != null) {
-                        out.println("    jlong size" + j + " = 0;");
+                        out.println("    jlong sizeBytes" + j + " = 0;");
                         out.println("    void* owner" + j + " = (void*)ptr" + j + ";");
                     }
                 } else if (methodInfo.parameterTypes[j].isArray() &&
@@ -2203,18 +2205,18 @@ public class Generator {
                             methodInfo.memberGetter || methodInfo.memberSetter) {
                         out.println("(j" + s + "*)env->GetPrimitiveArrayCritical(arg" + j + ", NULL);");
                     } else {
-                        s = Character.toUpperCase(s.charAt(0)) + s.substring(1);
-                        out.println("env->Get" + s + "ArrayElements(arg" + j + ", NULL);");
+                        String S = Character.toUpperCase(s.charAt(0)) + s.substring(1);
+                        out.println("env->Get" + S + "ArrayElements(arg" + j + ", NULL);");
                     }
                     if (adapterInfo != null || prevAdapterInfo != null) {
-                        out.println("    jlong size" + j +
-                                " = arg" + j + " == NULL ? 0 : env->GetArrayLength(arg" + j + ");");
+                        out.println("    jlong sizeBytes" + j +
+                                " = arg" + j + " == NULL ? 0 : sizeof(j" + s + ") * env->GetArrayLength(arg" + j + ");");
                         out.println("    void* owner" + j + " = (void*)ptr" + j + ";");
                     }
                 } else if (Buffer.class.isAssignableFrom(methodInfo.parameterTypes[j])) {
                     out.println("arg" + j + " == NULL ? NULL : (" + typeName[0] + typeName[1] + ")env->GetDirectBufferAddress(arg" + j + ");");
                     if (adapterInfo != null || prevAdapterInfo != null) {
-                        out.println("    jlong size" + j + " = arg" + j + " == NULL ? 0 : env->GetIntField(arg" + j +
+                        out.println("    jlong sizeBytes" + j + " = arg" + j + " == NULL ? 0 : sizeof(*ptr" + j + ") *env->GetIntField(arg" + j +
                                 ", JavaCPP_bufferLimitFID);");
                         out.println("    void* owner" + j + " = (void*)ptr" + j + ";");
                     }
@@ -2241,11 +2243,11 @@ public class Generator {
                         out.println("        }");
                         out.println("    }");
                     }
-                    out.println("    jlong position" + j + " = arg" + j + " == NULL ? 0 : env->GetIntField(arg" + j +
+                    out.println("    jlong positionElements" + j + " = arg" + j + " == NULL ? 0 : env->GetIntField(arg" + j +
                             ", JavaCPP_bufferPositionFID);");
-                    out.println("    ptr"  + j + " += position" + j + ";");
+                    out.println("    ptr"  + j + " += positionElements" + j + ";");
                     if (adapterInfo != null || prevAdapterInfo != null) {
-                        out.println("    size" + j + " -= position" + j + ";");
+                        out.println("    sizeBytes" + j + " -= sizeof(*ptr" + j + ") * positionElements" + j + ";");
                     }
                 } else {
                     out.println("arg" + j + ";");
@@ -2263,7 +2265,7 @@ public class Generator {
                         // sometimes we need to use the Cast annotation for declaring functions only
                         adapterLine += cast;
                     }
-                    adapterLine += "ptr" + j + ", size" + j + ", owner" + j;
+                    adapterLine += "ptr" + j + ", sizeBytes" + j + "/sizeof(*ptr" + j + "), owner" + j;
                     if (--prevAdapterInfo.argc > 0) {
                         adapterLine += ", ";
                     }
@@ -2692,11 +2694,13 @@ public class Generator {
 
         if (methodInfo.returnType == void.class) {
             if (methodInfo.allocator || methodInfo.arrayAllocator) {
-                out.println(indent + "jlong rcapacity = " + (methodInfo.arrayAllocator ? "arg0;" : "1;"));
+                out.println(indent + "jlong rcapacityElements = " + (methodInfo.arrayAllocator ? "arg0;" : "1;"));
                 boolean noDeallocator = methodInfo.cls == Pointer.class ||
                         methodInfo.cls.isAnnotationPresent(NoDeallocator.class) ||
                         methodInfo.method.isAnnotationPresent(NoDeallocator.class);
-                out.print(indent + "JavaCPP_initPointer(env, obj, rptr, rcapacity, rptr, ");
+                // HG : this is probably wrong:
+                String elementType = methodInfo.cls == Pointer.class ? "*ptr0" : "*rptr";
+                out.print(indent + "JavaCPP_initPointer(env, obj, rptr, rcapacityElements * sizeof(" + elementType + "), rptr, ");
                 if (noDeallocator) {
                     out.println("NULL);");
                 } else if (methodInfo.arrayAllocator) {
@@ -2734,7 +2738,7 @@ public class Generator {
                 if (adapterInfo != null) {
                     out.println(indent + "rptr = radapter;");
                     if (methodInfo.returnType != String.class) {
-                        out.println(indent + "jlong rcapacity = (jlong)radapter.size;");
+                        out.println(indent + "jlong rcapacityElements = (jlong)radapter.size;");
                         if (Pointer.class.isAssignableFrom(methodInfo.returnType)) {
                             out.println(indent + "void* rowner = radapter.owner;");
                             out.println(indent + "void (*deallocator)(void*) = rowner != NULL ? &" + adapterInfo.name + "::deallocate : 0;");
@@ -2745,7 +2749,7 @@ public class Generator {
                     needInit = true;
                 } else if (returnBy instanceof ByVal ||
                         FunctionPointer.class.isAssignableFrom(methodInfo.returnType)) {
-                    out.println(indent + "jlong rcapacity = 1;");
+                    out.println(indent + "jlong rcapacityElements = 1;");
                     out.println(indent + "void* rowner = (void*)rptr;");
                     out.println(indent + "void (*deallocator)(void*) = &JavaCPP_" +
                             mangle(methodInfo.returnType.getName()) + "_deallocate;");
@@ -2779,7 +2783,7 @@ public class Generator {
                             (methodInfo.parameterTypes.length > 0 && methodInfo.parameterTypes[0] == Class.class ? ", arg0);" : ");"));
                     out.println(indent + "    if (rarg != NULL) {");
                     if (needInit) {
-                        out.println(indent + "        JavaCPP_initPointer(env, rarg, rptr, rcapacity, rowner, deallocator);");
+                        out.println(indent + "        JavaCPP_initPointer(env, rarg, rptr, rcapacityElements * sizeof(*rptr), rowner, deallocator);");
                     } else {
                         out.println(indent + "        env->SetLongField(rarg, JavaCPP_addressFID, ptr_to_jlong(rptr));");
                     }
@@ -2793,13 +2797,13 @@ public class Generator {
                 } else if (methodInfo.returnType.isArray() &&
                         methodInfo.returnType.getComponentType().isPrimitive()) {
                     if (adapterInfo == null && !(returnBy instanceof ByVal)) {
-                        out.println(indent + "jlong rcapacity = rptr != NULL ? 1 : 0;");
+                        out.println(indent + "jlong rcapacityElements = rptr != NULL ? 1 : 0;");
                     }
                     String componentName = methodInfo.returnType.getComponentType().getName();
                     String componentNameUpperCase = Character.toUpperCase(componentName.charAt(0)) + componentName.substring(1);
                     out.println(indent + "if (rptr != NULL) {");
-                    out.println(indent + "    rarg = env->New" + componentNameUpperCase + "Array(rcapacity < INT_MAX ? rcapacity : INT_MAX);");
-                    out.println(indent + "    env->Set" + componentNameUpperCase + "ArrayRegion(rarg, 0, rcapacity < INT_MAX ? rcapacity : INT_MAX, (j" + componentName + "*)rptr);");
+                    out.println(indent + "    rarg = env->New" + componentNameUpperCase + "Array(rcapacityElements < INT_MAX ? rcapacityElements : INT_MAX);");
+                    out.println(indent + "    env->Set" + componentNameUpperCase + "ArrayRegion(rarg, 0, rcapacityElements < INT_MAX ? rcapacityElements : INT_MAX, (j" + componentName + "*)rptr);");
                     out.println(indent + "}");
                     if (adapterInfo != null) {
                         out.println(indent + "if (deallocator != 0 && rptr != NULL) {");
@@ -2808,20 +2812,18 @@ public class Generator {
                     }
                 } else if (Buffer.class.isAssignableFrom(methodInfo.returnType)) {
                     if (methodInfo.bufferGetter) {
-                        out.println(indent + "jlong rposition = position;");
-                        out.println(indent + "jlong rlimit = limit;");
-                        out.println(indent + "jlong rcapacity = capacity;");
+                        out.println(indent + "jlong rpositionBytes = positionBytes;");
+                        out.println(indent + "jlong rlimitBytes = limitBytes;");
+                        //out.println(indent + "jlong rcapacityBytes = capacityElements * sizeof(*rptr);");
+                        out.println(indent + "jlong rcapacityBytes = capacityBytes;");
                     } else if (adapterInfo == null && !(returnBy instanceof ByVal)) {
-                        out.println(indent + "jlong rcapacity = rptr != NULL ? 1 : 0;");
+                        out.println(indent + "jlong rcapacityBytes = rptr != NULL ? sizeof(*rptr) : 0;");
                     }
                     out.println(indent + "if (rptr != NULL) {");
-                    out.println(indent + "    jlong rcapacityptr = rcapacity * sizeof(rptr[0]);");
-                    out.println(indent + "    rarg = env->NewDirectByteBuffer((void*)rptr, rcapacityptr < INT_MAX ? rcapacityptr : INT_MAX);");
+                    out.println(indent + "    rarg = env->NewDirectByteBuffer((void*)rptr, rcapacityBytes < INT_MAX ? rcapacityBytes : INT_MAX);");
                     if (methodInfo.bufferGetter) {
-                        out.println(indent + "    jlong rpositionptr = rposition * sizeof(rptr[0]);");
-                        out.println(indent + "    jlong rlimitptr = rlimit * sizeof(rptr[0]);");
-                        out.println(indent + "    env->SetIntField(rarg, JavaCPP_bufferPositionFID, rpositionptr < INT_MAX ? rpositionptr : INT_MAX);");
-                        out.println(indent + "    env->SetIntField(rarg, JavaCPP_bufferLimitFID, rlimitptr < INT_MAX ? rlimitptr : INT_MAX);");
+                        out.println(indent + "    env->SetIntField(rarg, JavaCPP_bufferPositionFID, rpositionBytes < INT_MAX ? rpositionBytes : INT_MAX);");
+                        out.println(indent + "    env->SetIntField(rarg, JavaCPP_bufferLimitFID, rlimitBytes < INT_MAX ? rlimitBytes : INT_MAX);");
                     }
                     out.println(indent + "}");
                 }
@@ -2862,19 +2864,20 @@ public class Generator {
                 if (adapterInfo != null) {
                     for (int k = 0; k < adapterInfo.argc; k++) {
                         out.println("    " + typeName[0] + " rptr" + (j+k) + typeName[1] + " = " + cast + "adapter" + j + ";");
-                        out.println("    jlong rsize" + (j+k) + " = (jlong)adapter" + j + ".size" + (k > 0 ? (k+1) + ";" : ";"));
+                        // HG: I don't understand this j/k double loop. Please check the sizeof.
+                        out.println("    jlong rsizeBytes" + (j+k) + " = sizeof(*ptr" + j + ") * (jlong)adapter" + j + ".size" + (k > 0 ? (k+1) + ";" : ";"));
                         out.println("    void* rowner" + (j+k) + " = adapter" + j + ".owner" + (k > 0 ? (k+1) + ";" : ";"));
                         out.println("    if (rptr" + (j+k) + " != " + cast + "ptr" + (j+k) + ") {");
-                        out.println("        JavaCPP_initPointer(env, arg" + j + ", rptr" + (j+k) + ", rsize" + (j+k) + ", rowner" + (j+k) + ", &" + adapterInfo.name + "::deallocate);");
+                        out.println("        JavaCPP_initPointer(env, arg" + j + ", rptr" + (j+k) + ", rsizeBytes" + (j+k) + ", rowner" + (j+k) + ", &" + adapterInfo.name + "::deallocate);");
                         out.println("    } else {");
-                        out.println("        env->SetLongField(arg" + j + ", JavaCPP_limitFID, rsize" + (j+k)
-                                + (!methodInfo.parameterTypes[j].isAnnotationPresent(Opaque.class) ? " + position" + (j+k) : "") + ");");
+                        out.println("        env->SetLongField(arg" + j + ", JavaCPP_limitFID, rsizeBytes" + (j+k)
+                                + (!methodInfo.parameterTypes[j].isAnnotationPresent(Opaque.class) ? " + positionBytes" + (j+k) : "") + ");");
                         out.println("    }");
                     }
                 } else if ((passBy instanceof ByPtrPtr || passBy instanceof ByPtrRef) &&
                         !methodInfo.valueSetter && !methodInfo.memberSetter) {
                     if (!methodInfo.parameterTypes[j].isAnnotationPresent(Opaque.class)) {
-                        out.println("    ptr" + j + " -= position" + j + ";");
+                        out.println("    JavaCPP_offsetBytes(ptr" + j + ", -positionBytes" + j + ");");
                     }
                     out.println("    if (arg" + j + " != NULL) env->SetLongField(arg" + j +
                             ", JavaCPP_addressFID, ptr_to_jlong(ptr" + j + "));");
@@ -2913,10 +2916,10 @@ public class Generator {
                 parameterSimpleName = parameterSimpleName.substring(0, parameterSimpleName.length() - 6);
                 String parameterSimpleNameLowerCase = Character.toLowerCase(parameterSimpleName.charAt(0)) + parameterSimpleName.substring(1);
                 if (methodInfo.criticalRegion) {
-                    out.println("env->ReleasePrimitiveArrayCritical(arr" + j + ", ptr" + j + " - position" + j +", " + releaseArrayFlag + ");");
+                    out.println("env->ReleasePrimitiveArrayCritical(arr" + j + ", ptr" + j + " - positionElements" + j +", " + releaseArrayFlag + ");");
                 } else {
                     out.println("env->Release" + parameterSimpleName + "ArrayElements(arr" + j + ", " +
-                                "(j" + parameterSimpleNameLowerCase + "*)(ptr" + j + " - position" + j +"), " +
+                                "(j" + parameterSimpleNameLowerCase + "*)(ptr" + j + " - positionElements" + j +"), " +
                                 releaseArrayFlag + ");");
                 }
             }
@@ -3150,14 +3153,14 @@ public class Generator {
                     boolean needInit = false;
                     if (adapterInfo != null) {
                         if (callbackParameterTypes[j] != String.class) {
-                            out.println("    jlong size" + j + " = (jlong)adapter" + j + ".size;");
+                            out.println("    jlong sizeBytes" + j + " = sizeof(*ptr" + j + ") * (jlong)adapter" + j + ".size;");
                             out.println("    void* owner" + j + " = adapter" + j + ".owner;");
                             out.println("    void (*deallocator" + j + ")(void*) = &" + adapterInfo.name + "::deallocate;");
                         }
                         needInit = true;
                     } else if ((passBy instanceof ByVal && callbackParameterTypes[j] != Pointer.class) ||
                             FunctionPointer.class.isAssignableFrom(callbackParameterTypes[j])) {
-                        out.println("    jlong size" + j + " = 1;");
+                        out.println("    jlong sizeBytes" + j + " = sizeof(*ptr" + j + ");");
                         out.println("    void* owner" + j + " = ptr" + j + ";");
                         out.println("    void (*deallocator" + j + ")(void*) = &JavaCPP_" +
                                 mangle(callbackParameterTypes[j].getName()) + "_deallocate;");
@@ -3177,7 +3180,7 @@ public class Generator {
                         }
                         out.println("    if (obj" + j + " != NULL) { ");
                         if (needInit) {
-                            out.println("        JavaCPP_initPointer(env, obj" + j + ", ptr" + j + ", size" + j + ", owner" + j + ", deallocator" + j + ");");
+                            out.println("        JavaCPP_initPointer(env, obj" + j + ", ptr" + j + ", sizeBytes" + j + ", owner" + j + ", deallocator" + j + ");");
                         } else {
                             out.println("        env->SetLongField(obj" + j + ", JavaCPP_addressFID, ptr_to_jlong(ptr" + j + "));");
                         }
@@ -3201,13 +3204,13 @@ public class Generator {
                     } else if (callbackParameterTypes[j].isArray() &&
                             callbackParameterTypes[j].getComponentType().isPrimitive()) {
                         if (adapterInfo == null) {
-                            out.println("    jlong size" + j + " = ptr" + j + " != NULL ? 1 : 0;");
+                            out.println("    jlong sizeElements" + j + " = ptr" + j + " != NULL ? 1 : 0;");
                         }
                         String componentType = callbackParameterTypes[j].getComponentType().getName();
                         String S = Character.toUpperCase(componentType.charAt(0)) + componentType.substring(1);
                         out.println("    if (ptr" + j + " != NULL) {");
-                        out.println("        obj" + j + " = env->New" + S + "Array(size" + j + " < INT_MAX ? size" + j + " : INT_MAX);");
-                        out.println("        env->Set" + S + "ArrayRegion(obj" + j + ", 0, size" + j + " < INT_MAX ? size" + j + " : INT_MAX, (j" + componentType + "*)ptr" + j + ");");
+                        out.println("        obj" + j + " = env->New" + S + "Array(sizeElements" + j + " < INT_MAX ? sizeElements" + j + " : INT_MAX);");
+                        out.println("        env->Set" + S + "ArrayRegion(obj" + j + ", 0, sizeElements" + j + " < INT_MAX ? sizeElements" + j + " : INT_MAX, (j" + componentType + "*)ptr" + j + ");");
                         out.println("    }");
                         if (adapterInfo != null) {
                             out.println("    if (deallocator" + j + " != 0 && ptr" + j + " != NULL) {");
@@ -3217,11 +3220,11 @@ public class Generator {
                         out.println("    args[" + j + "].l = obj" + j + ";");
                     } else if (Buffer.class.isAssignableFrom(callbackParameterTypes[j])) {
                         if (adapterInfo == null) {
-                            out.println("    jlong size" + j + " = ptr" + j + " != NULL ? 1 : 0;");
+                            out.println("    jlong sizeElements" + j + " = ptr" + j + " != NULL ? 1 : 0;");
                         }
                         out.println("    if (ptr" + j + " != NULL) {");
-                        out.println("        jlong sizeptr = size" + j + " * sizeof(ptr" + j + "[0]);");
-                        out.println("        obj" + j + " = env->NewDirectByteBuffer((void*)ptr" + j + ", sizeptr < INT_MAX ? sizeptr : INT_MAX);");
+                        out.println("        jlong sizeBytes = sizeElements" + j + " * sizeof(ptr" + j + "[0]);");
+                        out.println("        obj" + j + " = env->NewDirectByteBuffer((void*)ptr" + j + ", sizeBytes < INT_MAX ? sizeBytes : INT_MAX);");
                         out.println("    }");
                         out.println("    args[" + j + "].l = obj" + j + ";");
                     } else {
@@ -3292,18 +3295,18 @@ public class Generator {
                     out.println("    " + typeName[0] + " rptr" + j + typeName[1] + " = (" +
                             typeName[0] + typeName[1] + ")jlong_to_ptr(env->GetLongField(obj" + j + ", JavaCPP_addressFID));");
                     if (adapterInfo != null) {
-                        out.println("    jlong rsize" + j + " = env->GetLongField(obj" + j + ", JavaCPP_limitFID);");
+                        out.println("    jlong rsizeBytes" + j + " = env->GetLongField(obj" + j + ", JavaCPP_limitFID);");
                         out.println("    void* rowner" + j + " = JavaCPP_getPointerOwner(env, obj" + j + ");");
                     }
                     if (!callbackParameterTypes[j].isAnnotationPresent(Opaque.class) && !FunctionPointer.class.isAssignableFrom(callbackParameterTypes[j])) {
-                        out.println("    jlong rposition" + j + " = env->GetLongField(obj" + j + ", JavaCPP_positionFID);");
-                        out.println("    rptr" + j + " += rposition" + j + ";");
+                        out.println("    jlong rpositionBytes" + j + " = env->GetLongField(obj" + j + ", JavaCPP_positionFID);");
+                        out.println("    JavaCPP_offsetBytes(rptr" + j + ", rposition" + j + ");");
                         if (adapterInfo != null) {
-                            out.println("    rsize" + j + " -= rposition" + j + ";");
+                            out.println("    rsizeBytes" + j + " -= rpositionBytes" + j + ";");
                         }
                     }
                     if (adapterInfo != null) {
-                        out.println("    adapter" + j + ".assign(rptr" + j + ", rsize" + j + ", rowner" + j + ");");
+                        out.println("    adapter" + j + ".assign(rptr" + j + ", rsizeElements" + j + ", rowner" + j + ");");
                     } else if (passBy instanceof ByPtrPtr) {
                         out.println("    if (arg" + j + " != NULL) {");
                         out.println("        *arg" + j + " = *" + cast + "&rptr" + j + ";");
@@ -3344,32 +3347,33 @@ public class Generator {
                 out.println("    " + returnTypeName[0] + " rptr" + returnTypeName[1] + " = rarg == NULL ? NULL : (" +
                         returnTypeName[0] + returnTypeName[1] + ")jlong_to_ptr(env->GetLongField(rarg, JavaCPP_addressFID));");
                 if (returnAdapterInfo != null) {
-                    out.println("    jlong rsize = rarg == NULL ? 0 : env->GetLongField(rarg, JavaCPP_limitFID);");
+                    out.println("    jlong rsizeBytes = rarg == NULL ? 0 : env->GetLongField(rarg, JavaCPP_limitFID);");
                     out.println("    void* rowner = JavaCPP_getPointerOwner(env, rarg);");
                 }
                 if (!callbackReturnType.isAnnotationPresent(Opaque.class)) {
-                    out.println("    jlong rposition = rarg == NULL ? 0 : env->GetLongField(rarg, JavaCPP_positionFID);");
-                    out.println("    rptr += rposition;");
+                    out.println("    jlong rpositionBytes = rarg == NULL ? 0 : env->GetLongField(rarg, JavaCPP_positionFID);");
+                    out.println("    JavaCPP_offsetBytes(rptr, rpositionBytes);");
                     if (returnAdapterInfo != null) {
-                        out.println("    rsize -= rposition;");
+                        out.println("    rsizeBytes -= rpositionBytes;");
                     }
                 }
             } else if (callbackReturnType == String.class) {
                 passesStrings = true;
                 out.println("    " + returnTypeName[0] + " rptr" + returnTypeName[1] + " = " + getStringData("rarg", callbackAnnotations));
                 if (returnAdapterInfo != null) {
-                    out.println("    jlong rsize = 0;");
+                    out.println("    jlong rsizeElements = 0;");
                     out.println("    void* rowner = (void*)rptr;");
                 }
             } else if (Buffer.class.isAssignableFrom(callbackReturnType)) {
                 out.println("    " + returnTypeName[0] + " rptr" + returnTypeName[1] + " = rarg == NULL ? NULL : ("
                         + returnTypeName[0] + returnTypeName[1] + ")env->GetDirectBufferAddress(rarg);");
                 if (returnAdapterInfo != null) {
-                    out.println("    jlong rsize = rarg == NULL ? 0 : env->GetIntField(rarg, JavaCPP_bufferLimitFID);");
+                    out.println("    jlong rsizeElements = rarg == NULL ? 0 : env->GetIntField(rarg, JavaCPP_bufferLimitFID);");
                     out.println("    void* rowner = (void*)rptr;");
-                    out.println("    jlong rposition = rarg == NULL ? 0 : env->GetIntField(rarg, JavaCPP_bufferPositionFID);");
-                    out.println("    rptr += rposition;");
-                    out.println("    rsize -= rposition;");
+                    out.println("    jlong rpositionElements = rarg == NULL ? 0 : env->GetIntField(rarg, JavaCPP_bufferPositionFID);");
+                    out.println("    rptr += rpositionElements;");
+                    out.println("    rsizeElements -= rpositionElements;");
+                    out.println("    jlong rsizeBytes = rsizeElements * sizeof(*rptr)");
                 }
             } else if (!callbackReturnType.isPrimitive()) {
                 logger.warn("Callback \"" + callbackMethod + "\" has unsupported return type \"" +
@@ -3402,7 +3406,7 @@ public class Generator {
                 out.println("    return " + callbackReturnCast + "rval;");
             } else if (returnAdapterInfo != null) {
                 usesAdapters = true;
-                out.println("    return " + returnAdapterInfo.name + "(" + callbackReturnCast + "rptr, rsize, rowner);");
+                out.println("    return " + returnAdapterInfo.name + "(" + callbackReturnCast + "rptr, rsizeElements, rowner);");
             } else if (FunctionPointer.class.isAssignableFrom(callbackReturnType)) {
                 functions.index(callbackReturnType);
                 out.println("    return " + callbackReturnCast + "(rptr == NULL ? NULL : rptr->ptr);");
@@ -3435,7 +3439,7 @@ public class Generator {
         out.println("    " + instanceTypeName + "* rptr = new (std::nothrow) " + instanceTypeName + ";");
         out.println("    if (rptr != NULL) {");
         out.println("        rptr->obj = obj;");
-        out.println("        JavaCPP_initPointer(env, obj, rptr, 1, rptr, &JavaCPP_" + mangle(cls.getName()) + "_deallocate);");
+        out.println("        JavaCPP_initPointer(env, obj, rptr, sizeof(*rptr), rptr, &JavaCPP_" + mangle(cls.getName()) + "_deallocate);");
         deallocators.index(cls);
         if (callbackName != null) {
             out.println("        for (int i = 0; i < " + allocatorMax + "; i++) {");

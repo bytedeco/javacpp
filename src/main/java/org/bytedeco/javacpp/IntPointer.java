@@ -129,8 +129,8 @@ public class IntPointer extends Pointer {
 
     /** Returns the code points, assuming a null-terminated string if {@code limit <= position}. */
     public int[] getStringCodePoints() {
-        if (limit > position) {
-            int[] array = new int[(int)Math.min(limit - position, Integer.MAX_VALUE)];
+        if (limit() > position()) {
+            int[] array = new int[(int)Math.min(limit() - position(), Integer.MAX_VALUE)];
             get(array);
             return array;
         }
