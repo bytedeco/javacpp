@@ -129,8 +129,8 @@ public class CharPointer extends Pointer {
 
     /** Returns the chars, assuming a null-terminated string if {@code limit <= position}. */
     public char[] getStringChars() {
-        if (limit > position) {
-            char[] array = new char[(int)Math.min(limit - position, Integer.MAX_VALUE)];
+        if (limit() > position()) {
+            char[] array = new char[(int)Math.min(limit() - position(), Integer.MAX_VALUE)];
             get(array);
             return array;
         }
