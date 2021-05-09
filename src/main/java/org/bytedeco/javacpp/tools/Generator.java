@@ -2694,13 +2694,14 @@ public class Generator {
 
         if (methodInfo.returnType == void.class) {
             if (methodInfo.allocator || methodInfo.arrayAllocator) {
-                out.println(indent + "jlong rcapacityElements = " + (methodInfo.arrayAllocator ? "arg0;" : "1;"));
+                // HG : this is probably wrong:
+                String sizeof = methodInfo.cls == Pointer.class ? "sizeof(*ptr0)" : "sizeof(*rptr)";
+                out.println(indent + "jlong rcapacityBytes = " +
+                    (methodInfo.arrayAllocator ? "arg0 * " + sizeof : sizeof) + ";");
                 boolean noDeallocator = methodInfo.cls == Pointer.class ||
                         methodInfo.cls.isAnnotationPresent(NoDeallocator.class) ||
                         methodInfo.method.isAnnotationPresent(NoDeallocator.class);
-                // HG : this is probably wrong:
-                String elementType = methodInfo.cls == Pointer.class ? "*ptr0" : "*rptr";
-                out.print(indent + "JavaCPP_initPointer(env, obj, rptr, rcapacityElements * sizeof(" + elementType + "), rptr, ");
+                out.print(indent + "JavaCPP_initPointer(env, obj, rptr, rcapacityBytes, rptr, ");
                 if (noDeallocator) {
                     out.println("NULL);");
                 } else if (methodInfo.arrayAllocator) {
@@ -2814,10 +2815,11 @@ public class Generator {
                     if (methodInfo.bufferGetter) {
                         out.println(indent + "jlong rpositionBytes = positionBytes;");
                         out.println(indent + "jlong rlimitBytes = limitBytes;");
-                        //out.println(indent + "jlong rcapacityBytes = capacityElements * sizeof(*rptr);");
                         out.println(indent + "jlong rcapacityBytes = capacityBytes;");
                     } else if (adapterInfo == null && !(returnBy instanceof ByVal)) {
                         out.println(indent + "jlong rcapacityBytes = rptr != NULL ? sizeof(*rptr) : 0;");
+                    } else {
+                        out.println(indent + "jlong rcapacityBytes = rptr == NULL ? 0 : rcapacityElements * sizeof(*rptr);");
                     }
                     out.println(indent + "if (rptr != NULL) {");
                     out.println(indent + "    rarg = env->NewDirectByteBuffer((void*)rptr, rcapacityBytes < INT_MAX ? rcapacityBytes : INT_MAX);");
@@ -3300,7 +3302,7 @@ public class Generator {
                     }
                     if (!callbackParameterTypes[j].isAnnotationPresent(Opaque.class) && !FunctionPointer.class.isAssignableFrom(callbackParameterTypes[j])) {
                         out.println("    jlong rpositionBytes" + j + " = env->GetLongField(obj" + j + ", JavaCPP_positionFID);");
-                        out.println("    JavaCPP_offsetBytes(rptr" + j + ", rposition" + j + ");");
+                        out.println("    JavaCPP_offsetBytes(rptr" + j + ", rpositionBytes" + j + ");");
                         if (adapterInfo != null) {
                             out.println("    rsizeBytes" + j + " -= rpositionBytes" + j + ";");
                         }
@@ -3348,6 +3350,7 @@ public class Generator {
                         returnTypeName[0] + returnTypeName[1] + ")jlong_to_ptr(env->GetLongField(rarg, JavaCPP_addressFID));");
                 if (returnAdapterInfo != null) {
                     out.println("    jlong rsizeBytes = rarg == NULL ? 0 : env->GetLongField(rarg, JavaCPP_limitFID);");
+                    out.println("    jlong rsizeElements = rsizeBytes / sizeof(*rarg);");
                     out.println("    void* rowner = JavaCPP_getPointerOwner(env, rarg);");
                 }
                 if (!callbackReturnType.isAnnotationPresent(Opaque.class)) {
@@ -3361,7 +3364,7 @@ public class Generator {
                 passesStrings = true;
                 out.println("    " + returnTypeName[0] + " rptr" + returnTypeName[1] + " = " + getStringData("rarg", callbackAnnotations));
                 if (returnAdapterInfo != null) {
-                    out.println("    jlong rsizeElements = 0;");
+                    out.println("    jlong rsizeBytes = 0;");
                     out.println("    void* rowner = (void*)rptr;");
                 }
             } else if (Buffer.class.isAssignableFrom(callbackReturnType)) {
@@ -3406,7 +3409,7 @@ public class Generator {
                 out.println("    return " + callbackReturnCast + "rval;");
             } else if (returnAdapterInfo != null) {
                 usesAdapters = true;
-                out.println("    return " + returnAdapterInfo.name + "(" + callbackReturnCast + "rptr, rsizeElements, rowner);");
+                out.println("    return " + returnAdapterInfo.name + "(" + callbackReturnCast + "rptr, rsizeBytes/sizeof(*rptr), rowner);");
             } else if (FunctionPointer.class.isAssignableFrom(callbackReturnType)) {
                 functions.index(callbackReturnType);
                 out.println("    return " + callbackReturnCast + "(rptr == NULL ? NULL : rptr->ptr);");
