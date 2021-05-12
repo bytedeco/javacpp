@@ -895,15 +895,20 @@ public class Pointer implements AutoCloseable {
         return (P)getPointer(getClass(), i);
     }
 
-    /** Returns {@code getPointer(cls, 0)}. */
-    public <P extends Pointer> P getPointer(Class<P> cls) {
-        return getPointer(cls, 0);
+    /** Returns {@code getPointer(type, 0)}. */
+    public <P extends Pointer> P getPointer(Class<P> type) {
+        return getPointer(type, 0);
     }
 
-    /** Returns {@code new P(this).offsetAddress(i)}. Throws RuntimeException if constructor is missing. */
-    public <P extends Pointer> P getPointer(Class<P> cls, long i) {
+    /** Returns {@code new P(this).offsetAddress(i)} after scaling {@link #position}, {@link #limit}, and {@link #capacity}
+     *  with {@link #sizeof()}. Throws RuntimeException if the cast constructor is missing from the subclass type. */
+    public <P extends Pointer> P getPointer(Class<P> type, long i) {
         try {
-            return cls.getDeclaredConstructor(Pointer.class).newInstance(this).offsetAddress(i);
+            P p = type.getDeclaredConstructor(Pointer.class).newInstance(this);
+            p.position = position != 0 ? Math.max(0, position * this.sizeof() / p.sizeof()) : 0;
+            p.limit    = limit    != 0 ? Math.max(0, limit    * this.sizeof() / p.sizeof()) : 0;
+            p.capacity = capacity != 0 ? Math.max(0, capacity * this.sizeof() / p.sizeof()) : 0;
+            return p.offsetAddress(i);
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException(e);
         }

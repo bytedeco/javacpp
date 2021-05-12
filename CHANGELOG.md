@@ -1,4 +1,5 @@
 
+ * Upon `Pointer.getPointer(Class<P>)` scale `position`, `limit`, and `capacity` with `sizeof()` ([pull #476](https://github.com/bytedeco/javacpp/pull/476))
  * Fix `Parser` incorrectly translating non-documentation comments as part of documentation comments ([issue #475](https://github.com/bytedeco/javacpp/issues/475))
  * Set `Pointer.maxPhysicalBytes` to `4 * Runtime.maxMemory()` by default as workaround for memory-mapped files, ZGC, etc ([issue #468](https://github.com/bytedeco/javacpp/issues/468))
  * Ensure `synchronized` code in `Pointer` gets skipped with "org.bytedeco.javacpp.nopointergc" ([issue tensorflow/java#313](https://github.com/tensorflow/java/issues/313))
