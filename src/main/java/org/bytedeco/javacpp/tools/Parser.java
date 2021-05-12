@@ -3663,15 +3663,20 @@ public class Parser {
             }
             if (token.match(Token.IDENTIFIER)) {
                 // XXX: If !typedef, this is a variable declaration with anonymous type
+                String name1 = name;
                 String name2 = token.value;
-                if (name == null || name.length() == 0) {
+                if (typedef || name == null || name.length() == 0) {
                     name = name2;
+                    if (name1 != null && name1.length() > 0) {
+                        name2 = name1;
+                    }
                 }
+                String cppName2 = context.namespace != null ? context.namespace + "::" + name2 : name2;
                 Info info2 = infoMap.getFirst(cppType);
                 if (indirections > 0) {
-                    infoMap.put(new Info(info2).cast().cppNames(name2).valueTypes(info2.pointerTypes).pointerTypes("PointerPointer"));
+                    infoMap.put(new Info(info2).cast().cppNames(cppName2).valueTypes(info2.pointerTypes).pointerTypes("PointerPointer"));
                 } else {
-                    infoMap.put(new Info(info2).cast().cppNames(name2));
+                    infoMap.put(new Info(info2).cast().cppNames(cppName2));
                 }
             }
             token = tokens.next();
@@ -3693,14 +3698,14 @@ public class Parser {
             String enumSpacing2 = newline < 0 ? enumSpacing : enumSpacing.substring(newline + 1);
             String javaName = info != null && info.valueTypes != null && info.valueTypes.length > 0 ? info.valueTypes[0] : name;
             if (enumerate && javaName != null && javaName.length() > 0 && !javaName.equals(javaType)) {
-                String fullName = context.namespace != null ? context.namespace + "::" + name : name;
+                String shortName = javaName.substring(javaName.lastIndexOf('.') + 1);
+                String fullName = context.namespace != null ? context.namespace + "::" + shortName : shortName;
                 String annotations = "";
                 if (!fullName.equals(cppName)){
                     annotations += "@Name(\"" + cppName + "\") ";
                 } else if (context.namespace != null && context.javaName == null) {
                     annotations += "@Namespace(\"" + context.namespace + "\") ";
                 }
-                String shortName = javaName.substring(javaName.lastIndexOf('.') + 1);
                 decl.text += enumSpacing + annotations + "public enum " + shortName + " {"
                           +  enumerators2 + token.expect(';').spacing + ";"
                           + (comment.length() > 0 && comment.charAt(0) == ' ' ? comment.substring(1) : comment) + "\n\n"
