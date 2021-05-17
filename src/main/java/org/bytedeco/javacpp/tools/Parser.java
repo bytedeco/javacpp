@@ -3846,6 +3846,7 @@ public class Parser {
                     }
                     int count = 0;
                     for (Map.Entry<String,Type> e : map.entrySet()) {
+                        e.setValue(null);
                         if (count < type.arguments.length) {
                             Type t = type.arguments[count++];
                             String s = t.cppName;

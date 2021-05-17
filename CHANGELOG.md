@@ -1,4 +1,5 @@
 
+ * Fix `Parser` sometimes failing to create template instances with default arguments ([issue #478](https://github.com/bytedeco/javacpp/issues/478))
  * Enhance `Parser` to handle `typedef` correctly in the case of `enum` as well ([issue #477](https://github.com/bytedeco/javacpp/issues/477))
  * Upon `Pointer.getPointer(Class<P>)` scale `position`, `limit`, and `capacity` with `sizeof()` ([pull #476](https://github.com/bytedeco/javacpp/pull/476))
  * Fix `Parser` incorrectly translating non-documentation comments as part of documentation comments ([issue #475](https://github.com/bytedeco/javacpp/issues/475))
