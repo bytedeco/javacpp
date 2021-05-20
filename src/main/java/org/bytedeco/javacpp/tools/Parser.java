@@ -1498,7 +1498,7 @@ public class Parser {
                     functionType = Character.toUpperCase(originalName.charAt(0)) + originalName.substring(1);
                 }
                 if (info != null && info.pointerTypes != null && info.pointerTypes.length > 0) {
-                    functionType = info.pointerTypes[0];
+                    functionType = info.pointerTypes[infoNumber < 0 ? 0 : infoNumber % info.pointerTypes.length];
                 } else if (typedef) {
                     functionType = originalName;
                 } else if (dcl.parameters != null && dcl.parameters.signature.length() > 0) {
@@ -1521,7 +1521,7 @@ public class Parser {
                     functionType = "null";
                 }
                 functionType = functionType.substring(functionType.lastIndexOf(' ') + 1); // get rid of pointer annotations
-                if (!functionType.equals("Pointer")) {
+                if (!functionType.equals("Pointer") && !functionType.equals("long")) {
                     definition.type = new Type(functionType);
                     for (Info info2 : infoMap.get("function/pointers")) {
                         if (info2 != null && info2.annotations != null) {
@@ -1802,13 +1802,14 @@ public class Parser {
         }
         Attribute attr = new Attribute();
         Info info = infoMap.getFirst(attr.cppName = tokens.get().value);
+        boolean keyword = attr.cppName.equals("__attribute__");
         if (attr.annotation = info != null && info.annotations != null
                 && info.javaNames == null && info.valueTypes == null && info.pointerTypes == null) {
             for (String s : info.annotations) {
                 attr.javaName += s + " ";
             }
         }
-        if (!brackets && explicit && !attr.annotation) {
+        if (!brackets && explicit && !attr.annotation && !keyword) {
             return null;
         }
         int count = tokens.next().match('(') ? 1 : 0;
@@ -1820,6 +1821,9 @@ public class Parser {
             return attr;
         }
 
+        if (keyword) {
+            attr.cppName += tokens.get().spacing + tokens.get();
+        }
         for (Token token = tokens.next(); !token.match(Token.EOF) && (brackets || count > 0); token = tokens.next()) {
             if (token.match('(')) {
                 count++;
@@ -1829,6 +1833,18 @@ public class Parser {
                 brackets = false;
             } else if (info == null || !info.skip) {
                 attr.arguments += token.value;
+            }
+            if (keyword) {
+                attr.cppName += token.spacing + token;
+            }
+        }
+        if (keyword) {
+            attr.annotation = true;
+            info = infoMap.getFirst(attr.cppName);
+            if (info != null && info.annotations != null) {
+                for (String s : info.annotations) {
+                    attr.javaName += s + " ";
+                }
             }
         }
         return attr;
@@ -2954,7 +2970,7 @@ public class Parser {
                                 && !dcl.type.annotations.startsWith("@Const ")) {
                             info.annotations(dcl.type.annotations.trim());
                         } else {
-                            info.cast(!dcl.cppName.equals(info.pointerTypes[0]));
+                            info.cast(!dcl.cppName.equals(info.pointerTypes[0]) && !info.pointerTypes[0].contains("@Cast"));
                         }
                     }
                     infoMap.put(info);
