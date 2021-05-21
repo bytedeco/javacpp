@@ -969,6 +969,11 @@ public class Parser {
             int varNumber, boolean arrayAsPointer, boolean pointerAsArray) throws ParserException {
         boolean typedef = tokens.get().match(Token.TYPEDEF);
         boolean using = tokens.get().match(Token.USING);
+        if (using && defaultName != null) {
+            tokens.next().expect(Token.IDENTIFIER);
+            tokens.next().expect('=');
+            tokens.next();
+        }
         Declarator dcl = new Declarator();
         Type type = type(context);
         if (type == null) {
@@ -1084,7 +1089,8 @@ public class Parser {
                 convention = a;
             }
         }
-        if (tokens.get().match('(') || (typedef && tokens.get(1).match('('))) {
+        if ((tokens.get().match('(') && (!using || tokens.get(1).match('*') || (tokens.get(2).match("::") && tokens.get(3).match('*'))))
+                || (typedef && tokens.get(1).match('('))) {
             // probably a function pointer declaration
             if (tokens.get().match('(')) {
                 tokens.next();
@@ -1333,7 +1339,7 @@ public class Parser {
                 }
             }
         }
-        if (!using && info != null) {
+        if ((!using || defaultName != null) && info != null) {
             valueType = (info.enumerate || info.valueTypes != null)
                     && ((type.constValue && dcl.indirections == 0 && dcl.reference)
                         || (dcl.indirections == 0 && !dcl.reference)
@@ -1442,7 +1448,7 @@ public class Parser {
             if (dcl.parameters != null) {
                 dcl.infoNumber = Math.max(dcl.infoNumber, dcl.parameters.infoNumber);
             }
-            if (dcl.parameters != null && indirections2 == 0 && !typedef) {
+            if (dcl.parameters != null && indirections2 == 0 && !using && !typedef) {
                 dcl.signature += dcl.parameters.signature;
             } else {
                 if (convention != null) {
@@ -2868,16 +2874,11 @@ public class Parser {
             return false;
         }
         Declaration decl = new Declaration();
-        if (usingDefName != null) {
-            tokens.next().expect(Token.IDENTIFIER);
-            tokens.next().expect('=');
-            tokens.next();
-        }
         int backIndex = tokens.index;
         for (int n = 0; n < Integer.MAX_VALUE; n++) {
             decl = new Declaration();
             tokens.index = backIndex;
-            Declarator dcl = declarator(context, null, -1, false, n, true, false);
+            Declarator dcl = declarator(context, usingDefName, -1, false, n, true, false);
             if (dcl == null) {
                 break;
             }

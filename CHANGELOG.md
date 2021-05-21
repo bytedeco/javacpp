@@ -1,4 +1,5 @@
 
+ * Allow `Parser` to consider function pointers declared with `using` but without indirections
  * Let `Parser` map to annotations whole expressions starting with the `__attribute__` keyword
  * Fix `Parser` sometimes failing to create template instances with default arguments ([issue #478](https://github.com/bytedeco/javacpp/issues/478))
  * Enhance `Parser` to handle `typedef` correctly in the case of `enum` as well ([issue #477](https://github.com/bytedeco/javacpp/issues/477))
