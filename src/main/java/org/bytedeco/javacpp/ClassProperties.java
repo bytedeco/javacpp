@@ -219,17 +219,17 @@ public class ClassProperties extends HashMap<String,List<String>> {
             }
         }
         for (Platform p : platforms != null ? platforms : new Platform[0]) {
-            String[][] names = { p.value().length > 0 ? p.value() : defaultNames, p.not() };
-            boolean[] matches = { false, false };
+            String[][] names = { p.value().length > 0 ? p.value() : defaultNames, p.not(), p.pattern() };
+            boolean[] matches = { false, false, false };
             for (int i = 0; i < names.length; i++) {
                 for (String s : names[i]) {
-                    if (platform.startsWith(s)) {
+                    if ((i < 2 && platform.startsWith(s)) || (s.length() > 0 && platform.matches(s))) {
                         matches[i] = true;
                         break;
                     }
                 }
             }
-            if ((names[0].length == 0 || matches[0]) && (names[1].length == 0 || !matches[1])) {
+            if ((names[0].length == 0 || matches[0]) && (names[1].length == 0 || !matches[1]) && (names[2].length == 0 || matches[2])) {
                 // when no extensions are given by user, but we are in library loading mode, try to load extensions anyway
                 boolean match = p.extension().length == 0 || (Loader.isLoadLibraries() && platformExtension == null);
                 for (String s : p.extension()) {

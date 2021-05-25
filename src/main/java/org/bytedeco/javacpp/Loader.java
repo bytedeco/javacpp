@@ -1058,17 +1058,17 @@ public class Loader {
         }
         String platform2 = properties.getProperty("platform");
         String platformExtension = properties.getProperty("platform.extension");
-        String[][] names = { platform.value().length > 0 ? platform.value() : defaultNames, platform.not() };
-        boolean[] matches = { false, false };
+        String[][] names = { platform.value().length > 0 ? platform.value() : defaultNames, platform.not(), platform.pattern() };
+        boolean[] matches = { false, false, false };
         for (int i = 0; i < names.length; i++) {
             for (String s : names[i]) {
-                if (platform2.startsWith(s)) {
+                if ((i < 2 && platform2.startsWith(s)) || (s.length() > 0 && platform2.matches(s))) {
                     matches[i] = true;
                     break;
                 }
             }
         }
-        if ((names[0].length == 0 || matches[0]) && (names[1].length == 0 || !matches[1])) {
+        if ((names[0].length == 0 || matches[0]) && (names[1].length == 0 || !matches[1]) && (names[2].length == 0 || matches[2])) {
             boolean match = platform.extension().length == 0 || acceptAllExtensions;
             for (String s : platform.extension()) {
                 if (platformExtension != null && platformExtension.length() > 0 && platformExtension.endsWith(s)) {

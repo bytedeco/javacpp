@@ -18,7 +18,8 @@ import org.bytedeco.javacpp.tools.Generator;
  * (or not). The strings are matched with {@link String#startsWith(String)}.
  * In particular, {@code @Platform(value="")} matches all platforms, while
  * {@code @Platform(not="")} matches no platforms, providing a way to specify
- * methods to skip or classes to ignore, as if they did not exist.
+ * methods to skip or classes to ignore, as if they did not exist. Alternatively,
+ * regular expressions can also be used with {@code @Platform(pattern="")}.
  * <p>
  * Classes annotated with at least one of the other values define a top-enclosing
  * class as returned by {@link Loader#getEnclosingClass(Class)}. By default, one
@@ -44,6 +45,9 @@ public @interface Platform {
     /** The properties, class, or method do NOT apply to the named platforms.
      *  The strings are matched with {@link String#startsWith(String)} */
     String[] not()         default {};
+    /** The properties, class, or method apply only to the named platforms.
+     *  The strings are matched as regular expressions with {@link String#matches(String)}. */
+    String[] pattern()     default {};
     /** A list of {@code pragma} directives to list at the top of the generated
      *  code, before {@link #define()} macros and any included header files. */
     String[] pragma()      default {};
