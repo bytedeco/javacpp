@@ -139,7 +139,7 @@ public class Parser {
             infoSet.addAll(leafInfoMap.get(containerName));
             for (Info info : infoSet) {
                 Declaration decl = new Declaration();
-                if (info == null || info.skip || !info.define) {
+                if (info == null || info.skip || !info.define || !info.cppNames[0].contains(containerName)) {
                     if (info != null && info.javaText != null) {
                         decl.type = new Type(info.pointerTypes[0]);
                         decl.text = info.javaText;
@@ -149,6 +149,7 @@ public class Parser {
                 }
                 int dim = containerName.toLowerCase().endsWith("optional")
                        || containerName.toLowerCase().endsWith("variant")
+                       || containerName.toLowerCase().endsWith("tuple")
                        || containerName.toLowerCase().endsWith("pair") ? 0 : 1;
                 boolean constant = info.cppNames[0].startsWith("const "), resizable = !constant;
                 Type containerType = new Parser(this, info.cppNames[0]).type(context),
@@ -174,6 +175,7 @@ public class Parser {
                 String valueVariable = "second";
                 boolean dict = false;
                 boolean list = resizable; // also vector, etc
+                boolean tuple = false;
                 if (valueType.javaName == null || valueType.javaName.length() == 0
                         || containerName.toLowerCase().endsWith("bitset")) {
                     indexFunction = "";
@@ -188,6 +190,7 @@ public class Parser {
                 } else if (containerName.toLowerCase().endsWith("list")
                         || containerName.toLowerCase().endsWith("optional")
                         || containerName.toLowerCase().endsWith("variant")
+                        || containerName.toLowerCase().endsWith("tuple")
                         || containerName.toLowerCase().endsWith("set")) {
                     if (containerType.arguments.length > 1) {
                         valueType = indexType;
@@ -195,6 +198,7 @@ public class Parser {
                     indexType = null;
                     resizable = false;
                     list = containerName.toLowerCase().endsWith("list");
+                    tuple = containerName.toLowerCase().endsWith("tuple");
                 } else if (!constant && !resizable) {
                     indexFunction = ""; // maps need operator[] to be writable
                 }
@@ -212,15 +216,10 @@ public class Parser {
                     firstType = valueType.arguments[0];
                     secondType = valueType.arguments[1];
                 }
-                Type[] types = {firstType, secondType, indexType, valueType};
-                for (int i = 0; i < types.length; i++) {
-                    for (int j = i + 1; j < types.length; j++) {
-                        if (types[j] == types[i]) {
-                            types[j] = null;
-                        }
-                    }
-                }
-                for (Type type : types) {
+                LinkedHashSet<Type> typeSet = new LinkedHashSet<Type>();
+                typeSet.addAll(Arrays.asList(firstType, secondType, indexType, valueType));
+                typeSet.addAll(Arrays.asList(containerType.arguments));
+                for (Type type : typeSet) {
                     if (type == null) {
                         continue;
                     } else if (type.annotations == null || type.annotations.length() == 0) {
@@ -261,7 +260,8 @@ public class Parser {
                         + "    static { Loader.load(); }\n"
                         + "    /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */\n"
                         + "    public " + containerType.javaName + "(Pointer p) { super(p); }\n";
-                if (!constant && (dim == 0 || (containerType.arguments.length == 1 && indexType != null)) && firstType != null && secondType != null) {
+                boolean purify = info != null && info.purify;
+                if (!constant && !purify && (dim == 0 || (containerType.arguments.length == 1 && indexType != null)) && firstType != null && secondType != null) {
                     String[] firstNames = firstType.javaNames != null ? firstType.javaNames : new String[] {firstType.javaName};
                     String[] secondNames = secondType.javaNames != null ? secondType.javaNames : new String[] {secondType.javaName};
                     String brackets = arrayBrackets + (dim > 0 ? "[]" : "");
@@ -270,25 +270,39 @@ public class Parser {
                                                                                   + secondNames[Math.min(n, secondNames.length - 1)] + brackets + " secondValue) "
                                   +  "{ this(" + (dim > 0 ? "Math.min(firstValue.length, secondValue.length)" : "") + "); put(firstValue, secondValue); }\n";
                     }
-                } else if (resizable && firstType == null && secondType == null) {
+                } else if (resizable && !purify && firstType == null && secondType == null) {
                     for (String javaName : valueType.javaNames != null ? valueType.javaNames : new String[] {valueType.javaName}) {
                         if (dim < 2 && !javaName.equals("int") && !javaName.equals("long")) {
                             decl.text += "    public " + containerType.javaName + "(" + javaName + " value) { this(1); put(0, value); }\n";
                         }
                         decl.text += "    public " + containerType.javaName + "(" + javaName + arrayBrackets + " ... array) { this(array.length); put(array); }\n";
                     }
-                } else if (indexType == null && dim == 0 && !constant) {
+                } else if (indexType == null && dim == 0 && !constant && !purify) {
+                    int n = 0;
+                    String valueNames = "", valueNames2 = "", separator = "";
                     for (Type type : containerType.arguments) {
-                        for (String javaName : type.javaNames != null ? type.javaNames : new String[] {type.javaName}) {
+                        if (tuple) {
+                            valueNames += separator + type.annotations + type.javaName + " value" + n;
+                            valueNames2 += separator + "value" + n;
+                            separator = ", ";
+                            n++;
+                        } else for (String javaName : type.javaNames != null ? type.javaNames : new String[] {type.javaName}) {
+                            // variant, optional, etc
                             decl.text += "    public " + containerType.javaName + "(" + javaName + " value) { this(); put(value); }\n";
                         }
                     }
+                    if (tuple) {
+                        decl.text += "    public " + containerType.javaName + "(" + valueNames + ") { allocate(" + valueNames2 + "); }\n"
+                                  +  "    private native void allocate(" + valueNames + ");\n";
+                    }
                 }
-                decl.text += "    public " + containerType.javaName + "()       { allocate();  }\n" + (!resizable ? ""
-                           : "    public " + containerType.javaName + "(long n) { allocate(n); }\n")
-                           + "    private native void allocate();\n"                                + (!resizable ? ""
-                           : "    private native void allocate(@Cast(\"size_t\") long n);\n")       + (constant   ? "\n\n"
-                           : "    public native @Name(\"operator =\") @ByRef " + containerType.javaName + " put(@ByRef " + containerType.annotations + containerType.javaName + " x);\n\n");
+                if (!purify) {
+                    decl.text += "    public " + containerType.javaName + "()       { allocate();  }\n" + (!resizable ? ""
+                               : "    public " + containerType.javaName + "(long n) { allocate(n); }\n")
+                               + "    private native void allocate();\n"                                + (!resizable ? ""
+                               : "    private native void allocate(@Cast(\"size_t\") long n);\n")       + (constant   ? "\n\n"
+                               : "    public native @Name(\"operator =\") @ByRef " + containerType.javaName + " put(@ByRef " + containerType.annotations + containerType.javaName + " x);\n\n");
+                }
 
                 for (int i = 0; i < dim; i++) {
                     String indexAnnotation = i > 0 ? ("@Index(" + (i > 1 ? "value = " + i + ", " : "" ) + "function = \"at\") ") : "";
@@ -335,19 +349,22 @@ public class Parser {
                             decl.text += "    @ValueSetter @Index" + indexFunction + " public native " + containerType.javaName + " put(" + params + separator + valueType.annotations + valueType.javaNames[i] + " value);\n";
                         }
                     } else if (dim == 0) {
+                        int n = 0;
                         for (Type type : containerType.arguments) {
-                            if (containerType.arguments.length == 1) {
+                            if (containerType.arguments.length == 1 && !tuple) {
                                 decl.text += "\n"
                                           +  "    @Name(\"value\") public native " + type.annotations + type.javaName + " get();\n";
                             } else {
-                                // ??
+                                decl.text += "    public " + type.annotations + type.javaName + " get" + n + "() { return get" + n + "(this); }\n"
+                                          +  "    @Namespace @Name(\"std::get<" + n + ">\") public static native " + type.annotations + type.javaName + " get" + n + "(@ByRef " + containerType.javaName + " container);\n";
                             }
-                            if (!constant) {
+                            if (!constant && !tuple) {
                                 decl.text += "    @ValueSetter public native " + containerType.javaName + " put(" + type.annotations + type.javaName + " value);\n";
                             }
-                            for (int i = 1; !constant && type.javaNames != null && i < type.javaNames.length; i++) {
+                            for (int i = 1; !constant && !tuple && type.javaNames != null && i < type.javaNames.length; i++) {
                                 decl.text += "    @ValueSetter public native " + containerType.javaName + " put(" + type.annotations + type.javaNames[i] + " value);\n";
                             }
+                            n++;
                         }
                     }
                     if (dim == 1 && !containerName.toLowerCase().endsWith("bitset") && containerType.arguments.length >= 1 && containerType.arguments[containerType.arguments.length - 1].javaName.length() > 0) {

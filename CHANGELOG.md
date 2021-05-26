@@ -18,7 +18,7 @@
  * Fix memory leak in `Pointer.releaseReference()` with "org.bytedeco.javacpp.nopointergc" ([issue awslabs/djl#690](https://github.com/awslabs/djl/issues/690))
  * Fix `Parser` not stripping annotations from `Info.pointerTypes` when creating Java peer classes
  * Fix `Parser` not inheriting constructors with existing `Info` or with nested templates
- * Add support for `std::optional` and `std::variant` basic containers and fix various `Parser` failures
+ * Add support for `std::tuple`, `std::optional`, and `std::variant` basic containers and fix various `Parser` failures
  * Add parameter for `Loader.load()` to return path of a specific executable ([pull #466](https://github.com/bytedeco/javacpp/pull/466))
  * Use `std::uninitialized_copy` in `VectorAdapter` to make sure copy constructors get called ([pull #465](https://github.com/bytedeco/javacpp/pull/465))
 
