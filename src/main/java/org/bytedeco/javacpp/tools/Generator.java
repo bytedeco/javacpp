@@ -1311,9 +1311,9 @@ public class Generator {
             out.println("            uniquePtr2(owner != NULL && owner != ptr ? U() : U((T*)ptr)),");
             out.println("            uniquePtr(owner != NULL && owner != ptr ? *(U*)owner : uniquePtr2) { }");
             out.println("    UniquePtrAdapter(U&& uniquePtr) : ptr(0), size(0), owner(0), uniquePtr2(UNIQUE_PTR_NAMESPACE::move(uniquePtr)), uniquePtr(uniquePtr2) { }");
-            out.println("    UniquePtrAdapter(const U& uniquePtr) : ptr(0), size(0), owner(0), uniquePtr((U&)uniquePtr) { }");
-            out.println("    UniquePtrAdapter(      U& uniquePtr) : ptr(0), size(0), owner(0), uniquePtr(uniquePtr) { }");
-            out.println("    UniquePtrAdapter(const U* uniquePtr) : ptr(0), size(0), owner(0), uniquePtr(*(U*)uniquePtr) { }");
+            out.println("    UniquePtrAdapter(const U& uniquePtr) : ptr(0), size(0), owner(0), uniquePtr2(U(NULL, D())), uniquePtr((U&)uniquePtr) { }");
+            out.println("    UniquePtrAdapter(      U& uniquePtr) : ptr(0), size(0), owner(0), uniquePtr2(U(NULL, D())), uniquePtr(uniquePtr) { }");
+            out.println("    UniquePtrAdapter(const U* uniquePtr) : ptr(0), size(0), owner(0), uniquePtr2(U(NULL, D())), uniquePtr(*(U*)uniquePtr) { }");
             out.println("    void assign(T* ptr, size_t size, void* owner) {");
             out.println("        this->ptr = ptr;");
             out.println("        this->size = size;");

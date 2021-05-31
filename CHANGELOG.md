@@ -1,4 +1,5 @@
 
+ * Add support for `Deleter` of pointer types to `UniquePtrAdapter`
  * Add `@Platform(pattern=...)` annotation value to allow matching with regular expressions as well
  * Allow `Parser` to consider function pointers declared with `using` but without indirections
  * Let `Parser` map to annotations whole expressions starting with the `__attribute__` keyword
