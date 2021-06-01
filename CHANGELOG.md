@@ -1,4 +1,6 @@
 
+ * Allow defining `NO_JNI_DETACH_THREAD` to avoid overhead from pthreads on callbacks ([issue #486](https://github.com/bytedeco/javacpp/issues/486))
+ * Pick up `@Allocator`, `@CriticalRegion`, `@NoException` in `Generator` from `@Properties(inherit=classes)` as well ([issue #484](https://github.com/bytedeco/javacpp/issues/484))
  * Add support for `Deleter` of pointer types to `UniquePtrAdapter`
  * Add `@Platform(pattern=...)` annotation value to allow matching with regular expressions as well
  * Allow `Parser` to consider function pointers declared with `using` but without indirections

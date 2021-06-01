@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2020 Samuel Audet
+ * Copyright (C) 2011-2021 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -521,7 +521,7 @@ public class Generator {
         out.println("    va_end(ap);");
         out.println("}");
         out.println();
-        out.println("#if defined(__linux__) || defined(__APPLE__)");
+        out.println("#if !defined(NO_JNI_DETACH_THREAD) && (defined(__linux__) || defined(__APPLE__))");
         out.println("    static pthread_key_t JavaCPP_current_env;");
         out.println("    static JavaCPP_noinline void JavaCPP_detach_env(void *data) {");
         out.println("        if (JavaCPP_vm) {");
@@ -1370,7 +1370,7 @@ public class Generator {
             out.println();
         }
         if (!functions.isEmpty() || !virtualFunctions.isEmpty()) {
-            out.println("#if defined(__linux__) || defined(__APPLE__)");
+            out.println("#if !defined(NO_JNI_DETACH_THREAD) && (defined(__linux__) || defined(__APPLE__))");
             out.println("  static pthread_once_t JavaCPP_once = PTHREAD_ONCE_INIT;");
             out.println("  static pthread_mutex_t JavaCPP_lock = PTHREAD_MUTEX_INITIALIZER;");
             out.println("#endif");
@@ -1407,7 +1407,7 @@ public class Generator {
                 out.println("#endif");
             }
             out.println("    }");
-            out.println("#if defined(__linux__) || defined(__APPLE__)");
+            out.println("#if !defined(NO_JNI_DETACH_THREAD) && (defined(__linux__) || defined(__APPLE__))");
             out.println("    pthread_mutex_lock(&JavaCPP_lock);");
             out.println("    pthread_once(&JavaCPP_once, JavaCPP_create_pthread_key);");
             out.println("    if ((*env = (JNIEnv *)pthread_getspecific(JavaCPP_current_env)) != NULL) {");
@@ -1438,7 +1438,7 @@ public class Generator {
             out.println("            *env = NULL;");
             out.println("            goto done;");
             out.println("        }");
-            out.println("#if defined(__linux__) || defined(__APPLE__)");
+            out.println("#if !defined(NO_JNI_DETACH_THREAD) && (defined(__linux__) || defined(__APPLE__))");
             out.println("        pthread_setspecific(JavaCPP_current_env, *env);");
             out.println("#endif");
             out.println("        attached = true;");
@@ -1451,7 +1451,7 @@ public class Generator {
             out.println("        }");
             out.println("    }");
             out.println("done:");
-            out.println("#if defined(__linux__) || defined(__APPLE__)");
+            out.println("#if !defined(NO_JNI_DETACH_THREAD) && (defined(__linux__) || defined(__APPLE__))");
             out.println("    pthread_mutex_unlock(&JavaCPP_lock);");
             out.println("#endif");
             out.println("    return attached;");
@@ -3707,10 +3707,28 @@ public class Generator {
     }
 
     static int allocatorMax(Class<?> cls, Method method) {
+        try {
+            Allocator a = allocator(cls, method);
+            return a != null ? a.max() : (int)Allocator.class.getDeclaredMethod("max").getDefaultValue();
+        } catch (NoSuchMethodException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    static Allocator allocator(Class<?> cls, Method method) {
         Allocator a = method.getAnnotation(Allocator.class);
         while (a == null && cls != null) {
             if ((a = cls.getAnnotation(Allocator.class)) != null) {
                 break;
+            }
+            org.bytedeco.javacpp.annotation.Properties classProperties =
+                    cls.getAnnotation(org.bytedeco.javacpp.annotation.Properties.class);
+            if (classProperties != null) {
+                for (Class c : classProperties.inherit()) {
+                    if ((a = allocator(c, method)) != null) {
+                        break;
+                    }
+                }
             }
             if (cls.getEnclosingClass() != null) {
                 cls = cls.getEnclosingClass();
@@ -3718,11 +3736,7 @@ public class Generator {
                 cls = cls.getSuperclass();
             }
         }
-        try {
-            return a != null ? a.max() : (int)Allocator.class.getDeclaredMethod("max").getDefaultValue();
-        } catch (NoSuchMethodException e) {
-            throw new RuntimeException(e);
-        }
+        return a;
     }
 
     static boolean criticalRegion(Class<?> cls, Method method) {
@@ -3731,6 +3745,15 @@ public class Generator {
         while (!criticalRegion && cls != null) {
             if (criticalRegion = cls.isAnnotationPresent(CriticalRegion.class)) {
                 break;
+            }
+            org.bytedeco.javacpp.annotation.Properties classProperties =
+                    cls.getAnnotation(org.bytedeco.javacpp.annotation.Properties.class);
+            if (classProperties != null) {
+                for (Class c : classProperties.inherit()) {
+                    if (criticalRegion = criticalRegion(c, method)) {
+                        break;
+                    }
+                }
             }
             if (cls.getEnclosingClass() != null) {
                 cls = cls.getEnclosingClass();
@@ -3747,6 +3770,15 @@ public class Generator {
         while (!noException && cls != null) {
             if (noException = cls.isAnnotationPresent(NoException.class)) {
                 break;
+            }
+            org.bytedeco.javacpp.annotation.Properties classProperties =
+                    cls.getAnnotation(org.bytedeco.javacpp.annotation.Properties.class);
+            if (classProperties != null) {
+                for (Class c : classProperties.inherit()) {
+                    if (noException = noException(c, method)) {
+                        break;
+                    }
+                }
             }
             if (cls.getEnclosingClass() != null) {
                 cls = cls.getEnclosingClass();
