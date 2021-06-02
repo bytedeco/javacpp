@@ -1372,7 +1372,6 @@ public class Generator {
         if (!functions.isEmpty() || !virtualFunctions.isEmpty()) {
             out.println("#if !defined(NO_JNI_DETACH_THREAD) && (defined(__linux__) || defined(__APPLE__))");
             out.println("  static pthread_once_t JavaCPP_once = PTHREAD_ONCE_INIT;");
-            out.println("  static pthread_mutex_t JavaCPP_lock = PTHREAD_MUTEX_INITIALIZER;");
             out.println("#endif");
             out.println();
             out.println("static JavaCPP_noinline void JavaCPP_detach(bool detach) {");
@@ -1408,7 +1407,6 @@ public class Generator {
             }
             out.println("    }");
             out.println("#if !defined(NO_JNI_DETACH_THREAD) && (defined(__linux__) || defined(__APPLE__))");
-            out.println("    pthread_mutex_lock(&JavaCPP_lock);");
             out.println("    pthread_once(&JavaCPP_once, JavaCPP_create_pthread_key);");
             out.println("    if ((*env = (JNIEnv *)pthread_getspecific(JavaCPP_current_env)) != NULL) {");
             out.println("        attached = true;");
@@ -1451,9 +1449,6 @@ public class Generator {
             out.println("        }");
             out.println("    }");
             out.println("done:");
-            out.println("#if !defined(NO_JNI_DETACH_THREAD) && (defined(__linux__) || defined(__APPLE__))");
-            out.println("    pthread_mutex_unlock(&JavaCPP_lock);");
-            out.println("#endif");
             out.println("    return attached;");
             out.println("}");
             out.println();
