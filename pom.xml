@@ -581,7 +581,7 @@ Import-Package: \
         </plugins>
       </build>
     </profile>
-    
+
     <!-- *********************************** -->
     <!-- * Eclipse: m2e lifecycle bindings * -->
     <!-- *********************************** -->
@@ -595,7 +595,7 @@ Import-Package: \
       <build>
         <pluginManagement>
           <plugins>
-            <!--This plugin's configuration is used to store Eclipse m2e settings 
+            <!--This plugin's configuration is used to store Eclipse m2e settings
                 only. It has no influence on the Maven build itself. -->
             <plugin>
               <groupId>org.eclipse.m2e</groupId>
@@ -606,7 +606,7 @@ Import-Package: \
                   <pluginExecutions>
                     <!-- *********************************************** -->
                     <!-- The Maven Dev Connector for Eclipse m2e is no   -->
-                    <!-- longer maintained. We copy the relevant part    --> 
+                    <!-- longer maintained. We copy the relevant part    -->
                     <!-- of the lifecycle mapping for the                -->
                     <!-- maven-plugin-plugin here.                       -->
                     <!--                                                 -->
@@ -649,4 +649,5 @@ Import-Package: \
       </build>
     </profile>
   </profiles>
+
 </project>

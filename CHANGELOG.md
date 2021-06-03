@@ -1,4 +1,5 @@
 
+ * Add missing `presets/package-info.java` required for OSGi and add profile for M2Eclipse ([pull #490](https://github.com/bytedeco/javacpp/pull/490))
  * Remove unnecessary mutex lock for pthreads on callbacks in `Generator` ([pull #489](https://github.com/bytedeco/javacpp/pull/489))
  * Fix `@AsUtf16` handling for setter methods paired with getters in `Generator` ([pull #488](https://github.com/bytedeco/javacpp/pull/488))
  * Allow defining `NO_JNI_DETACH_THREAD` to avoid overhead from pthreads on callbacks ([issue #486](https://github.com/bytedeco/javacpp/issues/486))
