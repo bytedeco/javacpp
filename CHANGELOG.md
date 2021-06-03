@@ -1,4 +1,6 @@
 
+ * Remove unnecessary mutex lock for pthreads on callbacks in `Generator` ([pull #489](https://github.com/bytedeco/javacpp/pull/489))
+ * Fix `@AsUtf16` handling for setter methods paired with getters in `Generator` ([pull #488](https://github.com/bytedeco/javacpp/pull/488))
  * Allow defining `NO_JNI_DETACH_THREAD` to avoid overhead from pthreads on callbacks ([issue #486](https://github.com/bytedeco/javacpp/issues/486))
  * Pick up `@Allocator`, `@CriticalRegion`, `@NoException` in `Generator` from `@Properties(inherit=classes)` as well ([issue #484](https://github.com/bytedeco/javacpp/issues/484))
  * Add support for `Deleter` of pointer types to `UniquePtrAdapter`
