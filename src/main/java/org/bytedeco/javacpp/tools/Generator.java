@@ -2120,7 +2120,7 @@ public class Generator {
                 Annotation passBy = by(methodInfo, j);
                 String cast = cast(methodInfo, j);
                 String[] typeName = methodInfo.parameterRaw[j] ? new String[] { "" }
-                        : cppTypeName(methodInfo.parameterTypes[j], methodInfo.parameterAnnotations[j]);
+                        : cppTypeName(methodInfo, j);
                 AdapterInformation adapterInfo = methodInfo.parameterRaw[j] ? null
                         : adapterInformation(false, methodInfo, j);
 
@@ -2190,7 +2190,7 @@ public class Generator {
                     }
                 } else if (methodInfo.parameterTypes[j] == String.class) {
                     passesStrings = true;
-                    out.println(getStringData("arg" + j, methodInfo.parameterAnnotations[j]));
+                    out.println(getStringData("arg" + j, asUtf16(methodInfo, j)));
                     if (adapterInfo != null || prevAdapterInfo != null) {
                         out.println("    jlong size" + j + " = 0;");
                         out.println("    void* owner" + j + " = (void*)ptr" + j + ";");
@@ -2424,7 +2424,12 @@ public class Generator {
                     adapterInformation(false, methodInfo, k) == null &&
                     methodInfo.parameterTypes[k] == String.class) {
                 // special considerations for char arrays as strings
-                out.print(indent + "strcpy((char*)");
+                if (asUtf16(methodInfo, k)) {
+                    out.print(indent + "memcpy(");
+                    suffix = ", (std::char_traits<unsigned short>::length(ptr" + k + ") + 1) * sizeof(unsigned short))";
+                } else {
+                    out.print(indent + "strcpy((char*)");
+                }
                 wantsPointer = true;
                 prefix = ", ";
             } else if (k >= 1 && methodInfo.parameterTypes[0].isArray() &&
@@ -2788,7 +2793,7 @@ public class Generator {
                 } else if (methodInfo.returnType == String.class) {
                     passesStrings = true;
                     out.println(indent + "if (rptr != NULL) {");
-                    out.println(indent + "    rarg = " + createString("rptr", (adapterInfo != null ? "radapter" : null), methodInfo.annotations));
+                    out.println(indent + "    rarg = " + createString("rptr", (adapterInfo != null ? "radapter" : null), asUtf16(methodInfo.annotations)));
                     out.println(indent + "}");
                 } else if (methodInfo.returnType.isArray() &&
                         methodInfo.returnType.getComponentType().isPrimitive()) {
@@ -2880,7 +2885,7 @@ public class Generator {
                             ", JavaCPP_addressFID, ptr_to_jlong(ptr" + j + "));");
                 }
             } else if (methodInfo.parameterTypes[j] == String.class) {
-                out.println("    " + releaseStringData("arg" + j, "ptr" + j, methodInfo.parameterAnnotations[j]));
+                out.println("    " + releaseStringData("arg" + j, "ptr" + j, asUtf16(methodInfo, j)));
             } else if (methodInfo.parameterTypes[j].isArray() &&
                     methodInfo.parameterTypes[j].getComponentType().isPrimitive()) {
                 for (int k = 0; adapterInfo != null && k < adapterInfo.argc; k++) {
@@ -3193,9 +3198,9 @@ public class Generator {
                         }
                         if (adapterInfo != null) {
                             final String adapter = "adapter" + j;
-                            out.println("    jstring obj" + j + " = " + createString("(" + typeName[0] + ") " + adapter, adapter, callbackParameterAnnotations[j]));
+                            out.println("    jstring obj" + j + " = " + createString("(" + typeName[0] + ") " + adapter, adapter, asUtf16(callbackParameterAnnotations[j])));
                         } else {
-                            out.println("    jstring obj" + j + " = " + createString("(" + typeName[0] + ") arg" + j, null, callbackParameterAnnotations[j]));
+                            out.println("    jstring obj" + j + " = " + createString("(" + typeName[0] + ") arg" + j, null, asUtf16(callbackParameterAnnotations[j])));
                         }
                         out.println("    args[" + j + "].l = obj" + j + ";");
                     } else if (callbackParameterTypes[j].isArray() &&
@@ -3356,7 +3361,7 @@ public class Generator {
                 }
             } else if (callbackReturnType == String.class) {
                 passesStrings = true;
-                out.println("    " + returnTypeName[0] + " rptr" + returnTypeName[1] + " = " + getStringData("rarg", callbackAnnotations));
+                out.println("    " + returnTypeName[0] + " rptr" + returnTypeName[1] + " = " + getStringData("rarg", asUtf16(callbackAnnotations)));
                 if (returnAdapterInfo != null) {
                     out.println("    jlong rsize = 0;");
                     out.println("    void* rowner = (void*)rptr;");
@@ -3962,6 +3967,14 @@ public class Generator {
         }
     }
 
+    static boolean asUtf16(MethodInformation methodInfo, int j) {
+        if (methodInfo.parameterAnnotations[j].length == 0 && methodInfo.pairedMethod != null &&
+                j == methodInfo.parameterTypes.length - 1 && (methodInfo.valueSetter || methodInfo.memberSetter)) {
+            return asUtf16(methodInfo.pairedMethod.getAnnotations());
+        }
+        return asUtf16(methodInfo.parameterAnnotations[j]);
+    }
+
     static boolean asUtf16(Annotation[] annotations) {
         if (annotations == null) {
             return false;
@@ -3974,20 +3987,20 @@ public class Generator {
         return false;
     }
 
-    static String createString(String ptr, String adapter, Annotation[] annotations) {
-        return (asUtf16(annotations) ? "JavaCPP_createStringFromUTF16(env, "
-                                     : "JavaCPP_createStringFromBytes(env, ")
+    static String createString(String ptr, String adapter, boolean asUtf16) {
+        return (asUtf16 ? "JavaCPP_createStringFromUTF16(env, "
+                        : "JavaCPP_createStringFromBytes(env, ")
                 + ptr + (adapter != null ? ", " + adapter + ".size);" : ");");
     }
 
-    static String getStringData(String str, Annotation[] annotations) {
-        return (asUtf16(annotations) ? "JavaCPP_getStringUTF16(env, "
-                                     : "JavaCPP_getStringBytes(env, ") + str + ");";
+    static String getStringData(String str, boolean asUtf16) {
+        return (asUtf16 ? "JavaCPP_getStringUTF16(env, "
+                        : "JavaCPP_getStringBytes(env, ") + str + ");";
     }
 
-    static String releaseStringData(String str, String ptr, Annotation[] annotations) {
-        return (asUtf16(annotations) ? "JavaCPP_releaseStringUTF16(env, "
-                                     : "JavaCPP_releaseStringBytes(env, " + str + ", ") + ptr + ");";
+    static String releaseStringData(String str, String ptr, boolean asUtf16) {
+        return (asUtf16 ? "JavaCPP_releaseStringUTF16(env, "
+                        : "JavaCPP_releaseStringBytes(env, " + str + ", ") + ptr + ");";
     }
 
     static String constValueTypeName(String ... typeName) {
@@ -4129,6 +4142,14 @@ public class Generator {
             typeName = cppTypeName(type, annotations);
         }
         return typeName;
+    }
+
+    String[] cppTypeName(MethodInformation methodInfo, int j) {
+        if (methodInfo.parameterAnnotations[j].length == 0 && methodInfo.pairedMethod != null &&
+                j == methodInfo.parameterTypes.length - 1 && (methodInfo.valueSetter || methodInfo.memberSetter)) {
+            return cppTypeName(methodInfo.pairedMethod.getReturnType(), methodInfo.pairedMethod.getAnnotations());
+        }
+        return cppTypeName(methodInfo.parameterTypes[j], methodInfo.parameterAnnotations[j]);
     }
 
     String[] cppTypeName(Class<?> type) {
