@@ -1606,9 +1606,7 @@ public class Parser {
             if (context.namespace != null && localName.startsWith(context.namespace + "::")) {
                 localName = dcl.cppName.substring(context.namespace.length() + 2);
             }
-            int template = localName.lastIndexOf('<');
-            String simpleName = template >= 0 ? localName.substring(0, template) : localName;
-            if (!simpleName.equals(dcl.javaName) && (!localName.contains("::") || context.javaName == null)) {
+            if (!localName.equals(dcl.javaName) && (!localName.contains("::") || context.javaName == null)) {
                 type.annotations += "@Name(\"" + localName + "\") ";
             }
         }
@@ -2213,7 +2211,7 @@ public class Parser {
             if (info == null) {
                 info = infoMap.getFirst(dcl.cppName);
             }
-            if (!type.constructor && !type.destructor && !type.operator) {
+            if (!type.constructor && !type.destructor && !type.operator && (context.templateMap == null || context.templateMap.full())) {
                 infoMap.put(info != null ? new Info(info).cppNames(fullname) : new Info(fullname));
             }
         }
@@ -2339,6 +2337,15 @@ public class Parser {
                 namespace = dcl.cppName.lastIndexOf("::");
                 if (context.namespace != null && namespace < 0) {
                     dcl.cppName = context.namespace + "::" + dcl.cppName;
+                }
+            }
+
+            // use Java names that we may get here but that declarator() did not catch
+            if (fullInfo != null && fullInfo.javaNames != null && fullInfo.javaNames.length > 0 && !dcl.javaName.equals(fullInfo.javaNames[0])) {
+                dcl.javaName = fullInfo.javaNames[0];
+                dcl.signature = dcl.javaName + dcl.parameters.signature;
+                if (!localName.equals(dcl.javaName) && !type.annotations.contains("@Name(")) {
+                    type.annotations += "@Name(\"" + localName + "\") ";
                 }
             }
 

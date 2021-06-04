@@ -1,4 +1,6 @@
 
+ * Allow `Parser` to use `Info.javaNames` for function names containing parameters as well ([issue #492](https://github.com/bytedeco/javacpp/issues/492))
+ * Fix `Parser` producing incorrect calls to function templates with non-type parameters ([issue #491](https://github.com/bytedeco/javacpp/issues/491))
  * Add missing `presets/package-info.java` required for OSGi and add profile for M2Eclipse ([pull #490](https://github.com/bytedeco/javacpp/pull/490))
  * Remove unnecessary mutex lock for pthreads on callbacks in `Generator` ([pull #489](https://github.com/bytedeco/javacpp/pull/489))
  * Fix `@AsUtf16` handling for setter methods paired with getters in `Generator` ([pull #488](https://github.com/bytedeco/javacpp/pull/488))

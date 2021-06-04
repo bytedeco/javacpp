@@ -3723,7 +3723,7 @@ public class Generator {
             }
             org.bytedeco.javacpp.annotation.Properties classProperties =
                     cls.getAnnotation(org.bytedeco.javacpp.annotation.Properties.class);
-            if (classProperties != null) {
+            if (Pointer.class.isAssignableFrom(cls) && classProperties != null) {
                 for (Class c : classProperties.inherit()) {
                     if ((a = allocator(c, method)) != null) {
                         break;
@@ -3748,7 +3748,7 @@ public class Generator {
             }
             org.bytedeco.javacpp.annotation.Properties classProperties =
                     cls.getAnnotation(org.bytedeco.javacpp.annotation.Properties.class);
-            if (classProperties != null) {
+            if (Pointer.class.isAssignableFrom(cls) && classProperties != null) {
                 for (Class c : classProperties.inherit()) {
                     if (criticalRegion = criticalRegion(c, method)) {
                         break;
@@ -3773,7 +3773,7 @@ public class Generator {
             }
             org.bytedeco.javacpp.annotation.Properties classProperties =
                     cls.getAnnotation(org.bytedeco.javacpp.annotation.Properties.class);
-            if (classProperties != null) {
+            if (Pointer.class.isAssignableFrom(cls) && classProperties != null) {
                 for (Class c : classProperties.inherit()) {
                     if (noException = noException(c, method)) {
                         break;
