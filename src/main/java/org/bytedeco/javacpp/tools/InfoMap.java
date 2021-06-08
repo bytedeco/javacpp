@@ -209,7 +209,7 @@ public class InfoMap extends HashMap<String,List<Info>> {
                 name += " " + tokens[i].value;
             }
         } else if (untemplate) {
-            int count = 0, lastColon = -1, template = -1;
+            int count = 0, lastColon = -1, template = -1, parameters = -1;
             for (int i = 0; i < n; i++) {
                 if (tokens[i].match('<')) {
                     count++;
@@ -228,8 +228,8 @@ public class InfoMap extends HashMap<String,List<Info>> {
                     count++;
                 } else if (i > lastColon && tokens[i].match('>')) {
                     count--;
-                    if (count == 0 && i + 1 != n) {
-                        template = -1;
+                    if (count == 0) {
+                        parameters = i + 1;
                     }
                 }
             }
@@ -237,6 +237,9 @@ public class InfoMap extends HashMap<String,List<Info>> {
                 name = foundConst ? "const " : "";
                 for (int i = 0; i < template; i++) {
                     name += tokens[i];
+                }
+                for (int i = parameters; i < n; i++) {
+                    name += tokens[i].spacing + tokens[i];
                 }
             }
         }

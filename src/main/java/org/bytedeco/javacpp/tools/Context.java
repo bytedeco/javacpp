@@ -72,6 +72,10 @@ class Context {
 
     /** Return all likely combinations of namespaces and template arguments for this C++ type */
     String[] qualify(String cppName) {
+        return qualify(cppName, null);
+    }
+    /** or function, if parameters != null */
+    String[] qualify(String cppName, String parameters) {
         if (cppName == null || cppName.length() == 0) {
             return new String[0];
         }
@@ -86,9 +90,16 @@ class Context {
         String ns = namespace != null ? namespace : "";
         while (ns != null) {
             String name = ns.length() > 0 ? ns + "::" + cppName : cppName;
+            if (parameters != null && name.endsWith(parameters)) {
+                name = name.substring(0, name.length() - parameters.length());
+            }
             TemplateMap map = templateMap;
             while (map != null) {
-                if (name.equals(map.getName())) {
+                String name2 = map.getName();
+                if (parameters != null && name2 != null && name2.endsWith(parameters)) {
+                    name2 = name2.substring(0, name2.length() - parameters.length());
+                }
+                if (name.equals(name2)) {
                     String args = "<", separator = "";
                     for (Type t : map.values()) {
                         // assume that missing arguments have default values
@@ -97,7 +108,7 @@ class Context {
                             separator = ",";
                         }
                     }
-                    names.add(name + args + (args.endsWith(">") ? " >" : ">"));
+                    names.add(name + args + (args.endsWith(">") ? " >" : ">") + (parameters != null ? parameters : ""));
                     break;
                 }
                 map = map.parent;

@@ -60,6 +60,9 @@ class DeclarationList extends ArrayList<Declaration> {
     }
 
     @Override public boolean add(Declaration decl) {
+        return add(decl, null);
+    }
+    public boolean add(Declaration decl, String fullName) {
         boolean add = true;
         if (templateMap != null && templateMap.empty() && !decl.custom && (decl.type != null || decl.declarator != null)) {
             // method templates cannot be declared in Java, but make sure to make their
@@ -67,13 +70,19 @@ class DeclarationList extends ArrayList<Declaration> {
             if (infoIterator == null) {
                 Type type = templateMap.type = decl.type;
                 Declarator dcl = templateMap.declarator = decl.declarator;
-                List<Info> infoList = infoMap.get(dcl != null ? dcl.cppName : type.cppName);
-                boolean hasJavaName = false;
-                for (Info info : infoList) {
-                    hasJavaName |= info.javaNames != null && info.javaNames.length > 0;
-                }
-                if (!decl.function || hasJavaName) {
-                    infoIterator = infoList.size() > 0 ? infoList.listIterator() : null;
+                for (String name : new String[] {fullName, dcl != null ? dcl.cppName : type.cppName}) {
+                    if (name == null) {
+                        continue;
+                    }
+                    List<Info> infoList = infoMap.get(name);
+                    boolean hasJavaName = false;
+                    for (Info info : infoList) {
+                        hasJavaName |= info.javaNames != null && info.javaNames.length > 0;
+                    }
+                    if (!decl.function || hasJavaName) {
+                        infoIterator = infoList.size() > 0 ? infoList.listIterator() : null;
+                        break;
+                    }
                 }
             }
             add = false;

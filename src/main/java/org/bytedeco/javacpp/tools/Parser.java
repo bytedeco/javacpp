@@ -2189,9 +2189,9 @@ public class Parser {
                     separator = ", ";
                 }
             }
-            info = fullInfo = infoMap.getFirst(fullname += ")");
+            info = fullInfo = infoMap.getFirst(fullname += ")", false);
             if (info == null) {
-                info = infoMap.getFirst(fullname2 += ")");
+                info = infoMap.getFirst(fullname2 += ")", false);
             }
         }
         if (info == null) {
@@ -2212,7 +2212,7 @@ public class Parser {
                 info = infoMap.getFirst(dcl.cppName);
             }
             if (!type.constructor && !type.destructor && !type.operator && (context.templateMap == null || context.templateMap.full())) {
-                infoMap.put(info != null ? new Info(info).cppNames(fullname) : new Info(fullname));
+                infoMap.put(info != null ? new Info(info).cppNames(fullname).javaNames(null) : new Info(fullname));
             }
         }
         String localName = dcl.cppName;
@@ -2341,11 +2341,28 @@ public class Parser {
             }
 
             // use Java names that we may get here but that declarator() did not catch
-            if (fullInfo != null && fullInfo.javaNames != null && fullInfo.javaNames.length > 0 && !dcl.javaName.equals(fullInfo.javaNames[0])) {
+            String parameters = fullname.substring(dcl.cppName.length());
+            for (String name : context.qualify(dcl.cppName, parameters)) {
+                if ((infoMap.getFirst(name, false)) != null) {
+                    dcl.cppName = name;
+                    break;
+                } else if (infoMap.getFirst(name) != null) {
+                    dcl.cppName = name;
+                }
+            }
+            String localName2 = dcl.cppName;
+            if (context.namespace != null && localName2.startsWith(context.namespace + "::")) {
+                localName2 = dcl.cppName.substring(context.namespace.length() + 2);
+            }
+            if (localName2.endsWith(parameters)) {
+                localName2 = localName2.substring(0, localName2.length() - parameters.length());
+            }
+            if (fullInfo != null && fullInfo.javaNames != null && fullInfo.javaNames.length > 0) {
                 dcl.javaName = fullInfo.javaNames[0];
                 dcl.signature = dcl.javaName + dcl.parameters.signature;
-                if (!localName.equals(dcl.javaName) && !type.annotations.contains("@Name(")) {
-                    type.annotations += "@Name(\"" + localName + "\") ";
+                if (!localName2.equals(dcl.javaName) && (!localName2.contains("::") || context.javaName == null)) {
+                    type.annotations = type.annotations.replaceAll("@Name\\(.*\\) ", "");
+                    type.annotations += "@Name(\"" + localName2 + "\") ";
                 }
             }
 
@@ -2461,7 +2478,7 @@ public class Parser {
                 found |= dcl.signature.equals(d.signature);
             }
             if (dcl.javaName.length() > 0 && !found && (!type.destructor || (info != null && info.javaText != null))) {
-                if (declList.add(decl)) {
+                if (declList.add(decl, fullname)) {
                     first = false;
                 }
                 if (type.virtual && context.virtualize) {
