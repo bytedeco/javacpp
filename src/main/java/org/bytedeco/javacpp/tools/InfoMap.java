@@ -209,7 +209,7 @@ public class InfoMap extends HashMap<String,List<Info>> {
                 name += " " + tokens[i].value;
             }
         } else if (untemplate) {
-            int count = 0, lastColon = -1, template = -1, parameters = -1;
+            int count = 0, lastColon = -1, template = -1, parameters = n;
             for (int i = 0; i < n; i++) {
                 if (tokens[i].match('<')) {
                     count++;
@@ -218,9 +218,12 @@ public class InfoMap extends HashMap<String,List<Info>> {
                 }
                 if (count == 0 && tokens[i].match("::")) {
                     lastColon = i;
+                } else if (count == 0 && tokens[i].match('(')) {
+                    parameters = i;
+                    break;
                 }
             }
-            for (int i = 0; i < n; i++) {
+            for (int i = 0; i < parameters; i++) {
                 if (i > lastColon && tokens[i].match('<')) {
                     if (count == 0) {
                         template = i;
@@ -228,8 +231,8 @@ public class InfoMap extends HashMap<String,List<Info>> {
                     count++;
                 } else if (i > lastColon && tokens[i].match('>')) {
                     count--;
-                    if (count == 0) {
-                        parameters = i + 1;
+                    if (count == 0 && i + 1 != parameters) {
+                        template = -1;
                     }
                 }
             }

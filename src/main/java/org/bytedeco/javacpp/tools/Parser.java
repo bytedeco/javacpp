@@ -1606,7 +1606,9 @@ public class Parser {
             if (context.namespace != null && localName.startsWith(context.namespace + "::")) {
                 localName = dcl.cppName.substring(context.namespace.length() + 2);
             }
-            if (!localName.equals(dcl.javaName) && (!localName.contains("::") || context.javaName == null)) {
+            int template = localName.lastIndexOf('<');
+            String simpleName = template >= 0 ? localName.substring(0, template) : localName;
+            if (!localName.equals(dcl.javaName) && (!simpleName.contains("::") || context.javaName == null)) {
                 type.annotations += "@Name(\"" + localName + "\") ";
             }
         }
@@ -2360,7 +2362,9 @@ public class Parser {
             if (fullInfo != null && fullInfo.javaNames != null && fullInfo.javaNames.length > 0) {
                 dcl.javaName = fullInfo.javaNames[0];
                 dcl.signature = dcl.javaName + dcl.parameters.signature;
-                if (!localName2.equals(dcl.javaName) && (!localName2.contains("::") || context.javaName == null)) {
+                int template = localName2.lastIndexOf('<');
+                String simpleName = template >= 0 ? localName2.substring(0, template) : localName2;
+                if (!localName2.equals(dcl.javaName) && (!simpleName.contains("::") || context.javaName == null)) {
                     type.annotations = type.annotations.replaceAll("@Name\\(.*\\) ", "");
                     type.annotations += "@Name(\"" + localName2 + "\") ";
                 }
