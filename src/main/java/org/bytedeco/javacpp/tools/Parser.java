@@ -2573,9 +2573,8 @@ public class Parser {
                 if (context.namespace != null && context.javaName == null) {
                     decl.text += "@Namespace(\"" + context.namespace + "\") ";
                 }
-                final boolean hasMetadcl = metadcl != null && metadcl.cppName != null && metadcl.cppName.length() > 0;
                 String nameAnnotation = "";
-                if (hasMetadcl) {
+                if (metadcl != null && metadcl.cppName != null && metadcl.cppName.length() > 0) {
                     nameAnnotation = metadcl.indices == 0
                             ? "@Name(\"" + metadcl.cppName + "." + shortName + "\") "
                             : "@Name({\"" + metadcl.cppName + "\", \"." + shortName + "\"}) ";
@@ -2584,13 +2583,13 @@ public class Parser {
                 final boolean beanify = context.beanify && indices.isEmpty();
                 String capitalizedJavaName = null;
                 if (beanify) {
-                    if (!hasMetadcl) {
+                    if (nameAnnotation.length() == 0) {
                         nameAnnotation = "@Name(\"" + shortName + "\") ";
                     }
                     capitalizedJavaName = javaName.substring(0, 1).toUpperCase() + javaName.substring(1);
                     javaName = "get" + capitalizedJavaName;
                 }
-                if (hasMetadcl || beanify) {
+                if (nameAnnotation.length() > 0) {
                     dcl.type.annotations = dcl.type.annotations.replaceAll("@Name\\(.*\\) ", "");
                     decl.text += nameAnnotation;
                 }
@@ -2605,10 +2604,11 @@ public class Parser {
                         indices += ", ";
                     }
                     if (beanify) {
-                        decl.text += "\n" + nameAnnotation + "@MemberSetter " + modifiers + setterType + "set" + capitalizedJavaName + "(" + indices + dcl.type.annotations + dcl.type.javaName + " setter);";
+                        decl.text += "\n" + nameAnnotation + "@MemberSetter " + modifiers + setterType + "set" + capitalizedJavaName
+                                  +  "(" + indices + dcl.type.annotations + dcl.type.javaName + " setter);";
                     } else {
                         String javaTypeWithoutAnnotations = dcl.type.javaName.substring(dcl.type.javaName.lastIndexOf(" ") + 1);
-                        decl.text += " " + nameAnnotation + modifiers + setterType + javaName + "(" + indices + javaTypeWithoutAnnotations + " setter);";
+                        decl.text += " " + modifiers + setterType + javaName + "(" + indices + javaTypeWithoutAnnotations + " setter);";
                     }
                 }
                 decl.text += "\n";
