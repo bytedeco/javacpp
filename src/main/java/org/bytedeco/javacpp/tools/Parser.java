@@ -3206,6 +3206,10 @@ public class Parser {
                 decl.text += token.spacing;
             } else {
                 int index = tokens.index - 1;
+                while (index >= 0 && tokens.preprocess(index, 0) == tokens.index) {
+                    // make sure to jump back over any potential comments
+                    index--;
+                }
                 for (int n = 0; n < Integer.MAX_VALUE; n++) {
                     tokens.index = index;
                     Declarator dcl = declarator(context, null, -1, false, n, false, true);
