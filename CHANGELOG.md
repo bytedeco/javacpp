@@ -1,4 +1,5 @@
 
+ * Add `Info.beanify` to have `Parser` generate JavaBeans-style getters and setters ([pull #495](https://github.com/bytedeco/javacpp/pull/495))
  * Allow `Parser` to use `Info.javaNames` for function names containing parameters as well ([issue #492](https://github.com/bytedeco/javacpp/issues/492))
  * Fix `Parser` producing incorrect calls to function templates with non-type parameters ([issue #491](https://github.com/bytedeco/javacpp/issues/491))
  * Add missing `presets/package-info.java` required for OSGi and add profile for M2Eclipse ([pull #490](https://github.com/bytedeco/javacpp/pull/490))

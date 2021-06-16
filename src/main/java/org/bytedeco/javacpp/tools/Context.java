@@ -45,6 +45,7 @@ class Context {
         constBaseName = c.constBaseName;
         immutable = c.immutable;
         inaccessible = c.inaccessible;
+        beanify = c.beanify;
         objectify = c.objectify;
         virtualize = c.virtualize;
         variable = c.variable;
@@ -62,6 +63,7 @@ class Context {
     String constBaseName = null;
     boolean immutable = false;
     boolean inaccessible = false;
+    boolean beanify = false;
     boolean objectify = false;
     boolean virtualize = false;
     Declarator variable = null;
