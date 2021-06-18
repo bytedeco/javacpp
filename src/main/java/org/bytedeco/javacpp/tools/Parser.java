@@ -241,6 +241,9 @@ public class Parser {
                         if (type.reference) {
                             cast += "&";
                         }
+                        if (type.rvalue) {
+                            cast += "&&";
+                        }
                         if (type.constPointer && !cast.endsWith(" const")) {
                             cast = cast + " const";
                         }
@@ -685,6 +688,14 @@ public class Parser {
                             s += "&";
                         }
                     }
+                    if (t.rvalue) {
+                        if (n >= 0) {
+                            // return value from function type
+                            s = s.substring(0, n) + "&&" + s.substring(n);
+                        } else {
+                            s += "&&";
+                        }
+                    }
                     if (t.constPointer && !s.endsWith(" const")) {
                         s = s + " const";
                     }
@@ -712,7 +723,9 @@ public class Parser {
                 tokens.next();
                 break;
             } else if (token.match("&&")) {
-                // rvalue reference... ignore?
+                type.rvalue = true;
+                tokens.next();
+                break;
             } else if (token.match('~')) {
                 type.cppName += "~";
                 type.destructor = true;
@@ -804,6 +817,10 @@ public class Parser {
             type.reference = true;
             type.cppName = type.cppName.substring(0, type.cppName.length() - 1);
         }
+        if (type.cppName.endsWith("&&")) {
+            type.rvalue = true;
+            type.cppName = type.cppName.substring(0, type.cppName.length() - 2);
+        }
 
         // perform template substitution
         if (context.templateMap != null) {
@@ -843,6 +860,10 @@ public class Parser {
         if (type.cppName.endsWith("&")) {
             type.reference = true;
             type.cppName = type.cppName.substring(0, type.cppName.length() - 1);
+        }
+        if (type.cppName.endsWith("&&")) {
+            type.rvalue = true;
+            type.cppName = type.cppName.substring(0, type.cppName.length() - 2);
         }
         if (type.cppName.endsWith(" const")) {
             type.constValue = true;
@@ -909,6 +930,10 @@ public class Parser {
         if (type.cppName.endsWith("&")) {
             type.reference = true;
             type.cppName = type.cppName.substring(0, type.cppName.length() - 1);
+        }
+        if (type.cppName.endsWith("&&")) {
+            type.rvalue = true;
+            type.cppName = type.cppName.substring(0, type.cppName.length() - 2);
         }
         if (type.cppName.endsWith(" const")) {
             type.constValue = true;
@@ -1037,13 +1062,17 @@ public class Parser {
             dcl.reference = true;
             cast += "&";
         }
+        if (varNumber == 0 && type.rvalue) {
+            dcl.rvalue = true;
+            cast += "&&";
+        }
         for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.next()) {
             if (token.match('*')) {
                 dcl.indirections++;
             } else if (token.match('&')) {
                 dcl.reference = true;
             } else if (token.match("&&")) {
-                // rvalue reference... ignore?
+                dcl.rvalue = true;
             } else if (token.match(Token.CONST, Token.__CONST, Token.CONSTEXPR)) {
                 dcl.constPointer = true;
             } else {
@@ -1321,11 +1350,14 @@ public class Parser {
                     type.simple = type2.arguments[0].simple;
                     type.indirections = type2.arguments[0].indirections;
                     type.reference = type2.arguments[0].reference;
+                    type.rvalue = type2.arguments[0].rvalue;
+                    type.value = type2.arguments[0].value;
                     type.annotations = type2.arguments[0].annotations;
                     type.cppName = type2.arguments[0].cppName;
                     type.javaName = type2.arguments[0].javaName;
                     dcl.indirections = 1;
                     dcl.reference = false;
+                    dcl.rvalue = false;
                     if (context.virtualize) {
                         // force cast in callbacks
                         needCast = true;
@@ -1344,6 +1376,10 @@ public class Parser {
                     if (type.reference) {
                         dcl.reference = true;
                         cast += "&";
+                    }
+                    if (type.rvalue) {
+                        dcl.rvalue = true;
+                        cast += "&&";
                     }
                     if (type.constPointer && !cast.endsWith(" const")) {
                         cast = cast + " const";
@@ -1373,7 +1409,7 @@ public class Parser {
 
         if (!valueType || context.virtualize) {
             if (!valueType && dcl.indirections == 0 && !dcl.reference) {
-                type.annotations += "@ByVal ";
+                type.annotations += dcl.rvalue ? "@ByRef(true) " : "@ByVal ";
             } else if (dcl.indirections == 0 && dcl.reference) {
                 if (type.javaName.contains("@ByPtrPtr ")) {
                     type.javaName = type.javaName.replace("@ByPtrPtr ", "@ByPtrRef ");
@@ -1407,7 +1443,7 @@ public class Parser {
                 }
             }
         }
-        if (needCast) {
+        if (needCast || (valueType && dcl.rvalue && !type.annotations.contains("@") && !type.javaName.contains("@"))) {
             if (dcl.indirections == 0 && dcl.reference) {
                 // consider as pointer type
                 cast = cast.replace('&', '*');
@@ -1483,6 +1519,9 @@ public class Parser {
                     if (dcl.reference) {
                         s += "&";
                     }
+                    if (dcl.rvalue) {
+                        s += "&&";
+                    }
                     if (dcl.type.constPointer && !s.endsWith(" const")) {
                         s = s + " const";
                     }
@@ -1502,6 +1541,9 @@ public class Parser {
                             }
                             if (d.reference) {
                                 s += "&";
+                            }
+                            if (d.rvalue) {
+                                s += "&&";
                             }
                             if (d.type.constPointer && !s.endsWith(" const")) {
                                 s = s + " const";
@@ -2182,6 +2224,10 @@ public class Parser {
                     if (d.reference) {
                         s += "&";
                         s2 += "&";
+                    }
+                    if (d.rvalue) {
+                        s += "&&";
+                        s2 += "&&";
                     }
                     if (d.type.constPointer && !s.endsWith(" const")) {
                         s = s + " const";
@@ -3015,6 +3061,9 @@ public class Parser {
                         }
                         if (dcl.type.reference) {
                             s += "&";
+                        }
+                        if (dcl.type.rvalue) {
+                            s += "&&";
                         }
                         if (dcl.type.constPointer && !s.endsWith(" const")) {
                             s = s + " const";
@@ -3946,6 +3995,9 @@ public class Parser {
                             }
                             if (t.reference) {
                                 s += "&";
+                            }
+                            if (t.rvalue) {
+                                s += "&&";
                             }
                             if (t.constPointer && !s.endsWith(" const")) {
                                 s = s + " const";

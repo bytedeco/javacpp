@@ -20,6 +20,8 @@ import org.bytedeco.javacpp.tools.Generator;
 @Documented @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.PARAMETER})
 public @interface ByRef {
+    /** When true indicates that the argument actually needs to be an rvalue reference (aka movable value). */
+    boolean value() default false;
     /** A C++ expression to use when null is passed. By default {@link NullPointerException} is thrown. */
     String nullValue() default "";
 }

@@ -2326,7 +2326,7 @@ public class Generator {
                         typeName[1] = "";
                         valueTypeName = valueTypeName(typeName);
                     }
-                    if (returnBy instanceof ByVal) {
+                    if (returnBy instanceof ByVal || (returnBy instanceof ByRef && ((ByRef)returnBy).value())) {
                         returnPrefix += (noException(methodInfo.returnType, methodInfo.method) ?
                             "new (std::nothrow) " : "new ") + valueTypeName + typeName[1] + "(";
                     } else if (returnBy instanceof ByRef) {
@@ -2613,9 +2613,16 @@ public class Generator {
                 }
             } else if (passBy instanceof ByVal || (passBy instanceof ByRef &&
                     methodInfo.parameterTypes[j] != String.class)) {
+                boolean rvalue = passBy instanceof ByRef ? ((ByRef)passBy).value() : false;
                 String nullValue = passBy instanceof ByVal ? ((ByVal)passBy).nullValue()
                                  : passBy instanceof ByRef ? ((ByRef)passBy).nullValue() : "";
+                if (rvalue) {
+                    out.print("std::move(");
+                }
                 out.print((nullValue.length() > 0 ? "ptr" + j + " == NULL ? " + nullValue + " : " : "") + "*" + cast + "ptr" + j);
+                if (rvalue) {
+                    out.print(")");
+                }
             } else if (passBy instanceof ByPtrPtr) {
                 out.print(cast + "(arg" + j + " == NULL ? NULL : &ptr" + j + ")");
             } else { // ByPtr || ByPtrRef || (ByRef && std::string)
@@ -2664,7 +2671,7 @@ public class Generator {
                  methodInfo.returnType.getComponentType().isPrimitive()) ||
                 Buffer.class.isAssignableFrom(methodInfo.returnType)) ||
                 methodInfo.returnType == String.class) {
-            if (returnBy instanceof ByVal && adapterInfo == null) {
+            if ((returnBy instanceof ByVal || (returnBy instanceof ByRef && ((ByRef)returnBy).value())) && adapterInfo == null) {
                 suffix = ")" + suffix;
             } else if (returnBy instanceof ByPtrPtr) {
                 out.println(suffix);
