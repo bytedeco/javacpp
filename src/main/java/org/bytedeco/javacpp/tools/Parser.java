@@ -358,8 +358,10 @@ public class Parser {
                                 decl.text += "\n"
                                           +  "    @Name(\"value\") public native " + type.annotations + type.javaName + " get();\n";
                             } else {
+                                int namespace = containerName.lastIndexOf("::");
+                                String ns = containerName.substring(0, namespace);
                                 decl.text += "    public " + type.annotations + type.javaName + " get" + n + "() { return get" + n + "(this); }\n"
-                                          +  "    @Namespace @Name(\"std::get<" + n + ">\") public static native " + type.annotations + type.javaName + " get" + n + "(@ByRef " + containerType.javaName + " container);\n";
+                                          +  "    @Namespace @Name(\"" + ns + "::get<" + n + ">\") public static native " + type.annotations + type.javaName + " get" + n + "(@ByRef " + containerType.javaName + " container);\n";
                             }
                             if (!constant && !tuple) {
                                 decl.text += "    @ValueSetter public native " + containerType.javaName + " put(" + type.annotations + type.javaName + " value);\n";

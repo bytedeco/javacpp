@@ -1,4 +1,5 @@
 
+ * Add `enum` classes missing from config files required by GraalVM Native Image
  * Let `Parser` annotate `&&` parameters with new `@ByRef(true)` value used by `Generator` to call `std::move()`
  * Fix `Parser` overlooking anonymous `class`, `struct` or `union` with comments after `}` ([issue #501](https://github.com/bytedeco/javacpp/issues/501))
  * Add `Info.beanify` to have `Parser` generate JavaBeans-style getters and setters ([pull #495](https://github.com/bytedeco/javacpp/pull/495))

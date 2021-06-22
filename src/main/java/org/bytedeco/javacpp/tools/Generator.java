@@ -1881,6 +1881,12 @@ public class Generator {
 
         LinkedHashSet<Class> reflectClasses = new LinkedHashSet<Class>();
         reflectClasses.addAll(baseClasses);
+        reflectClasses.add(BooleanEnum.class);
+        reflectClasses.add(ByteEnum.class);
+        reflectClasses.add(ShortEnum.class);
+        reflectClasses.add(IntEnum.class);
+        reflectClasses.add(LongEnum.class);
+        reflectClasses.add(Charset.class);
         reflectClasses.add(Object.class);
         reflectClasses.add(Buffer.class);
         reflectClasses.add(String.class);
@@ -1890,6 +1896,13 @@ public class Generator {
             while ((cls = cls.getEnclosingClass()) != null) {
                 allClasses.add(cls);
             }
+        }
+        if (declareEnums) {
+            allClasses.add(BooleanEnum.class);
+            allClasses.add(ByteEnum.class);
+            allClasses.add(ShortEnum.class);
+            allClasses.add(IntEnum.class);
+            allClasses.add(LongEnum.class);
         }
         allClasses.add(Unsafe.class);
 
