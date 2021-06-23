@@ -1450,6 +1450,10 @@ public class Parser {
                 // consider as pointer type
                 cast = cast.replace('&', '*');
             }
+            if (!valueType && dcl.indirections == 0 && dcl.rvalue) {
+                // consider as pointer type
+                cast = cast.replace("&&", "*");
+            }
             if (valueType && type.constValue && dcl.reference) {
                 // consider as value type
                 cast = cast.substring(0, cast.length() - 1);
@@ -1459,7 +1463,7 @@ public class Parser {
             }
             if (precast != null) {
                 type.annotations = "@Cast({\"" + cast + "\", \"" + precast + "\"}) " + type.annotations;
-            } else if (!valueType && dcl.indirections == 0 && !dcl.reference) {
+            } else if (!valueType && dcl.indirections == 0 && !dcl.reference && !dcl.rvalue) {
                 type.annotations += "@Cast(\"" + cast + "*\") ";
             } else {
                 type.annotations = "@Cast(\"" + cast + "\") " + type.annotations;
