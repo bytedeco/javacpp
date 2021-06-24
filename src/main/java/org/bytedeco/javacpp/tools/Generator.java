@@ -2237,7 +2237,7 @@ public class Generator {
                         out.println("        arr" + j + " = (j" + paramNameLowerCase + "Array)env->CallObjectMethod(arg" + j + ", JavaCPP_arrayMID);");
                         out.println("        offset" + j + " = env->CallIntMethod(arg" + j + ", JavaCPP_arrayOffsetMID);");
                         out.println("        if (env->ExceptionOccurred() != NULL) {");
-                        out.println("            env->ExceptionClear();");
+                        out.println("            return" + (methodInfo.returnType == void.class ? ";" : " 0;"));
                         out.println("        } else {");
                         if (methodInfo.criticalRegion) {
                             out.println("            ptr" + j + " = arr" + j + " == NULL ? NULL : (" + typeName[0] + typeName[1]
