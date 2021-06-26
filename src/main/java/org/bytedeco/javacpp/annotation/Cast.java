@@ -11,6 +11,7 @@ import org.bytedeco.javacpp.tools.Generator;
  * Indicates a type cast required on the argument to satisfy the native compiler.
  * When used with {@link Adapter} a second cast can also be specified making it
  * possible to apply a cast to both the argument and the adapter, in this order.
+ * A third "precast" can also be specified, which gets applied before the second one.
  * <p>
  * At the moment, {@link Generator} makes use of the simple C-style cast. If one
  * requires a different kind of type conversion, such as the {@code dynamic_cast}

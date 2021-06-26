@@ -2394,7 +2394,11 @@ public class Generator {
 
                 if (adapterInfo != null) {
                     usesAdapters = true;
-                    returnPrefix = adapterInfo.name + " radapter(";
+                    String cast2 = adapterInfo.cast2.trim();
+                    if (cast2.length() > 0 && !cast2.startsWith("(") && !cast2.endsWith(")")) {
+                        cast2 = "(" + cast2 + ")";
+                    }
+                    returnPrefix = adapterInfo.name + " radapter(" + cast2;
                 }
             }
         }
