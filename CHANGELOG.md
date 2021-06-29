@@ -1,4 +1,5 @@
 
+ * Fix `Parser` failure on `enum` declarations without enumerators
  * Let `Generator` use the third element of `@Cast(value)` on return values passed to adapters ([issue tensorflow/java#345](https://github.com/tensorflow/java/issues/345))
  * Prevent `Generator` from swallowing exceptions caught on `Buffer.array()` ([pull #504](https://github.com/bytedeco/javacpp/pull/504))
  * Add `enum` classes missing from config files required by GraalVM Native Image

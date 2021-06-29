@@ -1313,6 +1313,7 @@ public class Loader {
                             if (f != null) {
                                 f.setExecutable(true);
                                 executablePaths.put(e, f.getAbsolutePath());
+                                break;
                             }
                         }
                     }

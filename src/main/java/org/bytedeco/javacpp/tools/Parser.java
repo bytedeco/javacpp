@@ -3826,7 +3826,7 @@ public class Parser {
         Info info = infoMap.getFirst(cppName);
         Info info2 = infoMap.getFirst(null);
         boolean enumerate = info != null ? info.enumerate : info2 != null ? info2.enumerate : false;
-        if ((info != null && info.skip) || (enumerators.length() == 0 && enumerators2.length() == 0)) {
+        if (info != null && info.skip) {
             decl.text = enumSpacing;
         } else {
             if (info != null && info.cppTypes != null && info.cppTypes.length > 0) {
@@ -3838,7 +3838,8 @@ public class Parser {
             int newline = enumSpacing.lastIndexOf('\n');
             String enumSpacing2 = newline < 0 ? enumSpacing : enumSpacing.substring(newline + 1);
             String javaName = info != null && info.valueTypes != null && info.valueTypes.length > 0 ? info.valueTypes[0] : name;
-            if (enumerate && javaName != null && javaName.length() > 0 && !javaName.equals(javaType)) {
+            if (enumerate && javaName != null && javaName.length() > 0 && !javaName.equals(javaType)
+                    && enumerators.length() > 0 && enumerators2.length() > 0) {
                 String shortName = javaName.substring(javaName.lastIndexOf('.') + 1);
                 String fullName = context.namespace != null ? context.namespace + "::" + shortName : shortName;
                 String annotations = "";
