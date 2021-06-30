@@ -3512,7 +3512,9 @@ public class Parser {
                                  "    }\n";
                 }
             }
-            decl.text += constructors;
+            if (info == null || !info.skipDefaults) {
+                decl.text += constructors;
+            }
             declList.spacing = spacing;
             decl.text = declList.rescan(decl.text + casts + "\n");
             declList.spacing = null;

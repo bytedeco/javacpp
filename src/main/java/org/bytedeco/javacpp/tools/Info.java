@@ -108,7 +108,7 @@ public class Info {
     /** Skips entirely all the code associated with the C++ identifiers, expressions, or header filenames.
      * Unless more {@link Info} is provided... */
     boolean skip = false;
-    /** Ignores default function arguments to avoid ambiguous C++ function calls. */
+    /** Ignores default type constructors and default function arguments to avoid ambiguous C++ function calls. */
     boolean skipDefaults = false;
     /** Forces a class to be treated as if it were abstract. */
     boolean purify = false;
