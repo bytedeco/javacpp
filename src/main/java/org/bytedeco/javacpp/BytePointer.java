@@ -155,7 +155,7 @@ public class BytePointer extends Pointer {
         return super.capacity(capacity);
     }
     @Override public int sizeof() {
-        return 1;
+        return getClass() == BytePointer.class ? 1 : super.sizeof();
     }
     @Override public BytePointer getPointer(long i) {
         return new BytePointer(this).offsetAddress(i);

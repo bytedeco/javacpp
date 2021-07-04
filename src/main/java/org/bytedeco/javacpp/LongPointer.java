@@ -111,7 +111,7 @@ public class LongPointer extends Pointer {
         return super.capacity(capacity);
     }
     @Override public int sizeof() {
-        return Long.SIZE / Byte.SIZE;
+        return getClass() == LongPointer.class ? Long.SIZE / Byte.SIZE : super.sizeof();
     }
     @Override public LongPointer getPointer(long i) {
         return new LongPointer(this).offsetAddress(i);

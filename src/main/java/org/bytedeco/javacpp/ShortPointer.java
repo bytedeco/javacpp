@@ -111,7 +111,7 @@ public class ShortPointer extends Pointer {
         return super.capacity(capacity);
     }
     @Override public int sizeof() {
-        return Short.SIZE / Byte.SIZE;
+        return getClass() == ShortPointer.class ? Short.SIZE / Byte.SIZE : super.sizeof();
     }
     @Override public ShortPointer getPointer(long i) {
         return new ShortPointer(this).offsetAddress(i);

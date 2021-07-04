@@ -111,7 +111,7 @@ public class DoublePointer extends Pointer {
         return super.capacity(capacity);
     }
     @Override public int sizeof() {
-        return Double.SIZE / Byte.SIZE;
+        return getClass() == DoublePointer.class ? Double.SIZE / Byte.SIZE : super.sizeof();
     }
     @Override public DoublePointer getPointer(long i) {
         return new DoublePointer(this).offsetAddress(i);

@@ -111,7 +111,7 @@ public class FloatPointer extends Pointer {
         return super.capacity(capacity);
     }
     @Override public int sizeof() {
-        return Float.SIZE / Byte.SIZE;
+        return getClass() == FloatPointer.class ? Float.SIZE / Byte.SIZE : super.sizeof();
     }
     @Override public FloatPointer getPointer(long i) {
         return new FloatPointer(this).offsetAddress(i);

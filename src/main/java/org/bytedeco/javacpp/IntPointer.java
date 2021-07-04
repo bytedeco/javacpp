@@ -121,7 +121,7 @@ public class IntPointer extends Pointer {
         return super.capacity(capacity);
     }
     @Override public int sizeof() {
-        return Integer.SIZE / Byte.SIZE;
+        return getClass() == IntPointer.class ? Integer.SIZE / Byte.SIZE : super.sizeof();
     }
     @Override public IntPointer getPointer(long i) {
         return new IntPointer(this).offsetAddress(i);

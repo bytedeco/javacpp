@@ -1701,6 +1701,9 @@ public class Loader {
                 return filename;
             } else if (!libnameversion.trim().endsWith("#")) {
                 // ... or as last resort, try to load it via the system.
+                if (loadError == null) {
+                    loadError = new UnsatisfiedLinkError("Could not find " + libnameversion + " in class, module, and library paths.");
+                }
                 String libname = libnameversion.split("#")[0].split("@")[0];
                 if (libname.endsWith("!")) {
                     libname = libname.substring(0, libname.length() - 1);

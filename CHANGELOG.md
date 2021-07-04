@@ -1,4 +1,6 @@
 
+ * Fix `Pointer.sizeof()` method for subclasses of subclasses for primitive types ([issue bytedeco/javacpp-presets#1064](https://github.com/bytedeco/javacpp-presets/issues/1064))
+ * Throw more accurate `UnsatisfiedLinkError` when `Loader.load()` fails to find JNI libraries
  * Let `Parser` check `Info.skipDefaults` also for types to ignore default constructors ([issue #493](https://github.com/bytedeco/javacpp/issues/493))
  * Fix `Parser` failure on `enum` declarations without enumerators
  * Let `Generator` use the third element of `@Cast(value)` on return values passed to adapters ([issue tensorflow/java#345](https://github.com/tensorflow/java/issues/345))

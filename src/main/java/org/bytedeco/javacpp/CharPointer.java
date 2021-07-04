@@ -121,7 +121,7 @@ public class CharPointer extends Pointer {
         return super.capacity(capacity);
     }
     @Override public int sizeof() {
-        return Character.SIZE / Byte.SIZE;
+        return getClass() == CharPointer.class ? Character.SIZE / Byte.SIZE : super.sizeof();
     }
     @Override public CharPointer getPointer(long i) {
         return new CharPointer(this).offsetAddress(i);

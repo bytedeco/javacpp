@@ -115,7 +115,7 @@ public class BooleanPointer extends Pointer {
         return super.capacity(capacity);
     }
     @Override public int sizeof() {
-        return 1;
+        return getClass() == BooleanPointer.class ? 1 : super.sizeof();
     }
     @Override public BooleanPointer getPointer(long i) {
         return new BooleanPointer(this).offsetAddress(i);
