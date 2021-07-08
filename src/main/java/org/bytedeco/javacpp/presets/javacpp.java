@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Samuel Audet
+ * Copyright (C) 2020-2021 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -42,6 +42,7 @@ import org.bytedeco.javacpp.annotation.Properties;
             preload = {"api-ms-win-crt-locale-l1-1-0", "api-ms-win-crt-string-l1-1-0", "api-ms-win-crt-stdio-l1-1-0", "api-ms-win-crt-math-l1-1-0",
                        "api-ms-win-crt-heap-l1-1-0", "api-ms-win-crt-runtime-l1-1-0", "api-ms-win-crt-convert-l1-1-0", "api-ms-win-crt-environment-l1-1-0",
                        "api-ms-win-crt-time-l1-1-0", "api-ms-win-crt-filesystem-l1-1-0", "api-ms-win-crt-utility-l1-1-0", "api-ms-win-crt-multibyte-l1-1-0",
+                       "api-ms-win-crt-conio-l1-1-0", "api-ms-win-crt-private-l1-1-0", "api-ms-win-crt-process-l1-1-0", "api-ms-win-core-console-l1-2-0",
                        "api-ms-win-core-string-l1-1-0", "api-ms-win-core-errorhandling-l1-1-0", "api-ms-win-core-timezone-l1-1-0", "api-ms-win-core-file-l1-1-0",
                        "api-ms-win-core-namedpipe-l1-1-0", "api-ms-win-core-handle-l1-1-0", "api-ms-win-core-file-l2-1-0", "api-ms-win-core-heap-l1-1-0",
                        "api-ms-win-core-libraryloader-l1-1-0", "api-ms-win-core-synch-l1-1-0", "api-ms-win-core-processthreads-l1-1-0",
@@ -71,6 +72,21 @@ public class javacpp implements LoadEnabled {
     @Override public void init(ClassProperties properties) {
         String platform = properties.getProperty("platform");
         List<String> preloadpaths = properties.get("platform.preloadpath");
+
+        String ucrtsdkdir = System.getenv("UniversalCRTSdkDir");
+        String ucrtversion = System.getenv("UCRTVersion");
+        if (ucrtsdkdir != null && ucrtsdkdir.length() > 0 && ucrtversion != null && ucrtversion.length() > 0) {
+            switch (platform) {
+                case "windows-x86":
+                    preloadpaths.add(0, ucrtsdkdir + "\\Redist\\" + ucrtversion + "\\ucrt\\DLLs\\x86");
+                    break;
+                case "windows-x86_64":
+                    preloadpaths.add(0, ucrtsdkdir + "\\Redist\\" + ucrtversion + "\\ucrt\\DLLs\\x64");
+                    break;
+                default:
+                    // not Windows
+            }
+        }
 
         String vcredistdir = System.getenv("VCToolsRedistDir");
         if (vcredistdir != null && vcredistdir.length() > 0) {

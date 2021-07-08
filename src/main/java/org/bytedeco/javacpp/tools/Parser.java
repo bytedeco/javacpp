@@ -3563,7 +3563,7 @@ public class Parser {
         if (/*(context.templateMap == null || context.templateMap.full()) &&*/ constructorInfo == null) {
             infoMap.put(constructorInfo = new Info(type.cppName + "::" + constructorName));
         }
-        if (constructorInfo.javaText == null) {
+        if (constructorInfo.javaText == null && inheritedConstructors.length() > 0) {
             // save constructors to be able inherit them with C++11 "using" statements
             constructorInfo.javaText(inheritedConstructors);
         }
@@ -3808,7 +3808,7 @@ public class Parser {
                 // XXX: If !typedef, this is a variable declaration with anonymous type
                 String name1 = name;
                 String name2 = token.value;
-                if (typedef || name == null || name.length() == 0) {
+                if ((typedef && indirections == 0) || name == null || name.length() == 0) {
                     name = name2;
                     if (name1 != null && name1.length() > 0) {
                         name2 = name1;

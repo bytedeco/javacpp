@@ -1,4 +1,5 @@
 
+ * Bundle more DLLs from UCRT to fix the systems presets on Windows
  * Fix `Pointer.sizeof()` method for subclasses of subclasses for primitive types ([issue bytedeco/javacpp-presets#1064](https://github.com/bytedeco/javacpp-presets/issues/1064))
  * Throw more accurate `UnsatisfiedLinkError` when `Loader.load()` fails to find JNI libraries
  * Let `Parser` check `Info.skipDefaults` also for types to ignore default constructors ([issue #493](https://github.com/bytedeco/javacpp/issues/493))
