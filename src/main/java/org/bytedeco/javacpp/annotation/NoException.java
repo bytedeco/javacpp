@@ -21,4 +21,7 @@ import org.bytedeco.javacpp.tools.Generator;
  */
 @Documented @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE, ElementType.METHOD})
-public @interface NoException { }
+public @interface NoException {
+    /** On override, indicates whether to use the C++ noexcept operator or not. */
+    boolean value() default false;
+}

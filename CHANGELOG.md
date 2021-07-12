@@ -1,4 +1,5 @@
 
+ * Add `@NoException(true)` value to support overriding `virtual noexcept` functions
  * Bundle more DLLs from UCRT to fix the systems presets on Windows
  * Fix `Pointer.sizeof()` method for subclasses of subclasses for primitive types ([issue bytedeco/javacpp-presets#1064](https://github.com/bytedeco/javacpp-presets/issues/1064))
  * Throw more accurate `UnsatisfiedLinkError` when `Loader.load()` fails to find JNI libraries
@@ -25,7 +26,7 @@
  * Enhance `Parser` to handle `typedef` correctly in the case of `enum` as well ([issue #477](https://github.com/bytedeco/javacpp/issues/477))
  * Upon `Pointer.getPointer(Class<P>)` scale `position`, `limit`, and `capacity` with `sizeof()` ([pull #476](https://github.com/bytedeco/javacpp/pull/476))
  * Fix `Parser` incorrectly translating non-documentation comments as part of documentation comments ([issue #475](https://github.com/bytedeco/javacpp/issues/475))
- * Set `Pointer.maxPhysicalBytes` to `4 * Runtime.maxMemory()` by default as workaround for memory-mapped files, ZGC, etc ([issue #468](https://github.com/bytedeco/javacpp/issues/468))
+ * Set `Pointer.maxPhysicalBytes` to `4 * Runtime.maxMemory()` by default as workaround for Android, memory-mapped files, ZGC, etc ([issue #468](https://github.com/bytedeco/javacpp/issues/468))
  * Ensure `synchronized` code in `Pointer` gets skipped with "org.bytedeco.javacpp.nopointergc" ([issue tensorflow/java#313](https://github.com/tensorflow/java/issues/313))
  * Add `protected Pointer.offsetAddress()` and use it for `getPointer()` instead of `position()`
  * Fix potential infinite loop in `Parser` when processing `class`, `struct`, or `union` declarations

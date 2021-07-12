@@ -4068,6 +4068,23 @@ public class Generator {
         return false;
     }
 
+    static boolean noexceptFunction(Class<?> classType, Method functionMethod) {
+        if (classType.isAnnotationPresent(NoException.class)) {
+            return true;
+        }
+
+        if (!functionMethod.isAnnotationPresent(NoException.class)) {
+            return false;
+        }
+
+        for (Annotation a : functionMethod.getDeclaredAnnotations()) {
+            if (a instanceof NoException) {
+                return ((NoException) a).value();
+            }
+        }
+        return false;
+    }
+
     String[] cppAnnotationTypeName(Class<?> type, Annotation ... annotations) {
         String[] typeName = cppCastTypeName(type, annotations);
         String prefix = typeName[0];
@@ -4298,6 +4315,9 @@ public class Generator {
         }
         if (constFunction(type, functionMethod)) {
             suffix += " const";
+        }
+        if (noexceptFunction(type, functionMethod)) {
+            suffix += " noexcept";
         }
         return new String[] { prefix, suffix };
     }
