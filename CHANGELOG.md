@@ -1,4 +1,5 @@
 
+ * Add missing export to `module-info.java` file for presets package ([pull #508](https://github.com/bytedeco/javacpp/pull/508))
  * Add `@NoException(true)` value to support overriding `virtual noexcept` functions
  * Bundle more DLLs from UCRT to fix the systems presets on Windows
  * Fix `Pointer.sizeof()` method for subclasses of subclasses for primitive types ([issue bytedeco/javacpp-presets#1064](https://github.com/bytedeco/javacpp-presets/issues/1064))
