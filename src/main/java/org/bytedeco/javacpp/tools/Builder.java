@@ -1261,6 +1261,8 @@ public class Builder {
                                         return FileVisitResult.CONTINUE;
                                     }
                                 });
+                                files = Arrays.copyOf(files, files.length + 1);
+                                files[files.length - 1] = source.toFile();
                             }
                         }
                     }
@@ -1281,7 +1283,7 @@ public class Builder {
                     String separator = "," + System.lineSeparator();
                     for (File f : files != null ? files : new File[0]) {
                         if (f != null && !f.toPath().startsWith(configDirectory.toPath())) {
-                            out.print(separator + "    {\"pattern\": \".*/" + f.getName() + "\"}");
+                            out.print(separator + "    {\"pattern\": \".*/" + f.getName() + (f.isDirectory() ? "/.*" : "") + "\"}");
                         }
                     }
                     out.println();

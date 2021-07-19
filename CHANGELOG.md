@@ -8,7 +8,7 @@
  * Fix `Parser` failure on `enum` declarations without enumerators
  * Let `Generator` use the third element of `@Cast(value)` on return values passed to adapters ([issue tensorflow/java#345](https://github.com/tensorflow/java/issues/345))
  * Prevent `Generator` from swallowing exceptions caught on `Buffer.array()` ([pull #504](https://github.com/bytedeco/javacpp/pull/504))
- * Add `enum` classes missing from config files required by GraalVM Native Image
+ * Add `enum` classes as well as resources missing from config files required by GraalVM Native Image
  * Let `Parser` annotate `&&` parameters with new `@ByRef(true)` value used by `Generator` to call `std::move()`
  * Fix `Parser` overlooking anonymous `class`, `struct` or `union` with comments after `}` ([issue #501](https://github.com/bytedeco/javacpp/issues/501))
  * Add `Info.beanify` to have `Parser` generate JavaBeans-style getters and setters ([pull #495](https://github.com/bytedeco/javacpp/pull/495))
