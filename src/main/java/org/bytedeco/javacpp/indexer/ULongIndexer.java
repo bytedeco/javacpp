@@ -26,6 +26,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.LongBuffer;
 import org.bytedeco.javacpp.LongPointer;
+import org.bytedeco.javacpp.Raw;
 
 /**
  * Abstract indexer for the {@code long} primitive type, treated as unsigned.
