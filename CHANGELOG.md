@@ -1,4 +1,5 @@
 
+### August 2, 2021 version 1.5.6
  * Add missing export to `module-info.java` file for presets package ([pull #508](https://github.com/bytedeco/javacpp/pull/508))
  * Add `@NoException(true)` value to support overriding `virtual noexcept` functions
  * Bundle more DLLs from UCRT to fix the systems presets on Windows
