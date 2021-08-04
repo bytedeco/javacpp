@@ -59,6 +59,9 @@ public class CacheMojo extends AbstractMojo {
     @Parameter(defaultValue = "${plugin}", required = true, readonly = true)
     PluginDescriptor plugin;
 
+    @Parameter(property="classes")
+    String[] targetClasses;
+
     String join(String separator, Iterable<String> strings) {
         String string = "";
         for (String s : strings) {
@@ -103,7 +106,12 @@ public class CacheMojo extends AbstractMojo {
             for (Artifact a : artifacts) {
                 classLoader.addPaths(a.getFile().getAbsolutePath());
             }
-            classScanner.addPackage(null, true);
+
+	    if (targetClasses == null) 
+	      classScanner.addPackage(null, true);
+	    else 
+	      for (String c: targetClasses) 
+	        classScanner.addClassOrPackage(c);
 
             LinkedHashSet<String> packages = new LinkedHashSet<String>();
             for (Class c : classes) {
