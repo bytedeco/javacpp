@@ -107,7 +107,7 @@ public class CacheMojo extends AbstractMojo {
                 classLoader.addPaths(a.getFile().getAbsolutePath());
             }
 
-	    if (targetClasses == null) 
+	    if (targetClasses == null || targetClasses.length == 0) 
 	      classScanner.addPackage(null, true);
 	    else 
 	      for (String c: targetClasses) 
