@@ -59,8 +59,8 @@ public class CacheMojo extends AbstractMojo {
     @Parameter(defaultValue = "${plugin}", required = true, readonly = true)
     PluginDescriptor plugin;
 
-    @Parameter(property="classes")
-    String[] targetClasses;
+    @Parameter(property="javacpp.classOrPackageNames")
+    String[] classOrPackageNames;
 
     String join(String separator, Iterable<String> strings) {
         String string = "";
@@ -107,11 +107,11 @@ public class CacheMojo extends AbstractMojo {
                 classLoader.addPaths(a.getFile().getAbsolutePath());
             }
 
-	    if (targetClasses == null || targetClasses.length == 0) 
-	      classScanner.addPackage(null, true);
-	    else 
-	      for (String c: targetClasses) 
-	        classScanner.addClassOrPackage(c);
+            if (classOrPackageNames == null || classOrPackageNames.length == 0)
+                classScanner.addPackage(null, true);
+            else
+                for (String c : classOrPackageNames)
+                    classScanner.addClassOrPackage(c);
 
             LinkedHashSet<String> packages = new LinkedHashSet<String>();
             for (Class c : classes) {
