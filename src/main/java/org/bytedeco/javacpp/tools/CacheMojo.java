@@ -62,6 +62,9 @@ public class CacheMojo extends AbstractMojo {
     @Parameter(property="javacpp.classOrPackageNames")
     String[] classOrPackageNames;
 
+    @Parameter(property="javacpp.classOrPackageName")
+    String classOrPackageName;
+
     String join(String separator, Iterable<String> strings) {
         String string = "";
         for (String s : strings) {
@@ -107,11 +110,15 @@ public class CacheMojo extends AbstractMojo {
                 classLoader.addPaths(a.getFile().getAbsolutePath());
             }
 
-            if (classOrPackageNames == null || classOrPackageNames.length == 0)
+            if ((classOrPackageNames == null || classOrPackageNames.length == 0) &&
+                    classOrPackageName == null)
                 classScanner.addPackage(null, true);
-            else
-                for (String c : classOrPackageNames)
-                    classScanner.addClassOrPackage(c);
+            else {
+                if (classOrPackageNames != null)
+                    for (String c : classOrPackageNames)
+                        classScanner.addClassOrPackage(c);
+                classScanner.addClassOrPackage(classOrPackageName);
+            }
 
             LinkedHashSet<String> packages = new LinkedHashSet<String>();
             for (Class c : classes) {
