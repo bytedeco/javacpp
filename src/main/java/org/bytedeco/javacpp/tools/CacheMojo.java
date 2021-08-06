@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Samuel Audet
+ * Copyright (C) 2019-2021 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -53,17 +53,20 @@ import org.bytedeco.javacpp.Loader;
 @Mojo(name = "cache", defaultPhase = LifecyclePhase.NONE, threadSafe = true,
         requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
 public class CacheMojo extends AbstractMojo {
+
+    /** Process only this class or package (suffixed with .* or .**). */
+    @Parameter(property = "javacpp.classOrPackageName")
+    String classOrPackageName = null;
+
+    /** Process only these classes or packages (suffixed with .* or .**). */
+    @Parameter(property = "javacpp.classOrPackageNames")
+    String[] classOrPackageNames = null;
+
     @Parameter(defaultValue = "${project}", required = true, readonly = true)
     MavenProject project;
 
     @Parameter(defaultValue = "${plugin}", required = true, readonly = true)
     PluginDescriptor plugin;
-
-    @Parameter(property="javacpp.classOrPackageNames")
-    String[] classOrPackageNames;
-
-    @Parameter(property="javacpp.classOrPackageName")
-    String classOrPackageName;
 
     String join(String separator, Iterable<String> strings) {
         String string = "";
@@ -110,14 +113,11 @@ public class CacheMojo extends AbstractMojo {
                 classLoader.addPaths(a.getFile().getAbsolutePath());
             }
 
-            if ((classOrPackageNames == null || classOrPackageNames.length == 0) &&
-                    classOrPackageName == null)
+            classOrPackageNames = BuildMojo.merge(classOrPackageNames, classOrPackageName);
+            if (classOrPackageNames == null || classOrPackageNames.length == 0) {
                 classScanner.addPackage(null, true);
-            else {
-                if (classOrPackageNames != null)
-                    for (String c : classOrPackageNames)
-                        classScanner.addClassOrPackage(c);
-                classScanner.addClassOrPackage(classOrPackageName);
+            } else for (String s : classOrPackageNames) {
+                classScanner.addClassOrPackage(s);
             }
 
             LinkedHashSet<String> packages = new LinkedHashSet<String>();
