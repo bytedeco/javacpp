@@ -238,7 +238,7 @@ public class BuildMojo extends AbstractMojo {
     @Parameter(defaultValue = "${plugin}", required = true, readonly = true)
     PluginDescriptor plugin;
 
-    String[] merge(String[] ss, String s) {
+    static String[] merge(String[] ss, String s) {
         if (ss != null && s != null) {
             ss = Arrays.copyOf(ss, ss.length + 1);
             ss[ss.length - 1] = s;

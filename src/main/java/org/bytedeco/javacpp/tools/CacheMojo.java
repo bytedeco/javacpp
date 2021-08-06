@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Samuel Audet
+ * Copyright (C) 2019-2021 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -53,6 +53,15 @@ import org.bytedeco.javacpp.Loader;
 @Mojo(name = "cache", defaultPhase = LifecyclePhase.NONE, threadSafe = true,
         requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
 public class CacheMojo extends AbstractMojo {
+
+    /** Process only this class or package (suffixed with .* or .**). */
+    @Parameter(property = "javacpp.classOrPackageName")
+    String classOrPackageName = null;
+
+    /** Process only these classes or packages (suffixed with .* or .**). */
+    @Parameter(property = "javacpp.classOrPackageNames")
+    String[] classOrPackageNames = null;
+
     @Parameter(defaultValue = "${project}", required = true, readonly = true)
     MavenProject project;
 
@@ -103,7 +112,13 @@ public class CacheMojo extends AbstractMojo {
             for (Artifact a : artifacts) {
                 classLoader.addPaths(a.getFile().getAbsolutePath());
             }
-            classScanner.addPackage(null, true);
+
+            classOrPackageNames = BuildMojo.merge(classOrPackageNames, classOrPackageName);
+            if (classOrPackageNames == null || classOrPackageNames.length == 0) {
+                classScanner.addPackage(null, true);
+            } else for (String s : classOrPackageNames) {
+                classScanner.addClassOrPackage(s);
+            }
 
             LinkedHashSet<String> packages = new LinkedHashSet<String>();
             for (Class c : classes) {
