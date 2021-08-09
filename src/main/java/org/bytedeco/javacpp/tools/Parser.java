@@ -4132,6 +4132,10 @@ public class Parser {
         ClassProperties allProperties = Loader.loadProperties(cls, properties, true);
         ClassProperties clsProperties = Loader.loadProperties(cls, properties, false);
 
+        List<String> excludes = new ArrayList<>();
+        excludes.addAll(clsProperties.get("platform.exclude"));
+        excludes.addAll(allProperties.get("platform.exclude"));
+
         // Capture c-includes from "class" and "all" properties
         List<String> cIncludes = new ArrayList<>();
         cIncludes.addAll(clsProperties.get("platform.cinclude"));
@@ -4254,7 +4258,16 @@ public class Parser {
         for (String include : allIncludes) {
             if (!clsIncludes.contains(include)) {
                 boolean isCFile = cIncludes.contains(include);
-                parse(context, declList, includePaths, include, isCFile);
+                try {
+                    parse(context, declList, includePaths, include, isCFile);
+                } catch (FileNotFoundException e) {
+                    if (excludes.contains(include)) {
+                        // don't worry about missing files found in "exclude"
+                        logger.warn(e.toString());
+                    } else {
+                        throw e;
+                    }
+                }
             }
         }
         declList = new DeclarationList(declList);
@@ -4263,7 +4276,16 @@ public class Parser {
             for (String include : clsIncludes) {
                 if (allIncludes.contains(include)) {
                     boolean isCFile = cIncludes.contains(include);
-                    parse(context, declList, includePaths, include, isCFile);
+                    try {
+                        parse(context, declList, includePaths, include, isCFile);
+                    } catch (FileNotFoundException e) {
+                        if (excludes.contains(include)) {
+                            // don't worry about missing files found in "exclude"
+                            logger.warn(e.toString());
+                        } else {
+                            throw e;
+                        }
+                    }
                 }
             }
         }

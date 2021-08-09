@@ -1,4 +1,5 @@
 
+ * Prevent `Parser` from failing on nonexistent header files contained in `@Platform(exclude=...)`
  * Add `classOrPackageNames` parameter to `CacheMojo` ([pull #510](https://github.com/bytedeco/javacpp/pull/510))
 
 ### August 2, 2021 version 1.5.6
