@@ -62,7 +62,9 @@ public class BuilderTest implements BuildEnabled, LoadEnabled {
             URL u = Loader.findResource(c, Loader.getPlatform() + extension);
             if (u != null) {
                 for (File f : new File(u.toURI()).listFiles()) {
-                    f.delete();
+                    if (f.getName().contains("jniBuilderTest")) {
+                        f.delete();
+                    }
                 }
             }
         }

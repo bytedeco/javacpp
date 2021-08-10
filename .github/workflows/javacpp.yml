@@ -10,22 +10,22 @@ env:
   STAGING_REPOSITORY: ${{ secrets.STAGING_REPOSITORY }}
 jobs:
   android-arm:
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-18.04
     container: centos:7
     steps:
       - uses: bytedeco/javacpp-presets/.github/actions/deploy-centos@actions
   android-arm64:
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-18.04
     container: centos:7
     steps:
       - uses: bytedeco/javacpp-presets/.github/actions/deploy-centos@actions
   android-x86:
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-18.04
     container: centos:7
     steps:
       - uses: bytedeco/javacpp-presets/.github/actions/deploy-centos@actions
   android-x86_64:
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-18.04
     container: centos:7
     steps:
       - uses: bytedeco/javacpp-presets/.github/actions/deploy-centos@actions
@@ -38,28 +38,28 @@ jobs:
     steps:
       - uses: bytedeco/javacpp-presets/.github/actions/deploy-macosx@actions
   linux-armhf:
-    runs-on: ubuntu-16.04
-    container: ubuntu:xenial
+    runs-on: ubuntu-18.04
+    container: ubuntu:bionic
     steps:
       - uses: bytedeco/javacpp-presets/.github/actions/deploy-ubuntu@actions
   linux-arm64:
-    runs-on: ubuntu-16.04
-    container: ubuntu:xenial
+    runs-on: ubuntu-18.04
+    container: ubuntu:bionic
     steps:
       - uses: bytedeco/javacpp-presets/.github/actions/deploy-ubuntu@actions
   linux-ppc64le:
-    runs-on: ubuntu-16.04
-    container: ubuntu:xenial
+    runs-on: ubuntu-18.04
+    container: ubuntu:bionic
     steps:
       - uses: bytedeco/javacpp-presets/.github/actions/deploy-ubuntu@actions
   linux-x86:
-    runs-on: ubuntu-16.04
-    container: centos:6
+    runs-on: ubuntu-18.04
+    container: centos:7
     steps:
       - uses: bytedeco/javacpp-presets/.github/actions/deploy-centos@actions
   linux-x86_64:
-    runs-on: ubuntu-16.04
-    container: centos:6
+    runs-on: ubuntu-18.04
+    container: centos:7
     env:
       CI_DEPLOY_OPTIONS: "" # to not skip tests
     steps:
@@ -86,6 +86,6 @@ jobs:
       - uses: bytedeco/javacpp-presets/.github/actions/deploy-windows@actions
   redeploy:
     needs: [android-arm, android-arm64, android-x86, android-x86_64, ios-arm64, ios-x86_64, linux-armhf, linux-arm64, linux-ppc64le, linux-x86, linux-x86_64, macosx-arm64, macosx-x86_64, windows-x86, windows-x86_64]
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-18.04
     steps:
       - uses: bytedeco/javacpp-presets/.github/actions/redeploy@actions
