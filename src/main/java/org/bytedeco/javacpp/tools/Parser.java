@@ -594,7 +594,7 @@ public class Parser {
             Type type = type(context);
             arguments.add(type);
             token = tokens.get();
-            if (!token.match(',', '>')) {
+            if (!token.match(',', '>') && type != null) {
                 // may not actually be a type
                 int count = 0;
                 for (token = tokens.get(); !token.match(Token.EOF); token = tokens.next()) {
@@ -799,8 +799,15 @@ public class Parser {
         if (tokens.get().match("...")) {
             // skip over variable arguments
             tokens.next();
+            boolean paren;
+            if (paren = tokens.get().match('(')) {
+                tokens.next();
+            }
             if (tokens.get().match(Token.IDENTIFIER)) {
                 // skip over template parameter packs as well
+                tokens.next();
+            }
+            if (paren && tokens.get().match(')')) {
                 tokens.next();
             }
             return null;
@@ -2606,6 +2613,9 @@ public class Parser {
                 cppName = context.namespace + "::" + cppName;
             }
             info = infoMap.getFirst(cppName);
+            if (info != null && info.skip) {
+                continue;
+            }
 
             namespace = cppName.lastIndexOf("::");
             String shortName = cppName;

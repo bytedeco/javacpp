@@ -1,4 +1,5 @@
 
+ * Fix `Parser` failures on variadic templates calling `sizeof...()` and on variables initialized from template values
  * Prevent `Parser` from failing on nonexistent header files contained in `@Platform(exclude=...)`
  * Add `classOrPackageNames` parameter to `CacheMojo` ([pull #510](https://github.com/bytedeco/javacpp/pull/510))
 
