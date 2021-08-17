@@ -55,12 +55,16 @@ import java.util.Properties;
 import java.util.WeakHashMap;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+
 import org.bytedeco.javacpp.annotation.Cast;
 import org.bytedeco.javacpp.annotation.Name;
 import org.bytedeco.javacpp.annotation.Platform;
 import org.bytedeco.javacpp.annotation.Raw;
 import org.bytedeco.javacpp.tools.Builder;
 import org.bytedeco.javacpp.tools.Logger;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.Version;
 
 /**
  * The Loader contains functionality to load native libraries, but also has a bit
@@ -88,6 +92,18 @@ public class Loader {
             return new ArrayDeque<Class<?>>();
         }
     };
+
+    private static final boolean IS_OSGI_RUNTIME;
+    static {
+        boolean isOSGI;
+        try {
+            Bundle.class.getName();
+            isOSGI = true;
+        } catch (NoClassDefFoundError e) {
+            isOSGI = false;
+        }
+        IS_OSGI_RUNTIME = isOSGI;
+    }
 
     public static class Detector {
         /**
@@ -414,7 +430,7 @@ public class Loader {
      */
     public static File cacheResource(Class cls, String name) throws IOException {
         URL u = findResource(cls, name);
-        return u != null ? cacheResource(u) : null;
+        return u != null ? cacheResource(cls, u, null) : null;
     }
 
     /**
@@ -440,14 +456,14 @@ public class Loader {
         URL[] urls = findResources(cls, name);
         File[] files = new File[urls.length];
         for (int i = 0; i < urls.length; i++) {
-            files[i] = cacheResource(urls[i]);
+            files[i] = cacheResource(cls, urls[i], null);
         }
         return files;
     }
 
     /** Returns {@code cacheResource(resourceUrl, null)} */
     public static File cacheResource(URL resourceURL) throws IOException {
-        return cacheResource(resourceURL, null);
+        return cacheResource(null, resourceURL, null);
     }
     /**
      * Extracts a resource, if the size or last modified timestamp differs from what is in cache,
@@ -462,6 +478,10 @@ public class Loader {
      * @see #cacheDir
      */
     public static File cacheResource(URL resourceURL, String target) throws IOException {
+        return cacheResource(null, resourceURL, target);
+    }
+
+    private static File cacheResource(Class<?> cls, URL resourceURL, String target) throws IOException {
         // Find appropriate subdirectory in cache for the resource ...
         File urlFile;
         String[] splitURL = resourceURL.toString().split("#");
@@ -521,6 +541,21 @@ public class Loader {
             }
             if (!noSubdir) {
                 cacheSubdir = new File(cacheSubdir, urlFile.getParentFile().getName());
+            }
+        } else if (IS_OSGI_RUNTIME && cls != null) {
+            size = urlConnection.getContentLengthLong();
+            timestamp = urlConnection.getLastModified();
+
+            Bundle bundle = FrameworkUtil.getBundle(cls);
+            if (bundle != null) {
+                Version v = bundle.getVersion();
+                String version = v.getMajor() + "." + v.getMinor() + "." + v.getMicro(); // skip qualifier
+                String subdirName = bundle.getSymbolicName() + "_" + version;
+                String parentName = urlFile.getParentFile().toString();
+                if (parentName != null) {
+                    subdirName = subdirName + File.separator + parentName;
+                }
+                cacheSubdir = new File(cacheSubdir, subdirName);
             }
         } else {
             if (urlFile.exists()) {
@@ -654,7 +689,7 @@ public class Loader {
                             logger.debug("Extracting " + resourceURL);
                         }
                         file.delete();
-                        extractResource(resourceURL, file, null, null, true);
+                        extractResource(cls, resourceURL, file, null, null, true);
                         file.setLastModified(timestamp);
                     }
                 } finally {
@@ -692,7 +727,7 @@ public class Loader {
     public static File extractResource(Class cls, String name, File directory,
             String prefix, String suffix) throws IOException {
         URL u = findResource(cls, name);
-        return u != null ? extractResource(u, directory, prefix, suffix) : null;
+        return u != null ? extractResource(cls, u, directory, prefix, suffix, false) : null;
     }
 
     /**
@@ -718,7 +753,7 @@ public class Loader {
         URL[] urls = findResources(cls, name);
         File[] files = new File[urls.length];
         for (int i = 0; i < urls.length; i++) {
-            files[i] = extractResource(urls[i], directory, prefix, suffix);
+            files[i] = extractResource(cls, urls[i], directory, prefix, suffix, false);
         }
         return files;
     }
@@ -726,7 +761,7 @@ public class Loader {
     /** Returns {@code extractResource(resourceURL, directoryOrFile, prefix, suffix, false)}. */
     public static File extractResource(URL resourceURL, File directoryOrFile,
             String prefix, String suffix) throws IOException {
-        return extractResource(resourceURL, directoryOrFile, prefix, suffix, false);
+        return extractResource(null, resourceURL, directoryOrFile, prefix, suffix, false);
     }
 
     /**
@@ -744,11 +779,16 @@ public class Loader {
      */
     public static File extractResource(URL resourceURL, File directoryOrFile,
             String prefix, String suffix, boolean cacheDirectory) throws IOException {
+        return extractResource(null, directoryOrFile, prefix, suffix, cacheDirectory);
+    }
+
+    private static File extractResource(Class cls, URL resourceURL, File directoryOrFile, String prefix, String suffix,
+            boolean cacheDirectory) throws IOException {
         URLConnection urlConnection = resourceURL != null ? resourceURL.openConnection() : null;
+        String resourceURLStr = resourceURL.toString();
         if (urlConnection instanceof JarURLConnection) {
             JarFile jarFile = ((JarURLConnection)urlConnection).getJarFile();
             JarEntry jarEntry = ((JarURLConnection)urlConnection).getJarEntry();
-            String jarFileName = jarFile.getName();
             String jarEntryName = jarEntry.getName();
             if (!jarEntryName.endsWith("/")) {
                 jarEntryName += "/";
@@ -759,9 +799,9 @@ public class Loader {
                 while (entries.hasMoreElements()) {
                     JarEntry entry = entries.nextElement();
                     String entryName = entry.getName();
-                    long entrySize = entry.getSize();
-                    long entryTimestamp = entry.getTime();
                     if (entryName.startsWith(jarEntryName)) {
+                        long entrySize = entry.getSize();
+                        long entryTimestamp = entry.getTime();
                         File file = new File(directoryOrFile, entryName.substring(jarEntryName.length()));
                         if (entry.isDirectory()) {
                             file.mkdirs();
@@ -769,14 +809,43 @@ public class Loader {
                                 || file.lastModified() != entryTimestamp || !file.equals(file.getCanonicalFile())) {
                             // ... extract it from our resources ...
                             file.delete();
-                            String s = resourceURL.toString();
-                            URL u = new URL(s.substring(0, s.indexOf("!/") + 2) + entryName);
-                            file = extractResource(u, file, prefix, suffix);
+                            URL u = new URL(resourceURLStr.substring(0, resourceURLStr.indexOf("!/") + 2) + entryName);
+                            file = extractResource(cls, u, file, prefix, suffix, false);
                         }
                         file.setLastModified(entryTimestamp);
                     }
                 }
                 return directoryOrFile;
+            }
+        }
+        if (IS_OSGI_RUNTIME && cls != null) {
+            // TODO: check if the URL is connected to the given class, respectively obtain
+            // the bundle from the URL.
+            Bundle bundle = FrameworkUtil.getBundle(cls);
+            if (bundle != null) {
+                String path = resourceURL.getPath();
+                Enumeration<URL> entries = bundle.findEntries(path, null, true);
+                if (entries != null && entries.hasMoreElements()) { // a not empty directory
+                    while (entries.hasMoreElements()) {
+                        URL entry = entries.nextElement();
+                        String entryPath = entry.getPath();
+                        URLConnection entryConnection = entry.openConnection();
+                        long entrySize = entryConnection.getContentLengthLong();
+                        long entryTimestamp = entryConnection.getLastModified();
+                        File file = new File(directoryOrFile, entryPath.substring(path.length()));
+                        if (entryPath.endsWith("/")) { // is directory
+                            file.mkdirs();
+                        } else if (!cacheDirectory || !file.exists() || file.length() != entrySize
+                                || file.lastModified() != entryTimestamp || !file.equals(file.getCanonicalFile())) {
+                            // ... extract it from our resources ...
+                            file.delete();
+                            // optimization: pass null-class to not check for directories again
+                            extractResource(null, entry, file, prefix, suffix, false);
+                        }
+                        file.setLastModified(entryTimestamp);
+                    }
+                    return directoryOrFile;
+                }
             }
         }
         InputStream is = urlConnection != null ? urlConnection.getInputStream() : null;
@@ -795,7 +864,7 @@ public class Loader {
                 if (directoryOrFile.isDirectory()) {
                     directory = directoryOrFile;
                     try {
-                        file = new File(directoryOrFile, new File(new URI(resourceURL.toString().split("#")[0])).getName());
+                        file = new File(directoryOrFile, new File(new URI(resourceURLStr.split("#")[0])).getName());
                     } catch (IllegalArgumentException | URISyntaxException ex) {
                         file = new File(directoryOrFile, new File(resourceURL.getPath()).getName());
                     }
@@ -1283,7 +1352,7 @@ public class Loader {
                     for (String preload : preloads) {
                         URL[] urls = findLibrary(cls, p, preload, true);
                         for (URL url : urls) {
-                            File f = cacheResource(url);
+                            File f = cacheResource(cls, url, null);
                             if (f != null) {
                                 f.setExecutable(true);
                                 break;
@@ -1309,7 +1378,7 @@ public class Loader {
                                     f.set(u, filename2);
                                 }
                             }
-                            File f = cacheResource(u);
+                            File f = cacheResource(cls, u, null);
                             if (f != null) {
                                 f.setExecutable(true);
                                 executablePaths.put(e, f.getAbsolutePath());
@@ -1596,7 +1665,7 @@ public class Loader {
                     file = new File(uri);
                 } catch (Exception exc) {
                     // ... extract it from resources into the cache, if necessary ...
-                    File f = cacheResource(url, filename);
+                    File f = cacheResource(cls, url, filename);
                     try {
                         if (f != null) {
                             file = f;
