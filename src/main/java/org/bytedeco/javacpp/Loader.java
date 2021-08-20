@@ -49,12 +49,15 @@ import java.util.Deque;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+
 import org.bytedeco.javacpp.annotation.Cast;
 import org.bytedeco.javacpp.annotation.Name;
 import org.bytedeco.javacpp.annotation.Platform;
@@ -765,15 +768,16 @@ public class Loader {
                         File file = new File(directoryOrFile, entryName.substring(jarEntryName.length()));
                         if (entry.isDirectory()) {
                             file.mkdirs();
+                            file.setLastModified(entryTimestamp);
                         } else if (!cacheDirectory || !file.exists() || file.length() != entrySize
-                                || file.lastModified() != entryTimestamp || !file.equals(file.getCanonicalFile())) {
+                                || file.lastModified() != entryTimestamp) {
                             // ... extract it from our resources ...
                             file.delete();
                             String s = resourceURL.toString();
                             URL u = new URL(s.substring(0, s.indexOf("!/") + 2) + entryName);
                             file = extractResource(u, file, prefix, suffix);
+                            file.setLastModified(entryTimestamp);
                         }
-                        file.setLastModified(entryTimestamp);
                     }
                 }
                 return directoryOrFile;
@@ -1247,7 +1251,7 @@ public class Loader {
                     foundLibraries.put(preload, urls = findLibrary(cls, p, preload, pathsFirst));
                 }
                 String filename = null;
-                if (oldUrls == null || urls.length > 0) {
+                if (oldUrls == null && urls.length > 0) {
                     filename = loadLibrary(cls, urls, preload, preloaded.toArray(new String[preloaded.size()]));
                 }
                 if (filename != null && new File(filename).exists()) {
@@ -1341,7 +1345,7 @@ public class Loader {
                     foundLibraries.put(library, urls = findLibrary(cls, p, library, pathsFirst));
                 }
                 String filename = null;
-                if (oldUrls == null || urls.length > 0) {
+                if (oldUrls == null && urls.length > 0) {
                     filename = loadLibrary(cls, urls, library, preloaded.toArray(new String[preloaded.size()]));
                 }
                 if (cacheDir != null && filename != null && filename.startsWith(cacheDir)) {
@@ -1423,28 +1427,37 @@ public class Loader {
         String[] extensions = properties.get("platform.extension").toArray(new String[0]);
         String prefix = properties.getProperty("platform.library.prefix", "");
         String suffix = properties.getProperty("platform.library.suffix", "");
-        String[] styles = {
+        String[] styles = !version.isEmpty() ? new String[] { 
             prefix + libname + suffix + version, // Linux style
             prefix + libname + version + suffix, // Mac OS X style
             prefix + libname + suffix            // without version
-        };
-        String[] styles2 = {
+        } : new String[] { prefix + libname + suffix };
+        
+        String[] styles2 = !version2.isEmpty() ? new String[] {
             prefix + libname2 + suffix + version2, // Linux style
             prefix + libname2 + version2 + suffix, // Mac OS X style
             prefix + libname2 + suffix             // without version
-        };
+        } : new String[] { prefix + libname2 + suffix };
 
         String[] suffixes = properties.get("platform.library.suffix").toArray(new String[0]);
         if (suffixes.length > 1) {
-            styles = new String[3 * suffixes.length];
-            styles2 = new String[3 * suffixes.length];
+            styles = !version.isEmpty() ? new String[3 * suffixes.length] : new String[suffixes.length];
+            styles2 = !version2.isEmpty() ? new String[3 * suffixes.length] : new String[suffixes.length];
             for (int i = 0; i < suffixes.length; i++) {
-                styles[3 * i    ] = prefix + libname + suffixes[i] + version; // Linux style
-                styles[3 * i + 1] = prefix + libname + version + suffixes[i]; // Mac OS X style
-                styles[3 * i + 2] = prefix + libname + suffixes[i];           // without version
-                styles2[3 * i    ] = prefix + libname2 + suffixes[i] + version2; // Linux style
-                styles2[3 * i + 1] = prefix + libname2 + version2 + suffixes[i]; // Mac OS X style
-                styles2[3 * i + 2] = prefix + libname2 + suffixes[i];            // without version
+                if(!version.isEmpty()) {
+                    styles[3 * i    ] = prefix + libname + suffixes[i] + version; // Linux style
+                    styles[3 * i + 1] = prefix + libname + version + suffixes[i]; // Mac OS X style
+                    styles[3 * i + 2] = prefix + libname + suffixes[i];           // without version
+                }else {
+                    styles[i] = prefix + libname + suffixes[i]; // without version
+                }
+                if (!version2.isEmpty()) {
+                    styles2[3 * i    ] = prefix + libname2 + suffixes[i] + version2; // Linux style
+                    styles2[3 * i + 1] = prefix + libname2 + version2 + suffixes[i]; // Mac OS X style
+                    styles2[3 * i + 2] = prefix + libname2 + suffixes[i];            // without version
+                }else {
+                    styles2[i] = prefix + libname2 + suffixes[i]; // without version
+                }
             }
         }
         if (nostyle) {
@@ -1455,13 +1468,15 @@ public class Loader {
         List<String> paths = new ArrayList<String>();
         paths.addAll(properties.get("platform.linkpath"));
         paths.addAll(properties.get("platform.preloadpath"));
-        List<String> resources = properties.get("platform.preloadresource");
+        List<String> resourcesList = properties.get("platform.preloadresource");
         String libraryPath = properties.getProperty("platform.library.path", "");
+        Set<String> resources = new LinkedHashSet<String>();
         if (libraryPath.length() > 0 && pathsFirst) {
             // leave loading from "platform.library.path" to System.loadLibrary() as fallback,
             // which works better on Android, unless the user wants to run an executable
-            resources.add(0, libraryPath);
+            resources.add(libraryPath);
         }
+        resources.addAll(resourcesList);
         resources.add(null);
         String libpath = System.getProperty("java.library.path", "");
         if (libpath.length() > 0 && (pathsFirst || !isLoadLibraries() || reference)) {
