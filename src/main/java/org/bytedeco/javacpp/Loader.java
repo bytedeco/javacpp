@@ -524,22 +524,22 @@ public class Loader {
             if (!noSubdir) {
                 cacheSubdir = new File(cacheSubdir, urlFile.getParentFile().getName());
             }
-		} else if (OSGiBundleResourceLoader.isOSGiRuntime()) {
-			// TODO: what happens if this is another URL in a OSGi environment?
-			// I think it is unlikely that is called with URL-schema?!
-			if (!noSubdir) {
-				String subdirName = OSGiBundleResourceLoader.getContainerBundleName(resourceURL);
-				if (subdirName != null) {
-					String parentName = urlFile.getParentFile().toString();
-					if (parentName != null) {
-						subdirName = subdirName + File.separator + parentName;
-					}
-					cacheSubdir = new File(cacheSubdir, subdirName);
-				}
-				size = urlConnection.getContentLengthLong();
-				timestamp = urlConnection.getLastModified();
-			}
-		} else {
+        } else if (OSGiBundleResourceLoader.isOSGiRuntime()) {
+            // TODO: what happens if this is another URL in a OSGi environment?
+            // I think it is unlikely that is called with URL-schema?!
+            if (!noSubdir) {
+                String subdirName = OSGiBundleResourceLoader.getContainerBundleName(resourceURL);
+                if (subdirName != null) {
+                    String parentName = urlFile.getParentFile().toString();
+                    if (parentName != null) {
+                        subdirName = subdirName + File.separator + parentName;
+                    }
+                    cacheSubdir = new File(cacheSubdir, subdirName);
+                }
+                size = urlConnection.getContentLengthLong();
+                timestamp = urlConnection.getLastModified();
+            }
+        } else {
             if (urlFile.exists()) {
                 size = urlFile.length();
                 timestamp = urlFile.lastModified();

@@ -38,141 +38,139 @@ import org.osgi.framework.Version;
 
 public class OSGiBundleResourceLoader {
 
-	private OSGiBundleResourceLoader() { // static use only
-	}
+    private OSGiBundleResourceLoader() { // static use only
+    }
 
-	public static boolean isOSGiRuntime() {
-		return IS_OSGI_RUNTIME;
-	}
+    public static boolean isOSGiRuntime() {
+        return IS_OSGI_RUNTIME;
+    }
 
-	public static String getContainerBundleName(URL resourceURL) {
-		requireOSGi();
-		return OSGiEnvironmentLoader.getContainerBundleName(resourceURL);
-	}
+    public static String getContainerBundleName(URL resourceURL) {
+        requireOSGi();
+        return OSGiEnvironmentLoader.getContainerBundleName(resourceURL);
+    }
 
-	public static Enumeration<URL> getBundleDirectoryContent(URL resourceURL) {
-		requireOSGi();
-		return OSGiEnvironmentLoader.getBundleDirectoryContent(resourceURL);
-	}
+    public static Enumeration<URL> getBundleDirectoryContent(URL resourceURL) {
+        requireOSGi();
+        return OSGiEnvironmentLoader.getBundleDirectoryContent(resourceURL);
+    }
 
-	private static void requireOSGi() {
-		if (!IS_OSGI_RUNTIME) {
-			throw new IllegalStateException(
-				OSGiBundleResourceLoader.class.getSimpleName() + " must only be used within a OSGi runtime");
-		}
-	}
+    private static void requireOSGi() {
+        if (!IS_OSGI_RUNTIME) {
+            throw new IllegalStateException(OSGiBundleResourceLoader.class.getSimpleName() + " must only be used within a OSGi runtime");
+        }
+    }
 
-	private static final Map<String, Long> HOST_2_BUNDLE = new ConcurrentHashMap<String, Long>();
-	private static final boolean IS_OSGI_RUNTIME;
+    private static final Map<String, Long> HOST_2_BUNDLE = new ConcurrentHashMap<String, Long>();
+    private static final boolean IS_OSGI_RUNTIME;
 
-	static {
-		boolean isOSGI;
-		try {
-			Bundle.class.getName();
-			isOSGI = true;
-		} catch (NoClassDefFoundError e) {
-			isOSGI = false;
-		}
-		IS_OSGI_RUNTIME = isOSGI;
-		if (IS_OSGI_RUNTIME) {
-			OSGiEnvironmentLoader.initialize();
-		}
-	}
+    static {
+        boolean isOSGI;
+        try {
+            Bundle.class.getName();
+            isOSGI = true;
+        } catch (NoClassDefFoundError e) {
+            isOSGI = false;
+        }
+        IS_OSGI_RUNTIME = isOSGI;
+        if (IS_OSGI_RUNTIME) {
+            OSGiEnvironmentLoader.initialize();
+        }
+    }
 
-	private static class OSGiEnvironmentLoader {
-		// Code using OSGi APIs has to be encapsulated into own class
-		// to prevent NoClassDefFoundErrors in OSGi environments
+    private static class OSGiEnvironmentLoader {
+        // Code using OSGi APIs has to be encapsulated into own class
+        // to prevent NoClassDefFoundErrors in OSGi environments
 
-		private static void initialize() {
-			BundleContext context = getBundleContext();
-			if (context != null) {
-				indexAllBundles(context);
-				context.addBundleListener(new BundleListener() {
-					@Override
-					public void bundleChanged(BundleEvent event) {
-						Bundle bundle = event.getBundle();
-						switch (event.getType()) {
-						case BundleEvent.RESOLVED:
-							HOST_2_BUNDLE.put(getBundleURLHost(bundle), bundle.getBundleId());
-							break;
-						case BundleEvent.UNRESOLVED:
-							HOST_2_BUNDLE.remove(getBundleURLHost(bundle));
-							break;
-						default:
-							break;
-						}
-					}
-				});
-				context.addFrameworkListener(new FrameworkListener() {
-					@Override
-					public void frameworkEvent(FrameworkEvent event) {
-						if (event.getType() == FrameworkEvent.PACKAGES_REFRESHED) {
-							HOST_2_BUNDLE.clear();
-							indexAllBundles(getBundleContext());
-							// don't keep a reference on the BundleContext
-						}
-					}
-				});
-			}
-		}
+        private static void initialize() {
+            BundleContext context = getBundleContext();
+            if (context != null) {
+                indexAllBundles(context);
+                context.addBundleListener(new BundleListener() {
+                    @Override
+                    public void bundleChanged(BundleEvent event) {
+                        Bundle bundle = event.getBundle();
+                        switch (event.getType()) {
+                        case BundleEvent.RESOLVED:
+                            HOST_2_BUNDLE.put(getBundleURLHost(bundle), bundle.getBundleId());
+                            break;
+                        case BundleEvent.UNRESOLVED:
+                            HOST_2_BUNDLE.remove(getBundleURLHost(bundle));
+                            break;
+                        default:
+                            break;
+                        }
+                    }
+                });
+                context.addFrameworkListener(new FrameworkListener() {
+                    @Override
+                    public void frameworkEvent(FrameworkEvent event) {
+                        if (event.getType() == FrameworkEvent.PACKAGES_REFRESHED) {
+                            HOST_2_BUNDLE.clear();
+                            indexAllBundles(getBundleContext());
+                            // don't keep a reference on the BundleContext
+                        }
+                    }
+                });
+            }
+        }
 
-		private static BundleContext getBundleContext() {
-			Bundle bundle = FrameworkUtil.getBundle(OSGiEnvironmentLoader.class);
-			if (bundle != null) {
-				int state = bundle.getState();
-				if (state != Bundle.ACTIVE
-					&& (state == Bundle.INSTALLED || state == Bundle.RESOLVED || state == Bundle.STARTING)) {
-					try {
-						bundle.start();
-					} catch (BundleException e) { // ignore
-					}
-				}
-				if (bundle.getState() == Bundle.ACTIVE) {
-					return bundle.getBundleContext();
-				}
-			}
-			return null;
-		}
+        private static BundleContext getBundleContext() {
+            Bundle bundle = FrameworkUtil.getBundle(OSGiEnvironmentLoader.class);
+            if (bundle != null) {
+                int state = bundle.getState();
+                if (state != Bundle.ACTIVE && (state == Bundle.INSTALLED || state == Bundle.RESOLVED || state == Bundle.STARTING)) {
+                    try {
+                        bundle.start();
+                    } catch (BundleException e) { // ignore
+                    }
+                }
+                if (bundle.getState() == Bundle.ACTIVE) {
+                    return bundle.getBundleContext();
+                }
+            }
+            return null;
+        }
 
-		private static void indexAllBundles(BundleContext context) {
-			if (context != null) {
-				for (Bundle bundle : context.getBundles()) {
-					HOST_2_BUNDLE.put(getBundleURLHost(bundle), bundle.getBundleId());
-				}
-			}
-		}
+        private static void indexAllBundles(BundleContext context) {
+            if (context != null) {
+                for (Bundle bundle : context.getBundles()) {
+                    HOST_2_BUNDLE.put(getBundleURLHost(bundle), bundle.getBundleId());
+                }
+            }
+        }
 
-		private static String getBundleURLHost(Bundle bundle) {
-			return bundle.getEntry("/").getHost();
-		}
+        private static String getBundleURLHost(Bundle bundle) {
+            return bundle.getEntry("/").getHost();
+        }
 
-		private static Bundle getContainerBundle(URL url) {
-			Long bundleId = HOST_2_BUNDLE.get(url.getHost());
-			if (bundleId != null) {
-				BundleContext context = getBundleContext();
-				if (context != null) {
-					return context.getBundle(bundleId);
-				}
-			}
-			return null;
-		}
+        private static Bundle getContainerBundle(URL url) {
+            Long bundleId = HOST_2_BUNDLE.get(url.getHost());
+            if (bundleId != null) {
+                BundleContext context = getBundleContext();
+                if (context != null) {
+                    return context.getBundle(bundleId);
+                }
+            }
+            return null;
+        }
 
-		public static String getContainerBundleName(URL resourceURL) {
-			Bundle bundle = getContainerBundle(resourceURL);
-			if (bundle != null) {
-				Version v = bundle.getVersion();
-				String version = v.getMajor() + "." + v.getMinor() + "." + v.getMicro(); // skip qualifier
-				return bundle.getSymbolicName() + "_" + version;
-			}
-			return null;
-		}
+        public static String getContainerBundleName(URL resourceURL) {
+            Bundle bundle = getContainerBundle(resourceURL);
+            if (bundle != null) {
+                Version v = bundle.getVersion();
+                String version = v.getMajor() + "." + v.getMinor() + "." + v.getMicro(); // skip qualifier
+                return bundle.getSymbolicName() + "_" + version;
+            }
+            return null;
+        }
 
-		public static Enumeration<URL> getBundleDirectoryContent(URL resourceURL) {
-			Bundle bundle = getContainerBundle(resourceURL);
-			if (bundle != null) {
-				return bundle.findEntries(resourceURL.getPath(), null, true);
-			}
-			return null;
-		}
-	}
+        public static Enumeration<URL> getBundleDirectoryContent(URL resourceURL) {
+            Bundle bundle = getContainerBundle(resourceURL);
+            if (bundle != null) {
+                return bundle.findEntries(resourceURL.getPath(), null, true);
+            }
+            return null;
+        }
+    }
 }
