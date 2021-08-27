@@ -1991,9 +1991,9 @@ public class Parser {
                 for (token = tokens.next(), token.spacing = ""; !token.match(Token.EOF); token = tokens.next()) {
                     if (count2 == 0 && token.match(',', ')', '}')) {
                         break;
-                    } else if (token.match('(', '{')) {
+                    } else if (token.match('<', '(', '{')) {
                         count2++;
-                    } else if (token.match(')', '}')) {
+                    } else if (token.match('>', ')', '}')) {
                         count2--;
                     }
 
@@ -2588,8 +2588,16 @@ public class Parser {
         if (dcl.cppName.length() == 0 || (info != null && info.skip) || (info2 != null && info2.skip)) {
             decl.text = spacing;
             declList.add(decl);
-            while (!tokens.get().match(Token.EOF, ';')) {
-                tokens.next();
+            int count = 0;
+            for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.next()) {
+                if (token.match('{')) {
+                    count++;
+                } else if (token.match('}')) {
+                    count--;
+                }
+                if (count == 0 && token.match(';')) {
+                    break;
+                }
             }
             tokens.next();
             return true;
@@ -2726,8 +2734,16 @@ public class Parser {
                 decl.declarator = null;
                 decl.custom = true;
             }
-            while (!tokens.get().match(Token.EOF, ';')) {
-                tokens.next();
+            int count = 0;
+            for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.next()) {
+                if (token.match('{')) {
+                    count++;
+                } else if (token.match('}')) {
+                    count--;
+                }
+                if (count == 0 && token.match(';')) {
+                    break;
+                }
             }
             tokens.next();
             String comment = commentAfter();

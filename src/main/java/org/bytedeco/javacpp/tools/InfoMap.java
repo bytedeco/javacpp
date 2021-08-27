@@ -166,6 +166,7 @@ public class InfoMap extends HashMap<String,List<Info>> {
         .put(new Info("close").javaNames("_close"))
         .put(new Info("deallocate").javaNames("_deallocate"))
         .put(new Info("free").javaNames("_free"))
+        .put(new Info("hashCode").javaNames("_hashCode"))
         .put(new Info("address").javaNames("_address"))
         .put(new Info("position").javaNames("_position"))
         .put(new Info("limit").javaNames("_limit"))

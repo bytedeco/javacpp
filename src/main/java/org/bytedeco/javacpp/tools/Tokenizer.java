@@ -223,7 +223,21 @@ class Tokenizer implements Closeable {
             lastChar = c;
         } else if (c == '\'') {
             token.type = Token.INTEGER;
-            buffer.append('\'');
+            c = readChar();
+            boolean quote = true;
+            if (c == '\\') {
+                c = readChar();
+                if (c == 'x') {
+                    quote = false;
+                    buffer.append('0');
+                } else {
+                    buffer.append('\'');
+                    buffer.append('\\');
+                }
+            } else {
+                buffer.append('\'');
+            }
+            buffer.append((char)c);
             while ((c = readChar()) != -1 && c != '\'') {
                 buffer.append((char)c);
                 if (c == '\\') {
@@ -231,7 +245,9 @@ class Tokenizer implements Closeable {
                     buffer.append((char)c);
                 }
             }
-            buffer.append('\'');
+            if (quote) {
+                buffer.append('\'');
+            }
             token.value = buffer.toString();
         } else if (c == '"') {
             token.type = Token.STRING;

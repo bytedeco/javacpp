@@ -1,4 +1,6 @@
 
+ * Let `Tokenizer` convert characters using ASCII escape sequences `'\x...'` to normal hexadecimal values `0x...`
+ * Fix `Parser` incorrectly mapping default function arguments containing multiple template arguments
  * Fix `Parser` failures on variadic templates calling `sizeof...()` and on variables initialized from template values
  * Prevent `Parser` from failing on nonexistent header files contained in `@Platform(exclude=...)`
  * Add `classOrPackageNames` parameter to `CacheMojo` ([pull #510](https://github.com/bytedeco/javacpp/pull/510))
