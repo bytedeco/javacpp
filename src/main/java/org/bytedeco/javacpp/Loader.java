@@ -766,7 +766,6 @@ public class Loader {
         if (urlConnection instanceof JarURLConnection) {
             JarFile jarFile = ((JarURLConnection) urlConnection).getJarFile();
             JarEntry jarEntry = ((JarURLConnection) urlConnection).getJarEntry();
-            String jarFileName = jarFile.getName();
             String jarEntryName = jarEntry.getName();
             if (!jarEntryName.endsWith("/")) {
                 jarEntryName += "/";
@@ -783,8 +782,7 @@ public class Loader {
                         File file = new File(directoryOrFile, entryName.substring(jarEntryName.length()));
                         if (entry.isDirectory()) {
                             file.mkdirs();
-                        } else if (!cacheDirectory || !file.exists() || file.length() != entrySize
-                                || file.lastModified() != entryTimestamp || !file.equals(file.getCanonicalFile())) {
+                        } else if (!cacheDirectory || isCacheFileCurrent(file, entrySize, entryTimestamp)) {
                             // ... extract it from our resources ...
                             file.delete();
                             String s = resourceURL.toString();
@@ -812,8 +810,7 @@ public class Loader {
                     File file = new File(directoryOrFile, entryName.substring(directoryName.length()));
                     if (entryName.endsWith("/")) { // is directory
                         file.mkdirs();
-                    } else if (!cacheDirectory || !file.exists() || file.length() != entrySize
-                            || file.lastModified() != entryTimestamp || !file.equals(file.getCanonicalFile())) {
+                    } else if (!cacheDirectory || isCacheFileCurrent(file, entrySize, entryTimestamp)) {
                         // ... extract it from our resources ...
                         file.delete();
                         // FIXME: check if directories have to be extracted again?!
@@ -877,6 +874,11 @@ public class Loader {
             }
         }
         return file;
+    }
+
+    private static boolean isCacheFileCurrent(File file, long entrySize, long entryTimestamp) throws IOException {
+        return !file.exists() || file.length() != entrySize || file.lastModified() != entryTimestamp
+                || !file.equals(file.getCanonicalFile());
     }
 
     /** Returns {@code findResources(cls, name, 1)[0]} or null if none. */

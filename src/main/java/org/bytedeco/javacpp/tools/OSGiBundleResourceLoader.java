@@ -22,19 +22,33 @@
 package org.bytedeco.javacpp.tools;
 
 import java.net.URL;
+import java.util.AbstractMap.SimpleImmutableEntry;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Map.Entry;
+import java.util.Queue;
+import java.util.Set;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleEvent;
 import org.osgi.framework.BundleException;
-import org.osgi.framework.BundleListener;
 import org.osgi.framework.FrameworkEvent;
 import org.osgi.framework.FrameworkListener;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.Version;
+import org.osgi.framework.wiring.BundleWire;
+import org.osgi.framework.wiring.BundleWiring;
+import org.osgi.util.tracker.BundleTracker;
 
 public class OSGiBundleResourceLoader {
 
@@ -61,7 +75,6 @@ public class OSGiBundleResourceLoader {
         }
     }
 
-    private static final Map<String, Long> HOST_2_BUNDLE = new ConcurrentHashMap<String, Long>();
     private static final boolean IS_OSGI_RUNTIME;
 
     static {
@@ -82,33 +95,72 @@ public class OSGiBundleResourceLoader {
         // Code using OSGi APIs has to be encapsulated into own class
         // to prevent NoClassDefFoundErrors in OSGi environments
 
+        private static final Map<String, Long> HOST_2_BUNDLE_ID = new HashMap<>();
+        private static final ReadWriteLock LOCK = new ReentrantReadWriteLock();
+
         private static void initialize() {
             BundleContext context = getBundleContext();
             if (context != null) {
-                indexAllBundles(context);
-                context.addBundleListener(new BundleListener() {
+                final BundleTracker<Bundle> bundleTracker = new BundleTracker<Bundle>(context, Bundle.ACTIVE | Bundle.RESOLVED | Bundle.STARTING,
+                        null) {
                     @Override
-                    public void bundleChanged(BundleEvent event) {
-                        Bundle bundle = event.getBundle();
-                        switch (event.getType()) {
-                        case BundleEvent.RESOLVED:
-                            HOST_2_BUNDLE.put(getBundleURLHost(bundle), bundle.getBundleId());
-                            break;
-                        case BundleEvent.UNRESOLVED:
-                            HOST_2_BUNDLE.remove(getBundleURLHost(bundle));
-                            break;
-                        default:
-                            break;
+                    public Bundle addingBundle(Bundle bundle, BundleEvent event) {
+                        Bundle javaCppBundle = context.getBundle();
+                        if (requires(bundle, javaCppBundle)) {
+                            String bundleURLHost = getBundleURLHost(bundle);
+                            Long bundleId = bundle.getBundleId();
+                            LOCK.writeLock().lock();
+                            try {
+                                HOST_2_BUNDLE_ID.put(bundleURLHost, bundleId);
+                            } finally {
+                                LOCK.writeLock().unlock();
+                            }
+                            return bundle;
+                        }
+                        return null;
+                    }
+
+                    @Override
+                    public void removedBundle(Bundle bundle, BundleEvent event, Bundle object) {
+                        String bundleURLHost = getBundleURLHost(bundle);
+                        LOCK.writeLock().lock();
+                        try {
+                            HOST_2_BUNDLE_ID.remove(bundleURLHost);
+                        } finally {
+                            LOCK.writeLock().unlock();
                         }
                     }
-                });
+
+                };
+                bundleTracker.open();
                 context.addFrameworkListener(new FrameworkListener() {
                     @Override
                     public void frameworkEvent(FrameworkEvent event) {
                         if (event.getType() == FrameworkEvent.PACKAGES_REFRESHED) {
-                            HOST_2_BUNDLE.clear();
-                            indexAllBundles(getBundleContext());
-                            // don't keep a reference on the BundleContext
+                            BundleContext bundleContext = getBundleContext(); // don't keep a reference on the BundleContext
+                            if (bundleContext != null) {
+                                LOCK.writeLock().lock();
+                                try {
+                                    List<Entry<String, Long>> toAdd = new ArrayList<>();
+                                    for (Iterator<Entry<String, Long>> iterator = HOST_2_BUNDLE_ID.entrySet().iterator(); iterator.hasNext();) {
+                                        Entry<String, Long> entry = iterator.next();
+                                        Long bundleId = entry.getValue();
+                                        Bundle bundle = bundleContext.getBundle(bundleId);
+                                        String bundleURLHost = getBundleURLHost(bundle);
+                                        if (bundleURLHost.equals(entry.getKey())) {
+                                            iterator.remove();
+                                            toAdd.add(new SimpleImmutableEntry<>(bundleURLHost, bundleId));
+                                        }
+                                    }
+                                    for (Entry<String, Long> entry : toAdd) {
+                                        HOST_2_BUNDLE_ID.put(entry.getKey(), entry.getValue());
+                                    }
+                                } finally {
+                                    LOCK.writeLock().unlock();
+                                }
+                            }
+                        } else if (event.getType() == FrameworkEvent.STOPPED) {
+                            bundleTracker.close();
                         }
                     }
                 });
@@ -132,12 +184,25 @@ public class OSGiBundleResourceLoader {
             return null;
         }
 
-        private static void indexAllBundles(BundleContext context) {
-            if (context != null) {
-                for (Bundle bundle : context.getBundles()) {
-                    HOST_2_BUNDLE.put(getBundleURLHost(bundle), bundle.getBundleId());
+        private static boolean requires(Bundle source, Bundle target) {
+            BundleWiring sourceWiring = source.adapt(BundleWiring.class);
+            Queue<BundleWiring> pending = new ArrayDeque<>(Collections.singleton(sourceWiring));
+            Set<BundleWiring> visited = new HashSet<>(Collections.singleton(sourceWiring));
+
+            while (!pending.isEmpty()) { // perform iterative bfs
+                BundleWiring wiring = pending.remove();
+                if (wiring.getBundle().equals(target)) {
+                    return true;
+                }
+                List<BundleWire> requiredWires = wiring.getRequiredWires(null);
+                for (BundleWire requiredWire : requiredWires) {
+                    BundleWiring provider = requiredWire.getProviderWiring();
+                    if (visited.add(provider)) {
+                        pending.add(provider);
+                    }
                 }
             }
+            return false;
         }
 
         private static String getBundleURLHost(Bundle bundle) {
@@ -145,7 +210,13 @@ public class OSGiBundleResourceLoader {
         }
 
         private static Bundle getContainerBundle(URL url) {
-            Long bundleId = HOST_2_BUNDLE.get(url.getHost());
+            LOCK.readLock().lock();
+            Long bundleId;
+            try {
+                bundleId = HOST_2_BUNDLE_ID.get(url.getHost());
+            } finally {
+                LOCK.readLock().unlock();
+            }
             if (bundleId != null) {
                 BundleContext context = getBundleContext();
                 if (context != null) {
