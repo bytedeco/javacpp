@@ -21,58 +21,24 @@
  */
 package org.bytedeco.javacpp.tools;
 
+import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.net.URL;
-import java.util.AbstractMap.SimpleImmutableEntry;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Queue;
-import java.util.Set;
+import java.util.Optional;
+import java.util.WeakHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.osgi.framework.Bundle;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.BundleEvent;
-import org.osgi.framework.BundleException;
-import org.osgi.framework.FrameworkEvent;
-import org.osgi.framework.FrameworkListener;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.Version;
-import org.osgi.framework.wiring.BundleWire;
-import org.osgi.framework.wiring.BundleWiring;
-import org.osgi.util.tracker.BundleTracker;
 
 public class OSGiBundleResourceLoader {
 
     private OSGiBundleResourceLoader() { // static use only
-    }
-
-    public static boolean isOSGiRuntime() {
-        return IS_OSGI_RUNTIME;
-    }
-
-    public static String getContainerBundleName(URL resourceURL) {
-        requireOSGi();
-        return OSGiEnvironmentLoader.getContainerBundleName(resourceURL);
-    }
-
-    public static Enumeration<URL> getBundleDirectoryContent(URL resourceURL) {
-        requireOSGi();
-        return OSGiEnvironmentLoader.getBundleDirectoryContent(resourceURL);
-    }
-
-    private static void requireOSGi() {
-        if (!IS_OSGI_RUNTIME) {
-            throw new IllegalStateException(OSGiBundleResourceLoader.class.getSimpleName() + " must only be used within a OSGi runtime");
-        }
     }
 
     private static final boolean IS_OSGI_RUNTIME;
@@ -86,8 +52,35 @@ public class OSGiBundleResourceLoader {
             isOSGI = false;
         }
         IS_OSGI_RUNTIME = isOSGI;
-        if (IS_OSGI_RUNTIME) {
-            OSGiEnvironmentLoader.initialize();
+    }
+
+    public static boolean isOSGiRuntime() {
+        return IS_OSGI_RUNTIME;
+    }
+
+    public static String getOSGiContainerBundleName(URL resourceURL) {
+        requireOSGi();
+        return OSGiEnvironmentLoader.getContainerBundleName(resourceURL);
+    }
+
+    public static Enumeration<URL> getOSGiBundleDirectoryContent(URL resourceURL) {
+        requireOSGi();
+        return OSGiEnvironmentLoader.getBundleDirectoryContent(resourceURL);
+    }
+
+    public static URL getOSGiClassResource(Class<?> c, String name) {
+        requireOSGi();
+        return OSGiEnvironmentLoader.getClassResource(c, name);
+    }
+
+    public static Enumeration<URL> getOSGiClassLoaderResources(ClassLoader cl, String name) throws IOException {
+        requireOSGi();
+        return OSGiEnvironmentLoader.getClassLoaderResources(cl, name);
+    }
+
+    private static void requireOSGi() {
+        if (!IS_OSGI_RUNTIME) {
+            throw new IllegalStateException(OSGiBundleResourceLoader.class.getSimpleName() + " must only be used within a OSGi runtime");
         }
     }
 
@@ -95,138 +88,60 @@ public class OSGiBundleResourceLoader {
         // Code using OSGi APIs has to be encapsulated into own class
         // to prevent NoClassDefFoundErrors in OSGi environments
 
-        private static final Map<String, Long> HOST_2_BUNDLE_ID = new HashMap<>();
         private static final ReadWriteLock LOCK = new ReentrantReadWriteLock();
+        private static final WeakHashMap<URL, WeakReference<Bundle>> URL_TO_BUNDLE = new WeakHashMap<>();
 
-        private static void initialize() {
-            BundleContext context = getBundleContext();
-            if (context != null) {
-                final BundleTracker<Bundle> bundleTracker = new BundleTracker<Bundle>(context, Bundle.ACTIVE | Bundle.RESOLVED | Bundle.STARTING,
-                        null) {
-                    @Override
-                    public Bundle addingBundle(Bundle bundle, BundleEvent event) {
-                        Bundle javaCppBundle = context.getBundle();
-                        if (requires(bundle, javaCppBundle)) {
-                            String bundleURLHost = getBundleURLHost(bundle);
-                            Long bundleId = bundle.getBundleId();
-                            LOCK.writeLock().lock();
-                            try {
-                                HOST_2_BUNDLE_ID.put(bundleURLHost, bundleId);
-                            } finally {
-                                LOCK.writeLock().unlock();
-                            }
-                            return bundle;
-                        }
-                        return null;
-                    }
-
-                    @Override
-                    public void removedBundle(Bundle bundle, BundleEvent event, Bundle object) {
-                        String bundleURLHost = getBundleURLHost(bundle);
-                        LOCK.writeLock().lock();
-                        try {
-                            HOST_2_BUNDLE_ID.remove(bundleURLHost);
-                        } finally {
-                            LOCK.writeLock().unlock();
-                        }
-                    }
-
-                };
-                bundleTracker.open();
-                context.addFrameworkListener(new FrameworkListener() {
-                    @Override
-                    public void frameworkEvent(FrameworkEvent event) {
-                        if (event.getType() == FrameworkEvent.PACKAGES_REFRESHED) {
-                            BundleContext bundleContext = getBundleContext(); // don't keep a reference on the BundleContext
-                            if (bundleContext != null) {
-                                LOCK.writeLock().lock();
-                                try {
-                                    List<Entry<String, Long>> toAdd = new ArrayList<>();
-                                    for (Iterator<Entry<String, Long>> iterator = HOST_2_BUNDLE_ID.entrySet().iterator(); iterator.hasNext();) {
-                                        Entry<String, Long> entry = iterator.next();
-                                        Long bundleId = entry.getValue();
-                                        Bundle bundle = bundleContext.getBundle(bundleId);
-                                        String bundleURLHost = getBundleURLHost(bundle);
-                                        if (bundleURLHost.equals(entry.getKey())) {
-                                            iterator.remove();
-                                            toAdd.add(new SimpleImmutableEntry<>(bundleURLHost, bundleId));
-                                        }
-                                    }
-                                    for (Entry<String, Long> entry : toAdd) {
-                                        HOST_2_BUNDLE_ID.put(entry.getKey(), entry.getValue());
-                                    }
-                                } finally {
-                                    LOCK.writeLock().unlock();
-                                }
-                            }
-                        } else if (event.getType() == FrameworkEvent.STOPPED) {
-                            bundleTracker.close();
-                        }
-                    }
-                });
-            }
-        }
-
-        private static BundleContext getBundleContext() {
-            Bundle bundle = FrameworkUtil.getBundle(OSGiEnvironmentLoader.class);
-            if (bundle != null) {
-                int state = bundle.getState();
-                if (state != Bundle.ACTIVE && (state == Bundle.INSTALLED || state == Bundle.RESOLVED || state == Bundle.STARTING)) {
-                    try {
-                        bundle.start();
-                    } catch (BundleException e) { // ignore
-                    }
-                }
-                if (bundle.getState() == Bundle.ACTIVE) {
-                    return bundle.getBundleContext();
-                }
-            }
-            return null;
-        }
-
-        private static boolean requires(Bundle source, Bundle target) {
-            BundleWiring sourceWiring = source.adapt(BundleWiring.class);
-            Queue<BundleWiring> pending = new ArrayDeque<>(Collections.singleton(sourceWiring));
-            Set<BundleWiring> visited = new HashSet<>(Collections.singleton(sourceWiring));
-
-            while (!pending.isEmpty()) { // perform iterative bfs
-                BundleWiring wiring = pending.remove();
-                if (wiring.getBundle().equals(target)) {
-                    return true;
-                }
-                List<BundleWire> requiredWires = wiring.getRequiredWires(null);
-                for (BundleWire requiredWire : requiredWires) {
-                    BundleWiring provider = requiredWire.getProviderWiring();
-                    if (visited.add(provider)) {
-                        pending.add(provider);
-                    }
-                }
-            }
-            return false;
-        }
-
-        private static String getBundleURLHost(Bundle bundle) {
-            return bundle.getEntry("/").getHost();
+        private static void associateURLtoBundle(URL resource, Bundle bundle) {
+            URL_TO_BUNDLE.put(resource, new WeakReference<>(bundle));
         }
 
         private static Bundle getContainerBundle(URL url) {
+            WeakReference<Bundle> bundle;
             LOCK.readLock().lock();
-            Long bundleId;
             try {
-                bundleId = HOST_2_BUNDLE_ID.get(url.getHost());
+                bundle = URL_TO_BUNDLE.get(url);
             } finally {
                 LOCK.readLock().unlock();
             }
-            if (bundleId != null) {
-                BundleContext context = getBundleContext();
-                if (context != null) {
-                    return context.getBundle(bundleId);
-                }
-            }
-            return null;
+            return bundle != null ? bundle.get() : null;
         }
 
-        public static String getContainerBundleName(URL resourceURL) {
+        private static URL getClassResource(Class<?> c, String name) {
+            URL resource = c.getResource(name);
+            if (resource != null) {
+                Bundle bundle = FrameworkUtil.getBundle(c);
+                LOCK.writeLock().lock();
+                try {
+                    associateURLtoBundle(resource, bundle);
+                } finally {
+                    LOCK.writeLock().unlock();
+                }
+            }
+            return resource;
+        }
+
+        private static Enumeration<URL> getClassLoaderResources(ClassLoader cl, String name) throws IOException {
+            Enumeration<URL> resources = cl.getResources(name);
+            if (resources != null && resources.hasMoreElements()) {
+                Optional<Bundle> bundleOpt = FrameworkUtil.getBundle(cl);
+                if (bundleOpt.isPresent()) {
+                    Bundle bundle = bundleOpt.get();
+                    List<URL> resourcesList = Collections.list(resources);
+                    LOCK.writeLock().lock();
+                    try {
+                        for (URL url : resourcesList) {
+                            associateURLtoBundle(url, bundle);
+                        }
+                    } finally {
+                        LOCK.writeLock().unlock();
+                    }
+                    return Collections.enumeration(resourcesList);
+                }
+            }
+            return resources;
+        }
+
+        private static String getContainerBundleName(URL resourceURL) {
             Bundle bundle = getContainerBundle(resourceURL);
             if (bundle != null) {
                 Version v = bundle.getVersion();
@@ -236,7 +151,7 @@ public class OSGiBundleResourceLoader {
             return null;
         }
 
-        public static Enumeration<URL> getBundleDirectoryContent(URL resourceURL) {
+        private static Enumeration<URL> getBundleDirectoryContent(URL resourceURL) {
             Bundle bundle = getContainerBundle(resourceURL);
             if (bundle != null) {
                 return bundle.findEntries(resourceURL.getPath(), null, true);

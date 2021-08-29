@@ -22,6 +22,10 @@
 
 package org.bytedeco.javacpp;
 
+import static org.bytedeco.javacpp.tools.OSGiBundleResourceLoader.getOSGiClassLoaderResources;
+import static org.bytedeco.javacpp.tools.OSGiBundleResourceLoader.getOSGiClassResource;
+import static org.bytedeco.javacpp.tools.OSGiBundleResourceLoader.isOSGiRuntime;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -524,11 +528,11 @@ public class Loader {
             if (!noSubdir) {
                 cacheSubdir = new File(cacheSubdir, urlFile.getParentFile().getName());
             }
-        } else if (OSGiBundleResourceLoader.isOSGiRuntime()) {
+        } else if (isOSGiRuntime()) {
             // TODO: what happens if this is another URL in a OSGi environment?
             // I think it is unlikely that is called with URL-schema?!
             if (!noSubdir) {
-                String subdirName = OSGiBundleResourceLoader.getContainerBundleName(resourceURL);
+                String subdirName = OSGiBundleResourceLoader.getOSGiContainerBundleName(resourceURL);
                 if (subdirName != null) {
                     String parentName = urlFile.getParentFile().toString();
                     if (parentName != null) {
@@ -797,8 +801,8 @@ public class Loader {
                 return directoryOrFile;
             }
         }
-        if (OSGiBundleResourceLoader.isOSGiRuntime()) {
-            Enumeration<URL> directoryEntries = OSGiBundleResourceLoader.getBundleDirectoryContent(resourceURL);
+        if (isOSGiRuntime()) {
+            Enumeration<URL> directoryEntries = OSGiBundleResourceLoader.getOSGiBundleDirectoryContent(resourceURL);
             if (directoryEntries != null && directoryEntries.hasMoreElements()) { // a not empty directory
                 String directoryName = resourceURL.getPath();
                 while (directoryEntries.hasMoreElements()) {
@@ -912,7 +916,7 @@ public class Loader {
         }
 
         // Under JPMS, Class.getResource() and ClassLoader.getResources() do not return the same URLs
-        URL url = cls.getResource(name);
+        URL url = !isOSGiRuntime() ? cls.getResource(name) : getOSGiClassResource(cls, name);
         if (url != null && maxLength == 1) {
             return new URL[] {url};
         }
@@ -932,7 +936,7 @@ public class Loader {
             // This is the bootstrap class loader, let's try the system class loader instead
             classLoader = ClassLoader.getSystemClassLoader();
         }
-        Enumeration<URL> urls = classLoader.getResources(path + name);
+        Enumeration<URL> urls = !isOSGiRuntime() ? classLoader.getResources(path + name) : getOSGiClassLoaderResources(classLoader, path + name);
         ArrayList<URL> array = new ArrayList<URL>();
         if (url != null) {
             array.add(url);
@@ -944,7 +948,7 @@ public class Loader {
             } else {
                 path = "";
             }
-            urls = classLoader.getResources(path + name);
+            urls = !isOSGiRuntime() ? classLoader.getResources(path + name) : getOSGiClassLoaderResources(classLoader, path + name);
         }
         while (urls.hasMoreElements() && (maxLength < 0 || array.size() < maxLength)) {
             url = urls.nextElement();
