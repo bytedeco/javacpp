@@ -1915,7 +1915,8 @@ public class Generator {
             for (Class cls : allClasses) {
                 o.println(separator + "  {");
                 o.print("    \"name\" : \"" + cls.getName() + "\"");
-                if (reflectClasses.contains(cls) || reflectClasses.contains(cls.getEnclosingClass())) {
+                if (reflectClasses.contains(cls) || reflectClasses.contains(cls.getEnclosingClass())
+                        || virtualFunctions.get(cls) != null || FunctionPointer.class.isAssignableFrom(cls)) {
                     o.println(",");
                     o.println("    \"allDeclaredConstructors\" : true,");
                     o.println("    \"allPublicConstructors\" : true,");

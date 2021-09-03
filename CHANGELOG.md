@@ -1,4 +1,5 @@
 
+ * Add `FunctionPointer` and `@Virtual` methods missing from config files required by GraalVM Native Image
  * Let `Tokenizer` convert characters using ASCII escape sequences `'\x...'` to normal hexadecimal values `0x...`
  * Fix `Parser` incorrectly mapping default function arguments containing multiple template arguments
  * Fix `Parser` failures on variadic templates calling `sizeof...()` and on variables initialized from template values
