@@ -1991,9 +1991,9 @@ public class Parser {
                 for (token = tokens.next(), token.spacing = ""; !token.match(Token.EOF); token = tokens.next()) {
                     if (count2 == 0 && token.match(',', ')', '}')) {
                         break;
-                    } else if (token.match('<', '(', '{')) {
+                    } else if (token.match('(', '{') || (count2 == 0 && token.match('<'))) {
                         count2++;
-                    } else if (token.match('>', ')', '}')) {
+                    } else if (token.match(')', '}') || (count2 == 1 && token.match('>'))) {
                         count2--;
                     }
 
