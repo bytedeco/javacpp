@@ -22,6 +22,10 @@
 
 package org.bytedeco.javacpp;
 
+import static org.bytedeco.javacpp.tools.OSGiBundleResourceLoader.getOSGiClassLoaderResources;
+import static org.bytedeco.javacpp.tools.OSGiBundleResourceLoader.getOSGiClassResource;
+import static org.bytedeco.javacpp.tools.OSGiBundleResourceLoader.isOSGiRuntime;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -55,12 +59,14 @@ import java.util.Properties;
 import java.util.WeakHashMap;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+
 import org.bytedeco.javacpp.annotation.Cast;
 import org.bytedeco.javacpp.annotation.Name;
 import org.bytedeco.javacpp.annotation.Platform;
 import org.bytedeco.javacpp.annotation.Raw;
 import org.bytedeco.javacpp.tools.Builder;
 import org.bytedeco.javacpp.tools.Logger;
+import org.bytedeco.javacpp.tools.OSGiBundleResourceLoader;
 
 /**
  * The Loader contains functionality to load native libraries, but also has a bit
@@ -522,6 +528,21 @@ public class Loader {
             if (!noSubdir) {
                 cacheSubdir = new File(cacheSubdir, urlFile.getParentFile().getName());
             }
+        } else if (isOSGiRuntime()) {
+            // TODO: what happens if this is another URL in a OSGi environment?
+            // I think it is unlikely that is called with URL-schema?!
+            if (!noSubdir) {
+                String subdirName = OSGiBundleResourceLoader.getOSGiContainerBundleName(resourceURL);
+                if (subdirName != null) {
+                    String parentName = urlFile.getParentFile().toString();
+                    if (parentName != null) {
+                        subdirName = subdirName + File.separator + parentName;
+                    }
+                    cacheSubdir = new File(cacheSubdir, subdirName);
+                }
+                size = urlConnection.getContentLengthLong();
+                timestamp = urlConnection.getLastModified();
+            }
         } else {
             if (urlFile.exists()) {
                 size = urlFile.length();
@@ -745,10 +766,10 @@ public class Loader {
     public static File extractResource(URL resourceURL, File directoryOrFile,
             String prefix, String suffix, boolean cacheDirectory) throws IOException {
         URLConnection urlConnection = resourceURL != null ? resourceURL.openConnection() : null;
+        long start = System.currentTimeMillis();
         if (urlConnection instanceof JarURLConnection) {
-            JarFile jarFile = ((JarURLConnection)urlConnection).getJarFile();
-            JarEntry jarEntry = ((JarURLConnection)urlConnection).getJarEntry();
-            String jarFileName = jarFile.getName();
+            JarFile jarFile = ((JarURLConnection) urlConnection).getJarFile();
+            JarEntry jarEntry = ((JarURLConnection) urlConnection).getJarEntry();
             String jarEntryName = jarEntry.getName();
             if (!jarEntryName.endsWith("/")) {
                 jarEntryName += "/";
@@ -765,20 +786,47 @@ public class Loader {
                         File file = new File(directoryOrFile, entryName.substring(jarEntryName.length()));
                         if (entry.isDirectory()) {
                             file.mkdirs();
-                        } else if (!cacheDirectory || !file.exists() || file.length() != entrySize
-                                || file.lastModified() != entryTimestamp || !file.equals(file.getCanonicalFile())) {
+                        } else if (!cacheDirectory || isCacheFileCurrent(file, entrySize, entryTimestamp)) {
                             // ... extract it from our resources ...
                             file.delete();
                             String s = resourceURL.toString();
                             URL u = new URL(s.substring(0, s.indexOf("!/") + 2) + entryName);
+                            // FIXME: check if directories have to be extracted again?!
                             file = extractResource(u, file, prefix, suffix);
                         }
                         file.setLastModified(entryTimestamp);
                     }
                 }
+                System.out.println("Extract took " + (System.currentTimeMillis() - start) + "ms, for:" + resourceURL);
                 return directoryOrFile;
             }
         }
+        if (isOSGiRuntime()) {
+            Enumeration<URL> directoryEntries = OSGiBundleResourceLoader.getOSGiBundleDirectoryContent(resourceURL);
+            if (directoryEntries != null && directoryEntries.hasMoreElements()) { // a not empty directory
+                String directoryName = resourceURL.getPath();
+                while (directoryEntries.hasMoreElements()) {
+                    URL entry = directoryEntries.nextElement();
+                    String entryName = entry.getPath();
+                    URLConnection entryConnection = entry.openConnection();
+                    long entrySize = entryConnection.getContentLengthLong();
+                    long entryTimestamp = entryConnection.getLastModified();
+                    File file = new File(directoryOrFile, entryName.substring(directoryName.length()));
+                    if (entryName.endsWith("/")) { // is directory
+                        file.mkdirs();
+                    } else if (!cacheDirectory || isCacheFileCurrent(file, entrySize, entryTimestamp)) {
+                        // ... extract it from our resources ...
+                        file.delete();
+                        // FIXME: check if directories have to be extracted again?!
+                        file = extractResource(entry, file, prefix, suffix);
+                    }
+                    file.setLastModified(entryTimestamp);
+                }
+                System.out.println("Extract took " + (System.currentTimeMillis() - start) + "ms, for:" + resourceURL);
+                return directoryOrFile;
+            }
+        }
+
         InputStream is = urlConnection != null ? urlConnection.getInputStream() : null;
         OutputStream os = null;
         if (is == null) {
@@ -810,6 +858,7 @@ public class Loader {
             } else {
                 file = File.createTempFile(prefix, suffix, directoryOrFile);
             }
+            System.out.println("Extract resource (" + resourceURL + ") to " + file);
             file.delete();
             os = new FileOutputStream(file);
             byte[] buffer = new byte[64 * 1024];
@@ -829,6 +878,11 @@ public class Loader {
             }
         }
         return file;
+    }
+
+    private static boolean isCacheFileCurrent(File file, long entrySize, long entryTimestamp) throws IOException {
+        return !file.exists() || file.length() != entrySize || file.lastModified() != entryTimestamp
+                || !file.equals(file.getCanonicalFile());
     }
 
     /** Returns {@code findResources(cls, name, 1)[0]} or null if none. */
@@ -862,7 +916,7 @@ public class Loader {
         }
 
         // Under JPMS, Class.getResource() and ClassLoader.getResources() do not return the same URLs
-        URL url = cls.getResource(name);
+        URL url = !isOSGiRuntime() ? cls.getResource(name) : getOSGiClassResource(cls, name);
         if (url != null && maxLength == 1) {
             return new URL[] {url};
         }
@@ -882,7 +936,7 @@ public class Loader {
             // This is the bootstrap class loader, let's try the system class loader instead
             classLoader = ClassLoader.getSystemClassLoader();
         }
-        Enumeration<URL> urls = classLoader.getResources(path + name);
+        Enumeration<URL> urls = !isOSGiRuntime() ? classLoader.getResources(path + name) : getOSGiClassLoaderResources(classLoader, path + name);
         ArrayList<URL> array = new ArrayList<URL>();
         if (url != null) {
             array.add(url);
@@ -894,7 +948,7 @@ public class Loader {
             } else {
                 path = "";
             }
-            urls = classLoader.getResources(path + name);
+            urls = !isOSGiRuntime() ? classLoader.getResources(path + name) : getOSGiClassLoaderResources(classLoader, path + name);
         }
         while (urls.hasMoreElements() && (maxLength < 0 || array.size() < maxLength)) {
             url = urls.nextElement();

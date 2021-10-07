@@ -96,15 +96,22 @@
       <optional>true</optional>
     </dependency>
     <!--
-      The OSGi R7 Annotations are build time only and not
+      The OSGi R8 Annotations are build time only and not
       needed at runtime, therefore they can be provided scope
     -->
     <dependency>
       <groupId>org.osgi</groupId>
       <artifactId>osgi.annotation</artifactId>
-      <version>7.0.0</version>
+      <version>8.0.0</version>
       <scope>provided</scope>
     </dependency>
+    <dependency>
+      <groupId>org.osgi</groupId>
+      <artifactId>osgi.core</artifactId>
+      <version>8.0.0</version>
+      <scope>provided</scope>
+    </dependency>
+
   </dependencies>
 
   <repositories>
