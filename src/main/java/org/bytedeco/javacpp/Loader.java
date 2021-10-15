@@ -763,10 +763,12 @@ public class Loader {
                     long entryTimestamp = entry.getTime();
                     if (entryName.startsWith(jarEntryName)) {
                         File file = new File(directoryOrFile, entryName.substring(jarEntryName.length()));
+                        Path filePath = file.toPath();
+
                         if (entry.isDirectory()) {
                             file.mkdirs();
                         } else if (!cacheDirectory || !file.exists() || file.length() != entrySize
-                                || file.lastModified() != entryTimestamp || !file.equals(file.getCanonicalFile())) {
+                                || file.lastModified() != entryTimestamp || !filePath.equals(filePath.toRealPath())) {
                             // ... extract it from our resources ...
                             file.delete();
                             String s = resourceURL.toString();
