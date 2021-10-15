@@ -131,8 +131,8 @@ public class Loader {
     }
 
     /**
-     * @return The canonical pathname string denoting the same file or directory as this abstract pathname
-     * @throws IOException if the file does not exist or an I/O error occurs
+     * @return The canonical file denoting the same file or directory as this abstract pathname.
+     * @throws IOException if an I/O error occurs
      */
     public static File getCanonicalFile(File file) throws IOException {
         String platform = Loader.getPlatform();
