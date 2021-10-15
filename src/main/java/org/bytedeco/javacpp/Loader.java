@@ -131,6 +131,25 @@ public class Loader {
     }
 
     /**
+     * @return The canonical pathname string denoting the same file or directory as this abstract pathname
+     * @throws IOException if the file does not exist or an I/O error occurs
+     */
+    public static File getCanonicalFile(File file) throws IOException {
+        String platform = Loader.getPlatform();
+        boolean windows = platform.startsWith("windows");
+
+        if (windows) {
+            // If file is not exists, `toRealPath()` throw IOException.
+            if (file.exists()) {
+                return file.toPath().toRealPath().toFile();
+            }
+        }
+
+        return file.getCanonicalFile();
+    }
+
+
+    /**
      * Returns {@link #PLATFORM}.
      */
     public static String getPlatform() {
@@ -476,7 +495,7 @@ public class Loader {
         boolean reference = false;
         long size = 0, timestamp = 0;
         File cacheDir = getCacheDir();
-        File cacheSubdir = cacheDir.getCanonicalFile();
+        File cacheSubdir = Loader.getCanonicalFile(cacheDir);
         String s = System.getProperty("org.bytedeco.javacpp.cachedir.nosubdir", "false").toLowerCase();
         boolean noSubdir = s.equals("true") || s.equals("t") || s.equals("");
         URLConnection urlConnection = resourceURL.openConnection();
@@ -637,7 +656,7 @@ public class Loader {
             }
             // ... check if it has not already been extracted, and if not ...
             if (!file.exists() || file.length() != size || file.lastModified() != timestamp
-                    || !cacheSubdir.equals(file.getCanonicalFile().getParentFile())) {
+                    || !cacheSubdir.equals(Loader.getCanonicalFile(file).getParentFile())) {
                 // ... add lock to avoid two JVMs access cacheDir simultaneously and ...
                 synchronized (Runtime.getRuntime()) {
                 try {
@@ -648,7 +667,7 @@ public class Loader {
                     lock = lockChannel.lock();
                     // ... check if other JVM has extracted it before this JVM get the lock ...
                     if (!file.exists() || file.length() != size || file.lastModified() != timestamp
-                            || !cacheSubdir.equals(file.getCanonicalFile().getParentFile())) {
+                            || !cacheSubdir.equals(Loader.getCanonicalFile(file).getParentFile())) {
                         // ... extract it from our resources ...
                         if (logger.isDebugEnabled()) {
                             logger.debug("Extracting " + resourceURL);
@@ -763,12 +782,11 @@ public class Loader {
                     long entryTimestamp = entry.getTime();
                     if (entryName.startsWith(jarEntryName)) {
                         File file = new File(directoryOrFile, entryName.substring(jarEntryName.length()));
-                        Path filePath = file.toPath();
 
                         if (entry.isDirectory()) {
                             file.mkdirs();
                         } else if (!cacheDirectory || !file.exists() || file.length() != entrySize
-                                || file.lastModified() != entryTimestamp || !filePath.equals(filePath.toRealPath())) {
+                                || file.lastModified() != entryTimestamp || !file.equals(Loader.getCanonicalFile(file))) {
                             // ... extract it from our resources ...
                             file.delete();
                             String s = resourceURL.toString();
