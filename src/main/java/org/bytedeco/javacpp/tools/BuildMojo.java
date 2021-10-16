@@ -405,7 +405,7 @@ public class BuildMojo extends AbstractMojo {
             }
             properties.setProperty("platform.artifacts", project.getBuild().getOutputDirectory());
             for (Artifact a : plugin.getArtifacts()) {
-                String s = a.getFile().getCanonicalPath();
+                String s = Loader.getCanonicalPath(a.getFile());
                 String v = properties.getProperty("platform.artifacts", "");
                 properties.setProperty("platform.artifacts",
                         v.length() == 0 || v.endsWith(separator) ? v + s : v + separator + s);

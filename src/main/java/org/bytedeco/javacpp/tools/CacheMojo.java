@@ -127,7 +127,7 @@ public class CacheMojo extends AbstractMojo {
                     logger.info("Caching " + c);
                     File f = (File)cachePackage.invoke(c);
                     if (f != null) {
-                        packages.add(f.getCanonicalPath());
+                        packages.add(Loader.getCanonicalPath(f));
                     }
                 } catch (NoSuchMethodException e) {
                     // assume this class has no associated packages, skip

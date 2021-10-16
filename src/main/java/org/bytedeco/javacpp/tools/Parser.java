@@ -4106,7 +4106,7 @@ public class Parser {
         }
         if (file == null && includePath != null) {
             for (String path : includePath) {
-                File f = new File(path, filename).getCanonicalFile();
+                File f = Loader.getCanonicalFile(new File(path, filename));
                 if (f.exists()) {
                     file = f;
                     break;
@@ -4269,7 +4269,7 @@ public class Parser {
         List<String> paths = allProperties.get("platform.includepath");
         for (String s : allProperties.get("platform.includeresource")) {
             for (File f : Loader.cacheResources(s)) {
-                paths.add(f.getCanonicalPath());
+                paths.add(Loader.getCanonicalPath(f));
             }
         }
 

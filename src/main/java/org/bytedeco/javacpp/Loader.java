@@ -80,6 +80,9 @@ public class Loader {
     /** Value created out of "java.vm.name", "os.name", and "os.arch" system properties.
      *  Returned by {@link #getPlatform()} and initialized with {@link Detector#getPlatform()}. */
     private static final String PLATFORM = Detector.getPlatform();
+
+    private static final boolean WINDOWS = PLATFORM.startsWith("windows");
+
     /** Default platform properties loaded and returned by {@link #loadProperties()}. */
     private static Properties platformProperties = null;
     /** The stack of classes currently being loaded to support more than one class loader. */
@@ -131,14 +134,26 @@ public class Loader {
     }
 
     /**
-     * @return The canonical file denoting the same file or directory as this abstract pathname.
+     * @return The canonical pathname string denoting the same file or directory as file abstract pathname.
+     * @throws IOException if an I/O error occurs
+     */
+    public static String getCanonicalPath(File file) throws IOException {
+        if (WINDOWS) {
+            // If file is not exists, `toRealPath()` throw IOException.
+            if (file.exists()) {
+                return file.toPath().toRealPath().toString();
+            }
+        }
+
+        return file.getCanonicalPath();
+    }
+
+    /**
+     * @return The canonical file denoting the same file or directory as file abstract pathname.
      * @throws IOException if an I/O error occurs
      */
     public static File getCanonicalFile(File file) throws IOException {
-        String platform = Loader.getPlatform();
-        boolean windows = platform.startsWith("windows");
-
-        if (windows) {
+        if (WINDOWS) {
             // If file is not exists, `toRealPath()` throw IOException.
             if (file.exists()) {
                 return file.toPath().toRealPath().toFile();
@@ -147,7 +162,6 @@ public class Loader {
 
         return file.getCanonicalFile();
     }
-
 
     /**
      * Returns {@link #PLATFORM}.
@@ -1242,7 +1256,7 @@ public class Loader {
 
         String cacheDir = null;
         try {
-            cacheDir = getCacheDir().getCanonicalPath();
+            cacheDir = Loader.getCanonicalPath(getCacheDir());
         } catch (IOException e) {
             // no cache dir, no worries
         }
