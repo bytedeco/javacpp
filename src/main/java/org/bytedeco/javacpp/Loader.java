@@ -787,7 +787,6 @@ public class Loader {
                     long entryTimestamp = entry.getTime();
                     if (entryName.startsWith(jarEntryName)) {
                         File file = new File(directoryOrFile, entryName.substring(jarEntryName.length()));
-
                         if (entry.isDirectory()) {
                             file.mkdirs();
                         } else if (!cacheDirectory || !file.exists() || file.length() != entrySize
