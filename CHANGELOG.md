@@ -1,4 +1,5 @@
 
+ * Add `Loader.getCanonicalPath()` to work around bugs in `File.getCanonicalPath()` on Windows ([pull #519](https://github.com/bytedeco/javacpp/pull/519))
  * Add `FunctionPointer` and `@Virtual` methods missing from config files required by GraalVM Native Image
  * Let `Tokenizer` convert characters using ASCII escape sequences `'\x...'` to normal hexadecimal values `0x...`
  * Fix `Parser` incorrectly mapping default function arguments containing multiple template arguments

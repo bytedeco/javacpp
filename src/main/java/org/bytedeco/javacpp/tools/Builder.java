@@ -149,8 +149,8 @@ public class Builder {
         // Java home dir is the one returned by "java.home" or parent dir of it in older JDKs.
         File[] javaHomes = new File[2];
         try {
-            javaHomes[0] = new File(System.getProperty("java.home")).getCanonicalFile();
-            javaHomes[1] = javaHomes[0].getParentFile().getCanonicalFile();
+            javaHomes[0] = Loader.getCanonicalFile(new File(System.getProperty("java.home")));
+            javaHomes[1] = Loader.getCanonicalFile(javaHomes[0].getParentFile());;
         } catch (IOException | NullPointerException e) {
             logger.warn("Could not include header files from java.home:" + e);
             return;
@@ -170,7 +170,7 @@ public class Builder {
                 }
                 for (File f : files) {
                     try {
-                        f = f.getCanonicalFile();
+                        f = Loader.getCanonicalFile(f);
                     } catch (IOException e) {
                         f = f.getAbsoluteFile();
                     }
@@ -228,8 +228,9 @@ public class Builder {
         {
             String p = properties.getProperty("platform.sysroot.prefix", "");
             for (String s : properties.get("platform.sysroot")) {
-                if (new File(s).isDirectory()) {
-                    s = new File(s).getCanonicalPath();
+                File file = new File(s);
+                if (file.isDirectory()) {
+                    s = Loader.getCanonicalPath(file);
                     if (p.endsWith(" ")) {
                         command.add(p.trim()); command.add(s);
                     } else {
@@ -242,8 +243,9 @@ public class Builder {
         {
             String p = properties.getProperty("platform.toolchain.prefix", "");
             for (String s : properties.get("platform.toolchain")) {
-                if (new File(s).isDirectory()) {
-                    s = new File(s).getCanonicalPath();
+                File file = new File(s);
+                if (file.isDirectory()) {
+                    s = Loader.getCanonicalPath(file);
                     if (p.endsWith(" ")) {
                         command.add(p.trim()); command.add(s);
                     } else {
@@ -256,8 +258,9 @@ public class Builder {
         {
             String p = properties.getProperty("platform.includepath.prefix", "");
             for (String s : properties.get("platform.includepath")) {
-                if (new File(s).isDirectory()) {
-                    s = new File(s).getCanonicalPath();
+                File file = new File(s);
+                if (file.isDirectory()) {
+                    s = Loader.getCanonicalPath(file);
                     if (p.endsWith(" ")) {
                         command.add(p.trim()); command.add(s);
                     } else {
@@ -269,9 +272,9 @@ public class Builder {
                 for (File f : Loader.cacheResources(s)) {
                     if (f.isDirectory()) {
                         if (p.endsWith(" ")) {
-                            command.add(p.trim()); command.add(f.getCanonicalPath());
+                            command.add(p.trim()); command.add(Loader.getCanonicalPath(f));
                         } else {
-                            command.add(p + f.getCanonicalPath());
+                            command.add(p + Loader.getCanonicalPath(f));
                         }
                     }
                 }
@@ -319,8 +322,9 @@ public class Builder {
             String p  = properties.getProperty("platform.linkpath.prefix", "");
             String p2 = properties.getProperty("platform.linkpath.prefix2");
             for (String s : properties.get("platform.linkpath")) {
-                if (new File(s).isDirectory()) {
-                    s = new File(s).getCanonicalPath();
+                File file = new File(s);
+                if (file.isDirectory()) {
+                    s = Loader.getCanonicalPath(file);
                     if (p.endsWith(" ")) {
                         command.add(p.trim()); command.add(s);
                     } else {
@@ -339,15 +343,15 @@ public class Builder {
                 for (File f : Loader.cacheResources(s)) {
                     if (f.isDirectory()) {
                         if (p.endsWith(" ")) {
-                            command.add(p.trim()); command.add(f.getCanonicalPath());
+                            command.add(p.trim()); command.add(Loader.getCanonicalPath(f));
                         } else {
-                            command.add(p + f.getCanonicalPath());
+                            command.add(p + Loader.getCanonicalPath(f));
                         }
                         if (p2 != null) {
                             if (p2.endsWith(" ")) {
-                                command.add(p2.trim()); command.add(f.getCanonicalPath());
+                                command.add(p2.trim()); command.add(Loader.getCanonicalPath(f));
                             } else {
-                                command.add(p2 + f.getCanonicalPath());
+                                command.add(p2 + Loader.getCanonicalPath(f));
                             }
                         }
                     }
@@ -409,8 +413,9 @@ public class Builder {
         {
             String p = properties.getProperty("platform.frameworkpath.prefix", "");
             for (String s : properties.get("platform.frameworkpath")) {
-                if (new File(s).isDirectory()) {
-                    s = new File(s).getCanonicalPath();
+                File file = new File(s);
+                if (file.isDirectory()) {
+                    s = Loader.getCanonicalPath(file);
                     if (p.endsWith(" ")) {
                         command.add(p.trim()); command.add(s);
                     } else {
@@ -468,7 +473,7 @@ public class Builder {
      */
     File getOutputPath(Class[] classes, String[] sourcePrefixes) throws IOException {
         cleanOutputDirectory();
-        File outputPath = outputDirectory != null ? outputDirectory.getCanonicalFile() : null;
+        File outputPath = outputDirectory != null ? Loader.getCanonicalFile(outputDirectory) : null;
         ClassProperties p = Loader.loadProperties(classes, properties, true);
         String platform     = properties.getProperty("platform");
         String extension    = properties.getProperty("platform.extension");
@@ -498,7 +503,7 @@ public class Builder {
                 }
                 uri = new URI(packageURI);
                 boolean isFile = "file".equals(uri.getScheme());
-                File classPath = new File(classScanner.getClassLoader().getPaths()[0]).getCanonicalFile();
+                File classPath = Loader.getCanonicalFile(new File(classScanner.getClassLoader().getPaths()[0]));
                 // If our class is not a file, use first path of the user class loader as base for our output path
                 File packageDir = isFile ? new File(uri)
                                          : new File(classPath, resourceName.substring(0, resourceName.lastIndexOf('/') + 1));
@@ -681,7 +686,7 @@ public class Builder {
                 // class to get the file as a resource from the ClassLoader.
                 String[] names = new String[classPath.length];
                 for (int i = 0; i < classPath.length; i++) {
-                    String path = new File(classPath[i]).getCanonicalPath();
+                    String path = Loader.getCanonicalPath(new File(classPath[i]));
                     if (name.startsWith(path)) {
                         names[i] = name.substring(path.length() + 1);
                     }
@@ -1022,7 +1027,7 @@ public class Builder {
                 // Extract the required resources.
                 for (String s : resources.split(separator)) {
                     for (File f : Loader.cacheResources(s)) {
-                        String path = f.getCanonicalPath();
+                        String path = Loader.getCanonicalPath(f);
                         if (paths.length() > 0 && !paths.endsWith(File.pathSeparator)) {
                             paths += File.pathSeparator;
                         }
@@ -1032,7 +1037,7 @@ public class Builder {
                         List<String> linkPaths = new ArrayList<String>();
                         for (String s2 : links.split(separator)) {
                             for (File f2 : Loader.cacheResources(s2)) {
-                                String path2 = f2.getCanonicalPath();
+                                String path2 = Loader.getCanonicalPath(f2);
                                 if (path2.startsWith(path) && !path2.equals(path)) {
                                     linkPaths.add(path2);
                                 }

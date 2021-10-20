@@ -80,6 +80,8 @@ public class Loader {
     /** Value created out of "java.vm.name", "os.name", and "os.arch" system properties.
      *  Returned by {@link #getPlatform()} and initialized with {@link Detector#getPlatform()}. */
     private static final String PLATFORM = Detector.getPlatform();
+    private static final boolean WINDOWS = PLATFORM.startsWith("windows");
+
     /** Default platform properties loaded and returned by {@link #loadProperties()}. */
     private static Properties platformProperties = null;
     /** The stack of classes currently being loaded to support more than one class loader. */
@@ -135,6 +137,28 @@ public class Loader {
      */
     public static String getPlatform() {
         return PLATFORM;
+    }
+
+    /**
+     * Returns {@code file.getCanonicalPath()} or {@code file.toPath().toRealPath().toString()} on Windows.
+     * @return The canonical pathname string denoting the same file or directory as that abstract pathname.
+     * @throws IOException if an I/O error occurs
+     * @see <a href="https://bugs.openjdk.java.net/browse/JDK-8003887">https://bugs.openjdk.java.net/browse/JDK-8003887</a>
+     */
+    public static String getCanonicalPath(File file) throws IOException {
+        // When file does not exist, Path.toRealPath() throws IOException, but File.getCanonicalPath() does not
+        return WINDOWS && file.exists() ? file.toPath().toRealPath().toString() : file.getCanonicalPath();
+    }
+
+    /**
+     * Returns {@code file.getCanonicalFile()} or {@code file.toPath().toRealPath().toFile()} on Windows.
+     * @return The canonical file denoting the same file or directory as that abstract pathname.
+     * @throws IOException if an I/O error occurs
+     * @see <a href="https://bugs.openjdk.java.net/browse/JDK-8003887">https://bugs.openjdk.java.net/browse/JDK-8003887</a>
+     */
+    public static File getCanonicalFile(File file) throws IOException {
+        // When file does not exist, Path.toRealPath() throws IOException, but File.getCanonicalFile() does not
+        return WINDOWS && file.exists() ? file.toPath().toRealPath().toFile() : file.getCanonicalFile();
     }
 
     /**
@@ -476,7 +500,7 @@ public class Loader {
         boolean reference = false;
         long size = 0, timestamp = 0;
         File cacheDir = getCacheDir();
-        File cacheSubdir = cacheDir.getCanonicalFile();
+        File cacheSubdir = Loader.getCanonicalFile(cacheDir);
         String s = System.getProperty("org.bytedeco.javacpp.cachedir.nosubdir", "false").toLowerCase();
         boolean noSubdir = s.equals("true") || s.equals("t") || s.equals("");
         URLConnection urlConnection = resourceURL.openConnection();
@@ -637,7 +661,7 @@ public class Loader {
             }
             // ... check if it has not already been extracted, and if not ...
             if (!file.exists() || file.length() != size || file.lastModified() != timestamp
-                    || !cacheSubdir.equals(file.getCanonicalFile().getParentFile())) {
+                    || !cacheSubdir.equals(Loader.getCanonicalFile(file).getParentFile())) {
                 // ... add lock to avoid two JVMs access cacheDir simultaneously and ...
                 synchronized (Runtime.getRuntime()) {
                 try {
@@ -648,7 +672,7 @@ public class Loader {
                     lock = lockChannel.lock();
                     // ... check if other JVM has extracted it before this JVM get the lock ...
                     if (!file.exists() || file.length() != size || file.lastModified() != timestamp
-                            || !cacheSubdir.equals(file.getCanonicalFile().getParentFile())) {
+                            || !cacheSubdir.equals(Loader.getCanonicalFile(file).getParentFile())) {
                         // ... extract it from our resources ...
                         if (logger.isDebugEnabled()) {
                             logger.debug("Extracting " + resourceURL);
@@ -766,7 +790,7 @@ public class Loader {
                         if (entry.isDirectory()) {
                             file.mkdirs();
                         } else if (!cacheDirectory || !file.exists() || file.length() != entrySize
-                                || file.lastModified() != entryTimestamp || !file.equals(file.getCanonicalFile())) {
+                                || file.lastModified() != entryTimestamp || !file.equals(Loader.getCanonicalFile(file))) {
                             // ... extract it from our resources ...
                             file.delete();
                             String s = resourceURL.toString();
@@ -1222,7 +1246,7 @@ public class Loader {
 
         String cacheDir = null;
         try {
-            cacheDir = getCacheDir().getCanonicalPath();
+            cacheDir = Loader.getCanonicalPath(getCacheDir());
         } catch (IOException e) {
             // no cache dir, no worries
         }
