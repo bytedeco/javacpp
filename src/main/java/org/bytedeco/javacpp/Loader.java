@@ -80,7 +80,6 @@ public class Loader {
     /** Value created out of "java.vm.name", "os.name", and "os.arch" system properties.
      *  Returned by {@link #getPlatform()} and initialized with {@link Detector#getPlatform()}. */
     private static final String PLATFORM = Detector.getPlatform();
-
     private static final boolean WINDOWS = PLATFORM.startsWith("windows");
 
     /** Default platform properties loaded and returned by {@link #loadProperties()}. */
@@ -134,40 +133,32 @@ public class Loader {
     }
 
     /**
-     * @return The canonical pathname string denoting the same file or directory as file abstract pathname.
-     * @throws IOException if an I/O error occurs
-     */
-    public static String getCanonicalPath(File file) throws IOException {
-        if (WINDOWS) {
-            // If file is not exists, `toRealPath()` throw IOException.
-            if (file.exists()) {
-                return file.toPath().toRealPath().toString();
-            }
-        }
-
-        return file.getCanonicalPath();
-    }
-
-    /**
-     * @return The canonical file denoting the same file or directory as file abstract pathname.
-     * @throws IOException if an I/O error occurs
-     */
-    public static File getCanonicalFile(File file) throws IOException {
-        if (WINDOWS) {
-            // If file is not exists, `toRealPath()` throw IOException.
-            if (file.exists()) {
-                return file.toPath().toRealPath().toFile();
-            }
-        }
-
-        return file.getCanonicalFile();
-    }
-
-    /**
      * Returns {@link #PLATFORM}.
      */
     public static String getPlatform() {
         return PLATFORM;
+    }
+
+    /**
+     * Returns {@code file.getCanonicalPath()} or {@code file.toPath().toRealPath().toString()} on Windows.
+     * @return The canonical pathname string denoting the same file or directory as that abstract pathname.
+     * @throws IOException if an I/O error occurs
+     * @see <a href="https://bugs.openjdk.java.net/browse/JDK-8003887">https://bugs.openjdk.java.net/browse/JDK-8003887</a>
+     */
+    public static String getCanonicalPath(File file) throws IOException {
+        // When file does not exist, Path.toRealPath() throws IOException, but File.getCanonicalPath() does not
+        return WINDOWS && file.exists() ? file.toPath().toRealPath().toString() : file.getCanonicalPath();
+    }
+
+    /**
+     * Returns {@code file.getCanonicalFile()} or {@code file.toPath().toRealPath().toFile()} on Windows.
+     * @return The canonical file denoting the same file or directory as that abstract pathname.
+     * @throws IOException if an I/O error occurs
+     * @see <a href="https://bugs.openjdk.java.net/browse/JDK-8003887">https://bugs.openjdk.java.net/browse/JDK-8003887</a>
+     */
+    public static File getCanonicalFile(File file) throws IOException {
+        // When file does not exist, Path.toRealPath() throws IOException, but File.getCanonicalFile() does not
+        return WINDOWS && file.exists() ? file.toPath().toRealPath().toFile() : file.getCanonicalFile();
     }
 
     /**
