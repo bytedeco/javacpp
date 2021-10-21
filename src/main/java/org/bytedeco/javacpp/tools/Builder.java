@@ -1268,6 +1268,7 @@ public class Builder {
                                 });
                                 files = Arrays.copyOf(files, files.length + 1);
                                 files[files.length - 1] = source.toFile();
+                                break;
                             }
                         }
                     }
