@@ -291,7 +291,9 @@ public class Parser {
                             n++;
                         } else for (String javaName : type.javaNames != null ? type.javaNames : new String[] {type.javaName}) {
                             // variant, optional, etc
-                            decl.text += "    public " + containerType.javaName + "(" + javaName + " value) { this(); put(value); }\n";
+                            if (!javaName.substring(javaName.indexOf(' ') + 1).equals("Pointer")) {
+                                decl.text += "    public " + containerType.javaName + "(" + javaName + " value) { this(); put(value); }\n";
+                            }
                         }
                     }
                     if (tuple) {

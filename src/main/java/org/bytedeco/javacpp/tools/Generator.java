@@ -517,6 +517,7 @@ public class Generator {
         out.println("#else");
         out.println("    vfprintf(stderr, fmt, ap);");
         out.println("    fprintf(stderr, \"\\n\");");
+        out.println("    fflush(stderr);");
         out.println("#endif");
         out.println("    va_end(ap);");
         out.println("}");
@@ -3434,11 +3435,8 @@ public class Generator {
             } else if (returnBy instanceof ByVal || returnBy instanceof ByRef) {
                 out.println("    if (rptr == NULL) {");
                 out.println("        JavaCPP_log(\"Return pointer address is NULL in callback for " + cls.getCanonicalName() + ".\");");
-                out.println("        static " + constValueTypeName((returnType[0] + returnType[1]).trim()) + " empty" + returnTypeName[1] + ";");
-                out.println("        return empty;");
-                out.println("    } else {");
-                out.println("        return *" + callbackReturnCast + "rptr;");
                 out.println("    }");
+                out.println("    return *" + callbackReturnCast + "rptr;");
             } else if (returnBy instanceof ByPtrPtr) {
                 out.println("    return " + callbackReturnCast + "&rptr;");
             } else { // ByPtr || ByPtrRef

@@ -1,4 +1,6 @@
 
+ * Prevent `Parser` from outputting duplicate `Pointer` constructors for basic containers
+ * Fix `Generator` compiler errors on callback functions returning objects without default constructors
  * Ensure `Builder` copies resources only from the first directories found in the paths
  * Add `Loader.getCanonicalPath()` to work around bugs in `File.getCanonicalPath()` on Windows ([pull #519](https://github.com/bytedeco/javacpp/pull/519))
  * Add `FunctionPointer` and `@Virtual` methods missing from config files required by GraalVM Native Image
