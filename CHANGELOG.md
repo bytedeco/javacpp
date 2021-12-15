@@ -1,4 +1,5 @@
 
+ * Let `Parser` support arrays of anonymous `struct` or `union` containing another one ([discussion #528](https://github.com/bytedeco/javacpp/discussions/528))
  * Prevent `Parser` from outputting duplicate `Pointer` constructors for basic containers
  * Fix `Generator` compiler errors on callback functions returning objects without default constructors
  * Ensure `Builder` copies resources only from the first directories found in the paths

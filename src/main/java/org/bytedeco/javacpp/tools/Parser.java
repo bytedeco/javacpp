@@ -2648,9 +2648,9 @@ public class Parser {
                 String nameAnnotation = "";
                 if (metadcl != null && metadcl.cppName != null && metadcl.cppName.length() > 0) {
                     nameAnnotation = metadcl.indices == 0
-                            ? "@Name(\"" + metadcl.cppName + "." + shortName + "\") "
-                            : "@Name({\"" + metadcl.cppName + "\", \"." + shortName + "\"}) ";
-                    javaName = metadcl.javaName + "_" + shortName;
+                            ? "@Name(\"" + metadcl.cppName + "." + metadcl.type.cppName + shortName + "\") "
+                            : "@Name({\"" + metadcl.cppName + "\", \"." + metadcl.type.cppName + shortName + "\"}) ";
+                    javaName = metadcl.javaName + "_" + metadcl.type.javaName + shortName;
                 }
                 final boolean beanify = context.beanify && indices.isEmpty();
                 String capitalizedJavaName = null;
@@ -2709,10 +2709,10 @@ public class Parser {
                 }
                 if (metadcl != null && metadcl.cppName.length() > 0) {
                     decl.text += metadcl.indices == 0
-                            ? "@Name(\"" + metadcl.cppName + "." + shortName + "\") "
-                            : "@Name({\"" + metadcl.cppName + "\", \"." + shortName + "\"}) ";
+                            ? "@Name(\"" + metadcl.cppName + "." + metadcl.type.cppName + shortName + "\") "
+                            : "@Name({\"" + metadcl.cppName + "\", \"." + metadcl.type.cppName + shortName + "\"}) ";
                     dcl.type.annotations = dcl.type.annotations.replaceAll("@Name\\(.*\\) ", "");
-                    javaName = metadcl.javaName + "_" + shortName;
+                    javaName = metadcl.javaName + "_" + metadcl.type.javaName + shortName;
                 }
                 tokens.index = backIndex;
                 Declarator dcl2 = declarator(context, null, -1, false, n, false, false);
@@ -3428,8 +3428,17 @@ public class Parser {
             declarations(ctx, declList2);
         } else for (Declarator var : variables) {
             if (context.variable != null) {
-                var.cppName = context.variable.cppName + "." + var.cppName;
-                var.javaName = context.variable.javaName + "_" + var.javaName;
+                if (context.variable.indices > 0 && var.indices == 0) {
+                    // allow arrays on metadcl when there are none on dcl
+                    var.indices = context.variable.indices;
+                    var.type.cppName = var.cppName + ".";
+                    var.type.javaName = var.javaName + "_";
+                    var.cppName = context.variable.cppName;
+                    var.javaName = context.variable.javaName;
+                } else {
+                    var.cppName = context.variable.cppName + "." + var.cppName;
+                    var.javaName = context.variable.javaName + "_" + var.javaName;
+                }
             }
             ctx.variable = var;
             declarations(ctx, declList2);
