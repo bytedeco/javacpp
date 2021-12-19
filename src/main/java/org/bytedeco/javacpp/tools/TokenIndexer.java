@@ -251,11 +251,16 @@ class TokenIndexer {
                     }
                     // concatenate tokens as required
                     for (int i = startToken; i < tokens.size(); i++) {
-                        if (tokens.get(i).match("##") && i > 0 && i + 1 < tokens.size()) {
-                            tokens.get(i - 1).value += tokens.get(i + 1).value;
-                            tokens.remove(i);
-                            tokens.remove(i);
-                            i--;
+                        if (tokens.get(i).match("##")) {
+                            if (i > 0 && i + 1 < tokens.size()) {
+                                tokens.get(i - 1).value += tokens.get(i + 1).value;
+                                tokens.remove(i);
+                                tokens.remove(i);
+                                i--;
+                            } else {
+                                // missing arguments, simply remove the "##" token
+                                tokens.remove(i);
+                            }
                         }
                     }
                     // copy the rest of the tokens from this point on
