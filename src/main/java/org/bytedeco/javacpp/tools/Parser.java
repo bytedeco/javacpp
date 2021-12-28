@@ -1634,6 +1634,11 @@ public class Parser {
                 definition.signature = functionType;
                 definition.declarator = new Declarator();
                 definition.declarator.parameters = dcl.parameters;
+                if (info != null && info.javaText != null) {
+                    definition.signature = definition.text = info.javaText;
+                    definition.declarator = null;
+                    definition.custom = true;
+                }
                 if (info == null || !info.skip) {
                     dcl.definition = definition;
                 }
