@@ -533,6 +533,13 @@ public class Pointer implements AutoCloseable {
         }
     }
 
+    /** Calls {@code deallocatorThread.interrupt()}. */
+    public static void interruptDeallocatorThread() {
+        if (deallocatorThread != null) {
+            deallocatorThread.interrupt();
+        }
+    }
+
     /** Clears, deallocates, and removes all garbage collected objects from the {@link #referenceQueue}. */
     public static void deallocateReferences() {
         DeallocatorReference r;

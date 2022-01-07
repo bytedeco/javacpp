@@ -1,4 +1,5 @@
 
+ * Add `Pointer.interruptDeallocatorThread()` method to make JavaCPP classes eligible for GC ([discussion bytedeco/javacpp-presets#1115](https://github.com/bytedeco/javacpp-presets/discussions/1115))
  * Let `Parser` output the content of `Info.javaText` in the case of `FunctionPointer` as well
  * Fix `TokenIndexer` failure on macros using the concat `##` operator with empty arguments ([issue #525](https://github.com/bytedeco/javacpp/issues/525))
  * Let `Parser` support arrays of anonymous `struct` or `union` containing another one ([discussion #528](https://github.com/bytedeco/javacpp/discussions/528))
