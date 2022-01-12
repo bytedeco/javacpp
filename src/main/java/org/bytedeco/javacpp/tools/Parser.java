@@ -4371,6 +4371,7 @@ public class Parser {
                                     "@Properties(inherit = " + cls.getCanonicalName() + ".class)\n"
                                   + "public class " + shortName + " ") + "\n";
                     outputFiles.add(javaFile);
+                    javaText = javaText.replace("\n", lineSeparator).replace("\\u", "\\u005Cu");
                     Files.write(javaFile.toPath(), encoding != null ? javaText.getBytes(encoding) : javaText.getBytes());
                     prevd = null;
                 } else {
