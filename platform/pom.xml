@@ -192,7 +192,7 @@
     <plugins>
       <plugin>
         <artifactId>maven-dependency-plugin</artifactId>
-        <version>3.1.1</version>
+        <version>3.1.2</version>
         <executions>
           <execution>
             <id>properties</id>
@@ -214,7 +214,7 @@
       </plugin>
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
-        <version>3.1.0</version>
+        <version>3.3.0</version>
         <configuration>
           <attach>false</attach>
           <descriptors>
@@ -233,7 +233,7 @@
       </plugin>
       <plugin>
         <artifactId>maven-jar-plugin</artifactId>
-        <version>3.1.0</version>
+        <version>3.2.0</version>
         <executions>
           <execution>
             <id>default-jar</id>
@@ -268,7 +268,7 @@
       <plugin>
         <groupId>org.moditect</groupId>
         <artifactId>moditect-maven-plugin</artifactId>
-        <version>1.0.0.RC1</version>
+        <version>1.0.0.RC2</version>
         <configuration>
           <jvmVersion>9</jvmVersion>
           <overwriteExistingFiles>true</overwriteExistingFiles>
@@ -375,7 +375,7 @@
         <plugins>
           <plugin>
             <artifactId>maven-gpg-plugin</artifactId>
-            <version>1.6</version>
+            <version>3.0.1</version>
             <executions>
               <execution>
                 <id>sign-artifacts</id>
