@@ -671,7 +671,7 @@ public class Parser {
                     }
                     type.cppName += separator;
                     Info info = infoMap.getFirst(t.cppName);
-                    String s = info != null && info.cppTypes != null ? info.cppTypes[0] : t.cppName;
+                    String s = info != null && info.cppTypes != null  && info.cppTypes.length>0 ? info.cppTypes[0] : t.cppName;
                     if (t.constValue && !s.startsWith("const ")) {
                         s = "const " + s;
                     }
