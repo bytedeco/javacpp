@@ -572,8 +572,8 @@ public class Pointer implements AutoCloseable {
     /** Makes sure to return freed memory to the system, as required by Linux, at least. */
     @Name("JavaCPP_trimMemory") private static native boolean trimMemory();
 
-    /** Returns the amount of physical memory currently used by the whole process, or 0 if unknown.
-     * Also known as "resident set size" (Linux, Mac OS X, etc) or "working set size" (Windows). */
+    /** Returns the amount of non-shared physical memory currently used by the whole process, or 0 if unknown.
+     * Also known as "anonymous resident set size" (Linux, Mac OS X, etc) or "private working set size" (Windows). */
     @Name("JavaCPP_physicalBytes") public static native long physicalBytes();
 
     /** Returns the amount of physical memory installed according to the operating system, or 0 if unknown.

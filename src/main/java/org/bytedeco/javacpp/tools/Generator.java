@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2021 Samuel Audet
+ * Copyright (C) 2011-2022 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -552,21 +552,38 @@ public class Generator {
             out.println("        char* s;");
             out.println("        int n;");
             out.println("        if ((n = pread(fd, line, sizeof(line), 0)) > 0 && (s = (char*)memchr(line, ' ', n)) != NULL) {");
-            out.println("            size = (jlong)(atoll(s + 1) * getpagesize());");
+            out.println("            size = (jlong)atoll(s + 1);");
+            out.println("            if ((s = (char*)memchr(s + 1, ' ', n)) != NULL) {");
+            out.println("                size -= (jlong)atoll(s + 1);");
+            out.println("            }");
             out.println("        }");
+            out.println("        size *= (jlong)getpagesize();");
             out.println("        // no close(fd);");
             out.println("    }");
             out.println("#elif defined(__APPLE__)");
-            out.println("    task_basic_info info;");
-            out.println("    mach_msg_type_number_t count = TASK_BASIC_INFO_COUNT;");
-            out.println("    if (task_info(current_task(), TASK_BASIC_INFO, (task_info_t)&info, &count) == KERN_SUCCESS) {");
-            out.println("        size = (jlong)info.resident_size;");
+            out.println("    task_vm_info_data_t info;");
+            out.println("    mach_msg_type_number_t count = TASK_VM_INFO_COUNT;");
+            out.println("    if (task_info(current_task(), TASK_VM_INFO, (task_info_t)&info, &count) == KERN_SUCCESS) {");
+            out.println("        size = (jlong)info.internal;");
             out.println("    }");
             out.println("#elif defined(_WIN32)");
-            out.println("    PROCESS_MEMORY_COUNTERS counters;");
-            out.println("    if (GetProcessMemoryInfo(GetCurrentProcess(), &counters, sizeof(counters))) {");
-            out.println("        size = (jlong)counters.WorkingSetSize;");
+            out.println("    DWORD length = sizeof(PSAPI_WORKING_SET_INFORMATION);");
+            out.println("    PSAPI_WORKING_SET_INFORMATION *info = (PSAPI_WORKING_SET_INFORMATION*)malloc(length);");
+            out.println("    BOOL success = QueryWorkingSet(GetCurrentProcess(), info, length);");
+            out.println("    while (!success && GetLastError() == ERROR_BAD_LENGTH) {");
+            out.println("        length = sizeof(PSAPI_WORKING_SET_INFORMATION) + info->NumberOfEntries * sizeof(PSAPI_WORKING_SET_BLOCK);");
+            out.println("        info = (PSAPI_WORKING_SET_INFORMATION*)realloc(info, length);");
+            out.println("        success = QueryWorkingSet(GetCurrentProcess(), info, length);");
             out.println("    }");
+            out.println("    if (success && info != NULL) {");
+            out.println("        for (DWORD i = 0; i < info->NumberOfEntries; i++) {");
+            out.println("            size += !info->WorkingSetInfo[i].Shared;");
+            out.println("        }");
+            out.println("    }");
+            out.println("    SYSTEM_INFO sysinfo;");
+            out.println("    GetSystemInfo(&sysinfo);");
+            out.println("    size *= (jlong)sysinfo.dwPageSize;");
+            out.println("    free(info);");
             out.println("#endif");
             out.println("    return size;");
             out.println("}");
