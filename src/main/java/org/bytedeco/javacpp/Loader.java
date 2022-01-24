@@ -941,10 +941,12 @@ public class Loader {
     static boolean canCreateSymbolicLink = true;
 
     static boolean pathsFirst = false;
+
+    
     static {
         String s = System.getProperty("org.bytedeco.javacpp.pathsfirst", "false").toLowerCase();
         s = System.getProperty("org.bytedeco.javacpp.pathsFirst", s).toLowerCase();
-        pathsFirst = s.equals("true") || s.equals("t") || s.equals("");
+	pathsFirst = s.equals("true") || s.equals("t") || s.equals("");
     }
 
     /** Creates and returns {@code System.getProperty("org.bytedeco.javacpp.cachedir")} or {@code ~/.javacpp/cache/} when not set. */
@@ -1758,7 +1760,7 @@ public class Loader {
                         }
                     }
                 }
-                if (!loadedByLoadLibrary0) {
+		if (!loadedByLoadLibrary0 && System.getProperty("java.library.path", "").length() > 0) {
                     System.loadLibrary(libname);
                 }
                 return libname;
