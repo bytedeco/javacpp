@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2020 Samuel Audet
+ * Copyright (C) 2011-2022 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -500,7 +500,7 @@ public class Loader {
         boolean reference = false;
         long size = 0, timestamp = 0;
         File cacheDir = getCacheDir();
-        File cacheSubdir = Loader.getCanonicalFile(cacheDir);
+        File cacheSubdir = cacheDir;
         String s = System.getProperty("org.bytedeco.javacpp.cachedir.nosubdir", "false").toLowerCase();
         boolean noSubdir = s.equals("true") || s.equals("t") || s.equals("");
         URLConnection urlConnection = resourceURL.openConnection();
@@ -661,7 +661,7 @@ public class Loader {
             }
             // ... check if it has not already been extracted, and if not ...
             if (!file.exists() || file.length() != size || file.lastModified() != timestamp
-                    || !cacheSubdir.equals(Loader.getCanonicalFile(file).getParentFile())) {
+                    || (canCreateSymbolicLink && !cacheSubdir.equals(Loader.getCanonicalFile(file).getParentFile()))) {
                 // ... add lock to avoid two JVMs access cacheDir simultaneously and ...
                 synchronized (Runtime.getRuntime()) {
                 try {
@@ -672,7 +672,7 @@ public class Loader {
                     lock = lockChannel.lock();
                     // ... check if other JVM has extracted it before this JVM get the lock ...
                     if (!file.exists() || file.length() != size || file.lastModified() != timestamp
-                            || !cacheSubdir.equals(Loader.getCanonicalFile(file).getParentFile())) {
+                            || (canCreateSymbolicLink && !cacheSubdir.equals(Loader.getCanonicalFile(file).getParentFile()))) {
                         // ... extract it from our resources ...
                         if (logger.isDebugEnabled()) {
                             logger.debug("Extracting " + resourceURL);
@@ -790,7 +790,8 @@ public class Loader {
                         if (entry.isDirectory()) {
                             file.mkdirs();
                         } else if (!cacheDirectory || !file.exists() || file.length() != entrySize
-                                || file.lastModified() != entryTimestamp || !file.equals(Loader.getCanonicalFile(file))) {
+                                || file.lastModified() != entryTimestamp
+                                || (canCreateSymbolicLink && !file.equals(Loader.getCanonicalFile(file)))) {
                             // ... extract it from our resources ...
                             file.delete();
                             String s = resourceURL.toString();
@@ -937,14 +938,19 @@ public class Loader {
     static Map<String,URL[]> foundLibraries = new HashMap<String,URL[]>();
     /** Contains all the native libraries that we have loaded to avoid reloading them. */
     static Map<String,String> loadedLibraries = new HashMap<String,String>();
-    /** Will be set to false when symbolic link creation fails, such as on Windows. */
-    static boolean canCreateSymbolicLink = true;
-
+    /** Will be set to false when symbolic link creation fails, such as on Windows.
+     * Set via "org.bytedeco.javacpp.canCreateSymbolicLink" system property, defaults to false on Windows only. */
+    static boolean canCreateSymbolicLink = !WINDOWS;
+    /** Default value for {@code load(..., pathsFirst)} set via "org.bytedeco.javacpp.pathsFirst" system property. */
     static boolean pathsFirst = false;
     static {
         String s = System.getProperty("org.bytedeco.javacpp.pathsfirst", "false").toLowerCase();
         s = System.getProperty("org.bytedeco.javacpp.pathsFirst", s).toLowerCase();
         pathsFirst = s.equals("true") || s.equals("t") || s.equals("");
+
+        s = System.getProperty("org.bytedeco.javacpp.cancreatesymboliclink", WINDOWS ? "false" : "true").toLowerCase();
+        s = System.getProperty("org.bytedeco.javacpp.canCreateSymbolicLink", s).toLowerCase();
+        canCreateSymbolicLink = s.equals("true") || s.equals("t") || s.equals("");
     }
 
     /** Creates and returns {@code System.getProperty("org.bytedeco.javacpp.cachedir")} or {@code ~/.javacpp/cache/} when not set. */
@@ -959,7 +965,7 @@ public class Loader {
                     File f = new File(dirName);
                     try {
                         if ((f.exists() || f.mkdirs()) && f.canRead() && f.canWrite() && f.canExecute()) {
-                            cacheDir = f;
+                            cacheDir = getCanonicalFile(f);
                             break;
                         }
                     } catch (SecurityException e) {
@@ -1246,7 +1252,7 @@ public class Loader {
 
         String cacheDir = null;
         try {
-            cacheDir = Loader.getCanonicalPath(getCacheDir());
+            cacheDir = getCacheDir().toString();
         } catch (IOException e) {
             // no cache dir, no worries
         }
@@ -1457,6 +1463,11 @@ public class Loader {
             prefix + libname2 + version2 + suffix, // Mac OS X style
             prefix + libname2 + suffix             // without version
         };
+        if (version.length() == 0 && version2.length() == 0) {
+            // optimize a bit for this case in particular on Windows
+            styles = new String[] { prefix + libname + suffix };
+            styles2 = new String[] { prefix + libname2 + suffix };
+        }
 
         String[] suffixes = properties.get("platform.library.suffix").toArray(new String[0]);
         if (suffixes.length > 1) {
