@@ -39,9 +39,12 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -951,6 +954,29 @@ public class Loader {
         s = System.getProperty("org.bytedeco.javacpp.cancreatesymboliclink", WINDOWS ? "false" : "true").toLowerCase();
         s = System.getProperty("org.bytedeco.javacpp.canCreateSymbolicLink", s).toLowerCase();
         canCreateSymbolicLink = s.equals("true") || s.equals("t") || s.equals("");
+    }
+
+    /** Deletes the directory and all the files in it. */
+    public static void deleteDirectory(File directory) throws IOException {
+        Files.walkFileTree(directory.toPath(), new SimpleFileVisitor<Path>() {
+            @Override public FileVisitResult postVisitDirectory(Path dir, IOException e) throws IOException {
+                if (e != null) {
+                    throw e;
+                }
+                Files.delete(dir);
+                return FileVisitResult.CONTINUE;
+            }
+            @Override public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                Files.delete(file);
+                return FileVisitResult.CONTINUE;
+            }
+        });
+    }
+
+    /** Calls {@code deleteDirectory(getCacheDir())}. */
+    public static void clearCacheDir() throws IOException {
+        logger.info("Deleting " + getCacheDir());
+        deleteDirectory(getCacheDir());
     }
 
     /** Creates and returns {@code System.getProperty("org.bytedeco.javacpp.cachedir")} or {@code ~/.javacpp/cache/} when not set. */
