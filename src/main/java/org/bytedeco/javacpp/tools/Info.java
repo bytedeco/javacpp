@@ -64,7 +64,8 @@ public class Info {
         base = i.base;
         cppText = i.cppText;
         javaText = i.javaText;
-    }
+ 		downCaster = i.downCaster;
+   }
 
     /** A list of C++ identifiers, expressions, or header filenames to which this info is to be bound.
      * Usually set via the constructor parameter of {@link #Info(String...)}. */
@@ -120,7 +121,10 @@ public class Info {
     String cppText = null;
     /** Outputs the given code, instead of the result parsed from the declaration of C++ identifiers. */
     String javaText = null;
+    /** Contains the name of the downcaster function */
+    String downCaster = null;
 
+	public Info downCaster(String downCaster) { this.downCaster = downCaster; return this; }
     public Info cppNames(String... cppNames) { this.cppNames = cppNames; return this; }
     public Info javaNames(String... javaNames) { this.javaNames = javaNames; return this; }
     public Info annotations(String... annotations) { this.annotations = annotations; return this; }

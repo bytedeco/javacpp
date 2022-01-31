@@ -66,6 +66,7 @@ import org.bytedeco.javacpp.Loader;
  * @author Samuel Audet
  */
 public class Parser {
+	final static String RENAMED_SUFFIX = "__";
 
     public Parser(Logger logger, Properties properties) {
         this(logger, properties, null, null);
@@ -671,7 +672,7 @@ public class Parser {
                     }
                     type.cppName += separator;
                     Info info = infoMap.getFirst(t.cppName);
-                    String s = info != null && info.cppTypes != null ? info.cppTypes[0] : t.cppName;
+					String s = info != null && info.cppTypes != null && info.cppTypes.length > 0 ? info.cppTypes[0] : t.cppName;
                     if (t.constValue && !s.startsWith("const ")) {
                         s = "const " + s;
                     }
@@ -988,6 +989,7 @@ public class Parser {
             for (String s : info.annotations) {
                 type.annotations += s + " ";
             }
+            type.downCaster = info.downCaster;
         }
         if (context.cppName != null && type.javaName.length() > 0) {
             String cppName = type.cppName;
@@ -1398,6 +1400,7 @@ public class Parser {
                     for (String s : info2.annotations) {
                         type.annotations += s + " ";
                     }
+                    type.downCaster = info2.downCaster;
                     info = infoMap.getFirst(type.cppName, false);
                     break;
                 }
@@ -2517,7 +2520,11 @@ public class Parser {
                 decl.text += "public " + context.shorten(context.javaName) + dcl.parameters.list + " { super((Pointer)null); allocate" + params.names + "; }\n" +
                              type.annotations + "private native void allocate" + dcl.parameters.list + ";\n";
             } else {
-                decl.text += modifiers + type.annotations + context.shorten(type.javaName) + " " + dcl.javaName + dcl.parameters.list + ";\n";
+                String paramList = dcl.parameters.list.replaceAll("@Downcast", "");
+				if (type.annotations.contains("@Downcast"))
+                    decl.text += modifiers + type.annotations + "@Renamed " + context.shorten(type.javaName) + " " + dcl.javaName + RENAMED_SUFFIX + paramList + ";\n";
+                else
+                    decl.text += modifiers + type.annotations + context.shorten(type.javaName) + " " + dcl.javaName + paramList + ";\n";
             }
             decl.signature = dcl.signature;
 
@@ -2560,8 +2567,69 @@ public class Parser {
             prevDcl.add(dcl);
         }
         declList.spacing = null;
+		Declaration dcli2 = null;
+		for (Declaration dcli : declList) {
+			if (dcli.function) {
+				if (dcli.text.contains("@Renamed")) {
+
+					dcli2 = new Declaration();
+
+					//List<Info> infos = context.infoMap.get(dcli.declarator.type.cppName,false);
+
+					dcli2.type = dcli.type;
+					dcli2.declarator = dcli.declarator;
+					dcli2.constMember = dcli.constMember;
+					dcli2.inaccessible = dcli.inaccessible;
+					dcli2.incomplete = dcli.incomplete;
+					dcli2.function = dcli.function;
+					dcli2.variable = dcli.variable;
+					dcli2.comment = dcli.comment;
+					dcli2.text = fixFun(dcli.text, info, dcli.declarator.type.downCaster);
+					dcli2.signature = dcli2.text;
+				}
+			}
+
+		}
+		if (dcli2 != null) {
+			declList.add(dcli2);
+		}
         return true;
     }
+    
+  	String fixFun(String text, Info info, String downCaster) {
+		if (text.endsWith("};"))
+			return text;
+		String decl = text;
+		decl = decl.replace(RENAMED_SUFFIX, "");
+		decl = decl.replace("@Renamed", "");
+		decl = decl.replace(" native ", " ");
+		decl = decl.replace(";", "");
+		String name = decl.substring(0, decl.indexOf("(")).trim();
+		name = name.substring(name.lastIndexOf(" "));
+		String retype = decl.substring(0, decl.indexOf("(")).trim();
+		retype = retype.substring(0, retype.lastIndexOf(" ")).trim();
+		retype = retype.substring(retype.lastIndexOf(" ")).trim();
+
+		String params = decl.substring(decl.indexOf("(") + 1, decl.lastIndexOf(")"));
+		String[] alist = params.split(",");
+		String args = "";
+		if (alist != null) {
+			for (String a : alist) {
+				String a1 = a.trim();
+				String a2 = a1.substring(a1.lastIndexOf(" ") + 1);
+				if (args.length() > 0)
+					args += ", ";
+				args += a2;
+			}
+		}
+		//String n=f.substring(0,f.indexOf("("))-1).sub
+
+		String x = "\n" + decl + "{" + "return " + "(" + retype + ")" + downCaster + "(" + name + RENAMED_SUFFIX + "(" + args + ")" + ")" + ";" + "};";
+		//		System.out.println("KUSTI>>> " + text);
+		//		System.out.println("     >>> " + x);
+		return x;
+	}
+  
 
     boolean variable(Context context, DeclarationList declList) throws ParserException {
         int backIndex = tokens.index;
@@ -4384,7 +4452,25 @@ public class Parser {
             if (prevd != null) {
                 out.append(prevd.text);
             }
-            out.append("\n}\n").close();
+            
+ 			// Inject target level Java
+			for (Info i : infoMap.get("@" + target)) {
+				if (i.javaText != null) {
+					out.append("\n");
+					out.append(i.javaText);
+					out.append("\n");
+				}
+			}
+			
+ 			for (Info i : infoMap.get("@")) {
+				if (i.javaText != null) {
+					out.append("\n");
+					out.append(i.javaText);
+					out.append("\n");
+				}
+			}
+			
+           out.append("\n}\n").close();
         }
 
         return outputFiles.toArray(new File[outputFiles.size()]);

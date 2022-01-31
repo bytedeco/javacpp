@@ -37,7 +37,8 @@ class Type {
     String annotations = "", cppName = "", javaName = "", javaNames[] = null;
     Type[] arguments = null;
     Attribute[] attributes = null;
-
+    String downCaster = null;
+    
     @Override public boolean equals(Object obj) {
         if (obj == this) {
             return true;
