@@ -1,4 +1,5 @@
 
+### February 11, 2022 version 1.5.7
  * Add `Loader.clearCacheDir()` along with new `ClearMojo` and `-clear` command line option
  * Speed up `Loader` on Windows when there are no symbolic links or library versions ([pull #512](https://github.com/bytedeco/javacpp/pull/512))
  * Enhance `Pointer.physicalBytes()` by excluding shared pages from memory-mapped files, etc ([issue #468](https://github.com/bytedeco/javacpp/issues/468))

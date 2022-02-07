@@ -34,7 +34,7 @@ import org.bytedeco.javacpp.Loader;
  *
  * @author Samuel Audet
  */
-@Mojo(name = "clear", defaultPhase = LifecyclePhase.NONE)
+@Mojo(name = "clear", defaultPhase = LifecyclePhase.NONE, requiresProject = false)
 public class ClearMojo extends AbstractMojo {
     @Override public void execute() throws MojoExecutionException {
         try {

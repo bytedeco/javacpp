@@ -543,7 +543,7 @@ public class Generator {
             out.println("#endif");
             out.println("}");
             out.println();
-            out.println("static inline jlong JavaCPP_physicalBytes() {");
+            out.println("static inline jlong JavaCPP_physicalBytes(jlong maxSize = 0) {");
             out.println("    jlong size = 0;");
             out.println("#ifdef __linux__");
             out.println("    static int fd = open(\"/proc/self/statm\", O_RDONLY, 0);");
@@ -567,6 +567,11 @@ public class Generator {
             out.println("        size = (jlong)info.internal;");
             out.println("    }");
             out.println("#elif defined(_WIN32)");
+            out.println("    PROCESS_MEMORY_COUNTERS counters;");
+            out.println("    if (GetProcessMemoryInfo(GetCurrentProcess(), &counters, sizeof(counters))) {");
+            out.println("        jlong size2 = (jlong)counters.WorkingSetSize;");
+            out.println("        if (size2 <= maxSize) return size2;");
+            out.println("    }");
             out.println("    DWORD length = sizeof(PSAPI_WORKING_SET_INFORMATION);");
             out.println("    PSAPI_WORKING_SET_INFORMATION *info = (PSAPI_WORKING_SET_INFORMATION*)malloc(length);");
             out.println("    BOOL success = QueryWorkingSet(GetCurrentProcess(), info, length);");

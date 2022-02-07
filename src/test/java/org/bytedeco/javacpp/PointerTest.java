@@ -1172,6 +1172,6 @@ public class PointerTest {
         long bytesAfter = Pointer.physicalBytes();
 
         System.out.println(bytesBefore + " " + bytesAfter);
-        assertTrue(Math.abs(bytesAfter - bytesBefore) < 10_000_000 + buffer.get(0));
+        assertTrue(Math.abs(bytesAfter - bytesBefore) < 100_000_000 + buffer.get(0));
     }
 }

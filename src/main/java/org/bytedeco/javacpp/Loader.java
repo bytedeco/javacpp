@@ -479,7 +479,7 @@ public class Loader {
     /**
      * Extracts a resource, if the size or last modified timestamp differs from what is in cache,
      * and returns the cached {@link File}. If target is not null, creates instead a symbolic link
-     * where the resource would have been extracted.
+     * where the resource would have been extracted. Directories from JAR files are extracted recursively.
      *
      * @param resourceURL the URL of the resource to extract and cache
      * @param target of the symbolic link to create (must be null to have the resource actually extracted)
@@ -760,6 +760,7 @@ public class Loader {
      * Extracts a resource into the specified directory and with the specified
      * prefix and suffix for the filename. If both prefix and suffix are {@code null},
      * the original filename is used, so directoryOrFile must not be {@code null}.
+     * Directories from JAR files are extracted recursively.
      *
      * @param resourceURL the URL of the resource to extract
      * @param directoryOrFile the output directory or file ({@code null == System.getProperty("java.io.tmpdir")})

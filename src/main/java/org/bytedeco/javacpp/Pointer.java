@@ -576,6 +576,9 @@ public class Pointer implements AutoCloseable {
      * Also known as "anonymous resident set size" (Linux, Mac OS X, etc) or "private working set size" (Windows). */
     @Name("JavaCPP_physicalBytes") public static native long physicalBytes();
 
+    /** May return a value larger than {@link #physicalBytes()} but less than {@code maxSize} to save processing time. */
+    @Name("JavaCPP_physicalBytes") public static native long physicalBytesInaccurate(long maxSize);
+
     /** Returns the amount of physical memory installed according to the operating system, or 0 if unknown.
      * It should not be possible for {@link #physicalBytes()} to go over this value. */
     @Name("JavaCPP_totalPhysicalBytes") public static native long totalPhysicalBytes();
@@ -687,8 +690,19 @@ public class Pointer implements AutoCloseable {
             this.deallocator = r;
             if (referenceQueue != null) synchronized (DeallocatorThread.class) {
                 int count = 0;
-                long lastPhysicalBytes = maxPhysicalBytes > 0 ? physicalBytes() : 0;
+                long lastPhysicalBytes = 0;
                 try {
+                    if (maxPhysicalBytes > 0) {
+                        try {
+                            lastPhysicalBytes = physicalBytesInaccurate(maxPhysicalBytes);
+                        } catch (UnsatisfiedLinkError e) {
+                            // old binaries with physicalBytesInaccurate() missing -> call physicalBytes() for backward compatibility
+                            if (logger.isDebugEnabled()) {
+                                logger.debug(e.getMessage());
+                            }
+                            lastPhysicalBytes = physicalBytes();
+                        }
+                    }
                     while (count++ < maxRetries && ((maxBytes > 0 && DeallocatorReference.totalBytes + r.bytes > maxBytes)
                                          || (maxPhysicalBytes > 0 && lastPhysicalBytes > maxPhysicalBytes))) {
                         if (logger.isDebugEnabled()) {
