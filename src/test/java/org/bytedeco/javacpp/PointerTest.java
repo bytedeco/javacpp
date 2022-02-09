@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2021 Samuel Audet
+ * Copyright (C) 2016-2022 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -29,7 +29,12 @@ import java.nio.DoubleBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
+import java.nio.MappedByteBuffer;
 import java.nio.ShortBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -1144,5 +1149,29 @@ public class PointerTest {
         } catch (NumberFormatException e) {
             System.out.println(e);
         }
+    }
+
+    @Test public void testNoFileBytes() throws Exception {
+        System.out.println("NoFileBytes");
+
+        System.gc();
+        Thread.sleep(100);
+        long bytesBefore = Pointer.physicalBytes();
+
+        Path file = Files.createTempFile("javacpp", "tmp");
+        FileChannel channel = FileChannel.open(file,
+                StandardOpenOption.CREATE, StandardOpenOption.DELETE_ON_CLOSE,
+                StandardOpenOption.READ, StandardOpenOption.WRITE);
+        MappedByteBuffer buffer = channel.map(FileChannel.MapMode.READ_WRITE, 0, 100_000_000);
+        for (int i = 0; i < 100_000_000; i++) {
+            buffer.put(i, (byte)i);
+        }
+
+        System.gc();
+        Thread.sleep(100);
+        long bytesAfter = Pointer.physicalBytes();
+
+        System.out.println(bytesBefore + " " + bytesAfter);
+        assertTrue(Math.abs(bytesAfter - bytesBefore) < 10_000_000 + buffer.get(0));
     }
 }

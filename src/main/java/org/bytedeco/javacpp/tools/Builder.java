@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2020 Samuel Audet
+ * Copyright (C) 2011-2022 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -76,20 +76,7 @@ public class Builder {
      */
     void cleanOutputDirectory() throws IOException {
         if (outputDirectory != null && outputDirectory.isDirectory() && clean) {
-            logger.info("Deleting " + outputDirectory);
-            Files.walkFileTree(outputDirectory.toPath(), new SimpleFileVisitor<Path>() {
-                @Override public FileVisitResult postVisitDirectory(Path dir, IOException e) throws IOException {
-                    if (e != null) {
-                        throw e;
-                    }
-                    Files.delete(dir);
-                    return FileVisitResult.CONTINUE;
-                }
-                @Override public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                    Files.delete(file);
-                    return FileVisitResult.CONTINUE;
-                }
-            });
+            Loader.deleteDirectory(outputDirectory);
         }
     }
 
@@ -1325,7 +1312,7 @@ public class Builder {
         }
         System.out.println(
             "JavaCPP version " + version + "\n" +
-            "Copyright (C) 2011-2020 Samuel Audet <samuel.audet@gmail.com>\n" +
+            "Copyright (C) 2011-2022 Samuel Audet <samuel.audet@gmail.com>\n" +
             "Project site: https://github.com/bytedeco/javacpp");
         System.out.println();
         System.out.println("Usage: java -jar javacpp.jar [options] [class or package (suffixed with .* or .**)] [commands]");
@@ -1352,6 +1339,7 @@ public class Builder {
         System.out.println();
         System.out.println("and where optional commands include:");
         System.out.println();
+        System.out.println("    -clear                 Before doing anything else, delete all files from the cache");
         System.out.println("    -mod <file>            Output a module-info.java file for native JAR where module name is the package of the first class");
         System.out.println("    -exec [args...]        After build, call java command on the first class");
         System.out.println("    -print <property>      Print the given platform property, for example, \"platform.includepath\", and exit");
@@ -1366,6 +1354,7 @@ public class Builder {
      * @throws Exception
      */
     public static void main(String[] args) throws Exception {
+        boolean clearCacheDir = false;
         boolean addedClasses = false;
         Builder builder = new Builder();
         String[] execArgs = null;
@@ -1409,6 +1398,8 @@ public class Builder {
                 builder.property(args[i]);
             } else if ("-Xcompiler".equals(args[i])) {
                 builder.compilerOptions(args[++i]);
+            } else if ("-clear".equals(args[i])) {
+                clearCacheDir = true;
             } else if ("-mod".equals(args[i])) {
                 moduleFile = args[++i];
             } else if ("-exec".equals(args[i])) {
@@ -1441,6 +1432,9 @@ public class Builder {
                 addedClasses = true;
             }
         }
+        if (clearCacheDir) {
+            Loader.clearCacheDir();
+        }
         if (printPath != null) {
             Collection<Class> classes = builder.classScanner.getClasses();
             ClassProperties p = Loader.loadProperties(classes.toArray(new Class[classes.size()]), builder.properties, true);
@@ -1449,7 +1443,7 @@ public class Builder {
                 System.out.println(s);
             }
             System.exit(0);
-        } else if (!addedClasses) {
+        } else if (!clearCacheDir && !addedClasses) {
             printHelp();
             System.exit(2);
         }

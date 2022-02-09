@@ -1,4 +1,7 @@
 
+ * Add `Loader.clearCacheDir()` along with new `ClearMojo` and `-clear` command line option
+ * Speed up `Loader` on Windows when there are no symbolic links or library versions ([pull #512](https://github.com/bytedeco/javacpp/pull/512))
+ * Enhance `Pointer.physicalBytes()` by excluding shared pages from memory-mapped files, etc ([issue #468](https://github.com/bytedeco/javacpp/issues/468))
  * Fix `Parser` not correctly encoding files of top-level classes produced with `@Properties(target=..., global=...)`
  * Add `Pointer.interruptDeallocatorThread()` method to make JavaCPP classes eligible for GC ([discussion bytedeco/javacpp-presets#1115](https://github.com/bytedeco/javacpp-presets/discussions/1115))
  * Let `Parser` output the content of `Info.javaText` in the case of `FunctionPointer` as well
