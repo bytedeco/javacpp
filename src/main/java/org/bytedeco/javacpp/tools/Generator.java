@@ -251,7 +251,7 @@ private void outputDowncastFunDefinition() {
 }
 
 void outputDowncastCache(LinkedHashSet<Class> allClasses) {
-	var baseClasses = new LinkedHashSet<String>();
+	LinkedHashSet<String> baseClasses = new LinkedHashSet<String>();
 	// Scan to find out Downcast base classes
 	for (Class<?> cls : allClasses) {
 		// if super class is InfoMapper then this is likely a target class else skip this
@@ -279,7 +279,7 @@ void outputDowncastCache(LinkedHashSet<Class> allClasses) {
 			if (c2.isInterface())
 				continue;
 			// follow up the super class chain to see if this is derived from a baseclass
-			var sc = c2;
+			Class<?> sc = c2;
 			while (sc != null) {
 				if (baseClasses.contains(sc.getSimpleName()))
 					break;
