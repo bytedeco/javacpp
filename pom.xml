@@ -165,6 +165,7 @@
               <value>3</value>
             </property>
           </systemProperties>
+        	<forkCount>1.5C</forkCount>
         </configuration>
         <executions>
           <execution>
