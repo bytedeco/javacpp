@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2018 Samuel Audet
+ * Copyright (C) 2014-2022 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -55,24 +55,25 @@ public class InfoMap extends HashMap<String,List<Info>> {
         .put(new Info("FILE", "time_t", "va_list", "std::exception", "std::istream", "std::ostream", "std::iostream",
                 "std::ifstream", "std::ofstream", "std::fstream", "std::stringstream").cast().pointerTypes("Pointer"))
 
-        .put(new Info("int8_t", "__int8", "jbyte", "signed char")
+        .put(new Info("std::int8_t", "int8_t", "__int8", "jbyte", "signed char")
             .valueTypes("byte").pointerTypes("BytePointer", "ByteBuffer", "byte[]"))
-        .put(new Info("uint8_t", "unsigned __int8", "char", "unsigned char").cast()
+        .put(new Info("std::uint8_t", "uint8_t", "unsigned __int8", "char", "unsigned char").cast()
             .valueTypes("byte").pointerTypes("BytePointer", "ByteBuffer", "byte[]"))
 
-        .put(new Info("int16_t", "__int16", "jshort", "short", "signed short", "short int", "signed short int")
+        .put(new Info("std::int16_t", "int16_t", "__int16", "jshort", "short", "signed short", "short int", "signed short int")
             .valueTypes("short").pointerTypes("ShortPointer", "ShortBuffer", "short[]"))
-        .put(new Info("uint16_t", "unsigned __int16", "unsigned short", "unsigned short int").cast()
+        .put(new Info("std::uint16_t", "uint16_t", "unsigned __int16", "unsigned short", "unsigned short int").cast()
             .valueTypes("short").pointerTypes("ShortPointer", "ShortBuffer", "short[]"))
 
-        .put(new Info("int32_t", "__int32", "jint", "int", "signed int", "signed")
+        .put(new Info("std::int32_t", "int32_t", "__int32", "jint", "int", "signed int", "signed")
             .valueTypes("int").pointerTypes("IntPointer", "IntBuffer", "int[]"))
-        .put(new Info("uint32_t", "unsigned __int32", "unsigned int", "unsigned").cast()
+        .put(new Info("std::uint32_t", "uint32_t", "unsigned __int32", "unsigned int", "unsigned").cast()
             .valueTypes("int").pointerTypes("IntPointer", "IntBuffer", "int[]"))
 
         .put(new Info("jlong", "long long", "signed long long", "long long int", "signed long long int")
             .valueTypes("long").pointerTypes("LongPointer", "LongBuffer", "long[]"))
-        .put(new Info("int64_t", "__int64", "uint64_t", "unsigned __int64", "unsigned long long", "unsigned long long int").cast()
+        .put(new Info("std::int64_t", "int64_t", "__int64",
+                      "std::uint64_t", "uint64_t", "unsigned __int64", "unsigned long long", "unsigned long long int").cast()
             .valueTypes("long").pointerTypes("LongPointer", "LongBuffer", "long[]"))
 
         .put(new Info("long", "signed long", "long int", "signed long int")
@@ -80,7 +81,8 @@ public class InfoMap extends HashMap<String,List<Info>> {
         .put(new Info("unsigned long", "unsigned long int").cast()
             .valueTypes("long").pointerTypes("CLongPointer"))
 
-        .put(new Info("size_t", "ssize_t", "ptrdiff_t", "intptr_t", "uintptr_t", "off_t").cast().valueTypes("long").pointerTypes("SizeTPointer"))
+        .put(new Info("std::size_t", "std::ssize_t", "std::ptrdiff_t", "std::intptr_t", "std::uintptr_t", "std::off_t",
+                      "size_t", "ssize_t", "ptrdiff_t", "intptr_t", "uintptr_t", "off_t").cast().valueTypes("long").pointerTypes("SizeTPointer"))
         .put(new Info("float", "jfloat").valueTypes("float").pointerTypes("FloatPointer", "FloatBuffer", "float[]"))
         .put(new Info("double", "jdouble").valueTypes("double").pointerTypes("DoublePointer", "DoubleBuffer", "double[]"))
         .put(new Info("long double").cast().valueTypes("double").pointerTypes("Pointer"))
@@ -91,9 +93,9 @@ public class InfoMap extends HashMap<String,List<Info>> {
         .put(new Info("jboolean").valueTypes("boolean").pointerTypes("BooleanPointer", "boolean[]"))
         .put(new Info("_Bool", "bool").cast().valueTypes("boolean").pointerTypes("BoolPointer", "boolean[]"))
         .put(new Info("jchar").valueTypes("char").pointerTypes("CharPointer", "char[]"))
-        .put(new Info("char16_t").cast().valueTypes("char").pointerTypes("CharPointer", "char[]"))
-        .put(new Info("char32_t").cast().valueTypes("int").pointerTypes("IntPointer", "int[]"))
-        .put(new Info("wchar_t", "WCHAR").cast().valueTypes("char", "int").pointerTypes("CharPointer", "IntPointer"))
+        .put(new Info("std::char16_t", "char16_t").cast().valueTypes("char").pointerTypes("CharPointer", "char[]"))
+        .put(new Info("std::char32_t", "char32_t").cast().valueTypes("int").pointerTypes("IntPointer", "int[]"))
+        .put(new Info("std::wchar_t", "wchar_t", "WCHAR").cast().valueTypes("char", "int").pointerTypes("CharPointer", "IntPointer"))
         .put(new Info("const char").valueTypes("@Cast(\"const char\") byte").pointerTypes("@Cast(\"const char*\") BytePointer", "String"))
         .put(new Info("boost::shared_ptr", "std::shared_ptr").annotations("@SharedPtr"))
         .put(new Info("boost::movelib::unique_ptr", "std::unique_ptr").annotations("@UniquePtr"))

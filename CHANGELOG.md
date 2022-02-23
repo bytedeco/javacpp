@@ -1,4 +1,5 @@
 
+ * Add to `InfoMap` default pointer and value types for integer types in `std::` namespace
  * Fix Android build properties for NDK r23b
 
 ### February 11, 2022 version 1.5.7
