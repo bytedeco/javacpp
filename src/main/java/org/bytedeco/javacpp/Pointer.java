@@ -860,7 +860,9 @@ public class Pointer implements AutoCloseable {
     private native ByteBuffer asDirectBuffer();
     /**
      * Creates a new {@link ByteBuffer} covering the memory space between the
-     * {@link #position()} and {@link #limit()} of this Pointer.
+     * {@link #position()} and {@link #limit()} of this Pointer. The way the methods
+     * were designed allows constructs such as
+     * {@code this.position(13).limit(42).asByteBuffer()}.
      * <p>
      * The new buffer's position will be equal to {@link #position()}, its capacity
      * and its limit will be equal to {@link #limit()}, and its mark will be
@@ -886,13 +888,14 @@ public class Pointer implements AutoCloseable {
      *     ByteBuffer buffer = pointer.position(Integer.MAX_VALUE)
      *                                .asByteBuffer();
      * 
-     *     buffer.position();  // 2147483647
-     *     buffer.capacity();  // 2147483647 (error: off by 1)
-     *     buffer.remaining(); // 0          (error: off by 1)
-     * }</pre>
+     *     buffer.position(); // 2147483647
+     *     buffer.capacity(); // 2147483647 (error: off by 1)
+     *     buffer.remaining(); // 0 (error: off by 1)
+     * }
+     * </pre>
      * <p>
-     * In order to access this memory location using a ByteBuffer, you must 
-     * first offset this pointer's address. See the example below:
+     * In order to access this memory location using a ByteBuffer, you must first
+     * offset this pointer's address. See the example below:
      * </p>
      * 
      * <pre>
@@ -906,10 +909,11 @@ public class Pointer implements AutoCloseable {
      *     ByteBuffer buffer = pointer.getPointer(Integer.MAX_VALUE)
      *                                .asByteBuffer();
      * 
-     *     buffer.position();  // 0
-     *     buffer.capacity();  // 1
+     *     buffer.position(); // 0
+     *     buffer.capacity(); // 1
      *     buffer.remaining(); // 1
-     * }</pre>
+     * }
+     * </pre>
      * 
      * @return the direct NIO {@link ByteBuffer} created
      * @see ByteBuffer#isDirect()
