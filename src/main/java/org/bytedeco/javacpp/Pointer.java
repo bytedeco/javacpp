@@ -871,7 +871,7 @@ public class Pointer implements AutoCloseable {
      * <b>NOTE:</b> ByteBuffer objects can only support a capacity of size
      * {@link Integer#MAX_VALUE integer}. Certain combinations of position and limit
      * can be greater than the support capacity. For example, the following code
-     * snippet initializes a BytePointer and attempts to make ByteBuffer from the
+     * snippet initializes a BytePointer and attempts to make a ByteBuffer from the
      * final element:
      * </p>
      * 
@@ -889,11 +889,10 @@ public class Pointer implements AutoCloseable {
      *     buffer.position();  // 2147483647
      *     buffer.capacity();  // 2147483647 (error: off by 1)
      *     buffer.remaining(); // 0          (error: off by 1)
-     * }
-     * </pre>
+     * }</pre>
      * <p>
-     * In order access this memory location using a ByteBuffer, you must first
-     * offset this pointer's address. See the example below:
+     * In order to access this memory location using a ByteBuffer, you must 
+     * first offset this pointer's address. See the example below:
      * </p>
      * 
      * <pre>
@@ -910,8 +909,7 @@ public class Pointer implements AutoCloseable {
      *     buffer.position();  // 0
      *     buffer.capacity();  // 1
      *     buffer.remaining(); // 1
-     * }
-     * </pre>
+     * }</pre>
      * 
      * @return the direct NIO {@link ByteBuffer} created
      * @see ByteBuffer#isDirect()
