@@ -860,61 +860,56 @@ public class Pointer implements AutoCloseable {
     private native ByteBuffer asDirectBuffer();
     /**
      * Creates a new {@link ByteBuffer} covering the memory space between the
-     * {@link #position()} and {@link #limit()} of this Pointer. The way the methods
+     * {@link #position} and {@link #limit} of this Pointer. The way the methods
      * were designed allows constructs such as
      * {@code this.position(13).limit(42).asByteBuffer()}.
      * <p>
-     * The new buffer's position will be equal to {@link #position()}, its capacity
-     * and its limit will be equal to {@link #limit()}, and its mark will be
+     * The new buffer's position will be equal to {@link #position}, its capacity
+     * and its limit will be equal to {@link #limit}, and its mark will be
      * undefined. In the event that {@code limit <= 0}, the capacity and limit will
      * be set to {@code position + 1}. The new buffer will be direct and mutable.
-     * </p>
      * <p>
      * <b>NOTE:</b> ByteBuffer objects can only support a capacity of size
-     * {@link Integer#MAX_VALUE integer}. Certain combinations of position and limit
-     * can be greater than the support capacity. For example, the following code
+     * {@link Integer#MAX_VALUE}. Certain combinations of position and limit
+     * can be greater than the supported capacity. For example, the following code
      * snippet initializes a BytePointer and attempts to make a ByteBuffer from the
      * final element:
-     * </p>
-     * 
-     * <pre>
+     *
+     * <pre>{@code
      * final long bigSize = Integer.MAX_VALUE + 1L;
-     * 
-     * try (BytePointer pointer = new BytePointer(bigSize))
-     * {
+     *
+     * try (BytePointer pointer = new BytePointer(bigSize)) {
      *     pointer.fill(1);
-     *     pointer.put(pointer.capacity() - 1L, (byte) 100);
-     * 
+     *     pointer.put(pointer.capacity() - 1L, (byte)100);
+     *
      *     ByteBuffer buffer = pointer.position(Integer.MAX_VALUE)
      *                                .asByteBuffer();
-     * 
+     *
      *     buffer.position(); // 2147483647
      *     buffer.capacity(); // 2147483647 (error: off by 1)
      *     buffer.remaining(); // 0 (error: off by 1)
      * }
-     * </pre>
-     * <p>
+     * }</pre>
+     *
      * In order to access this memory location using a ByteBuffer, you must first
      * offset this pointer's address. See the example below:
-     * </p>
-     * 
-     * <pre>
+     *
+     * <pre>{@code
      * final long bigSize = Integer.MAX_VALUE + 1L;
-     * 
-     * try (BytePointer pointer = new BytePointer(bigSize))
-     * {
+     *
+     * try (BytePointer pointer = new BytePointer(bigSize)) {
      *     pointer.fill(1);
-     *     pointer.put(pointer.capacity() - 1L, (byte) 100);
-     * 
+     *     pointer.put(pointer.capacity() - 1L, (byte)100);
+     *
      *     ByteBuffer buffer = pointer.getPointer(Integer.MAX_VALUE)
      *                                .asByteBuffer();
-     * 
+     *
      *     buffer.position(); // 0
      *     buffer.capacity(); // 1
      *     buffer.remaining(); // 1
      * }
-     * </pre>
-     * 
+     * }</pre>
+     *
      * @return the direct NIO {@link ByteBuffer} created
      * @see ByteBuffer#isDirect()
      * @see #getPointer(long)
