@@ -1454,7 +1454,11 @@ public class Generator {
             out.println("        sprintf(name, \"JavaCPP Thread ID %lu\", pthread_self());");
             out.println("#endif");
             out.println("        args.name = name;");
+            out.println("#ifdef JNI_ATTACH_AS_DAEMON");
+            out.println("        if (vm->AttachCurrentThreadAsDaemon(env2, &args) != JNI_OK) {");
+            out.println("#else");
             out.println("        if (vm->AttachCurrentThread(env2, &args) != JNI_OK) {");
+            out.println("#endif");
             out.println("            JavaCPP_log(\"Could not attach the JavaVM to the current thread.\");");
             out.println("            *env = NULL;");
             out.println("            goto done;");
