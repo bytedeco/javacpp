@@ -14,6 +14,18 @@ import org.bytedeco.javacpp.tools.Builder;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+/**
+ * This test case verifies that threads attached from the native layer are
+ * configured as daemons and can remain attached when the appropriate property
+ * is specified.
+ * <p>
+ * You would want this behavior when you have a callback that is called with a
+ * high frequency.
+ * </p>
+ * 
+ * @author Dan Avila
+ *
+ */
 @Platform(compiler = "cpp11", define = "NO_JNI_DETACH_THREAD", include = "DaemonTest.h")
 public class DaemonTest
 {
