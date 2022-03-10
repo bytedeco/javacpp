@@ -1,4 +1,5 @@
 
+ * Switch to `AttachCurrentThreadAsDaemon()` when attaching native threads on callback ([pull #561](https://github.com/bytedeco/javacpp/pull/561))
  * Add to `InfoMap` default pointer and value types for integer types in `std::` namespace
  * Fix Android build properties for NDK r23b
 
