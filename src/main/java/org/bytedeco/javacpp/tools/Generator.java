@@ -1450,8 +1450,8 @@ public class Generator {
             out.println("        sprintf(name, \"JavaCPP Thread ID %lu\", GetCurrentThreadId());");
             out.println("#elif defined(__APPLE__)");
             out.println("        sprintf(name, \"JavaCPP Thread ID %u\", pthread_mach_thread_np(pthread_self()));");
-            out.println("#else");
-            out.println("        sprintf(name, \"JavaCPP Thread ID %lu\", pthread_self());");
+            out.println("#elif defined(__linux__)");
+            out.println("        sprintf(name, \"JavaCPP Thread ID %d\", gettid());");
             out.println("#endif");
             out.println("        args.name = name;");
             out.println("        if (vm->AttachCurrentThreadAsDaemon(env2, &args) != JNI_OK) {");

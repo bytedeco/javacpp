@@ -68,6 +68,7 @@ public class ThreadTest {
 
         Callback callback = new Callback() {
             @Override public void callback(int value) {
+                System.out.println("Callback from " + Thread.currentThread());
                 callbackValueRefs.add(Integer.valueOf(value));
                 threadRefs.add(Thread.currentThread());
             }
