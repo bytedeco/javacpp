@@ -322,6 +322,7 @@ public class Generator {
         out.println("    #include <malloc.h>");
         out.println("    #include <sys/types.h>");
         out.println("    #include <sys/stat.h>");
+        out.println("    #include <sys/syscall.h>");
         out.println("    #include <sys/sysinfo.h>");
         out.println("    #include <fcntl.h>");
         out.println("    #include <unistd.h>");
@@ -1451,7 +1452,7 @@ public class Generator {
             out.println("#elif defined(__APPLE__)");
             out.println("        sprintf(name, \"JavaCPP Thread ID %u\", pthread_mach_thread_np(pthread_self()));");
             out.println("#elif defined(__linux__)");
-            out.println("        sprintf(name, \"JavaCPP Thread ID %d\", gettid());");
+            out.println("        sprintf(name, \"JavaCPP Thread ID %ld\", syscall(SYS_gettid));");
             out.println("#endif");
             out.println("        args.name = name;");
             out.println("        if (vm->AttachCurrentThreadAsDaemon(env2, &args) != JNI_OK) {");
