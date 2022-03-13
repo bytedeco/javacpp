@@ -528,7 +528,7 @@ public class Generator {
         out.println("   public:");
         out.println("       bool attached = false;");
         out.println("       ~WindowsJniAutoDetach() {");
-        out.println("           if (attached) {");
+        out.println("           if (attached && JavaCPP_vm) {");
         out.println("               JavaCPP_vm->DetachCurrentThread();");
         out.println("           }");
         out.println("       }");
