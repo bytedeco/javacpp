@@ -526,9 +526,9 @@ public class Generator {
         out.println("#if !defined(NO_JNI_DETACH_THREAD) && defined(_WIN32)");
         out.println("   static __declspec(thread) class WindowsJniAutoDetach {");
         out.println("   public:");
-        out.println("       bool attached = false;");
+        out.println("       JNIEnv* env = NULL;");
         out.println("       ~WindowsJniAutoDetach() {");
-        out.println("           if (attached && JavaCPP_vm) {");
+        out.println("           if (env && JavaCPP_vm) {");
         out.println("               JavaCPP_vm->DetachCurrentThread();");
         out.println("           }");
         out.println("       }");
@@ -1473,7 +1473,7 @@ public class Generator {
             out.println("            goto done;");
             out.println("        }");
             out.println("#if !defined(NO_JNI_DETACH_THREAD) && defined(_WIN32)");
-            out.println("       windowsJniAutoDetachInstance.attached = true;");
+            out.println("       windowsJniAutoDetachInstance.env = *env;");
             out.println("#endif");
             out.println("#if !defined(NO_JNI_DETACH_THREAD) && (defined(__linux__) || defined(__APPLE__))");
             out.println("        pthread_setspecific(JavaCPP_current_env, *env);");
