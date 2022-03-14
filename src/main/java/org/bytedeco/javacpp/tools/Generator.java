@@ -1442,6 +1442,12 @@ public class Generator {
                 out.println("#endif");
             }
             out.println("    }");
+            out.println("#if !defined(NO_JNI_DETACH_THREAD) && defined(_WIN32)");
+            out.println("    if ((*env = windowsJniAutoDetachInstance.env) != NULL) {");
+            out.println("        attached = true;");
+            out.println("        goto done;");
+            out.println("    }");
+            out.println("#endif");
             out.println("#if !defined(NO_JNI_DETACH_THREAD) && (defined(__linux__) || defined(__APPLE__))");
             out.println("    pthread_once(&JavaCPP_once, JavaCPP_create_pthread_key);");
             out.println("    if ((*env = (JNIEnv *)pthread_getspecific(JavaCPP_current_env)) != NULL) {");
