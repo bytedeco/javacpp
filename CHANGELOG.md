@@ -1,4 +1,5 @@
 
+ * Use thread local in `Generator` to detach automatically native threads on exit for Windows as well ([pull #562](https://github.com/bytedeco/javacpp/pull/562))
  * Switch to `AttachCurrentThreadAsDaemon()` when attaching native threads on callback ([pull #561](https://github.com/bytedeco/javacpp/pull/561))
  * Add to `InfoMap` default pointer and value types for integer types in `std::` namespace
  * Fix Android build properties for NDK r23b
