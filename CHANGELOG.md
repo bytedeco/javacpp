@@ -1,4 +1,5 @@
 
+ * Add compiler options for C++14 and C++17 to platform properties files for Visual Studio
  * Fix `Parser` incorrectly shortening type names for nested class template instances
  * Make `Parser` output `boolean has_value()` methods for basic containers like `std::optional`
  * Add `OptionalAdapter` and corresponding `@Optional` annotation for containers like `std::optional`
