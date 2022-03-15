@@ -523,7 +523,16 @@ public class Generator {
         out.println("    va_end(ap);");
         out.println("}");
         out.println();
-        out.println("#if !defined(NO_JNI_DETACH_THREAD) && (defined(__linux__) || defined(__APPLE__))");
+        out.println("#if !defined(NO_JNI_DETACH_THREAD) && defined(_WIN32)");
+        out.println("   static __declspec(thread) struct JavaCPP_thread_local {");
+        out.println("       JNIEnv* env = NULL;");
+        out.println("       ~JavaCPP_thread_local() {");
+        out.println("           if (env && JavaCPP_vm) {");
+        out.println("               JavaCPP_vm->DetachCurrentThread();");
+        out.println("           }");
+        out.println("       }");
+        out.println("   } JavaCPP_thread_local; ");
+        out.println("#elif !defined(NO_JNI_DETACH_THREAD) && (defined(__linux__) || defined(__APPLE__))");
         out.println("    static pthread_key_t JavaCPP_current_env;");
         out.println("    static JavaCPP_noinline void JavaCPP_detach_env(void *data) {");
         out.println("        if (JavaCPP_vm) {");
@@ -1431,7 +1440,7 @@ public class Generator {
             out.println("#endif");
             out.println();
             out.println("static JavaCPP_noinline void JavaCPP_detach(bool detach) {");
-            out.println("#if !defined(NO_JNI_DETACH_THREAD) && !defined(__linux__) && !defined(__APPLE__)");
+            out.println("#if !defined(NO_JNI_DETACH_THREAD) && !defined(__linux__) && !defined(__APPLE__) && !defined(_WIN32)");
             out.println("    if (detach && JavaCPP_vm->DetachCurrentThread() != JNI_OK) {");
             out.println("        JavaCPP_log(\"Could not detach the JavaVM from the current thread.\");");
             out.println("    }");
@@ -1462,7 +1471,12 @@ public class Generator {
                 out.println("#endif");
             }
             out.println("    }");
-            out.println("#if !defined(NO_JNI_DETACH_THREAD) && (defined(__linux__) || defined(__APPLE__))");
+            out.println("#if !defined(NO_JNI_DETACH_THREAD) && defined(_WIN32)");
+            out.println("    if ((*env = JavaCPP_thread_local.env) != NULL) {");
+            out.println("        attached = true;");
+            out.println("        goto done;");
+            out.println("    }");
+            out.println("#elif !defined(NO_JNI_DETACH_THREAD) && (defined(__linux__) || defined(__APPLE__))");
             out.println("    pthread_once(&JavaCPP_once, JavaCPP_create_pthread_key);");
             out.println("    if ((*env = (JNIEnv *)pthread_getspecific(JavaCPP_current_env)) != NULL) {");
             out.println("        attached = true;");
@@ -1492,7 +1506,9 @@ public class Generator {
             out.println("            *env = NULL;");
             out.println("            goto done;");
             out.println("        }");
-            out.println("#if !defined(NO_JNI_DETACH_THREAD) && (defined(__linux__) || defined(__APPLE__))");
+            out.println("#if !defined(NO_JNI_DETACH_THREAD) && defined(_WIN32)");
+            out.println("        JavaCPP_thread_local.env = *env;");
+            out.println("#elif !defined(NO_JNI_DETACH_THREAD) && (defined(__linux__) || defined(__APPLE__))");
             out.println("        pthread_setspecific(JavaCPP_current_env, *env);");
             out.println("#endif");
             out.println("        attached = true;");

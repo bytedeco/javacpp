@@ -1,4 +1,5 @@
 
+ * Use thread local in `Generator` to detach automatically native threads on exit for Windows as well ([pull #562](https://github.com/bytedeco/javacpp/pull/562))
  * Add compiler options for C++14 and C++17 to platform properties files for Visual Studio
  * Fix `Parser` incorrectly shortening type names for nested class template instances
  * Make `Parser` output `boolean has_value()` methods for basic containers like `std::optional`

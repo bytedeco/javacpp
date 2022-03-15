@@ -25,7 +25,7 @@ import org.junit.Test;
  * @author Dan Avila
  *
  */
-@Platform(compiler = "cpp11", define = "NO_JNI_DETACH_THREAD", include = "ThreadTest.h")
+@Platform(compiler = "cpp11", include = "ThreadTest.h")
 public class ThreadTest {
     public static class Callback extends Pointer {
         /** Default native constructor. */
@@ -76,8 +76,8 @@ public class ThreadTest {
 
         run(callback, count);
 
-        assertTrue(callbackValueRefs.size() == count);
-        assertTrue(threadRefs.size() == count);
+        assertEquals(callbackValueRefs.size(), count);
+        assertEquals(threadRefs.size(), count);
 
         for (int i = 0; i < count; i++) {
             int value = callbackValueRefs.get(i);
@@ -95,5 +95,8 @@ public class ThreadTest {
 
             assertEquals(cbThread1, cbThread2);
         }
+        
+        // thread should be automatically detached upon completion
+        assertFalse(threadRefs.get(0).isAlive());
     }
 }
