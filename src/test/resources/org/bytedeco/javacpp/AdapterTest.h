@@ -1,6 +1,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <optional>
 
 std::string testStdString(std::string str) {
     return str;
@@ -131,4 +132,8 @@ MovedData&& getMovedData() {
 
 void putMovedData(MovedData&& m) {
     movedData = m;
+}
+
+std::optional<int> testOptionalInt(std::optional<int> o) {
+    return o;
 }

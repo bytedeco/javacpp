@@ -1,4 +1,7 @@
 
+ * Fix `Parser` incorrectly shortening type names for nested class template instances
+ * Make `Parser` output `boolean has_value()` methods for basic containers like `std::optional`
+ * Add `OptionalAdapter` and corresponding `@Optional` annotation for containers like `std::optional`
  * Switch to `AttachCurrentThreadAsDaemon()` when attaching native threads on callback ([pull #561](https://github.com/bytedeco/javacpp/pull/561))
  * Add to `InfoMap` default pointer and value types for integer types in `std::` namespace
  * Fix Android build properties for NDK r23b

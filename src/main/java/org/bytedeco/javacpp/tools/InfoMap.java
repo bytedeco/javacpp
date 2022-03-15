@@ -52,8 +52,10 @@ public class InfoMap extends HashMap<String,List<Info>> {
         .put(new Info(" __attribute__", "__declspec", "static_assert").annotations().skip())
         .put(new Info("void").valueTypes("void").pointerTypes("Pointer"))
         .put(new Info("std::nullptr_t").valueTypes("Pointer").pointerTypes("PointerPointer"))
-        .put(new Info("FILE", "time_t", "va_list", "std::exception", "std::istream", "std::ostream", "std::iostream",
-                "std::ifstream", "std::ofstream", "std::fstream", "std::stringstream").cast().pointerTypes("Pointer"))
+        .put(new Info("FILE", "time_t", "va_list", "std::exception",
+                      "std::istream", "std::ostream", "std::iostream",
+                      "std::ifstream", "std::ofstream", "std::fstream",
+                      "std::istringstream", "std::ostringstream", "std::stringstream").cast().pointerTypes("Pointer"))
 
         .put(new Info("std::int8_t", "int8_t", "__int8", "jbyte", "signed char")
             .valueTypes("byte").pointerTypes("BytePointer", "ByteBuffer", "byte[]"))
@@ -97,6 +99,7 @@ public class InfoMap extends HashMap<String,List<Info>> {
         .put(new Info("std::char32_t", "char32_t").cast().valueTypes("int").pointerTypes("IntPointer", "int[]"))
         .put(new Info("std::wchar_t", "wchar_t", "WCHAR").cast().valueTypes("char", "int").pointerTypes("CharPointer", "IntPointer"))
         .put(new Info("const char").valueTypes("@Cast(\"const char\") byte").pointerTypes("@Cast(\"const char*\") BytePointer", "String"))
+        .put(new Info("boost::optional", "std::optional").annotations("@Optional"))
         .put(new Info("boost::shared_ptr", "std::shared_ptr").annotations("@SharedPtr"))
         .put(new Info("boost::movelib::unique_ptr", "std::unique_ptr").annotations("@UniquePtr"))
         .put(new Info("std::string").annotations("@StdString").valueTypes("BytePointer", "String").pointerTypes("BytePointer"))
