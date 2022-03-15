@@ -27,6 +27,7 @@ import org.bytedeco.javacpp.annotation.ByRef;
 import org.bytedeco.javacpp.annotation.Cast;
 import org.bytedeco.javacpp.annotation.Const;
 import org.bytedeco.javacpp.annotation.Function;
+import org.bytedeco.javacpp.annotation.Optional;
 import org.bytedeco.javacpp.annotation.Platform;
 import org.bytedeco.javacpp.annotation.SharedPtr;
 import org.bytedeco.javacpp.annotation.StdBasicString;
@@ -48,7 +49,7 @@ import static org.junit.Assert.*;
  *
  * @author Samuel Audet
  */
-@Platform(compiler = "cpp11", define = {"SHARED_PTR_NAMESPACE std", "UNIQUE_PTR_NAMESPACE std"}, include = "AdapterTest.h")
+@Platform(compiler = "cpp17", define = {"OPTIONAL_NAMESPACE std", "SHARED_PTR_NAMESPACE std", "UNIQUE_PTR_NAMESPACE std"}, include = "AdapterTest.h")
 public class AdapterTest {
 
     static native @StdString String testStdString(@StdString String str);
@@ -121,6 +122,8 @@ public class AdapterTest {
 
     static native @StdMove MovedData getMovedData();
     static native void putMovedData(@StdMove MovedData m);
+
+    static native @Optional IntPointer testOptionalInt(@Optional IntPointer o);
 
     @BeforeClass public static void setUpClass() throws Exception {
         System.out.println("Builder");
@@ -325,4 +328,11 @@ public class AdapterTest {
         m.deallocate();
         m2.deallocate();
     }
+
+    @Test public void testOptional() {
+        System.out.println("Optional");
+        assertTrue(testOptionalInt(new IntPointer((Pointer)null)).isNull());
+        assertEquals(42, testOptionalInt(new IntPointer(1).put(42)).get(0));
+    }
+
 }

@@ -358,6 +358,7 @@ public class Parser {
                         for (Type type : containerType.arguments) {
                             if (containerType.arguments.length == 1 && !tuple) {
                                 decl.text += "\n"
+                                          +  "    public native boolean has_value();\n"
                                           +  "    @Name(\"value\") public native " + type.annotations + type.javaName + " get();\n";
                             } else {
                                 int namespace = containerName.lastIndexOf("::");
@@ -606,6 +607,10 @@ public class Parser {
                         count++;
                     } else if (token.match('>', ')')) {
                         count--;
+                        if (tokens.get(1).match('<')) {
+                            // probably an actual less than
+                            tokens.next();
+                        }
                     }
                     for (int i = 0; i < type.indirections; i++) {
                         // this is not actually a type -> add back the "*"
@@ -2203,9 +2208,10 @@ public class Parser {
             dcl.cppName = type.cppName;
             dcl.javaName = type.javaName.substring(type.javaName.lastIndexOf(' ') + 1);
             if (type.operator) {
+                String shortName = dcl.javaName.substring(dcl.javaName.lastIndexOf('.') + 1);
                 dcl.cppName = "operator " + (dcl.type.constValue ? "const " : "")
                         + dcl.type.cppName + (dcl.type.indirections > 0 ? "*" : dcl.type.reference ? "&" : "");
-                dcl.javaName = "as" + Character.toUpperCase(dcl.javaName.charAt(0)) + dcl.javaName.substring(1);
+                dcl.javaName = "as" + Character.toUpperCase(shortName.charAt(0)) + shortName.substring(1);
             }
             dcl.signature = dcl.javaName + params.signature;
         } else {
@@ -2367,9 +2373,10 @@ public class Parser {
                 dcl.cppName = type.cppName;
                 dcl.javaName = type.javaName.substring(type.javaName.lastIndexOf(' ') + 1);
                 if (type.operator) {
+                    String shortName = dcl.javaName.substring(dcl.javaName.lastIndexOf('.') + 1);
                     dcl.cppName = "operator " + (dcl.type.constValue ? "const " : "")
                             + dcl.type.cppName + (dcl.type.indirections > 0 ? "*" : dcl.type.reference ? "&" : "");
-                    dcl.javaName = "as" + Character.toUpperCase(dcl.javaName.charAt(0)) + dcl.javaName.substring(1);
+                    dcl.javaName = "as" + Character.toUpperCase(shortName.charAt(0)) + shortName.substring(1);
                 }
                 dcl.signature = dcl.javaName + params.signature;
                 for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.get()) {
@@ -3349,9 +3356,10 @@ public class Parser {
         if (baseClasses.size() > 0) {
             for (Type t : baseClasses) {
                 if (!t.javaName.equals("Pointer")) {
-                    casts += "    public " + t.javaName + " as" + t.javaName + "() { return as" + t.javaName + "(this); }\n"
+                    String shortName = t.javaName.substring(t.javaName.lastIndexOf('.') + 1);
+                    casts += "    public " + t.javaName + " as" + shortName + "() { return as" + shortName + "(this); }\n"
                             + "    @Namespace public static native @Name(\"static_cast<" + t.cppName + "*>\") "
-                            + t.javaName + " as" + t.javaName + "(" + type.javaName + " pointer);\n";
+                            + t.javaName + " as" + shortName + "(" + type.javaName + " pointer);\n";
                 }
             }
         }
@@ -3385,7 +3393,7 @@ public class Parser {
                 return true;
             }
             if (!fullName.equals(cppName)) {
-                decl.text += "@Name(\"" + (context.javaName == null || namespace < 0 ? cppName : cppName.substring(namespace + 2)) + "\") ";
+                decl.text += "@Name(\"" + (context.javaName == null || context.namespace == null ? cppName : cppName.substring(context.namespace.length() + 2)) + "\") ";
             } else if (context.namespace != null && context.javaName == null) {
                 decl.text += "@Namespace(\"" + context.namespace + "\") ";
             }
@@ -3505,7 +3513,7 @@ public class Parser {
         }
         if (!anonymous) {
             if (!fullName.equals(cppName)) {
-                decl.text += "@Name(\"" + (context.javaName == null || namespace < 0 ? cppName : cppName.substring(namespace + 2)) + "\") ";
+                decl.text += "@Name(\"" + (context.javaName == null || context.namespace == null ? cppName : cppName.substring(context.namespace.length() + 2)) + "\") ";
             } else if (context.namespace != null && context.javaName == null) {
                 decl.text += "@Namespace(\"" + context.namespace + "\") ";
             }

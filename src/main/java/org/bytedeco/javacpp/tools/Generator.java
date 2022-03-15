@@ -1401,6 +1401,38 @@ public class Generator {
             out.println("};");
             out.println("#endif");
             out.println();
+            out.println("#ifdef OPTIONAL_NAMESPACE");
+            out.println("template<class T> class OptionalAdapter {");
+            out.println("public:");
+            out.println("    typedef OPTIONAL_NAMESPACE::optional<T> O;");
+            out.println("    OptionalAdapter(const T* ptr, size_t size, void* owner) : ptr((T*)ptr), size(size), owner(owner),");
+            out.println("            optional2(owner != NULL && owner != ptr ? *(O*)owner : (ptr ? O(*(T*)ptr) : O())), optional(optional2) { }");
+            out.println("    OptionalAdapter(const O& optional) : ptr(0), size(0), owner(0), optional2(optional), optional(optional2) { }");
+            out.println("    OptionalAdapter(      O& optional) : ptr(0), size(0), owner(0), optional(optional) { }");
+            out.println("    OptionalAdapter(const O* optional) : ptr(0), size(0), owner(0), optional(*(O*)optional) { }");
+            out.println("    void assign(T* ptr, size_t size, void* owner) {");
+            out.println("        this->ptr = ptr;");
+            out.println("        this->size = size;");
+            out.println("        this->owner = owner;");
+            out.println("        this->optional = owner != NULL && owner != ptr ? *(O*)owner : (ptr ? O(*(T*)ptr) : O());");
+            out.println("    }");
+            out.println("    static void deallocate(void* owner) { delete (O*)owner; }");
+            out.println("    operator typename OPTIONAL_NAMESPACE::remove_const<T>::type*() {");
+            out.println("        if (owner == NULL || owner == ptr) {");
+            out.println("            owner = new O(optional);");
+            out.println("        }");
+            out.println("        ptr = (*(O*)owner).has_value() ? (*(O*)owner).operator->() : NULL;");
+            out.println("        return (typename OPTIONAL_NAMESPACE::remove_const<T>::type*)ptr;");
+            out.println("    }");
+            out.println("    operator O&() { return optional; }");
+            out.println("    operator O*() { return &optional; }");
+            out.println("    T* ptr;");
+            out.println("    size_t size;");
+            out.println("    void* owner;");
+            out.println("    O optional2;");
+            out.println("    O& optional;");
+            out.println("};");
+            out.println("#endif");
         }
         if (!functions.isEmpty() || !virtualFunctions.isEmpty()) {
             out.println("#if !defined(NO_JNI_DETACH_THREAD) && (defined(__linux__) || defined(__APPLE__))");
