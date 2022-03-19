@@ -885,8 +885,8 @@ public class Builder {
         if (equalIndex < 0) {
             equalIndex = keyValue.indexOf(':');
         }
-        property(keyValue.substring(2, equalIndex),
-                 keyValue.substring(equalIndex+1));
+        property(keyValue.substring(0, equalIndex),
+                 keyValue.substring(equalIndex + 1));
         return this;
     }
     /** Sets a key/value pair property of the {@link #properties} field. */
@@ -1395,7 +1395,7 @@ public class Builder {
             } else if ("-propertyfile".equals(args[i])) {
                 builder.propertyFile(args[++i]);
             } else if (args[i].startsWith("-D")) {
-                builder.property(args[i]);
+                builder.property(args[i].length() > 2 ? args[i].substring(2) : args[++i]);
             } else if ("-Xcompiler".equals(args[i])) {
                 builder.compilerOptions(args[++i]);
             } else if ("-clear".equals(args[i])) {
