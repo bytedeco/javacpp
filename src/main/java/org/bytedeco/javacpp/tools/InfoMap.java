@@ -43,7 +43,8 @@ public class InfoMap extends HashMap<String,List<Info>> {
     static final InfoMap defaults = new InfoMap(null)
         .put(new Info("basic/containers").cppTypes("std::array", "std::bitset", "std::deque", "std::list", "std::map", "std::queue", "std::set",
                                                    "std::stack", "std::vector", "std::valarray", "std::pair", "std::tuple", "std::forward_list",
-                                                   "std::priority_queue", "std::unordered_map", "std::unordered_set", "std::optional", "std::variant"))
+                                                   "std::priority_queue", "std::unordered_map", "std::unordered_set", "std::optional", "std::variant",
+                                                   "std::function"))
         .put(new Info("basic/types").cppTypes("signed", "unsigned", "char", "short", "int", "long", "bool", "float", "double",
                                               "_Bool", "_Complex", "_Imaginary", "complex", "imaginary"))
         .put(new Info("noexcept").annotations("@NoException(true)"))

@@ -114,7 +114,7 @@ class DeclarationList extends ArrayList<Declaration> {
                 }
             }
         }
-        if (decl.declarator != null && decl.declarator.type != null) {
+        if (infoMap != null && decl.declarator != null && decl.declarator.type != null) {
             // honor to skip over declarations when tagged as such
             Info info = infoMap.getFirst(decl.declarator.type.cppName);
             if (info != null && info.skip && info.valueTypes == null && info.pointerTypes == null) {

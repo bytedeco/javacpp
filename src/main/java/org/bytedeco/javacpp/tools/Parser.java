@@ -150,6 +150,7 @@ public class Parser {
                 int dim = containerName.toLowerCase().endsWith("optional")
                        || containerName.toLowerCase().endsWith("variant")
                        || containerName.toLowerCase().endsWith("tuple")
+                       || containerName.toLowerCase().endsWith("function")
                        || containerName.toLowerCase().endsWith("pair") ? 0 : 1;
                 boolean constant = info.cppNames[0].startsWith("const "), resizable = !constant;
                 Type containerType = new Parser(this, info.cppNames[0]).type(context),
@@ -176,6 +177,7 @@ public class Parser {
                 boolean dict = false;
                 boolean list = resizable; // also vector, etc
                 boolean tuple = false;
+                boolean function = false;
                 if (valueType.javaName == null || valueType.javaName.length() == 0
                         || containerName.toLowerCase().endsWith("bitset")) {
                     indexFunction = "";
@@ -191,6 +193,7 @@ public class Parser {
                         || containerName.toLowerCase().endsWith("optional")
                         || containerName.toLowerCase().endsWith("variant")
                         || containerName.toLowerCase().endsWith("tuple")
+                        || containerName.toLowerCase().endsWith("function")
                         || containerName.toLowerCase().endsWith("set")) {
                     if (containerType.arguments.length > 1) {
                         valueType = indexType;
@@ -199,6 +202,7 @@ public class Parser {
                     resizable = false;
                     list = containerName.toLowerCase().endsWith("list");
                     tuple = containerName.toLowerCase().endsWith("tuple");
+                    function = containerName.toLowerCase().endsWith("function");
                 } else if (!constant && !resizable) {
                     indexFunction = ""; // maps need operator[] to be writable
                 }
@@ -215,6 +219,22 @@ public class Parser {
                 } else if (valueTemplate >= 0 && valueType.cppName.substring(0, valueTemplate).toLowerCase().endsWith("pair")) {
                     firstType = valueType.arguments[0];
                     secondType = valueType.arguments[1];
+                }
+                if (function) {
+                    int n = valueType.cppName.indexOf('(');
+                    Info info2 = infoMap.getFirst(valueType.cppName, false);
+                    if (info2 != null && info2.pointerTypes != null && info2.pointerTypes.length > 0) {
+                        valueType.javaName = info2.pointerTypes[0];
+                        valueType.javaNames = info2.pointerTypes;
+                    } else {
+                        valueType.javaName = "";
+                        valueType.javaNames = null;
+                    }
+                    Declarator dcl = new Parser(this, "typedef " + valueType.cppName.substring(0, n)
+                            + "(*" + valueType.javaName + ")" + valueType.cppName.substring(n)).declarator(context, containerType.javaName, -1, false, 0, false, true);
+                    valueType.javaName = dcl.type.javaName;
+                    dcl.definition.text = "\n" + dcl.definition.text;
+                    decl.declarator = dcl;
                 }
                 LinkedHashSet<Type> typeSet = new LinkedHashSet<Type>();
                 typeSet.addAll(Arrays.asList(firstType, secondType, indexType, valueType));
@@ -353,13 +373,12 @@ public class Parser {
                         for (int i = 1; !constant && valueType.javaNames != null && i < valueType.javaNames.length; i++) {
                             decl.text += "    @ValueSetter @Index" + indexFunction + " public native " + containerType.javaName + " put(" + params + separator + valueType.annotations + valueType.javaNames[i] + " value);\n";
                         }
-                    } else if (dim == 0) {
+                    } else if (dim == 0 && !function) {
                         int n = 0;
                         for (Type type : containerType.arguments) {
                             if (containerType.arguments.length == 1 && !tuple) {
-                                decl.text += "\n"
-                                          +  "    public native boolean has_value();\n"
-                                          +  "    @Name(\"value\") public native " + type.annotations + type.javaName + " get();\n";
+                                decl.text += "    public native boolean has_value();\n"
+                                          +  "    public native @Name(\"value\") " + type.annotations + type.javaName + " get();\n";
                             } else {
                                 int namespace = containerName.lastIndexOf("::");
                                 String ns = containerName.substring(0, namespace);
@@ -521,6 +540,11 @@ public class Parser {
                                   +  "    }\n";
                         first = false;
                     }
+                }
+                if (function && decl.declarator != null) {
+                    Declarator dcl = decl.declarator.definition.declarator;
+                    decl.text += "    public native @Name(\"operator =\") @ByRef " + containerType.javaName + " put(@ByRef " + valueType.javaName + " value);\n"
+                              +  "    public native @Name(\"operator ()\") " + dcl.type.annotations + dcl.type.javaName + " call" + dcl.parameters.list + ";\n";
                 }
                 if (info != null && info.javaText != null) {
                     declList.spacing = "\n    ";
@@ -1584,7 +1608,7 @@ public class Parser {
                 }
                 if (info != null && info.pointerTypes != null && info.pointerTypes.length > 0) {
                     functionType = info.pointerTypes[infoNumber < 0 ? 0 : infoNumber % info.pointerTypes.length];
-                } else if (typedef) {
+                } else if (typedef && originalName != null && originalName.length() > 0 && originalName != defaultName) {
                     functionType = originalName;
                 } else if (dcl.parameters != null && dcl.parameters.signature.length() > 0) {
                     functionType += dcl.parameters.signature;
@@ -1638,6 +1662,7 @@ public class Parser {
                 }
                 definition.signature = functionType;
                 definition.declarator = new Declarator();
+                definition.declarator.type = new Type(type.javaName);
                 definition.declarator.parameters = dcl.parameters;
                 if (info != null && info.javaText != null) {
                     definition.signature = definition.text = info.javaText;

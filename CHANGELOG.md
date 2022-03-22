@@ -1,4 +1,5 @@
 
+ * Add support for `std::function` basic container instances with corresponding `FunctionPointer`
  * Fix `Builder` parsing of command line options for platform properties ([issue #564](https://github.com/bytedeco/javacpp/issues/564))
  * Use thread local in `Generator` to detach automatically native threads on exit for Windows as well ([pull #562](https://github.com/bytedeco/javacpp/pull/562))
  * Add compiler options for C++14 and C++17 to platform properties files for Visual Studio
