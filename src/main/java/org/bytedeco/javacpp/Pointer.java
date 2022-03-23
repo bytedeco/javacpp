@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2021 Samuel Audet
+ * Copyright (C) 2011-2022 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -222,6 +222,9 @@ public class Pointer implements AutoCloseable {
 
         private long ownerAddress;
         private long deallocatorAddress;
+
+        public long ownerAddress() { return ownerAddress; }
+        public long deallocatorAddress() { return deallocatorAddress; }
 
         @Override public void deallocate() {
             if (ownerAddress != 0 && deallocatorAddress != 0) {

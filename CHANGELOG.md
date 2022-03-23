@@ -1,4 +1,5 @@
 
+ * Add public getters for the address fields of `Pointer.NativeDeallocator` ([discussion bytedeco/javacpp-presets#1160](https://github.com/bytedeco/javacpp-presets/discussions/1160))
  * Add support for `std::function` basic container instances with corresponding `FunctionPointer`
  * Fix `Builder` parsing of command line options for platform properties ([issue #564](https://github.com/bytedeco/javacpp/issues/564))
  * Use thread local in `Generator` to detach automatically native threads on exit for Windows as well ([pull #562](https://github.com/bytedeco/javacpp/pull/562))
