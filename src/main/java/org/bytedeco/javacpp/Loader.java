@@ -947,6 +947,8 @@ public class Loader {
     static boolean canCreateSymbolicLink = !WINDOWS;
     /** Default value for {@code load(..., pathsFirst)} set via "org.bytedeco.javacpp.pathsFirst" system property. */
     static boolean pathsFirst = false;
+    /** Whether to extract libraries to {@link #cacheDir}, set via "org.bytedeco.javacpp.cacheLibraries" system property. */
+    static boolean cacheLibraries = true;
     static {
         String s = System.getProperty("org.bytedeco.javacpp.pathsfirst", "false").toLowerCase();
         s = System.getProperty("org.bytedeco.javacpp.pathsFirst", s).toLowerCase();
@@ -955,6 +957,10 @@ public class Loader {
         s = System.getProperty("org.bytedeco.javacpp.cancreatesymboliclink", WINDOWS ? "false" : "true").toLowerCase();
         s = System.getProperty("org.bytedeco.javacpp.canCreateSymbolicLink", s).toLowerCase();
         canCreateSymbolicLink = s.equals("true") || s.equals("t") || s.equals("");
+
+        s = System.getProperty("org.bytedeco.javacpp.cachelibraries", "true").toLowerCase();
+        s = System.getProperty("org.bytedeco.javacpp.cacheLibraries", s).toLowerCase();
+        cacheLibraries = s.equals("true") || s.equals("t") || s.equals("");
     }
 
     /** Deletes the directory and all the files in it. */
@@ -1279,7 +1285,7 @@ public class Loader {
 
         String cacheDir = null;
         try {
-            cacheDir = getCacheDir().toString();
+            cacheDir = cacheLibraries ? getCacheDir().toString() : null;
         } catch (IOException e) {
             // no cache dir, no worries
         }
@@ -1658,7 +1664,7 @@ public class Loader {
                     file = new File(uri);
                 } catch (Exception exc) {
                     // ... extract it from resources into the cache, if necessary ...
-                    File f = cacheResource(url, filename);
+                    File f = cacheLibraries ? cacheResource(url, filename) : null;
                     try {
                         if (f != null) {
                             file = f;
@@ -1667,7 +1673,9 @@ public class Loader {
                             try {
                                 file = new File(new URI(uri.toString().split("#")[0]));
                             } catch (IllegalArgumentException | URISyntaxException e) {
-                                file = new File(uri.getPath());
+                                if (uri.getPath() != null) {
+                                    file = new File(uri.getPath());
+                                }
                             }
                         }
                     } catch (Exception exc2) {

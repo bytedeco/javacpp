@@ -1,4 +1,5 @@
 
+ * Add "org.bytedeco.javacpp.cacheLibraries" system property to disable cache for libraries ([pull bytedeco/gradle-javacpp#21](https://github.com/bytedeco/gradle-javacpp/pull/21))
  * Add public getters for the address fields of `Pointer.NativeDeallocator` ([discussion bytedeco/javacpp-presets#1160](https://github.com/bytedeco/javacpp-presets/discussions/1160))
  * Add support for `std::function` basic container instances with corresponding `FunctionPointer`
  * Fix `Builder` parsing of command line options for platform properties ([issue #564](https://github.com/bytedeco/javacpp/issues/564))
