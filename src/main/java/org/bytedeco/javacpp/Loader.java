@@ -2051,4 +2051,13 @@ public class Loader {
 
     /** Returns the JavaVM JNI object, as required by some APIs for initialization. */
     @Name("JavaCPP_getJavaVM") public static native @Cast("JavaVM*") Pointer getJavaVM();
+
+    /** Returns a JNI global reference stored in a Pointer for the given Object. */
+    @Name("JavaCPP_newGlobalRef") public static native @Cast("jobject") Pointer newGlobalRef(@Raw(withEnv = true) Object object);
+
+    /** Returns an Object from the JNI global reference stored in the Pointer. */
+    @Name("JavaCPP_accessGlobalRef") @Raw(withEnv = true) public static native Object accessGlobalRef(@Cast("jobject") Pointer globalRef);
+
+    /** Deletes the JNI global reference stored in the Pointer. */
+    @Name("JavaCPP_deleteGlobalRef") @Raw(withEnv = true) public static native void deleteGlobalRef(@Cast("jobject") Pointer globalRef);
 }

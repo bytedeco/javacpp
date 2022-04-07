@@ -870,6 +870,18 @@ public class Generator {
             out.println("    return JavaCPP_vm;");
             out.println("}");
             out.println();
+            out.println("static inline jobject JavaCPP_newGlobalRef(JNIEnv *env, jclass cls, jobject obj) {");
+            out.println("    return env->NewGlobalRef(obj);");
+            out.println("}");
+            out.println();
+            out.println("static inline jobject JavaCPP_accessGlobalRef(JNIEnv *env, jclass cls, jobject globalRef) {");
+            out.println("    return globalRef;");
+            out.println("}");
+            out.println();
+            out.println("static inline void JavaCPP_deleteGlobalRef(JNIEnv *env, jclass cls, jobject globalRef) {");
+            out.println("    env->DeleteGlobalRef(globalRef);");
+            out.println("}");
+            out.println();
         }
         out.println("static JavaCPP_noinline jclass JavaCPP_getClass(JNIEnv* env, int i) {");
         out.println("    if (JavaCPP_classes[i] == NULL && env->PushLocalFrame(1) == 0) {");
