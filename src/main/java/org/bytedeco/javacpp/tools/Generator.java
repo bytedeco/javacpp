@@ -1003,10 +1003,12 @@ public class Generator {
             out.println("    jbyteArray bytes = env->NewByteArray(length < INT_MAX ? length : INT_MAX);");
             out.println("    env->SetByteArrayRegion(bytes, 0, length < INT_MAX ? length : INT_MAX, (signed char*)ptr);");
             out.println("#ifdef STRING_BYTES_CHARSET");
-            out.println("    return (jstring)env->NewObject(JavaCPP_getClass(env, " + jclasses.index(String.class) + "), JavaCPP_stringWithCharsetMID, bytes, JavaCPP_stringBytesCharset);");
+            out.println("    jstring s = (jstring)env->NewObject(JavaCPP_getClass(env, " + jclasses.index(String.class) + "), JavaCPP_stringWithCharsetMID, bytes, JavaCPP_stringBytesCharset);");
             out.println("#else");
-            out.println("    return (jstring)env->NewObject(JavaCPP_getClass(env, " + jclasses.index(String.class) + "), JavaCPP_stringMID, bytes);");
+            out.println("    jstring s = (jstring)env->NewObject(JavaCPP_getClass(env, " + jclasses.index(String.class) + "), JavaCPP_stringMID, bytes);");
             out.println("#endif // STRING_BYTES_CHARSET");
+            out.println("    env->DeleteLocalRef(bytes);");
+            out.println("    return s;");
             out.println("#endif // MODIFIED_UTF8_STRING");
             out.println("}");
             out.println();
