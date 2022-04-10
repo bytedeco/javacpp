@@ -949,8 +949,8 @@ public class Loader {
     static boolean pathsFirst = false;
     /** Whether to extract libraries to {@link #cacheDir}, set via "org.bytedeco.javacpp.cacheLibraries" system property. */
     static boolean cacheLibraries = true;
-    /** Whether to skip the search of libraries in resources and paths and directly attempt to System.load them. Set via "org.bytedeco.javacpp.librariesAreProvided" system property. */
-    static boolean librariesAreProvided = false;
+    /** Whether to search libraries in class, module, and library paths, set via "org.bytedeco.javacpp.findLibraries" system property. */
+    static boolean findLibraries = true;
 
     static {
         String s = System.getProperty("org.bytedeco.javacpp.pathsfirst", "false").toLowerCase();
@@ -965,9 +965,9 @@ public class Loader {
         s = System.getProperty("org.bytedeco.javacpp.cacheLibraries", s).toLowerCase();
         cacheLibraries = s.equals("true") || s.equals("t") || s.equals("");
 
-        s = System.getProperty("org.bytedeco.javacpp.librariesareprovided", "false").toLowerCase();
-        s = System.getProperty("org.bytedeco.javacpp.librariesAreProvided", s).toLowerCase();
-        librariesAreProvided = s.equals("true") || s.equals("t") || s.equals("");
+        s = System.getProperty("org.bytedeco.javacpp.findlibraries", "true").toLowerCase();
+        s = System.getProperty("org.bytedeco.javacpp.findLibraries", s).toLowerCase();
+        findLibraries = s.equals("true") || s.equals("t") || s.equals("");
     }
 
     /** Deletes the directory and all the files in it. */
@@ -1292,8 +1292,8 @@ public class Loader {
 
         String cacheDir = null;
         try {
-            // Checking for librariesAreProvided prevents the creation of an empty useless cache dir
-            cacheDir = cacheLibraries && !librariesAreProvided ? getCacheDir().toString() : null;
+            // Checking for findLibraries prevents the creation of an empty useless cache dir
+            cacheDir = cacheLibraries && findLibraries ? getCacheDir().toString() : null;
         } catch (IOException e) {
             // no cache dir, no worries
         }
@@ -1314,11 +1314,11 @@ public class Loader {
                     preload = preload.substring(0, preload.length() - 1);
                 }
                 URL[] urls = foundLibraries.get(preload), oldUrls = urls;
-                if (urls == null) {
+                if (urls == null && findLibraries) {
                     foundLibraries.put(preload, urls = findLibrary(cls, p, preload, pathsFirst));
                 }
                 String filename = null;
-                if (oldUrls == null || urls.length > 0) {
+                if (oldUrls == null || (urls != null && urls.length > 0)) {
                     filename = loadLibrary(cls, urls, preload, preloaded.toArray(new String[preloaded.size()]));
                 }
                 if (filename != null && new File(filename).exists()) {
@@ -1408,11 +1408,11 @@ public class Loader {
                     library += "#" + library + librarySuffix;
                 }
                 URL[] urls = foundLibraries.get(library), oldUrls = urls;
-                if (urls == null) {
+                if (urls == null && findLibraries) {
                     foundLibraries.put(library, urls = findLibrary(cls, p, library, pathsFirst));
                 }
                 String filename = null;
-                if (oldUrls == null || urls.length > 0) {
+                if (oldUrls == null || (urls != null && urls.length > 0)) {
                     filename = loadLibrary(cls, urls, library, preloaded.toArray(new String[preloaded.size()]));
                 }
                 if (cacheDir != null && filename != null && filename.startsWith(cacheDir)) {
@@ -1466,9 +1466,6 @@ public class Loader {
      * @return URLs that point to potential locations of the library
      */
     public static URL[] findLibrary(Class cls, ClassProperties properties, String libnameversion, boolean pathsFirst) {
-
-        if (librariesAreProvided) return new URL[0];
-
         boolean nostyle = false;
         if (libnameversion.startsWith(":")) {
             nostyle = true;
@@ -1498,7 +1495,6 @@ public class Loader {
         String prefix = properties.getProperty("platform.library.prefix", "");
         String suffix = properties.getProperty("platform.library.suffix", "");
         String[] styles, styles2;
-
         if (version.length() == 0 && version2.length() == 0) {
             // optimize a bit for this case in particular on Windows
             styles = new String[] { prefix + libname + suffix };
