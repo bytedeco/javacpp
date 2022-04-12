@@ -1318,7 +1318,7 @@ public class Loader {
                     foundLibraries.put(preload, urls = findLibrary(cls, p, preload, pathsFirst));
                 }
                 String filename = null;
-                if (oldUrls == null || (urls != null && urls.length > 0)) {
+                if (oldUrls == null || urls.length > 0) {
                     filename = loadLibrary(cls, urls, preload, preloaded.toArray(new String[preloaded.size()]));
                 }
                 if (filename != null && new File(filename).exists()) {
@@ -1412,7 +1412,7 @@ public class Loader {
                     foundLibraries.put(library, urls = findLibrary(cls, p, library, pathsFirst));
                 }
                 String filename = null;
-                if (oldUrls == null || (urls != null && urls.length > 0)) {
+                if (oldUrls == null || urls.length > 0) {
                     filename = loadLibrary(cls, urls, library, preloaded.toArray(new String[preloaded.size()]));
                 }
                 if (cacheDir != null && filename != null && filename.startsWith(cacheDir)) {
@@ -1666,68 +1666,69 @@ public class Loader {
         UnsatisfiedLinkError loadError = null;
         classStack.get().push(cls);
         try {
-            for (URL url : urls) {
-                URI uri = url.toURI();
-                File file = null;
-                try {
-                    // ... and if the URL is not already a file without fragments, etc ...
-                    file = new File(uri);
-                } catch (Exception exc) {
-                    // ... extract it from resources into the cache, if necessary ...
-                    File f = cacheLibraries ? cacheResource(url, filename) : null;
+            if (urls != null)
+                for (URL url : urls) {
+                    URI uri = url.toURI();
+                    File file = null;
                     try {
-                        if (f != null) {
-                            file = f;
-                        } else {
-                            // ... else try to load directly as some libraries do not like being renamed ...
-                            try {
-                                file = new File(new URI(uri.toString().split("#")[0]));
-                            } catch (IllegalArgumentException | URISyntaxException e) {
-                                if (uri.getPath() != null) {
-                                    file = new File(uri.getPath());
-                                }
-                            }
-                        }
-                    } catch (Exception exc2) {
-                        // ... (or give up) and ...
-                        if (logger.isDebugEnabled()) {
-                            logger.debug("Failed to access " + uri + ": " + exc2);
-                        }
-                    }
-
-                    // ... create symbolic links to previously loaded libraries as needed on Mac,
-                    // at least, and some libraries like MKL on Linux too, ...
-                    if (file != null && preloaded != null) {
-                        File dir = file.getParentFile();
-                        for (String s : preloaded) {
-                            File file2 = new File(s);
-                            File dir2 = file2.getParentFile();
-                            if (canCreateSymbolicLink && dir2 != null && !dir2.equals(dir)) {
-                                File linkFile = new File(dir, file2.getName());
+                        // ... and if the URL is not already a file without fragments, etc ...
+                        file = new File(uri);
+                    } catch (Exception exc) {
+                        // ... extract it from resources into the cache, if necessary ...
+                        File f = cacheLibraries ? cacheResource(url, filename) : null;
+                        try {
+                            if (f != null) {
+                                file = f;
+                            } else {
+                                // ... else try to load directly as some libraries do not like being renamed ...
                                 try {
-                                    Path linkPath = linkFile.toPath().normalize();
-                                    Path targetPath = file2.toPath().normalize();
-                                    if ((!linkFile.exists() || !Files.isSymbolicLink(linkPath) || !Files.readSymbolicLink(linkPath).equals(targetPath))
-                                            && targetPath.isAbsolute() && !targetPath.equals(linkPath) && !targetPath.toRealPath().equals(linkPath)) {
-                                        if (logger.isDebugEnabled()) {
-                                            logger.debug("Creating symbolic link " + linkPath + " to " + targetPath);
-                                        }
-                                        linkFile.delete();
-                                        Files.createSymbolicLink(linkPath, targetPath);
+                                    file = new File(new URI(uri.toString().split("#")[0]));
+                                } catch (IllegalArgumentException | URISyntaxException e) {
+                                    if (uri.getPath() != null) {
+                                        file = new File(uri.getPath());
                                     }
-                                } catch (IOException | RuntimeException e) {
-                                    // ... (probably an unsupported operation on Windows, but DLLs never need links,
-                                    // or other (filesystem?) exception: for example,
-                                    // "sun.nio.fs.UnixException: No such file or directory" on File.toPath()) ...
-                                    canCreateSymbolicLink = false;
-                                    if (logger.isDebugEnabled()) {
-                                        logger.debug("Failed to create symbolic link " + linkFile + " to " + file2 + ": " + e);
+                                }
+                            }
+                        } catch (Exception exc2) {
+                            // ... (or give up) and ...
+                            if (logger.isDebugEnabled()) {
+                                logger.debug("Failed to access " + uri + ": " + exc2);
+                            }
+                        }
+
+                        // ... create symbolic links to previously loaded libraries as needed on Mac,
+                        // at least, and some libraries like MKL on Linux too, ...
+                        if (file != null && preloaded != null) {
+                            File dir = file.getParentFile();
+                            for (String s : preloaded) {
+                                File file2 = new File(s);
+                                File dir2 = file2.getParentFile();
+                                if (canCreateSymbolicLink && dir2 != null && !dir2.equals(dir)) {
+                                    File linkFile = new File(dir, file2.getName());
+                                    try {
+                                        Path linkPath = linkFile.toPath().normalize();
+                                        Path targetPath = file2.toPath().normalize();
+                                        if ((!linkFile.exists() || !Files.isSymbolicLink(linkPath) || !Files.readSymbolicLink(linkPath).equals(targetPath))
+                                            && targetPath.isAbsolute() && !targetPath.equals(linkPath) && !targetPath.toRealPath().equals(linkPath)) {
+                                            if (logger.isDebugEnabled()) {
+                                                logger.debug("Creating symbolic link " + linkPath + " to " + targetPath);
+                                            }
+                                            linkFile.delete();
+                                            Files.createSymbolicLink(linkPath, targetPath);
+                                        }
+                                    } catch (IOException | RuntimeException e) {
+                                        // ... (probably an unsupported operation on Windows, but DLLs never need links,
+                                        // or other (filesystem?) exception: for example,
+                                        // "sun.nio.fs.UnixException: No such file or directory" on File.toPath()) ...
+                                        canCreateSymbolicLink = false;
+                                        if (logger.isDebugEnabled()) {
+                                            logger.debug("Failed to create symbolic link " + linkFile + " to " + file2 + ": " + e);
+                                        }
                                     }
                                 }
                             }
                         }
                     }
-                }
                 if (filename != null) {
                     return filename;
                 } else if (file != null && file.exists()) {
