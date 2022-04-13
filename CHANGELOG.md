@@ -1,4 +1,5 @@
 
+ * Add "org.bytedeco.javacpp.findLibraries" system property to disable search for libraries ([pull #565](https://github.com/bytedeco/javacpp/pull/565))
  * Add "org.bytedeco.javacpp.cacheLibraries" system property to disable cache for libraries ([pull bytedeco/gradle-javacpp#21](https://github.com/bytedeco/gradle-javacpp/pull/21))
  * Add public getters for the address fields of `Pointer.NativeDeallocator` ([discussion bytedeco/javacpp-presets#1160](https://github.com/bytedeco/javacpp-presets/discussions/1160))
  * Add support for `std::function` basic container instances with corresponding `FunctionPointer`
