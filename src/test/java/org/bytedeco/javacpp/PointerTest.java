@@ -84,6 +84,13 @@ public class PointerTest {
         assertTrue(totalChips > 0 && totalChips <= totalCores);
 
         assertNotEquals(null, Loader.getJavaVM());
+
+        Pointer globalRef = Loader.newGlobalRef(c);
+        assertNotEquals(null, globalRef);
+        assertEquals(null, Loader.newGlobalRef(null));
+        assertEquals(c, (Class)Loader.accessGlobalRef(globalRef));
+        Loader.deleteGlobalRef(globalRef);
+        Loader.deleteGlobalRef(null);
     }
 
     @Test public void testFunctionPointer() {

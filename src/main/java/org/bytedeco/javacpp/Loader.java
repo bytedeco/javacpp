@@ -1205,7 +1205,7 @@ public class Loader {
     /**
      * Loads native libraries associated with the {@link Class} of the caller and initializes it.
      *
-     * @param pathsFirst search the paths first before bundled resources
+     * @param pathsFirst search the library paths first before bundled resources
      * @return {@code load(getCallerClass(2), loadProperties(), pathsFirst) }
      * @see #getCallerClass(int)
      * @see #load(Class, Properties, boolean)
@@ -1231,7 +1231,7 @@ public class Loader {
      *
      * @param cls the Class to get native library and executable information from and to initialize
      * @param properties the platform Properties to inherit
-     * @param pathsFirst search the paths first before bundled resources
+     * @param pathsFirst search the library paths first before bundled resources
      * @param executable the executable name whose path to return, or the first one found when null
      * @return the full path to the main file loaded, or the library name if unknown
      *         (but {@code if (!isLoadLibraries() || cls == null) { return null; }}),
@@ -1455,14 +1455,15 @@ public class Loader {
      * resources. But in case that fails, and depending on the value of {@code pathsFirst},
      * either as a fallback or in priority over bundled resources, also searches the paths
      * found in the "platform.preloadpath" and "platform.linkpath" class properties (as well as
-     * the "java.library.path" system property if {@code pathsFirst || !loadLibraries}), in that order.
+     * the "sun.boot.library.path" and "java.library.path" system properties if
+     * {@code pathsFirst || !loadLibraries}), in that order.
      *
      * @param cls the Class whose package name and {@link ClassLoader} are used to extract from resources
      * @param properties contains the directories to scan for if we fail to extract the library from resources
      * @param libnameversion the name of the library + ":" + optional exact path to library + "@" + optional version tag
      *                       + "#" + a second optional name used at extraction (or empty to prevent it, unless it is a second "#")
      *                       + "!" to load all symbols globally
-     * @param pathsFirst search the paths first before bundled resources
+     * @param pathsFirst search the library paths first before bundled resources
      * @return URLs that point to potential locations of the library
      */
     public static URL[] findLibrary(Class cls, ClassProperties properties, String libnameversion, boolean pathsFirst) {
@@ -1541,7 +1542,13 @@ public class Loader {
             resources.add(0, libraryPath);
         }
         resources.add(null);
-        String libpath = System.getProperty("java.library.path", "");
+        String libpath = System.getProperty("sun.boot.library.path", "");
+        String libpath2 = System.getProperty("java.library.path", "");
+        if (libpath.length() > 0 && libpath2.length() > 0) {
+            libpath = libpath + File.pathSeparator + libpath2;
+        } else if (libpath2.length() > 0) {
+            libpath = libpath2;
+        }
         if (libpath.length() > 0 && (pathsFirst || !isLoadLibraries() || reference)) {
             // leave loading from "java.library.path" to System.loadLibrary() as fallback,
             // which works better on Android, unless the user wants to rename a library
@@ -1580,7 +1587,7 @@ public class Loader {
                 }
             }
         }
-        // ... and in case of bad resources search the paths last, or first on user request.
+        // ... and in case of bad resources search the library paths last, or first on user request.
         int k = pathsFirst ? 0 : urls.size();
         for (int i = 0; paths.size() > 0 && i < styles.length; i++) {
             for (String path : paths) {
@@ -2054,4 +2061,13 @@ public class Loader {
 
     /** Returns the JavaVM JNI object, as required by some APIs for initialization. */
     @Name("JavaCPP_getJavaVM") public static native @Cast("JavaVM*") Pointer getJavaVM();
+
+    /** Returns a JNI global reference stored in a Pointer for the given Object. */
+    @Name("JavaCPP_newGlobalRef") public static native @Cast("jobject") Pointer newGlobalRef(@Raw(withEnv = true) Object object);
+
+    /** Returns an Object from the JNI global reference stored in the Pointer. */
+    @Name("JavaCPP_accessGlobalRef") @Raw(withEnv = true) public static native Object accessGlobalRef(@Cast("jobject") Pointer globalRef);
+
+    /** Deletes the JNI global reference stored in the Pointer. */
+    @Name("JavaCPP_deleteGlobalRef") @Raw(withEnv = true) public static native void deleteGlobalRef(@Cast("jobject") Pointer globalRef);
 }

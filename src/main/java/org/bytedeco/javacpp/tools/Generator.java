@@ -870,6 +870,18 @@ public class Generator {
             out.println("    return JavaCPP_vm;");
             out.println("}");
             out.println();
+            out.println("static inline jobject JavaCPP_newGlobalRef(JNIEnv *env, jclass cls, jobject obj) {");
+            out.println("    return env->NewGlobalRef(obj);");
+            out.println("}");
+            out.println();
+            out.println("static inline jobject JavaCPP_accessGlobalRef(JNIEnv *env, jclass cls, jobject globalRef) {");
+            out.println("    return globalRef;");
+            out.println("}");
+            out.println();
+            out.println("static inline void JavaCPP_deleteGlobalRef(JNIEnv *env, jclass cls, jobject globalRef) {");
+            out.println("    env->DeleteGlobalRef(globalRef);");
+            out.println("}");
+            out.println();
         }
         out.println("static JavaCPP_noinline jclass JavaCPP_getClass(JNIEnv* env, int i) {");
         out.println("    if (JavaCPP_classes[i] == NULL && env->PushLocalFrame(1) == 0) {");
@@ -991,10 +1003,12 @@ public class Generator {
             out.println("    jbyteArray bytes = env->NewByteArray(length < INT_MAX ? length : INT_MAX);");
             out.println("    env->SetByteArrayRegion(bytes, 0, length < INT_MAX ? length : INT_MAX, (signed char*)ptr);");
             out.println("#ifdef STRING_BYTES_CHARSET");
-            out.println("    return (jstring)env->NewObject(JavaCPP_getClass(env, " + jclasses.index(String.class) + "), JavaCPP_stringWithCharsetMID, bytes, JavaCPP_stringBytesCharset);");
+            out.println("    jstring s = (jstring)env->NewObject(JavaCPP_getClass(env, " + jclasses.index(String.class) + "), JavaCPP_stringWithCharsetMID, bytes, JavaCPP_stringBytesCharset);");
             out.println("#else");
-            out.println("    return (jstring)env->NewObject(JavaCPP_getClass(env, " + jclasses.index(String.class) + "), JavaCPP_stringMID, bytes);");
+            out.println("    jstring s = (jstring)env->NewObject(JavaCPP_getClass(env, " + jclasses.index(String.class) + "), JavaCPP_stringMID, bytes);");
             out.println("#endif // STRING_BYTES_CHARSET");
+            out.println("    env->DeleteLocalRef(bytes);");
+            out.println("    return s;");
             out.println("#endif // MODIFIED_UTF8_STRING");
             out.println("}");
             out.println();
