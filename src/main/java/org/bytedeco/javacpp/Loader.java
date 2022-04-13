@@ -949,6 +949,9 @@ public class Loader {
     static boolean pathsFirst = false;
     /** Whether to extract libraries to {@link #cacheDir}, set via "org.bytedeco.javacpp.cacheLibraries" system property. */
     static boolean cacheLibraries = true;
+    /** Whether to search libraries in class, module, and library paths, set via "org.bytedeco.javacpp.findLibraries" system property. */
+    static boolean findLibraries = true;
+
     static {
         String s = System.getProperty("org.bytedeco.javacpp.pathsfirst", "false").toLowerCase();
         s = System.getProperty("org.bytedeco.javacpp.pathsFirst", s).toLowerCase();
@@ -961,6 +964,10 @@ public class Loader {
         s = System.getProperty("org.bytedeco.javacpp.cachelibraries", "true").toLowerCase();
         s = System.getProperty("org.bytedeco.javacpp.cacheLibraries", s).toLowerCase();
         cacheLibraries = s.equals("true") || s.equals("t") || s.equals("");
+
+        s = System.getProperty("org.bytedeco.javacpp.findlibraries", "true").toLowerCase();
+        s = System.getProperty("org.bytedeco.javacpp.findLibraries", s).toLowerCase();
+        findLibraries = s.equals("true") || s.equals("t") || s.equals("");
     }
 
     /** Deletes the directory and all the files in it. */
@@ -1285,7 +1292,8 @@ public class Loader {
 
         String cacheDir = null;
         try {
-            cacheDir = cacheLibraries ? getCacheDir().toString() : null;
+            // Checking for findLibraries prevents the creation of an empty useless cache dir
+            cacheDir = cacheLibraries && findLibraries ? getCacheDir().toString() : null;
         } catch (IOException e) {
             // no cache dir, no worries
         }
@@ -1306,7 +1314,7 @@ public class Loader {
                     preload = preload.substring(0, preload.length() - 1);
                 }
                 URL[] urls = foundLibraries.get(preload), oldUrls = urls;
-                if (urls == null) {
+                if (urls == null && findLibraries) {
                     foundLibraries.put(preload, urls = findLibrary(cls, p, preload, pathsFirst));
                 }
                 String filename = null;
@@ -1400,7 +1408,7 @@ public class Loader {
                     library += "#" + library + librarySuffix;
                 }
                 URL[] urls = foundLibraries.get(library), oldUrls = urls;
-                if (urls == null) {
+                if (urls == null && findLibraries) {
                     foundLibraries.put(library, urls = findLibrary(cls, p, library, pathsFirst));
                 }
                 String filename = null;
@@ -1487,20 +1495,22 @@ public class Loader {
         String[] extensions = properties.get("platform.extension").toArray(new String[0]);
         String prefix = properties.getProperty("platform.library.prefix", "");
         String suffix = properties.getProperty("platform.library.suffix", "");
-        String[] styles = {
-            prefix + libname + suffix + version, // Linux style
-            prefix + libname + version + suffix, // Mac OS X style
-            prefix + libname + suffix            // without version
-        };
-        String[] styles2 = {
-            prefix + libname2 + suffix + version2, // Linux style
-            prefix + libname2 + version2 + suffix, // Mac OS X style
-            prefix + libname2 + suffix             // without version
-        };
+        String[] styles, styles2;
         if (version.length() == 0 && version2.length() == 0) {
             // optimize a bit for this case in particular on Windows
             styles = new String[] { prefix + libname + suffix };
             styles2 = new String[] { prefix + libname2 + suffix };
+        } else {
+            styles = new String[] {
+                prefix + libname + suffix + version, // Linux style
+                prefix + libname + version + suffix, // Mac OS X style
+                prefix + libname + suffix            // without version
+            };
+            styles2 = new String[] {
+                prefix + libname2 + suffix + version2, // Linux style
+                prefix + libname2 + version2 + suffix, // Mac OS X style
+                prefix + libname2 + suffix             // without version
+            };
         }
 
         String[] suffixes = properties.get("platform.library.suffix").toArray(new String[0]);
@@ -1663,7 +1673,7 @@ public class Loader {
         UnsatisfiedLinkError loadError = null;
         classStack.get().push(cls);
         try {
-            for (URL url : urls) {
+            for (URL url : urls != null ? urls : new URL[0]) {
                 URI uri = url.toURI();
                 File file = null;
                 try {
