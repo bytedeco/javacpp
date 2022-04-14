@@ -1917,7 +1917,7 @@ public class Parser {
         }
         Attribute attr = new Attribute();
         Info info = infoMap.getFirst(attr.cppName = tokens.get().value);
-        boolean keyword = attr.cppName.equals("__attribute__");
+        boolean keyword = attr.cppName.equals("__attribute__") || attr.cppName.equals("alignas");
         if (attr.annotation = info != null && info.annotations != null
                 && info.javaNames == null && info.valueTypes == null && info.pointerTypes == null) {
             for (String s : info.annotations) {

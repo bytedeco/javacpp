@@ -1,4 +1,5 @@
 
+ * Let `Parser` consider `alignas` as an explicit attribute to be ignored by default ([issue bytedeco/javacpp-presets#1168](https://github.com/bytedeco/javacpp-presets/issues/1168))
  * Add "org.bytedeco.javacpp.findLibraries" system property to disable search for libraries ([pull #565](https://github.com/bytedeco/javacpp/pull/565))
  * Fix `Generator` causing memory leaks for `String` parameters on callback ([issue bytedeco/javacpp-presets#1141](https://github.com/bytedeco/javacpp-presets/issues/1141))
  * Add `Loader.new/access/deleteGlobalRef()` methods to store JNI `Object` references in `Pointer` ([issue bytedeco/javacpp-presets#1141](https://github.com/bytedeco/javacpp-presets/issues/1141))
