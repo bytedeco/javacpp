@@ -7,7 +7,7 @@
  * Add `__int8`, `__int16`, `__int32`, and `__int64` to `InfoMap` as "basic/types" to support combinations allowed by Visual Studio
  * Add "org.bytedeco.javacpp.cacheLibraries" system property to disable cache for libraries ([pull bytedeco/gradle-javacpp#21](https://github.com/bytedeco/gradle-javacpp/pull/21))
  * Add public getters for the address fields of `Pointer.NativeDeallocator` ([discussion bytedeco/javacpp-presets#1160](https://github.com/bytedeco/javacpp-presets/discussions/1160))
- * Add support for `std::function` basic container instances with corresponding `FunctionPointer`
+ * Add support for `std::function` basic container instances with corresponding `FunctionPointer` ([issue bytedeco/javacpp-presets#1051](https://github.com/bytedeco/javacpp-presets/issues/1051))
  * Fix `Builder` parsing of command line options for platform properties ([issue #564](https://github.com/bytedeco/javacpp/issues/564))
  * Use thread local in `Generator` to detach automatically native threads on exit for Windows as well ([pull #562](https://github.com/bytedeco/javacpp/pull/562))
  * Add compiler options for C++14 and C++17 to platform properties files for Visual Studio
@@ -16,7 +16,7 @@
  * Add `OptionalAdapter` and corresponding `@Optional` annotation for containers like `std::optional`
  * Switch to `AttachCurrentThreadAsDaemon()` when attaching native threads on callback ([pull #561](https://github.com/bytedeco/javacpp/pull/561))
  * Add to `InfoMap` default pointer and value types for integer types in `std::` namespace
- * Fix Android build properties for NDK r23b
+ * Fix Android platform properties for NDK r23b
 
 ### February 11, 2022 version 1.5.7
  * Add `Loader.clearCacheDir()` along with new `ClearMojo` and `-clear` command line option
