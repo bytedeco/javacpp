@@ -355,7 +355,19 @@ public class BytePointer extends Pointer {
     public BytePointer putChar(char c) { return putChar(0, c); }
     /** Sets the {@code char} value at the i-th {@code byte} in the native array. */
     @ValueSetter @Cast("short") public native BytePointer putChar(long i, char c);
-
+	
+    /**
+     * Returns the unsigned integer value at the i-th {@code byte} in the native array..
+     */
+    public int getUnsigned(int i) {
+        return get(i) & 0xFF;
+    }
+    
+    /** Sets the unsigned integer value at the i-th {@code byte} in the native array. */
+    public BytePointer putUnsigned(int i, int value) {
+        return put(i, (byte) (value & 0xFF));
+    }
+	
     /** Returns {@code getPointerValue(0)}. */
     public Pointer getPointerValue() { return getPointerValue(0); }
     /** Returns the {@code Pointer} value at the i-th {@code byte} in the native array. */
