@@ -73,6 +73,11 @@ public class PointerScope implements AutoCloseable {
         scopeStack.get().push(this);
     }
 
+    /** Creates a new scope accepting all pointer types and pushes itself on the {@link #scopeStack}. */
+    public PointerScope() {
+        this((Class<? extends Pointer>[]) null);
+    }
+
     public Class<? extends Pointer>[] forClasses() {
         return forClasses;
     }
