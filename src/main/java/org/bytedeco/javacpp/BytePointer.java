@@ -293,6 +293,15 @@ public class BytePointer extends Pointer {
         return asByteBuffer();
     }
 
+    /** Returns {@code getUnsigned(0)}. */
+    public int getUnsigned() { return getUnsigned(0); }
+    /** Returns the {@code byte} value at the i-th {@code byte} in the native array, treated as unsigned. */
+    public int getUnsigned(long i) { return get(i) & 0xFF; }
+    /** Returns {@code putUnsigned(0, b)}. */
+    public BytePointer putUnsigned(int b) { return putUnsigned(0, b); }
+    /** Sets the {@code byte} value at the i-th {@code byte} in the native array, treated as unsigned. */
+    public BytePointer putUnsigned(long i, int b) { return put(i, (byte)b); }
+
     /** Returns {@code getShort(0)}. */
     public short getShort() { return getShort(0); }
     /** Returns the {@code short} value at the i-th {@code byte} in the native array. */
