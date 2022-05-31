@@ -293,6 +293,15 @@ public class BytePointer extends Pointer {
         return asByteBuffer();
     }
 
+    /** Returns {@code getUnsigned(0)}. */
+    public int getUnsigned() { return getUnsigned(0); }
+    /** Returns the {@code byte} value at the i-th {@code byte} in the native array, treated as unsigned. */
+    public int getUnsigned(long i) { return get(i) & 0xFF; }
+    /** Returns {@code putUnsigned(0, b)}. */
+    public BytePointer putUnsigned(int b) { return putUnsigned(i, b); }
+    /** Sets the {@code byte} value at the i-th {@code byte} in the native array, treated as unsigned. */
+    public BytePointer putUnsigned(long i, int b) { return put(0, (byte)b); }
+
     /** Returns {@code getShort(0)}. */
     public short getShort() { return getShort(0); }
     /** Returns the {@code short} value at the i-th {@code byte} in the native array. */
@@ -355,19 +364,7 @@ public class BytePointer extends Pointer {
     public BytePointer putChar(char c) { return putChar(0, c); }
     /** Sets the {@code char} value at the i-th {@code byte} in the native array. */
     @ValueSetter @Cast("short") public native BytePointer putChar(long i, char c);
-	
-    /**
-     * Returns the unsigned integer value at the i-th {@code byte} in the native array..
-     */
-    public int getUnsigned(int i) {
-        return get(i) & 0xFF;
-    }
-    
-    /** Sets the unsigned integer value at the i-th {@code byte} in the native array. */
-    public BytePointer putUnsigned(int i, int value) {
-        return put(i, (byte) (value & 0xFF));
-    }
-	
+
     /** Returns {@code getPointerValue(0)}. */
     public Pointer getPointerValue() { return getPointerValue(0); }
     /** Returns the {@code Pointer} value at the i-th {@code byte} in the native array. */
