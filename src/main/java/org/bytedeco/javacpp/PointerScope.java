@@ -64,6 +64,11 @@ public class PointerScope implements AutoCloseable {
     /** When set to true, the next call to {@link #close()} does not release but resets this variable. */
     boolean extend = false;
 
+    /** Creates a new scope accepting all pointer types and pushes itself on the {@link #scopeStack}. */
+    public PointerScope() {
+        this((Class<? extends Pointer>[])null);
+    }
+
     /** Initializes {@link #forClasses}, and pushes itself on the {@link #scopeStack}. */
     public PointerScope(Class<? extends Pointer>... forClasses) {
         if (logger.isDebugEnabled()) {
