@@ -2695,6 +2695,8 @@ public class Generator {
             } else if (methodInfo.parameterTypes[j].isPrimitive()) {
                 if (passBy instanceof ByPtr || passBy instanceof ByPtrRef) {
                     out.print("&");
+                } else if ((passBy instanceof ByVal || passBy instanceof ByRef) && cast.endsWith("*)")) {
+                    out.print("*");
                 }
                 out.print(cast + "arg" + j);
             } else if (adapterInfo != null) {
