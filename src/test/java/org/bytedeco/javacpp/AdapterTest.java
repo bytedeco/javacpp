@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Samuel Audet
+ * Copyright (C) 2015-2022 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -49,7 +49,7 @@ import static org.junit.Assert.*;
  *
  * @author Samuel Audet
  */
-@Platform(compiler = "cpp17", define = {"OPTIONAL_NAMESPACE std", "SHARED_PTR_NAMESPACE std", "UNIQUE_PTR_NAMESPACE std"}, include = "AdapterTest.h")
+@Platform(compiler = "cpp17", include = "AdapterTest.h")
 public class AdapterTest {
 
     static native @StdString String testStdString(@StdString String str);

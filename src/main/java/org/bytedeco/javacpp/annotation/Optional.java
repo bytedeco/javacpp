@@ -10,8 +10,8 @@ import org.bytedeco.javacpp.tools.Generator;
 
 /**
  * A shorthand for {@code @Adapter("OptionalAdapter<type>")}.
- * We also need to define the {@code OPTIONAL_NAMESPACE} macro
- * to something like {@code boost} or {@code std}.
+ * We can also define the {@code OPTIONAL_NAMESPACE} macro
+ * to something like {@code boost} instead of the default {@code std}.
  *
  * @see Adapter
  * @see Generator

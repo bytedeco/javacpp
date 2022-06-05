@@ -10,8 +10,8 @@ import org.bytedeco.javacpp.tools.Generator;
 
 /**
  * A shorthand for {@code @Adapter("UniquePtrAdapter<type>")}.
- * We also need to define the {@code UNIQUE_PTR_NAMESPACE} macro
- * to something like {@code boost::movelib} or {@code std}.
+ * We can also define the {@code UNIQUE_PTR_NAMESPACE} macro
+ * to something like {@code boost::movelib} instead of the default {@code std}.
  *
  * @see Adapter
  * @see Generator

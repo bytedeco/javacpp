@@ -10,8 +10,8 @@ import org.bytedeco.javacpp.tools.Generator;
 
 /**
  * A shorthand for {@code @Adapter("SharedPtrAdapter<type>")}.
- * We also need to define the {@code SHARED_PTR_NAMESPACE} macro
- * to something like {@code boost} or {@code std}.
+ * We can also define the {@code SHARED_PTR_NAMESPACE} macro
+ * to something like {@code boost} instead of the default {@code std}.
  *
  * @see Adapter
  * @see Generator
