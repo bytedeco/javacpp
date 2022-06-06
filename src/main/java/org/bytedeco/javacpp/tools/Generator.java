@@ -2415,6 +2415,8 @@ public class Generator {
                 returnPrefix = typeName[0] + " rval" + typeName[1] + " = " + cast;
                 if ((returnBy instanceof ByPtr) || (returnBy instanceof ByPtrRef)) {
                     returnPrefix += "*";
+                } else if ((returnBy instanceof ByVal || returnBy instanceof ByRef) && cast.endsWith("*)")) {
+                    returnPrefix += "&";
                 }
             } else if (Enum.class.isAssignableFrom(methodInfo.returnType)) {
                 accessesEnums = true;

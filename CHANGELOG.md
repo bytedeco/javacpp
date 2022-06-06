@@ -1,6 +1,6 @@
 
  * Define default `SHARED_PTR_NAMESPACE`, `UNIQUE_PTR_NAMESPACE`, `OPTIONAL_NAMESPACE` to `std` on supported compilers ([issue #577](https://github.com/bytedeco/javacpp/issues/577))
- * Let `Generator` dereference `long` arguments `@ByVal` or `@ByRef` with `@Cast("...*")` ([issue #576](https://github.com/bytedeco/javacpp/issues/576))
+ * Let `Generator` treat `long` arguments and return values `@ByVal` or `@ByRef` with `@Cast("...*")` ([issue #576](https://github.com/bytedeco/javacpp/issues/576))
  * Add `BytePointer.getUnsigned()` and `putUnsigned()` methods for convenience ([pull #574](https://github.com/bytedeco/javacpp/pull/574))
  * Let `Parser` consider `alignas` as an explicit attribute to be ignored by default ([issue bytedeco/javacpp-presets#1168](https://github.com/bytedeco/javacpp-presets/issues/1168))
  * Add "org.bytedeco.javacpp.findLibraries" system property to disable search for libraries ([pull #565](https://github.com/bytedeco/javacpp/pull/565))
