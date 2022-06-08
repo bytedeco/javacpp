@@ -93,6 +93,8 @@ import org.bytedeco.javacpp.annotation.ValueGetter;
 import org.bytedeco.javacpp.annotation.ValueSetter;
 import org.bytedeco.javacpp.annotation.Virtual;
 import sun.misc.Unsafe;
+import java.lang.invoke.MethodHandleInfo;
+import org.bytedeco.javacpp.annotation.Downcast;
 
 /**
  * The Generator is where all the C++ source code that we need gets generated.
@@ -180,6 +182,124 @@ public class Generator {
     Map<Class,Set<String>> members, virtualFunctions, virtualMembers;
     Map<Method,MethodInformation> annotationCache;
     boolean mayThrowExceptions, usesAdapters, passesStrings, accessesEnums;
+
+    private void outputDowncastFunDeclaration() {
+	out.println(""); // a forward declaration is necessary because generated JNI methods will need to call the downcast function
+	out.println("extern \"C++\" template<class BASE> jobject JavaCPP_downcast(JNIEnv* env, BASE* obj);");
+	out.println("");
+}
+
+private void outputDowncastFunDefinition() {
+	out.println("");
+	out.println("#define JAVACPP_DEBUG_DCAST false");
+	out.println("");
+	out.println("#include <typeindex>");
+	out.println("#include <typeinfo>");
+	out.println("#include <ostream>");
+	out.println("#include <iostream>");
+	out.println("#include <unordered_map>");
+	out.println("#include <utility>");
+	out.println("");
+	out.println("typedef struct constructor {");
+	out.println("        jclass clazz;");
+	out.println("        jmethodID ctor_mid;");
+	out.println("} constructor;");
+	out.println("");
+	out.println("typedef std::unordered_map<std::type_index, constructor> JavaCPP_JavaCPP_downcast_cache_t;");
+	out.println("");
+	out.println("JavaCPP_JavaCPP_downcast_cache_t JavaCPP_downcast_cache;");
+	out.println("");
+	out.println("extern \"C++\" template<class BASE> jobject JavaCPP_downcast(JNIEnv* env, BASE* obj) {");
+	out.println("    std::type_index id = typeid(*obj);");
+	out.println("    JavaCPP_JavaCPP_downcast_cache_t::iterator ctor = JavaCPP_downcast_cache.find(id);");
+	out.println("    if (ctor != JavaCPP_downcast_cache.end()) {");
+	out.println("        jobject ret = (jobject)env->NewObject(ctor->second.clazz, ctor->second.ctor_mid, NULL);");
+	out.println("        if (ret == NULL || env->ExceptionCheck()) {");
+	out.println("            std::cerr <<  \"Error calling Pointer constructor \" << std::endl;");
+	out.println("            return NULL;");
+	out.println("            }");
+	out.println("        if (JAVACPP_DEBUG_DCAST) std::cerr << \"Success! \" << std::endl;");
+	out.println("        return ret;");
+	out.println("        }");
+	out.println("    else");
+	out.println("        return NULL;");
+	out.println("}");
+	out.println("");
+	out.println("void JavaCPP_dcast_preload(JNIEnv* env, std::string class_name, std::type_index type_id) {");
+	out.println("    if (JAVACPP_DEBUG_DCAST) std::cerr << \"Try to find class \" <<  class_name << std::endl;");
+	out.println("");
+	out.println("    jclass lclazz = env->FindClass(class_name.c_str());");
+	out.println("    if (lclazz == NULL || env->ExceptionCheck()) {");
+	out.println("        std::cerr << \"Error loading class \" <<  class_name.c_str() << std::endl;");
+	out.println("        return;");
+	out.println("        }");
+	out.println("");
+	out.println("    jclass gclazz = (jclass)env->NewGlobalRef(lclazz);");
+	out.println("    if (gclazz == NULL || env->ExceptionCheck()) {");
+	out.println("        std::cerr << \"Error creating class \" <<  class_name  << std::endl;");
+	out.println("        return;");
+	out.println("        }");
+	out.println(" ");
+	out.println("    if (JAVACPP_DEBUG_DCAST) std::cerr << \"Try to call constructor for class \" <<  class_name << std::endl;");
+	out.println("    jmethodID ctor_mid = env->GetMethodID(gclazz, \"<init>\", \"(Lorg/bytedeco/javacpp/Pointer;)V\");");
+	out.println("    if (ctor_mid == NULL || env->ExceptionCheck()) {");
+	out.println("        std::cerr <<  \"Error getting Pointer constructor \" <<  class_name  << std::endl;");
+	out.println("        return;");
+	out.println("        }");
+	out.println("    JavaCPP_downcast_cache[type_id] = constructor{gclazz,ctor_mid};");
+	out.println("    }");
+}
+
+void outputDowncastCache(LinkedHashSet<Class> allClasses) {
+	LinkedHashSet<String> baseClasses = new LinkedHashSet<String>();
+	// Scan to find out Downcast base classes
+	for (Class<?> cls : allClasses) {
+		// if super class is InfoMapper then this is likely a target class else skip this
+		if (!InfoMapper.class.isAssignableFrom(cls.getSuperclass()))
+			continue;
+		// check all methods to see if they declare a Downcast baseclass via annotation
+		for (Method m : cls.getMethods()) {
+			Downcast d = m.getAnnotation(Downcast.class);
+			if (d != null && d.base().length() > 0)
+				baseClasses.add(d.base());
+		}
+	}
+
+	if (!baseClasses.isEmpty())
+		outputDowncastFunDefinition();
+
+	out.println("static void JavaCPP_dcast_preload_classes(JNIEnv* env) {");
+	// Create/output runtime cache initialisation code for all target classes that are derived from any of the baseclasses
+	for (Class c : allClasses) {
+		// if super class is InfoMapper then this is likely a target class else skip this
+		if (!InfoMapper.class.isAssignableFrom(c.getSuperclass()))
+			continue;
+
+		for (Class<?> c2 : c.getClasses()) {
+			if (c2.isInterface())
+				continue;
+			// follow up the super class chain to see if this is derived from a baseclass
+			Class<?> sc = c2;
+			while (sc != null) {
+				if (baseClasses.contains(sc.getSimpleName()))
+					break;
+				sc = sc.getSuperclass();
+			}
+			if (sc == null) {
+				continue;
+			}
+
+			String canonName = c2.getCanonicalName();
+			int i = canonName.lastIndexOf(".");
+			String javaName = (canonName.substring(0, i) + "$" + canonName.substring(i + 1)).replaceAll("\\.", "/");
+			Name na = c2.getAnnotation(Name.class);
+			String cppTypeName = na != null ? na.value()[0] : c2.getSimpleName();
+			out.println("    JavaCPP_dcast_preload(env, \"" + javaName + "\", typeid(::" + cppTypeName + "));");
+		}
+	}
+	out.println("    }");
+
+}
 
     public boolean generate(String sourceFilename, String jniConfigFilename, String reflectConfigFilename, String headerFilename,
             String loadSuffix, String baseLoadSuffix, String classPath, Class<?> ... classes) throws IOException {
@@ -1733,6 +1853,7 @@ public class Generator {
             out.println();
             out.println("JNIEXPORT jint JNICALL JNI_OnLoad" + baseLoadSuffix + "(JavaVM* vm, void* reserved);");
             out.println("JNIEXPORT void JNICALL JNI_OnUnload" + baseLoadSuffix + "(JavaVM* vm, void* reserved);");
+			out.println("static void JavaCPP_dcast_preload_classes(JNIEnv* env);");
         }
         out.println(); // XXX: JNI_OnLoad() should ideally be protected by some mutex
         out.println("JNIEXPORT jint JNICALL JNI_OnLoad" + loadSuffix + "(JavaVM* vm, void* reserved) {");
@@ -1778,6 +1899,8 @@ public class Generator {
         out.println("                env->PopLocalFrame(NULL);");
         out.println("            }");
         out.println("        }");
+ 		if (baseLoadSuffix != null && !baseLoadSuffix.isEmpty())
+			out.println("  	    JavaCPP_dcast_preload_classes(env);");
         out.println("    }");
         out.println("    JavaCPP_addressFID = JavaCPP_getFieldID(env, " +
                 jclasses.index(Pointer.class) + ", \"address\", \"J\");");
@@ -1949,7 +2072,9 @@ public class Generator {
         out.println("    JavaCPP_vm = NULL;");
         out.println("}");
         out.println();
-
+ 
+		outputDowncastFunDeclaration();
+		
         boolean supportedPlatform = false;
         LinkedHashSet<Class> allClasses = new LinkedHashSet<Class>();
         if (baseLoadSuffix == null || baseLoadSuffix.isEmpty()) {
@@ -1976,6 +2101,9 @@ public class Generator {
 
         out.println("}");
         out.println();
+        		
+		outputDowncastCache(allClasses);
+		
         if (out2 != null) {
             out2.println("#ifdef __cplusplus");
             out2.println("}");
@@ -2412,7 +2540,10 @@ public class Generator {
                 out.println("    jobject rarg = obj;");
             } else if (methodInfo.returnType.isPrimitive()) {
                 out.println("    " + jniTypeName(methodInfo.returnType) + " rarg = 0;");
-                returnPrefix = typeName[0] + " rval" + typeName[1] + " = " + cast;
+				if (typeName.length >= 2)
+					returnPrefix = typeName[0] + " rval" + typeName[1] + " = " + cast;
+				else
+					returnPrefix = typeName[0] + " rval" + " = " + cast;
                 if ((returnBy instanceof ByPtr) || (returnBy instanceof ByPtrRef)) {
                     returnPrefix += "*";
                 } else if ((returnBy instanceof ByVal || returnBy instanceof ByRef) && cast.endsWith("*)")) {
@@ -2909,7 +3040,14 @@ public class Generator {
                         }
                     }
                     out.println(         "if (rptr != NULL) {");
-                    out.println(indent + "    rarg = JavaCPP_createPointer(env, " + jclasses.index(methodInfo.returnType) +
+ 
+					Downcast a = (Downcast) methodInfo.method.getAnnotation(Downcast.class);
+					if (a != null)
+						out.println(indent + "    rarg = JavaCPP_downcast<" + a.base() + ">(env, rptr);");
+					else
+						out.println(indent + "    rarg = JavaCPP_createPointer(env, " + jclasses.index(methodInfo.returnType) + (methodInfo.parameterTypes.length > 0 && methodInfo.parameterTypes[0] == Class.class ? ", arg0);" : ");"));
+
+				    out.println(indent + "    rarg = JavaCPP_createPointer(env, " + jclasses.index(methodInfo.returnType) +
                             (methodInfo.parameterTypes.length > 0 && methodInfo.parameterTypes[0] == Class.class ? ", arg0);" : ");"));
                     out.println(indent + "    if (rarg != NULL) {");
                     if (needInit) {
