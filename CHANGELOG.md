@@ -1,4 +1,5 @@
 
+ * Ensure `Generator` and `Parser` process header files from `cinclude` before `include` ([issue #580](https://github.com/bytedeco/javacpp/issues/580))
  * Remove `sun.misc.Unsafe` config incompatible/unneeded with GraalVM Native Image 22.x ([issue bytedeco/sample-projects#63](https://github.com/bytedeco/sample-projects/issues/63))
  * Define default `SHARED_PTR_NAMESPACE`, `UNIQUE_PTR_NAMESPACE`, `OPTIONAL_NAMESPACE` to `std` on supported compilers ([issue #577](https://github.com/bytedeco/javacpp/issues/577))
  * Let `Generator` treat `long` arguments and return values `@ByVal` or `@ByRef` with `@Cast("...*")` ([issue #576](https://github.com/bytedeco/javacpp/issues/576))

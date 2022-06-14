@@ -4218,13 +4218,13 @@ public class Parser {
 
         // Capture class includes
         List<String> clsIncludes = new ArrayList<String>();
-        clsIncludes.addAll(clsProperties.get("platform.include"));
         clsIncludes.addAll(clsProperties.get("platform.cinclude"));
+        clsIncludes.addAll(clsProperties.get("platform.include"));
 
         // Capture all includes
         List<String> allIncludes = new ArrayList<String>();
-        allIncludes.addAll(allProperties.get("platform.include"));
         allIncludes.addAll(allProperties.get("platform.cinclude"));
+        allIncludes.addAll(allProperties.get("platform.include"));
         List<String> allTargets = allProperties.get("target");
         List<String> allGlobals = allProperties.get("global");
         List<String> clsTargets = clsProperties.get("target");

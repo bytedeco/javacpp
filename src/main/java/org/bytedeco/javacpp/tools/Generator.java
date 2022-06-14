@@ -416,11 +416,11 @@ public class Generator {
 
         if (classes != null) {
             List exclude = clsProperties.get("platform.exclude");
-            List[] include = { clsProperties.get("platform.include"),
-                               clsProperties.get("platform.cinclude") };
+            List[] include = { clsProperties.get("platform.cinclude"),
+                               clsProperties.get("platform.include") };
             for (int i = 0; i < include.length; i++) {
                 if (include[i] != null && include[i].size() > 0) {
-                    if (i == 1) {
+                    if (i == 0) {
                         out.println("extern \"C\" {");
                         if (out2 != null) {
                             out2.println("#ifdef __cplusplus");
@@ -445,7 +445,7 @@ public class Generator {
                             out2.println(line);
                         }
                     }
-                    if (i == 1) {
+                    if (i == 0) {
                         out.println("}");
                         if (out2 != null) {
                             out2.println("#ifdef __cplusplus");
