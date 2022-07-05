@@ -58,6 +58,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.build.timestamp.format>yyyyMMddhhmm</maven.build.timestamp.format>
     <bnd.version>5.3.0</bnd.version>
+    <maven.version>3.8.4</maven.version>
     <javacpp.platform.root></javacpp.platform.root>
     <javacpp.platform.suffix></javacpp.platform.suffix>
     <javacpp.platform.compiler></javacpp.platform.compiler>
@@ -68,7 +69,7 @@
     <dependency>
       <groupId>org.apache.maven</groupId>
       <artifactId>maven-plugin-api</artifactId>
-      <version>3.8.4</version>
+      <version>${maven.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
@@ -80,7 +81,7 @@
     <dependency>
       <groupId>org.apache.maven</groupId>
       <artifactId>maven-core</artifactId>
-      <version>3.0</version>
+      <version>${maven.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
