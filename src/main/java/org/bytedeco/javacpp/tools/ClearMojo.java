@@ -40,7 +40,7 @@ public class ClearMojo extends AbstractMojo {
         try {
             Loader.clearCacheDir();
         } catch (IOException e) {
-            throw new MojoExecutionException("Failed to clear cache directory", e);
+            throw new MojoExecutionException(e.getMessage());
         }
     }
 }
