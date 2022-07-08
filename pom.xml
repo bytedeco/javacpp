@@ -57,8 +57,8 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.build.timestamp.format>yyyyMMddhhmm</maven.build.timestamp.format>
-    <bnd.version>5.3.0</bnd.version>
     <maven.version>3.0</maven.version>
+    <bnd.version>5.3.0</bnd.version>
     <javacpp.platform.root></javacpp.platform.root>
     <javacpp.platform.suffix></javacpp.platform.suffix>
     <javacpp.platform.compiler></javacpp.platform.compiler>
@@ -75,7 +75,7 @@
     <dependency>
       <groupId>org.apache.maven.plugin-tools</groupId>
       <artifactId>maven-plugin-annotations</artifactId>
-      <version>3.6.2</version>
+      <version>${maven.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
@@ -291,9 +291,9 @@
             </goals>
             <configuration>
               <links>
-                <link>http://maven.apache.org/ref/3.8.4/maven-plugin-api/apidocs</link>
+                <link>http://maven.apache.org/ref/${maven.version}/maven-plugin-api/apidocs</link>
                 <link>http://maven.apache.org/plugin-tools/maven-plugin-annotations/apidocs</link>
-                <link>http://maven.apache.org/ref/3.0/maven-core/apidocs</link>
+                <link>http://maven.apache.org/ref/${maven.version}/maven-core/apidocs</link>
                 <link>http://www.slf4j.org/apidocs</link>
                 <link>http://junit.org/junit4/javadoc/4.13.2</link>
               </links>
