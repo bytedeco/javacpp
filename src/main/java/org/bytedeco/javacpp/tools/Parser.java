@@ -3380,7 +3380,8 @@ public class Parser {
         String casts = "";
         if (baseClasses.size() > 0) {
             for (Type t : baseClasses) {
-                if (!t.javaName.equals("Pointer")) {
+                Info baseInfo = infoMap.getFirst(t.cppName);
+                if (!t.javaName.equals("Pointer") && !baseInfo.skip) {
                     String shortName = t.javaName.substring(t.javaName.lastIndexOf('.') + 1);
                     casts += "    public " + t.javaName + " as" + shortName + "() { return as" + shortName + "(this); }\n"
                             + "    @Namespace public static native @Name(\"static_cast<" + t.cppName + "*>\") "
