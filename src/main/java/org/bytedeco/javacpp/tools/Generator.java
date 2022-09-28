@@ -315,6 +315,8 @@ public class Generator {
         out.println("#elif defined(__APPLE__) && defined(__OBJC__)");
         out.println("    #include <TargetConditionals.h>");
         out.println("    #include <Foundation/Foundation.h>");
+        out.println("#elif defined(__APPLE__)");
+        out.println("    #include <TargetConditionals.h>");
         out.println("#endif");
         out.println();
         out.println("#ifdef __linux__");
