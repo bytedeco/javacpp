@@ -1,4 +1,5 @@
 
+ * Fix `Generator` compiler errors on Mac for Clang without Objective-C support ([pull #610](https://github.com/bytedeco/javacpp/pull/610))
  * Prevent `Parser` from outputting cast methods for base classes that are `Info.skip` ([pull #607](https://github.com/bytedeco/javacpp/pull/607))
  * Ensure `Generator` and `Parser` process header files from `cinclude` before `include` ([issue #580](https://github.com/bytedeco/javacpp/issues/580))
  * Remove `sun.misc.Unsafe` config incompatible/unneeded with GraalVM Native Image 22.x ([issue bytedeco/sample-projects#63](https://github.com/bytedeco/sample-projects/issues/63))
