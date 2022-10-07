@@ -282,6 +282,7 @@ public class Generator {
         for (String s : clsProperties.get("platform.define")) {
             out.println("#define " + s);
         }
+        
         out.println();
         out.println("#ifdef _WIN32");
         out.println("    #define _JAVASOFT_JNI_MD_H_");
@@ -293,6 +294,11 @@ public class Generator {
         out.println("    typedef int jint;");
         out.println("    typedef long long jlong;");
         out.println("    typedef signed char jbyte;");
+        out.println("    #ifdef __CUDACC__");
+        out.println("        #define THREADLOCAL thread_local");     
+        out.println("    #else");
+        out.println("        #define THREADLOCAL __declspec(thread)");     
+        out.println("    #endif");        
         out.println("#elif defined(__GNUC__) && !defined(__ANDROID__)");
         out.println("    #define _JAVASOFT_JNI_MD_H_");
         out.println();
@@ -524,7 +530,7 @@ public class Generator {
         out.println("    va_end(ap);");
         out.println("}");
         out.println();
-        out.println("#if !defined(NO_JNI_DETACH_THREAD) && defined(_WIN32) && defined(__CUDACC__)");
+        out.println("#if !defined(NO_JNI_DETACH_THREAD) && defined(_WIN32)");
         out.println("   static struct JavaCPP_thread_local {");
         out.println("       JNIEnv* env = NULL;");
         out.println("       ~JavaCPP_thread_local() {");
@@ -532,16 +538,7 @@ public class Generator {
         out.println("               JavaCPP_vm->DetachCurrentThread();");
         out.println("           }");
         out.println("       }");
-        out.println("   } thread_local JavaCPP_thread_local; ");
-        out.println("#elif !defined(NO_JNI_DETACH_THREAD) && defined(_WIN32)");
-        out.println("   static __declspec(thread) struct JavaCPP_thread_local {");
-        out.println("       JNIEnv* env = NULL;");
-        out.println("       ~JavaCPP_thread_local() {");
-        out.println("           if (env && JavaCPP_vm) {");
-        out.println("               JavaCPP_vm->DetachCurrentThread();");
-        out.println("           }");
-        out.println("       }");
-        out.println("   } JavaCPP_thread_local; ");
+        out.println("   } THREADLOCAL JavaCPP_thread_local; ");
         out.println("#elif !defined(NO_JNI_DETACH_THREAD) && (defined(__linux__) || defined(__APPLE__))");
         out.println("    static pthread_key_t JavaCPP_current_env;");
         out.println("    static JavaCPP_noinline void JavaCPP_detach_env(void *data) {");
