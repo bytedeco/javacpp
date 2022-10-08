@@ -294,7 +294,7 @@ public class Generator {
         out.println("    typedef int jint;");
         out.println("    typedef long long jlong;");
         out.println("    typedef signed char jbyte;");
-        out.println("    #ifdef __CUDACC__");
+        out.println("    #if __cplusplus >= 201103L || _MSC_VER >= 1900");
         out.println("        #define THREADLOCAL thread_local");     
         out.println("    #else");
         out.println("        #define THREADLOCAL __declspec(thread)");     
