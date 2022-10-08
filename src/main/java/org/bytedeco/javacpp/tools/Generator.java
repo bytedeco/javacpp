@@ -531,7 +531,7 @@ public class Generator {
         out.println("}");
         out.println();
         out.println("#if !defined(NO_JNI_DETACH_THREAD) && defined(_WIN32)");
-        out.println("   static struct THREADLOCAL JavaCPP_thread_local {");
+        out.println("   static THREADLOCAL struct JavaCPP_thread_local {");
         out.println("       JNIEnv* env = NULL;");
         out.println("       ~JavaCPP_thread_local() {");
         out.println("           if (env && JavaCPP_vm) {");
