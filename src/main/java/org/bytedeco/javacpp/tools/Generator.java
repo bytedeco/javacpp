@@ -531,14 +531,14 @@ public class Generator {
         out.println("}");
         out.println();
         out.println("#if !defined(NO_JNI_DETACH_THREAD) && defined(_WIN32)");
-        out.println("   static struct JavaCPP_thread_local {");
+        out.println("   static struct THREADLOCAL JavaCPP_thread_local {");
         out.println("       JNIEnv* env = NULL;");
         out.println("       ~JavaCPP_thread_local() {");
         out.println("           if (env && JavaCPP_vm) {");
         out.println("               JavaCPP_vm->DetachCurrentThread();");
         out.println("           }");
         out.println("       }");
-        out.println("   } THREADLOCAL JavaCPP_thread_local; ");
+        out.println("   } JavaCPP_thread_local; ");
         out.println("#elif !defined(NO_JNI_DETACH_THREAD) && (defined(__linux__) || defined(__APPLE__))");
         out.println("    static pthread_key_t JavaCPP_current_env;");
         out.println("    static JavaCPP_noinline void JavaCPP_detach_env(void *data) {");
