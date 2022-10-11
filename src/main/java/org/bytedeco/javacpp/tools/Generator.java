@@ -525,7 +525,12 @@ public class Generator {
         out.println("}");
         out.println();
         out.println("#if !defined(NO_JNI_DETACH_THREAD) && defined(_WIN32)");
-        out.println("   static __declspec(thread) struct JavaCPP_thread_local {");
+        out.println("#if __cplusplus >= 201103L || _MSC_VER >= 1900");
+        out.println("   static thread_local");
+        out.println("#else");
+        out.println("   static __declspec(thread)");
+        out.println("#endif");
+        out.println("   struct JavaCPP_thread_local {");
         out.println("       JNIEnv* env = NULL;");
         out.println("       ~JavaCPP_thread_local() {");
         out.println("           if (env && JavaCPP_vm) {");
