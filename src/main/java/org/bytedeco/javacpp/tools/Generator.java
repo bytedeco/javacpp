@@ -282,7 +282,6 @@ public class Generator {
         for (String s : clsProperties.get("platform.define")) {
             out.println("#define " + s);
         }
-        
         out.println();
         out.println("#ifdef _WIN32");
         out.println("    #define _JAVASOFT_JNI_MD_H_");
