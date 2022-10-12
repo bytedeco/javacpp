@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <optional>
+#include <functional>
 
 std::string testStdString(std::string str) {
     return str;
@@ -136,4 +137,8 @@ void putMovedData(MovedData&& m) {
 
 std::optional<int> testOptionalInt(std::optional<int> o) {
     return o;
+}
+
+int testCallback(std::function<int(std::shared_ptr<SharedData>)> f, std::shared_ptr<SharedData> s) {
+    return f(s);
 }

@@ -125,6 +125,15 @@ public class AdapterTest {
 
     static native @Optional IntPointer testOptionalInt(@Optional IntPointer o);
 
+    static class SharedFunction extends FunctionPointer {
+        public SharedFunction(Pointer p) { super(p); }
+        public SharedFunction() { allocate(); }
+        private native void allocate();
+        public native int call(@Cast({"", "std::shared_ptr<SharedData>"}) @SharedPtr SharedData s);
+    }
+
+    static native int testCallback(@Const @ByRef SharedFunction f, @SharedPtr SharedData s);
+
     @BeforeClass public static void setUpClass() throws Exception {
         System.out.println("Builder");
         Class c = AdapterTest.class;
@@ -252,6 +261,16 @@ public class AdapterTest {
 
         sharedData = fetchSharedData();
         assertEquals(13, sharedData.data());
+
+        int data = testCallback(new SharedFunction() {
+            @Override public int call(SharedData d) {
+                int data = d.data();
+                d.deallocate();
+                return 2 * data;
+            }
+        }, sharedData);
+        assertEquals(2 * 13, data);
+
         sharedData.deallocate();
 
         assertEquals(1, constructorCount());

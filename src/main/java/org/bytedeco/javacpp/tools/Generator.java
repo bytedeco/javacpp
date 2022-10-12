@@ -2736,10 +2736,13 @@ public class Generator {
                 out.print(cast + cast2 + "adapter" + j);
                 j += adapterInfo.argc - 1;
             } else if (FunctionPointer.class.isAssignableFrom(methodInfo.parameterTypes[j])
-                    && !(passBy instanceof ByVal || passBy instanceof ByRef)) {
+                    && (!(passBy instanceof ByVal || passBy instanceof ByRef) || cast.length() > 0)) {
                 if (passBy instanceof ByPtrRef) {
                     out.print(cast + "(ptr" + j + "->ptr)");
                 } else {
+                    if (passBy instanceof ByVal || passBy instanceof ByRef) {
+                        out.print("*");
+                    }
                     out.print(cast + "(ptr" + j + " == NULL ? NULL : " + (passBy instanceof ByPtrPtr ? "&ptr" : "ptr") + j + "->ptr)");
                 }
             } else if (passBy instanceof ByVal || (passBy instanceof ByRef &&
