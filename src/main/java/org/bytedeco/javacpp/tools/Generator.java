@@ -1391,7 +1391,7 @@ public class Generator {
             out.println("        this->ptr = ptr;");
             out.println("        this->size = size;");
             out.println("        this->owner = owner;");
-            out.println("        this->uniquePtr = owner != NULL && owner != ptr ? *(U*)owner : U((T*)ptr);");
+            out.println("        this->uniquePtr = owner != NULL && owner != ptr ? (U&&)*(U*)owner : U((T*)ptr);");
             out.println("    }");
             out.println("    static void deallocate(void* owner) { delete (U*)owner; }");
             out.println("    operator typename UNIQUE_PTR_NAMESPACE::remove_const<T>::type*() {");
@@ -3079,6 +3079,24 @@ public class Generator {
         String parameterDeclaration = callbackTypeName[1].substring(1);
         String fieldName = mangle(callbackMethod.getName()) + "__" + mangle(signature(callbackMethod.getParameterTypes()));
 
+        String callbackArguments = "";
+        for (int j = 0; j < callbackParameterTypes.length; j++) {
+            String[] typeName = cppTypeName(callbackParameterTypes[j], callbackParameterAnnotations[j]);
+            String valueTypeName = valueTypeName(typeName);
+            AdapterInformation adapterInfo = adapterInformation(false, valueTypeName, callbackParameterAnnotations[j]);
+            if (adapterInfo != null) {
+                String cast2 = adapterInfo.cast2.trim();
+                if (cast2.length() > 0 && !cast2.startsWith("(") && !cast2.endsWith(")")) {
+                    cast2 = "(" + cast2 + ")";
+                }
+                callbackArguments += cast2;
+            }
+            callbackArguments += "arg" + j;
+            if (j < callbackParameterTypes.length - 1) {
+                callbackArguments += ", ";
+            }
+        }
+
         String firstLine = "";
         if (methodInfo != null) {
             // stuff from a virtualized class
@@ -3098,13 +3116,7 @@ public class Generator {
                 return;
             } else if (methodInfo.allocator) {
                 member += subType + nonconstParamDeclaration + " : " + valueTypeName + "(";
-                for (int j = 0; j < callbackParameterTypes.length; j++) {
-                    member += "arg" + j;
-                    if (j < callbackParameterTypes.length - 1) {
-                        member += ", ";
-                    }
-                }
-                member += "), obj(NULL) { }";
+                member += callbackArguments + "), obj(NULL) { }";
             } else {
                 Set<String> functionList = virtualFunctions.get(cls);
                 if (functionList == null) {
@@ -3128,13 +3140,7 @@ public class Generator {
                     member += "throw JavaCPP_exception(\"Cannot call pure virtual function " + valueTypeName + "::" + methodInfo.memberName[0] + "().\"); }";
                 } else {
                     member += (callbackReturnType != void.class ? "return " : "") + valueTypeName + "::" + methodInfo.memberName[0] + "(";
-                    for (int j = 0; j < callbackParameterTypes.length; j++) {
-                        member += "arg" + j;
-                        if (j < callbackParameterTypes.length - 1) {
-                            member += ", ";
-                        }
-                    }
-                    member += "); }";
+                    member += callbackArguments + "); }";
                 }
                 firstLine = returnType[0] + (returnConvention.length > 1 ? returnConvention[1] : "")
                         + subType + "::" + methodInfo.memberName[0] + parameterDeclaration + returnType[1] + " {";
@@ -3158,13 +3164,7 @@ public class Generator {
                 out.println("JNIEXPORT " + returnType[0] + (returnConvention.length > 1 ?
                         returnConvention[1] : "") + callbackName + (i > 0 ? i : "") + parameterDeclaration + returnType[1] + " {");
                 out.print((callbackReturnType != void.class ? "    return " : "    ") + instanceTypeName + "_instances[" + i + "](");
-                for (int j = 0; j < callbackParameterTypes.length; j++) {
-                    out.print("arg" + j);
-                    if (j < callbackParameterTypes.length - 1) {
-                        out.print(", ");
-                    }
-                }
-                out.println(");");
+                out.println(callbackArguments + ");");
                 out.println("}");
             }
             if (convention != null && !convention.extern().equals("C")) {
