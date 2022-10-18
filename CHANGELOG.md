@@ -1,4 +1,5 @@
 
+ * Fix `UniquePtrAdapter` incorrectly deallocating pointers on callbacks ([issue #613](https://github.com/bytedeco/javacpp/issues/613))
  * Fix `Generator` incorrectly casting `@ByVal` or `@ByRef` annotated `FunctionPointer` arguments ([issue bytedeco/javacpp-presets#1244](https://github.com/bytedeco/javacpp-presets/issues/1244))
  * Fix `Generator` compiler errors for `FunctionPointer` with `@UniquePtr` arguments ([issue #613](https://github.com/bytedeco/javacpp/issues/613))
  * Fix `Generator` compiler errors on Mac for Clang without Objective-C support ([pull #610](https://github.com/bytedeco/javacpp/pull/610))

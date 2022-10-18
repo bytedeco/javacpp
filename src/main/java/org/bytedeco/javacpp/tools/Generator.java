@@ -1391,7 +1391,7 @@ public class Generator {
             out.println("        this->ptr = ptr;");
             out.println("        this->size = size;");
             out.println("        this->owner = owner;");
-            out.println("        this->uniquePtr = owner != NULL && owner != ptr ? (U&&)*(U*)owner : U((T*)ptr);");
+            out.println("        this->uniquePtr = owner != NULL && owner != ptr ? (U&&)*(U*)owner : U((T*)NULL);");
             out.println("    }");
             out.println("    static void deallocate(void* owner) { delete (U*)owner; }");
             out.println("    operator typename UNIQUE_PTR_NAMESPACE::remove_const<T>::type*() {");

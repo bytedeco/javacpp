@@ -142,3 +142,7 @@ std::optional<int> testOptionalInt(std::optional<int> o) {
 int testCallback(std::function<int(std::shared_ptr<SharedData>)> f, std::shared_ptr<SharedData> s) {
     return f(s);
 }
+
+int testCallback(std::function<int(std::unique_ptr<UniqueData>)> f, std::unique_ptr<UniqueData> u) {
+    return f(std::move(u));
+}

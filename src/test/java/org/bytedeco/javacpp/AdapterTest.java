@@ -134,6 +134,15 @@ public class AdapterTest {
 
     static native int testCallback(@Const @ByRef SharedFunction f, @SharedPtr SharedData s);
 
+    static class UniqueFunction extends FunctionPointer {
+        public UniqueFunction(Pointer p) { super(p); }
+        public UniqueFunction() { allocate(); }
+        private native void allocate();
+        public native int call(@Cast({"", "std::unique_ptr<UniqueData>", "std::unique_ptr<UniqueData>&&"}) @UniquePtr UniqueData u);
+    }
+
+    static native int testCallback(@ByRef UniqueFunction f, @UniquePtr UniqueData s);
+
     @BeforeClass public static void setUpClass() throws Exception {
         System.out.println("Builder");
         Class c = AdapterTest.class;
@@ -300,6 +309,15 @@ public class AdapterTest {
 
         uniqueData = fetchUniqueData();
         assertEquals(42, uniqueData.data());
+
+        int data = testCallback(new UniqueFunction() {
+            @Override public int call(UniqueData d) {
+                int data = d.data();
+                d.deallocate();
+                return 2 * data;
+            }
+        }, uniqueData);
+        assertEquals(2 * 42, data);
         System.gc();
     }
 
