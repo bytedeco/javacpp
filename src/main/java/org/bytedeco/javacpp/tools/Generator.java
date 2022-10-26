@@ -1388,6 +1388,7 @@ public class Generator {
             out.println("    UniquePtrAdapter(      U& uniquePtr) : ptr(0), size(0), owner(0), uniquePtr2(U(NULL, D())), uniquePtr(uniquePtr) { }");
             out.println("    UniquePtrAdapter(const U* uniquePtr) : ptr(0), size(0), owner(0), uniquePtr2(U(NULL, D())), uniquePtr(*(U*)uniquePtr) { }");
             out.println("    void assign(T* ptr, size_t size, void* owner) {");
+            out.println("        if (this->ptr == ptr && this->size == size && this->owner == owner) return;");
             out.println("        this->ptr = ptr;");
             out.println("        this->size = size;");
             out.println("        this->owner = owner;");
@@ -3245,7 +3246,11 @@ public class Generator {
 
                     if (adapterInfo != null) {
                         usesAdapters = true;
-                        out.println("    " + adapterInfo.name + " adapter" + j + "(arg" + j + ");");
+                        String cast2 = adapterInfo.cast2.trim();
+                        if (cast2.length() > 0 && !cast2.startsWith("(") && !cast2.endsWith(")")) {
+                            cast2 = "(" + cast2 + ")";
+                        }
+                        out.println("    " + adapterInfo.name + " adapter" + j + "(" + cast2 + "arg" + j + ");");
                     }
 
                     if (Pointer.class.isAssignableFrom(callbackParameterTypes[j]) ||

@@ -271,16 +271,19 @@ public class AdapterTest {
         sharedData = fetchSharedData();
         assertEquals(13, sharedData.data());
 
+        final SharedData[] sharedData2 = new SharedData[1];
         int data = testCallback(new SharedFunction() {
             @Override public int call(SharedData d) {
-                int data = d.data();
-                d.deallocate();
-                return 2 * data;
+                d.data(2 * d.data());
+                sharedData2[0] = d;
+                return 3 * d.data();
             }
         }, sharedData);
-        assertEquals(2 * 13, data);
+        assertEquals(2 * 13, sharedData2[0].data());
+        assertEquals(2 * 3 * 13, data);
 
         sharedData.deallocate();
+        sharedData2[0].deallocate();
 
         assertEquals(1, constructorCount());
         assertEquals(1, destructorCount());
@@ -310,14 +313,17 @@ public class AdapterTest {
         uniqueData = fetchUniqueData();
         assertEquals(42, uniqueData.data());
 
+        final UniqueData[] uniqueData2 = new UniqueData[1];
         int data = testCallback(new UniqueFunction() {
             @Override public int call(UniqueData d) {
-                int data = d.data();
-                d.deallocate();
-                return 2 * data;
+                d.data(2 * d.data());
+                uniqueData2[0] = d;
+                return 3 * d.data();
             }
         }, uniqueData);
-        assertEquals(2 * 42, data);
+        assertEquals(2 * 42, uniqueData2[0].data());
+        assertEquals(2 * 3 * 42, data);
+        uniqueData2[0].deallocate();
         System.gc();
     }
 
