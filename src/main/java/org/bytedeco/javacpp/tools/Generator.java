@@ -888,6 +888,10 @@ public class Generator {
             out.println("    env->DeleteGlobalRef(globalRef);");
             out.println("}");
             out.println();
+            out.println("static inline jlong JavaCPP_getDirectBufferAddress(JNIEnv *env, jclass cls, jobject obj) {");
+            out.println("    return (jlong)env->GetDirectBufferAddress(obj);");
+            out.println("}");
+            out.println();
         }
         out.println("static JavaCPP_noinline jclass JavaCPP_getClass(JNIEnv* env, int i) {");
         out.println("    if (JavaCPP_classes[i] == NULL && env->PushLocalFrame(1) == 0) {");

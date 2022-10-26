@@ -33,6 +33,7 @@ import java.nio.ByteOrder;
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.bytedeco.javacpp.annotation.Name;
+import org.bytedeco.javacpp.annotation.Raw;
 import org.bytedeco.javacpp.tools.Generator;
 import org.bytedeco.javacpp.tools.Logger;
 
@@ -588,6 +589,10 @@ public class Pointer implements AutoCloseable {
 
     /** Returns the amount of physical memory that is free according to the operating system, or 0 if unknown. */
     @Name("JavaCPP_availablePhysicalBytes") public static native long availablePhysicalBytes();
+
+    /** Returns the starting address of the memory region referenced by the given direct {@link java.nio.Buffer}.
+     * An alternative to allocating a new Pointer object if all you need is the memory address. */
+    @Name("JavaCPP_getDirectBufferAddress") public static native long getDirectBufferAddress(@Raw(withEnv = true) Buffer b);
 
     /** The native address of this Pointer, which can be an array. */
     protected long address = 0;
