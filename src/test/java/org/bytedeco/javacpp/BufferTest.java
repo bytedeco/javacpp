@@ -101,6 +101,7 @@ public class BufferTest {
         BytePointer pointer = new BytePointer(arrayBuffer);
         ByteBuffer directBuffer = pointer.asBuffer();
         assertEquals(pointer.address(), new BytePointer(directBuffer).address());
+        assertEquals(pointer.address(), Pointer.getDirectBufferAddress(directBuffer));
 
         assertTrue(directBuffer.compareTo(arrayBuffer) == 0);
         assertEquals(arrayBuffer.position(), directBuffer.position());
@@ -123,6 +124,7 @@ public class BufferTest {
         ShortPointer pointer = new ShortPointer(arrayBuffer);
         ShortBuffer directBuffer = pointer.asBuffer();
         assertEquals(pointer.address() + pointer.position() * pointer.sizeof(), new ShortPointer(directBuffer).address());
+        assertEquals(pointer.address() + pointer.position() * pointer.sizeof(), Pointer.getDirectBufferAddress(directBuffer));
 
         assertTrue(directBuffer.compareTo(arrayBuffer) == 0);
         assertEquals(arrayBuffer.limit() - arrayBuffer.position(), directBuffer.limit());
@@ -144,6 +146,7 @@ public class BufferTest {
         IntPointer pointer = new IntPointer(arrayBuffer);
         IntBuffer directBuffer = pointer.asBuffer();
         assertEquals(pointer.address() + pointer.position() * pointer.sizeof(), new IntPointer(directBuffer).address());
+        assertEquals(pointer.address() + pointer.position() * pointer.sizeof(), Pointer.getDirectBufferAddress(directBuffer));
 
         assertTrue(directBuffer.compareTo(arrayBuffer) == 0);
         assertEquals(arrayBuffer.limit() - arrayBuffer.position(), directBuffer.limit());
@@ -165,6 +168,7 @@ public class BufferTest {
         LongPointer pointer = new LongPointer(arrayBuffer);
         LongBuffer directBuffer = pointer.asBuffer();
         assertEquals(pointer.address() + pointer.position() * pointer.sizeof(), new LongPointer(directBuffer).address());
+        assertEquals(pointer.address() + pointer.position() * pointer.sizeof(), Pointer.getDirectBufferAddress(directBuffer));
 
         assertTrue(directBuffer.compareTo(arrayBuffer) == 0);
         assertEquals(arrayBuffer.limit() - arrayBuffer.position(), directBuffer.limit());
@@ -186,6 +190,7 @@ public class BufferTest {
         FloatPointer pointer = new FloatPointer(arrayBuffer);
         FloatBuffer directBuffer = pointer.asBuffer();
         assertEquals(pointer.address() + pointer.position() * pointer.sizeof(), new FloatPointer(directBuffer).address());
+        assertEquals(pointer.address() + pointer.position() * pointer.sizeof(), Pointer.getDirectBufferAddress(directBuffer));
 
         assertTrue(directBuffer.compareTo(arrayBuffer) == 0);
         assertEquals(arrayBuffer.limit() - arrayBuffer.position(), directBuffer.limit());
@@ -207,6 +212,7 @@ public class BufferTest {
         DoublePointer pointer = new DoublePointer(arrayBuffer);
         DoubleBuffer directBuffer = pointer.asBuffer();
         assertEquals(pointer.address() + pointer.position() * pointer.sizeof(), new DoublePointer(directBuffer).address());
+        assertEquals(pointer.address() + pointer.position() * pointer.sizeof(), Pointer.getDirectBufferAddress(directBuffer));
 
         assertTrue(directBuffer.compareTo(arrayBuffer) == 0);
         assertEquals(arrayBuffer.limit() - arrayBuffer.position(), directBuffer.limit());
