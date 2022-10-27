@@ -664,6 +664,10 @@ public class Generator {
             out.println("    return size;");
             out.println("}");
             out.println();
+            out.println("static inline jlong JavaCPP_getDirectBufferAddress(JNIEnv *env, jclass cls, jobject obj) {");
+            out.println("    return (jlong)env->GetDirectBufferAddress(obj);");
+            out.println("}");
+            out.println();
             out.println("static inline jint JavaCPP_totalProcessors() {");
             out.println("    jint total = 0;");
             out.println("#ifdef __linux__");
@@ -886,10 +890,6 @@ public class Generator {
             out.println();
             out.println("static inline void JavaCPP_deleteGlobalRef(JNIEnv *env, jclass cls, jobject globalRef) {");
             out.println("    env->DeleteGlobalRef(globalRef);");
-            out.println("}");
-            out.println();
-            out.println("static inline jlong JavaCPP_getDirectBufferAddress(JNIEnv *env, jclass cls, jobject obj) {");
-            out.println("    return (jlong)env->GetDirectBufferAddress(obj);");
             out.println("}");
             out.println();
         }
