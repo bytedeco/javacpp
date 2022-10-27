@@ -592,7 +592,7 @@ public class Pointer implements AutoCloseable {
 
     /** Returns the starting address of the memory region referenced by the given direct {@link java.nio.Buffer}.
      * An alternative to allocating a new Pointer object if all you need is the memory address. */
-    @Name("JavaCPP_getDirectBufferAddress") public static native long getDirectBufferAddress(@Raw(withEnv = true) Buffer b);
+    @Name("JavaCPP_getDirectBufferAddress") protected static native long getDirectBufferAddress(@Raw(withEnv = true) Buffer b);
 
     /** The native address of this Pointer, which can be an array. */
     protected long address = 0;
