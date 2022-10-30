@@ -1,4 +1,6 @@
 
+### November 2, 2022 version 1.5.8
+ * Add `static long Pointer.getDirectBufferAddress(Buffer)` method for convenience ([pull #629](https://github.com/bytedeco/javacpp/pull/629))
  * Fix `UniquePtrAdapter` incorrectly deallocating pointers on callbacks ([issue #613](https://github.com/bytedeco/javacpp/issues/613))
  * Fix `Generator` incorrectly casting `@ByVal` or `@ByRef` annotated `FunctionPointer` arguments ([issue bytedeco/javacpp-presets#1244](https://github.com/bytedeco/javacpp-presets/issues/1244))
  * Fix `Generator` compiler errors for `FunctionPointer` with `@UniquePtr` arguments ([issue #613](https://github.com/bytedeco/javacpp/issues/613))
