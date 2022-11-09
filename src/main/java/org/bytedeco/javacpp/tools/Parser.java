@@ -3834,7 +3834,7 @@ public class Parser {
             String cast = javaType.equals("byte") || javaType.equals("short") ? "(" + javaType + ")(" : "";
             text += spacing + javaName + spacing2 + " = " + cast + countPrefix;
             text2 += spacing + javaName + spacing2 + "(" + cast + countPrefix;
-            if (enumeratorMap.containsKey(countPrefix)) {
+            if (enumeratorMap.containsKey(countPrefix.trim())) {
                 text2 += ".value";
             }
             if (countPrefix.trim().length() > 0) {

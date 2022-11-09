@@ -252,7 +252,7 @@ class TokenIndexer {
                     // concatenate tokens as required
                     for (int i = startToken; i < tokens.size(); i++) {
                         if (tokens.get(i).match("##")) {
-                            if (i > 0 && i + 1 < tokens.size()) {
+                            if (i > 0 && i + 1 < tokens.size() && !tokens.get(i - 1).match(',')) {
                                 tokens.get(i - 1).value += tokens.get(i + 1).value;
                                 tokens.remove(i);
                                 tokens.remove(i);

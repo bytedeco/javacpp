@@ -1,4 +1,6 @@
 
+ * Fix `Parser` failure on `enum` enumerators generated using the concat `##` operator
+
 ### November 2, 2022 version 1.5.8
  * Add `static long Pointer.getDirectBufferAddress(Buffer)` method for convenience ([pull #629](https://github.com/bytedeco/javacpp/pull/629))
  * Fix `UniquePtrAdapter` incorrectly deallocating pointers on callbacks ([issue #613](https://github.com/bytedeco/javacpp/issues/613))
