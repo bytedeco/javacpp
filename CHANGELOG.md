@@ -1,4 +1,5 @@
 
+ * Fix `Generator` passing empty `String` objects on callback for arguments using adapters
  * Fix `Parser` failure on `enum` enumerators generated using the concat `##` operator
 
 ### November 2, 2022 version 1.5.8

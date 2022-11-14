@@ -3341,12 +3341,9 @@ public class Generator {
                         if (!typeName[0].startsWith("const ")) {
                             typeName[0] = "const " + typeName[0];
                         }
-                        if (adapterInfo != null) {
-                            final String adapter = "adapter" + j;
-                            out.println("    jstring obj" + j + " = " + createString("(" + typeName[0] + ") " + adapter, adapter, asUtf16(callbackParameterAnnotations[j])));
-                        } else {
-                            out.println("    jstring obj" + j + " = " + createString("(" + typeName[0] + ") arg" + j, null, asUtf16(callbackParameterAnnotations[j])));
-                        }
+                        // to avoid undefined behavior, make sure ptr gets set before accessing size
+                        out.println("    " + typeName[0] + " ptr" + j + typeName[1] + " = (" + typeName[0] + typeName[1] + ")" + (adapterInfo != null ? "adapter" : "arg") + j + ";");
+                        out.println("    jstring obj" + j + " = " + createString("ptr" + j, (adapterInfo != null ? "adapter" + j : null), asUtf16(callbackParameterAnnotations[j])));
                         out.println("    args[" + j + "].l = obj" + j + ";");
                     } else if (callbackParameterTypes[j].isArray() &&
                             callbackParameterTypes[j].getComponentType().isPrimitive()) {
