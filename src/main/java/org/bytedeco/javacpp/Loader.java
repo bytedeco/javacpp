@@ -837,7 +837,7 @@ public class Loader {
                 }
                 fileExisted = file.exists();
             } else {
-                file = File.createTempFile(prefix, suffix, directoryOrFile);
+                file = Files.createTempFile(directoryOrFile.toPath(), prefix, suffix).toFile();
             }
             file.delete();
             os = new FileOutputStream(file);
