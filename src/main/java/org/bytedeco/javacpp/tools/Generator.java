@@ -524,7 +524,7 @@ public class Generator {
         out.println("    va_end(ap);");
         out.println("}");
         out.println();
-        out.println("#if !defined(NO_JNI_DETACH_THREAD) && defined(_WIN32)");
+        out.println("#if defined(_WIN32)");
         out.println("#if __cplusplus >= 201103L || _MSC_VER >= 1900");
         out.println("   static thread_local");
         out.println("#else");
@@ -538,7 +538,7 @@ public class Generator {
         out.println("           }");
         out.println("       }");
         out.println("   } JavaCPP_thread_local; ");
-        out.println("#elif !defined(NO_JNI_DETACH_THREAD) && (defined(__linux__) || defined(__APPLE__))");
+        out.println("#elif defined(__linux__) || defined(__APPLE__)");
         out.println("    static pthread_key_t JavaCPP_current_env;");
         out.println("    static JavaCPP_noinline void JavaCPP_detach_env(void *data) {");
         out.println("        if (JavaCPP_vm) {");
