@@ -1484,12 +1484,10 @@ public class Generator {
             out.println("#endif");
             out.println();
             out.println("static JavaCPP_noinline void JavaCPP_detach(bool detach) {");
-            out.println("#if __cplusplus < 201103L && _MSC_VER < 1900");
-            out.println("#if !defined(NO_JNI_DETACH_THREAD) && !defined(__linux__) && !defined(__APPLE__) && !defined(_WIN32)");
+            out.println("#if !defined(NO_JNI_DETACH_THREAD) && __cplusplus < 201103L && !defined(__linux__) && !defined(__APPLE__) && !defined(_WIN32)");
             out.println("    if (detach && JavaCPP_vm->DetachCurrentThread() != JNI_OK) {");
             out.println("        JavaCPP_log(\"Could not detach the JavaVM from the current thread.\");");
             out.println("    }");
-            out.println("#endif");
             out.println("#endif");
             out.println("}");
             out.println();
