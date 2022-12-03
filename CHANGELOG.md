@@ -1,4 +1,5 @@
 
+ * Prevent `TokenIndexer` from recursively expanding macros
  * Fix `Generator` passing empty `String` objects on callback for arguments using adapters
  * Fix `Parser` failure on `enum` enumerators generated using the concat `##` operator
 

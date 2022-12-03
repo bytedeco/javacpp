@@ -25,6 +25,7 @@ package org.bytedeco.javacpp.tools;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -134,8 +135,9 @@ class TokenIndexer {
         return array;
     }
 
-    Token[] expand(Token[] array, int index) {
-        if (index < array.length && infoMap.containsKey(array[index].value)) {
+    Token[] expand(Token[] array, int index, HashSet<String> alreadyExpanded) {
+        if (index < array.length && infoMap.containsKey(array[index].value) && !alreadyExpanded.contains(array[index].value)) {
+            alreadyExpanded.add(array[index].value);
             // if we hit a token whose info.cppText starts with #define (a macro), expand it
             int startIndex = index;
             List<Info> infoList = infoMap.get(array[index].value);
@@ -216,7 +218,7 @@ class TokenIndexer {
                             if (args[i] == null) {
                                 args[i] = Arrays.asList(); // empty varargs
                             } else if (infoMap.containsKey(args[i].get(0).value)) {
-                                args[i] = Arrays.asList(expand(args[i].toArray(new Token[args[i].size()]), 0));
+                                args[i] = Arrays.asList(expand(args[i].toArray(new Token[args[i].size()]), 0, alreadyExpanded));
                             }
                         }
                     }
@@ -282,10 +284,11 @@ class TokenIndexer {
     int preprocess(int index, int count) {
         for ( ; index < array.length; index++) {
             Token[] a = null;
+            HashSet<String> alreadyExpanded = new HashSet<String>();
             while (a != array) {
                 a = array;
                 array = filter(array, index); // conditionals
-                array = expand(array, index); // macros
+                array = expand(array, index, alreadyExpanded); // macros
             }
             // skip comments
             if (!array[index].match(Token.COMMENT) && --count < 0) {
@@ -293,10 +296,11 @@ class TokenIndexer {
             }
         }
         Token[] a = null;
+        HashSet<String> alreadyExpanded = new HashSet<String>();
         while (a != array) {
             a = array;
             array = filter(array, index); // conditionals
-            array = expand(array, index); // macros
+            array = expand(array, index, alreadyExpanded); // macros
         }
         return index;
     }
