@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2022 Samuel Audet
+ * Copyright (C) 2011-2023 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -164,15 +164,20 @@ public class Loader {
         return WINDOWS && file.exists() ? file.toPath().toRealPath().toFile() : file.getCanonicalFile();
     }
 
+    /** Returns {@code loadProperties(false)}. */
+    public static Properties loadProperties() {
+        return loadProperties(false);
+    }
     /**
      * Loads the {@link Properties} associated with the default {@link #getPlatform()}.
      *
+     * @param forceReload to reset cached {@link #platformProperties} even when not null
      * @return {@code loadProperties(getPlatform(), null)}
      * @see #loadProperties(String, String)
      */
-    public static Properties loadProperties() {
+    public static Properties loadProperties(boolean forceReload) {
         String name = getPlatform();
-        if (platformProperties != null && name.equals(platformProperties.getProperty("platform"))) {
+        if (!forceReload && platformProperties != null && name.equals(platformProperties.getProperty("platform"))) {
             return platformProperties;
         }
         return platformProperties = loadProperties(name, null);
@@ -180,6 +185,8 @@ public class Loader {
     /**
      * Loads from resources the default {@link Properties} of the specified platform name.
      * The resource must be at {@code "org/bytedeco/javacpp/properties/" + name + ".properties"}.
+     * Also picks up system properties starting with "org.bytedeco.javacpp.platform.", which
+     * can be used to override default platform properties.
      *
      * @param name the platform name
      * @param defaults the fallback platform name (null == "generic")
