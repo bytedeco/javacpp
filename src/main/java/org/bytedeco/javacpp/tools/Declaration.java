@@ -32,4 +32,8 @@ class Declaration {
     boolean abstractMember = false, constMember = false, inaccessible = false,
             incomplete = false, function = false, variable = false, comment = false, custom = false;
     String signature = "", text = "";
+
+    public String toString() {
+        return text;
+    }
 }

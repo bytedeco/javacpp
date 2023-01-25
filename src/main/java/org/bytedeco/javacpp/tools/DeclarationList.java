@@ -138,8 +138,8 @@ class DeclarationList extends ArrayList<Declaration> {
             return false;
         }
 
-        // place all definitions prior to the declaractions that need them
-        List<Declaration> stack = new ArrayList<Declaration>();
+        // place all definitions prior to the declarations that need them
+        List<Declaration> stack = new ArrayList<>();
         ListIterator<Declaration> it = stack.listIterator();
         it.add(decl); it.previous();
         while (it.hasNext()) {
