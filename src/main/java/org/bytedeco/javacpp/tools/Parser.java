@@ -93,6 +93,7 @@ public class Parser {
     InfoMap leafInfoMap = null;
     TokenIndexer tokens = null;
     String lineSeparator = null;
+    DeclarationList globalDeclList;
 
     String translate(String text) {
         Info info = infoMap.getFirst(text);
@@ -2331,8 +2332,8 @@ public class Parser {
                 break;
             }
         }
-        if (type.friend || tokens.get().match("&&") || (context.javaName == null && localNamespace > 0) || (info != null && info.skip)) {
-            // this is a friend declaration, an rvalue function, or a member function definition or specialization, skip over
+        if (tokens.get().match("&&") || (context.javaName == null && localNamespace > 0) || (info != null && info.skip)) {
+            // this is a rvalue function, or a member function definition or specialization, skip over
             while (!tokens.get().match(':', '{', ';', Token.EOF)) {
                 tokens.next();
             }
@@ -2376,7 +2377,7 @@ public class Parser {
             decl.function = true;
             declList.add(decl);
             return true;
-        } else if (type.staticMember || context.javaName == null) {
+        } else if (type.staticMember || type.friend || context.javaName == null) {
             modifiers = "public " + ((info != null && info.objectify) || context.objectify ? "" : "static ") + "native ";
             if (tokens.isCFile) {
                 modifiers = "@NoException " + modifiers;
@@ -2580,7 +2581,7 @@ public class Parser {
                 found |= dcl.signature.equals(d.signature);
             }
             if (dcl.javaName.length() > 0 && !found && (!type.destructor || (info != null && info.javaText != null))) {
-                if (declList.add(decl, fullname)) {
+                if (declList.add(decl, fullname, type.friend)) {
                     first = false;
                 }
                 if (type.virtual && context.virtualize) {
@@ -3660,7 +3661,16 @@ public class Parser {
         } else if (info != null && info.flatten) {
             info.javaText = decl.text;
         }
-        declList.add(decl);
+        if (declList.add(decl)) {
+            for (Declaration dd: declList2.nonMemberDeclarations) {
+                // Only add the friend functions that we know will be visible through ADL.
+                for (int i=0; i<dd.declarator.parameters.declarators.length; i++)
+                    if (dd.declarator.parameters.declarators[i].type.cppName.equals(type.cppName)) {
+                        globalDeclList.add(dd);
+                        break;
+                    }
+            }
+        }
         return true;
     }
 
@@ -4330,12 +4340,12 @@ public class Parser {
 
         String[] includePaths = paths.toArray(new String[paths.size() + includePath.length]);
         System.arraycopy(includePath, 0, includePaths, paths.size(), includePath.length);
-        DeclarationList declList = new DeclarationList();
+        globalDeclList = new DeclarationList();
         for (String include : allIncludes) {
             if (!clsIncludes.contains(include)) {
                 boolean isCFile = cIncludes.contains(include);
                 try {
-                    parse(context, declList, includePaths, include, isCFile);
+                    parse(context, globalDeclList, includePaths, include, isCFile);
                 } catch (FileNotFoundException e) {
                     if (excludes.contains(include)) {
                         // don't worry about missing files found in "exclude"
@@ -4346,14 +4356,14 @@ public class Parser {
                 }
             }
         }
-        declList = new DeclarationList(declList);
+        globalDeclList = new DeclarationList(globalDeclList);
         if (clsIncludes.size() > 0) {
-            containers(context, declList);
+            containers(context, globalDeclList);
             for (String include : clsIncludes) {
                 if (allIncludes.contains(include)) {
                     boolean isCFile = cIncludes.contains(include);
                     try {
-                        parse(context, declList, includePaths, include, isCFile);
+                        parse(context, globalDeclList, includePaths, include, isCFile);
                     } catch (FileNotFoundException e) {
                         if (excludes.contains(include)) {
                             // don't worry about missing files found in "exclude"
@@ -4366,7 +4376,7 @@ public class Parser {
             }
         }
 
-        if (declList.size() == 0) {
+        if (globalDeclList.size() == 0) {
             logger.info("Nothing targeted for " + globalFile);
             return null;
         }
@@ -4389,7 +4399,7 @@ public class Parser {
                 }
             }
             Declaration prevd = null;
-            for (Declaration d : declList) {
+            for (Declaration d : globalDeclList) {
                 if (!target.equals(global) && d.type != null && d.type.javaName != null && d.type.javaName.length() > 0) {
                     // when "target" != "global", the former is a package where to output top-level classes into their own files
                     String shortName = d.type.javaName.substring(d.type.javaName.lastIndexOf('.') + 1);
