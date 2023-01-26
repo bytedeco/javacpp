@@ -2332,8 +2332,16 @@ public class Parser {
                 break;
             }
         }
-        if (tokens.get().match("&&") || (context.javaName == null && localNamespace > 0) || (info != null && info.skip)) {
-            // this is a rvalue function, or a member function definition or specialization, skip over
+        Info info2 = infoMap.getFirst(null);
+        boolean mapFriends = info != null ? info.mapFriends : info2 != null ? info2.mapFriends : false;
+        if (tokens.get().match("&&")
+                || (context.javaName == null && localNamespace > 0)
+                || (info != null && info.skip)
+                || (type.friend && !mapFriends)
+        ) {
+            // this is a rvalue function, or a member function definition or specialization,
+            // or a friend function and we don't want to map it,
+            // skip over
             while (!tokens.get().match(':', '{', ';', Token.EOF)) {
                 tokens.next();
             }

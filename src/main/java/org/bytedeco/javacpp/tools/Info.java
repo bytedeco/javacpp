@@ -52,6 +52,7 @@ public class Info {
         cast = i.cast;
         define = i.define;
         enumerate = i.enumerate;
+        mapFriends = i.mapFriends;
         flatten = i.flatten;
         immutable = i.immutable;
         beanify = i.beanify;
@@ -94,6 +95,10 @@ public class Info {
     /** Maps native C++ {@code enum} classes to Java {@code enum} types, along with methods using them.
      * To use as keys in maps, etc, intern() must be called on instances returned from native code. */
     boolean enumerate = false;
+    /** Maps friend functions (that are not also declared outside the class, so only accessible through ADL)
+     * as global static methods. Only functions taking an instance of the class as one of their arguments are
+     * currently supported. */
+    boolean mapFriends = false;
     /** Outputs declarations for this class into their subclasses as well.
      * Also adds methods for explicit casting, as done for multiple inheritance by default. */
     boolean flatten = false;
@@ -134,6 +139,8 @@ public class Info {
     public Info define(boolean define) { this.define = define; return this; }
     public Info enumerate() { this.enumerate = true; return this; }
     public Info enumerate(boolean enumerate) { this.enumerate = enumerate; return this; }
+    public Info mapFriends() { this.mapFriends = true; return this; }
+    public Info mapFriends(boolean mapFriends) { this.mapFriends = mapFriends; return this; }
     public Info flatten() { this.flatten = true; return this; }
     public Info flatten(boolean flatten) { this.flatten = flatten; return this; }
     public Info immutable() { this.immutable = true; return this; }
