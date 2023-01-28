@@ -3670,11 +3670,11 @@ public class Parser {
             info.javaText = decl.text;
         }
         if (declList.add(decl)) {
-            for (Declaration dd: declList2.nonMemberDeclarations) {
+            for (Declaration friendDecl: declList2.nonMemberDeclarations) {
                 // Only add the friend functions that we know will be visible through ADL.
-                for (int i=0; i<dd.declarator.parameters.declarators.length; i++)
-                    if (dd.declarator.parameters.declarators[i].type.cppName.equals(type.cppName)) {
-                        globalDeclList.add(dd);
+                for (Declarator paramDecl: friendDecl.declarator.parameters.declarators)
+                    if (paramDecl.type.cppName.equals(type.cppName)) {
+                        globalDeclList.add(friendDecl);
                         break;
                     }
             }
