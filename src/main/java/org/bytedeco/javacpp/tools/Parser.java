@@ -93,7 +93,6 @@ public class Parser {
     InfoMap leafInfoMap = null;
     TokenIndexer tokens = null;
     String lineSeparator = null;
-    DeclarationList globalDeclList;
 
     String translate(String text) {
         Info info = infoMap.getFirst(text);
@@ -2332,16 +2331,8 @@ public class Parser {
                 break;
             }
         }
-        Info info2 = infoMap.getFirst(null);
-        boolean mapFriends = info != null ? info.mapFriends : info2 != null ? info2.mapFriends : false;
-        if (tokens.get().match("&&")
-                || (context.javaName == null && localNamespace > 0)
-                || (info != null && info.skip)
-                || (type.friend && !mapFriends)
-        ) {
-            // this is a rvalue function, or a member function definition or specialization,
-            // or a friend function and we don't want to map it,
-            // skip over
+        if (tokens.get().match("&&") || (context.javaName == null && localNamespace > 0) || (info != null && info.skip)) {
+            // This is a rvalue function, or a member function definition or specialization, skip over
             while (!tokens.get().match(':', '{', ';', Token.EOF)) {
                 tokens.next();
             }
@@ -2385,7 +2376,12 @@ public class Parser {
             decl.function = true;
             declList.add(decl);
             return true;
-        } else if (type.staticMember || type.friend || context.javaName == null) {
+        } else if (type.friend) {
+            // The friend function may be accessible only through ADL, so disable namespace lookup.
+            // Map the function to a private static method and create a public Java instance method below
+            // that calls this static method.
+            modifiers = "private static native @Namespace ";
+        } else if (type.staticMember || context.javaName == null) {
             modifiers = "public " + ((info != null && info.objectify) || context.objectify ? "" : "static ") + "native ";
             if (tokens.isCFile) {
                 modifiers = "@NoException " + modifiers;
@@ -2521,8 +2517,34 @@ public class Parser {
                 tokens.next();
             }
 
+            /* If it's a friend function, and we want friend mapping, check if it accepts an argument of the enclosing type.
+               If it does, add a Java instance method calling the static native method.
+               If it does not, skip over. */
+            Info info2 = infoMap.getFirst(null);
+            boolean mapFriends = info != null ? info.mapFriends : info2 != null ? info2.mapFriends : false;
+            if (type.friend && mapFriends) {
+                Declarator[] paramDeclarators = dcl.parameters.declarators;
+                String argList = "", staticArgList = "";
+                boolean foundThis = false;
+                for (Declarator paramDecl: paramDeclarators) {
+                    if (staticArgList.length() > 0) staticArgList += ", ";
+                    if (!foundThis && paramDecl.type.cppName.equals(context.cppName)) {
+                        foundThis = true;
+                        staticArgList += "this";
+                    } else {
+                        if (argList.length() > 0) argList += ", ";
+                        argList += paramDecl.type.javaName+' '+paramDecl.javaName;
+                        staticArgList += paramDecl.javaName;
+                    }
+                }
+                if (foundThis)
+                    decl.text += "public "+dcl.type.javaName+" "+dcl.javaName+"("+argList+") { "+(dcl.type.javaName.equals("void") ? "" : "return ")+dcl.javaName+"("+staticArgList+"); }\n";
+                else
+                    mapFriends = false;
+            }
+
             // skip over non-const function within const class
-            if (!decl.constMember && context.constName != null) {
+            if (type.friend && !mapFriends || !decl.constMember && context.constName != null) {
                 decl.text = spacing;
                 declList.add(decl);
                 return true;
@@ -2589,7 +2611,7 @@ public class Parser {
                 found |= dcl.signature.equals(d.signature);
             }
             if (dcl.javaName.length() > 0 && !found && (!type.destructor || (info != null && info.javaText != null))) {
-                if (declList.add(decl, fullname, type.friend)) {
+                if (declList.add(decl, fullname)) {
                     first = false;
                 }
                 if (type.virtual && context.virtualize) {
@@ -3669,16 +3691,7 @@ public class Parser {
         } else if (info != null && info.flatten) {
             info.javaText = decl.text;
         }
-        if (declList.add(decl)) {
-            for (Declaration friendDecl: declList2.nonMemberDeclarations) {
-                // Only add the friend functions that we know will be visible through ADL.
-                for (Declarator paramDecl: friendDecl.declarator.parameters.declarators)
-                    if (paramDecl.type.cppName.equals(type.cppName)) {
-                        globalDeclList.add(friendDecl);
-                        break;
-                    }
-            }
-        }
+        declList.add(decl);
         return true;
     }
 
@@ -4348,12 +4361,12 @@ public class Parser {
 
         String[] includePaths = paths.toArray(new String[paths.size() + includePath.length]);
         System.arraycopy(includePath, 0, includePaths, paths.size(), includePath.length);
-        globalDeclList = new DeclarationList();
+        DeclarationList declList = new DeclarationList();
         for (String include : allIncludes) {
             if (!clsIncludes.contains(include)) {
                 boolean isCFile = cIncludes.contains(include);
                 try {
-                    parse(context, globalDeclList, includePaths, include, isCFile);
+                    parse(context, declList, includePaths, include, isCFile);
                 } catch (FileNotFoundException e) {
                     if (excludes.contains(include)) {
                         // don't worry about missing files found in "exclude"
@@ -4364,14 +4377,14 @@ public class Parser {
                 }
             }
         }
-        globalDeclList = new DeclarationList(globalDeclList);
+        declList = new DeclarationList(declList);
         if (clsIncludes.size() > 0) {
-            containers(context, globalDeclList);
+            containers(context, declList);
             for (String include : clsIncludes) {
                 if (allIncludes.contains(include)) {
                     boolean isCFile = cIncludes.contains(include);
                     try {
-                        parse(context, globalDeclList, includePaths, include, isCFile);
+                        parse(context, declList, includePaths, include, isCFile);
                     } catch (FileNotFoundException e) {
                         if (excludes.contains(include)) {
                             // don't worry about missing files found in "exclude"
@@ -4384,7 +4397,7 @@ public class Parser {
             }
         }
 
-        if (globalDeclList.size() == 0) {
+        if (declList.size() == 0) {
             logger.info("Nothing targeted for " + globalFile);
             return null;
         }
@@ -4407,7 +4420,7 @@ public class Parser {
                 }
             }
             Declaration prevd = null;
-            for (Declaration d : globalDeclList) {
+            for (Declaration d : declList) {
                 if (!target.equals(global) && d.type != null && d.type.javaName != null && d.type.javaName.length() > 0) {
                     // when "target" != "global", the former is a package where to output top-level classes into their own files
                     String shortName = d.type.javaName.substring(d.type.javaName.lastIndexOf('.') + 1);

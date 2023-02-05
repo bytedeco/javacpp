@@ -38,7 +38,6 @@ class DeclarationList extends ArrayList<Declaration> {
     ListIterator<Info> infoIterator = null;
     String spacing = null;
     DeclarationList inherited = null;
-    ArrayList<Declaration> nonMemberDeclarations = new ArrayList<>();
 
     DeclarationList() { }
     DeclarationList(DeclarationList inherited) {
@@ -61,9 +60,9 @@ class DeclarationList extends ArrayList<Declaration> {
     }
 
     @Override public boolean add(Declaration decl) {
-        return add(decl, null, false);
+        return add(decl, null);
     }
-    public boolean add(Declaration decl, String fullName, boolean notMember) {
+    public boolean add(Declaration decl, String fullName) {
         boolean add = true;
         if (templateMap != null && templateMap.empty() && !decl.custom && (decl.type != null || decl.declarator != null)) {
             // method templates cannot be declared in Java, but make sure to make their
@@ -193,12 +192,8 @@ class DeclarationList extends ArrayList<Declaration> {
                 }
             }
             if (!found) {
-                if (notMember)
-                    nonMemberDeclarations.add(decl);
-                else {
-                    decl.text = rescan(decl.text);
-                    super.add(decl);
-                }
+                decl.text = rescan(decl.text);
+                super.add(decl);
                 add = true;
             }
         }

@@ -95,9 +95,8 @@ public class Info {
     /** Maps native C++ {@code enum} classes to Java {@code enum} types, along with methods using them.
      * To use as keys in maps, etc, intern() must be called on instances returned from native code. */
     boolean enumerate = false;
-    /** Maps friend functions (that are not also declared outside the class, so only accessible through ADL)
-     * as global static methods. Only functions taking an instance of the class as one of their arguments are
-     * currently supported. */
+    /** Maps friend functions. Only functions having in their argument list an instance of the class they are friend
+     * of are currently supported. They are mapped as instance methods of the class. */
     boolean mapFriends = false;
     /** Outputs declarations for this class into their subclasses as well.
      * Also adds methods for explicit casting, as done for multiple inheritance by default. */
