@@ -2331,8 +2331,10 @@ public class Parser {
                 break;
             }
         }
-        if (tokens.get().match("&&") || (context.javaName == null && localNamespace > 0) || (info != null && info.skip)) {
-            // This is a rvalue function, or a member function definition or specialization, skip over
+        Info info2 = infoMap.getFirst(null);
+        boolean friendly = info != null ? info.friendly : info2 != null ? info2.friendly : false;
+        if ((type.friend && !friendly) || tokens.get().match("&&") || (context.javaName == null && localNamespace > 0) || (info != null && info.skip)) {
+            // this is an unwanted friend declaration, an rvalue function, or a member function definition or specialization, skip over
             while (!tokens.get().match(':', '{', ';', Token.EOF)) {
                 tokens.next();
             }
@@ -2520,31 +2522,35 @@ public class Parser {
             /* If it's a friend function, and we want friend mapping, check if it accepts an argument of the enclosing type.
                If it does, add a Java instance method calling the static native method.
                If it does not, skip over. */
-            Info info2 = infoMap.getFirst(null);
-            boolean mapFriends = info != null ? info.mapFriends : info2 != null ? info2.mapFriends : false;
-            if (type.friend && mapFriends) {
+            if (type.friend && friendly) {
                 Declarator[] paramDeclarators = dcl.parameters.declarators;
                 String argList = "", staticArgList = "";
                 boolean foundThis = false;
-                for (Declarator paramDecl: paramDeclarators) {
-                    if (staticArgList.length() > 0) staticArgList += ", ";
+                for (Declarator paramDecl : paramDeclarators) {
+                    if (staticArgList.length() > 0) {
+                        staticArgList += ", ";
+                    }
                     if (!foundThis && paramDecl.type.cppName.equals(context.cppName)) {
                         foundThis = true;
                         staticArgList += "this";
                     } else {
-                        if (argList.length() > 0) argList += ", ";
-                        argList += paramDecl.type.javaName+' '+paramDecl.javaName;
+                        if (argList.length() > 0) {
+                            argList += ", ";
+                        }
+                        argList += paramDecl.type.javaName + " " + paramDecl.javaName;
                         staticArgList += paramDecl.javaName;
                     }
                 }
-                if (foundThis)
-                    decl.text += "public "+dcl.type.javaName+" "+dcl.javaName+"("+argList+") { "+(dcl.type.javaName.equals("void") ? "" : "return ")+dcl.javaName+"("+staticArgList+"); }\n";
-                else
-                    mapFriends = false;
+                if (foundThis) {
+                    decl.text += "public " + dcl.type.javaName + " " + dcl.javaName + "(" + argList + ") { "
+                              + (dcl.type.javaName.equals("void") ? "" : "return ") + dcl.javaName + "(" + staticArgList + "); }\n";
+                } else {
+                    friendly = false;
+                }
             }
 
-            // skip over non-const function within const class
-            if (type.friend && !mapFriends || !decl.constMember && context.constName != null) {
+            // skip over friend functions we can't map and non-const function within const class
+            if ((type.friend && !friendly) || !decl.constMember && context.constName != null) {
                 decl.text = spacing;
                 declList.add(decl);
                 return true;

@@ -52,8 +52,8 @@ public class Info {
         cast = i.cast;
         define = i.define;
         enumerate = i.enumerate;
-        mapFriends = i.mapFriends;
         flatten = i.flatten;
+        friendly = i.friendly;
         immutable = i.immutable;
         beanify = i.beanify;
         objectify = i.objectify;
@@ -95,12 +95,12 @@ public class Info {
     /** Maps native C++ {@code enum} classes to Java {@code enum} types, along with methods using them.
      * To use as keys in maps, etc, intern() must be called on instances returned from native code. */
     boolean enumerate = false;
-    /** Maps friend functions. Only functions having in their argument list an instance of the class they are friend
-     * of are currently supported. They are mapped as instance methods of the class. */
-    boolean mapFriends = false;
     /** Outputs declarations for this class into their subclasses as well.
      * Also adds methods for explicit casting, as done for multiple inheritance by default. */
     boolean flatten = false;
+    /** Maps friend functions. Only functions having in their argument list an instance of the class they are friend
+     * of are currently supported. They are mapped as instance methods of the class. */
+    boolean friendly = false;
     /** Disables generation of setters for public data members of a class */
     boolean immutable = false;
     /** Adds JavaBeans-style prefixes to getters and setters of public data members of a class */
@@ -138,10 +138,10 @@ public class Info {
     public Info define(boolean define) { this.define = define; return this; }
     public Info enumerate() { this.enumerate = true; return this; }
     public Info enumerate(boolean enumerate) { this.enumerate = enumerate; return this; }
-    public Info mapFriends() { this.mapFriends = true; return this; }
-    public Info mapFriends(boolean mapFriends) { this.mapFriends = mapFriends; return this; }
     public Info flatten() { this.flatten = true; return this; }
     public Info flatten(boolean flatten) { this.flatten = flatten; return this; }
+    public Info friendly() { this.friendly = true; return this; }
+    public Info friendly(boolean friendly) { this.friendly = friendly; return this; }
     public Info immutable() { this.immutable = true; return this; }
     public Info immutable(boolean immutable) { this.immutable = immutable; return this; }
     public Info beanify() { this.beanify = true; return this; }

@@ -1,4 +1,5 @@
 
+ * Add `Info.friendly` to have `Parser` map some `friend` functions to Java methods ([pull #649](https://github.com/bytedeco/javacpp/pull/649))
  * Add `Loader.loadProperties(boolean forceReload)` to reset platform properties ([issue deepjavalibrary/djl#2318](https://github.com/deepjavalibrary/djl/issues/2318))
  * Prevent `TokenIndexer` from recursively expanding macros
  * Fix `Generator` passing empty `String` objects on callback for arguments using adapters
