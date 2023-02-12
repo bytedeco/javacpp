@@ -2114,9 +2114,7 @@ public class Parser {
                     params.list += "/*" + defaultToken + defaultValue + "*/";
                 }
                 params.signature += '_';
-                for (char c : dcl.type.javaName.substring(dcl.type.javaName.lastIndexOf(' ') + 1).toCharArray()) {
-                    params.signature += Character.isJavaIdentifierPart(c) ? c : '_';
-                }
+                params.signature += dcl.type.signature();
                 params.names += (count > 1 ? ", " : "") + paramName;
                 if (dcl.javaName.startsWith("arg")) {
                     try {
@@ -2394,6 +2392,7 @@ public class Parser {
         boolean first = true;
         for (int n = -2; n < Integer.MAX_VALUE; n++) {
             decl = new Declaration();
+            Declaration extraDecl = null; // Secondary declaration to add. Currently only used for friends.
             tokens.index = startIndex;
             boolean useDefaults = (info == null || !info.skipDefaults) && n % 2 != 0;
             if ((type.constructor || type.destructor || type.operator) && params != null) {
@@ -2524,6 +2523,7 @@ public class Parser {
                If it does not, skip over. */
             if (type.friend && friendly) {
                 Declarator[] paramDeclarators = dcl.parameters.declarators;
+                String signature = dcl.javaName;
                 String argList = "", staticArgList = "";
                 boolean foundThis = false;
                 for (Declarator paramDecl : paramDeclarators) {
@@ -2538,11 +2538,15 @@ public class Parser {
                             argList += ", ";
                         }
                         argList += paramDecl.type.javaName + " " + paramDecl.javaName;
+                        signature += '_' + paramDecl.type.signature();
                         staticArgList += paramDecl.javaName;
                     }
                 }
                 if (foundThis) {
-                    decl.text += "public " + dcl.type.javaName + " " + dcl.javaName + "(" + argList + ") { "
+                    extraDecl = new Declaration();
+                    extraDecl.signature = signature;
+                    extraDecl.declarator = dcl; // Used in group to recognize friends
+                    extraDecl.text = "public " + dcl.type.javaName + " " + dcl.javaName + "(" + argList + ") { "
                               + (dcl.type.javaName.equals("void") ? "" : "return ") + dcl.javaName + "(" + staticArgList + "); }\n";
                 } else {
                     friendly = false;
@@ -2619,6 +2623,7 @@ public class Parser {
             if (dcl.javaName.length() > 0 && !found && (!type.destructor || (info != null && info.javaText != null))) {
                 if (declList.add(decl, fullname)) {
                     first = false;
+                    if (extraDecl != null) declList.add(extraDecl);
                 }
                 if (type.virtual && context.virtualize) {
                     break;
@@ -3651,7 +3656,8 @@ public class Parser {
             }
         }
         for (Declaration d : declList2) {
-            if (!d.inaccessible && (d.declarator == null || d.declarator.type == null
+            if ((!d.inaccessible || d.declarator != null && d.declarator.type.friend)
+                    && (d.declarator == null || d.declarator.type == null
                     || !d.declarator.type.constructor || !abstractClass || (info != null && info.virtualize))) {
                 decl.text += d.text;
             }
