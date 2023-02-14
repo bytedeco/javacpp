@@ -50,4 +50,12 @@ class Type {
             return false;
         }
     }
+
+    String signature() {
+        String sig = "";
+        for (char c : javaName.substring(javaName.lastIndexOf(' ') + 1).toCharArray()) {
+            sig += Character.isJavaIdentifierPart(c) ? c : '_';
+        }
+        return sig;
+    }
 }

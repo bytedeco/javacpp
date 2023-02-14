@@ -2114,9 +2114,7 @@ public class Parser {
                     params.list += "/*" + defaultToken + defaultValue + "*/";
                 }
                 params.signature += '_';
-                for (char c : dcl.type.javaName.substring(dcl.type.javaName.lastIndexOf(' ') + 1).toCharArray()) {
-                    params.signature += Character.isJavaIdentifierPart(c) ? c : '_';
-                }
+                params.signature += dcl.type.signature();
                 params.names += (count > 1 ? ", " : "") + paramName;
                 if (dcl.javaName.startsWith("arg")) {
                     try {
@@ -2331,8 +2329,10 @@ public class Parser {
                 break;
             }
         }
-        if (type.friend || tokens.get().match("&&") || (context.javaName == null && localNamespace > 0) || (info != null && info.skip)) {
-            // this is a friend declaration, an rvalue function, or a member function definition or specialization, skip over
+        Info info2 = infoMap.getFirst(null);
+        boolean friendly = info != null ? info.friendly : info2 != null ? info2.friendly : false;
+        if ((type.friend && !friendly) || tokens.get().match("&&") || (context.javaName == null && localNamespace > 0) || (info != null && info.skip)) {
+            // this is an unwanted friend declaration, an rvalue function, or a member function definition or specialization, skip over
             while (!tokens.get().match(':', '{', ';', Token.EOF)) {
                 tokens.next();
             }
@@ -2376,6 +2376,11 @@ public class Parser {
             decl.function = true;
             declList.add(decl);
             return true;
+        } else if (type.friend) {
+            // The friend function may be accessible only through ADL, so disable namespace lookup.
+            // Map the function to a private static method and create a public Java instance method below
+            // that calls this static method.
+            modifiers = "private static native @Namespace ";
         } else if (type.staticMember || context.javaName == null) {
             modifiers = "public " + ((info != null && info.objectify) || context.objectify ? "" : "static ") + "native ";
             if (tokens.isCFile) {
@@ -2387,6 +2392,7 @@ public class Parser {
         boolean first = true;
         for (int n = -2; n < Integer.MAX_VALUE; n++) {
             decl = new Declaration();
+            Declaration extraDecl = null; // Secondary declaration to add. Currently only used for friends.
             tokens.index = startIndex;
             boolean useDefaults = (info == null || !info.skipDefaults) && n % 2 != 0;
             if ((type.constructor || type.destructor || type.operator) && params != null) {
@@ -2512,8 +2518,43 @@ public class Parser {
                 tokens.next();
             }
 
-            // skip over non-const function within const class
-            if (!decl.constMember && context.constName != null) {
+            /* If it's a friend function, and we want friend mapping, check if it accepts an argument of the enclosing type.
+               If it does, add a Java instance method calling the static native method.
+               If it does not, skip over. */
+            if (type.friend && friendly) {
+                Declarator[] paramDeclarators = dcl.parameters.declarators;
+                String signature = dcl.javaName;
+                String argList = "", staticArgList = "";
+                boolean foundThis = false;
+                for (Declarator paramDecl : paramDeclarators) {
+                    if (staticArgList.length() > 0) {
+                        staticArgList += ", ";
+                    }
+                    if (!foundThis && paramDecl.type.cppName.equals(context.cppName)) {
+                        foundThis = true;
+                        staticArgList += "this";
+                    } else {
+                        if (argList.length() > 0) {
+                            argList += ", ";
+                        }
+                        argList += paramDecl.type.javaName + " " + paramDecl.javaName;
+                        signature += '_' + paramDecl.type.signature();
+                        staticArgList += paramDecl.javaName;
+                    }
+                }
+                if (foundThis) {
+                    extraDecl = new Declaration();
+                    extraDecl.signature = signature;
+                    extraDecl.declarator = dcl; // Used in group to recognize friends
+                    extraDecl.text = "public " + dcl.type.javaName + " " + dcl.javaName + "(" + argList + ") { "
+                              + (dcl.type.javaName.equals("void") ? "" : "return ") + dcl.javaName + "(" + staticArgList + "); }\n";
+                } else {
+                    friendly = false;
+                }
+            }
+
+            // skip over friend functions we can't map and non-const function within const class
+            if ((type.friend && !friendly) || !decl.constMember && context.constName != null) {
                 decl.text = spacing;
                 declList.add(decl);
                 return true;
@@ -2582,6 +2623,7 @@ public class Parser {
             if (dcl.javaName.length() > 0 && !found && (!type.destructor || (info != null && info.javaText != null))) {
                 if (declList.add(decl, fullname)) {
                     first = false;
+                    if (extraDecl != null) declList.add(extraDecl);
                 }
                 if (type.virtual && context.virtualize) {
                     break;
@@ -3614,7 +3656,8 @@ public class Parser {
             }
         }
         for (Declaration d : declList2) {
-            if (!d.inaccessible && (d.declarator == null || d.declarator.type == null
+            if ((!d.inaccessible || d.declarator != null && d.declarator.type.friend)
+                    && (d.declarator == null || d.declarator.type == null
                     || !d.declarator.type.constructor || !abstractClass || (info != null && info.virtualize))) {
                 decl.text += d.text;
             }

@@ -53,6 +53,7 @@ public class Info {
         define = i.define;
         enumerate = i.enumerate;
         flatten = i.flatten;
+        friendly = i.friendly;
         immutable = i.immutable;
         beanify = i.beanify;
         objectify = i.objectify;
@@ -97,6 +98,9 @@ public class Info {
     /** Outputs declarations for this class into their subclasses as well.
      * Also adds methods for explicit casting, as done for multiple inheritance by default. */
     boolean flatten = false;
+    /** Maps friend functions. Only functions having in their argument list an instance of the class they are friend
+     * of are currently supported. They are mapped as instance methods of the class. */
+    boolean friendly = false;
     /** Disables generation of setters for public data members of a class */
     boolean immutable = false;
     /** Adds JavaBeans-style prefixes to getters and setters of public data members of a class */
@@ -136,6 +140,8 @@ public class Info {
     public Info enumerate(boolean enumerate) { this.enumerate = enumerate; return this; }
     public Info flatten() { this.flatten = true; return this; }
     public Info flatten(boolean flatten) { this.flatten = flatten; return this; }
+    public Info friendly() { this.friendly = true; return this; }
+    public Info friendly(boolean friendly) { this.friendly = friendly; return this; }
     public Info immutable() { this.immutable = true; return this; }
     public Info immutable(boolean immutable) { this.immutable = immutable; return this; }
     public Info beanify() { this.beanify = true; return this; }
