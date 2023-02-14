@@ -44,7 +44,7 @@ public class Info {
         return def;
     }
     public Info() { this(def); }
-    public Info(String... cppNames) { this.cppNames = cppNames; }
+    public Info(String... cppNames) { this(def); this.cppNames = cppNames; }
     public Info(Info i) {
         if (i == null) return;
         cppNames = i.cppNames != null ? i.cppNames.clone() : null;
