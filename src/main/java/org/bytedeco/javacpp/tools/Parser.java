@@ -2157,7 +2157,7 @@ public class Parser {
         Pattern boolPattern = Pattern.compile(boolPatternStr);
         Matcher matcher = boolPattern.matcher(constAnnotation);
 
-        /* default value same with {@link org.bytedeco.javacpp.annotation.Const} */
+        // default value same with {@link org.bytedeco.javacpp.annotation.Const}
         boolean constArray[] = {true, false, false};
         int index = 0;
         while (matcher.find()) {
@@ -4207,9 +4207,7 @@ public class Parser {
     public File[] parse(File outputDirectory, String[] classPath, Class cls) throws IOException, ParserException {
         ClassProperties allProperties = Loader.loadProperties(cls, properties, true);
         ClassProperties clsProperties = Loader.loadProperties(cls, properties, false);
-
         Set<String> excludes = new HashSet<>(allProperties.get("platform.exclude"));
-
         Set<String> cIncludes = new HashSet<>(allProperties.get("platform.cinclude"));
 
         // Capture class includes
