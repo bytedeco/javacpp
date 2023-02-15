@@ -30,10 +30,12 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -129,12 +131,12 @@ public class Parser {
     }
 
     void containers(Context context, DeclarationList declList) throws ParserException {
-        List<String> basicContainers = new ArrayList<String>();
+        List<String> basicContainers = new ArrayList<>();
         for (Info info : infoMap.get("basic/containers")) {
             basicContainers.addAll(Arrays.asList(info.cppTypes));
         }
         for (String containerName : basicContainers) {
-            LinkedHashSet<Info> infoSet = new LinkedHashSet<Info>();
+            LinkedHashSet<Info> infoSet = new LinkedHashSet<>();
             infoSet.addAll(leafInfoMap.get("const " + containerName));
             infoSet.addAll(leafInfoMap.get(containerName));
             for (Info info : infoSet) {
@@ -236,7 +238,7 @@ public class Parser {
                     dcl.definition.text = "\n" + dcl.definition.text;
                     decl.declarator = dcl;
                 }
-                LinkedHashSet<Type> typeSet = new LinkedHashSet<Type>();
+                LinkedHashSet<Type> typeSet = new LinkedHashSet<>();
                 typeSet.addAll(Arrays.asList(firstType, secondType, indexType, valueType));
                 typeSet.addAll(Arrays.asList(containerType.arguments));
                 for (Type type : typeSet) {
@@ -616,7 +618,7 @@ public class Parser {
         if (!tokens.get().match('<')) {
             return null;
         }
-        List<Type> arguments = new ArrayList<Type>();
+        List<Type> arguments = new ArrayList<>();
         for (Token token = tokens.next(); !token.match(Token.EOF); token = tokens.next()) {
             Type type = type(context);
             arguments.add(type);
@@ -655,7 +657,7 @@ public class Parser {
                 break;
             }
         }
-        return arguments.toArray(new Type[arguments.size()]);
+        return arguments.toArray(new Type[0]);
     }
 
     Type type(Context context) throws ParserException {
@@ -664,7 +666,7 @@ public class Parser {
 
     Type type(Context context, boolean definition) throws ParserException {
         Type type = new Type();
-        List<Attribute> attributes = new ArrayList<Attribute>();
+        List<Attribute> attributes = new ArrayList<>();
         for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.get()) {
             if (token.match("::")) {
                 Info info = infoMap.getFirst(type.cppName, false);
@@ -787,7 +789,7 @@ public class Parser {
             } else if (token.match(Token.ENUM, Token.EXPLICIT, Token.EXTERN, Token.INLINE, Token.CLASS, Token.FINAL,
                                    Token.INTERFACE, Token.__INTERFACE, Token.MUTABLE, Token.NAMESPACE, Token.STRUCT, Token.UNION,
                                    Token.TYPENAME, Token.REGISTER, Token.THREAD_LOCAL, Token.VOLATILE)) {
-                token = tokens.next();
+                tokens.next();
                 continue;
             } else if (token.match((Object[])infoMap.getFirst("basic/types").cppTypes) && !tokens.get(1).match('<') && (type.cppName.length() == 0 || type.simple)) {
                 type.cppName += token.value + " ";
@@ -824,7 +826,7 @@ public class Parser {
             tokens.next();
         }
         if (attributes.size() > 0) {
-            type.attributes = attributes.toArray(new Attribute[attributes.size()]);
+            type.attributes = attributes.toArray(new Attribute[0]);
         }
         type.cppName = type.cppName.trim();
         if (tokens.get().match("...")) {
@@ -867,7 +869,7 @@ public class Parser {
             String[] types = type.cppName.split("::");
             String separator = "";
             type.cppName = "";
-            List<Type> arguments = new ArrayList<Type>();
+            List<Type> arguments = new ArrayList<>();
             for (String t : types) {
                 Type t2 = context.templateMap.get(t);
                 type.cppName += separator + (t2 != null ? t2.cppName : t);
@@ -877,7 +879,7 @@ public class Parser {
                 separator = "::";
             }
             if (arguments.size() > 0) {
-                type.arguments = arguments.toArray(new Type[arguments.size()]);
+                type.arguments = arguments.toArray(new Type[0]);
             }
         }
 
@@ -1021,7 +1023,7 @@ public class Parser {
         if (context.cppName != null && type.javaName.length() > 0) {
             String cppName = type.cppName;
             String groupName = context.cppName;
-            int template2 = groupName != null ? groupName.lastIndexOf('<') : -1;
+            int template2 = groupName.lastIndexOf('<');
             if (template < 0 && template2 >= 0) {
                 groupName = groupName.substring(0, template2);
                 template2 = groupName.indexOf('<');
@@ -1032,7 +1034,7 @@ public class Parser {
                 cppName = cppName.substring(0, template);
                 namespace = cppName.lastIndexOf("::");
             }
-            int namespace2 = groupName != null ? groupName.lastIndexOf("::") : -1;
+            int namespace2 = groupName.lastIndexOf("::");
             if (namespace < 0 && namespace2 >= 0) {
                 groupName = groupName.substring(namespace2 + 2);
             } else if (namespace >= 0 && namespace2 < 0) {
@@ -1063,7 +1065,7 @@ public class Parser {
         }
         typedef |= type.typedef;
 
-        // pick the requested identifier out of the statement in the case of multiple variable declaractions
+        // pick the requested identifier out of the statement in the case of multiple variable declarations
         int count = 0, number = 0;
         for (Token token = tokens.get(); number < varNumber && !token.match(Token.EOF); token = tokens.next()) {
             if (token.match('(','[','{')) {
@@ -1122,7 +1124,7 @@ public class Parser {
         }
 
         // translate C++ attributes to equivalent Java annotations
-        List<Attribute> attributes = new ArrayList<Attribute>();
+        List<Attribute> attributes = new ArrayList<>();
         if (type.attributes != null) {
             attributes.addAll(Arrays.asList(type.attributes));
         }
@@ -1804,7 +1806,7 @@ public class Parser {
 
     /** Converts Doxygen-like documentation comments placed before identifiers to Javadoc-style.
      *  Also leaves as is non-documentation comments. */
-    String commentBefore() throws ParserException {
+    String commentBefore() {
         String comment = "";
         tokens.raw = true;
         while (tokens.index > 0 && tokens.get(-1).match(Token.COMMENT)) {
@@ -1855,7 +1857,7 @@ public class Parser {
     }
 
     /** Converts Doxygen-like documentation comments placed after identifiers to Javadoc-style. */
-    String commentAfter() throws ParserException {
+    String commentAfter() {
         String comment = "";
         tokens.raw = true;
         while (tokens.index > 0 && tokens.get(-1).match(Token.COMMENT)) {
@@ -1903,10 +1905,10 @@ public class Parser {
         return commentDoc(comment, startDoc);
     }
 
-    Attribute attribute() throws ParserException {
+    Attribute attribute() {
         return attribute(false);
     }
-    Attribute attribute(boolean explicit) throws ParserException {
+    Attribute attribute(boolean explicit) {
         boolean brackets = false;
         if (tokens.get().match("[[")) {
             brackets = true;
@@ -1932,7 +1934,7 @@ public class Parser {
             brackets = false;
             tokens.next();
         }
-        if (!brackets && count <= 0) {
+        if (!brackets && count == 0) {
             return attr;
         }
 
@@ -1965,7 +1967,7 @@ public class Parser {
         return attr;
     }
 
-    String body() throws ParserException {
+    String body() {
         String text = "";
         if (!tokens.get().match('{')) {
             return null;
@@ -2002,7 +2004,7 @@ public class Parser {
 
         int count = 0;
         Parameters params = new Parameters();
-        List<Declarator> dcls = new ArrayList<Declarator>();
+        List<Declarator> dcls = new ArrayList<>();
         params.list = "(";
         params.names = "(";
         int lastVarargs = -1;
@@ -2135,7 +2137,7 @@ public class Parser {
             tokens.index = backIndex;
             return null;
         }
-        params.declarators = dcls.toArray(new Declarator[dcls.size()]);
+        params.declarators = dcls.toArray(new Declarator[0]);
         return params;
     }
 
@@ -2147,13 +2149,13 @@ public class Parser {
         }
         String prefix = annotations.substring(0, start);
         String constAnnotation = annotations.substring(start, end);
-        String suffix = " " + annotations.substring(end, annotations.length());
+        String suffix = " " + annotations.substring(end);
 
         String boolPatternStr = "(true|false)";
         Pattern boolPattern = Pattern.compile(boolPatternStr);
         Matcher matcher = boolPattern.matcher(constAnnotation);
 
-        /** default value same with {@link org.bytedeco.javacpp.annotation.Const} **/
+        // default value same with {@link org.bytedeco.javacpp.annotation.Const}
         boolean constArray[] = {true, false, false};
         int index = 0;
         while (matcher.find()) {
@@ -2894,7 +2896,7 @@ public class Parser {
                 } else if (info != null && info.cppText == null &&
                         info.cppTypes != null && info.cppTypes.length > (hasArgs ? 0 : 1)) {
                     // declare as a static native method
-                    List<Declarator> prevDcl = new ArrayList<Declarator>();
+                    List<Declarator> prevDcl = new ArrayList<>();
                     for (int n = -1; n < Integer.MAX_VALUE; n++) {
                         int count = 1;
                         tokens.index = beginIndex + 2;
@@ -2978,7 +2980,7 @@ public class Parser {
                             Declarator dcl = new Parser(this, info.cppTypes[0]).declarator(context, null, -1, false, 0, false, true);
                             if (!dcl.type.javaName.equals("int")) {
                                 cppType = dcl.type.cppName;
-                                type = dcl.type.annotations + (info.pointerTypes != null ? info.pointerTypes[0] : dcl.type.javaName);;
+                                type = dcl.type.annotations + (info.pointerTypes != null ? info.pointerTypes[0] : dcl.type.javaName);
                             }
                         }
                         for (int i = 0; i < info.cppNames.length; i++) {
@@ -3095,10 +3097,9 @@ public class Parser {
         if (!tokens.get().match(Token.TYPEDEF) && !tokens.get(1).match(Token.TYPEDEF) && usingDefName == null) {
             return false;
         }
-        Declaration decl = new Declaration();
         int backIndex = tokens.index;
         for (int n = 0; n < Integer.MAX_VALUE; n++) {
-            decl = new Declaration();
+            Declaration decl = new Declaration();
             tokens.index = backIndex;
             Declarator dcl = declarator(context, usingDefName, -1, false, n, true, false);
             if (dcl == null) {
@@ -3286,7 +3287,7 @@ public class Parser {
             tokens.next();
         }
         Type type = type(context, true);
-        List<Type> baseClasses = new ArrayList<Type>();
+        List<Type> baseClasses = new ArrayList<>();
         Declaration decl = new Declaration();
         decl.text = type.annotations;
         String name = type.javaName;
@@ -3325,7 +3326,7 @@ public class Parser {
             return false;
         }
         int startIndex = tokens.index;
-        List<Declarator> variables = new ArrayList<Declarator>();
+        List<Declarator> variables = new ArrayList<>();
         String originalName = type.cppName;
         String body = body();
         boolean hasBody = body != null && body.length() > 0;
@@ -3465,7 +3466,6 @@ public class Parser {
             } else if (context.namespace != null && context.javaName == null) {
                 decl.text += "@Namespace(\"" + context.namespace + "\") ";
             }
-            decl.type = new Type(name);
             decl.text += "@Opaque public static class " + name + " extends " + base.javaName + " {\n" +
                          "    /** Empty constructor. Calls {@code super((Pointer)null)}. */\n" +
                          "    public " + name + "() { super((Pointer)null); }\n" +
@@ -3683,7 +3683,7 @@ public class Parser {
             infoMap.put(constructorInfo = new Info(type.cppName + "::" + constructorName));
         }
         if (constructorInfo.javaText == null && inheritedConstructors.length() > 0) {
-            // save constructors to be able inherit them with C++11 "using" statements
+            // save constructors to be able to inherit them with C++11 "using" statements
             constructorInfo.javaText(inheritedConstructors);
         }
         if (!anonymous) {
@@ -3742,7 +3742,7 @@ public class Parser {
         String countPrefix = "";
         String enumerators = "";
         String enumerators2 = "";
-        HashMap<String,String> enumeratorMap = new HashMap<String,String>();
+        HashMap<String,String> enumeratorMap = new HashMap<>();
         String extraText = "";
         String name = "";
         Token token = tokens.next().expect(Token.IDENTIFIER, '{', ':', ';');
@@ -3809,7 +3809,7 @@ public class Parser {
                 countPrefix = "";
                 int count2 = 0;
                 Token prevToken = new Token();
-                boolean translate = info != null ? info.translate : true;
+                boolean translate = info == null || info.translate;
                 for (token = tokens.next(); !token.match(Token.EOF, '#', ',', '}') || count2 > 0; token = tokens.next()) {
                     if (token.match(Token.INTEGER) && token.value.endsWith("L")) {
                         longenum = true;
@@ -4097,7 +4097,7 @@ public class Parser {
             declList.infoIterator = null;
             declList.spacing = null;
             do {
-                if (map != null && declList.infoIterator != null && declList.infoIterator.hasNext()) {
+                if (map != null && declList.infoIterator != null) {
                     // create all template instances provided by user
                     Info info = declList.infoIterator.next();
                     if (info == null) {
@@ -4135,7 +4135,7 @@ public class Parser {
                         }
                     }
                     tokens.index = startIndex;
-                } else if (declList.infoIterator != null && declList.infoIterator.hasNext()) {
+                } else if (declList.infoIterator != null) {
                     // create two Java classes for C++ types with names for both with and without const qualifier
                     Info info = declList.infoIterator.next();
                     if (info == null) {
@@ -4172,7 +4172,7 @@ public class Parser {
         // for comments at the end without declarations
         String comment = commentBefore() + (tokens.get().match(Token.EOF) ? tokens.get().spacing : "");
         Declaration decl = new Declaration();
-        if (comment != null && comment.length() > 0) {
+        if (comment.length() > 0) {
             decl.text = comment;
             decl.comment = true;
             declList.add(decl);
@@ -4184,7 +4184,7 @@ public class Parser {
                String[] includePath,
                String include,
                boolean isCFile) throws IOException, ParserException {
-        List<Token> tokenList = new ArrayList<Token>();
+        List<Token> tokenList = new ArrayList<>();
         File file = null;
         String filename = include;
         if (filename == null || filename.length() == 0) {
@@ -4239,7 +4239,7 @@ public class Parser {
         token.file = file;
         token.lineNumber = tokenList.get(tokenList.size() - 1).lineNumber;
         tokenList.add(token);
-        tokens = new TokenIndexer(infoMap, tokenList.toArray(new Token[tokenList.size()]), isCFile);
+        tokens = new TokenIndexer(infoMap, tokenList.toArray(new Token[0]), isCFile);
         context.objectify |= info != null && info.objectify;
         declarations(context, declList);
     }
@@ -4250,23 +4250,16 @@ public class Parser {
     public File[] parse(File outputDirectory, String[] classPath, Class cls) throws IOException, ParserException {
         ClassProperties allProperties = Loader.loadProperties(cls, properties, true);
         ClassProperties clsProperties = Loader.loadProperties(cls, properties, false);
-
-        List<String> excludes = new ArrayList<>();
-        excludes.addAll(clsProperties.get("platform.exclude"));
-        excludes.addAll(allProperties.get("platform.exclude"));
-
-        // Capture c-includes from "class" and "all" properties
-        List<String> cIncludes = new ArrayList<>();
-        cIncludes.addAll(clsProperties.get("platform.cinclude"));
-        cIncludes.addAll(allProperties.get("platform.cinclude"));
+        Set<String> excludes = new HashSet<>(allProperties.get("platform.exclude"));
+        Set<String> cIncludes = new HashSet<>(allProperties.get("platform.cinclude"));
 
         // Capture class includes
-        List<String> clsIncludes = new ArrayList<String>();
+        List<String> clsIncludes = new ArrayList<>();
         clsIncludes.addAll(clsProperties.get("platform.cinclude"));
         clsIncludes.addAll(clsProperties.get("platform.include"));
 
         // Capture all includes
-        List<String> allIncludes = new ArrayList<String>();
+        List<String> allIncludes = new ArrayList<>();
         allIncludes.addAll(allProperties.get("platform.cinclude"));
         allIncludes.addAll(allProperties.get("platform.include"));
         List<String> allTargets = allProperties.get("target");
@@ -4315,9 +4308,11 @@ public class Parser {
         List<Info> infoList = leafInfoMap.get(null);
         boolean objectify = false;
         for (Info info : infoList) {
-            objectify |= info != null && info.objectify;
-            if (info.javaText != null && info.javaText.startsWith("import")) {
-                text += info.javaText + "\n";
+            if (info != null) {
+                objectify |= info.objectify;
+                if (info.javaText != null && info.javaText.startsWith("import")) {
+                    text += info.javaText + "\n";
+                }
             }
         }
         if (!target.equals(global) && !targetHeader.equals(globalHeader)) {
@@ -4345,7 +4340,7 @@ public class Parser {
 
         String targetPath = target.replace('.', File.separatorChar);
         String globalPath = global.replace('.', File.separatorChar);
-        File targetFile = new File(outputDirectory, targetPath);
+        File targetDir = new File(outputDirectory, targetPath);
         File globalFile = new File(outputDirectory, globalPath + ".java");
         logger.info("Targeting " + globalFile);
         Context context = new Context();
@@ -4414,7 +4409,6 @@ public class Parser {
             return null;
         }
 
-        File targetDir = targetFile;
         File globalDir = globalFile.getParentFile();
         if (!target.equals(global)) {
             targetDir.mkdirs();
@@ -4422,7 +4416,8 @@ public class Parser {
         if (globalDir != null) {
             globalDir.mkdirs();
         }
-        ArrayList<File> outputFiles = new ArrayList<File>(Arrays.asList(globalFile));
+        ArrayList<File> outputFiles = new ArrayList<>();
+        outputFiles.add(globalFile);
         try (Writer out = encoding != null ? new EncodingFileWriter(globalFile, encoding, lineSeparator)
                                            : new EncodingFileWriter(globalFile, lineSeparator)) {
             out.append(globalText);
@@ -4464,6 +4459,6 @@ public class Parser {
             out.append("\n}\n").close();
         }
 
-        return outputFiles.toArray(new File[outputFiles.size()]);
+        return outputFiles.toArray(new File[0]);
     }
 }
