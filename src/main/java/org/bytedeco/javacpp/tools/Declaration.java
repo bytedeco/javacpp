@@ -26,7 +26,7 @@ package org.bytedeco.javacpp.tools;
  *
  * @author Samuel Audet
  */
-class Declaration {
+class Declaration implements Cloneable {
     Type type = null;
     Declarator declarator = null;
     boolean abstractMember = false, constMember = false, inaccessible = false,
@@ -35,5 +35,15 @@ class Declaration {
 
     public String toString() {
         return text;
+    }
+
+    @Override
+    public Declaration clone() {
+        try {
+            // Shallow copy is enough for the current usage
+            return (Declaration) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError();
+        }
     }
 }

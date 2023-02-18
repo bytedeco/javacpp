@@ -2626,6 +2626,16 @@ public class Parser {
                 if (declList.add(decl, fullname)) {
                     first = false;
                     if (extraDecl != null) declList.add(extraDecl);
+                    // Do not copy constructors unless specifically asked for with Info.
+                    // Do not copy static functions. The copy would probably need changes in the type of its argument
+                    // to be useful anyway.
+                    // We don't copy extraDecl either that is only used for friends and that calls a static method.
+                    if (!decl.declarator.type.staticMember && !decl.inaccessible) {
+                        if (info != null && info.copiedDeclarations != null)
+                            info.copiedDeclarations.add(decl, fullname, modifiers, context.namespace);
+                        if (context.copiedDeclarations != null && !type.constructor)
+                            context.copiedDeclarations.add(decl, fullname, modifiers,context.namespace);
+                    }
                 }
                 if (type.virtual && context.virtualize) {
                     break;
@@ -3292,17 +3302,22 @@ public class Parser {
         decl.text = type.annotations;
         String name = type.javaName;
         boolean anonymous = !typedef && type.cppName.length() == 0, derivedClass = false, skipBase = false;
+        List<String> copyFrom = new ArrayList<>();
+        List<Type> flattenFrom = new ArrayList<>();
         if (type.cppName.length() > 0 && tokens.get().match(':')) {
             derivedClass = true;
+            boolean virtualInheritance = false;
+            boolean accessible = !ctx.inaccessible;
             for (Token token = tokens.next(); !token.match(Token.EOF); token = tokens.next()) {
-                boolean accessible = !ctx.inaccessible;
                 if (token.match(Token.VIRTUAL)) {
+                    virtualInheritance = true;
                     continue;
                 } else if (token.match(Token.PRIVATE, Token.PROTECTED, Token.PUBLIC)) {
                     accessible = token.match(Token.PUBLIC);
-                    tokens.next();
+                    continue;
                 }
                 Type t = type(context);
+                t.virtual = virtualInheritance;
                 Info info = infoMap.getFirst(t.cppName);
                 if (info != null && info.skip) {
                     skipBase = true;
@@ -3313,6 +3328,8 @@ public class Parser {
                 if (tokens.get().expect(',', '{').match('{')) {
                     break;
                 }
+                virtualInheritance = false;
+                accessible = !ctx.inaccessible;
             }
         }
         if (typedef && type.indirections > 0) {
@@ -3409,17 +3426,34 @@ public class Parser {
             }
             infoMap.put(info = new Info(type.cppName).pointerTypes(type.javaName));
         }
-        Type base = new Type("Pointer");
+
+        // Choose the base Java type: first base C++ type which is not flattened and that we can inherit from.
+        // Keep the others in baseClasses to generate asX() casts and fill copyFrom and flattenFrom.
+        // If no C++ base type suits, use Pointer.
+        boolean polymorphic = false;
+        Type base = null;
         Iterator<Type> it = baseClasses.iterator();
         while (it.hasNext()) {
             Type next = it.next();
             Info nextInfo = infoMap.getFirst(next.cppName);
-            if (nextInfo == null || !nextInfo.flatten) {
+            if (nextInfo != null) {
+                polymorphic |= nextInfo.polymorphic;
+                if (nextInfo.flatten) {
+                    flattenFrom.add(next);
+                    continue;
+                } else if (nextInfo.polymorphic && next.virtual) {
+                    // Virtual inheritance to a polymorphic class, we cannot inherit in Java, copy declarations instead.
+                    copyFrom.add(next.cppName);
+                    continue;
+                }
+            }
+            if (base == null) {
                 base = next;
                 it.remove();
-                break;
             }
         }
+        if (base == null) base = new Type("Pointer");
+
         String casts = "";
         if (baseClasses.size() > 0) {
             for (Type t : baseClasses) {
@@ -3501,8 +3535,15 @@ public class Parser {
                 ctx.immutable = true;
             if (info.beanify)
                 ctx.beanify = true;
+            if (info.copyFrom != null)
+                copyFrom.addAll(info.copyFrom);
         }
         ctx.baseType = base.cppName;
+
+        /* Always copy member declarations. The copy will be saved in an Info if this class turns out to be
+         * polymorphic (in case another class will virtually inherit from it) or if the used asked for
+         * copy using Info.copyFrom. */
+        ctx.copiedDeclarations = new CopiedDeclarations();
 
         DeclarationList declList2 = new DeclarationList();
         if (variables.size() == 0) {
@@ -3524,11 +3565,55 @@ public class Parser {
             ctx.variable = var;
             declarations(ctx, declList2);
         }
+
+        String thisNamespace = context.namespace != null && context.javaName == null ? context.namespace : null;
+        for (String cf: copyFrom) {
+            Info infoCopyFrom = infoMap.getFirst(cf);
+            if (infoCopyFrom != null && infoCopyFrom.copiedDeclarations != null) {
+                declList2.context.inaccessible = false;
+                // Recompose the text of copied declarations, change the class name for constructor
+                // Adjust @Virtual
+                // Probably other modifications are necessary.
+                for (CopiedDeclarations.CopiedDeclaration cd : infoCopyFrom.copiedDeclarations) {
+                    Declaration d = cd.decl.clone();
+                    final String funcName = (d.declarator.type != null && d.declarator.type.constructor) ?
+                            shortName : ctx.shorten(d.declarator.javaName);
+                    Info infoCopyTo = infoMap.getFirst(ctx.namespace == null ? funcName : ctx.namespace + "::" + funcName);
+                    String modifiers = cd.modifiers.replace("@Virtual", "");
+                    if (infoCopyTo != null) {
+                        if (infoCopyTo.virtualize) modifiers = "@Virtual " + modifiers;
+                        if (infoCopyTo.annotations != null) {
+                            for (String ann : infoCopyTo.annotations)
+                                modifiers += ann + " ";
+                        }
+                    }
+                    if (d.declarator.type != null && d.declarator.type.constructor) {
+                        Parameters params = d.declarator.parameters;
+                        d.text = spacing + "public " + shortName + params.list + " { super((Pointer)null); allocate" + params.names + "; }\n" +
+                                d.declarator.type.annotations + "private native void allocate" + params.list + ";\n";
+                        d.signature = shortName + params.signature;
+                    } else {
+                        d.text = spacing;
+                        if (cd.namespace != null && !cd.namespace.equals(thisNamespace))
+                            // Use namespace of the declaration we are copying since it can contain non-qualified types.
+                            // TODO: this annotation won't help if the declaration contains a @Cast or other annotation
+                            // with non-qualified types. Arrange so that auto-generated @Cast in containers are
+                            // always fully-qualified.
+                            d.text += "@Namespace(\""+cd.namespace+"\") ";
+                        d.text += modifiers + d.declarator.type.annotations + context.shorten(d.declarator.type.javaName) + " " + d.declarator.javaName + d.declarator.parameters.list + ";\n";
+                    }
+
+                    declList2.add(d, cd.fullname);
+                }
+            }
+        }
+
         String modifiers = "public static ", constructors = "", inheritedConstructors = "";
         boolean implicitConstructor = true, arrayConstructor = false, defaultConstructor = false, longConstructor = false,
                 pointerConstructor = false, abstractClass = info != null && info.purify && !ctx.virtualize,
                 allPureConst = true, haveVariables = false;
         for (Declaration d : declList2) {
+            polymorphic |= d.declarator != null && d.declarator.type != null && d.declarator.type.virtual;
             if (d.declarator != null && d.declarator.type != null && d.declarator.type.using && decl.text != null) {
                 // inheriting constructors
                 defaultConstructor |= d.text.contains("private native void allocate();");
@@ -3637,24 +3722,41 @@ public class Parser {
             decl.text = declList.rescan(decl.text + casts + "\n");
             declList.spacing = null;
         }
-        for (Type base2 : baseClasses) {
+        for (Type base2 : flattenFrom) {
             Info baseInfo = infoMap.getFirst(base2.cppName);
-            if (baseInfo != null && baseInfo.flatten && baseInfo.javaText != null) {
-                String text = baseInfo.javaText;
-                int start = text.indexOf('{');
-                for (int n = 0; n < 2; start++) {
-                    int c = text.charAt(start);
-                    if (c == '\n') {
-                        n++;
-                    } else if (!Character.isWhitespace(c)) {
-                        n = 0;
+            if (baseInfo != null) {
+                if (baseInfo.flatten && baseInfo.javaText != null) {
+                    String text = baseInfo.javaText;
+                    int start = text.indexOf('{');
+                    for (int n = 0; n < 2; start++) {
+                        int c = text.charAt(start);
+                        if (c == '\n') {
+                            n++;
+                        } else if (!Character.isWhitespace(c)) {
+                            n = 0;
+                        }
                     }
+                    int end = text.lastIndexOf('}');
+                    decl.text += text.substring(start, end).replace(base2.javaName, type.javaName);
+                    decl.custom = true;
                 }
-                int end = text.lastIndexOf('}');
-                decl.text += text.substring(start, end).replace(base2.javaName, type.javaName);
-                decl.custom = true;
             }
         }
+        if (polymorphic) {
+            if (info == null) {
+                info = new Info(cppName);
+                info.copiedDeclarations = new CopiedDeclarations();
+                infoMap.put(info);
+            } else if (info.copiedDeclarations == null) {
+                info.copiedDeclarations = new CopiedDeclarations();
+            }
+            info.polymorphic = true;
+        }
+
+        if (info != null && info.copiedDeclarations != null) {
+            info.copiedDeclarations.addAll(ctx.copiedDeclarations);
+        }
+
         for (Declaration d : declList2) {
             if ((!d.inaccessible || d.declarator != null && d.declarator.type.friend)
                     && (d.declarator == null || d.declarator.type == null
@@ -4295,6 +4397,7 @@ public class Parser {
             // fail silently as if the interface wasn't implemented
         }
         infoMap.putAll(leafInfoMap);
+        infoMap.normalizeCopy();
 
         String version = Parser.class.getPackage().getImplementationVersion();
         if (version == null) {
