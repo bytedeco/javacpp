@@ -26,24 +26,33 @@ package org.bytedeco.javacpp.tools;
  *
  * @author Samuel Audet
  */
-class Declaration implements Cloneable {
+class Declaration {
     Type type = null;
     Declarator declarator = null;
     boolean abstractMember = false, constMember = false, inaccessible = false,
             incomplete = false, function = false, variable = false, comment = false, custom = false;
     String signature = "", text = "";
 
-    public String toString() {
-        return text;
+    public Declaration() {
     }
 
-    @Override
-    public Declaration clone() {
-        try {
-            // Shallow copy is enough for the current usage
-            return (Declaration) super.clone();
-        } catch (CloneNotSupportedException e) {
-            throw new AssertionError();
-        }
+    Declaration(Declaration src) {
+        // Shallow copy is enough for the current usage
+        type = src.type;
+        declarator = src.declarator;
+        abstractMember = src.abstractMember;
+        constMember = src.constMember;
+        inaccessible = src.inaccessible;
+        incomplete = src.incomplete;
+        function = src.function;
+        variable = src.variable;
+        comment = src.comment;
+        custom = src.custom;
+        signature = src.signature;
+        text = src.text;
+    }
+
+    public String toString() {
+        return text;
     }
 }

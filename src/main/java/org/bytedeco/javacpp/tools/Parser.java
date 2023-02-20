@@ -3575,7 +3575,7 @@ public class Parser {
                 // Adjust @Virtual
                 // Probably other modifications are necessary.
                 for (CopiedDeclarations.CopiedDeclaration cd : infoCopyFrom.copiedDeclarations) {
-                    Declaration d = cd.decl.clone();
+                    Declaration d = new Declaration(cd.decl);
                     final String funcName = (d.declarator.type != null && d.declarator.type.constructor) ?
                             shortName : ctx.shorten(d.declarator.javaName);
                     Info infoCopyTo = infoMap.getFirst(ctx.namespace == null ? funcName : ctx.namespace + "::" + funcName);
