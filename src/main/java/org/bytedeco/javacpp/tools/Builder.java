@@ -481,9 +481,8 @@ public class Builder {
                     String resourceURL2 = Loader.findResource(classes[i], resourceName2).toString();
                     String packageURI2 = resourceURL2.substring(0, resourceURL2.lastIndexOf('/') + 1);
 
-                    String longest, shortest;
-                    if (packageURI2.length() > packageURI.length()) { longest = packageURI2; shortest = packageURI; }
-                    else { longest = packageURI; shortest = packageURI2; }
+                    String longest = packageURI2.length() >= packageURI.length() ? packageURI2 : packageURI;
+                    String shortest = packageURI2.length() < packageURI.length() ? packageURI2 : packageURI;
                     while (!longest.startsWith(shortest) && shortest.lastIndexOf('/') > 0) {
                         shortest = shortest.substring(0, shortest.lastIndexOf('/'));
                     }
