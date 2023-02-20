@@ -27,7 +27,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashSet;
 
 /**
  * A {@link Map} containing {@link Info} objects consumed by the {@link Parser}.
@@ -345,22 +344,4 @@ public class InfoMap extends HashMap<String,List<Info>> {
         return put(0, info);
     }
 
-    /** Initialize copiedDeclarations for cppName we need to copy declarations from. */
-    void normalizeCopy() {
-        HashSet<String> copyFrom = new HashSet<>();
-        for (List<Info> infoList: values()) {
-            for (Info i: infoList) {
-                if (i.copyFrom != null)
-                    copyFrom.addAll(i.copyFrom);
-            }
-        }
-        for (String cppName: copyFrom) {
-            Info i = getFirst(cppName);
-            if (i == null) {
-                i = new Info(cppName);
-                put(i);
-            }
-            i.copiedDeclarations = new CopiedDeclarations();
-        }
-    }
 }

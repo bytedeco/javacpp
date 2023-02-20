@@ -131,12 +131,6 @@ public class Info {
     String javaText = null;
     /** List of cpp names (class, struct, member function) the declarations of which we want to copy in this class or struct. */
     List<String> copyFrom = null;
-    /** If not-null, declarations for these cpp names are copied.
-     * Set to non-null by InfoMap.normalizeCopy or for polymorphic classes. */
-    CopiedDeclarations copiedDeclarations = null;
-    /** Set by Parser when a class has a virtual member function or inherit from a polymorphic class. */
-    boolean polymorphic = false;
-
 
     public Info cppNames(String... cppNames) { this.cppNames = cppNames; return this; }
     public Info javaNames(String... javaNames) { this.javaNames = javaNames; return this; }
