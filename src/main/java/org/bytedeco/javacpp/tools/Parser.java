@@ -2638,9 +2638,9 @@ public class Parser {
                         CopiedDeclarations cd = copiedDeclarations.get(type.constructor ?
                                 dcl.cppName + "::" + dcl.cppName.substring(namespace + 2) :
                                 dcl.cppName);
-                        if (cd != null) cd.add(decl, fullname, modifiers, context.namespace);
+                        if (cd != null) cd.add(decl, fullname, modifiers, context);
                         if (context.copiedDeclarations != null && !type.constructor)
-                            context.copiedDeclarations.add(decl, fullname, modifiers, context.namespace);
+                            context.copiedDeclarations.add(decl, fullname, modifiers, context);
                     }
                 }
                 if (type.virtual && context.virtualize) {
@@ -3611,6 +3611,7 @@ public class Parser {
                         d.text += modifiers + d.declarator.type.annotations + context.shorten(d.declarator.type.javaName) + " " + d.declarator.javaName + d.declarator.parameters.list + ";\n";
                     }
 
+                    declList2.templateMap = cd.templateMap;
                     declList2.add(d, cd.fullname);
                 }
             }
