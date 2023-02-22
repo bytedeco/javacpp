@@ -449,7 +449,7 @@ public class Builder {
     /**
      * Creates and returns the directory where output files should be placed.
      * Uses {@link #outputDirectory} as is when available, but falls back
-     * on the shortest common path to the classes as well as the platform
+     * on the longest common path to the classes as well as the platform
      * specific library path when available, or the platform name itself
      * and the user provided extension when not.
      *
@@ -476,12 +476,12 @@ public class Builder {
                 String resourceURL = Loader.findResource(classes[0], resourceName).toString();
                 String packageURI = resourceURL.substring(0, resourceURL.lastIndexOf('/') + 1);
                 for (int i = 1; i < classes.length; i++) {
-                    // Use shortest common package name among all classes as default output path
+                    // Use the longest common package name among all classes as default output path
                     String resourceName2 = '/' + classes[i].getName().replace('.', '/')  + ".class";
                     String resourceURL2 = Loader.findResource(classes[i], resourceName2).toString();
                     String packageURI2 = resourceURL2.substring(0, resourceURL2.lastIndexOf('/') + 1);
 
-                    String longest = packageURI2.length() > packageURI.length() ? packageURI2 : packageURI;
+                    String longest = packageURI2.length() >= packageURI.length() ? packageURI2 : packageURI;
                     String shortest = packageURI2.length() < packageURI.length() ? packageURI2 : packageURI;
                     while (!longest.startsWith(shortest) && shortest.lastIndexOf('/') > 0) {
                         shortest = shortest.substring(0, shortest.lastIndexOf('/'));
