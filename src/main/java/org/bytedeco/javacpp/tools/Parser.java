@@ -2253,8 +2253,8 @@ public class Parser {
             return false;
         }
 
-        int namespace = dcl.cppName.lastIndexOf("::");
-        if (context.namespace != null && namespace < 0) {
+        boolean hasNamespace = dcl.cppName.contains("::");
+        if (context.namespace != null && !hasNamespace) {
             dcl.cppName = context.namespace + "::" + dcl.cppName;
         }
         Info info = null, fullInfo = null;
@@ -2446,8 +2446,8 @@ public class Parser {
             } else {
                 dcl = declarator(context, null, n / 2, (info == null || !info.skipDefaults) && n % 2 != 0, 0, false, false);
                 type = dcl.type;
-                namespace = dcl.cppName.lastIndexOf("::");
-                if (context.namespace != null && namespace < 0) {
+                hasNamespace = dcl.cppName.contains("::");
+                if (context.namespace != null && !hasNamespace) {
                     dcl.cppName = context.namespace + "::" + dcl.cppName;
                 }
             }
@@ -2635,9 +2635,17 @@ public class Parser {
                     // to be useful anyway.
                     // We don't copy extraDecl either that is only used for friends and that calls a static method.
                     if (!decl.declarator.type.staticMember && !decl.inaccessible) {
-                        CopiedDeclarations cd = copiedDeclarations.get(type.constructor ?
-                                dcl.cppName + "::" + dcl.cppName.substring(namespace + 2) :
-                                dcl.cppName);
+                        final String key;
+                        if (type.constructor) {
+                            int template = dcl.cppName.indexOf('<');
+                            if (template < 0) template = dcl.cppName.length();
+                            int namespace = dcl.cppName.lastIndexOf("::", template);
+                            if (namespace < 0) namespace = -2;
+                            key = dcl.cppName + "::" + dcl.cppName.substring(namespace + 2, template);
+                        } else {
+                            key = dcl.cppName;
+                        }
+                        CopiedDeclarations cd = copiedDeclarations.get(key);
                         if (cd != null) cd.add(decl, fullname, modifiers, context);
                         if (context.copiedDeclarations != null && !type.constructor)
                             context.copiedDeclarations.add(decl, fullname, modifiers, context);
