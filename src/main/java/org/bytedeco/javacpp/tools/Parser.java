@@ -3603,7 +3603,9 @@ public class Parser {
                                 modifiers += ann + " ";
                         }
                     }
-                    if (d.declarator.type != null && d.declarator.type.constructor) {
+                    if (infoCopyTo != null && infoCopyTo.javaText != null)
+                        d.text = "\n" + infoCopyTo.javaText;
+                    else if (d.declarator.type != null && d.declarator.type.constructor) {
                         Parameters params = d.declarator.parameters;
                         d.text = "\npublic " + shortName + params.list + " { super((Pointer)null); allocate" + params.names + "; }\n" +
                                 d.declarator.type.annotations + "private native void allocate" + params.list + ";\n";
