@@ -27,6 +27,10 @@ import org.bytedeco.javacpp.annotation.ByVal;
 import org.bytedeco.javacpp.annotation.Cast;
 import org.bytedeco.javacpp.annotation.Virtual;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * Holds information useful to the {@link Parser} and associated with C++ identifiers.
  * Info objects are meant to be added by the user to an {@link InfoMap} passed as
@@ -65,6 +69,7 @@ public class Info {
         base = i.base;
         cppText = i.cppText;
         javaText = i.javaText;
+        copyFrom = i.copyFrom == null ? null : new ArrayList<>(i.copyFrom);
     }
 
     /** A list of C++ identifiers, expressions, or header filenames to which this info is to be bound.
@@ -124,6 +129,8 @@ public class Info {
     String cppText = null;
     /** Outputs the given code, instead of the result parsed from the declaration of C++ identifiers. */
     String javaText = null;
+    /** List of cpp names (class, struct, member function) the declarations of which we want to copy in this class or struct. */
+    List<String> copyFrom = null;
 
     public Info cppNames(String... cppNames) { this.cppNames = cppNames; return this; }
     public Info javaNames(String... javaNames) { this.javaNames = javaNames; return this; }
@@ -161,4 +168,5 @@ public class Info {
     public Info base(String base) { this.base = base; return this; }
     public Info cppText(String cppText) { this.cppText = cppText; return this; }
     public Info javaText(String javaText) { this.javaText = javaText; return this; }
+    public Info copyFrom(String... cppNames) { this.copyFrom = Arrays.asList(cppNames); return this; }
 }

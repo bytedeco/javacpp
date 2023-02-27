@@ -33,6 +33,25 @@ class Declaration {
             incomplete = false, function = false, variable = false, comment = false, custom = false;
     String signature = "", text = "";
 
+    public Declaration() {
+    }
+
+    Declaration(Declaration src) {
+        // Shallow copy is enough for the current usage
+        type = src.type;
+        declarator = src.declarator;
+        abstractMember = src.abstractMember;
+        constMember = src.constMember;
+        inaccessible = src.inaccessible;
+        incomplete = src.incomplete;
+        function = src.function;
+        variable = src.variable;
+        comment = src.comment;
+        custom = src.custom;
+        signature = src.signature;
+        text = src.text;
+    }
+
     public String toString() {
         return text;
     }
