@@ -141,7 +141,7 @@ public class Parser {
         return s;
     }
 
-    private boolean noTemplate(String s) {
+    private static boolean noTemplate(String s) {
         return templateStrip(s).length() == s.length();
     }
 
