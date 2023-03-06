@@ -3401,28 +3401,23 @@ public class Parser {
         }
 
         boolean isQualified = namespaceSplit(type.cppName).size() > 1;
-        if (type.cppName.length() > 0 && context.namespace != null && !isQualified) {
+        if (context.namespace != null && !isQualified) {
             type.cppName = context.namespace + "::" + type.cppName;
             originalName = context.namespace + "::" + originalName;
         }
-        Info info;
-        if (type.cppName.length() == 0)
-            info = null;
-        else {
-            info = infoMap.getFirst(type.cppName);
-            if (((info == null || info.base == null) && skipBase) || (info != null && info.skip)) {
-                decl.text = "";
-                declList.add(decl);
-                return true;
-            } else if (info != null && info.pointerTypes != null && info.pointerTypes.length > 0) {
-                type.javaName = context.constName != null ? context.constName : info.pointerTypes[0].substring(info.pointerTypes[0].lastIndexOf(" ") + 1);
-                name = context.shorten(type.javaName);
-            } else if (info == null && !friend) {
-                if (type.javaName.length() > 0 && context.javaName != null) {
-                    type.javaName = context.javaName + "." + type.javaName;
-                }
-                infoMap.put(info = new Info(type.cppName).pointerTypes(type.javaName));
+        Info info = infoMap.getFirst(type.cppName);
+        if (((info == null || info.base == null) && skipBase) || (info != null && info.skip)) {
+            decl.text = "";
+            declList.add(decl);
+            return true;
+        } else if (info != null && info.pointerTypes != null && info.pointerTypes.length > 0) {
+            type.javaName = context.constName != null ? context.constName : info.pointerTypes[0].substring(info.pointerTypes[0].lastIndexOf(" ") + 1);
+            name = context.shorten(type.javaName);
+        } else if (info == null && !friend) {
+            if (type.javaName.length() > 0 && context.javaName != null) {
+                type.javaName = context.javaName + "." + type.javaName;
             }
+            infoMap.put(info = new Info(type.cppName).pointerTypes(type.javaName));
         }
         Type base = new Type("Pointer");
         Iterator<Type> it = baseClasses.iterator();
