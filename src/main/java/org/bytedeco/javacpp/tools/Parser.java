@@ -2174,6 +2174,8 @@ public class Parser {
 
         int startIndex = tokens.index;
         Type type = type(context);
+        context = new Context(context);
+        context.virtualize &= type.virtual;
         Parameters params = parameters(context, 0, false);
         Declarator dcl = new Declarator();
         Declaration decl = new Declaration();
@@ -2563,7 +2565,7 @@ public class Parser {
             }
 
             // add @Const annotation only for const virtual functions
-            if (decl.constMember && type.virtual && context.virtualize) {
+            if (decl.constMember && context.virtualize) {
                 if (type.annotations.contains("@Const")) {
                     type.annotations = incorporateConstAnnotation(type.annotations, 2, true);
                 } else {
@@ -2572,7 +2574,7 @@ public class Parser {
             }
 
             // add @Virtual annotation on user request only, inherited through context
-            if (type.virtual && context.virtualize) {
+            if (context.virtualize) {
                 modifiers = "@Virtual" + (decl.abstractMember ? "(true) " : " ")
                           + (context.inaccessible ? "protected native " : "public native ");
             }
@@ -2627,7 +2629,7 @@ public class Parser {
                     first = false;
                     if (extraDecl != null) declList.add(extraDecl);
                 }
-                if (type.virtual && context.virtualize) {
+                if (context.virtualize) {
                     break;
                 }
             } else if (found && n / 2 > 0 && n % 2 == 0 && n / 2 > Math.max(dcl.infoNumber, dcl.parameters.infoNumber)) {
