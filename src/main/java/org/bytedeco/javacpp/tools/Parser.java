@@ -865,7 +865,7 @@ public class Parser {
 
         // perform template substitution
         if (context.templateMap != null) {
-            List<String> types = Templates.nsSplit(type.cppName);
+            List<String> types = Templates.splitNamespace(type.cppName);
             String separator = "";
             type.cppName = "";
             List<Type> arguments = new ArrayList<>();
@@ -973,8 +973,8 @@ public class Parser {
         }
 
         // produce some appropriate name for the peer Java class, relying on Info if available
-        List<String> nsComps = Templates.nsSplit(type.cppName);
-        type.javaName = Templates.hasNone(type.cppName) ? nsComps.get(nsComps.size()-1) : type.cppName;
+        List<String> typeSplit = Templates.splitNamespace(type.cppName);
+        type.javaName = Templates.notExists(type.cppName) ? typeSplit.get(typeSplit.size() - 1) : type.cppName;
         if (info != null) {
             if (type.indirections == 0 && !type.reference && info.valueTypes != null && info.valueTypes.length > 0) {
                 type.javaName = info.valueTypes[0];
@@ -1012,19 +1012,19 @@ public class Parser {
         if (context.cppName != null && type.javaName.length() > 0) {
             String cppName = type.cppName;
             String groupName = context.cppName;
-            String cppNameNoTemplate = Templates.strip(cppName);
-            String groupNameNoTemplate = Templates.strip(groupName);
-            if (cppNameNoTemplate.length() == cppName.length() && groupNameNoTemplate.length() != groupName.length()) {
-                groupName = groupNameNoTemplate;
-            } else if (cppNameNoTemplate.length() != cppName.length() && groupNameNoTemplate.length() == groupName.length()) {
-                cppName = cppNameNoTemplate;
+            String cppNameStripped = Templates.strip(cppName);
+            String groupNameStripped = Templates.strip(groupName);
+            if (cppNameStripped.length() == cppName.length() && groupNameStripped.length() != groupName.length()) {
+                groupName = groupNameStripped;
+            } else if (cppNameStripped.length() != cppName.length() && groupNameStripped.length() == groupName.length()) {
+                cppName = cppNameStripped;
             }
-            List<String> cppNameComps = Templates.nsSplit(cppName);
-            List<String> groupNameComps = Templates.nsSplit(groupName);
-            if (cppNameComps.size() == 1 && groupNameComps.size() > 1)
-                groupName = groupNameComps.get(groupNameComps.size() - 1);
-            else if (cppNameComps.size() > 1 && groupNameComps.size() == 1)
-                cppName = cppNameComps.get(cppNameComps.size() - 1);
+            List<String> cppNameSplit = Templates.splitNamespace(cppName);
+            List<String> groupNameSplit = Templates.splitNamespace(groupName);
+            if (cppNameSplit.size() == 1 && groupNameSplit.size() > 1)
+                groupName = groupNameSplit.get(groupNameSplit.size() - 1);
+            else if (cppNameSplit.size() > 1 && groupNameSplit.size() == 1)
+                cppName = cppNameSplit.get(cppNameSplit.size() - 1);
             if (cppName.equals(groupName) || groupName.startsWith(cppName + "<")) {
                 type.constructor = !type.destructor && !type.operator
                         && type.indirections == 0 && !type.reference && tokens.get().match('(', ':');
@@ -1513,7 +1513,7 @@ public class Parser {
         // pick the Java name from the InfoMap if appropriate
         String originalName = fieldPointer ? groupInfo.pointerTypes[0] : dcl.javaName;
         if (attr == null && defaultName == null && info != null && info.javaNames != null && info.javaNames.length > 0
-                && (dcl.operator || Templates.hasNone(info.cppNames[0]) || (context.templateMap != null && context.templateMap.type == null))) {
+                && (dcl.operator || Templates.notExists(info.cppNames[0]) || (context.templateMap != null && context.templateMap.type == null))) {
             dcl.javaName = info.javaNames[0];
         }
 
@@ -2023,7 +2023,7 @@ public class Parser {
                     // perform template substitution
                     String cppName = token.value;
                     if (context.templateMap != null) {
-                        List<String> types = Templates.nsSplit(cppName);
+                        List<String> types = Templates.splitNamespace(cppName);
                         String separator = "";
                         cppName = "";
                         for (String t : types) {
@@ -2233,7 +2233,7 @@ public class Parser {
             return false;
         }
 
-        boolean isQualified = Templates.nsSplit(dcl.cppName).size() > 1;
+        boolean isQualified = Templates.splitNamespace(dcl.cppName).size() > 1;
         if (context.namespace != null && !isQualified) {
             dcl.cppName = context.namespace + "::" + dcl.cppName;
         }
@@ -2280,8 +2280,8 @@ public class Parser {
         if (info == null) {
             if (type.constructor) {
                 // get Info explicitly associated with all constructors
-                List<String> comps = Templates.nsSplit(dcl.cppName);
-                String name = Templates.strip(comps.get(comps.size()-1));
+                List<String> cppNameSplit = Templates.splitNamespace(dcl.cppName);
+                String name = Templates.strip(cppNameSplit.get(cppNameSplit.size() - 1));
                 info = fullInfo = infoMap.getFirst(dcl.cppName + "::" + name);
             }
             if (info == null) {
@@ -2295,7 +2295,7 @@ public class Parser {
         if (localName.startsWith(context.namespace + "::")) {
             localName = dcl.cppName.substring(context.namespace.length() + 2);
         }
-        boolean localNamespace = Templates.nsSplit(localName).size() > 1;
+        boolean localNamespace = Templates.splitNamespace(localName).size() > 1;
         Info info2 = infoMap.getFirst(null);
         boolean friendly = info != null ? info.friendly : info2 != null ? info2.friendly : false;
         if ((type.friend && !friendly) || tokens.get().match("&&") || (context.javaName == null && localNamespace) || (info != null && info.skip)) {
@@ -2407,7 +2407,7 @@ public class Parser {
             } else {
                 dcl = declarator(context, null, n / 2, (info == null || !info.skipDefaults) && n % 2 != 0, 0, false, false);
                 type = dcl.type;
-                isQualified = Templates.nsSplit(dcl.cppName).size() > 1;
+                isQualified = Templates.splitNamespace(dcl.cppName).size() > 1;
                 if (context.namespace != null && !isQualified) {
                     dcl.cppName = context.namespace + "::" + dcl.cppName;
                 }
@@ -3358,7 +3358,7 @@ public class Parser {
             }
         }
 
-        boolean isQualified = Templates.nsSplit(type.cppName).size() > 1;
+        boolean isQualified = Templates.splitNamespace(type.cppName).size() > 1;
         if (context.namespace != null && !isQualified) {
             type.cppName = context.namespace + "::" + type.cppName;
             originalName = context.namespace + "::" + originalName;
@@ -3504,10 +3504,10 @@ public class Parser {
                 pointerConstructor |= d.text.contains("private native void allocate(Pointer");
                 implicitConstructor &= !d.text.contains("private native void allocate(");
                 String baseType = d.declarator.type.cppName;
-                List<String> baseTypeComps = Templates.nsSplit(baseType);
-                baseType = baseType.substring(0, baseType.length() - baseTypeComps.get(baseTypeComps.size()-1).length() - 2);
-                String baseNoTemplate = Templates.strip(base.cppName);
-                if (Templates.hasNone(baseType) && baseNoTemplate.length() != base.cppName.length() && baseType.equals(baseNoTemplate)) {
+                List<String> baseTypeSplit = Templates.splitNamespace(baseType);
+                baseType = baseType.substring(0, baseType.length() - baseTypeSplit.get(baseTypeSplit.size() - 1).length() - 2);
+                String baseStripped = Templates.strip(base.cppName);
+                if (Templates.notExists(baseType) && baseStripped.length() != base.cppName.length() && baseType.equals(baseStripped)) {
                     baseType = base.cppName;
                 }
                 List<Info> infoList = infoMap.get(baseType);
