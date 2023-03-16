@@ -3200,9 +3200,8 @@ public class Parser {
         String cppName = dcl.type.cppName;
         String baseType = context.baseType;
         if (baseType != null) {
-            boolean noTemplate = Templates.strip(cppName).length() == cppName.length();
             String baseTypeStripped = Templates.strip(baseType);
-            if (noTemplate && cppName.startsWith(baseTypeStripped)) {
+            if (Templates.notExists(cppName) && cppName.startsWith(baseTypeStripped)) {
                 cppName = baseType + cppName.substring(baseTypeStripped.length());
             }
         }
