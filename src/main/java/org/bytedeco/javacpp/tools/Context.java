@@ -90,6 +90,7 @@ class Context {
         }
         List<String> names = new ArrayList<String>();
         String ns = namespace != null ? namespace : "";
+        String prefix = infoMap.normalize(cppName, false, true);
         while (ns != null) {
             String name = ns.length() > 0 ? ns + "::" + cppName : cppName;
             if (parameters != null && name.endsWith(parameters)) {
@@ -118,7 +119,6 @@ class Context {
             names.add(name);
 
             for (String s : usingList) {
-                String prefix = infoMap.normalize(cppName, false, true);
                 int i = s.lastIndexOf("::") + 2;
                 String ns2 = ns.length() > 0 ? ns + "::" + s.substring(0, i) : s.substring(0, i);
                 String suffix = s.substring(i);
