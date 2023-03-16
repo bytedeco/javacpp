@@ -230,13 +230,13 @@ public class InfoMap extends HashMap<String,List<Info>> {
                     break;
                 }
             }
-            for (int i = 0; i < parameters; i++) {
-                if (i > lastColon && tokens[i].match('<')) {
+            for (int i = lastColon + 1; i < parameters; i++) {
+                if (tokens[i].match('<')) {
                     if (count == 0) {
                         template = i;
                     }
                     count++;
-                } else if (i > lastColon && tokens[i].match('>')) {
+                } else if (tokens[i].match('>')) {
                     count--;
                     if (count == 0 && i + 1 != parameters) {
                         template = -1;
