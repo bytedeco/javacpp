@@ -62,6 +62,7 @@ public class Info {
         skipDefaults = i.skipDefaults;
         purify = i.purify;
         virtualize = i.virtualize;
+        share = i.share;
         base = i.base;
         cppText = i.cppText;
         javaText = i.javaText;
@@ -118,6 +119,9 @@ public class Info {
     boolean purify = false;
     /** Annotates virtual functions with @{@link Virtual} and adds appropriate constructors. */
     boolean virtualize = false;
+    /** Allows instances of this class to be passed as shared_ptr, and ensures new instances are allocated
+     * with make_shared. */
+    boolean share = false;
     /** Allows to override the base class of {@link #pointerTypes}. Defaults to {@link Pointer}. */
     String base = null;
     /** Replaces the code associated with the declaration of C++ identifiers, before parsing. */
@@ -158,6 +162,8 @@ public class Info {
     public Info purify(boolean purify) { this.purify = purify; return this; }
     public Info virtualize() { this.virtualize = true; return this; }
     public Info virtualize(boolean virtualize) { this.virtualize = virtualize; return this; }
+    public Info share() { this.share = true; return this; }
+    public Info share(boolean share) { this.share = share; return this; }
     public Info base(String base) { this.base = base; return this; }
     public Info cppText(String cppText) { this.cppText = cppText; return this; }
     public Info javaText(String javaText) { this.javaText = javaText; return this; }

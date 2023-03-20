@@ -33,7 +33,8 @@ class Type {
     int indirections = 0;
     boolean anonymous = false, constExpr = false, constPointer = false, constValue = false, constructor = false,
             destructor = false, operator = false, simple = false, staticMember = false, using = false,
-            reference = false, rvalue = false, value = false, friend = false, typedef = false, virtual = false;
+            reference = false, rvalue = false, value = false, friend = false, typedef = false, virtual = false,
+            share = false;
     String annotations = "", cppName = "", javaName = "", javaNames[] = null;
     Type[] arguments = null;
     Attribute[] attributes = null;
