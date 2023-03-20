@@ -21,4 +21,5 @@ public @interface Virtual {
     /** Pure (abstract) or not. */
     boolean value() default false;
     boolean subclasses() default true;
+    String javaName() default "";
 }

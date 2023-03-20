@@ -31,6 +31,7 @@ import java.util.regex.Pattern;
 class Templates {
 
     static final Pattern templatePattern = Pattern.compile("<[^<>=]*>");
+    static final Pattern smartPointerPattern = Pattern.compile("\\w+::(?:unique|weak|shared)_ptr<");
 
     /** Remove template arguments from s, taking care of nested templates, default arguments (xxx<>), operator <=>, ->, etc... */
     static String strip(String s) {
@@ -73,5 +74,9 @@ class Templates {
         }
         comps.add(s.substring(start));
         return comps;
+    }
+
+    public static boolean isSmartPointer(String cppName) {
+        return smartPointerPattern.matcher(cppName).lookingAt();
     }
 }

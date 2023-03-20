@@ -124,6 +124,11 @@ public class Info {
     String cppText = null;
     /** Outputs the given code, instead of the result parsed from the declaration of C++ identifiers. */
     String javaText = null;
+    /** Whether an explicit static_cast is needed to upcast a pointer to this cppName.
+     *  This is necessary for polymorphic classes that are virtually inherited from. */
+    boolean explicitUpcast = false;
+
+
 
     public Info cppNames(String... cppNames) { this.cppNames = cppNames; return this; }
     public Info javaNames(String... javaNames) { this.javaNames = javaNames; return this; }
@@ -161,4 +166,6 @@ public class Info {
     public Info base(String base) { this.base = base; return this; }
     public Info cppText(String cppText) { this.cppText = cppText; return this; }
     public Info javaText(String javaText) { this.javaText = javaText; return this; }
+    public Info explicitUpcast() { this.explicitUpcast = true; return this; }
+    public Info explicitUpcast(boolean eu) { this.explicitUpcast = eu; return this; }
 }
