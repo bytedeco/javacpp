@@ -54,6 +54,7 @@ class Context {
         templateMap = c.templateMap;
         usingList = c.usingList;
         namespaceMap = c.namespaceMap;
+        explicitUpcast = c.explicitUpcast;
     }
 
     String namespace = null;
@@ -73,6 +74,7 @@ class Context {
     TemplateMap templateMap = null;
     List<String> usingList = null;
     Map<String,String> namespaceMap = null;
+    boolean explicitUpcast = false;
 
     /** Return all likely combinations of namespaces and template arguments for this C++ type */
     String[] qualify(String cppName) {

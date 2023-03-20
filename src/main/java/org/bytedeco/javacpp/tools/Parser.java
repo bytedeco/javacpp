@@ -141,6 +141,28 @@ public class Parser {
         return text;
     }
 
+    private static final Pattern accessModifierPattern = Pattern.compile("\\b(private|protected|public)\\b");
+
+    private static String explicitCastMethodName(String javaName) {
+        String shortName = javaName.substring(javaName.lastIndexOf('.') + 1);
+        return "as" + shortName;
+    }
+
+    private static String joinList(List<?> list, String separator) {
+        StringBuilder sb = new StringBuilder();
+        boolean b =  false;
+        for (Object o: list) {
+            if (b) sb.append(separator);
+            else b = true;
+            sb.append(o);
+        }
+        return sb.toString();
+    }
+
+    private static String removeAnnotations(String s) {
+        return s.substring(s.lastIndexOf(' ') + 1);
+    }
+
     void containers(Context context, DeclarationList declList) throws ParserException {
         List<String> basicContainers = new ArrayList<>();
         for (Info info : infoMap.get("basic/containers")) {
@@ -2582,20 +2604,25 @@ public class Parser {
 
                     // Rebuild a parameters list without the annotations.
                     StringBuilder sb = new StringBuilder();
+                    boolean firstParam = true;
                     for (Declarator param : dcl.parameters.declarators) {
-                        if (sb.length() > 0) {
+                        if (firstParam) {
+                            firstParam = false;
+                        } else {
                             sb.append(", ");
                         }
-                        sb.append(removeAnnotations(param.type.javaName)).append(" ").append(param.javaName);
+                        sb.append(removeAnnotations(param.type.javaName)).append(' ').append(param.javaName);
                     }
-                    decl.text += accessModifier + " " + (staticMethod ? "static " : "")
-                              +  removeAnnotations(type.javaName) + " " + dcl.javaName + "(" + sb + ") { "
-                              +  (type.javaName.equals("void") ? "" : "return ")
-                              +  (context.upcast && !staticMethod ? upcastMethodName(context.javaName) + "()." : "")
-                              +  "_" + dcl.javaName + (dcl.parameters.names == null ? "()" : dcl.parameters.names) + "; }\n";
-                    dcl.javaName = "_" + dcl.javaName;
+                    boolean staticMethod = type.staticMember || type.friend || context.javaName == null;
+                    decl.text += accessModifier + ' '
+                        + (staticMethod ? "static ": "")
+                        + removeAnnotations(type.javaName) + " " + dcl.javaName + '(' + sb + ") {  "
+                        + (type.javaName.equals("void") ? "" : "return ")
+                        + (context.explicitUpcast && !staticMethod ? explicitCastMethodName(context.javaName) + "()." : "")
+                        + '_' + dcl.javaName + (dcl.parameters.names == null ? "()" : dcl.parameters.names) + "; }\n";
+                    dcl.javaName = '_' + dcl.javaName;
                 }
-                decl.text += modifiers2 + type.annotations + context.shorten(type.javaName) + " " + dcl.javaName + dcl.parameters.list + ";\n";
+                decl.text += nativeModifiers + type.annotations + context.shorten(type.javaName) + " " + dcl.javaName + dcl.parameters.list + ";\n";
             }
             decl.signature = dcl.signature;
 
@@ -3354,15 +3381,18 @@ public class Parser {
         boolean anonymous = !typedef && type.cppName.length() == 0, derivedClass = false, skipBase = false;
         if (type.cppName.length() > 0 && tokens.get().match(':')) {
             derivedClass = true;
+            boolean virtualInheritance = false;
+            boolean accessible = !ctx.inaccessible;
             for (Token token = tokens.next(); !token.match(Token.EOF); token = tokens.next()) {
-                boolean accessible = !ctx.inaccessible;
                 if (token.match(Token.VIRTUAL)) {
+                    virtualInheritance = true;
                     continue;
                 } else if (token.match(Token.PRIVATE, Token.PROTECTED, Token.PUBLIC)) {
                     accessible = token.match(Token.PUBLIC);
-                    tokens.next();
+                    continue;
                 }
                 Type t = type(context);
+                t.virtual = virtualInheritance;
                 Info info = infoMap.getFirst(t.cppName);
                 if (info != null && info.skip) {
                     skipBase = true;
@@ -3373,6 +3403,8 @@ public class Parser {
                 if (tokens.get().expect(',', '{').match('{')) {
                     break;
                 }
+                virtualInheritance = false;
+                accessible = !ctx.inaccessible;
             }
         }
         if (typedef && type.indirections > 0) {
@@ -3470,15 +3502,29 @@ public class Parser {
             }
             infoMap.put(info = new Info(type.cppName).pointerTypes(type.javaName));
         }
-        Type base = new Type("Pointer");
+
+        // Choose the base Java type: first base C++ type which is not flattened
+        // Keep the others in baseClasses to generate asX() casts.
+        // Detect virtual inheritance.
+        // If no C++ base type suits, use Pointer.
+        boolean polymorphic = false;
+        Type base = null;
         Iterator<Type> it = baseClasses.iterator();
         while (it.hasNext()) {
             Type next = it.next();
+            boolean nextPolymorphic = polymorphicClasses.contains(next.javaName);
+            polymorphic |= nextPolymorphic;
             Info nextInfo = infoMap.getFirst(next.cppName);
-            if (nextInfo == null || !nextInfo.flatten) {
+            if (nextInfo != null && nextInfo.flatten)
+                continue;
+            if (nextPolymorphic && next.virtual && !next.explicitUpcast) {
+                // We can detect this only if the superclass is parsed before.
+                logger.warn(type.cppName + " virtually inherits from polymorphic class " + next.cppName +
+                    ". Consider adding an explicitUpcast Info on " + next.cppName + ".");
+            }
+            if (base == null) {
                 base = next;
                 it.remove();
-                break;
             }
         }
         String casts = "";
@@ -3596,6 +3642,7 @@ public class Parser {
                 pointerConstructor = false, abstractClass = info != null && info.purify && !ctx.virtualize,
                 allPureConst = true, haveVariables = false;
         for (Declaration d : declList2) {
+            polymorphic |= d.declarator != null && d.declarator.type != null && d.declarator.type.virtual;
             if (d.declarator != null && d.declarator.type != null && d.declarator.type.using && decl.text != null) {
                 // inheriting constructors
                 defaultConstructor |= d.text.contains("private native void allocate();");
@@ -3722,6 +3769,8 @@ public class Parser {
                 decl.custom = true;
             }
         }
+        if (polymorphic) polymorphicClasses.add(type.javaName);
+
         for (Declaration d : declList2) {
             if ((!d.inaccessible || d.declarator != null && d.declarator.type.friend)
                     && (d.declarator == null || d.declarator.type == null
