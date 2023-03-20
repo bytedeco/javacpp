@@ -130,6 +130,17 @@ public class Parser {
         return text;
     }
 
+    private static String joinList(List<?> list, String separator) {
+        StringBuilder sb = new StringBuilder();
+        boolean b =  false;
+        for (Object o: list) {
+            if (b) sb.append(separator);
+            else b = true;
+            sb.append(o);
+        }
+        return sb.toString();
+    }
+
     void containers(Context context, DeclarationList declList) throws ParserException {
         List<String> basicContainers = new ArrayList<>();
         for (Info info : infoMap.get("basic/containers")) {
@@ -2537,7 +2548,10 @@ public class Parser {
 
             // add @Virtual annotation on user request only, inherited through context
             if (type.virtual && context.virtualize) {
-                modifiers = "@Virtual" + (decl.abstractMember ? "(true) " : " ")
+                ArrayList<String> attrs = new ArrayList<>();
+                if (decl.abstractMember) attrs.add("value = true");
+                if (!context.virtualizeInheritance) attrs.add("inherited = false");
+                modifiers = "@Virtual" + (attrs.size() == 0 ? " " : ('(' + joinList(attrs, ", ") + ") "))
                           + (context.inaccessible ? "protected native " : "public native ");
             }
 
@@ -3464,6 +3478,7 @@ public class Parser {
         if (info != null) {
             if (info.virtualize)
                 ctx.virtualize = true;
+            ctx.virtualizeInheritance = info.virtualizeInheritance;
             if (info.immutable)
                 ctx.immutable = true;
             if (info.beanify)
