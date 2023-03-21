@@ -2355,7 +2355,7 @@ public class Parser {
             }
         }
 
-        type = postDeclarator(context, decl, dcl, dcl.type);
+        type = postDeclarator(context, decl, dcl, type);
         context = new Context(context);
         context.virtualize &= type.virtual;
 
