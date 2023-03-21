@@ -2355,7 +2355,7 @@ public class Parser {
             }
         }
 
-        type = postDeclarator(context, decl, dcl, type);
+        type = functionAfter(context, decl, dcl, type);
         context = new Context(context);
         context.virtualize &= type.virtual;
 
@@ -2444,7 +2444,7 @@ public class Parser {
                 }
             }
 
-            type = postDeclarator(context, decl, dcl, type);
+            type = functionAfter(context, decl, dcl, type);
 
             if (tokens.get().match('{')) {
                 body();
@@ -2587,7 +2587,8 @@ public class Parser {
     /** Parse function declaration or definition after parameters:
      * const, attributes, trailing type, pure virtual functions.
      * Updates dcl, decl and/or type accordingly. */
-    Type postDeclarator(Context context, Declaration decl, Declarator dcl, Type type) throws ParserException {
+    Type functionAfter(Context context, Declaration decl, Declarator dcl, Type type) throws ParserException {
+        // check for const, other attributes, and pure virtual functions, ignoring the body if present
         for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.get()) {
             if (token.match(Token.CONST, Token.__CONST, Token.CONSTEXPR)) {
                 decl.constMember = true;
