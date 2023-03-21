@@ -2355,6 +2355,10 @@ public class Parser {
             }
         }
 
+        type = functionAfter(context, decl, dcl, type);
+        context = new Context(context);
+        context.virtualize &= type.virtual;
+
         List<Declarator> prevDcl = new ArrayList<Declarator>();
         boolean first = true;
         for (int n = -2; n < Integer.MAX_VALUE; n++) {
@@ -2440,32 +2444,8 @@ public class Parser {
                 }
             }
 
-            // check for const, other attributes, and pure virtual functions, ignoring the body if present
-            for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.get()) {
-                if (token.match(Token.CONST, Token.__CONST, Token.CONSTEXPR)) {
-                    decl.constMember = true;
-                    token = tokens.next();
-                } else if (token.match(Token.OVERRIDE)) {
-                    type.virtual = true;
-                    // token = tokens.next();
-                    // let through for user defined annotations
-                }
-                if (token.match('&', "&&")) {
-                    // ignore?
-                    token = tokens.next();
-                }
-                Attribute attr = attribute();
-                if (attr != null && attr.annotation) {
-                    dcl.type.annotations += attr.javaName;
-                } else if (attr == null) {
-                    break;
-                }
-            }
-            if (tokens.get().match("->")) {
-                // auto type
-                tokens.next();
-                type = type(context);
-            }
+            type = functionAfter(context, decl, dcl, type);
+
             if (tokens.get().match('{')) {
                 body();
             } else {
@@ -2527,7 +2507,7 @@ public class Parser {
             }
 
             // add @Const annotation only for const virtual functions
-            if (decl.constMember && type.virtual && context.virtualize) {
+            if (decl.constMember && context.virtualize) {
                 if (type.annotations.contains("@Const")) {
                     type.annotations = incorporateConstAnnotation(type.annotations, 2, true);
                 } else {
@@ -2536,7 +2516,7 @@ public class Parser {
             }
 
             // add @Virtual annotation on user request only, inherited through context
-            if (type.virtual && context.virtualize) {
+            if (context.virtualize) {
                 modifiers = "@Virtual" + (decl.abstractMember ? "(true) " : " ")
                           + (context.inaccessible ? "protected native " : "public native ");
             }
@@ -2591,7 +2571,7 @@ public class Parser {
                     first = false;
                     if (extraDecl != null) declList.add(extraDecl);
                 }
-                if (type.virtual && context.virtualize) {
+                if (context.virtualize) {
                     // Prevent creation of overloads, that are not supported by the generated C++ proxy class.
                     break;
                 }
@@ -2602,6 +2582,39 @@ public class Parser {
         }
         declList.spacing = null;
         return true;
+    }
+
+    /** Parse function declaration or definition after parameters:
+     * const, attributes, trailing type, pure virtual functions.
+     * Updates dcl, decl and/or type accordingly. */
+    Type functionAfter(Context context, Declaration decl, Declarator dcl, Type type) throws ParserException {
+        // check for const, other attributes, and pure virtual functions, ignoring the body if present
+        for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.get()) {
+            if (token.match(Token.CONST, Token.__CONST, Token.CONSTEXPR)) {
+                decl.constMember = true;
+                token = tokens.next();
+            } else if (token.match(Token.OVERRIDE)) {
+                type.virtual = true;
+                // token = tokens.next();
+                // let through for user defined annotations
+            }
+            if (token.match('&', "&&") || token.match(Token.VOLATILE)) {
+                // ignore?
+                token = tokens.next();
+            }
+            Attribute attr = attribute();
+            if (attr != null && attr.annotation) {
+                dcl.type.annotations += attr.javaName;
+            } else if (attr == null) {
+                break;
+            }
+        }
+        if (tokens.get().match("->")) {
+            // auto type
+            tokens.next();
+            type = type(context);
+        }
+        return type;
     }
 
     boolean variable(Context context, DeclarationList declList) throws ParserException {

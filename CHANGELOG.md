@@ -1,4 +1,5 @@
 
+ * Fix `Parser` observing `Info.virtualize` for non-virtual functions ([pull #658](https://github.com/bytedeco/javacpp/pull/658))
  * Use regex in `Parser` to match more robustly templates and namespaces ([pull #657](https://github.com/bytedeco/javacpp/pull/657))
  * Fix `Builder` default output path for class names with the same length ([pull #654](https://github.com/bytedeco/javacpp/pull/654))
  * Add `Info.friendly` to have `Parser` map some `friend` functions to Java methods ([pull #649](https://github.com/bytedeco/javacpp/pull/649))
