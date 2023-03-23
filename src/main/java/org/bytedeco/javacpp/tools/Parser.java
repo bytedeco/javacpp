@@ -171,6 +171,10 @@ public class Parser {
                     indexType.cppName = "size_t";
                     indexType.javaName = "long";
                     valueType = containerType.arguments[0];
+                    if (resizable) {
+                        Info valueInfo = infoMap.getFirst(valueType.cppName);
+                        resizable = valueInfo == null || valueInfo.defaultInsertable;
+                    }
                 }
                 String indexFunction = "(function = \"at\")";
                 String iteratorType = "iterator";

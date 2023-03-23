@@ -65,6 +65,7 @@ public class Info {
         base = i.base;
         cppText = i.cppText;
         javaText = i.javaText;
+        defaultInsertable = i.defaultInsertable;
     }
 
     /** A list of C++ identifiers, expressions, or header filenames to which this info is to be bound.
@@ -124,6 +125,10 @@ public class Info {
     String cppText = null;
     /** Outputs the given code, instead of the result parsed from the declaration of C++ identifiers. */
     String javaText = null;
+    /** If a type is not DefaultInsertable (has no default constructor), containers with this value type won't try to implement resize(). */
+    boolean defaultInsertable = true;
+
+
 
     public Info cppNames(String... cppNames) { this.cppNames = cppNames; return this; }
     public Info javaNames(String... javaNames) { this.javaNames = javaNames; return this; }
@@ -161,4 +166,6 @@ public class Info {
     public Info base(String base) { this.base = base; return this; }
     public Info cppText(String cppText) { this.cppText = cppText; return this; }
     public Info javaText(String javaText) { this.javaText = javaText; return this; }
+    public Info notDefaultInsertable() { this.defaultInsertable = false; return this; }
+    public Info defaultInsertable(boolean di) { this.defaultInsertable = di; return this; }
 }
