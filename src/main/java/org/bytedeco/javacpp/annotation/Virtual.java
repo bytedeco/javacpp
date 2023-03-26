@@ -20,5 +20,5 @@ import org.bytedeco.javacpp.tools.Generator;
 public @interface Virtual {
     /** Pure (abstract) or not. */
     boolean value() default false;
-    boolean inherited() default true;
+    boolean subclasses() default true;
 }

@@ -48,7 +48,6 @@ class Context {
         beanify = c.beanify;
         objectify = c.objectify;
         virtualize = c.virtualize;
-        virtualizeInheritance = c.virtualizeInheritance;
         variable = c.variable;
         infoMap = c.infoMap;
         templateMap = c.templateMap;
@@ -67,7 +66,6 @@ class Context {
     boolean beanify = false;
     boolean objectify = false;
     boolean virtualize = false;
-    boolean virtualizeInheritance = true;
     Declarator variable = null;
     InfoMap infoMap = null;
     TemplateMap templateMap = null;
