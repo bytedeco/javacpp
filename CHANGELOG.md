@@ -1,4 +1,7 @@
 
+ * Fix `Loader.getPlatform()` detection for `linux-armhf` with Temurin JDK ([issue bytedeco/javacv#2001](https://github.com/bytedeco/javacv/issues/2001))
+ * Fix `Parser` ignoring `Info.skip` for enumerators that do not get translated ([issue bytedeco/javacpp-presets#1315](https://github.com/bytedeco/javacpp-presets/issues/1315))
+ * Fix `Parser` error on C++17 style namespace declarations containing `::` separators ([issue #595](https://github.com/bytedeco/javacpp/issues/595))
  * Fix `Parser` observing `Info.virtualize` for non-virtual functions ([pull #658](https://github.com/bytedeco/javacpp/pull/658))
  * Use regex in `Parser` to match more robustly templates and namespaces ([pull #657](https://github.com/bytedeco/javacpp/pull/657))
  * Fix `Builder` default output path for class names with the same length ([pull #654](https://github.com/bytedeco/javacpp/pull/654))

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2021 Samuel Audet
+ * Copyright (C) 2013-2023 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -3819,7 +3819,9 @@ public class Parser {
                         } else if (context.namespace != null && context.javaName == null) {
                             annotations += "@Namespace(\"" + context.namespace + "\") ";
                         }
-                        extraText += "\n" + annotations + "public static native @MemberGetter " + javaType + " " + javaName + "();\n";
+                        if (info == null || !info.skip) {
+                            extraText += "\n" + annotations + "public static native @MemberGetter " + javaType + " " + javaName + "();\n";
+                        }
                         enumPrefix = "public static final " + javaType;
                         countPrefix = javaName + "()";
                     }
@@ -3986,10 +3988,13 @@ public class Parser {
         String spacing = tokens.get().spacing;
         String name = null;
         tokens.next();
-        if (tokens.get().match(Token.IDENTIFIER)) {
+        while (tokens.get().match(Token.IDENTIFIER)) {
             // get the name, unless anonymous
-            name = tokens.get().value;
-            tokens.next();
+            name = (name != null ? name : "") + tokens.get().value;
+            if (tokens.next().match("::")) {
+                name += tokens.get();
+                tokens.next();
+            }
         }
         if (tokens.get().match('=')) {
             // deal with namespace aliases

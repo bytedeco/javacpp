@@ -126,7 +126,7 @@ public class Loader {
                 osArch = "x86_64";
             } else if (osArch.startsWith("aarch64") || osArch.startsWith("armv8") || osArch.startsWith("arm64")) {
                 osArch = "arm64";
-            } else if ((osArch.startsWith("arm")) && ((abiType.equals("gnueabihf")) || (libPath.contains("openjdk-armhf")))) {
+            } else if ((osArch.startsWith("arm")) && ((abiType.equals("gnueabihf")) || (libPath.contains("jdk-armhf")))) {
                 osArch = "armhf";
             } else if (osArch.startsWith("arm")) {
                 osArch = "arm";
