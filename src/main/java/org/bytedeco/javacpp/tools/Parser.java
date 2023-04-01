@@ -2357,8 +2357,7 @@ public class Parser {
 
         type = functionAfter(context, decl, dcl, type);
         context = new Context(context);
-        if (info != null) context.virtualize |= info.virtualize;
-        context.virtualize &= type.virtual;
+        context.virtualize = (context.virtualize && type.virtual) || (info != null && info.virtualize);
 
         List<Declarator> prevDcl = new ArrayList<Declarator>();
         boolean first = true;
