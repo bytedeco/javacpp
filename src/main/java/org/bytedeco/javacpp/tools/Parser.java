@@ -2357,7 +2357,7 @@ public class Parser {
 
         type = functionAfter(context, decl, dcl, type);
         context = new Context(context);
-        context.virtualize &= type.virtual;
+        context.virtualize = (context.virtualize && type.virtual) || (info != null && info.virtualize);
 
         List<Declarator> prevDcl = new ArrayList<Declarator>();
         boolean first = true;
@@ -2516,7 +2516,7 @@ public class Parser {
             }
 
             // add @Virtual annotation on user request only, inherited through context
-            if (context.virtualize) {
+            if (context.virtualize && !type.annotations.contains("@Virtual")) {
                 modifiers = "@Virtual" + (decl.abstractMember ? "(true) " : " ")
                           + (context.inaccessible ? "protected native " : "public native ");
             }
