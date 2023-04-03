@@ -988,14 +988,15 @@ public class Parser {
             } else if (info.javaNames != null && info.javaNames.length > 0) {
                 type.javaName = info.javaNames[0];
                 type.javaNames = info.javaNames;
-           }
+            }
+            type.shared = info.share;
         }
 
         String typeCppNameStripped = Templates.strip(type.cppName);
         if (typeCppNameStripped.endsWith(":shared_ptr")) {
             Info argInfo = infoMap.getFirst(type.arguments[0].cppName);
             if (argInfo != null && argInfo.share) {
-                type.share = true;
+                type.shared_ptr = true;
                 type.javaName = type.arguments[0].javaName;
                 type.javaNames = type.arguments[0].javaNames;
                 type.annotations += "@SharedPtr ";
@@ -1049,6 +1050,12 @@ public class Parser {
             }
             type.javaName = context.shorten(type.javaName);
         }
+<<<<<<< HEAD
+=======
+        type.explicitUpcast =
+            info != null && info.explicitUpcast
+                || type.shared_ptr && type.arguments[0].explicitUpcast;
+>>>>>>> 4f60b6a7 (Move Context.share to Type)
         return type;
     }
 
@@ -1382,7 +1389,7 @@ public class Parser {
         if ((!typedef || dcl.parameters != null)
                 && (constInfo == null || (constInfo.cppTypes != null && constInfo.cppTypes.length > 0))
                 && (info == null || (info.cppTypes != null && info.cppTypes.length > 0))
-                && !type.share) {
+                && !type.shared_ptr) {
             // substitute template types that have no info with appropriate adapter annotation
             Type type2 = type;
             if (info != null) {
@@ -2553,7 +2560,7 @@ public class Parser {
             }
             if (type.constructor && params != null) {
                 decl.text += "public " + context.shorten(context.javaName) + dcl.parameters.list + " { super((Pointer)null); allocate" + params.names + "; }\n" +
-                    (context.share ? "@SharedPtr ": "") + type.annotations + "private native void allocate" + dcl.parameters.list + ";\n";
+                    (type.shared ? "@SharedPtr ": "") + type.annotations + "private native void allocate" + dcl.parameters.list + ";\n";
             } else {
                 decl.text += modifiers + type.annotations + context.shorten(type.javaName) + " " + dcl.javaName + dcl.parameters.list + ";\n";
             }
@@ -3500,7 +3507,6 @@ public class Parser {
                 ctx.immutable = true;
             if (info.beanify)
                 ctx.beanify = true;
-            ctx.share = info.share;
         }
         ctx.baseType = base.cppName;
 
@@ -3601,7 +3607,7 @@ public class Parser {
                              "    public " + shortName + "(long size) { super((Pointer)null); allocateArray(size); }\n" +
                              "    /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */\n" +
                              "    public " + shortName + "(Pointer p) { super(p); }\n" +
-                             "    " + (ctx.share ? "@SharedPtr " : "") + "private native void allocate();\n" +
+                             "    " + (type.shared ? "@SharedPtr " : "") + "private native void allocate();\n" +
                              "    private native void allocateArray(long size);\n" +
                              "    @Override public " + shortName + " position(long position) {\n" +
                              "        return (" + shortName + ")super.position(position);\n" +
