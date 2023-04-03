@@ -1364,7 +1364,7 @@ public class Generator {
             out.println("        this->ptr = ptr;");
             out.println("        this->size = size;");
             out.println("        this->owner = owner;");
-            out.println("        this->sharedPtr = owner != NULL && owner != ptr ? *(SU*)owner : S((TU*)ptr);");
+            out.println("        this->sharedPtr = owner != NULL && owner != ptr ? *(SU*)owner : SU((TU*)ptr);");
             out.println("    }");
             out.println("    static void deallocate(void* owner) { delete (SU*)owner; }");
             out.println("    operator TU*() {");
