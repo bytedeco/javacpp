@@ -1350,33 +1350,37 @@ public class Generator {
             out.println("#ifdef SHARED_PTR_NAMESPACE");
             out.println("template<class T> class SharedPtrAdapter {");
             out.println("public:");
-            out.println("    typedef SHARED_PTR_NAMESPACE::shared_ptr<T> S;");
-            out.println("    SharedPtrAdapter(const T* ptr, size_t size, void* owner) : ptr((T*)ptr), size(size), owner(owner),");
-            out.println("            sharedPtr2(owner != NULL && owner != ptr ? *(S*)owner : S((T*)ptr)), sharedPtr(sharedPtr2) { }");
-            out.println("    SharedPtrAdapter(const S& sharedPtr) : ptr(0), size(0), owner(0), sharedPtr2(sharedPtr), sharedPtr(sharedPtr2) { }");
-            out.println("    SharedPtrAdapter(      S& sharedPtr) : ptr(0), size(0), owner(0), sharedPtr(sharedPtr) { }");
-            out.println("    SharedPtrAdapter(const S* sharedPtr) : ptr(0), size(0), owner(0), sharedPtr(*(S*)sharedPtr) { }");
-            out.println("    void assign(T* ptr, size_t size, void* owner) {");
+            out.println("    typedef typename SHARED_PTR_NAMESPACE::remove_const<T>::type TU;");
+            out.println("    typedef typename SHARED_PTR_NAMESPACE::add_const<T>::type TC;");
+            out.println("    typedef SHARED_PTR_NAMESPACE::shared_ptr<TU> SU;");
+            out.println("    typedef SHARED_PTR_NAMESPACE::shared_ptr<TC> SC;");
+            out.println("    SharedPtrAdapter(const TU* ptr, size_t size, void* owner) : ptr((TU*)ptr), size(size), owner(owner),");
+            out.println("            sharedPtr2(owner != NULL && owner != ptr ? *(SU*)owner : SU((TU*)ptr)), sharedPtr(sharedPtr2) { }");
+            out.println("    SharedPtrAdapter(const SU& sharedPtr) : ptr(0), size(0), owner(0), sharedPtr2(sharedPtr), sharedPtr(sharedPtr2) { }");
+            out.println("    SharedPtrAdapter(      SU& sharedPtr) : ptr(0), size(0), owner(0), sharedPtr(sharedPtr) { }");
+            out.println("    SharedPtrAdapter(const SC& sharedPtr) : ptr(0), size(0), owner(0), sharedPtr2(std::const_pointer_cast<TU>(sharedPtr)), sharedPtr(sharedPtr2) { }");
+            out.println("    SharedPtrAdapter(const SU* sharedPtr) : ptr(0), size(0), owner(0), sharedPtr(*(SU*)sharedPtr) { }");
+            out.println("    void assign(TU* ptr, size_t size, void* owner) {");
             out.println("        this->ptr = ptr;");
             out.println("        this->size = size;");
             out.println("        this->owner = owner;");
-            out.println("        this->sharedPtr = owner != NULL && owner != ptr ? *(S*)owner : S((T*)ptr);");
+            out.println("        this->sharedPtr = owner != NULL && owner != ptr ? *(SU*)owner : S((TU*)ptr);");
             out.println("    }");
-            out.println("    static void deallocate(void* owner) { delete (S*)owner; }");
-            out.println("    operator typename SHARED_PTR_NAMESPACE::remove_const<T>::type*() {");
+            out.println("    static void deallocate(void* owner) { delete (SU*)owner; }");
+            out.println("    operator TU*() {");
             out.println("        ptr = sharedPtr.get();");
             out.println("        if (owner == NULL || owner == ptr) {");
-            out.println("            owner = new S(sharedPtr);");
+            out.println("            owner = new SU(sharedPtr);");
             out.println("        }");
-            out.println("        return (typename SHARED_PTR_NAMESPACE::remove_const<T>::type*)ptr;");
+            out.println("        return (TU*)ptr;");
             out.println("    }");
-            out.println("    operator S&() { return sharedPtr; }");
-            out.println("    operator S*() { return &sharedPtr; }");
-            out.println("    T* ptr;");
+            out.println("    operator SU&() { return sharedPtr; }");
+            out.println("    operator SU*() { return &sharedPtr; }");
+            out.println("    TU* ptr;");
             out.println("    size_t size;");
             out.println("    void* owner;");
-            out.println("    S sharedPtr2;");
-            out.println("    S& sharedPtr;");
+            out.println("    SU sharedPtr2;");
+            out.println("    SU& sharedPtr;");
             out.println("};");
             out.println("#endif");
             out.println();
@@ -2401,16 +2405,28 @@ public class Generator {
 
     String returnBefore(MethodInformation methodInfo) {
         String returnPrefix = "";
+        String[] typeName =
+            methodInfo.allocator || methodInfo.arrayAllocator ? cppTypeName(methodInfo.cls) :
+                (methodInfo.returnRaw ? new String[]{""}
+                    : cppCastTypeName(methodInfo.returnType, methodInfo.annotations));
         if (methodInfo.returnType == void.class) {
             if (methodInfo.allocator || methodInfo.arrayAllocator) {
+                String valueTypeName = valueTypeName(typeName);
+                AdapterInformation adapterInfo = adapterInformation(false, valueTypeName, methodInfo.annotations);
                 jclasses.index(methodInfo.cls); // makes sure to index all POD structs
-                String[] typeName = cppTypeName(methodInfo.cls);
-                returnPrefix = typeName[0] + " rptr" + typeName[1] + " = ";
+                if (adapterInfo == null) {
+                    returnPrefix = typeName[0] + " rptr" + typeName[1] + " = ";
+                } else {
+                    usesAdapters = true;
+                    String cast2 = adapterInfo.cast2.trim();
+                    if (cast2.length() > 0 && !cast2.startsWith("(") && !cast2.endsWith(")")) {
+                        cast2 = "(" + cast2 + ")";
+                    }
+                    returnPrefix = adapterInfo.name + " radapter(" + cast2;
+                }
             }
         } else {
             String cast = cast(methodInfo.returnType, methodInfo.annotations);
-            String[] typeName = methodInfo.returnRaw ? new String[] { "" }
-                    : cppCastTypeName(methodInfo.returnType, methodInfo.annotations);
             Annotation returnBy = by(methodInfo.annotations);
             if (FunctionPointer.class.isAssignableFrom(methodInfo.cls)
                     && !methodInfo.cls.isAnnotationPresent(Namespace.class)
@@ -2790,8 +2806,9 @@ public class Generator {
 
     void returnAfter(MethodInformation methodInfo) {
         String indent = methodInfo.throwsException != null ? "        " : "    ";
-        String[] typeName = methodInfo.returnRaw ? new String[] { "" }
-                : cppCastTypeName(methodInfo.returnType, methodInfo.annotations);
+        String[] typeName = methodInfo.allocator || methodInfo.arrayAllocator ? cppTypeName(methodInfo.cls) :
+            (methodInfo.returnRaw ? new String[]{""}
+                : cppCastTypeName(methodInfo.returnType, methodInfo.annotations));
         Annotation returnBy = by(methodInfo.annotations);
         String valueTypeName = valueTypeName(typeName);
         AdapterInformation adapterInfo = adapterInformation(false, valueTypeName, methodInfo.annotations);
@@ -2802,9 +2819,12 @@ public class Generator {
             // special considerations for std::string without adapter
             out.print(");\n" + indent + "rptr = rstr.c_str()");
         }
-        if (!methodInfo.returnType.isPrimitive() && adapterInfo != null) {
-            suffix = ")" + suffix;
-        }
+        if (adapterInfo != null)
+            if (methodInfo.allocator)
+                suffix = ", 1, NULL)" + suffix;
+            else if (!methodInfo.returnType.isPrimitive()) {
+                suffix = ")" + suffix;
+            }
         if ((Pointer.class.isAssignableFrom(methodInfo.returnType) ||
                 (methodInfo.returnType.isArray() &&
                  methodInfo.returnType.getComponentType().isPrimitive()) ||
@@ -2838,22 +2858,32 @@ public class Generator {
 
         if (methodInfo.returnType == void.class) {
             if (methodInfo.allocator || methodInfo.arrayAllocator) {
-                out.println(indent + "jlong rcapacity = " + (methodInfo.arrayAllocator ? "arg0;" : "1;"));
                 boolean noDeallocator = methodInfo.cls == Pointer.class ||
                         methodInfo.cls.isAnnotationPresent(NoDeallocator.class) ||
                         methodInfo.method.isAnnotationPresent(NoDeallocator.class);
-                out.print(indent + "JavaCPP_initPointer(env, obj, rptr, rcapacity, rptr, ");
-                if (noDeallocator) {
-                    out.println("NULL);");
-                } else if (methodInfo.arrayAllocator) {
-                    out.println("&JavaCPP_" + mangle(methodInfo.cls.getName()) + "_deallocateArray);");
-                    arrayDeallocators.index(methodInfo.cls);
+                if (adapterInfo != null) {
+                    out.println(indent + typeName[0] + " rptr = radapter;");
+                    out.println(indent + "jlong rcapacity = (jlong)radapter.size;");
+                    out.println(indent + "void* rowner = radapter.owner;");
+                    if (noDeallocator)
+                        out.println(indent + "void (*deallocator)(void*) = 0;");
+                    else
+                        out.println(indent + "void (*deallocator)(void*) = rowner != NULL ? &" + adapterInfo.name + "::deallocate : 0;");
+                    out.println(indent + "JavaCPP_initPointer(env, obj, rptr, rcapacity, rowner, deallocator);");
                 } else {
-                    out.println("&JavaCPP_" + mangle(methodInfo.cls.getName()) + "_deallocate);");
-                    deallocators.index(methodInfo.cls);
+                    out.println(indent + "jlong rcapacity = " + (methodInfo.arrayAllocator ? "arg0;" : "1;"));
+                    out.print(indent + "JavaCPP_initPointer(env, obj, rptr, rcapacity, rptr, ");
+                    if (noDeallocator) {
+                        out.println("NULL);");
+                    } else if (methodInfo.arrayAllocator) {
+                        out.println("&JavaCPP_" + mangle(methodInfo.cls.getName()) + "_deallocateArray);");
+                        arrayDeallocators.index(methodInfo.cls);
+                    } else {
+                        out.println("&JavaCPP_" + mangle(methodInfo.cls.getName()) + "_deallocate);");
+                        deallocators.index(methodInfo.cls);
+                    }
                 }
                 if (virtualFunctions.containsKey(methodInfo.cls)) {
-                    typeName = cppTypeName(methodInfo.cls);
                     valueTypeName = valueTypeName(typeName);
                     String subType = "JavaCPP_" + mangle(valueTypeName);
                     out.println(indent + "((" + subType + "*)rptr)->obj = env->NewWeakGlobalRef(obj);");
