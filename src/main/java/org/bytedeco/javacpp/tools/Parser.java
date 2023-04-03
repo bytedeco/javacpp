@@ -1050,12 +1050,6 @@ public class Parser {
             }
             type.javaName = context.shorten(type.javaName);
         }
-<<<<<<< HEAD
-=======
-        type.explicitUpcast =
-            info != null && info.explicitUpcast
-                || type.shared_ptr && type.arguments[0].explicitUpcast;
->>>>>>> 4f60b6a7 (Move Context.share to Type)
         return type;
     }
 
@@ -3259,6 +3253,20 @@ public class Parser {
         return true;
     }
 
+    static private String explicitCast(Type from, Type to, boolean override) {
+        String ecmn = "as" + to.javaName.substring(to.javaName.lastIndexOf('.') + 1);
+        String res = "    ";
+        if (override) res += "@Override ";
+        res += "public " + to.javaName + ' ' + ecmn + "() { return " + ecmn + "(this); }\n";
+        if (to.shared && from.shared)
+            res += "    @Namespace public static native @SharedPtr @Name(\"SHARED_PTR_NAMESPACE::static_pointer_cast<" + to.cppName + ">\") "
+                + to.javaName + " " + ecmn + "(@Cast({\"\", \"SHARED_PTR_NAMESPACE::shared_ptr<" + from.cppName + ">\"}) @SharedPtr " + from.javaName + " pointer);\n";
+        else
+            res += "    @Namespace public static native @Name(\"static_cast<" + to.cppName + "*>\") "
+                + to.javaName + " " + ecmn + "(" + from.javaName + " pointer);\n";
+        return res;
+    }
+
     boolean group(Context context, DeclarationList declList) throws ParserException {
         int backIndex = tokens.index;
         String spacing = tokens.get().spacing;
@@ -3431,10 +3439,7 @@ public class Parser {
             for (Type t : baseClasses) {
                 Info baseInfo = infoMap.getFirst(t.cppName);
                 if (!t.javaName.equals("Pointer") && (baseInfo == null || !baseInfo.skip)) {
-                    String shortName = t.javaName.substring(t.javaName.lastIndexOf('.') + 1);
-                    casts += "    public " + t.javaName + " as" + shortName + "() { return as" + shortName + "(this); }\n"
-                            + "    @Namespace public static native @Name(\"static_cast<" + t.cppName + "*>\") "
-                            + t.javaName + " as" + shortName + "(" + type.javaName + " pointer);\n";
+                    casts += explicitCast(type, t, false);
                 }
             }
         }
