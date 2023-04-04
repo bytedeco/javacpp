@@ -2091,7 +2091,7 @@ public class Generator {
         while (c != null && c != Object.class && !Modifier.isAbstract(cls.getModifiers())) {
             // consider non-duplicate virtual functions from superclasses as well, unless abstract anyway
             for (Method m : c.getDeclaredMethods()) {
-                if (m.isAnnotationPresent(Virtual.class)) {
+                if (m.isAnnotationPresent(Virtual.class) && m.getAnnotation(Virtual.class).subclasses()) {
                     boolean found = false;
                     String name = m.getName();
                     Class<?>[] types = m.getParameterTypes();

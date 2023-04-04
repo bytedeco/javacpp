@@ -1,4 +1,5 @@
 
+ * Provide `@Virtual(subclasses=false)` to prevent `Generator` from subclassing subclasses ([pull #660](https://github.com/bytedeco/javacpp/pull/660))
  * Fix `Loader.getPlatform()` detection for `linux-armhf` with Temurin JDK ([issue bytedeco/javacv#2001](https://github.com/bytedeco/javacv/issues/2001))
  * Fix `Parser` ignoring `Info.skip` for enumerators that do not get translated ([issue bytedeco/javacpp-presets#1315](https://github.com/bytedeco/javacpp-presets/issues/1315))
  * Fix `Parser` error on C++17 style namespace declarations containing `::` separators ([issue #595](https://github.com/bytedeco/javacpp/issues/595))
