@@ -938,11 +938,9 @@ public class Parser {
             }
         }
 
-        if (info != null && info.cppTypes != null && info.cppTypes.length > 0 && !info.cppTypes[0].equals(type.cppName)) {
+        if (info != null && info.cppTypes != null && info.cppTypes.length > 0) {
             // use user defined type
             type.cppName = info.cppTypes[0];
-            Type type2 = new Parser(this, type.cppName).type(context);
-            type.arguments = type2.arguments;
         }
 
         // remove const, * and & after user defined substitution for consistency
@@ -988,23 +986,7 @@ public class Parser {
             } else if (info.javaNames != null && info.javaNames.length > 0) {
                 type.javaName = info.javaNames[0];
                 type.javaNames = info.javaNames;
-            }
-            type.shared = info.share;
-        }
-
-        String typeCppNameStripped = Templates.strip(type.cppName);
-        if (typeCppNameStripped.endsWith(":shared_ptr")) {
-            Info argInfo = infoMap.getFirst(type.arguments[0].cppName);
-            if (argInfo != null && argInfo.share) {
-                type.shared_ptr = true;
-                type.javaName = type.arguments[0].javaName;
-                type.javaNames = type.arguments[0].javaNames;
-                type.annotations += "@SharedPtr ";
-                if (type.indirections == 0 && !type.reference)
-                    type.annotations += "@Cast({\"\", \"" + typeCppNameStripped + "<" + type.arguments[0].cppName + ">\"}) ";
-                    // not using type.cppName since it could contain a const we do not want
-                    // so that the resulting value can be passed to functions accepting either shared_ptr to const or to non-const
-            }
+           }
         }
 
         if (type.operator) {
@@ -1024,8 +1006,7 @@ public class Parser {
         }
         if (info != null && info.annotations != null) {
             for (String s : info.annotations) {
-                if (!type.annotations.contains(s))
-                    type.annotations += s + " ";
+                type.annotations += s + " ";
             }
         }
         if (context.cppName != null && type.javaName.length() > 0) {
@@ -1382,8 +1363,7 @@ public class Parser {
                   : infoMap.getFirst(type.cppName, false);
         if ((!typedef || dcl.parameters != null)
                 && (constInfo == null || (constInfo.cppTypes != null && constInfo.cppTypes.length > 0))
-                && (info == null || (info.cppTypes != null && info.cppTypes.length > 0))
-                && !type.shared_ptr) {
+                && (info == null || (info.cppTypes != null && info.cppTypes.length > 0))) {
             // substitute template types that have no info with appropriate adapter annotation
             Type type2 = type;
             if (info != null) {
@@ -2554,7 +2534,7 @@ public class Parser {
             }
             if (type.constructor && params != null) {
                 decl.text += "public " + context.shorten(context.javaName) + dcl.parameters.list + " { super((Pointer)null); allocate" + params.names + "; }\n" +
-                    (type.shared ? "@SharedPtr ": "") + type.annotations + "private native void allocate" + dcl.parameters.list + ";\n";
+                             type.annotations + "private native void allocate" + dcl.parameters.list + ";\n";
             } else {
                 decl.text += modifiers + type.annotations + context.shorten(type.javaName) + " " + dcl.javaName + dcl.parameters.list + ";\n";
             }
@@ -3253,20 +3233,6 @@ public class Parser {
         return true;
     }
 
-    static private String explicitCast(Type from, Type to, boolean override) {
-        String ecmn = "as" + to.javaName.substring(to.javaName.lastIndexOf('.') + 1);
-        String res = "    ";
-        if (override) res += "@Override ";
-        res += "public " + to.javaName + ' ' + ecmn + "() { return " + ecmn + "(this); }\n";
-        if (to.shared && from.shared)
-            res += "    @Namespace public static native @SharedPtr @Name(\"SHARED_PTR_NAMESPACE::static_pointer_cast<" + to.cppName + ">\") "
-                + to.javaName + " " + ecmn + "(@Cast({\"\", \"SHARED_PTR_NAMESPACE::shared_ptr<" + from.cppName + ">\"}) @SharedPtr " + from.javaName + " pointer);\n";
-        else
-            res += "    @Namespace public static native @Name(\"static_cast<" + to.cppName + "*>\") "
-                + to.javaName + " " + ecmn + "(" + from.javaName + " pointer);\n";
-        return res;
-    }
-
     boolean group(Context context, DeclarationList declList) throws ParserException {
         int backIndex = tokens.index;
         String spacing = tokens.get().spacing;
@@ -3439,7 +3405,10 @@ public class Parser {
             for (Type t : baseClasses) {
                 Info baseInfo = infoMap.getFirst(t.cppName);
                 if (!t.javaName.equals("Pointer") && (baseInfo == null || !baseInfo.skip)) {
-                    casts += explicitCast(type, t, false);
+                    String shortName = t.javaName.substring(t.javaName.lastIndexOf('.') + 1);
+                    casts += "    public " + t.javaName + " as" + shortName + "() { return as" + shortName + "(this); }\n"
+                            + "    @Namespace public static native @Name(\"static_cast<" + t.cppName + "*>\") "
+                            + t.javaName + " as" + shortName + "(" + type.javaName + " pointer);\n";
                 }
             }
         }
@@ -3612,7 +3581,7 @@ public class Parser {
                              "    public " + shortName + "(long size) { super((Pointer)null); allocateArray(size); }\n" +
                              "    /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */\n" +
                              "    public " + shortName + "(Pointer p) { super(p); }\n" +
-                             "    " + (type.shared ? "@SharedPtr " : "") + "private native void allocate();\n" +
+                             "    private native void allocate();\n" +
                              "    private native void allocateArray(long size);\n" +
                              "    @Override public " + shortName + " position(long position) {\n" +
                              "        return (" + shortName + ")super.position(position);\n" +
