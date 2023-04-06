@@ -2401,15 +2401,12 @@ public class Generator {
 
     String returnBefore(MethodInformation methodInfo) {
         String returnPrefix = "";
-        String[] typeName =
-            methodInfo.allocator || methodInfo.arrayAllocator ? cppTypeName(methodInfo.cls) :
-                (methodInfo.returnRaw ? new String[]{""}
-                    : cppCastTypeName(methodInfo.returnType, methodInfo.annotations));
         if (methodInfo.returnType == void.class) {
             if (methodInfo.allocator || methodInfo.arrayAllocator) {
+                jclasses.index(methodInfo.cls); // makes sure to index all POD structs
+                String[] typeName = cppTypeName(methodInfo.cls);
                 String valueTypeName = valueTypeName(typeName);
                 AdapterInformation adapterInfo = adapterInformation(false, valueTypeName, methodInfo.annotations);
-                jclasses.index(methodInfo.cls); // makes sure to index all POD structs
                 if (adapterInfo == null) {
                     returnPrefix = typeName[0] + " rptr" + typeName[1] + " = ";
                 } else {
@@ -2423,6 +2420,8 @@ public class Generator {
             }
         } else {
             String cast = cast(methodInfo.returnType, methodInfo.annotations);
+            String[] typeName = methodInfo.returnRaw ? new String[] { "" }
+                    : cppCastTypeName(methodInfo.returnType, methodInfo.annotations);
             Annotation returnBy = by(methodInfo.annotations);
             if (FunctionPointer.class.isAssignableFrom(methodInfo.cls)
                     && !methodInfo.cls.isAnnotationPresent(Namespace.class)
