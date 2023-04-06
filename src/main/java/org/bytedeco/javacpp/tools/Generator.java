@@ -2857,7 +2857,7 @@ public class Generator {
                         methodInfo.cls.isAnnotationPresent(NoDeallocator.class) ||
                         methodInfo.method.isAnnotationPresent(NoDeallocator.class);
                 if (adapterInfo != null) {
-                    out.println(indent + typeName[0] + " rptr = radapter;");
+                    out.println(indent + typeName[0] + " rptr" + typeName[1] + " = radapter;");
                     out.println(indent + "jlong rcapacity = (jlong)radapter.size;");
                     out.println(indent + "void* rowner = radapter.owner;");
                     if (noDeallocator)
