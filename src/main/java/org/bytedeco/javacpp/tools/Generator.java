@@ -2801,9 +2801,9 @@ public class Generator {
 
     void returnAfter(MethodInformation methodInfo) {
         String indent = methodInfo.throwsException != null ? "        " : "    ";
-        String[] typeName = methodInfo.allocator || methodInfo.arrayAllocator ? cppTypeName(methodInfo.cls) :
-            (methodInfo.returnRaw ? new String[]{""}
-                : cppCastTypeName(methodInfo.returnType, methodInfo.annotations));
+        String[] typeName = methodInfo.allocator || methodInfo.arrayAllocator
+                ? cppTypeName(methodInfo.cls) : methodInfo.returnRaw ? new String[] { "" }
+                : cppCastTypeName(methodInfo.returnType, methodInfo.annotations);
         Annotation returnBy = by(methodInfo.annotations);
         String valueTypeName = valueTypeName(typeName);
         AdapterInformation adapterInfo = adapterInformation(false, valueTypeName, methodInfo.annotations);
@@ -2814,12 +2814,13 @@ public class Generator {
             // special considerations for std::string without adapter
             out.print(");\n" + indent + "rptr = rstr.c_str()");
         }
-        if (adapterInfo != null)
-            if (methodInfo.allocator)
+        if (adapterInfo != null) {
+            if (methodInfo.allocator || methodInfo.arrayAllocator) {
                 suffix = ", 1, NULL)" + suffix;
-            else if (!methodInfo.returnType.isPrimitive()) {
+            } else if (!methodInfo.returnType.isPrimitive()) {
                 suffix = ")" + suffix;
             }
+        }
         if ((Pointer.class.isAssignableFrom(methodInfo.returnType) ||
                 (methodInfo.returnType.isArray() &&
                  methodInfo.returnType.getComponentType().isPrimitive()) ||
