@@ -77,6 +77,14 @@ void storeSharedData(std::shared_ptr<SharedData> s) {
     sharedData->data = 13;
 }
 
+int useCount() {
+    return sharedData.use_count();
+}
+
+int useCount(std::shared_ptr<SharedData>& s) {
+    return s.use_count();
+}
+
 std::shared_ptr<SharedData> fetchSharedData() {
     std::shared_ptr<SharedData> s = sharedData;
     sharedData.reset();

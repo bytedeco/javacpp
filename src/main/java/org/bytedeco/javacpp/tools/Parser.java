@@ -2108,7 +2108,7 @@ public class Parser {
                     } catch (NumberFormatException e) { /* don't care if not int */ }
                 }
             }
-            if (!hasDefault || !useDefaults) {
+            if (dcl != null && (!hasDefault || !useDefaults)) {
                 dcls.add(dcl);
             }
             if (tokens.get().expect(',', ')').match(',')) {
@@ -3166,7 +3166,7 @@ public class Parser {
                         info.valueTypes(info.pointerTypes != null ? info.pointerTypes : new String[] {typeName});
                         info.pointerTypes("PointerPointer");
                     } else if (info.pointerTypes == null) {
-                        info.pointerTypes(typeName);
+                        info.pointerTypes(dcl.type.javaName);
                     }
                     if (info.annotations == null) {
                         if (dcl.type.annotations != null && dcl.type.annotations.length() > 0

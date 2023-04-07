@@ -82,7 +82,7 @@ public class AdapterTest {
     static class SharedData extends Pointer {
         SharedData(Pointer p) { super(p); }
         SharedData(int data) { allocate(data); }
-        native void allocate(int data);
+        @SharedPtr native void allocate(int data);
 
         native int data(); native SharedData data(int data);
     }
@@ -90,6 +90,8 @@ public class AdapterTest {
     static native @SharedPtr SharedData createSharedData();
     static native void storeSharedData(@SharedPtr SharedData s);
     static native @SharedPtr SharedData fetchSharedData();
+    static native int useCount();
+    static native int useCount(@SharedPtr SharedData s);
 
     static class UniqueData extends Pointer {
         UniqueData(Pointer p) { super(p); }
@@ -264,12 +266,17 @@ public class AdapterTest {
         System.out.println("SharedPtr");
         SharedData sharedData = createSharedData();
         assertEquals(42, sharedData.data());
+        assertEquals(2, useCount(sharedData)); // 1 in Java shareData, 1 in JNI sharePtr2
 
         storeSharedData(sharedData);
+        assertEquals(2, useCount()); // 1 in C++ static var, 1 in Java sharedData
+
         sharedData.deallocate();
+        assertEquals(1, useCount());
 
         sharedData = fetchSharedData();
         assertEquals(13, sharedData.data());
+        assertEquals(0, useCount());
 
         final SharedData[] sharedData2 = new SharedData[1];
         int data = testCallback(new SharedFunction() {
@@ -281,12 +288,29 @@ public class AdapterTest {
         }, sharedData);
         assertEquals(2 * 13, sharedData2[0].data());
         assertEquals(2 * 3 * 13, data);
+        assertEquals(3, useCount(sharedData)); // 1 in JNI sharePtr2, 1 in sharedData, 1 in sharedData2[0]
 
         sharedData.deallocate();
         sharedData2[0].deallocate();
 
         assertEquals(1, constructorCount());
         assertEquals(1, destructorCount());
+
+        SharedData sd = new SharedData(45);
+        assertEquals(2, useCount(sd));
+        storeSharedData(sd);
+        assertEquals(3, useCount(sd));
+
+        sd.deallocate();
+        assertEquals(1, useCount());
+        sd = fetchSharedData();
+        assertEquals(2, useCount(sd));
+        assertEquals(13, sd.data());
+        sd.deallocate();
+
+        assertEquals(2, constructorCount());
+        assertEquals(2, destructorCount());
+
         System.gc();
     }
 

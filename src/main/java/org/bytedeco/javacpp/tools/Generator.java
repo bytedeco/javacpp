@@ -2405,7 +2405,18 @@ public class Generator {
             if (methodInfo.allocator || methodInfo.arrayAllocator) {
                 jclasses.index(methodInfo.cls); // makes sure to index all POD structs
                 String[] typeName = cppTypeName(methodInfo.cls);
-                returnPrefix = typeName[0] + " rptr" + typeName[1] + " = ";
+                String valueTypeName = valueTypeName(typeName);
+                AdapterInformation adapterInfo = adapterInformation(false, valueTypeName, methodInfo.annotations);
+                if (adapterInfo == null) {
+                    returnPrefix = typeName[0] + " rptr" + typeName[1] + " = ";
+                } else {
+                    usesAdapters = true;
+                    String cast2 = adapterInfo.cast2.trim();
+                    if (cast2.length() > 0 && !cast2.startsWith("(") && !cast2.endsWith(")")) {
+                        cast2 = "(" + cast2 + ")";
+                    }
+                    returnPrefix = adapterInfo.name + " radapter(" + cast2;
+                }
             }
         } else {
             String cast = cast(methodInfo.returnType, methodInfo.annotations);
@@ -2790,7 +2801,8 @@ public class Generator {
 
     void returnAfter(MethodInformation methodInfo) {
         String indent = methodInfo.throwsException != null ? "        " : "    ";
-        String[] typeName = methodInfo.returnRaw ? new String[] { "" }
+        String[] typeName = methodInfo.allocator || methodInfo.arrayAllocator
+                ? cppTypeName(methodInfo.cls) : methodInfo.returnRaw ? new String[] { "" }
                 : cppCastTypeName(methodInfo.returnType, methodInfo.annotations);
         Annotation returnBy = by(methodInfo.annotations);
         String valueTypeName = valueTypeName(typeName);
@@ -2802,8 +2814,12 @@ public class Generator {
             // special considerations for std::string without adapter
             out.print(");\n" + indent + "rptr = rstr.c_str()");
         }
-        if (!methodInfo.returnType.isPrimitive() && adapterInfo != null) {
-            suffix = ")" + suffix;
+        if (adapterInfo != null) {
+            if (methodInfo.allocator || methodInfo.arrayAllocator) {
+                suffix = ", 1, NULL)" + suffix;
+            } else if (!methodInfo.returnType.isPrimitive()) {
+                suffix = ")" + suffix;
+            }
         }
         if ((Pointer.class.isAssignableFrom(methodInfo.returnType) ||
                 (methodInfo.returnType.isArray() &&
@@ -2838,22 +2854,32 @@ public class Generator {
 
         if (methodInfo.returnType == void.class) {
             if (methodInfo.allocator || methodInfo.arrayAllocator) {
-                out.println(indent + "jlong rcapacity = " + (methodInfo.arrayAllocator ? "arg0;" : "1;"));
                 boolean noDeallocator = methodInfo.cls == Pointer.class ||
                         methodInfo.cls.isAnnotationPresent(NoDeallocator.class) ||
                         methodInfo.method.isAnnotationPresent(NoDeallocator.class);
-                out.print(indent + "JavaCPP_initPointer(env, obj, rptr, rcapacity, rptr, ");
-                if (noDeallocator) {
-                    out.println("NULL);");
-                } else if (methodInfo.arrayAllocator) {
-                    out.println("&JavaCPP_" + mangle(methodInfo.cls.getName()) + "_deallocateArray);");
-                    arrayDeallocators.index(methodInfo.cls);
+                if (adapterInfo != null) {
+                    out.println(indent + typeName[0] + " rptr" + typeName[1] + " = radapter;");
+                    out.println(indent + "jlong rcapacity = (jlong)radapter.size;");
+                    out.println(indent + "void* rowner = radapter.owner;");
+                    if (noDeallocator)
+                        out.println(indent + "void (*deallocator)(void*) = 0;");
+                    else
+                        out.println(indent + "void (*deallocator)(void*) = rowner != NULL ? &" + adapterInfo.name + "::deallocate : 0;");
+                    out.println(indent + "JavaCPP_initPointer(env, obj, rptr, rcapacity, rowner, deallocator);");
                 } else {
-                    out.println("&JavaCPP_" + mangle(methodInfo.cls.getName()) + "_deallocate);");
-                    deallocators.index(methodInfo.cls);
+                    out.println(indent + "jlong rcapacity = " + (methodInfo.arrayAllocator ? "arg0;" : "1;"));
+                    out.print(indent + "JavaCPP_initPointer(env, obj, rptr, rcapacity, rptr, ");
+                    if (noDeallocator) {
+                        out.println("NULL);");
+                    } else if (methodInfo.arrayAllocator) {
+                        out.println("&JavaCPP_" + mangle(methodInfo.cls.getName()) + "_deallocateArray);");
+                        arrayDeallocators.index(methodInfo.cls);
+                    } else {
+                        out.println("&JavaCPP_" + mangle(methodInfo.cls.getName()) + "_deallocate);");
+                        deallocators.index(methodInfo.cls);
+                    }
                 }
                 if (virtualFunctions.containsKey(methodInfo.cls)) {
-                    typeName = cppTypeName(methodInfo.cls);
                     valueTypeName = valueTypeName(typeName);
                     String subType = "JavaCPP_" + mangle(valueTypeName);
                     out.println(indent + "((" + subType + "*)rptr)->obj = env->NewWeakGlobalRef(obj);");
