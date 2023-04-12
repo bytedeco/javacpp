@@ -95,7 +95,6 @@ public class Parser {
     InfoMap leafInfoMap = null;
     TokenIndexer tokens = null;
     String lineSeparator = null;
-    HashSet<String> polymorphicClasses = new HashSet<>(); // Contains Java names
 
     String translate(String text) {
         Info info = infoMap.getFirst(text);
@@ -3367,18 +3366,15 @@ public class Parser {
         boolean anonymous = !typedef && type.cppName.length() == 0, derivedClass = false, skipBase = false;
         if (type.cppName.length() > 0 && tokens.get().match(':')) {
             derivedClass = true;
-            boolean virtualInheritance = false;
-            boolean accessible = !ctx.inaccessible;
             for (Token token = tokens.next(); !token.match(Token.EOF); token = tokens.next()) {
+                boolean accessible = !ctx.inaccessible;
                 if (token.match(Token.VIRTUAL)) {
-                    virtualInheritance = true;
                     continue;
                 } else if (token.match(Token.PRIVATE, Token.PROTECTED, Token.PUBLIC)) {
                     accessible = token.match(Token.PUBLIC);
-                    continue;
+                    tokens.next();
                 }
                 Type t = type(context);
-                t.virtual = virtualInheritance;
                 Info info = infoMap.getFirst(t.cppName);
                 if (info != null && info.skip) {
                     skipBase = true;
@@ -3389,8 +3385,6 @@ public class Parser {
                 if (tokens.get().expect(',', '{').match('{')) {
                     break;
                 }
-                virtualInheritance = false;
-                accessible = !ctx.inaccessible;
             }
         }
         if (typedef && type.indirections > 0) {
@@ -3488,29 +3482,15 @@ public class Parser {
             }
             infoMap.put(info = new Info(type.cppName).pointerTypes(type.javaName));
         }
-
-        // Choose the base Java type: first base C++ type which is not flattened
-        // Keep the others in baseClasses to generate asX() casts.
-        // Detect virtual inheritance.
-        // If no C++ base type suits, use Pointer.
-        boolean polymorphic = false;
-        Type base = null;
+        Type base = new Type("Pointer");
         Iterator<Type> it = baseClasses.iterator();
         while (it.hasNext()) {
             Type next = it.next();
-            boolean nextPolymorphic = polymorphicClasses.contains(next.javaName);
-            polymorphic |= nextPolymorphic;
             Info nextInfo = infoMap.getFirst(next.cppName);
-            if (nextInfo != null && nextInfo.flatten)
-                continue;
-            if (nextPolymorphic && next.virtual && !next.explicitUpcast) {
-                // We can detect this only if the superclass is parsed before.
-                logger.warn(type.cppName + " virtually inherits from polymorphic class " + next.cppName +
-                    ". Consider adding an explicitUpcast Info on " + next.cppName + ".");
-            }
-            if (base == null) {
+            if (nextInfo == null || !nextInfo.flatten) {
                 base = next;
                 it.remove();
+                break;
             }
         }
         String casts = "";
@@ -3526,8 +3506,7 @@ public class Parser {
             casts += "    public " + type.javaName + ' ' + explicitCastMethodName(type.javaName) + "() { return this; }\n";
         }
 
-        if (base == null) base = new Type("Pointer");
-        else if (base.explicitUpcast) {
+        if (base.explicitUpcast) {
             casts += explicitCast(type, base, true);
         }
 
@@ -3629,7 +3608,6 @@ public class Parser {
                 pointerConstructor = false, abstractClass = info != null && info.purify && !ctx.virtualize,
                 allPureConst = true, haveVariables = false;
         for (Declaration d : declList2) {
-            polymorphic |= d.declarator != null && d.declarator.type != null && d.declarator.type.virtual;
             if (d.declarator != null && d.declarator.type != null && d.declarator.type.using && decl.text != null) {
                 // inheriting constructors
                 defaultConstructor |= d.text.contains("private native void allocate();");
@@ -3756,8 +3734,6 @@ public class Parser {
                 decl.custom = true;
             }
         }
-        if (polymorphic) polymorphicClasses.add(type.javaName);
-
         for (Declaration d : declList2) {
             if ((!d.inaccessible || d.declarator != null && d.declarator.type.friend)
                     && (d.declarator == null || d.declarator.type == null
