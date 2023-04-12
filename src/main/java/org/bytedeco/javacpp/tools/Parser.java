@@ -134,7 +134,7 @@ public class Parser {
 
     private static String explicitCastMethodName(String javaName) {
         String shortName = javaName.substring(javaName.lastIndexOf('.') + 1);
-        return "as" + shortName;
+        return "as" + Character.toUpperCase(shortName.charAt(0)) + shortName.substring(1);
     }
 
     private static String joinList(List<?> list, String separator) {
