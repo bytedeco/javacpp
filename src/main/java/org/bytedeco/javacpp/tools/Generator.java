@@ -89,6 +89,7 @@ import org.bytedeco.javacpp.annotation.NoOffset;
 import org.bytedeco.javacpp.annotation.Opaque;
 import org.bytedeco.javacpp.annotation.Platform;
 import org.bytedeco.javacpp.annotation.Raw;
+import org.bytedeco.javacpp.annotation.Renamed;
 import org.bytedeco.javacpp.annotation.ValueGetter;
 import org.bytedeco.javacpp.annotation.ValueSetter;
 import org.bytedeco.javacpp.annotation.Virtual;
@@ -3660,6 +3661,17 @@ public class Generator {
                 functionMethods : null;
     }
 
+    String removeSuffix(String name, MethodInformation info) {
+		if (info.annotations != null) {
+			for (Annotation a : info.annotations) {
+				if (a instanceof Renamed) {
+					return name.substring(0, name.length() - Parser.RENAMED_SUFFIX.length());
+				}
+			}
+		}
+		return name;
+	}
+
     MethodInformation methodInformation(Method method) {
         MethodInformation info = new MethodInformation();
         info.cls         = method.getDeclaringClass();
@@ -3668,6 +3680,7 @@ public class Generator {
         info.modifiers   = method.getModifiers();
         info.returnType  = method.getReturnType();
         info.name = method.getName();
+        info.name = removeSuffix(info.name, info);
         Name name = method.getAnnotation(Name.class);
         info.memberName = name != null ? name.value() : new String[] { info.name };
         Index index = method.getAnnotation(Index.class);
@@ -3712,6 +3725,14 @@ public class Generator {
                 info2.parameterTypes       = method2.getParameterTypes();
                 info2.annotations          = method2.getAnnotations();
                 info2.parameterAnnotations = method2.getParameterAnnotations();
+                
+                for (Annotation a:info2.annotations) {
+                     if (a instanceof Renamed) {
+                    	 info2.name = info2.name.substring(0, info2.name.length() - Parser.RENAMED_SUFFIX.length());
+                    	 break;
+                     }
+                 }
+
             }
             int skipParameters = info.parameterTypes.length > 0 && info.parameterTypes[0] == Class.class ? 1 : 0;
             int skipParameters2 = info2.parameterTypes.length > 0 && info2.parameterTypes[0] == Class.class ? 1 : 0;
