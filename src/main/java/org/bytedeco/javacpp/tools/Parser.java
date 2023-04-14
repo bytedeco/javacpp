@@ -3311,21 +3311,23 @@ public class Parser {
            assuming that this annotation is @SharedPtr or some other adapter storing a share_ptr in owner.
            This is the only use case for now. We can generalize to any adapter if the need arises and call
            some cast function on the adapter instead of static_pointer_cast. */
-        if (constructorIsAnnotated(to))
-            res += "    @Namespace public static native @SharedPtr @Name(\"SHARED_PTR_NAMESPACE::static_pointer_cast<" + to.cppName + ">\") "
-                + to.javaName + " " + ecmn + "(@Cast({\"\", \"SHARED_PTR_NAMESPACE::shared_ptr<" + from.cppName + ">\"}) @SharedPtr " + from.javaName + " pointer);\n";
+        String annotation = getConstructorAdapter(to);
+        if (annotation != null)
+            res += "    @Namespace public static native " + annotation + " @Name(\"SHARED_PTR_NAMESPACE::static_pointer_cast<" + to.cppName + ">\") "
+                + to.javaName + " " + ecmn + "(@Cast({\"\", \"SHARED_PTR_NAMESPACE::shared_ptr<" + from.cppName + ">\"}) " + annotation + " " + from.javaName + " pointer);\n";
         else
             res += "    @Namespace public static native @Name(\"static_cast<" + to.cppName + "*>\") "
                 + to.javaName + " " + ecmn + "(" + from.javaName + " pointer);\n";
         return res;
     }
 
-    private boolean constructorIsAnnotated(Type t) {
+    private String getConstructorAdapter(Type t) {
         String cppName = t.cppName;
         List<String> split = Templates.splitNamespace(cppName);
         String constructorName = cppName + "::" + Templates.strip(split.get(split.size() - 1));
         Info info = infoMap.getFirst(constructorName);
-        return (info != null && info.annotations != null);
+        return info == null || info.annotations == null ? null :
+            joinList(Arrays.asList(info.annotations), " ");
     }
 
     boolean group(Context context, DeclarationList declList) throws ParserException {
