@@ -83,6 +83,7 @@ public class Parser {
         this.properties = p.properties;
         this.encoding = p.encoding;
         this.infoMap = p.infoMap;
+        this.explicitUpcasts = p.explicitUpcasts;
         Token t = p.tokens != null ? p.tokens.get() : Token.EOF;
         this.tokens = new TokenIndexer(infoMap, new Tokenizer(text, t.file, t.lineNumber).tokenize(), false);
         this.lineSeparator = p.lineSeparator;
@@ -95,6 +96,7 @@ public class Parser {
     InfoMap leafInfoMap = null;
     TokenIndexer tokens = null;
     String lineSeparator = null;
+    Set<String> explicitUpcasts = new HashSet<>();
 
     String translate(String text) {
         Info info = infoMap.getFirst(text);
@@ -963,8 +965,10 @@ public class Parser {
         if (info != null && info.cppTypes != null && info.cppTypes.length > 0 && !info.cppTypes[0].equals(type.cppName)) {
             // use user defined type
             type.cppName = info.cppTypes[0];
-            Type type2 = new Parser(this, type.cppName).type(context);
-            type.arguments = type2.arguments;
+            // arguments won't match the new cppName, we might need:
+            // Type type2 = new Parser(this, type.cppName).type(context);
+            // type.arguments = type2.arguments;
+            // if arguments is used below.
         }
 
         // remove const, * and & after user defined substitution for consistency
@@ -1055,9 +1059,7 @@ public class Parser {
             }
             type.javaName = context.shorten(type.javaName);
         }
-        type.explicitUpcast =
-            info != null && info.explicitUpcast
-                 || Templates.isSmartPointer(type.cppName) && type.arguments != null && type.arguments[0].explicitUpcast;
+        if (info != null && info.explicitUpcast) explicitUpcasts.add(type.javaName);
         return type;
     }
 
@@ -2129,7 +2131,7 @@ public class Parser {
                 params.signature += '_';
                 params.signature += dcl.type.signature();
                 params.names += (count > 1 ? ", " : "") + paramName;
-                if (dcl.type.explicitUpcast) {
+                if (explicitUpcasts.contains(dcl.type.javaName)) {
                     params.names += '.' + explicitCastMethodName(removeAnnotations(dcl.type.javaName)) + "()";
                 }
                 if (dcl.javaName.startsWith("arg")) {
@@ -2550,7 +2552,7 @@ public class Parser {
                 needWrapper = !(type.staticMember || type.friend || context.javaName == null) && context.explicitUpcast;
                 for (Declarator paramDecl : dcl.parameters.declarators)
                     if (paramDecl != null)
-                        needWrapper |= paramDecl.type.explicitUpcast;
+                        needWrapper |= explicitUpcasts.contains(paramDecl.type.javaName);
             }
 
             // add @Virtual annotation on user request only, inherited through context
@@ -3305,8 +3307,11 @@ public class Parser {
         String res = "    ";
         if (override) res += "@Override ";
         res += "public " + to.javaName + ' ' + ecmn + "() { return " + ecmn + "(this); }\n";
-        // XXX We definitely need a better test here, and add support for other smart pointers
-        if ("SharedPtrAdapter".equals(getConstructorAdapter(from)) || "SharedPtrAdapter".equals(getConstructorAdapter(to)))
+        /* We generate the adapter-aware version of the method when the target class has any annotation,
+           assuming that this annotation is @SharedPtr or some other adapter storing a share_ptr in owner.
+           This is the only use case for now. We can generalize to any adapter if the need arises and call
+           some cast function on the adapter instead of static_pointer_cast. */
+        if (constructorIsAnnotated(to))
             res += "    @Namespace public static native @SharedPtr @Name(\"SHARED_PTR_NAMESPACE::static_pointer_cast<" + to.cppName + ">\") "
                 + to.javaName + " " + ecmn + "(@Cast({\"\", \"SHARED_PTR_NAMESPACE::shared_ptr<" + from.cppName + ">\"}) @SharedPtr " + from.javaName + " pointer);\n";
         else
@@ -3315,15 +3320,12 @@ public class Parser {
         return res;
     }
 
-    private String getConstructorAdapter(Type t) {
+    private boolean constructorIsAnnotated(Type t) {
         String cppName = t.cppName;
         List<String> split = Templates.splitNamespace(cppName);
         String constructorName = cppName + "::" + Templates.strip(split.get(split.size() - 1));
         Info info = infoMap.getFirst(constructorName);
-        if (info != null && info.annotations != null)
-            for (String annotation : info.annotations)
-                if (annotation.contains("SharedPtr")) return "SharedPtrAdapter";
-        return null;
+        return (info != null && info.annotations != null);
     }
 
     boolean group(Context context, DeclarationList declList) throws ParserException {
@@ -3502,11 +3504,11 @@ public class Parser {
                 }
             }
         }
-        if (type.explicitUpcast) {
+        if (explicitUpcasts.contains(type.javaName)) {
             casts += "    public " + type.javaName + ' ' + explicitCastMethodName(type.javaName) + "() { return this; }\n";
         }
 
-        if (base.explicitUpcast) {
+        if (explicitUpcasts.contains(base.javaName)) {
             casts += explicitCast(type, base, true);
         }
 
