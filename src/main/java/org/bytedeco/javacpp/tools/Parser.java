@@ -3313,8 +3313,8 @@ public class Parser {
            some cast function on the adapter instead of static_pointer_cast. */
         String annotation = getConstructorAdapter(to);
         if (annotation != null)
-            res += "    @Namespace public static native " + annotation + " @Name(\"SHARED_PTR_NAMESPACE::static_pointer_cast<" + to.cppName + ">\") "
-                + to.javaName + " " + ecmn + "(@Cast({\"\", \"SHARED_PTR_NAMESPACE::shared_ptr<" + from.cppName + ">\"}) " + annotation + " " + from.javaName + " pointer);\n";
+            res += "    @Namespace public static native " + annotation + " @Name(\"SHARED_PTR_NAMESPACE::static_pointer_cast<" + to.cppName + ", " + from.cppName + ">\") "
+                + to.javaName + " " + ecmn + "(" + annotation + " " + from.javaName + " pointer);\n";
         else
             res += "    @Namespace public static native @Name(\"static_cast<" + to.cppName + "*>\") "
                 + to.javaName + " " + ecmn + "(" + from.javaName + " pointer);\n";
