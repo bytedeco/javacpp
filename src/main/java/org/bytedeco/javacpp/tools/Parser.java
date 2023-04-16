@@ -143,7 +143,7 @@ public class Parser {
 
     private static final Pattern accessModifierPattern = Pattern.compile("\\b(private|protected|public)\\b");
 
-    private static String explicitCastMethodName(String javaName) {
+    private static String upcastMethodName(String javaName) {
         String shortName = javaName.substring(javaName.lastIndexOf('.') + 1);
         return "as" + Character.toUpperCase(shortName.charAt(0)) + shortName.substring(1);
     }
@@ -2618,7 +2618,7 @@ public class Parser {
                         + (staticMethod ? "static ": "")
                         + removeAnnotations(type.javaName) + " " + dcl.javaName + '(' + sb + ") {  "
                         + (type.javaName.equals("void") ? "" : "return ")
-                        + (context.explicitUpcast && !staticMethod ? explicitCastMethodName(context.javaName) + "()." : "")
+                        + (context.upcast && !staticMethod ? upcastMethodName(context.javaName) + "()." : "")
                         + '_' + dcl.javaName + (dcl.parameters.names == null ? "()" : dcl.parameters.names) + "; }\n";
                     dcl.javaName = '_' + dcl.javaName;
                 }
