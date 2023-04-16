@@ -83,7 +83,7 @@ public class Parser {
         this.properties = p.properties;
         this.encoding = p.encoding;
         this.infoMap = p.infoMap;
-        this.explicitUpcasts = p.explicitUpcasts;
+        this.upcasts = p.upcasts;
         Token t = p.tokens != null ? p.tokens.get() : Token.EOF;
         this.tokens = new TokenIndexer(infoMap, new Tokenizer(text, t.file, t.lineNumber).tokenize(), false);
         this.lineSeparator = p.lineSeparator;
@@ -96,7 +96,7 @@ public class Parser {
     InfoMap leafInfoMap = null;
     TokenIndexer tokens = null;
     String lineSeparator = null;
-    Set<String> explicitUpcasts = new HashSet<>();
+    Set<String> upcasts = new HashSet<>();
 
     String translate(String text) {
         Info info = infoMap.getFirst(text);
@@ -134,7 +134,7 @@ public class Parser {
 
     private static final Pattern accessModifierPattern = Pattern.compile("\\b(private|protected|public)\\b");
 
-    private static String explicitCastMethodName(String javaName) {
+    private static String upcastMethodName(String javaName) {
         String shortName = javaName.substring(javaName.lastIndexOf('.') + 1);
         return "as" + Character.toUpperCase(shortName.charAt(0)) + shortName.substring(1);
     }
@@ -1059,7 +1059,7 @@ public class Parser {
             }
             type.javaName = context.shorten(type.javaName);
         }
-        if (info != null && info.explicitUpcast) explicitUpcasts.add(type.javaName);
+        if (info != null && info.upcast) upcasts.add(type.javaName);
         return type;
     }
 
@@ -2131,8 +2131,8 @@ public class Parser {
                 params.signature += '_';
                 params.signature += dcl.type.signature();
                 params.names += (count > 1 ? ", " : "") + paramName;
-                if (explicitUpcasts.contains(dcl.type.javaName)) {
-                    params.names += '.' + explicitCastMethodName(removeAnnotations(dcl.type.javaName)) + "()";
+                if (upcasts.contains(dcl.type.javaName)) {
+                    params.names += '.' + upcastMethodName(removeAnnotations(dcl.type.javaName)) + "()";
                 }
                 if (dcl.javaName.startsWith("arg")) {
                     try {
@@ -2251,7 +2251,7 @@ public class Parser {
             if (type.operator) {
                 dcl.cppName = "operator " + (dcl.type.constValue ? "const " : "")
                         + dcl.type.cppName + (dcl.type.indirections > 0 ? "*" : dcl.type.reference ? "&" : "");
-                dcl.javaName = explicitCastMethodName(dcl.javaName);
+                dcl.javaName = upcastMethodName(dcl.javaName);
             }
             dcl.signature = dcl.javaName + params.signature;
         } else {
@@ -2408,7 +2408,7 @@ public class Parser {
                 if (type.operator) {
                     dcl.cppName = "operator " + (dcl.type.constValue ? "const " : "")
                             + dcl.type.cppName + (dcl.type.indirections > 0 ? "*" : dcl.type.reference ? "&" : "");
-                    dcl.javaName = explicitCastMethodName(dcl.javaName);
+                    dcl.javaName = upcastMethodName(dcl.javaName);
                 }
                 dcl.signature = dcl.javaName + params.signature;
                 for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.get()) {
@@ -2549,10 +2549,10 @@ public class Parser {
             if (type.constructor) {
                 needWrapper = false;
             } else {
-                needWrapper = !(type.staticMember || type.friend || context.javaName == null) && context.explicitUpcast;
+                needWrapper = !(type.staticMember || type.friend || context.javaName == null) && context.upcast;
                 for (Declarator paramDecl : dcl.parameters.declarators)
                     if (paramDecl != null)
-                        needWrapper |= explicitUpcasts.contains(paramDecl.type.javaName);
+                        needWrapper |= upcasts.contains(paramDecl.type.javaName);
             }
 
             // add @Virtual annotation on user request only, inherited through context
@@ -2602,7 +2602,7 @@ public class Parser {
                         + (staticMethod ? "static ": "")
                         + removeAnnotations(type.javaName) + " " + dcl.javaName + '(' + sb + ") {  "
                         + (type.javaName.equals("void") ? "" : "return ")
-                        + (context.explicitUpcast && !staticMethod ? explicitCastMethodName(context.javaName) + "()." : "")
+                        + (context.upcast && !staticMethod ? upcastMethodName(context.javaName) + "()." : "")
                         + '_' + dcl.javaName + (dcl.parameters.names == null ? "()" : dcl.parameters.names) + "; }\n";
                     dcl.javaName = '_' + dcl.javaName;
                 }
@@ -3302,8 +3302,8 @@ public class Parser {
         return true;
     }
 
-    private String explicitCast(Type from, Type to, boolean override) {
-        String ecmn = explicitCastMethodName(to.javaName);
+    private String upcast(Type from, Type to, boolean override) {
+        String ecmn = upcastMethodName(to.javaName);
         String res = "    ";
         if (override) res += "@Override ";
         res += "public " + to.javaName + ' ' + ecmn + "() { return " + ecmn + "(this); }\n";
@@ -3502,16 +3502,16 @@ public class Parser {
             for (Type t : baseClasses) {
                 Info baseInfo = infoMap.getFirst(t.cppName);
                 if (!t.javaName.equals("Pointer") && (baseInfo == null || !baseInfo.skip)) {
-                    casts += explicitCast(type, t, false);
+                    casts += upcast(type, t, false);
                 }
             }
         }
-        if (explicitUpcasts.contains(type.javaName)) {
-            casts += "    public " + type.javaName + ' ' + explicitCastMethodName(type.javaName) + "() { return this; }\n";
+        if (upcasts.contains(type.javaName)) {
+            casts += "    public " + type.javaName + ' ' + upcastMethodName(type.javaName) + "() { return this; }\n";
         }
 
-        if (explicitUpcasts.contains(base.javaName)) {
-            casts += explicitCast(type, base, true);
+        if (upcasts.contains(base.javaName)) {
+            casts += upcast(type, base, true);
         }
 
         decl.signature = type.javaName;
@@ -3583,7 +3583,7 @@ public class Parser {
                 ctx.immutable = true;
             if (info.beanify)
                 ctx.beanify = true;
-            ctx.explicitUpcast = info.explicitUpcast;
+            ctx.upcast = info.upcast;
         }
         ctx.baseType = base.cppName;
 

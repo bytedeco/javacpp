@@ -96,7 +96,7 @@ public class Info {
      * To use as keys in maps, etc, intern() must be called on instances returned from native code. */
     boolean enumerate = false;
     /** Outputs declarations for this class into their subclasses as well.
-     * Also adds methods for explicit casting, as done for multiple inheritance by default. */
+     * Also adds methods for upcasting, as done for multiple inheritance by default. */
     boolean flatten = false;
     /** Maps friend functions. Only functions having in their argument list an instance of the class they are friend
      * of are currently supported. They are mapped as instance methods of the class. */
@@ -124,9 +124,9 @@ public class Info {
     String cppText = null;
     /** Outputs the given code, instead of the result parsed from the declaration of C++ identifiers. */
     String javaText = null;
-    /** Whether an explicit static_cast is needed to upcast a pointer to this cppName.
+    /** Whether a static_cast is needed to upcast a pointer to this cppName.
      *  This is necessary for polymorphic classes that are virtually inherited from. */
-    boolean explicitUpcast = false;
+    boolean upcast = false;
 
 
 
@@ -166,6 +166,6 @@ public class Info {
     public Info base(String base) { this.base = base; return this; }
     public Info cppText(String cppText) { this.cppText = cppText; return this; }
     public Info javaText(String javaText) { this.javaText = javaText; return this; }
-    public Info explicitUpcast() { this.explicitUpcast = true; return this; }
-    public Info explicitUpcast(boolean eu) { this.explicitUpcast = eu; return this; }
+    public Info upcast() { this.upcast = true; return this; }
+    public Info upcast(boolean eu) { this.upcast = eu; return this; }
 }
