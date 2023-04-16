@@ -2559,7 +2559,7 @@ public class Parser {
             if (context.virtualize && !type.annotations.contains("@Virtual")) {
                 ArrayList<String> attrs = new ArrayList<>();
                 if (decl.abstractMember) attrs.add("value = true");
-                if (needWrapper) attrs.add("javaName = \"" + dcl.javaName+'"');
+                if (needWrapper) attrs.add("method = \"" + dcl.javaName+'"');
                 modifiers = "@Virtual" + (attrs.size() == 0 ? " " : ('(' + joinList(attrs, ", ") + ") "))
                           + (context.inaccessible ? "protected native " : "public native ");
             }

@@ -3407,9 +3407,9 @@ public class Generator {
 
         if (methodInfo != null) {
             Virtual virtualAnnotation = callbackMethod.getAnnotation(Virtual.class);
-            String javaName = (virtualAnnotation != null && virtualAnnotation.javaName().length() > 0) ? virtualAnnotation.javaName() : methodInfo.method.getName();
+            String methodName = (virtualAnnotation != null && virtualAnnotation.method().length() > 0) ? virtualAnnotation.method() : methodInfo.method.getName();
             out.println("    if (" + fieldName + " == NULL) {");
-            out.println("        " + fieldName + " = JavaCPP_getMethodID(env, " + jclasses.index(cls) + ", \"" + javaName + "\", \"(" +
+            out.println("        " + fieldName + " = JavaCPP_getMethodID(env, " + jclasses.index(cls) + ", \"" + methodName + "\", \"(" +
                     signature(methodInfo.method.getParameterTypes()) + ")" + signature(methodInfo.method.getReturnType()) + "\");");
             out.println("    }");
             out.println("    jmethodID mid = " + fieldName + ";");
