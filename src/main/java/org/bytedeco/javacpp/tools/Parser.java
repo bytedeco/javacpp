@@ -2545,21 +2545,21 @@ public class Parser {
                 }
             }
 
-            boolean needWrapper;
+            boolean needUpcast;
             if (type.constructor) {
-                needWrapper = false;
+                needUpcast = false;
             } else {
-                needWrapper = !(type.staticMember || type.friend || context.javaName == null) && context.upcast;
+                needUpcast = !(type.staticMember || type.friend || context.javaName == null) && context.upcast;
                 for (Declarator paramDecl : dcl.parameters.declarators)
                     if (paramDecl != null)
-                        needWrapper |= upcasts.contains(paramDecl.type.javaName);
+                        needUpcast |= upcasts.contains(paramDecl.type.javaName);
             }
 
             // add @Virtual annotation on user request only, inherited through context
             if (context.virtualize && !type.annotations.contains("@Virtual")) {
                 ArrayList<String> attrs = new ArrayList<>();
                 if (decl.abstractMember) attrs.add("value = true");
-                if (needWrapper) attrs.add("method = \"" + dcl.javaName+'"');
+                if (needUpcast) attrs.add("method = \"" + dcl.javaName+'"');
                 modifiers = "@Virtual" + (attrs.size() == 0 ? " " : ('(' + joinList(attrs, ", ") + ") "))
                           + (context.inaccessible ? "protected native " : "public native ");
             }
@@ -2580,7 +2580,7 @@ public class Parser {
                              type.annotations + "private native void allocate" + dcl.parameters.list + ";\n";
             } else {
                 String nativeModifiers = modifiers;
-                if (needWrapper) {
+                if (needUpcast) {
                     if (!type.annotations.contains("@Name")) type.annotations += "@Name(\"" + localName2 + "\") ";
                     Matcher matcher = accessModifierPattern.matcher(nativeModifiers);
                     nativeModifiers = matcher.replaceFirst("private");
