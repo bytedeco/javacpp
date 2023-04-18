@@ -47,13 +47,13 @@ class Context {
         inaccessible = c.inaccessible;
         beanify = c.beanify;
         objectify = c.objectify;
+        upcast = c.upcast;
         virtualize = c.virtualize;
         variable = c.variable;
         infoMap = c.infoMap;
         templateMap = c.templateMap;
         usingList = c.usingList;
         namespaceMap = c.namespaceMap;
-        upcast = c.upcast;
     }
 
     String namespace = null;
@@ -66,13 +66,13 @@ class Context {
     boolean inaccessible = false;
     boolean beanify = false;
     boolean objectify = false;
+    boolean upcast = false;
     boolean virtualize = false;
     Declarator variable = null;
     InfoMap infoMap = null;
     TemplateMap templateMap = null;
     List<String> usingList = null;
     Map<String,String> namespaceMap = null;
-    boolean upcast = false;
 
     /** Return all likely combinations of namespaces and template arguments for this C++ type */
     String[] qualify(String cppName) {

@@ -1,4 +1,5 @@
 
+ * Add `Info.upcast` to support class hierarchies with virtual inheritance ([pull #671](https://github.com/bytedeco/javacpp/pull/671))
  * Pick up `@Adapter`, `@SharedPtr`, etc annotations on `allocate()` as well ([pull #668](https://github.com/bytedeco/javacpp/pull/668))
  * Provide `@Virtual(subclasses=false)` to prevent `Generator` from subclassing subclasses ([pull #660](https://github.com/bytedeco/javacpp/pull/660))
  * Fix `Loader.getPlatform()` detection for `linux-armhf` with Temurin JDK ([issue bytedeco/javacv#2001](https://github.com/bytedeco/javacv/issues/2001))

@@ -98,6 +98,15 @@ public class Parser {
     String lineSeparator = null;
     Set<String> upcasts = new HashSet<>();
 
+    static String removeAnnotations(String s) {
+        return s.substring(s.lastIndexOf(' ') + 1);
+    }
+
+    static String upcastMethodName(String javaName) {
+        String shortName = javaName.substring(javaName.lastIndexOf('.') + 1);
+        return "as" + Character.toUpperCase(shortName.charAt(0)) + shortName.substring(1);
+    }
+
     String translate(String text) {
         Info info = infoMap.getFirst(text);
         if (info != null && info.javaNames != null && info.javaNames.length > 0) {
@@ -130,28 +139,6 @@ public class Parser {
             }
         }
         return text;
-    }
-
-    private static final Pattern accessModifierPattern = Pattern.compile("\\b(private|protected|public)\\b");
-
-    private static String upcastMethodName(String javaName) {
-        String shortName = javaName.substring(javaName.lastIndexOf('.') + 1);
-        return "as" + Character.toUpperCase(shortName.charAt(0)) + shortName.substring(1);
-    }
-
-    private static String joinList(List<?> list, String separator) {
-        StringBuilder sb = new StringBuilder();
-        boolean b =  false;
-        for (Object o: list) {
-            if (b) sb.append(separator);
-            else b = true;
-            sb.append(o);
-        }
-        return sb.toString();
-    }
-
-    private static String removeAnnotations(String s) {
-        return s.substring(s.lastIndexOf(' ') + 1);
     }
 
     void containers(Context context, DeclarationList declList) throws ParserException {
@@ -494,7 +481,7 @@ public class Parser {
                     for (int n = 0; n < firstNames.length || n < secondNames.length; n++) {
                         String firstName = firstNames[Math.min(n, firstNames.length - 1)];
                         String secondName = secondNames[Math.min(n, secondNames.length - 1)];
-                        firstName = removeAnnotations(firstName); // get rid of any annotations
+                        firstName = removeAnnotations(firstName);
                         secondName = removeAnnotations(secondName);
                         decl.text += "\n"
                                   +  "    public " + containerType.javaName + " put(" + firstName + brackets + " firstValue, "
@@ -1059,7 +1046,9 @@ public class Parser {
             }
             type.javaName = context.shorten(type.javaName);
         }
-        if (info != null && info.upcast) upcasts.add(type.javaName);
+        if (info != null && info.upcast) {
+            upcasts.add(type.javaName);
+        }
         return type;
     }
 
@@ -2545,23 +2534,25 @@ public class Parser {
                 }
             }
 
-            boolean needUpcast;
-            if (type.constructor) {
-                needUpcast = false;
-            } else {
-                needUpcast = !(type.staticMember || type.friend || context.javaName == null) && context.upcast;
-                for (Declarator paramDecl : dcl.parameters.declarators)
-                    if (paramDecl != null)
+            boolean staticMethod = type.staticMember || type.friend || context.javaName == null;
+            boolean needUpcast = !type.constructor && !staticMethod && context.upcast;
+            if (!type.constructor) {
+                for (Declarator paramDecl : dcl.parameters.declarators) {
+                    if (paramDecl != null) {
                         needUpcast |= upcasts.contains(paramDecl.type.javaName);
+                    }
+                }
             }
 
             // add @Virtual annotation on user request only, inherited through context
             if (context.virtualize && !type.annotations.contains("@Virtual")) {
-                ArrayList<String> attrs = new ArrayList<>();
-                if (decl.abstractMember) attrs.add("value = true");
-                if (needUpcast) attrs.add("method = \"" + dcl.javaName+'"');
-                modifiers = "@Virtual" + (attrs.size() == 0 ? " " : ('(' + joinList(attrs, ", ") + ") "))
-                          + (context.inaccessible ? "protected native " : "public native ");
+                modifiers = "@Virtual";
+                if (needUpcast) {
+                    modifiers += (decl.abstractMember ? "(value = true, " : "(") + "method = \"" + dcl.javaName + "\") ";
+                } else {
+                    modifiers += (decl.abstractMember ? "(true) " : " ");
+                }
+                modifiers += (context.inaccessible ? "protected native " : "public native ");
             }
 
             // compose the text of the declaration with the info we got up until this point
@@ -2579,34 +2570,31 @@ public class Parser {
                 decl.text += "public " + context.shorten(context.javaName) + dcl.parameters.list + " { super((Pointer)null); allocate" + params.names + "; }\n" +
                              type.annotations + "private native void allocate" + dcl.parameters.list + ";\n";
             } else {
-                String nativeModifiers = modifiers;
                 if (needUpcast) {
-                    if (!type.annotations.contains("@Name")) type.annotations += "@Name(\"" + localName2 + "\") ";
-                    Matcher matcher = accessModifierPattern.matcher(nativeModifiers);
-                    nativeModifiers = matcher.replaceFirst("private");
+                    if (!type.annotations.contains("@Name")) {
+                        type.annotations += "@Name(\"" + localName2 + "\") ";
+                    }
+                    Pattern pattern = Pattern.compile("\\b(private|protected|public)\\b");
+                    Matcher matcher = pattern.matcher(modifiers);
+                    modifiers = matcher.replaceFirst("private");
                     String accessModifier = matcher.group(1);
 
                     // Rebuild a parameters list without the annotations.
                     StringBuilder sb = new StringBuilder();
-                    boolean firstParam = true;
                     for (Declarator param : dcl.parameters.declarators) {
-                        if (firstParam) {
-                            firstParam = false;
-                        } else {
+                        if (sb.length() > 0) {
                             sb.append(", ");
                         }
-                        sb.append(removeAnnotations(param.type.javaName)).append(' ').append(param.javaName);
+                        sb.append(removeAnnotations(param.type.javaName)).append(" ").append(param.javaName);
                     }
-                    boolean staticMethod = type.staticMember || type.friend || context.javaName == null;
-                    decl.text += accessModifier + ' '
-                        + (staticMethod ? "static ": "")
-                        + removeAnnotations(type.javaName) + " " + dcl.javaName + '(' + sb + ") {  "
-                        + (type.javaName.equals("void") ? "" : "return ")
-                        + (context.upcast && !staticMethod ? upcastMethodName(context.javaName) + "()." : "")
-                        + '_' + dcl.javaName + (dcl.parameters.names == null ? "()" : dcl.parameters.names) + "; }\n";
-                    dcl.javaName = '_' + dcl.javaName;
+                    decl.text += accessModifier + " " + (staticMethod ? "static " : "")
+                              +  removeAnnotations(type.javaName) + " " + dcl.javaName + "(" + sb + ") { "
+                              +  (type.javaName.equals("void") ? "" : "return ")
+                              +  (context.upcast && !staticMethod ? upcastMethodName(context.javaName) + "()." : "")
+                              +  "_" + dcl.javaName + (dcl.parameters.names == null ? "()" : dcl.parameters.names) + "; }\n";
+                    dcl.javaName = "_" + dcl.javaName;
                 }
-                decl.text += nativeModifiers + type.annotations + context.shorten(type.javaName) + " " + dcl.javaName + dcl.parameters.list + ";\n";
+                decl.text += modifiers + type.annotations + context.shorten(type.javaName) + " " + dcl.javaName + dcl.parameters.list + ";\n";
             }
             decl.signature = dcl.signature;
 
@@ -3302,32 +3290,27 @@ public class Parser {
         return true;
     }
 
-    private String upcast(Type from, Type to, boolean override) {
+    String upcast(Type from, Type to, boolean override) {
         String ecmn = upcastMethodName(to.javaName);
-        String res = "    ";
-        if (override) res += "@Override ";
-        res += "public " + to.javaName + ' ' + ecmn + "() { return " + ecmn + "(this); }\n";
+        String res = "    " + (override ? "@Override " : "") + "public " + to.javaName + " " + ecmn + "() { return " + ecmn + "(this); }\n"
+                   + "    @Namespace public static native ";
         /* We generate the adapter-aware version of the method when the target class has any annotation,
            assuming that this annotation is @SharedPtr or some other adapter storing a share_ptr in owner.
            This is the only use case for now. We can generalize to any adapter if the need arises and call
            some cast function on the adapter instead of static_pointer_cast. */
-        String annotation = getConstructorAdapter(to);
-        if (annotation != null)
-            res += "    @Namespace public static native " + annotation + " @Name(\"SHARED_PTR_NAMESPACE::static_pointer_cast<" + to.cppName + ", " + from.cppName + ">\") "
-                + to.javaName + " " + ecmn + "(" + annotation + " " + from.javaName + " pointer);\n";
-        else
-            res += "    @Namespace public static native @Name(\"static_cast<" + to.cppName + "*>\") "
-                + to.javaName + " " + ecmn + "(" + from.javaName + " pointer);\n";
-        return res;
-    }
-
-    private String getConstructorAdapter(Type t) {
-        String cppName = t.cppName;
-        List<String> split = Templates.splitNamespace(cppName);
-        String constructorName = cppName + "::" + Templates.strip(split.get(split.size() - 1));
+        List<String> split = Templates.splitNamespace(to.cppName);
+        String constructorName = to.cppName + "::" + Templates.strip(split.get(split.size() - 1));
         Info info = infoMap.getFirst(constructorName);
-        return info == null || info.annotations == null ? null :
-            joinList(Arrays.asList(info.annotations), " ");
+        String annotations = "";
+        if (info != null && info.annotations != null) {
+            for (String s : info.annotations) {
+                annotations += s + " ";
+            }
+            res += annotations + "@Name(\"SHARED_PTR_NAMESPACE::static_pointer_cast<" + to.cppName + ", " + from.cppName + ">\") ";
+        } else {
+            res += "@Name(\"static_cast<" + to.cppName + "*>\") ";
+        }
+        return res + to.javaName + " " + ecmn + "(" + annotations + from.javaName + " pointer);\n";
     }
 
     boolean group(Context context, DeclarationList declList) throws ParserException {
@@ -3507,7 +3490,7 @@ public class Parser {
             }
         }
         if (upcasts.contains(type.javaName)) {
-            casts += "    public " + type.javaName + ' ' + upcastMethodName(type.javaName) + "() { return this; }\n";
+            casts += "    public " + type.javaName + " " + upcastMethodName(type.javaName) + "() { return this; }\n";
         }
 
         if (upcasts.contains(base.javaName)) {

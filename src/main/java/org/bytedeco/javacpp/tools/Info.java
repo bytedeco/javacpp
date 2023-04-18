@@ -61,6 +61,7 @@ public class Info {
         skip = i.skip;
         skipDefaults = i.skipDefaults;
         purify = i.purify;
+        upcast = i.upcast;
         virtualize = i.virtualize;
         base = i.base;
         cppText = i.cppText;
@@ -116,6 +117,9 @@ public class Info {
     boolean skipDefaults = false;
     /** Forces a class to be treated as if it were abstract. */
     boolean purify = false;
+    /** Whether a static_cast is needed to upcast a pointer to this cppName.
+     * This is necessary for polymorphic classes that are virtually inherited from. */
+    boolean upcast = false;
     /** Annotates virtual functions with @{@link Virtual} and adds appropriate constructors. */
     boolean virtualize = false;
     /** Allows to override the base class of {@link #pointerTypes}. Defaults to {@link Pointer}. */
@@ -124,11 +128,6 @@ public class Info {
     String cppText = null;
     /** Outputs the given code, instead of the result parsed from the declaration of C++ identifiers. */
     String javaText = null;
-    /** Whether a static_cast is needed to upcast a pointer to this cppName.
-     *  This is necessary for polymorphic classes that are virtually inherited from. */
-    boolean upcast = false;
-
-
 
     public Info cppNames(String... cppNames) { this.cppNames = cppNames; return this; }
     public Info javaNames(String... javaNames) { this.javaNames = javaNames; return this; }
@@ -161,11 +160,11 @@ public class Info {
     public Info skipDefaults(boolean skipDefaults) { this.skipDefaults = skipDefaults; return this; }
     public Info purify() { this.purify = true; return this; }
     public Info purify(boolean purify) { this.purify = purify; return this; }
+    public Info upcast() { this.upcast = true; return this; }
+    public Info upcast(boolean upcast) { this.upcast = upcast; return this; }
     public Info virtualize() { this.virtualize = true; return this; }
     public Info virtualize(boolean virtualize) { this.virtualize = virtualize; return this; }
     public Info base(String base) { this.base = base; return this; }
     public Info cppText(String cppText) { this.cppText = cppText; return this; }
     public Info javaText(String javaText) { this.javaText = javaText; return this; }
-    public Info upcast() { this.upcast = true; return this; }
-    public Info upcast(boolean eu) { this.upcast = eu; return this; }
 }
