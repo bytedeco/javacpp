@@ -141,28 +141,6 @@ public class Parser {
         return text;
     }
 
-    private static final Pattern accessModifierPattern = Pattern.compile("\\b(private|protected|public)\\b");
-
-    private static String upcastMethodName(String javaName) {
-        String shortName = javaName.substring(javaName.lastIndexOf('.') + 1);
-        return "as" + Character.toUpperCase(shortName.charAt(0)) + shortName.substring(1);
-    }
-
-    private static String joinList(List<?> list, String separator) {
-        StringBuilder sb = new StringBuilder();
-        boolean b =  false;
-        for (Object o: list) {
-            if (b) sb.append(separator);
-            else b = true;
-            sb.append(o);
-        }
-        return sb.toString();
-    }
-
-    private static String removeAnnotations(String s) {
-        return s.substring(s.lastIndexOf(' ') + 1);
-    }
-
     void containers(Context context, DeclarationList declList) throws ParserException {
         List<String> basicContainers = new ArrayList<>();
         for (Info info : infoMap.get("basic/containers")) {
@@ -2604,25 +2582,20 @@ public class Parser {
 
                     // Rebuild a parameters list without the annotations.
                     StringBuilder sb = new StringBuilder();
-                    boolean firstParam = true;
                     for (Declarator param : dcl.parameters.declarators) {
-                        if (firstParam) {
-                            firstParam = false;
-                        } else {
+                        if (sb.length() > 0) {
                             sb.append(", ");
                         }
-                        sb.append(removeAnnotations(param.type.javaName)).append(' ').append(param.javaName);
+                        sb.append(removeAnnotations(param.type.javaName)).append(" ").append(param.javaName);
                     }
-                    boolean staticMethod = type.staticMember || type.friend || context.javaName == null;
-                    decl.text += accessModifier + ' '
-                        + (staticMethod ? "static ": "")
-                        + removeAnnotations(type.javaName) + " " + dcl.javaName + '(' + sb + ") {  "
-                        + (type.javaName.equals("void") ? "" : "return ")
-                        + (context.upcast && !staticMethod ? upcastMethodName(context.javaName) + "()." : "")
-                        + '_' + dcl.javaName + (dcl.parameters.names == null ? "()" : dcl.parameters.names) + "; }\n";
-                    dcl.javaName = '_' + dcl.javaName;
+                    decl.text += accessModifier + " " + (staticMethod ? "static " : "")
+                              +  removeAnnotations(type.javaName) + " " + dcl.javaName + "(" + sb + ") { "
+                              +  (type.javaName.equals("void") ? "" : "return ")
+                              +  (context.upcast && !staticMethod ? upcastMethodName(context.javaName) + "()." : "")
+                              +  "_" + dcl.javaName + (dcl.parameters.names == null ? "()" : dcl.parameters.names) + "; }\n";
+                    dcl.javaName = "_" + dcl.javaName;
                 }
-                decl.text += nativeModifiers + type.annotations + context.shorten(type.javaName) + " " + dcl.javaName + dcl.parameters.list + ";\n";
+                decl.text += modifiers + type.annotations + context.shorten(type.javaName) + " " + dcl.javaName + dcl.parameters.list + ";\n";
             }
             decl.signature = dcl.signature;
 
