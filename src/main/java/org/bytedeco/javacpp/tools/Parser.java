@@ -2595,7 +2595,7 @@ public class Parser {
                               +  "_" + dcl.javaName + (dcl.parameters.names == null ? "()" : dcl.parameters.names) + "; }\n";
                     dcl.javaName = "_" + dcl.javaName;
                 }
-                decl.text += nativeModifiers + type.annotations + context.shorten(type.javaName) + " " + dcl.javaName + dcl.parameters.list + ";\n";
+                decl.text += modifiers2 + type.annotations + context.shorten(type.javaName) + " " + dcl.javaName + dcl.parameters.list + ";\n";
             }
             decl.signature = dcl.signature;
 
