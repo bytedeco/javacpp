@@ -2570,13 +2570,14 @@ public class Parser {
                 decl.text += "public " + context.shorten(context.javaName) + dcl.parameters.list + " { super((Pointer)null); allocate" + params.names + "; }\n" +
                              type.annotations + "private native void allocate" + dcl.parameters.list + ";\n";
             } else {
+                String nativeModifiers = modifiers;
                 if (needUpcast) {
                     if (!type.annotations.contains("@Name")) {
                         type.annotations += "@Name(\"" + localName2 + "\") ";
                     }
                     Pattern pattern = Pattern.compile("\\b(private|protected|public)\\b");
-                    Matcher matcher = pattern.matcher(modifiers);
-                    modifiers = matcher.replaceFirst("private");
+                    Matcher matcher = pattern.matcher(nativeModifiers);
+                    nativeModifiers = matcher.replaceFirst("private");
                     String accessModifier = matcher.group(1);
 
                     // Rebuild a parameters list without the annotations.
@@ -2594,7 +2595,7 @@ public class Parser {
                               +  "_" + dcl.javaName + (dcl.parameters.names == null ? "()" : dcl.parameters.names) + "; }\n";
                     dcl.javaName = "_" + dcl.javaName;
                 }
-                decl.text += modifiers + type.annotations + context.shorten(type.javaName) + " " + dcl.javaName + dcl.parameters.list + ";\n";
+                decl.text += nativeModifiers + type.annotations + context.shorten(type.javaName) + " " + dcl.javaName + dcl.parameters.list + ";\n";
             }
             decl.signature = dcl.signature;
 
