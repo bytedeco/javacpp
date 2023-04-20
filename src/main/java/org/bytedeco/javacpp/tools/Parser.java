@@ -4159,16 +4159,13 @@ public class Parser {
             declList.infoMap = infoMap;
             declList.context = ctx;
             declList.templateMap = map;
-            declList.infoIterator = null;
+            declList.instancesIterator = null;
             declList.spacing = null;
             do {
-                if (map != null && declList.infoIterator != null) {
+                if (map != null && declList.instancesIterator != null) {
                     // create all template instances provided by user
-                    Info info = declList.infoIterator.next();
-                    if (info == null) {
-                        continue;
-                    }
-                    Type type = new Parser(this, info.cppNames[0]).type(context);
+                    String name = declList.instancesIterator.next();
+                    Type type = new Parser(this, name).type(context);
                     if (type.arguments == null) {
                         continue;
                     }
@@ -4200,14 +4197,11 @@ public class Parser {
                         }
                     }
                     tokens.index = startIndex;
-                } else if (declList.infoIterator != null) {
+                } else if (declList.instancesIterator != null) {
                     // create two Java classes for C++ types with names for both with and without const qualifier
-                    Info info = declList.infoIterator.next();
-                    if (info == null) {
-                        continue;
-                    }
-                    if (info.cppNames != null && info.cppNames.length > 0 && info.cppNames[0].startsWith("const ")
-                            && info.pointerTypes != null && info.pointerTypes.length > 0) {
+                    String name = declList.instancesIterator.next();
+                    Info info = infoMap.getFirst(name);
+                    if (name.startsWith("const ") && info.pointerTypes != null && info.pointerTypes.length > 0) {
                         ctx = new Context(ctx);
                         ctx.constName = removeAnnotations(info.pointerTypes[0]);
                         ctx.constBaseName = info.base != null ? info.base : "Pointer";
@@ -4231,7 +4225,7 @@ public class Parser {
                 while (tokens.get().match(';') && !tokens.get().match(Token.EOF)) {
                     tokens.next();
                 }
-            } while (declList.infoIterator != null && declList.infoIterator.hasNext());
+            } while (declList.instancesIterator != null && declList.instancesIterator.hasNext());
         }
 
         // for comments at the end without declarations

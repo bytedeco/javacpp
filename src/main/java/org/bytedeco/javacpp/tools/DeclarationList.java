@@ -23,9 +23,13 @@
 package org.bytedeco.javacpp.tools;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Scanner;
+import java.util.Set;
 
 /**
  *
@@ -35,7 +39,7 @@ class DeclarationList extends ArrayList<Declaration> {
     InfoMap infoMap = null;
     Context context = null;
     TemplateMap templateMap = null;
-    ListIterator<Info> infoIterator = null;
+    Iterator<String> instancesIterator = null;
     String spacing = null;
     DeclarationList inherited = null;
 
@@ -67,7 +71,7 @@ class DeclarationList extends ArrayList<Declaration> {
         if (templateMap != null && templateMap.empty() && !decl.custom && (decl.type != null || decl.declarator != null)) {
             // method templates cannot be declared in Java, but make sure to make their
             // info available on request (when Info.javaNames is set) to be able to create instances
-            if (infoIterator == null) {
+            if (instancesIterator == null) {
                 Type type = templateMap.type = decl.type;
                 Declarator dcl = templateMap.declarator = decl.declarator;
                 for (String name : new String[] {fullName, dcl != null ? dcl.cppName : type.cppName}) {
@@ -75,12 +79,23 @@ class DeclarationList extends ArrayList<Declaration> {
                         continue;
                     }
                     List<Info> infoList = infoMap.get(name);
-                    boolean hasJavaName = false;
+                    Set<String> templateInstances = new LinkedHashSet<>();
+                    String normalizedName = infoMap.normalize(name, true, true);
                     for (Info info : infoList) {
-                        hasJavaName |= info.javaNames != null && info.javaNames.length > 0;
+                        if (!decl.function || info.javaNames != null && info.javaNames.length > 0) {
+                            for (String n: info.cppNames) {
+                                if (infoMap.normalize(n, true, true).equals(normalizedName)) {
+                                    templateInstances.add(n);
+                                    // We keep the first matching name per info.
+                                    // This is for backward compatibility. That's somewhat arbitrary.
+                                    break;
+                                }
+                            }
+                        }
                     }
-                    if (!decl.function || hasJavaName) {
-                        infoIterator = infoList.size() > 0 ? infoList.listIterator() : null;
+
+                    if (templateInstances.size() > 0) {
+                        instancesIterator = templateInstances.iterator();
                         break;
                     }
                 }
@@ -88,20 +103,20 @@ class DeclarationList extends ArrayList<Declaration> {
             add = false;
         } else if (infoMap != null && !decl.incomplete && decl.type != null && decl.type.cppName != null) {
             // check if the user gave us different names for the same type with and without const
-            if (infoIterator == null) {
+            if (instancesIterator == null) {
                 String constName = null, name = null;
                 List<Info> infoList = infoMap.get(decl.type.cppName);
                 List<Info> constInfoList = infoMap.get("const " + decl.type.cppName);
                 if (infoList != null && constInfoList != null && !infoList.equals(constInfoList)) {
                     for (Info info : infoList) {
                         if (info.pointerTypes != null && info.pointerTypes.length > 0) {
-                            name = info.pointerTypes[0].substring(info.pointerTypes[0].lastIndexOf(" ") + 1);
+                            name = Parser.removeAnnotations(info.pointerTypes[0]);
                             break;
                         }
                     }
                     for (Info info : constInfoList) {
                         if (info.pointerTypes != null && info.pointerTypes.length > 0) {
-                            constName = info.pointerTypes[0].substring(info.pointerTypes[0].lastIndexOf(" ") + 1);
+                            constName = Parser.removeAnnotations(info.pointerTypes[0]);
                             break;
                         }
                     }
@@ -109,7 +124,7 @@ class DeclarationList extends ArrayList<Declaration> {
                 if (constName != null && name != null && !constName.equals(name)) {
                     // if so, let's reparse this twice to create two Java peer classes
                     infoList.addAll(constInfoList);
-                    infoIterator = infoList.size() > 0 ? infoList.listIterator() : null;
+                    instancesIterator = Arrays.asList(decl.type.cppName, "const " + decl.type.cppName).iterator();
                     add = false;
                 }
             }
