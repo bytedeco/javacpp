@@ -1969,7 +1969,7 @@ public class Parser {
         return attr;
     }
 
-    String body() {
+    String body() throws ParserException {
         String text = "";
         if (!tokens.get().match('{')) {
             return null;
@@ -1978,6 +1978,11 @@ public class Parser {
         int count = 1;
         boolean catchBlock = false;
         for (Token token = tokens.next(); !token.match(Token.EOF) && count > 0; token = tokens.next()) {
+            while (tokens.get().match('#')) {
+                // prevent premature macro expansion
+                macro(null, null);
+                token = tokens.get();
+            }
             if (token.match('{')) {
                 if (catchBlock) {
                     catchBlock = false;
@@ -2888,9 +2893,11 @@ public class Parser {
         Token keyword = tokens.next();
         if (keyword.spacing.indexOf('\n') >= 0) {
             // empty macro?
-            Declaration decl = new Declaration();
-            decl.text = spacing + "// #";
-            declList.add(decl);
+            if (declList != null) {
+                Declaration decl = new Declaration();
+                decl.text = spacing + "// #";
+                declList.add(decl);
+            }
             tokens.raw = false;
             return true;
         }
@@ -2902,6 +2909,11 @@ public class Parser {
             if (token.spacing.indexOf('\n') >= 0) {
                 break;
             }
+        }
+        if (context == null) {
+            // we just want to skip over the macro in this case
+            tokens.raw = false;
+            return true;
         }
         int endIndex = tokens.index;
         while (tokens.get(-1).match(Token.COMMENT)) {
@@ -3119,9 +3131,11 @@ public class Parser {
             decl.text = comment + decl.text;
         }
         tokens.raw = false;
-        declList.spacing = spacing;
-        declList.add(decl);
-        declList.spacing = null;
+        if (declList != null) {
+            declList.spacing = spacing;
+            declList.add(decl);
+            declList.spacing = null;
+        }
         return true;
     }
 
