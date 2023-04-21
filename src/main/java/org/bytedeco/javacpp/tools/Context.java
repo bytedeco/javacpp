@@ -47,6 +47,7 @@ class Context {
         inaccessible = c.inaccessible;
         beanify = c.beanify;
         objectify = c.objectify;
+        upcast = c.upcast;
         virtualize = c.virtualize;
         variable = c.variable;
         infoMap = c.infoMap;
@@ -65,6 +66,7 @@ class Context {
     boolean inaccessible = false;
     boolean beanify = false;
     boolean objectify = false;
+    boolean upcast = false;
     boolean virtualize = false;
     Declarator variable = null;
     InfoMap infoMap = null;

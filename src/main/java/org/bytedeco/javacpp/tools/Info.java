@@ -61,6 +61,7 @@ public class Info {
         skip = i.skip;
         skipDefaults = i.skipDefaults;
         purify = i.purify;
+        upcast = i.upcast;
         virtualize = i.virtualize;
         base = i.base;
         cppText = i.cppText;
@@ -96,7 +97,7 @@ public class Info {
      * To use as keys in maps, etc, intern() must be called on instances returned from native code. */
     boolean enumerate = false;
     /** Outputs declarations for this class into their subclasses as well.
-     * Also adds methods for explicit casting, as done for multiple inheritance by default. */
+     * Also adds methods for upcasting, as done for multiple inheritance by default. */
     boolean flatten = false;
     /** Maps friend functions. Only functions having in their argument list an instance of the class they are friend
      * of are currently supported. They are mapped as instance methods of the class. */
@@ -116,6 +117,9 @@ public class Info {
     boolean skipDefaults = false;
     /** Forces a class to be treated as if it were abstract. */
     boolean purify = false;
+    /** Whether a static_cast is needed to upcast a pointer to this cppName.
+     * This is necessary for polymorphic classes that are virtually inherited from. */
+    boolean upcast = false;
     /** Annotates virtual functions with @{@link Virtual} and adds appropriate constructors. */
     boolean virtualize = false;
     /** Allows to override the base class of {@link #pointerTypes}. Defaults to {@link Pointer}. */
@@ -156,6 +160,8 @@ public class Info {
     public Info skipDefaults(boolean skipDefaults) { this.skipDefaults = skipDefaults; return this; }
     public Info purify() { this.purify = true; return this; }
     public Info purify(boolean purify) { this.purify = purify; return this; }
+    public Info upcast() { this.upcast = true; return this; }
+    public Info upcast(boolean upcast) { this.upcast = upcast; return this; }
     public Info virtualize() { this.virtualize = true; return this; }
     public Info virtualize(boolean virtualize) { this.virtualize = virtualize; return this; }
     public Info base(String base) { this.base = base; return this; }
