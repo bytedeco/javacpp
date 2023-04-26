@@ -27,8 +27,9 @@ package org.bytedeco.javacpp.tools;
  * @author Samuel Audet
  */
 class AdapterInformation {
-    String name;
-    int argc;
-    String cast, cast2;
-    boolean constant;
+	String name;
+	int argc;
+	String cast, cast2;
+	boolean constant;
+	boolean downcast;
 }

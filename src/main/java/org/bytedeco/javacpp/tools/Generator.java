@@ -2947,7 +2947,10 @@ public class Generator {
                         }
                     }
                     out.println(         "if (rptr != NULL) {");
-                    out.println(indent + "    rarg = JavaCPP_createPointer(env, " + jclasses.index(methodInfo.returnType) +
+                    if (adapterInfo!=null && adapterInfo.downcast)
+                       out.println(indent + "    rarg = radapter.createPointer(env);");
+                    else
+                       out.println(indent + "    rarg = JavaCPP_createPointer(env, " + jclasses.index(methodInfo.returnType) +
                             (methodInfo.parameterTypes.length > 0 && methodInfo.parameterTypes[0] == Class.class ? ", arg0);" : ");"));
                     out.println(indent + "    if (rarg != NULL) {");
                     if (needInit) {
@@ -3021,7 +3024,7 @@ public class Generator {
             if ("void*".equals(typeName[0]) && !methodInfo.parameterTypes[j].isAnnotationPresent(Opaque.class)) {
                 typeName[0] = "char*";
             }
-            
+
             // If const array, then use JNI_ABORT to avoid copying unmodified data back to JVM
             final String releaseArrayFlag;
             if (cast.contains(" const *") || cast.startsWith("(const ")) {
@@ -4000,6 +4003,7 @@ public class Generator {
                 adapterInfo = new AdapterInformation();
                 adapterInfo.name = adapter.value();
                 adapterInfo.argc = adapter.argc();
+                adapterInfo.downcast = adapter.downcast();
                 if (a != adapter) {
                     try {
                         Class cls = a.annotationType();
@@ -4029,7 +4033,7 @@ public class Generator {
                                 cast2 = c.value()[2];
                             }
                         }
-                    } catch (Exception ex) { 
+                    } catch (Exception ex) {
                         logger.warn("Could not invoke the value() method on annotation \"" + a + "\": " + ex);
                     }
                     if (valueTypeName != null && valueTypeName.length() > 0) {

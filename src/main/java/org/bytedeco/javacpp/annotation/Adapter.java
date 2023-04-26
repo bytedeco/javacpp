@@ -39,4 +39,5 @@ public @interface Adapter {
     /** The number of arguments that {@link Generator} takes from the method as
      *  arguments to the adapter constructor. */
     int argc() default 1;
+    boolean downcast() default false;
 }
