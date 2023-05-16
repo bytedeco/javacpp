@@ -906,6 +906,9 @@ public class Parser {
             type.indirections++;
             if (type.reference) {
                 type.constValue = false;
+            } else if (type.constValue) {
+                type.constValue = false;
+                type.constPointer = true; // For good measure. constPointer is ignored in this case.
             }
             type.cppName = type.cppName.substring(0, type.cppName.length() - 1);
         }
