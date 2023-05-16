@@ -713,7 +713,7 @@ public class Parser {
                     }
                     type.cppName += separator;
                     Info info = infoMap.getFirst(t.cppName);
-                    String s = info != null && info.cppTypes != null ? info.cppTypes[0] : t.cppName;
+                    String s = info != null && info.cppTypes != null && info.cppTypes.length > 0 ? info.cppTypes[0] : t.cppName;
                     if (t.constValue && !s.startsWith("const ")) {
                         s = "const " + s;
                     }
@@ -3955,10 +3955,11 @@ public class Parser {
             }
             String cast = javaType.equals("byte") || javaType.equals("short") ? "(" + javaType + ")(" : "";
             text += spacing + javaName + spacing2 + " = " + cast + countPrefix;
-            text2 += spacing + javaName + spacing2 + "(" + cast + countPrefix;
-            if (enumeratorMap.containsKey(countPrefix.trim())) {
-                text2 += ".value";
+            String countPrefix2 = countPrefix;
+            for (String key : enumeratorMap.keySet()) {
+                countPrefix2 = countPrefix2.replaceAll("\\b" + key + "\\b", key + ".value");
             }
+            text2 += spacing + javaName + spacing2 + "(" + cast + countPrefix2;
             if (countPrefix.trim().length() > 0) {
                 if (count > 0) {
                     text += " + " + count;
