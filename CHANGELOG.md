@@ -1,4 +1,5 @@
 
+ * Fix `Parser` incorrectly mapping `const` pointers to template arguments of pointer types ([pull #677](https://github.com/bytedeco/javacpp/pull/677))
  * Fix `Parser` with `Info.enumerate` failing to translate `enum` values based on other `enum` values
  * Fix `Parser` prematurely expanding macros defined in `class`, `struct` or `union` ([issue #674](https://github.com/bytedeco/javacpp/issues/674))
  * Add `Info.upcast` to support class hierarchies with virtual inheritance ([pull #671](https://github.com/bytedeco/javacpp/pull/671))
