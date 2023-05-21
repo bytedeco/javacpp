@@ -1,4 +1,5 @@
 
+ * Fix `Parser` failing on some `friend` functions for `operator` overloading ([pull #681](https://github.com/bytedeco/javacpp/pull/681))
  * Fix `Parser` incorrectly casting `const` pointers to template arguments of pointer types ([pull #677](https://github.com/bytedeco/javacpp/pull/677))
  * Fix `Parser` with `Info.enumerate` failing to translate `enum` values based on other `enum` values
  * Fix `Parser` prematurely expanding macros defined in `class`, `struct` or `union` ([issue #674](https://github.com/bytedeco/javacpp/issues/674))

@@ -3363,7 +3363,7 @@ public class Parser {
             return false;
         }
         if (!tokens.get().match('{') && tokens.get(1).match(Token.IDENTIFIER)
-                && !tokens.get(1).match(Token.FINAL)
+                && !tokens.get(1).match(Token.FINAL) && !friend
                 && (typedef || !tokens.get(2).match(';'))) {
             tokens.next();
         }
