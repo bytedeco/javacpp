@@ -102,6 +102,10 @@ public class Parser {
         return s.substring(s.lastIndexOf(' ') + 1);
     }
 
+    static String desugarVarargs(String s) {
+        return s.trim().endsWith("...") ? s.trim().substring(0, s.length() - 3) + "[]" : s;
+    }
+
     static String upcastMethodName(String javaName) {
         String shortName = javaName.substring(javaName.lastIndexOf('.') + 1);
         return "as" + Character.toUpperCase(shortName.charAt(0)) + shortName.substring(1);
@@ -2519,7 +2523,7 @@ public class Parser {
                     extraDecl = new Declaration();
                     extraDecl.signature = signature;
                     extraDecl.declarator = dcl; // Used in group to recognize friends
-                    extraDecl.text = "public " + dcl.type.javaName + " " + dcl.javaName + "(" + argList + ") { "
+                    extraDecl.text = "public " + desugarVarargs(dcl.type.javaName) + " " + dcl.javaName + "(" + argList + ") { "
                               + (dcl.type.javaName.equals("void") ? "" : "return ") + dcl.javaName + "(" + staticArgList + "); }\n";
                 } else {
                     friendly = false;
@@ -2597,13 +2601,13 @@ public class Parser {
                         sb.append(removeAnnotations(param.type.javaName)).append(" ").append(param.javaName);
                     }
                     decl.text += accessModifier + " " + (staticMethod ? "static " : "")
-                              +  removeAnnotations(type.javaName) + " " + dcl.javaName + "(" + sb + ") { "
+                              +  desugarVarargs(removeAnnotations(type.javaName)) + " " + dcl.javaName + "(" + sb + ") { "
                               +  (type.javaName.equals("void") ? "" : "return ")
                               +  (context.upcast && !staticMethod ? upcastMethodName(context.javaName) + "()." : "")
                               +  "_" + dcl.javaName + (dcl.parameters.names == null ? "()" : dcl.parameters.names) + "; }\n";
                     dcl.javaName = "_" + dcl.javaName;
                 }
-                decl.text += modifiers2 + type.annotations + context.shorten(type.javaName) + " " + dcl.javaName + dcl.parameters.list + ";\n";
+                decl.text += modifiers2 + type.annotations + context.shorten(desugarVarargs(type.javaName)) + " " + dcl.javaName + dcl.parameters.list + ";\n";
             }
             decl.signature = dcl.signature;
 
