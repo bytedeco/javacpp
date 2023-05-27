@@ -173,14 +173,12 @@ public class Builder {
             }
         }
         properties.addAll("platform.includepath", jnipath);
-        if (platform.equals(properties.getProperty("platform", platform))) {
-            if (header) {
-                // We only need libjvm for callbacks exported with the header file
-                properties.get("platform.link").add(0, "jvm");
-                properties.addAll("platform.linkpath", jvmpath);
-                if (platform.startsWith("macosx") && jvmpath.isEmpty()) {
-                    properties.addAll("platform.framework", "JavaVM");
-                }
+        if (platform.equals(properties.getProperty("platform", platform)) && header) {
+            // We only need libjvm for callbacks exported with the header file
+            properties.get("platform.link").add(0, "jvm");
+            properties.addAll("platform.linkpath", jvmpath);
+            if (platform.startsWith("macosx") && jvmpath.isEmpty()) {
+                properties.addAll("platform.framework", "JavaVM");
             }
         }
     }

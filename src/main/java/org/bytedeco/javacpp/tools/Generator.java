@@ -2131,10 +2131,8 @@ public class Generator {
             if (!Modifier.isNative(methods[i].getModifiers())) {
                 continue;
             }
-            if ((methodInfo.memberGetter || methodInfo.memberSetter) && !methodInfo.noOffset && memberList != null && !Modifier.isStatic(methodInfo.modifiers)) {
-                if (!memberList.contains(methodInfo.memberName[0])) {
-                    memberList.add(methodInfo.memberName[0]);
-                }
+            if ((methodInfo.memberGetter || methodInfo.memberSetter) && !methodInfo.noOffset && memberList != null && !Modifier.isStatic(methodInfo.modifiers) && !memberList.contains(methodInfo.memberName[0])) {
+                memberList.add(methodInfo.memberName[0]);
             }
             didSomething = true;
             out.print("JNIEXPORT " + jniTypeName(methodInfo.returnType) + " JNICALL Java_" + nativeName);
@@ -2416,11 +2414,8 @@ public class Generator {
                         returnPrefix = "rptr = NULL; " + typeName[0] + "* rptrptr" + typeName[1] + " = " + cast;
                     }
                     // else ByPtr || ByPtrRef
-                    if (adapterInfo != null && methodInfo.returnType.isArray() && methodInfo.returnType.getComponentType().isPrimitive()) {
-                        // data will get copied out anyway
-                        if (!typeName[0].startsWith("const ")) {
-                            typeName[0] = "const " + typeName[0];
-                        }
+                    if (adapterInfo != null && methodInfo.returnType.isArray() && methodInfo.returnType.getComponentType().isPrimitive() && !typeName[0].startsWith("const ")) {
+                        typeName[0] = "const " + typeName[0];
                     }
                     if (methodInfo.bufferGetter) {
                         out.println("    jobject rarg = NULL;");
@@ -2752,11 +2747,8 @@ public class Generator {
                 }
                 out.println(indent + "}");
             }
-            if (adapterInfo != null && methodInfo.returnType.isArray() && methodInfo.returnType.getComponentType().isPrimitive()) {
-                // data will get copied out anyway
-                if (!typeName[0].startsWith("const ")) {
-                    typeName[0] = "const " + typeName[0];
-                }
+            if (adapterInfo != null && methodInfo.returnType.isArray() && methodInfo.returnType.getComponentType().isPrimitive() && !typeName[0].startsWith("const ")) {
+                typeName[0] = "const " + typeName[0];
             }
         }
         out.println(suffix);
@@ -3670,11 +3662,9 @@ public class Generator {
         }
         Index index2 = pairedMethod != null ? pairedMethod.getAnnotation(Index.class) : null;
         info.throwsException = null;
-        if (!noException(info.cls, method)) {
-            if ((by(info.annotations) instanceof ByVal && !noException(info.returnType, method)) || (index != null && index.function().length() > 0) || (index2 != null && index2.function().length() > 0) || !info.deallocator && !info.valueGetter && !info.valueSetter && !info.memberGetter && !info.memberSetter && !info.bufferGetter) {
-                Class<?>[] exceptions = method.getExceptionTypes();
-                info.throwsException = exceptions.length > 0 ? exceptions[0] : RuntimeException.class;
-            }
+        if (!noException(info.cls, method) && (by(info.annotations) instanceof ByVal && !noException(info.returnType, method)) || (index != null && index.function().length() > 0) || (index2 != null && index2.function().length() > 0) || !info.deallocator && !info.valueGetter && !info.valueSetter && !info.memberGetter && !info.memberSetter && !info.bufferGetter) {
+            Class<?>[] exceptions = method.getExceptionTypes();
+            info.throwsException = exceptions.length > 0 ? exceptions[0] : RuntimeException.class;
         }
         return info;
     }

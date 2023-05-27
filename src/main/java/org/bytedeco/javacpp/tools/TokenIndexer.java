@@ -126,10 +126,8 @@ class TokenIndexer {
                             }
                     } else if (keyword.match(Token.ELSE)) {
                         define = info == null || !define;
-                    } else if (keyword.match(Token.ENDIF)) {
-                        if (count == 0) {
-                            break;
-                        }
+                    } else if (keyword.match(Token.ENDIF) && count == 0) {
+                        break;
                     }
                 } else if (define) {
                     tokens.add(array[index++]);
