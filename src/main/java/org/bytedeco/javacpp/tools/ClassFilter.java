@@ -19,7 +19,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp.tools;
 
 /**
@@ -28,5 +27,6 @@ package org.bytedeco.javacpp.tools;
  * @author Samuel Audet
  */
 public interface ClassFilter {
+
     boolean keep(String filename, byte[] data);
 }

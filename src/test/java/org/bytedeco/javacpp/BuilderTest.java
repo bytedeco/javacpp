@@ -36,28 +36,34 @@ import static org.junit.Assert.*;
  *
  * @author Samuel Audet
  */
-@Platform(extension = {"-ext1", "-ext2"})
+@Platform(extension = { "-ext1", "-ext2" })
 public class BuilderTest implements BuildEnabled, LoadEnabled {
 
     static int initCount = 0;
+
     static Logger logger = null;
+
     static Properties properties = null;
+
     static String encoding = null;
 
-    @Override public void init(ClassProperties properties) {
+    @Override
+    public void init(ClassProperties properties) {
         initCount++;
     }
 
-    @Override public void init(Logger logger, Properties properties, String encoding) {
+    @Override
+    public void init(Logger logger, Properties properties, String encoding) {
         this.logger = logger;
         this.properties = properties;
         this.encoding = encoding;
     }
 
-    @Test public void testExtensions() throws Exception {
+    @Test
+    public void testExtensions() throws Exception {
         System.out.println("Builder");
         Class c = BuilderTest.class;
-        String[] extensions = {"", "-ext1", "-ext2"};
+        String[] extensions = { "", "-ext1", "-ext2" };
         for (String extension : extensions) {
             URL u = Loader.findResource(c, Loader.getPlatform() + extension);
             if (u != null) {
@@ -68,15 +74,12 @@ public class BuilderTest implements BuildEnabled, LoadEnabled {
                 }
             }
         }
-
         Builder builder0 = new Builder().classesOrPackages(c.getName());
         File[] outputFiles0 = builder0.build();
         assertEquals(0, outputFiles0.length);
-
         System.out.println("Builder");
         Builder builder = new Builder().property("platform.extension", "-ext1").classesOrPackages(c.getName());
         File[] outputFiles = builder.build();
-
         System.out.println("Loader");
         try {
             System.out.println("Note: UnsatisfiedLinkError should get thrown here and printed below.");
@@ -91,11 +94,9 @@ public class BuilderTest implements BuildEnabled, LoadEnabled {
         assertTrue(Loader.getLoadedLibraries().get("jniBuilderTest").contains("-ext1"));
         Loader.foundLibraries.clear();
         Loader.loadedLibraries.clear();
-
         System.out.println("Builder");
         Builder builder2 = new Builder().property("platform.extension", "-ext2").classesOrPackages(c.getName());
         File[] outputFiles2 = builder2.build();
-
         System.out.println("Loader");
         Loader.loadProperties().remove("platform.extension");
         filename = Loader.load(c);
@@ -103,16 +104,13 @@ public class BuilderTest implements BuildEnabled, LoadEnabled {
         assertTrue(Loader.getLoadedLibraries().get("jniBuilderTest").contains("-ext2"));
         Loader.foundLibraries.clear();
         Loader.loadedLibraries.clear();
-
         Loader.loadProperties().put("platform.extension", "-ext1");
         filename = Loader.load(c);
         Loader.loadGlobal(filename);
         assertTrue(Loader.getLoadedLibraries().get("jniBuilderTest").contains("-ext1"));
-
         System.out.println(initCount);
         assertTrue(initCount >= 6);
         assertNotNull(logger);
         assertNotNull(properties);
     }
-
 }

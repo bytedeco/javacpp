@@ -19,7 +19,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp.indexer;
 
 /**
@@ -28,103 +27,145 @@ package org.bytedeco.javacpp.indexer;
  * @author Samuel Audet
  */
 public class FloatArrayIndexer extends FloatIndexer {
-    /** The backing array. */
+
+    /**
+     * The backing array.
+     */
     protected float[] array;
 
-    /** Calls {@code FloatArrayIndexer(array, Index.create(array.length))}. */
+    /**
+     * Calls {@code FloatArrayIndexer(array, Index.create(array.length))}.
+     */
     public FloatArrayIndexer(float[] array) {
         this(array, Index.create(array.length));
     }
 
-    /** Calls {@code FloatArrayIndexer(array, Index.create(sizes))}. */
+    /**
+     * Calls {@code FloatArrayIndexer(array, Index.create(sizes))}.
+     */
     public FloatArrayIndexer(float[] array, long... sizes) {
         this(array, Index.create(sizes));
     }
 
-    /** Calls {@code FloatArrayIndexer(array, Index.create(sizes, strides))}. */
+    /**
+     * Calls {@code FloatArrayIndexer(array, Index.create(sizes, strides))}.
+     */
     public FloatArrayIndexer(float[] array, long[] sizes, long[] strides) {
         this(array, Index.create(sizes, strides));
     }
 
-    /** Constructor to set the {@link #array} and {@link #index}. */
+    /**
+     * Constructor to set the {@link #array} and {@link #index}.
+     */
     public FloatArrayIndexer(float[] array, Index index) {
         super(index);
         this.array = array;
     }
 
-    @Override public float[] array() {
+    @Override
+    public float[] array() {
         return array;
     }
 
-    @Override public FloatIndexer reindex(Index index) {
+    @Override
+    public FloatIndexer reindex(Index index) {
         return new FloatArrayIndexer(array, index);
     }
 
-    @Override public float get(long i) {
-        return array[(int)index(i)];
+    @Override
+    public float get(long i) {
+        return array[(int) index(i)];
     }
-    @Override public FloatIndexer get(long i, float[] f, int offset, int length) {
+
+    @Override
+    public FloatIndexer get(long i, float[] f, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            f[offset + n] = array[(int)index(i) + n];
-        }
-        return this;
-    }
-    @Override public float get(long i, long j) {
-        return array[(int)index(i, j)];
-    }
-    @Override public FloatIndexer get(long i, long j, float[] f, int offset, int length) {
-        for (int n = 0; n < length; n++) {
-            f[offset + n] = array[(int)index(i, j) + n];
-        }
-        return this;
-    }
-    @Override public float get(long i, long j, long k) {
-        return array[(int)index(i, j, k)];
-    }
-    @Override public float get(long... indices) {
-        return array[(int)index(indices)];
-    }
-    @Override public FloatIndexer get(long[] indices, float[] f, int offset, int length) {
-        for (int n = 0; n < length; n++) {
-            f[offset + n] = array[(int)index(indices) + n];
+            f[offset + n] = array[(int) index(i) + n];
         }
         return this;
     }
 
-    @Override public FloatIndexer put(long i, float f) {
-        array[(int)index(i)] = f;
-        return this;
+    @Override
+    public float get(long i, long j) {
+        return array[(int) index(i, j)];
     }
-    @Override public FloatIndexer put(long i, float[] f, int offset, int length) {
+
+    @Override
+    public FloatIndexer get(long i, long j, float[] f, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            array[(int)index(i) + n] = f[offset + n];
-        }
-        return this;
-    }
-    @Override public FloatIndexer put(long i, long j, float f) {
-        array[(int)index(i, j)] = f;
-        return this;
-    }
-    @Override public FloatIndexer put(long i, long j, float[] f, int offset, int length) {
-        for (int n = 0; n < length; n++) {
-            array[(int)index(i, j) + n] = f[offset + n];
-        }
-        return this;
-    }
-    @Override public FloatIndexer put(long i, long j, long k, float f) {
-        array[(int)index(i, j, k)] = f;
-        return this;
-    }
-    @Override public FloatIndexer put(long[] indices, float f) {
-        array[(int)index(indices)] = f;
-        return this;
-    }
-    @Override public FloatIndexer put(long[] indices, float[] f, int offset, int length) {
-        for (int n = 0; n < length; n++) {
-            array[(int)index(indices) + n] = f[offset + n];
+            f[offset + n] = array[(int) index(i, j) + n];
         }
         return this;
     }
 
-    @Override public void release() { array = null; }
+    @Override
+    public float get(long i, long j, long k) {
+        return array[(int) index(i, j, k)];
+    }
+
+    @Override
+    public float get(long... indices) {
+        return array[(int) index(indices)];
+    }
+
+    @Override
+    public FloatIndexer get(long[] indices, float[] f, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            f[offset + n] = array[(int) index(indices) + n];
+        }
+        return this;
+    }
+
+    @Override
+    public FloatIndexer put(long i, float f) {
+        array[(int) index(i)] = f;
+        return this;
+    }
+
+    @Override
+    public FloatIndexer put(long i, float[] f, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            array[(int) index(i) + n] = f[offset + n];
+        }
+        return this;
+    }
+
+    @Override
+    public FloatIndexer put(long i, long j, float f) {
+        array[(int) index(i, j)] = f;
+        return this;
+    }
+
+    @Override
+    public FloatIndexer put(long i, long j, float[] f, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            array[(int) index(i, j) + n] = f[offset + n];
+        }
+        return this;
+    }
+
+    @Override
+    public FloatIndexer put(long i, long j, long k, float f) {
+        array[(int) index(i, j, k)] = f;
+        return this;
+    }
+
+    @Override
+    public FloatIndexer put(long[] indices, float f) {
+        array[(int) index(indices)] = f;
+        return this;
+    }
+
+    @Override
+    public FloatIndexer put(long[] indices, float[] f, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            array[(int) index(indices) + n] = f[offset + n];
+        }
+        return this;
+    }
+
+    @Override
+    public void release() {
+        array = null;
+    }
 }

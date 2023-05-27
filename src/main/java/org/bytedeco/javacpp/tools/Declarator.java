@@ -19,18 +19,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp.tools;
 
 /**
- *
  * @author Samuel Audet
  */
 class Declarator {
+
     Type type = null;
+
     Parameters parameters = null;
+
     Declaration definition = null;
+
     int infoNumber = 0, indices = 0, indirections = 0;
+
     boolean constPointer = false, operator = false, reference = false, rvalue = false;
+
     String cppName = "", javaName = "", signature = "";
 }

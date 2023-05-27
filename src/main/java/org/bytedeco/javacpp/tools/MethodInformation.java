@@ -19,29 +19,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp.tools;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 
 /**
- *
  * @author Samuel Audet
  */
 public class MethodInformation {
+
     Class<?> cls;
+
     Method method;
+
     Annotation[] annotations;
+
     int modifiers;
+
     Class<?> returnType;
+
     String name, memberName[];
+
     int allocatorMax, dim;
+
     boolean[] parameterRaw;
+
     Class<?>[] parameterTypes;
+
     Annotation[][] parameterAnnotations;
-    boolean criticalRegion, returnRaw, withEnv, overloaded, noOffset, deallocator, allocator, arrayAllocator,
-            bufferGetter, valueGetter, valueSetter, memberGetter, memberSetter, noReturnGetter;
+
+    boolean criticalRegion, returnRaw, withEnv, overloaded, noOffset, deallocator, allocator, arrayAllocator, bufferGetter, valueGetter, valueSetter, memberGetter, memberSetter, noReturnGetter;
+
     Method pairedMethod;
+
     Class<?> throwsException;
 }

@@ -19,14 +19,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp.tools;
 
 /**
- *
  * @author Samuel Audet
  */
 class Attribute {
+
     boolean annotation = false;
+
     String cppName = "", javaName = "", arguments = "";
 }

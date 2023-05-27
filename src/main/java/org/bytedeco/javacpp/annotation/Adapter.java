@@ -31,12 +31,19 @@ import org.bytedeco.javacpp.tools.Generator;
  *
  * @author Samuel Audet
  */
-@Documented @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD, ElementType.PARAMETER, ElementType.ANNOTATION_TYPE})
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ ElementType.METHOD, ElementType.PARAMETER, ElementType.ANNOTATION_TYPE })
 public @interface Adapter {
-    /** The name of the C++ adapter class. */
+
+    /**
+     * The name of the C++ adapter class.
+     */
     String value();
-    /** The number of arguments that {@link Generator} takes from the method as
-     *  arguments to the adapter constructor. */
+
+    /**
+     * The number of arguments that {@link Generator} takes from the method as
+     *  arguments to the adapter constructor.
+     */
     int argc() default 1;
 }

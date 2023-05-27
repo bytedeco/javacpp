@@ -29,6 +29,7 @@ package org.bytedeco.javacpp.indexer;
 abstract class Raw {
 
     static final Raw INSTANCE;
+
     static {
         if (UnsafeRaw.isAvailable()) {
             INSTANCE = new UnsafeRaw();
@@ -36,42 +37,75 @@ abstract class Raw {
             INSTANCE = null;
         }
     }
-    /** Returns {@link UnsafeRaw} if {@code UnsafeRaw.isAvailable()} or null otherwise. */
+
+    /**
+     * Returns {@link UnsafeRaw} if {@code UnsafeRaw.isAvailable()} or null otherwise.
+     */
     static Raw getInstance() {
         return INSTANCE;
     }
 
     abstract byte getByte(long address);
+
     abstract void putByte(long address, byte b);
+
     abstract short getShort(long address);
+
     abstract void putShort(long address, short s);
+
     abstract int getInt(long address);
+
     abstract void putInt(long address, int i);
+
     abstract long getLong(long address);
+
     abstract void putLong(long address, long l);
+
     abstract float getFloat(long address);
+
     abstract void putFloat(long address, float f);
+
     abstract double getDouble(long address);
+
     abstract void putDouble(long address, double d);
+
     abstract char getChar(long address);
+
     abstract void putChar(long address, char c);
+
     abstract boolean getBoolean(long address);
+
     abstract void putBoolean(long address, boolean b);
 
     abstract byte getByte(byte[] array, long offset);
+
     abstract void putByte(byte[] array, long offset, byte b);
+
     abstract short getShort(byte[] array, long offset);
+
     abstract void putShort(byte[] array, long offset, short s);
+
     abstract int getInt(byte[] array, long offset);
+
     abstract void putInt(byte[] array, long offset, int i);
+
     abstract long getLong(byte[] array, long offset);
+
     abstract void putLong(byte[] array, long offset, long l);
+
     abstract float getFloat(byte[] array, long offset);
+
     abstract void putFloat(byte[] array, long offset, float f);
+
     abstract double getDouble(byte[] array, long offset);
+
     abstract void putDouble(byte[] array, long offset, double d);
+
     abstract char getChar(byte[] array, long offset);
+
     abstract void putChar(byte[] array, long offset, char c);
+
     abstract boolean getBoolean(byte[] array, long offset);
+
     abstract void putBoolean(byte[] array, long offset, boolean b);
 }

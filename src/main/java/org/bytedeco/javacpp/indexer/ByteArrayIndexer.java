@@ -19,7 +19,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp.indexer;
 
 import java.nio.ByteBuffer;
@@ -31,104 +30,149 @@ import java.nio.ByteOrder;
  * @author Samuel Audet
  */
 public class ByteArrayIndexer extends ByteIndexer {
-    /** The instance for the raw memory interface. */
+
+    /**
+     * The instance for the raw memory interface.
+     */
     protected static final Raw RAW = Raw.getInstance();
-    /** The wrapping buffer. */
+
+    /**
+     * The wrapping buffer.
+     */
     protected ByteBuffer buffer;
-    /** The backing array. */
+
+    /**
+     * The backing array.
+     */
     protected byte[] array;
 
-    /** Calls {@code ByteArrayIndexer(array, Index.create(array.length))}. */
+    /**
+     * Calls {@code ByteArrayIndexer(array, Index.create(array.length))}.
+     */
     public ByteArrayIndexer(byte[] array) {
         this(array, Index.create(array.length));
     }
 
-    /** Calls {@code ByteArrayIndexer(array, Index.create(sizes))}. */
+    /**
+     * Calls {@code ByteArrayIndexer(array, Index.create(sizes))}.
+     */
     public ByteArrayIndexer(byte[] array, long... sizes) {
         this(array, Index.create(sizes));
     }
 
-    /** Calls {@code ByteArrayIndexer(array, Index.create(sizes, strides))}. */
+    /**
+     * Calls {@code ByteArrayIndexer(array, Index.create(sizes, strides))}.
+     */
     public ByteArrayIndexer(byte[] array, long[] sizes, long[] strides) {
         this(array, Index.create(sizes, strides));
     }
 
-    /** Constructor to set the {@link #array} and {@link #index}. */
+    /**
+     * Constructor to set the {@link #array} and {@link #index}.
+     */
     public ByteArrayIndexer(byte[] array, Index index) {
         super(index);
         this.array = array;
     }
 
-    @Override public byte[] array() {
+    @Override
+    public byte[] array() {
         return array;
     }
 
-    @Override public ByteIndexer reindex(Index index) {
+    @Override
+    public ByteIndexer reindex(Index index) {
         return new ByteArrayIndexer(array, index);
     }
 
-    @Override public byte get(long i) {
-        return array[(int)index(i)];
+    @Override
+    public byte get(long i) {
+        return array[(int) index(i)];
     }
-    @Override public ByteIndexer get(long i, byte[] b, int offset, int length) {
+
+    @Override
+    public ByteIndexer get(long i, byte[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            b[offset + n] = array[(int)index(i) + n];
-        }
-        return this;
-    }
-    @Override public byte get(long i, long j) {
-        return array[(int)index(i, j)];
-    }
-    @Override public ByteIndexer get(long i, long j, byte[] b, int offset, int length) {
-        for (int n = 0; n < length; n++) {
-            b[offset + n] = array[(int)index(i, j) + n];
-        }
-        return this;
-    }
-    @Override public byte get(long i, long j, long k) {
-        return array[(int)index(i, j, k)];
-    }
-    @Override public byte get(long... indices) {
-        return array[(int)index(indices)];
-    }
-    @Override public ByteIndexer get(long[] indices, byte[] b, int offset, int length) {
-        for (int n = 0; n < length; n++) {
-            b[offset + n] = array[(int)index(indices) + n];
+            b[offset + n] = array[(int) index(i) + n];
         }
         return this;
     }
 
-    @Override public ByteIndexer put(long i, byte b) {
-        array[(int)index(i)] = b;
-        return this;
+    @Override
+    public byte get(long i, long j) {
+        return array[(int) index(i, j)];
     }
-    @Override public ByteIndexer put(long i, byte[] b, int offset, int length) {
+
+    @Override
+    public ByteIndexer get(long i, long j, byte[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            array[(int)index(i) + n] = b[offset + n];
+            b[offset + n] = array[(int) index(i, j) + n];
         }
         return this;
     }
-    @Override public ByteIndexer put(long i, long j, byte b) {
-        array[(int)index(i, j)] = b;
-        return this;
+
+    @Override
+    public byte get(long i, long j, long k) {
+        return array[(int) index(i, j, k)];
     }
-    @Override public ByteIndexer put(long i, long j, byte[] b, int offset, int length) {
+
+    @Override
+    public byte get(long... indices) {
+        return array[(int) index(indices)];
+    }
+
+    @Override
+    public ByteIndexer get(long[] indices, byte[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            array[(int)index(i, j) + n] = b[offset + n];
+            b[offset + n] = array[(int) index(indices) + n];
         }
         return this;
     }
-    @Override public ByteIndexer put(long i, long j, long k, byte b) {
-        array[(int)index(i, j, k)] = b;
+
+    @Override
+    public ByteIndexer put(long i, byte b) {
+        array[(int) index(i)] = b;
         return this;
     }
-    @Override public ByteIndexer put(long[] indices, byte b) {
-        array[(int)index(indices)] = b;
-        return this;
-    }
-    @Override public ByteIndexer put(long[] indices, byte[] b, int offset, int length) {
+
+    @Override
+    public ByteIndexer put(long i, byte[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            array[(int)index(indices) + n] = b[offset + n];
+            array[(int) index(i) + n] = b[offset + n];
+        }
+        return this;
+    }
+
+    @Override
+    public ByteIndexer put(long i, long j, byte b) {
+        array[(int) index(i, j)] = b;
+        return this;
+    }
+
+    @Override
+    public ByteIndexer put(long i, long j, byte[] b, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            array[(int) index(i, j) + n] = b[offset + n];
+        }
+        return this;
+    }
+
+    @Override
+    public ByteIndexer put(long i, long j, long k, byte b) {
+        array[(int) index(i, j, k)] = b;
+        return this;
+    }
+
+    @Override
+    public ByteIndexer put(long[] indices, byte b) {
+        array[(int) index(indices)] = b;
+        return this;
+    }
+
+    @Override
+    public ByteIndexer put(long[] indices, byte[] b, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            array[(int) index(indices) + n] = b[offset + n];
         }
         return this;
     }
@@ -140,109 +184,133 @@ public class ByteArrayIndexer extends ByteIndexer {
         return buffer;
     }
 
-    @Override public byte getByte(long i) {
-        return array[(int)i];
+    @Override
+    public byte getByte(long i) {
+        return array[(int) i];
     }
-    @Override public ByteIndexer putByte(long i, byte b) {
-        array[(int)i] = b;
+
+    @Override
+    public ByteIndexer putByte(long i, byte b) {
+        array[(int) i] = b;
         return this;
     }
 
-    @Override public short getShort(long i) {
+    @Override
+    public short getShort(long i) {
         if (RAW != null) {
             return RAW.getShort(array, checkIndex(i, array.length - 1));
         } else {
-            return getBuffer().getShort((int)i);
+            return getBuffer().getShort((int) i);
         }
     }
-    @Override public ByteIndexer putShort(long i, short s) {
+
+    @Override
+    public ByteIndexer putShort(long i, short s) {
         if (RAW != null) {
             RAW.putShort(array, checkIndex(i, array.length - 1), s);
         } else {
-            getBuffer().putShort((int)i, s);
+            getBuffer().putShort((int) i, s);
         }
         return this;
     }
 
-    @Override public int getInt(long i) {
+    @Override
+    public int getInt(long i) {
         if (RAW != null) {
             return RAW.getInt(array, checkIndex(i, array.length - 3));
         } else {
-            return getBuffer().getInt((int)i);
+            return getBuffer().getInt((int) i);
         }
     }
-    @Override public ByteIndexer putInt(long i, int j) {
+
+    @Override
+    public ByteIndexer putInt(long i, int j) {
         if (RAW != null) {
             RAW.putInt(array, checkIndex(i, array.length - 3), j);
         } else {
-            getBuffer().putInt((int)i, j);
+            getBuffer().putInt((int) i, j);
         }
         return this;
     }
 
-    @Override public long getLong(long i) {
+    @Override
+    public long getLong(long i) {
         if (RAW != null) {
             return RAW.getLong(array, checkIndex(i, array.length - 7));
         } else {
-            return getBuffer().getLong((int)i);
+            return getBuffer().getLong((int) i);
         }
     }
-    @Override public ByteIndexer putLong(long i, long j) {
+
+    @Override
+    public ByteIndexer putLong(long i, long j) {
         if (RAW != null) {
             RAW.putLong(array, checkIndex(i, array.length - 7), j);
         } else {
-            getBuffer().putLong((int)i, j);
+            getBuffer().putLong((int) i, j);
         }
         return this;
     }
 
-    @Override public float getFloat(long i) {
+    @Override
+    public float getFloat(long i) {
         if (RAW != null) {
             return RAW.getFloat(array, checkIndex(i, array.length - 3));
         } else {
-            return getBuffer().getFloat((int)i);
+            return getBuffer().getFloat((int) i);
         }
     }
-    @Override public ByteIndexer putFloat(long i, float f) {
+
+    @Override
+    public ByteIndexer putFloat(long i, float f) {
         if (RAW != null) {
             RAW.putFloat(array, checkIndex(i, array.length - 3), f);
         } else {
-            getBuffer().putFloat((int)i, f);
+            getBuffer().putFloat((int) i, f);
         }
         return this;
     }
 
-    @Override public double getDouble(long i) {
+    @Override
+    public double getDouble(long i) {
         if (RAW != null) {
             return RAW.getDouble(array, checkIndex(i, array.length - 7));
         } else {
-            return getBuffer().getDouble((int)i);
+            return getBuffer().getDouble((int) i);
         }
     }
-    @Override public ByteIndexer putDouble(long i, double d) {
+
+    @Override
+    public ByteIndexer putDouble(long i, double d) {
         if (RAW != null) {
             RAW.putDouble(array, checkIndex(i, array.length - 7), d);
         } else {
-            getBuffer().putDouble((int)i, d);
+            getBuffer().putDouble((int) i, d);
         }
         return this;
     }
 
-    @Override public char getChar(long i) {
+    @Override
+    public char getChar(long i) {
         if (RAW != null) {
             return RAW.getChar(array, checkIndex(i, array.length - 1));
         } else {
-            return getBuffer().getChar((int)i);
+            return getBuffer().getChar((int) i);
         }
     }
-    @Override public ByteIndexer putChar(long i, char c) {
+
+    @Override
+    public ByteIndexer putChar(long i, char c) {
         if (RAW != null) {
             RAW.putChar(array, checkIndex(i, array.length - 1), c);
         } else {
-            getBuffer().putChar((int)i, c);
+            getBuffer().putChar((int) i, c);
         }
         return this;
     }
 
-    @Override public void release() { array = null; }
+    @Override
+    public void release() {
+        array = null;
+    }
 }

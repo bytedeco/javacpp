@@ -20,9 +20,13 @@ import org.bytedeco.javacpp.tools.Generator;
  *
  * @author Samuel Audet
  */
-@Documented @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE, ElementType.METHOD})
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ ElementType.TYPE, ElementType.METHOD })
 public @interface Name {
-    /** The second element gets used as a suffix to work around arrays of anonymous struct or union. */
+
+    /**
+     * The second element gets used as a suffix to work around arrays of anonymous struct or union.
+     */
     String[] value();
 }

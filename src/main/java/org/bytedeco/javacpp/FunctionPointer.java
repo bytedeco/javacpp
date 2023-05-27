@@ -19,7 +19,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp;
 
 import org.bytedeco.javacpp.annotation.ByPtr;
@@ -52,6 +51,11 @@ import org.bytedeco.javacpp.tools.Generator;
  * @author Samuel Audet
  */
 public abstract class FunctionPointer extends Pointer {
-    protected FunctionPointer() { }
-    protected FunctionPointer(Pointer p) { super(p); }
+
+    protected FunctionPointer() {
+    }
+
+    protected FunctionPointer(Pointer p) {
+        super(p);
+    }
 }

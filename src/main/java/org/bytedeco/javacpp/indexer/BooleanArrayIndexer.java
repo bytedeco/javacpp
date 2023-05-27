@@ -19,7 +19,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp.indexer;
 
 /**
@@ -28,103 +27,145 @@ package org.bytedeco.javacpp.indexer;
  * @author Samuel Audet
  */
 public class BooleanArrayIndexer extends BooleanIndexer {
-    /** The backing array. */
+
+    /**
+     * The backing array.
+     */
     protected boolean[] array;
 
-    /** Calls {@code BooleanArrayIndexer(array, Index.create(array.length))}. */
+    /**
+     * Calls {@code BooleanArrayIndexer(array, Index.create(array.length))}.
+     */
     public BooleanArrayIndexer(boolean[] array) {
         this(array, Index.create(array.length));
     }
 
-    /** Calls {@code BooleanArrayIndexer(array, Index.create(sizes))}. */
+    /**
+     * Calls {@code BooleanArrayIndexer(array, Index.create(sizes))}.
+     */
     public BooleanArrayIndexer(boolean[] array, long... sizes) {
         this(array, Index.create(sizes));
     }
 
-    /** Calls {@code BooleanArrayIndexer(array, Index.create(sizes, strides))}. */
+    /**
+     * Calls {@code BooleanArrayIndexer(array, Index.create(sizes, strides))}.
+     */
     public BooleanArrayIndexer(boolean[] array, long[] sizes, long[] strides) {
         this(array, Index.create(sizes, strides));
     }
 
-    /** Constructor to set the {@link #array} and {@link #index}. */
+    /**
+     * Constructor to set the {@link #array} and {@link #index}.
+     */
     public BooleanArrayIndexer(boolean[] array, Index index) {
         super(index);
         this.array = array;
     }
 
-    @Override public boolean[] array() {
+    @Override
+    public boolean[] array() {
         return array;
     }
 
-    @Override public BooleanIndexer reindex(Index index) {
+    @Override
+    public BooleanIndexer reindex(Index index) {
         return new BooleanArrayIndexer(array, index);
     }
 
-    @Override public boolean get(long i) {
-        return array[(int)index(i)];
+    @Override
+    public boolean get(long i) {
+        return array[(int) index(i)];
     }
-    @Override public BooleanIndexer get(long i, boolean[] b, int offset, int length) {
+
+    @Override
+    public BooleanIndexer get(long i, boolean[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            b[offset + n] = array[(int)index(i) + n];
-        }
-        return this;
-    }
-    @Override public boolean get(long i, long j) {
-        return array[(int)index(i, j)];
-    }
-    @Override public BooleanIndexer get(long i, long j, boolean[] b, int offset, int length) {
-        for (int n = 0; n < length; n++) {
-            b[offset + n] = array[(int)index(i, j) + n];
-        }
-        return this;
-    }
-    @Override public boolean get(long i, long j, long k) {
-        return array[(int)index(i, j, k)];
-    }
-    @Override public boolean get(long... indices) {
-        return array[(int)index(indices)];
-    }
-    @Override public BooleanIndexer get(long[] indices, boolean[] b, int offset, int length) {
-        for (int n = 0; n < length; n++) {
-            b[offset + n] = array[(int)index(indices) + n];
+            b[offset + n] = array[(int) index(i) + n];
         }
         return this;
     }
 
-    @Override public BooleanIndexer put(long i, boolean b) {
-        array[(int)index(i)] = b;
-        return this;
+    @Override
+    public boolean get(long i, long j) {
+        return array[(int) index(i, j)];
     }
-    @Override public BooleanIndexer put(long i, boolean[] b, int offset, int length) {
+
+    @Override
+    public BooleanIndexer get(long i, long j, boolean[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            array[(int)index(i) + n] = b[offset + n];
-        }
-        return this;
-    }
-    @Override public BooleanIndexer put(long i, long j, boolean b) {
-        array[(int)index(i, j)] = b;
-        return this;
-    }
-    @Override public BooleanIndexer put(long i, long j, boolean[] b, int offset, int length) {
-        for (int n = 0; n < length; n++) {
-            array[(int)index(i, j) + n] = b[offset + n];
-        }
-        return this;
-    }
-    @Override public BooleanIndexer put(long i, long j, long k, boolean b) {
-        array[(int)index(i, j, k)] = b;
-        return this;
-    }
-    @Override public BooleanIndexer put(long[] indices, boolean b) {
-        array[(int)index(indices)] = b;
-        return this;
-    }
-    @Override public BooleanIndexer put(long[] indices, boolean[] b, int offset, int length) {
-        for (int n = 0; n < length; n++) {
-            array[(int)index(indices) + n] = b[offset + n];
+            b[offset + n] = array[(int) index(i, j) + n];
         }
         return this;
     }
 
-    @Override public void release() { array = null; }
+    @Override
+    public boolean get(long i, long j, long k) {
+        return array[(int) index(i, j, k)];
+    }
+
+    @Override
+    public boolean get(long... indices) {
+        return array[(int) index(indices)];
+    }
+
+    @Override
+    public BooleanIndexer get(long[] indices, boolean[] b, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            b[offset + n] = array[(int) index(indices) + n];
+        }
+        return this;
+    }
+
+    @Override
+    public BooleanIndexer put(long i, boolean b) {
+        array[(int) index(i)] = b;
+        return this;
+    }
+
+    @Override
+    public BooleanIndexer put(long i, boolean[] b, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            array[(int) index(i) + n] = b[offset + n];
+        }
+        return this;
+    }
+
+    @Override
+    public BooleanIndexer put(long i, long j, boolean b) {
+        array[(int) index(i, j)] = b;
+        return this;
+    }
+
+    @Override
+    public BooleanIndexer put(long i, long j, boolean[] b, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            array[(int) index(i, j) + n] = b[offset + n];
+        }
+        return this;
+    }
+
+    @Override
+    public BooleanIndexer put(long i, long j, long k, boolean b) {
+        array[(int) index(i, j, k)] = b;
+        return this;
+    }
+
+    @Override
+    public BooleanIndexer put(long[] indices, boolean b) {
+        array[(int) index(indices)] = b;
+        return this;
+    }
+
+    @Override
+    public BooleanIndexer put(long[] indices, boolean[] b, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            array[(int) index(indices) + n] = b[offset + n];
+        }
+        return this;
+    }
+
+    @Override
+    public void release() {
+        array = null;
+    }
 }

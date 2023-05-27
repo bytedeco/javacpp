@@ -19,7 +19,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp;
 
 import java.nio.ShortBuffer;
@@ -33,6 +32,7 @@ import org.bytedeco.javacpp.tools.Logger;
  */
 @org.bytedeco.javacpp.annotation.Properties(inherit = org.bytedeco.javacpp.presets.javacpp.class)
 public class ShortPointer extends Pointer {
+
     private static final Logger logger = Logger.create(ShortPointer.class);
 
     static {
@@ -51,10 +51,11 @@ public class ShortPointer extends Pointer {
      * @param array the array to copy
      * @see #put(short[])
      */
-    public ShortPointer(short ... array) {
+    public ShortPointer(short... array) {
         this(array.length);
         put(array);
     }
+
     /**
      * For direct buffers, calls {@link Pointer#Pointer(Buffer)}, while for buffers
      * backed with an array, allocates enough memory for the array and copies it.
@@ -72,6 +73,7 @@ public class ShortPointer extends Pointer {
             limit(buffer.limit());
         }
     }
+
     /**
      * Allocates a native {@code short} array of the given size.
      *
@@ -86,43 +88,80 @@ public class ShortPointer extends Pointer {
         } catch (UnsatisfiedLinkError e) {
             throw new RuntimeException("No native JavaCPP library in memory. (Has Loader.load() been called?)", e);
         } catch (OutOfMemoryError e) {
-            OutOfMemoryError e2 = new OutOfMemoryError("Cannot allocate new ShortPointer(" + size + "): "
-                    + "totalBytes = " + formatBytes(totalBytes()) + ", physicalBytes = " + formatBytes(physicalBytes()));
+            OutOfMemoryError e2 = new OutOfMemoryError("Cannot allocate new ShortPointer(" + size + "): " + "totalBytes = " + formatBytes(totalBytes()) + ", physicalBytes = " + formatBytes(physicalBytes()));
             e2.initCause(e);
             throw e2;
         }
     }
-    /** @see Pointer#Pointer() */
-    public ShortPointer() { }
-    /** @see Pointer#Pointer(Pointer) */
-    public ShortPointer(Pointer p) { super(p); }
+
+    /**
+     * @see Pointer#Pointer()
+     */
+    public ShortPointer() {
+    }
+
+    /**
+     * @see Pointer#Pointer(Pointer)
+     */
+    public ShortPointer(Pointer p) {
+        super(p);
+    }
+
     private native void allocateArray(long size);
 
-    /** @see Pointer#position(long) */
-    @Override public ShortPointer position(long position) {
+    /**
+     * @see Pointer#position(long)
+     */
+    @Override
+    public ShortPointer position(long position) {
         return super.position(position);
     }
-    /** @see Pointer#limit(long) */
-    @Override public ShortPointer limit(long limit) {
+
+    /**
+     * @see Pointer#limit(long)
+     */
+    @Override
+    public ShortPointer limit(long limit) {
         return super.limit(limit);
     }
-    /** @see Pointer#capacity(long) */
-    @Override public ShortPointer capacity(long capacity) {
+
+    /**
+     * @see Pointer#capacity(long)
+     */
+    @Override
+    public ShortPointer capacity(long capacity) {
         return super.capacity(capacity);
     }
-    @Override public int sizeof() {
+
+    @Override
+    public int sizeof() {
         return getClass() == ShortPointer.class ? Short.SIZE / Byte.SIZE : super.sizeof();
     }
-    @Override public ShortPointer getPointer(long i) {
+
+    @Override
+    public ShortPointer getPointer(long i) {
         return new ShortPointer(this).offsetAddress(i);
     }
 
-    /** @return {@code get(0)} */
-    public short get() { return get(0); }
-    /** @return the i-th {@code short} value of a native array */
+    /**
+     * @return {@code get(0)}
+     */
+    public short get() {
+        return get(0);
+    }
+
+    /**
+     * @return the i-th {@code short} value of a native array
+     */
     public native short get(long i);
-    /** @return {@code put(0, s)} */
-    public ShortPointer put(short s) { return put(0, s); }
+
+    /**
+     * @return {@code put(0, s)}
+     */
+    public ShortPointer put(short s) {
+        return put(0, s);
+    }
+
     /**
      * Copies the {@code short} value to the i-th element of a native array.
      *
@@ -132,10 +171,20 @@ public class ShortPointer extends Pointer {
      */
     public native ShortPointer put(long i, short s);
 
-    /** @return {@code get(array, 0, array.length)} */
-    public ShortPointer get(short[] array) { return get(array, 0, array.length); }
-    /** @return {@code put(array, 0, array.length)} */
-    public ShortPointer put(short ... array) { return put(array, 0, array.length); }
+    /**
+     * @return {@code get(array, 0, array.length)}
+     */
+    public ShortPointer get(short[] array) {
+        return get(array, 0, array.length);
+    }
+
+    /**
+     * @return {@code put(array, 0, array.length)}
+     */
+    public ShortPointer put(short... array) {
+        return put(array, 0, array.length);
+    }
+
     /**
      * Reads a portion of the native array into a Java array.
      *
@@ -145,6 +194,7 @@ public class ShortPointer extends Pointer {
      * @return this
      */
     public native ShortPointer get(short[] array, int offset, int length);
+
     /**
      * Writes a portion of a Java array into the native array.
      *
@@ -155,8 +205,11 @@ public class ShortPointer extends Pointer {
      */
     public native ShortPointer put(short[] array, int offset, int length);
 
-    /** @return {@code asByteBuffer().asShortBuffer()} */
-    @Override public final ShortBuffer asBuffer() {
+    /**
+     * @return {@code asByteBuffer().asShortBuffer()}
+     */
+    @Override
+    public final ShortBuffer asBuffer() {
         return asByteBuffer().asShortBuffer();
     }
 }

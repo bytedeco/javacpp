@@ -19,7 +19,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp.indexer;
 
 import org.bytedeco.javacpp.FloatPointer;
@@ -31,29 +30,46 @@ import org.bytedeco.javacpp.Pointer;
  * @author Samuel Audet
  */
 public class FloatRawIndexer extends FloatIndexer {
-    /** The instance for the raw memory interface. */
+
+    /**
+     * The instance for the raw memory interface.
+     */
     protected static final Raw RAW = Raw.getInstance();
-    /** The backing pointer. */
+
+    /**
+     * The backing pointer.
+     */
     protected FloatPointer pointer;
-    /** Base address and number of elements accessible. */
+
+    /**
+     * Base address and number of elements accessible.
+     */
     final long base, size;
 
-    /** Calls {@code FloatRawIndexer(pointer, Index.create(pointer.limit() - pointer.position()))}. */
+    /**
+     * Calls {@code FloatRawIndexer(pointer, Index.create(pointer.limit() - pointer.position()))}.
+     */
     public FloatRawIndexer(FloatPointer pointer) {
         this(pointer, Index.create(pointer.limit() - pointer.position()));
     }
 
-    /** Calls {@code FloatRawIndexer(pointer, Index.create(sizes))}. */
+    /**
+     * Calls {@code FloatRawIndexer(pointer, Index.create(sizes))}.
+     */
     public FloatRawIndexer(FloatPointer pointer, long... sizes) {
         this(pointer, Index.create(sizes));
     }
 
-    /** Calls {@code FloatRawIndexer(pointer, Index.create(sizes, strides))}. */
+    /**
+     * Calls {@code FloatRawIndexer(pointer, Index.create(sizes, strides))}.
+     */
     public FloatRawIndexer(FloatPointer pointer, long[] sizes, long[] strides) {
         this(pointer, Index.create(sizes, strides));
     }
 
-    /** Constructor to set the {@link #pointer} and {@link #index}. */
+    /**
+     * Constructor to set the {@link #pointer} and {@link #index}.
+     */
     public FloatRawIndexer(FloatPointer pointer, Index index) {
         super(index);
         this.pointer = pointer;
@@ -61,42 +77,58 @@ public class FloatRawIndexer extends FloatIndexer {
         this.size = pointer.limit() - pointer.position();
     }
 
-    @Override public Pointer pointer() {
+    @Override
+    public Pointer pointer() {
         return pointer;
     }
 
-    @Override public FloatIndexer reindex(Index index) {
+    @Override
+    public FloatIndexer reindex(Index index) {
         return new FloatRawIndexer(pointer, index);
     }
 
     public float getRaw(long i) {
         return RAW.getFloat(base + checkIndex(i, size) * VALUE_BYTES);
     }
-    @Override public float get(long i) {
+
+    @Override
+    public float get(long i) {
         return getRaw(index(i));
     }
-    @Override public FloatIndexer get(long i, float[] f, int offset, int length) {
+
+    @Override
+    public FloatIndexer get(long i, float[] f, int offset, int length) {
         for (int n = 0; n < length; n++) {
             f[offset + n] = getRaw(index(i) + n);
         }
         return this;
     }
-    @Override public float get(long i, long j) {
+
+    @Override
+    public float get(long i, long j) {
         return getRaw(index(i, j));
     }
-    @Override public FloatIndexer get(long i, long j, float[] f, int offset, int length) {
+
+    @Override
+    public FloatIndexer get(long i, long j, float[] f, int offset, int length) {
         for (int n = 0; n < length; n++) {
             f[offset + n] = getRaw(index(i, j) + n);
         }
         return this;
     }
-    @Override public float get(long i, long j, long k) {
+
+    @Override
+    public float get(long i, long j, long k) {
         return getRaw(index(i, j, k));
     }
-    @Override public float get(long... indices) {
+
+    @Override
+    public float get(long... indices) {
         return getRaw(index(indices));
     }
-    @Override public FloatIndexer get(long[] indices, float[] f, int offset, int length) {
+
+    @Override
+    public FloatIndexer get(long[] indices, float[] f, int offset, int length) {
         for (int n = 0; n < length; n++) {
             f[offset + n] = getRaw(index(indices) + n);
         }
@@ -107,39 +139,56 @@ public class FloatRawIndexer extends FloatIndexer {
         RAW.putFloat(base + checkIndex(i, size) * VALUE_BYTES, f);
         return this;
     }
-    @Override public FloatIndexer put(long i, float f) {
+
+    @Override
+    public FloatIndexer put(long i, float f) {
         return putRaw(index(i), f);
     }
-    @Override public FloatIndexer put(long i, float[] f, int offset, int length) {
+
+    @Override
+    public FloatIndexer put(long i, float[] f, int offset, int length) {
         for (int n = 0; n < length; n++) {
             putRaw(index(i) + n, f[offset + n]);
         }
         return this;
     }
-    @Override public FloatIndexer put(long i, long j, float f) {
+
+    @Override
+    public FloatIndexer put(long i, long j, float f) {
         putRaw(index(i, j), f);
         return this;
     }
-    @Override public FloatIndexer put(long i, long j, float[] f, int offset, int length) {
+
+    @Override
+    public FloatIndexer put(long i, long j, float[] f, int offset, int length) {
         for (int n = 0; n < length; n++) {
             putRaw(index(i, j) + n, f[offset + n]);
         }
         return this;
     }
-    @Override public FloatIndexer put(long i, long j, long k, float f) {
+
+    @Override
+    public FloatIndexer put(long i, long j, long k, float f) {
         putRaw(index(i, j, k), f);
         return this;
     }
-    @Override public FloatIndexer put(long[] indices, float f) {
+
+    @Override
+    public FloatIndexer put(long[] indices, float f) {
         putRaw(index(indices), f);
         return this;
     }
-    @Override public FloatIndexer put(long[] indices, float[] f, int offset, int length) {
+
+    @Override
+    public FloatIndexer put(long[] indices, float[] f, int offset, int length) {
         for (int n = 0; n < length; n++) {
             putRaw(index(indices) + n, f[offset + n]);
         }
         return this;
     }
 
-    @Override public void release() { pointer = null; }
+    @Override
+    public void release() {
+        pointer = null;
+    }
 }

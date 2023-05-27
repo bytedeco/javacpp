@@ -19,7 +19,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp;
 
 import java.nio.DoubleBuffer;
@@ -33,6 +32,7 @@ import org.bytedeco.javacpp.tools.Logger;
  */
 @org.bytedeco.javacpp.annotation.Properties(inherit = org.bytedeco.javacpp.presets.javacpp.class)
 public class DoublePointer extends Pointer {
+
     private static final Logger logger = Logger.create(DoublePointer.class);
 
     static {
@@ -51,10 +51,11 @@ public class DoublePointer extends Pointer {
      * @param array the array to copy
      * @see #put(double[])
      */
-    public DoublePointer(double ... array) {
+    public DoublePointer(double... array) {
         this(array.length);
         put(array);
     }
+
     /**
      * For direct buffers, calls {@link Pointer#Pointer(Buffer)}, while for buffers
      * backed with an array, allocates enough memory for the array and copies it.
@@ -72,6 +73,7 @@ public class DoublePointer extends Pointer {
             limit(buffer.limit());
         }
     }
+
     /**
      * Allocates a native {@code double} array of the given size.
      *
@@ -86,43 +88,80 @@ public class DoublePointer extends Pointer {
         } catch (UnsatisfiedLinkError e) {
             throw new RuntimeException("No native JavaCPP library in memory. (Has Loader.load() been called?)", e);
         } catch (OutOfMemoryError e) {
-            OutOfMemoryError e2 = new OutOfMemoryError("Cannot allocate new DoublePointer(" + size + "): "
-                    + "totalBytes = " + formatBytes(totalBytes()) + ", physicalBytes = " + formatBytes(physicalBytes()));
+            OutOfMemoryError e2 = new OutOfMemoryError("Cannot allocate new DoublePointer(" + size + "): " + "totalBytes = " + formatBytes(totalBytes()) + ", physicalBytes = " + formatBytes(physicalBytes()));
             e2.initCause(e);
             throw e2;
         }
     }
-    /** @see Pointer#Pointer() */
-    public DoublePointer() { }
-    /** @see Pointer#Pointer(Pointer) */
-    public DoublePointer(Pointer p) { super(p); }
+
+    /**
+     * @see Pointer#Pointer()
+     */
+    public DoublePointer() {
+    }
+
+    /**
+     * @see Pointer#Pointer(Pointer)
+     */
+    public DoublePointer(Pointer p) {
+        super(p);
+    }
+
     private native void allocateArray(long size);
 
-    /** @see Pointer#position(long) */
-    @Override public DoublePointer position(long position) {
+    /**
+     * @see Pointer#position(long)
+     */
+    @Override
+    public DoublePointer position(long position) {
         return super.position(position);
     }
-    /** @see Pointer#limit(long) */
-    @Override public DoublePointer limit(long limit) {
+
+    /**
+     * @see Pointer#limit(long)
+     */
+    @Override
+    public DoublePointer limit(long limit) {
         return super.limit(limit);
     }
-    /** @see Pointer#capacity(long) */
-    @Override public DoublePointer capacity(long capacity) {
+
+    /**
+     * @see Pointer#capacity(long)
+     */
+    @Override
+    public DoublePointer capacity(long capacity) {
         return super.capacity(capacity);
     }
-    @Override public int sizeof() {
+
+    @Override
+    public int sizeof() {
         return getClass() == DoublePointer.class ? Double.SIZE / Byte.SIZE : super.sizeof();
     }
-    @Override public DoublePointer getPointer(long i) {
+
+    @Override
+    public DoublePointer getPointer(long i) {
         return new DoublePointer(this).offsetAddress(i);
     }
 
-    /** @return {@code get(0)} */
-    public double get() { return get(0); }
-    /** @return the i-th {@code double} value of a native array */
+    /**
+     * @return {@code get(0)}
+     */
+    public double get() {
+        return get(0);
+    }
+
+    /**
+     * @return the i-th {@code double} value of a native array
+     */
     public native double get(long i);
-    /** @return {@code put(0, d)} */
-    public DoublePointer put(double d) { return put(0, d); }
+
+    /**
+     * @return {@code put(0, d)}
+     */
+    public DoublePointer put(double d) {
+        return put(0, d);
+    }
+
     /**
      * Copies the {@code double} value to the i-th element of a native array.
      *
@@ -132,10 +171,20 @@ public class DoublePointer extends Pointer {
      */
     public native DoublePointer put(long i, double d);
 
-    /** @return {@code get(array, 0, array.length)} */
-    public DoublePointer get(double[] array) { return get(array, 0, array.length); }
-    /** @return {@code put(array, 0, array.length)} */
-    public DoublePointer put(double ... array) { return put(array, 0, array.length); }
+    /**
+     * @return {@code get(array, 0, array.length)}
+     */
+    public DoublePointer get(double[] array) {
+        return get(array, 0, array.length);
+    }
+
+    /**
+     * @return {@code put(array, 0, array.length)}
+     */
+    public DoublePointer put(double... array) {
+        return put(array, 0, array.length);
+    }
+
     /**
      * Reads a portion of the native array into a Java array.
      *
@@ -145,6 +194,7 @@ public class DoublePointer extends Pointer {
      * @return this
      */
     public native DoublePointer get(double[] array, int offset, int length);
+
     /**
      * Writes a portion of a Java array into the native array.
      *
@@ -155,8 +205,11 @@ public class DoublePointer extends Pointer {
      */
     public native DoublePointer put(double[] array, int offset, int length);
 
-    /** @return {@code asByteBuffer().asDoubleBuffer()} */
-    @Override public final DoubleBuffer asBuffer() {
+    /**
+     * @return {@code asByteBuffer().asDoubleBuffer()}
+     */
+    @Override
+    public final DoubleBuffer asBuffer() {
         return asByteBuffer().asDoubleBuffer();
     }
 }

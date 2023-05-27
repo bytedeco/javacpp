@@ -19,7 +19,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp.tools;
 
 import java.util.ArrayList;
@@ -28,14 +27,15 @@ import java.util.List;
 import java.util.Map;
 
 /**
- *
  * @author Samuel Audet
  */
 class Context {
+
     Context() {
         usingList = new ArrayList<String>();
-        namespaceMap = new HashMap<String,String>();
+        namespaceMap = new HashMap<String, String>();
     }
+
     Context(Context c) {
         namespace = c.namespace;
         baseType = c.baseType;
@@ -57,28 +57,49 @@ class Context {
     }
 
     String namespace = null;
-    String baseType = null;
-    String cppName = null;
-    String javaName = null;
-    String constName = null;
-    String constBaseName = null;
-    boolean immutable = false;
-    boolean inaccessible = false;
-    boolean beanify = false;
-    boolean objectify = false;
-    boolean upcast = false;
-    boolean virtualize = false;
-    Declarator variable = null;
-    InfoMap infoMap = null;
-    TemplateMap templateMap = null;
-    List<String> usingList = null;
-    Map<String,String> namespaceMap = null;
 
-    /** Return all likely combinations of namespaces and template arguments for this C++ type */
+    String baseType = null;
+
+    String cppName = null;
+
+    String javaName = null;
+
+    String constName = null;
+
+    String constBaseName = null;
+
+    boolean immutable = false;
+
+    boolean inaccessible = false;
+
+    boolean beanify = false;
+
+    boolean objectify = false;
+
+    boolean upcast = false;
+
+    boolean virtualize = false;
+
+    Declarator variable = null;
+
+    InfoMap infoMap = null;
+
+    TemplateMap templateMap = null;
+
+    List<String> usingList = null;
+
+    Map<String, String> namespaceMap = null;
+
+    /**
+     * Return all likely combinations of namespaces and template arguments for this C++ type
+     */
     String[] qualify(String cppName) {
         return qualify(cppName, null);
     }
-    /** or function, if parameters != null */
+
+    /**
+     * or function, if parameters != null
+     */
     String[] qualify(String cppName, String parameters) {
         if (cppName == null || cppName.length() == 0) {
             return new String[0];
@@ -119,7 +140,6 @@ class Context {
                 map = map.parent;
             }
             names.add(name);
-
             for (String s : usingList) {
                 int i = s.lastIndexOf("::") + 2;
                 String ns2 = ns.length() > 0 ? ns + "::" + s.substring(0, i) : s.substring(0, i);
@@ -135,7 +155,9 @@ class Context {
         return names.toArray(new String[names.size()]);
     }
 
-    /** Shorten a qualified Java name, given the Context */
+    /**
+     * Shorten a qualified Java name, given the Context
+     */
     String shorten(String javaName) {
         if (this.javaName != null) {
             int lastDot = 0;

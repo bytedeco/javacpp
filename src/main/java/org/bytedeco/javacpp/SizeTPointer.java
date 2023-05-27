@@ -19,7 +19,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp;
 
 import org.bytedeco.javacpp.annotation.Cast;
@@ -37,6 +36,7 @@ import org.bytedeco.javacpp.tools.Logger;
 @Name("size_t")
 @org.bytedeco.javacpp.annotation.Properties(inherit = org.bytedeco.javacpp.presets.javacpp.class)
 public class SizeTPointer extends Pointer {
+
     private static final Logger logger = Logger.create(SizeTPointer.class);
 
     static {
@@ -55,10 +55,11 @@ public class SizeTPointer extends Pointer {
      * @param array the array to copy
      * @see #put(long[])
      */
-    public SizeTPointer(long ... array) {
+    public SizeTPointer(long... array) {
         this(array.length);
         put(array);
     }
+
     /**
      * Allocates a native {@code size_t} array of the given size.
      *
@@ -73,40 +74,76 @@ public class SizeTPointer extends Pointer {
         } catch (UnsatisfiedLinkError e) {
             throw new RuntimeException("No native JavaCPP library in memory. (Has Loader.load() been called?)", e);
         } catch (OutOfMemoryError e) {
-            OutOfMemoryError e2 = new OutOfMemoryError("Cannot allocate new SizeTPointer(" + size + "): "
-                    + "totalBytes = " + formatBytes(totalBytes()) + ", physicalBytes = " + formatBytes(physicalBytes()));
+            OutOfMemoryError e2 = new OutOfMemoryError("Cannot allocate new SizeTPointer(" + size + "): " + "totalBytes = " + formatBytes(totalBytes()) + ", physicalBytes = " + formatBytes(physicalBytes()));
             e2.initCause(e);
             throw e2;
         }
     }
-    /** @see Pointer#Pointer() */
-    public SizeTPointer() { }
-    /** @see Pointer#Pointer(Pointer) */
-    public SizeTPointer(Pointer p) { super(p); }
+
+    /**
+     * @see Pointer#Pointer()
+     */
+    public SizeTPointer() {
+    }
+
+    /**
+     * @see Pointer#Pointer(Pointer)
+     */
+    public SizeTPointer(Pointer p) {
+        super(p);
+    }
+
     private native void allocateArray(long size);
 
-    /** @see Pointer#position(long) */
-    @Override public SizeTPointer position(long position) {
+    /**
+     * @see Pointer#position(long)
+     */
+    @Override
+    public SizeTPointer position(long position) {
         return super.position(position);
     }
-    /** @see Pointer#limit(long) */
-    @Override public SizeTPointer limit(long limit) {
+
+    /**
+     * @see Pointer#limit(long)
+     */
+    @Override
+    public SizeTPointer limit(long limit) {
         return super.limit(limit);
     }
-    /** @see Pointer#capacity(long) */
-    @Override public SizeTPointer capacity(long capacity) {
+
+    /**
+     * @see Pointer#capacity(long)
+     */
+    @Override
+    public SizeTPointer capacity(long capacity) {
         return super.capacity(capacity);
     }
-    @Override public SizeTPointer getPointer(long i) {
+
+    @Override
+    public SizeTPointer getPointer(long i) {
         return new SizeTPointer(this).offsetAddress(i);
     }
 
-    /** @return {@code get(0)} */
-    public long get() { return get(0); }
-    /** @return the i-th {@code size_t} value of a native array */
-    @Cast("size_t") public native long get(long i);
-    /** @return {@code put(0, s)} */
-    public SizeTPointer put(long s) { return put(0, s); }
+    /**
+     * @return {@code get(0)}
+     */
+    public long get() {
+        return get(0);
+    }
+
+    /**
+     * @return the i-th {@code size_t} value of a native array
+     */
+    @Cast("size_t")
+    public native long get(long i);
+
+    /**
+     * @return {@code put(0, s)}
+     */
+    public SizeTPointer put(long s) {
+        return put(0, s);
+    }
+
     /**
      * Copies the {@code size_t} value to the i-th element of a native array.
      *
@@ -116,10 +153,20 @@ public class SizeTPointer extends Pointer {
      */
     public native SizeTPointer put(long i, long s);
 
-    /** @return {@code get(array, 0, array.length)} */
-    public SizeTPointer get(long[] array) { return get(array, 0, array.length); }
-    /** @return {@code put(array, 0, array.length)} */
-    public SizeTPointer put(long ... array) { return put(array, 0, array.length); }
+    /**
+     * @return {@code get(array, 0, array.length)}
+     */
+    public SizeTPointer get(long[] array) {
+        return get(array, 0, array.length);
+    }
+
+    /**
+     * @return {@code put(array, 0, array.length)}
+     */
+    public SizeTPointer put(long... array) {
+        return put(array, 0, array.length);
+    }
+
     /**
      * Reads a portion of the native array into a Java array.
      *
@@ -134,6 +181,7 @@ public class SizeTPointer extends Pointer {
         }
         return this;
     }
+
     /**
      * Writes a portion of a Java array into the native array.
      *

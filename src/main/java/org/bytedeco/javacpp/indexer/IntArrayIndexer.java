@@ -19,7 +19,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp.indexer;
 
 /**
@@ -28,103 +27,145 @@ package org.bytedeco.javacpp.indexer;
  * @author Samuel Audet
  */
 public class IntArrayIndexer extends IntIndexer {
-    /** The backing array. */
+
+    /**
+     * The backing array.
+     */
     protected int[] array;
 
-    /** Calls {@code IntArrayIndexer(array, Index.create(array.length))}. */
+    /**
+     * Calls {@code IntArrayIndexer(array, Index.create(array.length))}.
+     */
     public IntArrayIndexer(int[] array) {
         this(array, Index.create(array.length));
     }
 
-    /** Calls {@code IntArrayIndexer(array, Index.create(sizes))}. */
+    /**
+     * Calls {@code IntArrayIndexer(array, Index.create(sizes))}.
+     */
     public IntArrayIndexer(int[] array, long... sizes) {
         this(array, Index.create(sizes));
     }
 
-    /** Calls {@code IntArrayIndexer(array, Index.create(sizes, strides))}. */
+    /**
+     * Calls {@code IntArrayIndexer(array, Index.create(sizes, strides))}.
+     */
     public IntArrayIndexer(int[] array, long[] sizes, long[] strides) {
         this(array, Index.create(sizes, strides));
     }
 
-    /** Constructor to set the {@link #array} and {@link #index}. */
+    /**
+     * Constructor to set the {@link #array} and {@link #index}.
+     */
     public IntArrayIndexer(int[] array, Index index) {
         super(index);
         this.array = array;
     }
 
-    @Override public int[] array() {
+    @Override
+    public int[] array() {
         return array;
     }
 
-    @Override public IntIndexer reindex(Index index) {
+    @Override
+    public IntIndexer reindex(Index index) {
         return new IntArrayIndexer(array, index);
     }
 
-    @Override public int get(long i) {
-        return array[(int)index(i)];
+    @Override
+    public int get(long i) {
+        return array[(int) index(i)];
     }
-    @Override public IntIndexer get(long i, int[] m, int offset, int length) {
+
+    @Override
+    public IntIndexer get(long i, int[] m, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            m[offset + n] = array[(int)index(i) + n];
-        }
-        return this;
-    }
-    @Override public int get(long i, long j) {
-        return array[(int)index(i, j)];
-    }
-    @Override public IntIndexer get(long i, long j, int[] m, int offset, int length) {
-        for (int n = 0; n < length; n++) {
-            m[offset + n] = array[(int)index(i, j) + n];
-        }
-        return this;
-    }
-    @Override public int get(long i, long j, long k) {
-        return array[(int)index(i, j, k)];
-    }
-    @Override public int get(long... indices) {
-        return array[(int)index(indices)];
-    }
-    @Override public IntIndexer get(long[] indices, int[] m, int offset, int length) {
-        for (int n = 0; n < length; n++) {
-            m[offset + n] = array[(int)index(indices) + n];
+            m[offset + n] = array[(int) index(i) + n];
         }
         return this;
     }
 
-    @Override public IntIndexer put(long i, int n) {
-        array[(int)index(i)] = n;
-        return this;
+    @Override
+    public int get(long i, long j) {
+        return array[(int) index(i, j)];
     }
-    @Override public IntIndexer put(long i, int[] m, int offset, int length) {
+
+    @Override
+    public IntIndexer get(long i, long j, int[] m, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            array[(int)index(i) + n] = m[offset + n];
-        }
-        return this;
-    }
-    @Override public IntIndexer put(long i, long j, int n) {
-        array[(int)index(i, j)] = n;
-        return this;
-    }
-    @Override public IntIndexer put(long i, long j, int[] m, int offset, int length) {
-        for (int n = 0; n < length; n++) {
-            array[(int)index(i, j) + n] = m[offset + n];
-        }
-        return this;
-    }
-    @Override public IntIndexer put(long i, long j, long k, int n) {
-        array[(int)index(i, j, k)] = n;
-        return this;
-    }
-    @Override public IntIndexer put(long[] indices, int n) {
-        array[(int)index(indices)] = n;
-        return this;
-    }
-    @Override public IntIndexer put(long[] indices, int[] m, int offset, int length) {
-        for (int n = 0; n < length; n++) {
-            array[(int)index(indices) + n] = m[offset + n];
+            m[offset + n] = array[(int) index(i, j) + n];
         }
         return this;
     }
 
-    @Override public void release() { array = null; }
+    @Override
+    public int get(long i, long j, long k) {
+        return array[(int) index(i, j, k)];
+    }
+
+    @Override
+    public int get(long... indices) {
+        return array[(int) index(indices)];
+    }
+
+    @Override
+    public IntIndexer get(long[] indices, int[] m, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            m[offset + n] = array[(int) index(indices) + n];
+        }
+        return this;
+    }
+
+    @Override
+    public IntIndexer put(long i, int n) {
+        array[(int) index(i)] = n;
+        return this;
+    }
+
+    @Override
+    public IntIndexer put(long i, int[] m, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            array[(int) index(i) + n] = m[offset + n];
+        }
+        return this;
+    }
+
+    @Override
+    public IntIndexer put(long i, long j, int n) {
+        array[(int) index(i, j)] = n;
+        return this;
+    }
+
+    @Override
+    public IntIndexer put(long i, long j, int[] m, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            array[(int) index(i, j) + n] = m[offset + n];
+        }
+        return this;
+    }
+
+    @Override
+    public IntIndexer put(long i, long j, long k, int n) {
+        array[(int) index(i, j, k)] = n;
+        return this;
+    }
+
+    @Override
+    public IntIndexer put(long[] indices, int n) {
+        array[(int) index(indices)] = n;
+        return this;
+    }
+
+    @Override
+    public IntIndexer put(long[] indices, int[] m, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            array[(int) index(indices) + n] = m[offset + n];
+        }
+        return this;
+    }
+
+    @Override
+    public void release() {
+        array = null;
+    }
 }

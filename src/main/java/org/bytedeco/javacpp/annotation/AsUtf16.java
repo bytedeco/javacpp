@@ -1,7 +1,6 @@
 package org.bytedeco.javacpp.annotation;
 
 import org.bytedeco.javacpp.tools.Generator;
-
 import java.lang.annotation.*;
 
 /**
@@ -12,7 +11,8 @@ import java.lang.annotation.*;
  *
  * @author Alexey Rochev
  */
-
-@Documented @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD, ElementType.PARAMETER})
-public @interface AsUtf16 { }
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ ElementType.METHOD, ElementType.PARAMETER })
+public @interface AsUtf16 {
+}

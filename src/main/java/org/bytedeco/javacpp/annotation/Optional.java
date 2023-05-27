@@ -18,11 +18,15 @@ import org.bytedeco.javacpp.tools.Generator;
  *
  * @author Samuel Audet
  */
-@Documented @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD, ElementType.PARAMETER})
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ ElementType.METHOD, ElementType.PARAMETER })
 @Adapter("OptionalAdapter")
 public @interface Optional {
-    /** The template type of {@code OptionalAdapter}. If not specified, it is
-     *  inferred from the value type of the {@link Pointer} or Java array. */
+
+    /**
+     * The template type of {@code OptionalAdapter}. If not specified, it is
+     *  inferred from the value type of the {@link Pointer} or Java array.
+     */
     String value() default "";
 }

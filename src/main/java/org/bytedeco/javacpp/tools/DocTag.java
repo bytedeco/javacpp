@@ -19,7 +19,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp.tools;
 
 import java.util.regex.Pattern;
@@ -30,41 +29,28 @@ import java.util.regex.Pattern;
  * @author Hervé Guillemet
  */
 class DocTag {
-    static String[][] docTagsStr = {
-        // Doxygen escape of \ and @
-        { "\\\\", "\\\\" },
-        { "@", "{@literal @}" },
 
-        // Translate Doxygen-LaTeX formula into pre-formatted inline or block
-        // containing correct LaTeX code.
-        // @ will not display correctly in the case of <pre> blocks.
-        // Let's bet they won't appear frequently in formula.
-        {"(?s)f\\[(.*?)[@\\\\]f\\]", "<pre>{@code \\\\[$1\\\\]}</pre>"},
-        {"(?s)f\\{([^\\}]*)\\}\\s*\\{(.*?)[@\\\\]f\\}", "<pre>{@code \\\\begin{$1}$2\\\\end{$1}}</pre>"},
-        {"(?s)f\\$(.*?)[@\\\\]f\\$", "{@code $1}"},
-
-        { "authors?\\b", "@author" },
-        { "deprecated\\b", "@deprecated" },
-        { "(?:exception|throws?)\\b", "@throws" },
-        // Doxygen allows the definition of multiple params with a single
-        // \param, separated by ,. JavaDoc doesn't. Treat ,identifier as part
-        // of the description for now.
-        { "param\\s*(\\[[a-z,\\s]+\\])\\s+([a-zA-Z\\$_]+)", "@param $2 $1" },
-        { "param\\b", "@param" },
-        { "(?:returns?|result)\\b", "@return" },
-        { "(?:see|sa)\\b", "@see" },
-        { "since\\b", "@since" },
-        { "version\\b", "@version" }
-        /* "code", "docRoot", "inheritDoc", "link", "linkplain", "literal", "serial", "serialData", "serialField", "value" */
+    static String[][] docTagsStr = { // Doxygen escape of \ and @
+    { "\\\\", "\\\\" }, { "@", "{@literal @}" }, // Translate Doxygen-LaTeX formula into pre-formatted inline or block
+    // containing correct LaTeX code.
+    // @ will not display correctly in the case of <pre> blocks.
+    // Let's bet they won't appear frequently in formula.
+    { "(?s)f\\[(.*?)[@\\\\]f\\]", "<pre>{@code \\\\[$1\\\\]}</pre>" }, { "(?s)f\\{([^\\}]*)\\}\\s*\\{(.*?)[@\\\\]f\\}", "<pre>{@code \\\\begin{$1}$2\\\\end{$1}}</pre>" }, { "(?s)f\\$(.*?)[@\\\\]f\\$", "{@code $1}" }, { "authors?\\b", "@author" }, { "deprecated\\b", "@deprecated" }, { "(?:exception|throws?)\\b", "@throws" }, // Doxygen allows the definition of multiple params with a single
+    // \param, separated by ,. JavaDoc doesn't. Treat ,identifier as part
+    // of the description for now.
+    { "param\\s*(\\[[a-z,\\s]+\\])\\s+([a-zA-Z\\$_]+)", "@param $2 $1" }, { "param\\b", "@param" }, { "(?:returns?|result)\\b", "@return" }, { "(?:see|sa)\\b", "@see" }, { "since\\b", "@since" }, { "version\\b", "@version" } /* "code", "docRoot", "inheritDoc", "link", "linkplain", "literal", "serial", "serialData", "serialField", "value" */
     };
+
     static DocTag[] docTags = new DocTag[docTagsStr.length];
+
     static {
-        for (int i=0; i<docTagsStr.length; i++)
-            docTags[i] = new DocTag(docTagsStr[i][0], docTagsStr[i][1]);
+        for (int i = 0; i < docTagsStr.length; i++) docTags[i] = new DocTag(docTagsStr[i][0], docTagsStr[i][1]);
     }
 
     Pattern pattern;
+
     String replacement;
+
     DocTag(String p, String r) {
         pattern = Pattern.compile(p);
         replacement = r;

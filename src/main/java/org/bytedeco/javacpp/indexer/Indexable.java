@@ -19,7 +19,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp.indexer;
 
 /**
@@ -32,6 +31,7 @@ package org.bytedeco.javacpp.indexer;
  * @author Samuel Audet
  */
 public interface Indexable {
+
     /**
      * Factory method called by the user to get an indexer to access the data.
      * Eventually, {@link Indexer#release()} should be called to have changes

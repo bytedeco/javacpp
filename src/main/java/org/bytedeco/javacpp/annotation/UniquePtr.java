@@ -18,11 +18,15 @@ import org.bytedeco.javacpp.tools.Generator;
  *
  * @author Samuel Audet
  */
-@Documented @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD, ElementType.PARAMETER})
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ ElementType.METHOD, ElementType.PARAMETER })
 @Adapter("UniquePtrAdapter")
 public @interface UniquePtr {
-    /** The template type of {@code UniquePtrAdapter}. If not specified, it is
-     *  inferred from the value type of the {@link Pointer} or Java array. */
+
+    /**
+     * The template type of {@code UniquePtrAdapter}. If not specified, it is
+     *  inferred from the value type of the {@link Pointer} or Java array.
+     */
     String value() default "";
 }

@@ -19,7 +19,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp.tools;
 
 /**
@@ -28,8 +27,11 @@ package org.bytedeco.javacpp.tools;
  * @author Samuel Audet
  */
 public class Logger {
-    /** If the "org.bytedeco.javacpp.logger" system property is set to "slf4j",
-     *  returns new {@link Slf4jLogger#Slf4jLogger(Class)}, else returns new {@link #Logger()}. */
+
+    /**
+     * If the "org.bytedeco.javacpp.logger" system property is set to "slf4j",
+     *  returns new {@link Slf4jLogger#Slf4jLogger(Class)}, else returns new {@link #Logger()}.
+     */
     public static Logger create(Class cls) {
         String s = System.getProperty("org.bytedeco.javacpp.logger", "").toLowerCase();
         if (s.equals("slf4j") || s.equals("slf4jlogger")) {
@@ -40,26 +42,65 @@ public class Logger {
     }
 
     static boolean debug = false;
+
     static {
         String s = System.getProperty("org.bytedeco.javacpp.logger.debug", "false").toLowerCase();
         debug = s.equals("true") || s.equals("t") || s.equals("");
     }
 
-    /** Returns the "org.bytedeco.javacpp.logger.debug" system property. */
-    public boolean isDebugEnabled() { return debug; }
-    /** Returns true. */
-    public boolean isInfoEnabled()  { return true; }
-    /** Returns true. */
-    public boolean isWarnEnabled()  { return true; }
-    /** Returns true. */
-    public boolean isErrorEnabled() { return true; }
+    /**
+     * Returns the "org.bytedeco.javacpp.logger.debug" system property.
+     */
+    public boolean isDebugEnabled() {
+        return debug;
+    }
 
-    /** Calls {@code System.err.println("Debug: " + s)}. */
-    public void debug(String s) { System.err.println("Debug: " + s); }
-    /** Calls {@code System.err.println("Info: " + s)}. */
-    public void info(String s)  { System.err.println("Info: " + s); }
-    /** Calls {@code System.err.println("Warning: " + s)}. */
-    public void warn(String s)  { System.err.println("Warning: " + s); }
-    /** Calls {@code System.err.println("Error: " + s)}. */
-    public void error(String s) { System.err.println("Error: " + s); }
+    /**
+     * Returns true.
+     */
+    public boolean isInfoEnabled() {
+        return true;
+    }
+
+    /**
+     * Returns true.
+     */
+    public boolean isWarnEnabled() {
+        return true;
+    }
+
+    /**
+     * Returns true.
+     */
+    public boolean isErrorEnabled() {
+        return true;
+    }
+
+    /**
+     * Calls {@code System.err.println("Debug: " + s)}.
+     */
+    public void debug(String s) {
+        System.err.println("Debug: " + s);
+    }
+
+    /**
+     * Calls {@code System.err.println("Info: " + s)}.
+     */
+    public void info(String s) {
+        System.err.println("Info: " + s);
+    }
+
+    /**
+     * Calls {@code System.err.println("Warning: " + s)}.
+     */
+    public void warn(String s) {
+        System.err.println("Warning: " + s);
+    }
+
+    /**
+     * Calls {@code System.err.println("Error: " + s)}.
+     */
+    public void error(String s) {
+        System.err.println("Error: " + s);
+    }
 }

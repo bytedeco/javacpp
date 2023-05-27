@@ -19,7 +19,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp;
 
 import org.bytedeco.javacpp.annotation.Cast;
@@ -37,6 +36,7 @@ import org.bytedeco.javacpp.tools.Logger;
 @Name("bool")
 @org.bytedeco.javacpp.annotation.Properties(inherit = org.bytedeco.javacpp.presets.javacpp.class)
 public class BoolPointer extends Pointer {
+
     private static final Logger logger = Logger.create(BoolPointer.class);
 
     static {
@@ -63,41 +63,77 @@ public class BoolPointer extends Pointer {
         } catch (UnsatisfiedLinkError e) {
             throw new RuntimeException("No native JavaCPP library in memory. (Has Loader.load() been called?)", e);
         } catch (OutOfMemoryError e) {
-            OutOfMemoryError e2 = new OutOfMemoryError("Cannot allocate new BoolPointer(" + size + "): "
-                    + "totalBytes = " + formatBytes(totalBytes()) + ", physicalBytes = " + formatBytes(physicalBytes()));
+            OutOfMemoryError e2 = new OutOfMemoryError("Cannot allocate new BoolPointer(" + size + "): " + "totalBytes = " + formatBytes(totalBytes()) + ", physicalBytes = " + formatBytes(physicalBytes()));
             e2.initCause(e);
             throw e2;
         }
     }
-    /** @see Pointer#Pointer() */
-    public BoolPointer() { }
-    /** @see Pointer#Pointer(Pointer) */
-    public BoolPointer(Pointer p) { super(p); }
+
+    /**
+     * @see Pointer#Pointer()
+     */
+    public BoolPointer() {
+    }
+
+    /**
+     * @see Pointer#Pointer(Pointer)
+     */
+    public BoolPointer(Pointer p) {
+        super(p);
+    }
+
     private native void allocateArray(long size);
 
-    /** @see Pointer#position(long) */
-    @Override public BoolPointer position(long position) {
+    /**
+     * @see Pointer#position(long)
+     */
+    @Override
+    public BoolPointer position(long position) {
         return super.position(position);
     }
-    /** @see Pointer#limit(long) */
-    @Override public BoolPointer limit(long limit) {
+
+    /**
+     * @see Pointer#limit(long)
+     */
+    @Override
+    public BoolPointer limit(long limit) {
         return super.limit(limit);
     }
-    /** @see Pointer#capacity(long) */
-    @Override public BoolPointer capacity(long capacity) {
+
+    /**
+     * @see Pointer#capacity(long)
+     */
+    @Override
+    public BoolPointer capacity(long capacity) {
         return super.capacity(capacity);
     }
-    @Override public BoolPointer getPointer(long i) {
+
+    @Override
+    public BoolPointer getPointer(long i) {
         return new BoolPointer(this).offsetAddress(i);
     }
 
-    /** @return {@code get(0)} */
-    public boolean get() { return get(0); }
-    /** @return the i-th {@code bool} value of a native array
-     * @param i*/
-    @Cast("bool") public native boolean get(long i);
-    /** @return {@code put(0, b)} */
-    public BoolPointer put(boolean b) { return put(0, b); }
+    /**
+     * @return {@code get(0)}
+     */
+    public boolean get() {
+        return get(0);
+    }
+
+    /**
+     * @return the i-th {@code bool} value of a native array
+     * @param i
+     */
+    @Cast("bool")
+    public native boolean get(long i);
+
+    /**
+     * @return {@code put(0, b)}
+     */
+    public BoolPointer put(boolean b) {
+        return put(0, b);
+    }
+
     /**
      * Copies the {@code bool} value to the i-th element of a native array.
      *

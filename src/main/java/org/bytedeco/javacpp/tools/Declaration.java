@@ -19,18 +19,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp.tools;
 
 /**
- *
  * @author Samuel Audet
  */
 class Declaration {
+
     Type type = null;
+
     Declarator declarator = null;
-    boolean abstractMember = false, constMember = false, inaccessible = false,
-            incomplete = false, function = false, variable = false, comment = false, custom = false;
+
+    boolean abstractMember = false, constMember = false, inaccessible = false, incomplete = false, function = false, variable = false, comment = false, custom = false;
+
     String signature = "", text = "";
 
     public String toString() {

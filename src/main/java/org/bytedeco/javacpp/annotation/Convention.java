@@ -15,9 +15,12 @@ import org.bytedeco.javacpp.tools.Generator;
  *
  * @author Samuel Audet
  */
-@Documented @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE})
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ ElementType.TYPE })
 public @interface Convention {
+
     String value();
+
     String extern() default "C";
 }

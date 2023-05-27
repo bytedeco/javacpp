@@ -19,7 +19,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp.indexer;
 
 /**
@@ -28,103 +27,145 @@ package org.bytedeco.javacpp.indexer;
  * @author Samuel Audet
  */
 public class Bfloat16ArrayIndexer extends Bfloat16Indexer {
-    /** The backing array. */
+
+    /**
+     * The backing array.
+     */
     protected short[] array;
 
-    /** Calls {@code Bfloat16ArrayIndexer(array, Index.create(array.length))}. */
+    /**
+     * Calls {@code Bfloat16ArrayIndexer(array, Index.create(array.length))}.
+     */
     public Bfloat16ArrayIndexer(short[] array) {
         this(array, Index.create(array.length));
     }
 
-    /** Calls {@code Bfloat16ArrayIndexer(array, Index.create(sizes))}. */
+    /**
+     * Calls {@code Bfloat16ArrayIndexer(array, Index.create(sizes))}.
+     */
     public Bfloat16ArrayIndexer(short[] array, long... sizes) {
         this(array, Index.create(sizes));
     }
 
-    /** Calls {@code Bfloat16ArrayIndexer(array, Index.create(sizes, strides))}. */
+    /**
+     * Calls {@code Bfloat16ArrayIndexer(array, Index.create(sizes, strides))}.
+     */
     public Bfloat16ArrayIndexer(short[] array, long[] sizes, long[] strides) {
         this(array, Index.create(sizes, strides));
     }
 
-    /** Constructor to set the {@link #array} and {@link #index}. */
+    /**
+     * Constructor to set the {@link #array} and {@link #index}.
+     */
     public Bfloat16ArrayIndexer(short[] array, Index index) {
         super(index);
         this.array = array;
     }
 
-    @Override public short[] array() {
+    @Override
+    public short[] array() {
         return array;
     }
 
-    @Override public Bfloat16Indexer reindex(Index index) {
+    @Override
+    public Bfloat16Indexer reindex(Index index) {
         return new Bfloat16ArrayIndexer(array, index);
     }
 
-    @Override public float get(long i) {
-        return toFloat(array[(int)index(i)]);
+    @Override
+    public float get(long i) {
+        return toFloat(array[(int) index(i)]);
     }
-    @Override public Bfloat16Indexer get(long i, float[] h, int offset, int length) {
+
+    @Override
+    public Bfloat16Indexer get(long i, float[] h, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            h[offset + n] = toFloat(array[(int)index(i) + n]);
-        }
-        return this;
-    }
-    @Override public float get(long i, long j) {
-        return toFloat(array[(int)index(i, j)]);
-    }
-    @Override public Bfloat16Indexer get(long i, long j, float[] h, int offset, int length) {
-        for (int n = 0; n < length; n++) {
-            h[offset + n] = toFloat(array[(int)index(i, j) + n]);
-        }
-        return this;
-    }
-    @Override public float get(long i, long j, long k) {
-        return toFloat(array[(int)index(i, j, k)]);
-    }
-    @Override public float get(long... indices) {
-        return toFloat(array[(int)index(indices)]);
-    }
-    @Override public Bfloat16Indexer get(long[] indices, float[] h, int offset, int length) {
-        for (int n = 0; n < length; n++) {
-            h[offset + n] = toFloat(array[(int)index(indices) + n]);
+            h[offset + n] = toFloat(array[(int) index(i) + n]);
         }
         return this;
     }
 
-    @Override public Bfloat16Indexer put(long i, float h) {
-        array[(int)index(i)] = (short)fromFloat(h);
-        return this;
+    @Override
+    public float get(long i, long j) {
+        return toFloat(array[(int) index(i, j)]);
     }
-    @Override public Bfloat16Indexer put(long i, float[] h, int offset, int length) {
+
+    @Override
+    public Bfloat16Indexer get(long i, long j, float[] h, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            array[(int)index(i) + n] = (short)fromFloat(h[offset + n]);
-        }
-        return this;
-    }
-    @Override public Bfloat16Indexer put(long i, long j, float h) {
-        array[(int)index(i, j)] = (short)fromFloat(h);
-        return this;
-    }
-    @Override public Bfloat16Indexer put(long i, long j, float[] h, int offset, int length) {
-        for (int n = 0; n < length; n++) {
-            array[(int)index(i, j) + n] = (short)fromFloat(h[offset + n]);
-        }
-        return this;
-    }
-    @Override public Bfloat16Indexer put(long i, long j, long k, float h) {
-        array[(int)index(i, j, k)] = (short)fromFloat(h);
-        return this;
-    }
-    @Override public Bfloat16Indexer put(long[] indices, float h) {
-        array[(int)index(indices)] = (short)fromFloat(h);
-        return this;
-    }
-    @Override public Bfloat16Indexer put(long[] indices, float[] h, int offset, int length) {
-        for (int n = 0; n < length; n++) {
-            array[(int)index(indices) + n] = (short)fromFloat(h[offset + n]);
+            h[offset + n] = toFloat(array[(int) index(i, j) + n]);
         }
         return this;
     }
 
-    @Override public void release() { array = null; }
+    @Override
+    public float get(long i, long j, long k) {
+        return toFloat(array[(int) index(i, j, k)]);
+    }
+
+    @Override
+    public float get(long... indices) {
+        return toFloat(array[(int) index(indices)]);
+    }
+
+    @Override
+    public Bfloat16Indexer get(long[] indices, float[] h, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            h[offset + n] = toFloat(array[(int) index(indices) + n]);
+        }
+        return this;
+    }
+
+    @Override
+    public Bfloat16Indexer put(long i, float h) {
+        array[(int) index(i)] = (short) fromFloat(h);
+        return this;
+    }
+
+    @Override
+    public Bfloat16Indexer put(long i, float[] h, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            array[(int) index(i) + n] = (short) fromFloat(h[offset + n]);
+        }
+        return this;
+    }
+
+    @Override
+    public Bfloat16Indexer put(long i, long j, float h) {
+        array[(int) index(i, j)] = (short) fromFloat(h);
+        return this;
+    }
+
+    @Override
+    public Bfloat16Indexer put(long i, long j, float[] h, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            array[(int) index(i, j) + n] = (short) fromFloat(h[offset + n]);
+        }
+        return this;
+    }
+
+    @Override
+    public Bfloat16Indexer put(long i, long j, long k, float h) {
+        array[(int) index(i, j, k)] = (short) fromFloat(h);
+        return this;
+    }
+
+    @Override
+    public Bfloat16Indexer put(long[] indices, float h) {
+        array[(int) index(indices)] = (short) fromFloat(h);
+        return this;
+    }
+
+    @Override
+    public Bfloat16Indexer put(long[] indices, float[] h, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            array[(int) index(indices) + n] = (short) fromFloat(h[offset + n]);
+        }
+        return this;
+    }
+
+    @Override
+    public void release() {
+        array = null;
+    }
 }

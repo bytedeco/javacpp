@@ -19,7 +19,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp.indexer;
 
 /**
@@ -28,103 +27,145 @@ package org.bytedeco.javacpp.indexer;
  * @author Samuel Audet
  */
 public class ShortArrayIndexer extends ShortIndexer {
-    /** The backing array. */
+
+    /**
+     * The backing array.
+     */
     protected short[] array;
 
-    /** Calls {@code ShortArrayIndexer(array, Index.create(array.length))}. */
+    /**
+     * Calls {@code ShortArrayIndexer(array, Index.create(array.length))}.
+     */
     public ShortArrayIndexer(short[] array) {
         this(array, Index.create(array.length));
     }
 
-    /** Calls {@code ShortArrayIndexer(array, Index.create(sizes))}. */
+    /**
+     * Calls {@code ShortArrayIndexer(array, Index.create(sizes))}.
+     */
     public ShortArrayIndexer(short[] array, long... sizes) {
         this(array, Index.create(sizes));
     }
 
-    /** Calls {@code ShortArrayIndexer(array, Index.create(sizes, strides))}. */
+    /**
+     * Calls {@code ShortArrayIndexer(array, Index.create(sizes, strides))}.
+     */
     public ShortArrayIndexer(short[] array, long[] sizes, long[] strides) {
         this(array, Index.create(sizes, strides));
     }
 
-    /** Constructor to set the {@link #array} and {@link #index}. */
+    /**
+     * Constructor to set the {@link #array} and {@link #index}.
+     */
     public ShortArrayIndexer(short[] array, Index index) {
         super(index);
         this.array = array;
     }
 
-    @Override public short[] array() {
+    @Override
+    public short[] array() {
         return array;
     }
 
-    @Override public ShortIndexer reindex(Index index) {
+    @Override
+    public ShortIndexer reindex(Index index) {
         return new ShortArrayIndexer(array, index);
     }
 
-    @Override public short get(long i) {
-        return array[(int)index(i)];
+    @Override
+    public short get(long i) {
+        return array[(int) index(i)];
     }
-    @Override public ShortIndexer get(long i, short[] s, int offset, int length) {
+
+    @Override
+    public ShortIndexer get(long i, short[] s, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            s[offset + n] = array[(int)index(i) + n];
-        }
-        return this;
-    }
-    @Override public short get(long i, long j) {
-        return array[(int)index(i, j)];
-    }
-    @Override public ShortIndexer get(long i, long j, short[] s, int offset, int length) {
-        for (int n = 0; n < length; n++) {
-            s[offset + n] = array[(int)index(i, j) + n];
-        }
-        return this;
-    }
-    @Override public short get(long i, long j, long k) {
-        return array[(int)index(i, j, k)];
-    }
-    @Override public short get(long... indices) {
-        return array[(int)index(indices)];
-    }
-    @Override public ShortIndexer get(long[] indices, short[] s, int offset, int length) {
-        for (int n = 0; n < length; n++) {
-            s[offset + n] = array[(int)index(indices) + n];
+            s[offset + n] = array[(int) index(i) + n];
         }
         return this;
     }
 
-    @Override public ShortIndexer put(long i, short s) {
-        array[(int)index(i)] = s;
-        return this;
+    @Override
+    public short get(long i, long j) {
+        return array[(int) index(i, j)];
     }
-    @Override public ShortIndexer put(long i, short[] s, int offset, int length) {
+
+    @Override
+    public ShortIndexer get(long i, long j, short[] s, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            array[(int)index(i) + n] = s[offset + n];
-        }
-        return this;
-    }
-    @Override public ShortIndexer put(long i, long j, short s) {
-        array[(int)index(i, j)] = s;
-        return this;
-    }
-    @Override public ShortIndexer put(long i, long j, short[] s, int offset, int length) {
-        for (int n = 0; n < length; n++) {
-            array[(int)index(i, j) + n] = s[offset + n];
-        }
-        return this;
-    }
-    @Override public ShortIndexer put(long i, long j, long k, short s) {
-        array[(int)index(i, j, k)] = s;
-        return this;
-    }
-    @Override public ShortIndexer put(long[] indices, short s) {
-        array[(int)index(indices)] = s;
-        return this;
-    }
-    @Override public ShortIndexer put(long[] indices, short[] s, int offset, int length) {
-        for (int n = 0; n < length; n++) {
-            array[(int)index(indices) + n] = s[offset + n];
+            s[offset + n] = array[(int) index(i, j) + n];
         }
         return this;
     }
 
-    @Override public void release() { array = null; }
+    @Override
+    public short get(long i, long j, long k) {
+        return array[(int) index(i, j, k)];
+    }
+
+    @Override
+    public short get(long... indices) {
+        return array[(int) index(indices)];
+    }
+
+    @Override
+    public ShortIndexer get(long[] indices, short[] s, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            s[offset + n] = array[(int) index(indices) + n];
+        }
+        return this;
+    }
+
+    @Override
+    public ShortIndexer put(long i, short s) {
+        array[(int) index(i)] = s;
+        return this;
+    }
+
+    @Override
+    public ShortIndexer put(long i, short[] s, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            array[(int) index(i) + n] = s[offset + n];
+        }
+        return this;
+    }
+
+    @Override
+    public ShortIndexer put(long i, long j, short s) {
+        array[(int) index(i, j)] = s;
+        return this;
+    }
+
+    @Override
+    public ShortIndexer put(long i, long j, short[] s, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            array[(int) index(i, j) + n] = s[offset + n];
+        }
+        return this;
+    }
+
+    @Override
+    public ShortIndexer put(long i, long j, long k, short s) {
+        array[(int) index(i, j, k)] = s;
+        return this;
+    }
+
+    @Override
+    public ShortIndexer put(long[] indices, short s) {
+        array[(int) index(indices)] = s;
+        return this;
+    }
+
+    @Override
+    public ShortIndexer put(long[] indices, short[] s, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            array[(int) index(indices) + n] = s[offset + n];
+        }
+        return this;
+    }
+
+    @Override
+    public void release() {
+        array = null;
+    }
 }

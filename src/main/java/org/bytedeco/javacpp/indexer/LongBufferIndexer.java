@@ -19,7 +19,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp.indexer;
 
 import java.nio.Buffer;
@@ -31,103 +30,145 @@ import java.nio.LongBuffer;
  * @author Samuel Audet
  */
 public class LongBufferIndexer extends LongIndexer {
-    /** The backing buffer. */
+
+    /**
+     * The backing buffer.
+     */
     protected LongBuffer buffer;
 
-    /** Calls {@code LongBufferIndexer(buffer, Index.create(buffer.limit()))}. */
+    /**
+     * Calls {@code LongBufferIndexer(buffer, Index.create(buffer.limit()))}.
+     */
     public LongBufferIndexer(LongBuffer buffer) {
         this(buffer, Index.create(buffer.limit()));
     }
 
-    /** Calls {@code LongBufferIndexer(buffer, Index.create(sizes))}. */
+    /**
+     * Calls {@code LongBufferIndexer(buffer, Index.create(sizes))}.
+     */
     public LongBufferIndexer(LongBuffer buffer, long... sizes) {
         this(buffer, Index.create(sizes));
     }
 
-    /** Calls {@code LongBufferIndexer(buffer, Index.create(sizes, strides))}. */
+    /**
+     * Calls {@code LongBufferIndexer(buffer, Index.create(sizes, strides))}.
+     */
     public LongBufferIndexer(LongBuffer buffer, long[] sizes, long[] strides) {
         this(buffer, Index.create(sizes, strides));
     }
 
-    /** Constructor to set the {@link #buffer} and {@link #index}. */
+    /**
+     * Constructor to set the {@link #buffer} and {@link #index}.
+     */
     public LongBufferIndexer(LongBuffer buffer, Index index) {
         super(index);
         this.buffer = buffer;
     }
 
-    @Override public Buffer buffer() {
+    @Override
+    public Buffer buffer() {
         return buffer;
     }
 
-    @Override public LongIndexer reindex(Index index) {
+    @Override
+    public LongIndexer reindex(Index index) {
         return new LongBufferIndexer(buffer, index);
     }
 
-    @Override public long get(long i) {
-        return buffer.get((int)index(i));
+    @Override
+    public long get(long i) {
+        return buffer.get((int) index(i));
     }
-    @Override public LongIndexer get(long i, long[] l, int offset, int length) {
+
+    @Override
+    public LongIndexer get(long i, long[] l, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            l[offset + n] = buffer.get((int)index(i) + n);
-        }
-        return this;
-    }
-    @Override public long get(long i, long j) {
-        return buffer.get((int)index(i, j));
-    }
-    @Override public LongIndexer get(long i, long j, long[] l, int offset, int length) {
-        for (int n = 0; n < length; n++) {
-            l[offset + n] = buffer.get((int)index(i, j) + n);
-        }
-        return this;
-    }
-    @Override public long get(long i, long j, long k) {
-        return buffer.get((int)index(i, j, k));
-    }
-    @Override public long get(long... indices) {
-        return buffer.get((int)index(indices));
-    }
-    @Override public LongIndexer get(long[] indices, long[] l, int offset, int length) {
-        for (int n = 0; n < length; n++) {
-            l[offset + n] = buffer.get((int)index(indices) + n);
+            l[offset + n] = buffer.get((int) index(i) + n);
         }
         return this;
     }
 
-    @Override public LongIndexer put(long i, long l) {
-        buffer.put((int)index(i), l);
-        return this;
+    @Override
+    public long get(long i, long j) {
+        return buffer.get((int) index(i, j));
     }
-    @Override public LongIndexer put(long i, long[] l, int offset, int length) {
+
+    @Override
+    public LongIndexer get(long i, long j, long[] l, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            buffer.put((int)index(i) + n, l[offset + n]);
-        }
-        return this;
-    }
-    @Override public LongIndexer put(long i, long j, long l) {
-        buffer.put((int)index(i, j), l);
-        return this;
-    }
-    @Override public LongIndexer put(long i, long j, long[] l, int offset, int length) {
-        for (int n = 0; n < length; n++) {
-            buffer.put((int)index(i, j) + n, l[offset + n]);
-        }
-        return this;
-    }
-    @Override public LongIndexer put(long i, long j, long k, long l) {
-        buffer.put((int)index(i, j, k), l);
-        return this;
-    }
-    @Override public LongIndexer put(long[] indices, long l) {
-        buffer.put((int)index(indices), l);
-        return this;
-    }
-    @Override public LongIndexer put(long[] indices, long[] l, int offset, int length) {
-        for (int n = 0; n < length; n++) {
-            buffer.put((int)index(indices) + n, l[offset + n]);
+            l[offset + n] = buffer.get((int) index(i, j) + n);
         }
         return this;
     }
 
-    @Override public void release() { buffer = null; }
+    @Override
+    public long get(long i, long j, long k) {
+        return buffer.get((int) index(i, j, k));
+    }
+
+    @Override
+    public long get(long... indices) {
+        return buffer.get((int) index(indices));
+    }
+
+    @Override
+    public LongIndexer get(long[] indices, long[] l, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            l[offset + n] = buffer.get((int) index(indices) + n);
+        }
+        return this;
+    }
+
+    @Override
+    public LongIndexer put(long i, long l) {
+        buffer.put((int) index(i), l);
+        return this;
+    }
+
+    @Override
+    public LongIndexer put(long i, long[] l, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            buffer.put((int) index(i) + n, l[offset + n]);
+        }
+        return this;
+    }
+
+    @Override
+    public LongIndexer put(long i, long j, long l) {
+        buffer.put((int) index(i, j), l);
+        return this;
+    }
+
+    @Override
+    public LongIndexer put(long i, long j, long[] l, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            buffer.put((int) index(i, j) + n, l[offset + n]);
+        }
+        return this;
+    }
+
+    @Override
+    public LongIndexer put(long i, long j, long k, long l) {
+        buffer.put((int) index(i, j, k), l);
+        return this;
+    }
+
+    @Override
+    public LongIndexer put(long[] indices, long l) {
+        buffer.put((int) index(indices), l);
+        return this;
+    }
+
+    @Override
+    public LongIndexer put(long[] indices, long[] l, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            buffer.put((int) index(indices) + n, l[offset + n]);
+        }
+        return this;
+    }
+
+    @Override
+    public void release() {
+        buffer = null;
+    }
 }

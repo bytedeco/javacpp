@@ -37,5 +37,6 @@ import org.osgi.annotation.versioning.ConsumerType;
  */
 @ConsumerType
 public interface LoadEnabled {
+
     void init(ClassProperties properties);
 }

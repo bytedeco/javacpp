@@ -19,17 +19,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp.tools;
 
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 
 /**
- *
  * @author Samuel Audet
  */
-class IndexedSet<E> extends LinkedHashMap<E,Integer> implements Iterable<E> {
+class IndexedSet<E> extends LinkedHashMap<E, Integer> implements Iterable<E> {
+
     public int index(E e) {
         Integer i = get(e);
         if (i == null) {
@@ -38,7 +37,8 @@ class IndexedSet<E> extends LinkedHashMap<E,Integer> implements Iterable<E> {
         return i;
     }
 
-    @Override public Iterator<E> iterator() {
+    @Override
+    public Iterator<E> iterator() {
         return keySet().iterator();
     }
 }

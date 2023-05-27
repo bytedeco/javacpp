@@ -19,7 +19,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp.tools;
 
 import org.bytedeco.javacpp.annotation.Properties;
@@ -41,5 +40,6 @@ import org.osgi.annotation.versioning.ConsumerType;
  */
 @ConsumerType
 public interface InfoMapper {
+
     void map(InfoMap infoMap);
 }

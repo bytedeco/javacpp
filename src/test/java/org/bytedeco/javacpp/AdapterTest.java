@@ -52,115 +52,225 @@ import static org.junit.Assert.*;
 @Platform(compiler = "cpp17", include = "AdapterTest.h")
 public class AdapterTest {
 
-    static native @StdString String testStdString(@StdString String str);
-    static native @StdString BytePointer testStdString(@StdString BytePointer str);
+    @StdString
+    static native String testStdString(@StdString String str);
 
-    static native @StdWString CharPointer testStdWString(@StdWString CharPointer str);
-    static native @StdWString @AsUtf16 String testStdWString(@StdWString @AsUtf16 String str);
-    static native @StdWString IntPointer testStdWString(@StdWString IntPointer str);
+    @StdString
+    static native BytePointer testStdString(@StdString BytePointer str);
 
-    static native @StdBasicString("char") String testStdString2(@StdBasicString("char") String str);
-    static native @Cast("char*") @StdBasicString("char") BytePointer testStdString2(@Cast("char*") @StdBasicString("char") BytePointer str);
-    static native @Cast("wchar_t*") @StdBasicString("wchar_t") CharPointer testStdWString2(@Cast("wchar_t*") @StdBasicString("wchar_t") CharPointer str);
-    static native @Cast("wchar_t*") @StdBasicString("wchar_t") IntPointer testStdWString2(@Cast("wchar_t*") @StdBasicString("wchar_t") IntPointer str);
+    @StdWString
+    static native CharPointer testStdWString(@StdWString CharPointer str);
 
-    static native @StdU16String CharPointer testStdU16String(@StdU16String CharPointer str);
-    static native @StdU16String @AsUtf16 String testStdU16String(@StdU16String @AsUtf16 String str);
-    static native @StdU32String IntPointer testStdU32String(@StdU32String IntPointer str);
+    @StdWString
+    @AsUtf16
+    static native String testStdWString(@StdWString @AsUtf16 String str);
+
+    @StdWString
+    static native IntPointer testStdWString(@StdWString IntPointer str);
+
+    @StdBasicString("char")
+    static native String testStdString2(@StdBasicString("char") String str);
+
+    @Cast("char*")
+    @StdBasicString("char")
+    static native BytePointer testStdString2(@Cast("char*") @StdBasicString("char") BytePointer str);
+
+    @Cast("wchar_t*")
+    @StdBasicString("wchar_t")
+    static native CharPointer testStdWString2(@Cast("wchar_t*") @StdBasicString("wchar_t") CharPointer str);
+
+    @Cast("wchar_t*")
+    @StdBasicString("wchar_t")
+    static native IntPointer testStdWString2(@Cast("wchar_t*") @StdBasicString("wchar_t") IntPointer str);
+
+    @StdU16String
+    static native CharPointer testStdU16String(@StdU16String CharPointer str);
+
+    @StdU16String
+    @AsUtf16
+    static native String testStdU16String(@StdU16String @AsUtf16 String str);
+
+    @StdU32String
+    static native IntPointer testStdU32String(@StdU32String IntPointer str);
 
     static native String testCharString(String str);
-    static native @Cast("char*") BytePointer testCharString(@Cast("char*") BytePointer str);
+
+    @Cast("char*")
+    static native BytePointer testCharString(@Cast("char*") BytePointer str);
 
     static native CharPointer testShortString(CharPointer str);
-    static native @AsUtf16 String testShortString(@AsUtf16 String str);
+
+    @AsUtf16
+    static native String testShortString(@AsUtf16 String str);
 
     static native IntPointer testIntString(IntPointer str);
 
-    static native @Const @ByRef @StdString byte[] getConstStdString();
-    static native @Const @ByRef @Cast("char*") @StdBasicString("char") byte[] getConstStdString2();
+    @Const
+    @ByRef
+    @StdString
+    static native byte[] getConstStdString();
+
+    @Const
+    @ByRef
+    @Cast("char*")
+    @StdBasicString("char")
+    static native byte[] getConstStdString2();
 
     static class SharedData extends Pointer {
-        SharedData(Pointer p) { super(p); }
-        SharedData(int data) { allocate(data); }
-        @SharedPtr native void allocate(int data);
 
-        native int data(); native SharedData data(int data);
+        SharedData(Pointer p) {
+            super(p);
+        }
+
+        SharedData(int data) {
+            allocate(data);
+        }
+
+        @SharedPtr
+        native void allocate(int data);
+
+        native int data();
+
+        native SharedData data(int data);
     }
 
-    static native @SharedPtr SharedData createSharedData();
+    @SharedPtr
+    static native SharedData createSharedData();
+
     static native void storeSharedData(@SharedPtr SharedData s);
-    static native @SharedPtr SharedData fetchSharedData();
+
+    @SharedPtr
+    static native SharedData fetchSharedData();
+
     static native int useCount();
+
     static native int useCount(@SharedPtr SharedData s);
 
     static class UniqueData extends Pointer {
-        UniqueData(Pointer p) { super(p); }
-        UniqueData(int data) { allocate(data); }
+
+        UniqueData(Pointer p) {
+            super(p);
+        }
+
+        UniqueData(int data) {
+            allocate(data);
+        }
+
         native void allocate(int data);
 
-        native int data(); native UniqueData data(int data);
+        native int data();
+
+        native UniqueData data(int data);
     }
 
-    @Function static native @UniquePtr UniqueData createUniqueData();
+    @Function
+    @UniquePtr
+    static native UniqueData createUniqueData();
+
     static native void createUniqueData(@UniquePtr UniqueData u);
+
     static native void storeUniqueData(@Const @UniquePtr UniqueData u);
-    static native @Const @UniquePtr UniqueData fetchUniqueData();
 
-    static native int constructorCount(); static native void constructorCount(int c);
-    static native int destructorCount(); static native void destructorCount(int c);
+    @Const
+    @UniquePtr
+    static native UniqueData fetchUniqueData();
 
-    static native @StdVector IntPointer testStdVectorByVal(@StdVector IntPointer v);
-    static native @StdVector IntPointer testStdVectorByRef(@StdVector IntBuffer v);
-    static native @StdVector int[] testStdVectorByPtr(@StdVector int[] v);
-    static native @Cast("const char**") @StdVector PointerPointer testStdVectorConstPointer(@Cast("const char**") @StdVector PointerPointer v);
+    static native int constructorCount();
+
+    static native void constructorCount(int c);
+
+    static native int destructorCount();
+
+    static native void destructorCount(int c);
+
+    @StdVector
+    static native IntPointer testStdVectorByVal(@StdVector IntPointer v);
+
+    @StdVector
+    static native IntPointer testStdVectorByRef(@StdVector IntBuffer v);
+
+    @StdVector
+    static native int[] testStdVectorByPtr(@StdVector int[] v);
+
+    @Cast("const char**")
+    @StdVector
+    static native PointerPointer testStdVectorConstPointer(@Cast("const char**") @StdVector PointerPointer v);
 
     static class MovedData extends Pointer {
-        MovedData(Pointer p) { super(p); }
-        MovedData(int data) { allocate(data); }
+
+        MovedData(Pointer p) {
+            super(p);
+        }
+
+        MovedData(int data) {
+            allocate(data);
+        }
+
         native void allocate(int data);
 
-        native int data(); native MovedData data(int data);
+        native int data();
+
+        native MovedData data(int data);
     }
 
-    static native @StdMove MovedData getMovedData();
+    @StdMove
+    static native MovedData getMovedData();
+
     static native void putMovedData(@StdMove MovedData m);
 
-    static native @Optional IntPointer testOptionalInt(@Optional IntPointer o);
+    @Optional
+    static native IntPointer testOptionalInt(@Optional IntPointer o);
 
     static class SharedFunction extends FunctionPointer {
-        public SharedFunction(Pointer p) { super(p); }
-        public SharedFunction() { allocate(); }
+
+        public SharedFunction(Pointer p) {
+            super(p);
+        }
+
+        public SharedFunction() {
+            allocate();
+        }
+
         private native void allocate();
-        public native int call(@Cast({"", "std::shared_ptr<SharedData>"}) @SharedPtr SharedData s);
+
+        public native int call(@Cast({ "", "std::shared_ptr<SharedData>" }) @SharedPtr SharedData s);
     }
 
     static native int testCallback(@Const @ByRef SharedFunction f, @SharedPtr SharedData s);
 
     static class UniqueFunction extends FunctionPointer {
-        public UniqueFunction(Pointer p) { super(p); }
-        public UniqueFunction() { allocate(); }
+
+        public UniqueFunction(Pointer p) {
+            super(p);
+        }
+
+        public UniqueFunction() {
+            allocate();
+        }
+
         private native void allocate();
-        public native int call(@Cast({"", "std::unique_ptr<UniqueData>", "std::unique_ptr<UniqueData>&&"}) @UniquePtr UniqueData u);
+
+        public native int call(@Cast({ "", "std::unique_ptr<UniqueData>", "std::unique_ptr<UniqueData>&&" }) @UniquePtr UniqueData u);
     }
 
     static native int testCallback(@ByRef UniqueFunction f, @UniquePtr UniqueData s);
 
-    @BeforeClass public static void setUpClass() throws Exception {
+    @BeforeClass
+    public static void setUpClass() throws Exception {
         System.out.println("Builder");
         Class c = AdapterTest.class;
         Builder builder = new Builder().classesOrPackages(c.getName());
         File[] outputFiles = builder.build();
-
         System.out.println("Loader");
         Loader.load(c);
     }
 
-    @Test public void testStdString() {
+    @Test
+    public void testStdString() {
         System.out.println("StdString");
-
         byte[] data = new byte[42];
         for (int i = 0; i < data.length; i++) {
-            data[i] = (byte)i;
+            data[i] = (byte) i;
         }
         BytePointer dataPtr1 = new BytePointer(data);
         BytePointer dataPtr2 = testStdString(dataPtr1);
@@ -168,34 +278,27 @@ public class AdapterTest {
             assertEquals(data[i], dataPtr1.get(i));
             assertEquals(data[i], dataPtr2.get(i));
         }
-
         String textStr1 = "This is a normal ASCII string.";
         String textStr2 = testStdString(textStr1);
         assertEquals(textStr1, textStr2);
         String textStr3 = testStdString2(textStr1);
         assertEquals(textStr1, textStr3);
-
         BytePointer textPtr1 = new BytePointer(textStr1);
         BytePointer textPtr2 = testStdString(textPtr1);
         assertEquals(textStr1, textPtr1.getString());
         assertEquals(textStr1, textPtr2.getString());
         BytePointer textPtr3 = testStdString2(textPtr1);
         assertEquals(textStr1, textPtr3.getString());
-
         CharPointer textCharPtr1 = new CharPointer(textStr1);
         assertEquals(textStr1, textCharPtr1.getString());
-
         IntPointer textIntPtr1 = new IntPointer(textStr1);
         assertEquals(textStr1, textIntPtr1.getString());
-
         if (Loader.getPlatform().startsWith("windows")) {
             // UTF-16
             CharPointer textCharPtr2 = testStdWString(textCharPtr1);
             assertEquals(textStr1, textCharPtr2.getString());
-
             CharPointer textCharPtr3 = testStdWString2(textCharPtr1);
             assertEquals(textStr1, textCharPtr3.getString());
-
             String textStr4 = testStdWString(textStr1);
             assertEquals(textStr1, textStr4);
         } else {
@@ -205,16 +308,12 @@ public class AdapterTest {
             IntPointer textIntPtr3 = testStdWString2(textIntPtr1);
             assertEquals(textStr1, textIntPtr3.getString());
         }
-
         CharPointer textCharPtr4 = testStdU16String(textCharPtr1);
         assertEquals(textStr1, textCharPtr4.getString());
-
         String textStr5 = testStdU16String(textStr1);
         assertEquals(textStr1, textStr5);
-
         IntPointer textIntPtr4 = testStdU32String(textIntPtr1);
         assertEquals(textStr1, textIntPtr4.getString());
-
         byte[] test = getConstStdString();
         assertEquals("test", new String(test));
         byte[] test2 = getConstStdString2();
@@ -222,13 +321,12 @@ public class AdapterTest {
         System.gc();
     }
 
-    @Test public void testCharString() {
+    @Test
+    public void testCharString() {
         System.out.println("CharString");
-
         String textStr1 = "This is a normal ASCII string.";
         String textStr2 = testCharString(textStr1);
         assertEquals(textStr1, textStr2);
-
         BytePointer textPtr1 = new BytePointer(textStr1);
         BytePointer textPtr2 = testCharString(textPtr1);
         assertEquals(textStr1, textPtr1.getString());
@@ -236,24 +334,22 @@ public class AdapterTest {
         System.gc();
     }
 
-    @Test public void testShortString() {
+    @Test
+    public void testShortString() {
         System.out.println("ShortString");
-
         String textStr1 = "This is a normal ASCII string.";
         CharPointer textPtr1 = new CharPointer(textStr1);
         CharPointer textPtr2 = testShortString(textPtr1);
         assertEquals(textStr1, textPtr1.getString());
         assertEquals(textStr1, textPtr2.getString());
-
         String textStr2 = testShortString(textStr1);
         assertEquals(textStr1, textStr2);
-
         System.gc();
     }
 
-    @Test public void testIntString() {
+    @Test
+    public void testIntString() {
         System.out.println("IntString");
-
         String textStr = "This is a normal ASCII string.";
         IntPointer textPtr1 = new IntPointer(textStr);
         IntPointer textPtr2 = testIntString(textPtr1);
@@ -262,25 +358,26 @@ public class AdapterTest {
         System.gc();
     }
 
-    @Test public void testSharedPtr() {
+    @Test
+    public void testSharedPtr() {
         System.out.println("SharedPtr");
         SharedData sharedData = createSharedData();
         assertEquals(42, sharedData.data());
-        assertEquals(2, useCount(sharedData)); // 1 in Java shareData, 1 in JNI sharePtr2
-
+        // 1 in Java shareData, 1 in JNI sharePtr2
+        assertEquals(2, useCount(sharedData));
         storeSharedData(sharedData);
-        assertEquals(2, useCount()); // 1 in C++ static var, 1 in Java sharedData
-
+        // 1 in C++ static var, 1 in Java sharedData
+        assertEquals(2, useCount());
         sharedData.deallocate();
         assertEquals(1, useCount());
-
         sharedData = fetchSharedData();
         assertEquals(13, sharedData.data());
         assertEquals(0, useCount());
-
         final SharedData[] sharedData2 = new SharedData[1];
         int data = testCallback(new SharedFunction() {
-            @Override public int call(SharedData d) {
+
+            @Override
+            public int call(SharedData d) {
                 d.data(2 * d.data());
                 sharedData2[0] = d;
                 return 3 * d.data();
@@ -288,58 +385,48 @@ public class AdapterTest {
         }, sharedData);
         assertEquals(2 * 13, sharedData2[0].data());
         assertEquals(2 * 3 * 13, data);
-        assertEquals(3, useCount(sharedData)); // 1 in JNI sharePtr2, 1 in sharedData, 1 in sharedData2[0]
-
+        // 1 in JNI sharePtr2, 1 in sharedData, 1 in sharedData2[0]
+        assertEquals(3, useCount(sharedData));
         sharedData.deallocate();
         sharedData2[0].deallocate();
-
         assertEquals(1, constructorCount());
         assertEquals(1, destructorCount());
-
         SharedData sd = new SharedData(45);
         assertEquals(2, useCount(sd));
         storeSharedData(sd);
         assertEquals(3, useCount(sd));
-
         sd.deallocate();
         assertEquals(1, useCount());
         sd = fetchSharedData();
         assertEquals(2, useCount(sd));
         assertEquals(13, sd.data());
         sd.deallocate();
-
         assertEquals(2, constructorCount());
         assertEquals(2, destructorCount());
-
         System.gc();
     }
 
-    @Test public void testUniquePtr() {
+    @Test
+    public void testUniquePtr() {
         System.out.println("UniquePtr");
-
         UniqueData uniqueData = fetchUniqueData();
         assertEquals(13, uniqueData.data());
-
         uniqueData = createUniqueData();
         assertEquals(5, uniqueData.data());
-
         storeUniqueData(uniqueData);
-
         uniqueData = fetchUniqueData();
         assertEquals(5, uniqueData.data());
-
         uniqueData = new UniqueData(null);
         createUniqueData(uniqueData);
         assertEquals(42, uniqueData.data());
-
         storeUniqueData(uniqueData);
-
         uniqueData = fetchUniqueData();
         assertEquals(42, uniqueData.data());
-
         final UniqueData[] uniqueData2 = new UniqueData[1];
         int data = testCallback(new UniqueFunction() {
-            @Override public int call(UniqueData d) {
+
+            @Override
+            public int call(UniqueData d) {
                 d.data(2 * d.data());
                 uniqueData2[0] = d;
                 return 3 * d.data();
@@ -351,18 +438,17 @@ public class AdapterTest {
         System.gc();
     }
 
-    @Test public void testStdVector() {
+    @Test
+    public void testStdVector() {
         System.out.println("StdVector");
-        int[] arr = {5, 7, 13, 37, 42};
+        int[] arr = { 5, 7, 13, 37, 42 };
         IntPointer ptr = new IntPointer(arr);
         IntBuffer buf = ptr.asBuffer();
         PointerPointer ptrptr = new PointerPointer(ptr, ptr, ptr, ptr, ptr);
-
         IntPointer ptr2 = testStdVectorByVal(ptr);
         IntBuffer buf2 = testStdVectorByRef(buf).asBuffer();
         int[] arr2 = testStdVectorByPtr(arr);
         PointerPointer ptrptr2 = testStdVectorConstPointer(ptrptr);
-
         for (int i = 0; i < arr.length; i++) {
             assertEquals(ptr.get(i), ptr2.get(i));
             assertEquals(buf.get(i), buf2.get(i));
@@ -372,7 +458,8 @@ public class AdapterTest {
         System.gc();
     }
 
-    @Test public void testStdMove() {
+    @Test
+    public void testStdMove() {
         System.out.println("StdMove");
         MovedData m = getMovedData();
         System.out.println(m);
@@ -380,11 +467,11 @@ public class AdapterTest {
         assertEquals(13, m.data());
         assertNotNull(m.deallocator());
         m.deallocate();
-
         m = new MovedData(42);
         putMovedData(m);
         System.out.println(m);
-        System.out.println(m.data()); // probably 42, but undefined
+        // probably 42, but undefined
+        System.out.println(m.data());
         MovedData m2 = getMovedData();
         System.out.println(m2);
         System.out.println(m2.data());
@@ -396,10 +483,10 @@ public class AdapterTest {
         m2.deallocate();
     }
 
-    @Test public void testOptional() {
+    @Test
+    public void testOptional() {
         System.out.println("Optional");
-        assertTrue(testOptionalInt(new IntPointer((Pointer)null)).isNull());
+        assertTrue(testOptionalInt(new IntPointer((Pointer) null)).isNull());
         assertEquals(42, testOptionalInt(new IntPointer(1).put(42)).get(0));
     }
-
 }

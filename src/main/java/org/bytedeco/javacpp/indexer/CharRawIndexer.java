@@ -19,7 +19,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp.indexer;
 
 import org.bytedeco.javacpp.CharPointer;
@@ -31,29 +30,46 @@ import org.bytedeco.javacpp.Pointer;
  * @author Samuel Audet
  */
 public class CharRawIndexer extends CharIndexer {
-    /** The instance for the raw memory interface. */
+
+    /**
+     * The instance for the raw memory interface.
+     */
     protected static final Raw RAW = Raw.getInstance();
-    /** The backing pointer. */
+
+    /**
+     * The backing pointer.
+     */
     protected CharPointer pointer;
-    /** Base address and number of elements accessible. */
+
+    /**
+     * Base address and number of elements accessible.
+     */
     final long base, size;
 
-    /** Calls {@code CharRawIndexer(pointer, Index.create(pointer.limit() - pointer.position()))}. */
+    /**
+     * Calls {@code CharRawIndexer(pointer, Index.create(pointer.limit() - pointer.position()))}.
+     */
     public CharRawIndexer(CharPointer pointer) {
         this(pointer, Index.create(pointer.limit() - pointer.position()));
     }
 
-    /** Calls {@code CharRawIndexer(pointer, Index.create(sizes))}. */
+    /**
+     * Calls {@code CharRawIndexer(pointer, Index.create(sizes))}.
+     */
     public CharRawIndexer(CharPointer pointer, long... sizes) {
         this(pointer, Index.create(sizes));
     }
 
-    /** Calls {@code CharRawIndexer(pointer, Index.create(sizes, strides))}. */
+    /**
+     * Calls {@code CharRawIndexer(pointer, Index.create(sizes, strides))}.
+     */
     public CharRawIndexer(CharPointer pointer, long[] sizes, long[] strides) {
         this(pointer, Index.create(sizes, strides));
     }
 
-    /** Constructor to set the {@link #pointer} and {@link #index}. */
+    /**
+     * Constructor to set the {@link #pointer} and {@link #index}.
+     */
     public CharRawIndexer(CharPointer pointer, Index index) {
         super(index);
         this.pointer = pointer;
@@ -61,42 +77,58 @@ public class CharRawIndexer extends CharIndexer {
         this.size = pointer.limit() - pointer.position();
     }
 
-    @Override public Pointer pointer() {
+    @Override
+    public Pointer pointer() {
         return pointer;
     }
 
-    @Override public CharIndexer reindex(Index index) {
+    @Override
+    public CharIndexer reindex(Index index) {
         return new CharRawIndexer(pointer, index);
     }
 
     public char getRaw(long i) {
         return RAW.getChar(base + checkIndex(i, size) * VALUE_BYTES);
     }
-    @Override public char get(long i) {
+
+    @Override
+    public char get(long i) {
         return getRaw(index(i));
     }
-    @Override public CharIndexer get(long i, char[] c, int offset, int length) {
+
+    @Override
+    public CharIndexer get(long i, char[] c, int offset, int length) {
         for (int n = 0; n < length; n++) {
             c[offset + n] = getRaw(index(i) + n);
         }
         return this;
     }
-    @Override public char get(long i, long j) {
+
+    @Override
+    public char get(long i, long j) {
         return getRaw(index(i, j));
     }
-    @Override public CharIndexer get(long i, long j, char[] c, int offset, int length) {
+
+    @Override
+    public CharIndexer get(long i, long j, char[] c, int offset, int length) {
         for (int n = 0; n < length; n++) {
             c[offset + n] = getRaw(index(i, j) + n);
         }
         return this;
     }
-    @Override public char get(long i, long j, long k) {
+
+    @Override
+    public char get(long i, long j, long k) {
         return getRaw(index(i, j, k));
     }
-    @Override public char get(long... indices) {
+
+    @Override
+    public char get(long... indices) {
         return getRaw(index(indices));
     }
-    @Override public CharIndexer get(long[] indices, char[] c, int offset, int length) {
+
+    @Override
+    public CharIndexer get(long[] indices, char[] c, int offset, int length) {
         for (int n = 0; n < length; n++) {
             c[offset + n] = getRaw(index(indices) + n);
         }
@@ -107,39 +139,56 @@ public class CharRawIndexer extends CharIndexer {
         RAW.putChar(base + checkIndex(i, size) * VALUE_BYTES, c);
         return this;
     }
-    @Override public CharIndexer put(long i, char c) {
+
+    @Override
+    public CharIndexer put(long i, char c) {
         return putRaw(index(i), c);
     }
-    @Override public CharIndexer put(long i, char[] c, int offset, int length) {
+
+    @Override
+    public CharIndexer put(long i, char[] c, int offset, int length) {
         for (int n = 0; n < length; n++) {
             putRaw(index(i) + n, c[offset + n]);
         }
         return this;
     }
-    @Override public CharIndexer put(long i, long j, char c) {
+
+    @Override
+    public CharIndexer put(long i, long j, char c) {
         putRaw(index(i, j), c);
         return this;
     }
-    @Override public CharIndexer put(long i, long j, char[] c, int offset, int length) {
+
+    @Override
+    public CharIndexer put(long i, long j, char[] c, int offset, int length) {
         for (int n = 0; n < length; n++) {
             putRaw(index(i, j) + n, c[offset + n]);
         }
         return this;
     }
-    @Override public CharIndexer put(long i, long j, long k, char c) {
+
+    @Override
+    public CharIndexer put(long i, long j, long k, char c) {
         putRaw(index(i, j, k), c);
         return this;
     }
-    @Override public CharIndexer put(long[] indices, char c) {
+
+    @Override
+    public CharIndexer put(long[] indices, char c) {
         putRaw(index(indices), c);
         return this;
     }
-    @Override public CharIndexer put(long[] indices, char[] c, int offset, int length) {
+
+    @Override
+    public CharIndexer put(long[] indices, char[] c, int offset, int length) {
         for (int n = 0; n < length; n++) {
             putRaw(index(indices) + n, c[offset + n]);
         }
         return this;
     }
 
-    @Override public void release() { pointer = null; }
+    @Override
+    public void release() {
+        pointer = null;
+    }
 }

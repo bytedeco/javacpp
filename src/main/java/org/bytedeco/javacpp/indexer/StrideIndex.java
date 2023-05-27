@@ -19,7 +19,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp.indexer;
 
 /**
@@ -47,34 +46,49 @@ public class StrideIndex extends Index {
      */
     protected final long[] strides;
 
-    /** Calls {@code StrideIndex(sizes, defaultStrides(sizes))}. */
+    /**
+     * Calls {@code StrideIndex(sizes, defaultStrides(sizes))}.
+     */
     public StrideIndex(long... sizes) {
         this(sizes, defaultStrides(sizes));
     }
 
-    /** Constructor to set the {@link #sizes} and {@link #strides}. */
+    /**
+     * Constructor to set the {@link #sizes} and {@link #strides}.
+     */
     public StrideIndex(long[] sizes, long[] strides) {
         super(sizes);
         this.strides = strides;
     }
 
-    /** Returns {@link #strides}. */
+    /**
+     * Returns {@link #strides}.
+     */
     public long[] strides() {
         return strides;
     }
 
-    /** Returns {@code i * strides[0]}. */
-    @Override public long index(long i) {
+    /**
+     * Returns {@code i * strides[0]}.
+     */
+    @Override
+    public long index(long i) {
         return i * strides[0];
     }
 
-    /** Returns {@code i * strides[0] + j * strides[1]}. */
-    @Override public long index(long i, long j) {
+    /**
+     * Returns {@code i * strides[0] + j * strides[1]}.
+     */
+    @Override
+    public long index(long i, long j) {
         return i * strides[0] + j * strides[1];
     }
 
-    /** Returns {@code i * strides[0] + j * strides[1] + k * strides[2]}. */
-    @Override public long index(long i, long j, long k) {
+    /**
+     * Returns {@code i * strides[0] + j * strides[1] + k * strides[2]}.
+     */
+    @Override
+    public long index(long i, long j, long k) {
         return i * strides[0] + j * strides[1] + k * strides[2];
     }
 
@@ -84,7 +98,8 @@ public class StrideIndex extends Index {
      * @param indices of each dimension
      * @return index to access array or buffer
      */
-    @Override public long index(long... indices) {
+    @Override
+    public long index(long... indices) {
         long index = 0;
         for (int i = 0; i < indices.length && i < strides.length; i++) {
             index += indices[i] * strides[i];

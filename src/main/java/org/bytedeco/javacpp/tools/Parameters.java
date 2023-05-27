@@ -19,15 +19,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp.tools;
 
 /**
- *
  * @author Samuel Audet
  */
 class Parameters {
+
     Declarator[] declarators = null;
+
     int infoNumber = 0;
+
     String list = "", signature = "", names = "";
 }

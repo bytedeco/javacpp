@@ -19,7 +19,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp.indexer;
 
 import java.nio.Buffer;
@@ -44,57 +43,125 @@ import org.bytedeco.javacpp.Pointer;
  */
 public abstract class Indexer implements AutoCloseable {
 
-    /** Calls {@link #release()}. */
-    @Override public void close() {
+    /**
+     * Calls {@link #release()}.
+     */
+    @Override
+    public void close() {
         release();
     }
 
-    /** See {@link Index#sizes}. */
-    @Deprecated protected long[] sizes;
+    /**
+     * See {@link Index#sizes}.
+     */
+    @Deprecated
+    protected long[] sizes;
 
-    /** See {@link StrideIndex#strides}. */
-    @Deprecated protected long[] strides;
+    /**
+     * See {@link StrideIndex#strides}.
+     */
+    @Deprecated
+    protected long[] strides;
 
-    /** The Index to be used for {@link #index(long...)}. */
+    /**
+     * The Index to be used for {@link #index(long...)}.
+     */
     protected final Index index;
 
-    /** Constructor to set the {@link #index}. */
+    /**
+     * Constructor to set the {@link #index}.
+     */
     protected Indexer(Index index) {
         this.index = index;
         this.sizes = index.sizes();
         if (index instanceof StrideIndex) {
-            this.strides = ((StrideIndex)index).strides();
+            this.strides = ((StrideIndex) index).strides();
         }
     }
 
-    /** Calls {@code Indexer(Index.create(sizes, strides))}. */
+    /**
+     * Calls {@code Indexer(Index.create(sizes, strides))}.
+     */
     protected Indexer(long[] sizes, long[] strides) {
         this(Index.create(sizes, strides));
     }
 
-    /** Returns {@code index.rank()}. */
-    public int rank() { return index.rank(); }
+    /**
+     * Returns {@code index.rank()}.
+     */
+    public int rank() {
+        return index.rank();
+    }
 
-    /** Returns {@code index.sizes()}. */
-    public long[] sizes() { return index.sizes(); }
-    /** Returns {@link #strides} or {@code null} if there are no strides. */
-    @Deprecated public long[] strides() { return strides; }
+    /**
+     * Returns {@code index.sizes()}.
+     */
+    public long[] sizes() {
+        return index.sizes();
+    }
 
-    /** Returns {@code index.size(i)}. */
-    public long size(int i) { return index.size(i); }
-    /** Returns {@code strides[i]} or {@code -1} if there are no strides. */
-    @Deprecated public long stride(int i) { return strides != null ? strides[i] : -1; }
+    /**
+     * Returns {@link #strides} or {@code null} if there are no strides.
+     */
+    @Deprecated
+    public long[] strides() {
+        return strides;
+    }
 
-    /** Returns {@code sizes.length > 0 && sizes.length < 4 ? sizes[0] : -1}. */
-    @Deprecated public long rows() { return sizes.length > 0 && sizes.length < 4 ? sizes[0] : -1; }
-    /** Returns {@code sizes.length > 1 && sizes.length < 4 ? sizes[1] : -1}. */
-    @Deprecated public long cols() { return sizes.length > 1 && sizes.length < 4 ? sizes[1] : -1; }
-    /** Returns {@code sizes.length > 1 && sizes.length < 4 ? sizes[1] : -1}. */
-    @Deprecated public long width() { return sizes.length > 1 && sizes.length < 4 ? sizes[1] : -1; }
-    /** Returns {@code sizes.length > 0 && sizes.length < 4 ? sizes[0] : -1}. */
-    @Deprecated public long height() { return sizes.length > 0 && sizes.length < 4 ? sizes[0] : -1; }
-    /** Returns {@code sizes.length > 2 && sizes.length < 4 ? sizes[2] : -1}. */
-    @Deprecated public long channels() { return sizes.length > 2 && sizes.length < 4 ? sizes[2] : -1; }
+    /**
+     * Returns {@code index.size(i)}.
+     */
+    public long size(int i) {
+        return index.size(i);
+    }
+
+    /**
+     * Returns {@code strides[i]} or {@code -1} if there are no strides.
+     */
+    @Deprecated
+    public long stride(int i) {
+        return strides != null ? strides[i] : -1;
+    }
+
+    /**
+     * Returns {@code sizes.length > 0 && sizes.length < 4 ? sizes[0] : -1}.
+     */
+    @Deprecated
+    public long rows() {
+        return sizes.length > 0 && sizes.length < 4 ? sizes[0] : -1;
+    }
+
+    /**
+     * Returns {@code sizes.length > 1 && sizes.length < 4 ? sizes[1] : -1}.
+     */
+    @Deprecated
+    public long cols() {
+        return sizes.length > 1 && sizes.length < 4 ? sizes[1] : -1;
+    }
+
+    /**
+     * Returns {@code sizes.length > 1 && sizes.length < 4 ? sizes[1] : -1}.
+     */
+    @Deprecated
+    public long width() {
+        return sizes.length > 1 && sizes.length < 4 ? sizes[1] : -1;
+    }
+
+    /**
+     * Returns {@code sizes.length > 0 && sizes.length < 4 ? sizes[0] : -1}.
+     */
+    @Deprecated
+    public long height() {
+        return sizes.length > 0 && sizes.length < 4 ? sizes[0] : -1;
+    }
+
+    /**
+     * Returns {@code sizes.length > 2 && sizes.length < 4 ? sizes[2] : -1}.
+     */
+    @Deprecated
+    public long channels() {
+        return sizes.length > 2 && sizes.length < 4 ? sizes[2] : -1;
+    }
 
     protected static final long checkIndex(long i, long size) {
         if (i < 0 || i >= size) {
@@ -103,60 +170,106 @@ public abstract class Indexer implements AutoCloseable {
         return i;
     }
 
-    /** See {@link StrideIndex#defaultStrides(long...)}. */
-    @Deprecated public static long[] strides(long... sizes) {
+    /**
+     * See {@link StrideIndex#defaultStrides(long...)}.
+     */
+    @Deprecated
+    public static long[] strides(long... sizes) {
         return StrideIndex.defaultStrides(sizes);
     }
 
-    /** Returns {@code index.index(i)}. */
+    /**
+     * Returns {@code index.index(i)}.
+     */
     public long index(long i) {
         return index.index(i);
     }
 
-    /** Returns {@code index.index(i, j)}. */
+    /**
+     * Returns {@code index.index(i, j)}.
+     */
     public long index(long i, long j) {
         return index.index(i, j);
     }
 
-    /** Returns {@code index.index(i, j, k)}. */
+    /**
+     * Returns {@code index.index(i, j, k)}.
+     */
     public long index(long i, long j, long k) {
         return index.index(i, j, k);
     }
 
-    /** Returns {@code index.index(indices)}. */
+    /**
+     * Returns {@code index.index(indices)}.
+     */
     public long index(long... indices) {
         return index.index(indices);
     }
 
-    /** The associated (optional) {@link Indexable}. */
+    /**
+     * The associated (optional) {@link Indexable}.
+     */
     protected Indexable indexable;
 
-    /** Returns {@link #indexable}. */
-    public Indexable indexable() { return indexable; }
-    /** Sets {@link #indexable} and returns this. */
-    public Indexer indexable(Indexable indexable) { this.indexable = indexable; return this; }
+    /**
+     * Returns {@link #indexable}.
+     */
+    public Indexable indexable() {
+        return indexable;
+    }
 
-    /** Returns the backing array, or {@code null} if none */
-    public Object array() { return null; }
-    /** Returns the backing buffer, or {@code null} if none */
-    public Buffer buffer() { return null; }
-    /** Returns the backing pointer, or {@code null} if none */
-    public Pointer pointer() { return null; }
-    /** Makes sure changes are reflected onto the backing memory and clears any references. */
+    /**
+     * Sets {@link #indexable} and returns this.
+     */
+    public Indexer indexable(Indexable indexable) {
+        this.indexable = indexable;
+        return this;
+    }
+
+    /**
+     * Returns the backing array, or {@code null} if none
+     */
+    public Object array() {
+        return null;
+    }
+
+    /**
+     * Returns the backing buffer, or {@code null} if none
+     */
+    public Buffer buffer() {
+        return null;
+    }
+
+    /**
+     * Returns the backing pointer, or {@code null} if none
+     */
+    public Pointer pointer() {
+        return null;
+    }
+
+    /**
+     * Makes sure changes are reflected onto the backing memory and clears any references.
+     */
     public abstract void release();
 
-    /** Calls {@code get(int...indices)} and returns the value as a double. */
+    /**
+     * Calls {@code get(int...indices)} and returns the value as a double.
+     */
     public abstract double getDouble(long... indices);
-    /** Casts value to primitive type and calls {@code put(long[] indices, <type> value)}. */
+
+    /**
+     * Casts value to primitive type and calls {@code put(long[] indices, <type> value)}.
+     */
     public abstract Indexer putDouble(long[] indices, double value);
 
-    /** Returns a new Indexer using the same data, but with a different Index. */
+    /**
+     * Returns a new Indexer using the same data, but with a different Index.
+     */
     public abstract <I extends Indexer> I reindex(Index index);
 
-    @Override public String toString() {
-        long rows     = sizes.length > 0 ? sizes[0] : 1,
-             cols     = sizes.length > 1 ? sizes[1] : 1,
-             channels = sizes.length > 2 ? sizes[2] : 1;
+    @Override
+    public String toString() {
+        long rows = sizes.length > 0 ? sizes[0] : 1, cols = sizes.length > 1 ? sizes[1] : 1, channels = sizes.length > 2 ? sizes[2] : 1;
         StringBuilder s = new StringBuilder(rows > 1 ? "\n[ " : "[ ");
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
@@ -165,7 +278,7 @@ public abstract class Indexer implements AutoCloseable {
                 }
                 for (int k = 0; k < channels; k++) {
                     double v = getDouble(i, j, k);
-                    s.append((float)v);
+                    s.append((float) v);
                     if (k < channels - 1) {
                         s.append(", ");
                     }

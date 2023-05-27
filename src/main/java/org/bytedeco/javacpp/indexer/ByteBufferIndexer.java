@@ -19,7 +19,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp.indexer;
 
 import java.nio.Buffer;
@@ -31,159 +30,222 @@ import java.nio.ByteBuffer;
  * @author Samuel Audet
  */
 public class ByteBufferIndexer extends ByteIndexer {
-    /** The backing buffer. */
+
+    /**
+     * The backing buffer.
+     */
     protected ByteBuffer buffer;
 
-    /** Calls {@code ByteBufferIndexer(buffer, Index.create(buffer.limit()))}. */
+    /**
+     * Calls {@code ByteBufferIndexer(buffer, Index.create(buffer.limit()))}.
+     */
     public ByteBufferIndexer(ByteBuffer buffer) {
         this(buffer, Index.create(buffer.limit()));
     }
 
-    /** Calls {@code ByteBufferIndexer(buffer, Index.create(sizes))}. */
+    /**
+     * Calls {@code ByteBufferIndexer(buffer, Index.create(sizes))}.
+     */
     public ByteBufferIndexer(ByteBuffer buffer, long... sizes) {
         this(buffer, Index.create(sizes));
     }
 
-    /** Calls {@code ByteBufferIndexer(buffer, Index.create(sizes, strides))}. */
+    /**
+     * Calls {@code ByteBufferIndexer(buffer, Index.create(sizes, strides))}.
+     */
     public ByteBufferIndexer(ByteBuffer buffer, long[] sizes, long[] strides) {
         this(buffer, Index.create(sizes, strides));
     }
 
-    /** Constructor to set the {@link #buffer} and {@link #index}. */
+    /**
+     * Constructor to set the {@link #buffer} and {@link #index}.
+     */
     public ByteBufferIndexer(ByteBuffer buffer, Index index) {
         super(index);
         this.buffer = buffer;
     }
 
-    @Override public Buffer buffer() {
+    @Override
+    public Buffer buffer() {
         return buffer;
     }
 
-    @Override public ByteIndexer reindex(Index index) {
+    @Override
+    public ByteIndexer reindex(Index index) {
         return new ByteBufferIndexer(buffer, index);
     }
 
-    @Override public byte get(long i) {
-        return buffer.get((int)index(i));
+    @Override
+    public byte get(long i) {
+        return buffer.get((int) index(i));
     }
-    @Override public ByteIndexer get(long i, byte[] b, int offset, int length) {
+
+    @Override
+    public ByteIndexer get(long i, byte[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            b[offset + n] = buffer.get((int)index(i) + n);
-        }
-        return this;
-    }
-    @Override public byte get(long i, long j) {
-        return buffer.get((int)index(i, j));
-    }
-    @Override public ByteIndexer get(long i, long j, byte[] b, int offset, int length) {
-        for (int n = 0; n < length; n++) {
-            b[offset + n] = buffer.get((int)index(i, j) + n);
-        }
-        return this;
-    }
-    @Override public byte get(long i, long j, long k) {
-        return buffer.get((int)index(i, j, k));
-    }
-    @Override public byte get(long... indices) {
-        return buffer.get((int)index(indices));
-    }
-    @Override public ByteIndexer get(long[] indices, byte[] b, int offset, int length) {
-        for (int n = 0; n < length; n++) {
-            b[offset + n] = buffer.get((int)index(indices) + n);
+            b[offset + n] = buffer.get((int) index(i) + n);
         }
         return this;
     }
 
-    @Override public ByteIndexer put(long i, byte b) {
-        buffer.put((int)index(i), b);
-        return this;
+    @Override
+    public byte get(long i, long j) {
+        return buffer.get((int) index(i, j));
     }
-    @Override public ByteIndexer put(long i, byte[] b, int offset, int length) {
+
+    @Override
+    public ByteIndexer get(long i, long j, byte[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            buffer.put((int)index(i) + n, b[offset + n]);
-        }
-        return this;
-    }
-    @Override public ByteIndexer put(long i, long j, byte b) {
-        buffer.put((int)index(i, j), b);
-        return this;
-    }
-    @Override public ByteIndexer put(long i, long j, byte[] b, int offset, int length) {
-        for (int n = 0; n < length; n++) {
-            buffer.put((int)index(i, j) + n, b[offset + n]);
-        }
-        return this;
-    }
-    @Override public ByteIndexer put(long i, long j, long k, byte b) {
-        buffer.put((int)index(i, j, k), b);
-        return this;
-    }
-    @Override public ByteIndexer put(long[] indices, byte b) {
-        buffer.put((int)index(indices), b);
-        return this;
-    }
-    @Override public ByteIndexer put(long[] indices, byte[] b, int offset, int length) {
-        for (int n = 0; n < length; n++) {
-            buffer.put((int)index(indices) + n, b[offset + n]);
+            b[offset + n] = buffer.get((int) index(i, j) + n);
         }
         return this;
     }
 
-    @Override public byte getByte(long i) {
-        return buffer.get((int)i);
+    @Override
+    public byte get(long i, long j, long k) {
+        return buffer.get((int) index(i, j, k));
     }
-    @Override public ByteIndexer putByte(long i, byte b) {
-        buffer.put((int)i, b);
+
+    @Override
+    public byte get(long... indices) {
+        return buffer.get((int) index(indices));
+    }
+
+    @Override
+    public ByteIndexer get(long[] indices, byte[] b, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            b[offset + n] = buffer.get((int) index(indices) + n);
+        }
         return this;
     }
 
-    @Override public short getShort(long i) {
-        return buffer.getShort((int)i);
-    }
-    @Override public ByteIndexer putShort(long i, short s) {
-        buffer.putShort((int)i, s);
+    @Override
+    public ByteIndexer put(long i, byte b) {
+        buffer.put((int) index(i), b);
         return this;
     }
 
-    @Override public int getInt(long i) {
-        return buffer.getInt((int)i);
-    }
-    @Override public ByteIndexer putInt(long i, int j) {
-        buffer.putInt((int)i, j);
+    @Override
+    public ByteIndexer put(long i, byte[] b, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            buffer.put((int) index(i) + n, b[offset + n]);
+        }
         return this;
     }
 
-    @Override public long getLong(long i) {
-        return buffer.getLong((int)i);
-    }
-    @Override public ByteIndexer putLong(long i, long j) {
-        buffer.putLong((int)i, j);
+    @Override
+    public ByteIndexer put(long i, long j, byte b) {
+        buffer.put((int) index(i, j), b);
         return this;
     }
 
-    @Override public float getFloat(long i) {
-        return buffer.getFloat((int)i);
-    }
-    @Override public ByteIndexer putFloat(long i, float f) {
-        buffer.putFloat((int)i, f);
+    @Override
+    public ByteIndexer put(long i, long j, byte[] b, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            buffer.put((int) index(i, j) + n, b[offset + n]);
+        }
         return this;
     }
 
-    @Override public double getDouble(long i) {
-        return buffer.getDouble((int)i);
-    }
-    @Override public ByteIndexer putDouble(long i, double d) {
-        buffer.putDouble((int)i, d);
+    @Override
+    public ByteIndexer put(long i, long j, long k, byte b) {
+        buffer.put((int) index(i, j, k), b);
         return this;
     }
 
-    @Override public char getChar(long i) {
-        return buffer.getChar((int)i);
-    }
-    @Override public ByteIndexer putChar(long i, char c) {
-        buffer.putChar((int)i, c);
+    @Override
+    public ByteIndexer put(long[] indices, byte b) {
+        buffer.put((int) index(indices), b);
         return this;
     }
 
-    @Override public void release() { buffer = null; }
+    @Override
+    public ByteIndexer put(long[] indices, byte[] b, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            buffer.put((int) index(indices) + n, b[offset + n]);
+        }
+        return this;
+    }
+
+    @Override
+    public byte getByte(long i) {
+        return buffer.get((int) i);
+    }
+
+    @Override
+    public ByteIndexer putByte(long i, byte b) {
+        buffer.put((int) i, b);
+        return this;
+    }
+
+    @Override
+    public short getShort(long i) {
+        return buffer.getShort((int) i);
+    }
+
+    @Override
+    public ByteIndexer putShort(long i, short s) {
+        buffer.putShort((int) i, s);
+        return this;
+    }
+
+    @Override
+    public int getInt(long i) {
+        return buffer.getInt((int) i);
+    }
+
+    @Override
+    public ByteIndexer putInt(long i, int j) {
+        buffer.putInt((int) i, j);
+        return this;
+    }
+
+    @Override
+    public long getLong(long i) {
+        return buffer.getLong((int) i);
+    }
+
+    @Override
+    public ByteIndexer putLong(long i, long j) {
+        buffer.putLong((int) i, j);
+        return this;
+    }
+
+    @Override
+    public float getFloat(long i) {
+        return buffer.getFloat((int) i);
+    }
+
+    @Override
+    public ByteIndexer putFloat(long i, float f) {
+        buffer.putFloat((int) i, f);
+        return this;
+    }
+
+    @Override
+    public double getDouble(long i) {
+        return buffer.getDouble((int) i);
+    }
+
+    @Override
+    public ByteIndexer putDouble(long i, double d) {
+        buffer.putDouble((int) i, d);
+        return this;
+    }
+
+    @Override
+    public char getChar(long i) {
+        return buffer.getChar((int) i);
+    }
+
+    @Override
+    public ByteIndexer putChar(long i, char c) {
+        buffer.putChar((int) i, c);
+        return this;
+    }
+
+    @Override
+    public void release() {
+        buffer = null;
+    }
 }

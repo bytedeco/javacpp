@@ -19,7 +19,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp.tools;
 
 import java.io.File;
@@ -48,187 +47,279 @@ import org.bytedeco.javacpp.Loader;
 @Mojo(name = "build", defaultPhase = LifecyclePhase.PROCESS_CLASSES, threadSafe = true)
 public class BuildMojo extends AbstractMojo {
 
-    /** Load user classes from classPath. */
+    /**
+     * Load user classes from classPath.
+     */
     @Parameter(property = "javacpp.classPath", defaultValue = "${project.build.outputDirectory}")
     String classPath = null;
 
-    /** Load user classes from classPaths. */
+    /**
+     * Load user classes from classPaths.
+     */
     @Parameter(property = "javacpp.classPaths")
     String[] classPaths = null;
 
-    /** Add the path to the "platform.includepath" property. */
+    /**
+     * Add the path to the "platform.includepath" property.
+     */
     @Parameter(property = "javacpp.includePath")
     String includePath = null;
 
-    /** Add the paths to the "platform.includepath" property. */
+    /**
+     * Add the paths to the "platform.includepath" property.
+     */
     @Parameter(property = "javacpp.includePaths")
     String[] includePaths = null;
 
-    /** Add the path to the "platform.includeresource" property. */
+    /**
+     * Add the path to the "platform.includeresource" property.
+     */
     @Parameter(property = "javacpp.includeResource")
     String includeResource = null;
 
-    /** Add the paths to the "platform.includeresource" property. */
+    /**
+     * Add the paths to the "platform.includeresource" property.
+     */
     @Parameter(property = "javacpp.includeResources")
     String[] includeResources = null;
 
-    /** Add the path to the "platform.buildpath" property. */
+    /**
+     * Add the path to the "platform.buildpath" property.
+     */
     @Parameter(property = "javacpp.buildPath")
     String buildPath = null;
 
-    /** Add the paths to the "platform.buildpath" property. */
+    /**
+     * Add the paths to the "platform.buildpath" property.
+     */
     @Parameter(property = "javacpp.buildPaths")
     String[] buildPaths = null;
 
-    /** Add the path to the "platform.buildresource" property. */
+    /**
+     * Add the path to the "platform.buildresource" property.
+     */
     @Parameter(property = "javacpp.buildResource")
     String buildResource = null;
 
-    /** Add the paths to the "platform.buildresource" property. */
+    /**
+     * Add the paths to the "platform.buildresource" property.
+     */
     @Parameter(property = "javacpp.buildResources")
     String[] buildResources = null;
 
-    /** Add the path to the "platform.linkpath" property. */
+    /**
+     * Add the path to the "platform.linkpath" property.
+     */
     @Parameter(property = "javacpp.linkPath")
     String linkPath = null;
 
-    /** Add the paths to the "platform.linkpath" property. */
+    /**
+     * Add the paths to the "platform.linkpath" property.
+     */
     @Parameter(property = "javacpp.linkPaths")
     String[] linkPaths = null;
 
-    /** Add the path to the "platform.linkresource" property. */
+    /**
+     * Add the path to the "platform.linkresource" property.
+     */
     @Parameter(property = "javacpp.linkResource")
     String linkResource = null;
 
-    /** Add the paths to the "platform.linkresource" property. */
+    /**
+     * Add the paths to the "platform.linkresource" property.
+     */
     @Parameter(property = "javacpp.linkResources")
     String[] linkResources = null;
 
-    /** Add the path to the "platform.preloadpath" property. */
+    /**
+     * Add the path to the "platform.preloadpath" property.
+     */
     @Parameter(property = "javacpp.preloadPath")
     String preloadPath = null;
 
-    /** Add the paths to the "platform.preloadpath" property. */
+    /**
+     * Add the paths to the "platform.preloadpath" property.
+     */
     @Parameter(property = "javacpp.preloadPaths")
     String[] preloadPaths = null;
 
-    /** Add the path to the "platform.preloadresource" property. */
+    /**
+     * Add the path to the "platform.preloadresource" property.
+     */
     @Parameter(property = "javacpp.preloadResource")
     String preloadResource = null;
 
-    /** Add the paths to the "platform.preloadresource" property. */
+    /**
+     * Add the paths to the "platform.preloadresource" property.
+     */
     @Parameter(property = "javacpp.preloadResources")
     String[] preloadResources = null;
 
-    /** Add the path to the "platform.resourcepath" property. */
+    /**
+     * Add the path to the "platform.resourcepath" property.
+     */
     @Parameter(property = "javacpp.resourcePath")
     String resourcePath = null;
 
-    /** Add the paths to the "platform.resourcepath" property. */
+    /**
+     * Add the paths to the "platform.resourcepath" property.
+     */
     @Parameter(property = "javacpp.resourcePaths")
     String[] resourcePaths = null;
 
-    /** Add the path to the "platform.executablepath" property. */
+    /**
+     * Add the path to the "platform.executablepath" property.
+     */
     @Parameter(property = "javacpp.executablePath")
     String executablePath = null;
 
-    /** Add the paths to the "platform.executablepath" property. */
+    /**
+     * Add the paths to the "platform.executablepath" property.
+     */
     @Parameter(property = "javacpp.executablePaths")
     String[] executablePaths = null;
 
-    /** Specify the character encoding used for input and output. */
+    /**
+     * Specify the character encoding used for input and output.
+     */
     @Parameter(property = "javacpp.encoding")
     String encoding = null;
 
-    /** Output all generated files to outputDirectory. */
+    /**
+     * Output all generated files to outputDirectory.
+     */
     @Parameter(property = "javacpp.outputDirectory")
     File outputDirectory = null;
 
-    /** Output everything in a file named after given outputName. */
+    /**
+     * Output everything in a file named after given outputName.
+     */
     @Parameter(property = "javacpp.outputName")
     String outputName = null;
 
-    /** Delete all files from {@link #outputDirectory} before generating anything in it. */
+    /**
+     * Delete all files from {@link #outputDirectory} before generating anything in it.
+     */
     @Parameter(property = "javacpp.clean", defaultValue = "false")
     boolean clean = false;
 
-    /** Generate .cpp files from Java interfaces if found, parsing from header files if not. */
+    /**
+     * Generate .cpp files from Java interfaces if found, parsing from header files if not.
+     */
     @Parameter(property = "javacpp.generate", defaultValue = "true")
     boolean generate = true;
 
-    /** Compile and delete the generated .cpp files. */
+    /**
+     * Compile and delete the generated .cpp files.
+     */
     @Parameter(property = "javacpp.compile", defaultValue = "true")
     boolean compile = true;
 
-    /** Delete generated C++ JNI files after compilation */
+    /**
+     * Delete generated C++ JNI files after compilation
+     */
     @Parameter(property = "javacpp.deleteJniFiles", defaultValue = "true")
     boolean deleteJniFiles = true;
 
-    /** Generate header file with declarations of callbacks functions. */
+    /**
+     * Generate header file with declarations of callbacks functions.
+     */
     @Parameter(property = "javacpp.header", defaultValue = "false")
     boolean header = false;
 
-    /** Copy to output directory dependent libraries (link and preload). */
+    /**
+     * Copy to output directory dependent libraries (link and preload).
+     */
     @Parameter(property = "javacpp.copyLibs", defaultValue = "false")
     boolean copyLibs = false;
 
-    /** Copy to output directory resources listed in properties. */
+    /**
+     * Copy to output directory resources listed in properties.
+     */
     @Parameter(property = "javacpp.copyResources", defaultValue = "false")
     boolean copyResources = false;
 
-    /** Also create config files for GraalVM native-image in directory. */
+    /**
+     * Also create config files for GraalVM native-image in directory.
+     */
     @Parameter(property = "javacpp.configDirectory")
     String configDirectory = null;
 
-    /** Also create a JAR file named {@code <jarPrefix>-<platform>.jar}. */
+    /**
+     * Also create a JAR file named {@code <jarPrefix>-<platform>.jar}.
+     */
     @Parameter(property = "javacpp.jarPrefix")
     String jarPrefix = null;
 
-    /** Load all properties from resource. */
+    /**
+     * Load all properties from resource.
+     */
     @Parameter(property = "javacpp.properties")
     String properties = null;
 
-    /** Load all properties from file. */
+    /**
+     * Load all properties from file.
+     */
     @Parameter(property = "javacpp.propertyFile")
     File propertyFile = null;
 
-    /** Set property keys to values. */
+    /**
+     * Set property keys to values.
+     */
     @Parameter(property = "javacpp.propertyKeysAndValues")
     Properties propertyKeysAndValues = null;
 
-    /** Process only this class or package (suffixed with .* or .**). */
+    /**
+     * Process only this class or package (suffixed with .* or .**).
+     */
     @Parameter(property = "javacpp.classOrPackageName")
     String classOrPackageName = null;
 
-    /** Process only these classes or packages (suffixed with .* or .**). */
+    /**
+     * Process only these classes or packages (suffixed with .* or .**).
+     */
     @Parameter(property = "javacpp.classOrPackageNames")
     String[] classOrPackageNames = null;
 
-    /** Execute a build command instead of JavaCPP itself, and return. */
+    /**
+     * Execute a build command instead of JavaCPP itself, and return.
+     */
     @Parameter(property = "javacpp.buildCommand")
     String[] buildCommand = null;
 
-    /** Add to Maven project source directory of Java files generated by buildCommand. */
+    /**
+     * Add to Maven project source directory of Java files generated by buildCommand.
+     */
     @Parameter(property = "javacpp.targetDirectory")
     String targetDirectory = null;
 
-    /** Add to Maven project source directory of Java files generated by buildCommand. */
+    /**
+     * Add to Maven project source directory of Java files generated by buildCommand.
+     */
     @Parameter(property = "javacpp.targetDirectories")
     String[] targetDirectories = null;
 
-    /** Set the working directory of the build subprocess. */
+    /**
+     * Set the working directory of the build subprocess.
+     */
     @Parameter(property = "javacpp.workingDirectory")
     File workingDirectory = null;
 
-    /** Add environment variables to the compiler subprocess. */
+    /**
+     * Add environment variables to the compiler subprocess.
+     */
     @Parameter(property = "javacpp.environmentVariables")
-    Map<String,String> environmentVariables = null;
+    Map<String, String> environmentVariables = null;
 
-    /** Pass compilerOptions directly to compiler. */
+    /**
+     * Pass compilerOptions directly to compiler.
+     */
     @Parameter(property = "javacpp.compilerOptions")
     String[] compilerOptions = null;
 
-     /** Skip the execution. */
+    /**
+     * Skip the execution.
+     */
     @Parameter(property = "javacpp.skip", defaultValue = "false")
     boolean skip = false;
 
@@ -248,7 +339,8 @@ public class BuildMojo extends AbstractMojo {
         return ss != null ? ss : new String[0];
     }
 
-    @Override public void execute() throws MojoExecutionException {
+    @Override
+    public void execute() throws MojoExecutionException {
         final Log log = getLog();
         try {
             if (log.isDebugEnabled()) {
@@ -306,48 +398,39 @@ public class BuildMojo extends AbstractMojo {
                     project.addCompileSourceRoot(targetDirectory);
                 }
             }
-
             if (skip) {
                 log.info("Skipping execution of JavaCPP Builder");
                 return;
             }
-
             classPaths = merge(classPaths, classPath);
             classOrPackageNames = merge(classOrPackageNames, classOrPackageName);
-
             Logger logger = new Logger() {
-                @Override public void debug(String s) { log.debug(s); }
-                @Override public void info (String s) { log.info(s);  }
-                @Override public void warn (String s) { log.warn(s);  }
-                @Override public void error(String s) { log.error(s); }
+
+                @Override
+                public void debug(String s) {
+                    log.debug(s);
+                }
+
+                @Override
+                public void info(String s) {
+                    log.info(s);
+                }
+
+                @Override
+                public void warn(String s) {
+                    log.warn(s);
+                }
+
+                @Override
+                public void error(String s) {
+                    log.error(s);
+                }
             };
-            Builder builder = new Builder(logger)
-                    .classPaths(classPaths)
-                    .encoding(encoding)
-                    .outputDirectory(outputDirectory)
-                    .outputName(outputName)
-                    .clean(clean)
-                    .generate(generate)
-                    .compile(compile)
-                    .deleteJniFiles(deleteJniFiles)
-                    .header(header)
-                    .copyLibs(copyLibs)
-                    .copyResources(copyResources)
-                    .configDirectory(configDirectory)
-                    .jarPrefix(jarPrefix)
-                    .properties(properties)
-                    .propertyFile(propertyFile)
-                    .properties(propertyKeysAndValues)
-                    .classesOrPackages(classOrPackageNames)
-                    .buildCommand(buildCommand)
-                    .workingDirectory(workingDirectory)
-                    .environmentVariables(environmentVariables)
-                    .compilerOptions(compilerOptions);
+            Builder builder = new Builder(logger).classPaths(classPaths).encoding(encoding).outputDirectory(outputDirectory).outputName(outputName).clean(clean).generate(generate).compile(compile).deleteJniFiles(deleteJniFiles).header(header).copyLibs(copyLibs).copyResources(copyResources).configDirectory(configDirectory).jarPrefix(jarPrefix).properties(properties).propertyFile(propertyFile).properties(propertyKeysAndValues).classesOrPackages(classOrPackageNames).buildCommand(buildCommand).workingDirectory(workingDirectory).environmentVariables(environmentVariables).compilerOptions(compilerOptions);
             Properties properties = builder.properties;
             String extension = properties.getProperty("platform.extension");
             log.info("Detected platform \"" + Loader.getPlatform() + "\"");
-            log.info("Building platform \"" + properties.get("platform") + "\""
-                    + (extension != null && extension.length() > 0 ? " with extension \"" + extension + "\"" : ""));
+            log.info("Building platform \"" + properties.get("platform") + "\"" + (extension != null && extension.length() > 0 ? " with extension \"" + extension + "\"" : ""));
             properties.setProperty("platform.host", Loader.getPlatform());
             String module = properties.get("platform") + (extension != null ? extension : "");
             // make available a platform name that is JPMS friendly without hyphens
@@ -355,60 +438,49 @@ public class BuildMojo extends AbstractMojo {
             String separator = properties.getProperty("platform.path.separator");
             for (String s : merge(buildPaths, buildPath)) {
                 String v = properties.getProperty("platform.buildpath", "");
-                properties.setProperty("platform.buildpath",
-                        v.length() == 0 || v.endsWith(separator) ? v + s : v + separator + s);
+                properties.setProperty("platform.buildpath", v.length() == 0 || v.endsWith(separator) ? v + s : v + separator + s);
             }
             for (String s : merge(buildResources, buildResource)) {
                 String v = properties.getProperty("platform.buildresource", "");
-                properties.setProperty("platform.buildresource",
-                        v.length() == 0 || v.endsWith(separator) ? v + s : v + separator + s);
+                properties.setProperty("platform.buildresource", v.length() == 0 || v.endsWith(separator) ? v + s : v + separator + s);
             }
             for (String s : merge(includePaths, includePath)) {
                 String v = properties.getProperty("platform.includepath", "");
-                properties.setProperty("platform.includepath",
-                        v.length() == 0 || v.endsWith(separator) ? v + s : v + separator + s);
+                properties.setProperty("platform.includepath", v.length() == 0 || v.endsWith(separator) ? v + s : v + separator + s);
             }
             for (String s : merge(includeResources, includeResource)) {
                 String v = properties.getProperty("platform.includeresource", "");
-                properties.setProperty("platform.includeresource",
-                        v.length() == 0 || v.endsWith(separator) ? v + s : v + separator + s);
+                properties.setProperty("platform.includeresource", v.length() == 0 || v.endsWith(separator) ? v + s : v + separator + s);
             }
             for (String s : merge(linkPaths, linkPath)) {
                 String v = properties.getProperty("platform.linkpath", "");
-                properties.setProperty("platform.linkpath",
-                        v.length() == 0 || v.endsWith(separator) ? v + s : v + separator + s);
+                properties.setProperty("platform.linkpath", v.length() == 0 || v.endsWith(separator) ? v + s : v + separator + s);
             }
             for (String s : merge(linkResources, linkResource)) {
                 String v = properties.getProperty("platform.linkresource", "");
-                properties.setProperty("platform.linkresource",
-                        v.length() == 0 || v.endsWith(separator) ? v + s : v + separator + s);
+                properties.setProperty("platform.linkresource", v.length() == 0 || v.endsWith(separator) ? v + s : v + separator + s);
             }
             for (String s : merge(preloadPaths, preloadPath)) {
                 String v = properties.getProperty("platform.preloadpath", "");
-                properties.setProperty("platform.preloadpath",
-                        v.length() == 0 || v.endsWith(separator) ? v + s : v + separator + s);
+                properties.setProperty("platform.preloadpath", v.length() == 0 || v.endsWith(separator) ? v + s : v + separator + s);
             }
             for (String s : merge(preloadResources, preloadResource)) {
                 String v = properties.getProperty("platform.preloadresource", "");
-                properties.setProperty("platform.preloadresource",
-                        v.length() == 0 || v.endsWith(separator) ? v + s : v + separator + s);
+                properties.setProperty("platform.preloadresource", v.length() == 0 || v.endsWith(separator) ? v + s : v + separator + s);
             }
             for (String s : merge(resourcePaths, resourcePath)) {
                 String v = properties.getProperty("platform.resourcepath", "");
-                properties.setProperty("platform.resourcepath",
-                        v.length() == 0 || v.endsWith(separator) ? v + s : v + separator + s);
+                properties.setProperty("platform.resourcepath", v.length() == 0 || v.endsWith(separator) ? v + s : v + separator + s);
             }
             for (String s : merge(executablePaths, executablePath)) {
                 String v = properties.getProperty("platform.executablepath", "");
-                properties.setProperty("platform.executablepath",
-                        v.length() == 0 || v.endsWith(separator) ? v + s : v + separator + s);
+                properties.setProperty("platform.executablepath", v.length() == 0 || v.endsWith(separator) ? v + s : v + separator + s);
             }
             properties.setProperty("platform.artifacts", project.getBuild().getOutputDirectory());
             for (Artifact a : plugin.getArtifacts()) {
                 String s = Loader.getCanonicalPath(a.getFile());
                 String v = properties.getProperty("platform.artifacts", "");
-                properties.setProperty("platform.artifacts",
-                        v.length() == 0 || v.endsWith(separator) ? v + s : v + separator + s);
+                properties.setProperty("platform.artifacts", v.length() == 0 || v.endsWith(separator) ? v + s : v + separator + s);
             }
             Properties projectProperties = project.getProperties();
             for (String key : properties.stringPropertyNames()) {

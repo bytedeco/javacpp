@@ -19,7 +19,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp.tools;
 
 import java.io.IOException;
@@ -36,7 +35,9 @@ import org.bytedeco.javacpp.Loader;
  */
 @Mojo(name = "clear", defaultPhase = LifecyclePhase.NONE, requiresProject = false)
 public class ClearMojo extends AbstractMojo {
-    @Override public void execute() throws MojoExecutionException {
+
+    @Override
+    public void execute() throws MojoExecutionException {
         try {
             Loader.clearCacheDir();
         } catch (IOException e) {

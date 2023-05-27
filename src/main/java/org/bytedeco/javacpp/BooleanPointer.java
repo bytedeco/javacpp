@@ -19,7 +19,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp;
 
 import java.nio.ByteBuffer;
@@ -35,6 +34,7 @@ import org.bytedeco.javacpp.tools.Logger;
  */
 @org.bytedeco.javacpp.annotation.Properties(inherit = org.bytedeco.javacpp.presets.javacpp.class)
 public class BooleanPointer extends Pointer {
+
     private static final Logger logger = Logger.create(BooleanPointer.class);
 
     static {
@@ -53,10 +53,11 @@ public class BooleanPointer extends Pointer {
      * @param array the array to copy
      * @see #put(boolean[])
      */
-    public BooleanPointer(boolean ... array) {
+    public BooleanPointer(boolean... array) {
         this(array.length);
         put(array);
     }
+
     /**
      * For direct buffers, calls {@link Pointer#Pointer(Buffer)}, while for buffers
      * backed with an array, allocates enough memory for the array and copies it.
@@ -76,6 +77,7 @@ public class BooleanPointer extends Pointer {
             limit(buffer.limit());
         }
     }
+
     /**
      * Allocates a native {@code boolean} array of the given size.
      *
@@ -90,43 +92,80 @@ public class BooleanPointer extends Pointer {
         } catch (UnsatisfiedLinkError e) {
             throw new RuntimeException("No native JavaCPP library in memory. (Has Loader.load() been called?)", e);
         } catch (OutOfMemoryError e) {
-            OutOfMemoryError e2 = new OutOfMemoryError("Cannot allocate new BooleanPointer(" + size + "): "
-                    + "totalBytes = " + formatBytes(totalBytes()) + ", physicalBytes = " + formatBytes(physicalBytes()));
+            OutOfMemoryError e2 = new OutOfMemoryError("Cannot allocate new BooleanPointer(" + size + "): " + "totalBytes = " + formatBytes(totalBytes()) + ", physicalBytes = " + formatBytes(physicalBytes()));
             e2.initCause(e);
             throw e2;
         }
     }
-    /** @see Pointer#Pointer() */
-    public BooleanPointer() { }
-    /** @see Pointer#Pointer(Pointer) */
-    public BooleanPointer(Pointer p) { super(p); }
+
+    /**
+     * @see Pointer#Pointer()
+     */
+    public BooleanPointer() {
+    }
+
+    /**
+     * @see Pointer#Pointer(Pointer)
+     */
+    public BooleanPointer(Pointer p) {
+        super(p);
+    }
+
     private native void allocateArray(long size);
 
-    /** @see Pointer#position(long) */
-    @Override public BooleanPointer position(long position) {
+    /**
+     * @see Pointer#position(long)
+     */
+    @Override
+    public BooleanPointer position(long position) {
         return super.position(position);
     }
-    /** @see Pointer#limit(long) */
-    @Override public BooleanPointer limit(long limit) {
+
+    /**
+     * @see Pointer#limit(long)
+     */
+    @Override
+    public BooleanPointer limit(long limit) {
         return super.limit(limit);
     }
-    /** @see Pointer#capacity(long) */
-    @Override public BooleanPointer capacity(long capacity) {
+
+    /**
+     * @see Pointer#capacity(long)
+     */
+    @Override
+    public BooleanPointer capacity(long capacity) {
         return super.capacity(capacity);
     }
-    @Override public int sizeof() {
+
+    @Override
+    public int sizeof() {
         return getClass() == BooleanPointer.class ? 1 : super.sizeof();
     }
-    @Override public BooleanPointer getPointer(long i) {
+
+    @Override
+    public BooleanPointer getPointer(long i) {
         return new BooleanPointer(this).offsetAddress(i);
     }
 
-    /** @return {@code get(0)} */
-    public boolean get() { return get(0); }
-    /** @return the i-th {@code boolean} value of a native array */
+    /**
+     * @return {@code get(0)}
+     */
+    public boolean get() {
+        return get(0);
+    }
+
+    /**
+     * @return the i-th {@code boolean} value of a native array
+     */
     public native boolean get(long i);
-    /** @return {@code put(0, b)} */
-    public BooleanPointer put(boolean b) { return put(0, b); }
+
+    /**
+     * @return {@code put(0, b)}
+     */
+    public BooleanPointer put(boolean b) {
+        return put(0, b);
+    }
+
     /**
      * Copies the {@code boolean} value to the i-th element of a native array.
      *
@@ -136,10 +175,20 @@ public class BooleanPointer extends Pointer {
      */
     public native BooleanPointer put(long i, boolean b);
 
-    /** @return {@code get(array, 0, array.length)} */
-    public BooleanPointer get(boolean[] array) { return get(array, 0, array.length); }
-    /** @return {@code put(array, 0, array.length)} */
-    public BooleanPointer put(boolean ... array) { return put(array, 0, array.length); }
+    /**
+     * @return {@code get(array, 0, array.length)}
+     */
+    public BooleanPointer get(boolean[] array) {
+        return get(array, 0, array.length);
+    }
+
+    /**
+     * @return {@code put(array, 0, array.length)}
+     */
+    public BooleanPointer put(boolean... array) {
+        return put(array, 0, array.length);
+    }
+
     /**
      * Reads a portion of the native array into a Java array.
      *
@@ -149,6 +198,7 @@ public class BooleanPointer extends Pointer {
      * @return this
      */
     public native BooleanPointer get(boolean[] array, int offset, int length);
+
     /**
      * Writes a portion of a Java array into the native array.
      *

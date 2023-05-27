@@ -19,7 +19,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp.tools;
 
 import java.io.File;
@@ -56,7 +55,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
-
 import org.bytedeco.javacpp.ClassProperties;
 import org.bytedeco.javacpp.Loader;
 
@@ -108,15 +106,14 @@ public class Builder {
             return;
         }
         String platform = Loader.getPlatform();
-        final String jvmlink = properties.getProperty("platform.link.prefix", "") +
-                       "jvm" + properties.getProperty("platform.link.suffix", "");
-        final String jvmlib  = properties.getProperty("platform.library.prefix", "") +
-                       "jvm" + properties.getProperty("platform.library.suffix", "");
+        final String jvmlink = properties.getProperty("platform.link.prefix", "") + "jvm" + properties.getProperty("platform.link.suffix", "");
+        final String jvmlib = properties.getProperty("platform.library.prefix", "") + "jvm" + properties.getProperty("platform.library.suffix", "");
         final HashSet<String> jnipath = new HashSet<String>();
         final HashSet<String> jvmpath = new HashSet<String>();
-
         FilenameFilter filter = new FilenameFilter() {
-            @Override public boolean accept(File dir, String name) {
+
+            @Override
+            public boolean accept(File dir, String name) {
                 if (new File(dir, "jni.h").exists()) {
                     jnipath.add(dir.getAbsolutePath());
                 }
@@ -132,21 +129,19 @@ public class Builder {
                 return new File(dir, name).isDirectory();
             }
         };
-
         // Java home dir is the one returned by "java.home" or parent dir of it in older JDKs.
         File[] javaHomes = new File[2];
         try {
             javaHomes[0] = Loader.getCanonicalFile(new File(System.getProperty("java.home")));
-            javaHomes[1] = Loader.getCanonicalFile(javaHomes[0].getParentFile());;
+            javaHomes[1] = Loader.getCanonicalFile(javaHomes[0].getParentFile());
+            ;
         } catch (IOException | NullPointerException e) {
             logger.warn("Could not include header files from java.home:" + e);
             return;
         }
-
         for (File javaHome : javaHomes) {
             jnipath.clear();
             jvmpath.clear();
-
             ArrayList<File> dirs = new ArrayList<File>(Arrays.asList(javaHome.listFiles(filter)));
             while (!dirs.isEmpty()) {
                 File d = dirs.remove(dirs.size() - 1);
@@ -166,11 +161,10 @@ public class Builder {
                     }
                 }
             }
-
             // Break searching if all needed paths are found
-            if (!jnipath.isEmpty() && !jvmpath.isEmpty()) break;
+            if (!jnipath.isEmpty() && !jvmpath.isEmpty())
+                break;
         }
-
         // Try to set default path for Mac OS if above step failed.
         if (jnipath.isEmpty()) {
             String macpath = "/System/Library/Frameworks/JavaVM.framework/Headers/";
@@ -178,7 +172,6 @@ public class Builder {
                 jnipath.add(macpath);
             }
         }
-
         properties.addAll("platform.includepath", jnipath);
         if (platform.equals(properties.getProperty("platform", platform))) {
             if (header) {
@@ -202,16 +195,12 @@ public class Builder {
      * @throws IOException
      * @throws InterruptedException
      */
-    int compile(String[] sourceFilenames, String outputFilename, ClassProperties properties, File workingDirectory)
-            throws IOException, InterruptedException {
+    int compile(String[] sourceFilenames, String outputFilename, ClassProperties properties, File workingDirectory) throws IOException, InterruptedException {
         ArrayList<String> command = new ArrayList<String>();
-
         includeJavaPaths(properties, header);
-
-        String platform  = Loader.getPlatform();
+        String platform = Loader.getPlatform();
         String compilerPath = properties.getProperty("platform.compiler");
         command.add(compilerPath);
-
         {
             String p = properties.getProperty("platform.sysroot.prefix", "");
             for (String s : properties.get("platform.sysroot")) {
@@ -219,14 +208,14 @@ public class Builder {
                 if (file.isDirectory()) {
                     s = Loader.getCanonicalPath(file);
                     if (p.endsWith(" ")) {
-                        command.add(p.trim()); command.add(s);
+                        command.add(p.trim());
+                        command.add(s);
                     } else {
                         command.add(p + s);
                     }
                 }
             }
         }
-
         {
             String p = properties.getProperty("platform.toolchain.prefix", "");
             for (String s : properties.get("platform.toolchain")) {
@@ -234,14 +223,14 @@ public class Builder {
                 if (file.isDirectory()) {
                     s = Loader.getCanonicalPath(file);
                     if (p.endsWith(" ")) {
-                        command.add(p.trim()); command.add(s);
+                        command.add(p.trim());
+                        command.add(s);
                     } else {
                         command.add(p + s);
                     }
                 }
             }
         }
-
         {
             String p = properties.getProperty("platform.includepath.prefix", "");
             for (String s : properties.get("platform.includepath")) {
@@ -249,7 +238,8 @@ public class Builder {
                 if (file.isDirectory()) {
                     s = Loader.getCanonicalPath(file);
                     if (p.endsWith(" ")) {
-                        command.add(p.trim()); command.add(s);
+                        command.add(p.trim());
+                        command.add(s);
                     } else {
                         command.add(p + s);
                     }
@@ -259,7 +249,8 @@ public class Builder {
                 for (File f : Loader.cacheResources(s)) {
                     if (f.isDirectory()) {
                         if (p.endsWith(" ")) {
-                            command.add(p.trim()); command.add(Loader.getCanonicalPath(f));
+                            command.add(p.trim());
+                            command.add(Loader.getCanonicalPath(f));
                         } else {
                             command.add(p + Loader.getCanonicalPath(f));
                         }
@@ -267,11 +258,9 @@ public class Builder {
                 }
             }
         }
-
         for (int i = sourceFilenames.length - 1; i >= 0; i--) {
             command.add(sourceFilenames[i]);
         }
-
         List<String> allOptions = properties.get("platform.compiler.*");
         if (!allOptions.contains("!default") && !allOptions.contains("default")) {
             allOptions.add(0, "default");
@@ -288,38 +277,35 @@ public class Builder {
                 logger.warn("Could not get the property named \"" + p + "\"");
             }
         }
-
         command.addAll(compilerOptions);
-
         String output = properties.getProperty("platform.compiler.output");
-        for (int i = 1; i < 2 || output != null; i++,
-                output = properties.getProperty("platform.compiler.output" + i)) {
+        for (int i = 1; i < 2 || output != null; i++, output = properties.getProperty("platform.compiler.output" + i)) {
             if (output != null && output.length() > 0) {
                 command.addAll(Arrays.asList(output.split(" ")));
             }
-
             if (output == null || output.length() == 0 || output.endsWith(" ")) {
                 command.add(outputFilename);
             } else {
                 command.add(command.remove(command.size() - 1) + outputFilename);
             }
         }
-
         {
-            String p  = properties.getProperty("platform.linkpath.prefix", "");
+            String p = properties.getProperty("platform.linkpath.prefix", "");
             String p2 = properties.getProperty("platform.linkpath.prefix2");
             for (String s : properties.get("platform.linkpath")) {
                 File file = new File(s);
                 if (file.isDirectory()) {
                     s = Loader.getCanonicalPath(file);
                     if (p.endsWith(" ")) {
-                        command.add(p.trim()); command.add(s);
+                        command.add(p.trim());
+                        command.add(s);
                     } else {
                         command.add(p + s);
                     }
                     if (p2 != null) {
                         if (p2.endsWith(" ")) {
-                            command.add(p2.trim()); command.add(s);
+                            command.add(p2.trim());
+                            command.add(s);
                         } else {
                             command.add(p2 + s);
                         }
@@ -330,13 +316,15 @@ public class Builder {
                 for (File f : Loader.cacheResources(s)) {
                     if (f.isDirectory()) {
                         if (p.endsWith(" ")) {
-                            command.add(p.trim()); command.add(Loader.getCanonicalPath(f));
+                            command.add(p.trim());
+                            command.add(Loader.getCanonicalPath(f));
                         } else {
                             command.add(p + Loader.getCanonicalPath(f));
                         }
                         if (p2 != null) {
                             if (p2.endsWith(" ")) {
-                                command.add(p2.trim()); command.add(Loader.getCanonicalPath(f));
+                                command.add(p2.trim());
+                                command.add(Loader.getCanonicalPath(f));
                             } else {
                                 command.add(p2 + Loader.getCanonicalPath(f));
                             }
@@ -345,16 +333,13 @@ public class Builder {
                 }
             }
         }
-
         {
             String p = properties.getProperty("platform.link.prefix", "");
             String x = properties.getProperty("platform.link.suffix", "");
-
             String linkPrefix = "";
             String linkSuffix = "";
             List<String> linkBeforeOptions = new ArrayList<>();
-            List<String> linkAfterOptions  = new ArrayList<>();
-
+            List<String> linkAfterOptions = new ArrayList<>();
             if (p.endsWith(" ")) {
                 linkBeforeOptions.addAll(Arrays.asList(p.trim().split(" ")));
             } else {
@@ -366,7 +351,6 @@ public class Builder {
                     linkPrefix = p;
                 }
             }
-
             if (x.startsWith(" ")) {
                 linkAfterOptions.addAll(Arrays.asList(x.trim().split(" ")));
             } else {
@@ -378,8 +362,8 @@ public class Builder {
                     linkSuffix = x;
                 }
             }
-
-            int i = command.size(); // to inverse order and satisfy typical compilers
+            // to inverse order and satisfy typical compilers
+            int i = command.size();
             for (String s : properties.get("platform.link")) {
                 String[] libnameversion = s.split("#")[0].split("@");
                 if (libnameversion.length == 3 && libnameversion[1].length() == 0) {
@@ -392,11 +376,9 @@ public class Builder {
                 l.addAll(linkBeforeOptions);
                 l.add(linkPrefix + (s.endsWith("!") ? s.substring(0, s.length() - 1) : s) + linkSuffix);
                 l.addAll(linkAfterOptions);
-
                 command.addAll(i, l);
             }
         }
-
         {
             String p = properties.getProperty("platform.frameworkpath.prefix", "");
             for (String s : properties.get("platform.frameworkpath")) {
@@ -404,30 +386,33 @@ public class Builder {
                 if (file.isDirectory()) {
                     s = Loader.getCanonicalPath(file);
                     if (p.endsWith(" ")) {
-                        command.add(p.trim()); command.add(s);
+                        command.add(p.trim());
+                        command.add(s);
                     } else {
                         command.add(p + s);
                     }
                 }
             }
         }
-
         {
             String p = properties.getProperty("platform.framework.prefix", "");
             String x = properties.getProperty("platform.framework.suffix", "");
             for (String s : properties.get("platform.framework")) {
                 if (p.endsWith(" ") && x.startsWith(" ")) {
-                    command.add(p.trim()); command.add(s); command.add(x.trim());
+                    command.add(p.trim());
+                    command.add(s);
+                    command.add(x.trim());
                 } else if (p.endsWith(" ")) {
-                    command.add(p.trim()); command.add(s + x);
+                    command.add(p.trim());
+                    command.add(s + x);
                 } else if (x.startsWith(" ")) {
-                    command.add(p + s); command.add(x.trim());
+                    command.add(p + s);
+                    command.add(x.trim());
                 } else {
                     command.add(p + s + x);
                 }
             }
         }
-
         boolean windows = platform.startsWith("windows");
         for (int i = 0; i < command.size(); i++) {
             String arg = command.get(i);
@@ -440,7 +425,6 @@ public class Builder {
             }
             command.set(i, arg);
         }
-
         // Use the library output path as the working directory so that all
         // build files, including intermediate ones from MSVC, are dumped there
         return commandExecutor.executeCommand(command, workingDirectory, environmentVariables);
@@ -462,25 +446,24 @@ public class Builder {
         cleanOutputDirectory();
         File outputPath = outputDirectory != null ? Loader.getCanonicalFile(outputDirectory) : null;
         ClassProperties p = Loader.loadProperties(classes, properties, true);
-        String platform     = properties.getProperty("platform");
-        String extension    = properties.getProperty("platform.extension");
+        String platform = properties.getProperty("platform");
+        String extension = properties.getProperty("platform.extension");
         String sourcePrefix = outputPath != null ? outputPath.getPath() + File.separator : "";
-        String libraryPath  = p.getProperty("platform.library.path", "");
+        String libraryPath = p.getProperty("platform.library.path", "");
         if (sourcePrefixes != null) {
             sourcePrefixes[0] = sourcePrefixes[1] = sourcePrefix;
         }
         if (outputPath == null) {
             URI uri = null;
             try {
-                String resourceName = '/' + classes[0].getName().replace('.', '/')  + ".class";
+                String resourceName = '/' + classes[0].getName().replace('.', '/') + ".class";
                 String resourceURL = Loader.findResource(classes[0], resourceName).toString();
                 String packageURI = resourceURL.substring(0, resourceURL.lastIndexOf('/') + 1);
                 for (int i = 1; i < classes.length; i++) {
                     // Use the longest common package name among all classes as default output path
-                    String resourceName2 = '/' + classes[i].getName().replace('.', '/')  + ".class";
+                    String resourceName2 = '/' + classes[i].getName().replace('.', '/') + ".class";
                     String resourceURL2 = Loader.findResource(classes[i], resourceName2).toString();
                     String packageURI2 = resourceURL2.substring(0, resourceURL2.lastIndexOf('/') + 1);
-
                     String longest = packageURI2.length() >= packageURI.length() ? packageURI2 : packageURI;
                     String shortest = packageURI2.length() < packageURI.length() ? packageURI2 : packageURI;
                     while (!longest.startsWith(shortest) && shortest.lastIndexOf('/') > 0) {
@@ -492,13 +475,10 @@ public class Builder {
                 boolean isFile = "file".equals(uri.getScheme());
                 File classPath = Loader.getCanonicalFile(new File(classScanner.getClassLoader().getPaths()[0]));
                 // If our class is not a file, use first path of the user class loader as base for our output path
-                File packageDir = isFile ? new File(uri)
-                                         : new File(classPath, resourceName.substring(0, resourceName.lastIndexOf('/') + 1));
+                File packageDir = isFile ? new File(uri) : new File(classPath, resourceName.substring(0, resourceName.lastIndexOf('/') + 1));
                 // Output to the library path inside of the class path, if provided by the user
                 uri = new URI(resourceURL.substring(0, resourceURL.length() - resourceName.length() + 1));
-                File targetDir = libraryPath.length() > 0
-                        ? (isFile ? new File(uri) : classPath)
-                        : new File(packageDir, platform + (extension != null ? extension : ""));
+                File targetDir = libraryPath.length() > 0 ? (isFile ? new File(uri) : classPath) : new File(packageDir, platform + (extension != null ? extension : ""));
                 outputPath = new File(targetDir, libraryPath);
                 sourcePrefix = packageDir.getPath() + File.separator;
                 // make sure jnijavacpp.cpp ends up in the same directory for all classes in different packages
@@ -535,38 +515,33 @@ public class Builder {
         File outputPath = getOutputPath(classes, sourcePrefixes);
         ClassProperties p = Loader.loadProperties(classes, properties, true);
         String sourceSuffix = p.getProperty("platform.source.suffix", ".cpp");
-        String libraryPrefix  = p.getProperty("platform.library.prefix", "") ;
-        String librarySuffix  = p.getProperty("platform.library.suffix", "");
+        String libraryPrefix = p.getProperty("platform.library.prefix", "");
+        String librarySuffix = p.getProperty("platform.library.suffix", "");
         Generator generator = new Generator(logger, properties, encoding);
-        String[] sourceFilenames = {sourcePrefixes[0] + "jnijavacpp" + sourceSuffix,
-                                    sourcePrefixes[1] + outputName + sourceSuffix};
-        String[] configDirectories = {configDirectory != null ? new File(configDirectory, "jnijavacpp").getPath() : null,
-                                      configDirectory != null ? new File(configDirectory, outputName).getPath() : null};
-        String[] headerFilenames = {null, header ? sourcePrefixes[1] + outputName +  ".h" : null};
-        String[] loadSuffixes = {"_jnijavacpp", null};
-        String[] baseLoadSuffixes = {null, "_jnijavacpp"};
+        String[] sourceFilenames = { sourcePrefixes[0] + "jnijavacpp" + sourceSuffix, sourcePrefixes[1] + outputName + sourceSuffix };
+        String[] configDirectories = { configDirectory != null ? new File(configDirectory, "jnijavacpp").getPath() : null, configDirectory != null ? new File(configDirectory, outputName).getPath() : null };
+        String[] headerFilenames = { null, header ? sourcePrefixes[1] + outputName + ".h" : null };
+        String[] loadSuffixes = { "_jnijavacpp", null };
+        String[] baseLoadSuffixes = { null, "_jnijavacpp" };
         String classPath = System.getProperty("java.class.path");
         for (String s : classScanner.getClassLoader().getPaths()) {
             classPath += File.pathSeparator + s;
         }
-        String[] classPaths = {null, classPath};
-        Class[][] classesArray = {null, classes};
-        String[] libraryNames  = {libraryPrefix + "jnijavacpp" + librarySuffix,
-                                  libraryPrefix + outputName + librarySuffix};
+        String[] classPaths = { null, classPath };
+        Class[][] classesArray = { null, classes };
+        String[] libraryNames = { libraryPrefix + "jnijavacpp" + librarySuffix, libraryPrefix + outputName + librarySuffix };
         File[] outputFiles = null;
-
         if (outputName.equals("jnijavacpp")) {
             // generate a single file if the user only wants "jnijavacpp"
-            sourceFilenames = new String[] {sourcePrefixes[0] + outputName + sourceSuffix};
-            configDirectories = new String[] {configDirectory != null ? new File(configDirectory, outputName).getPath() : null};
-            headerFilenames = new String[] {header ? sourcePrefixes[0] + outputName +  ".h" : null};
-            loadSuffixes = new String[] {null};
-            baseLoadSuffixes = new String[] {null};
-            classPaths = new String[] {classPath};
-            classesArray = new Class[][] {classes};
-            libraryNames  = new String[] {libraryPrefix + outputName + librarySuffix};
+            sourceFilenames = new String[] { sourcePrefixes[0] + outputName + sourceSuffix };
+            configDirectories = new String[] { configDirectory != null ? new File(configDirectory, outputName).getPath() : null };
+            headerFilenames = new String[] { header ? sourcePrefixes[0] + outputName + ".h" : null };
+            loadSuffixes = new String[] { null };
+            baseLoadSuffixes = new String[] { null };
+            classPaths = new String[] { classPath };
+            classesArray = new Class[][] { classes };
+            libraryNames = new String[] { libraryPrefix + outputName + librarySuffix };
         }
-
         boolean generated = true;
         String[] jniConfigFilenames = new String[sourceFilenames.length];
         String[] reflectConfigFilenames = new String[sourceFilenames.length];
@@ -576,9 +551,8 @@ public class Builder {
             }
             logger.info("Generating " + sourceFilenames[i]);
             jniConfigFilenames[i] = configDirectories[i] != null ? configDirectories[i] + File.separator + "jni-config.json" : null;
-            reflectConfigFilenames[i] = configDirectories[i] != null ? configDirectories[i] + File.separator +  "reflect-config.json" : null;
-            if (!generator.generate(sourceFilenames[i], jniConfigFilenames[i], reflectConfigFilenames[i], headerFilenames[i],
-                    loadSuffixes[i], baseLoadSuffixes[i], classPaths[i], classesArray[i])) {
+            reflectConfigFilenames[i] = configDirectories[i] != null ? configDirectories[i] + File.separator + "reflect-config.json" : null;
+            if (!generator.generate(sourceFilenames[i], jniConfigFilenames[i], reflectConfigFilenames[i], headerFilenames[i], loadSuffixes[i], baseLoadSuffixes[i], classPaths[i], classesArray[i])) {
                 logger.info("Nothing generated for " + sourceFilenames[i]);
                 generated = false;
                 break;
@@ -595,14 +569,14 @@ public class Builder {
                             continue;
                         }
                         logger.info("Compiling " + outputPath.getPath() + File.separator + libraryNames[i]);
-                        exitValue = compile(new String[] {sourceFilenames[i]}, libraryNames[i], p, outputPath);
+                        exitValue = compile(new String[] { sourceFilenames[i] }, libraryNames[i], p, outputPath);
                         outputFiles[i] = new File(outputPath, libraryNames[i]);
                     }
                 } else {
                     String libraryName = libraryNames[libraryNames.length - 1];
                     logger.info("Compiling " + outputPath.getPath() + File.separator + libraryName);
                     exitValue = compile(sourceFilenames, libraryName, p, outputPath);
-                    outputFiles = new File[] {new File(outputPath, libraryName)};
+                    outputFiles = new File[] { new File(outputPath, libraryName) };
                 }
                 if (exitValue == 0) {
                     for (int i = sourceFilenames.length - 1; i >= 0; i--) {
@@ -625,7 +599,6 @@ public class Builder {
                     outputFiles[i] = new File(sourceFilenames[i]);
                 }
             }
-
             if (header) {
                 for (String headerFilename : headerFilenames) {
                     if (headerFilename != null) {
@@ -634,7 +607,6 @@ public class Builder {
                     }
                 }
             }
-
             if (configDirectory != null) {
                 for (String jniConfigFilename : jniConfigFilenames) {
                     if (jniConfigFilename != null) {
@@ -662,7 +634,7 @@ public class Builder {
      * @param files a list of files to store in the JAR file
      * @throws IOException
      */
-    void createJar(File jarFile, String[] classPath, File ... files) throws IOException {
+    void createJar(File jarFile, String[] classPath, File... files) throws IOException {
         logger.info("Creating " + jarFile);
         JarOutputStream jos = new JarOutputStream(new FileOutputStream(jarFile));
         for (File f : files) {
@@ -706,6 +678,7 @@ public class Builder {
     public Builder() {
         this(Logger.create(Builder.class));
     }
+
     /**
      * Constructor that simply initializes everything.
      * @param logger where to send messages
@@ -714,157 +687,274 @@ public class Builder {
         this.logger = logger;
         System.setProperty("org.bytedeco.javacpp.loadlibraries", "false");
         properties = Loader.loadProperties();
-        classScanner = new ClassScanner(logger, new ArrayList<Class>(),
-                new UserClassLoader(Thread.currentThread().getContextClassLoader()));
+        classScanner = new ClassScanner(logger, new ArrayList<Class>(), new UserClassLoader(Thread.currentThread().getContextClassLoader()));
         compilerOptions = new ArrayList<String>();
         commandExecutor = new CommandExecutor(logger);
     }
 
-    /** Logger where to send debug, info, warning, and error messages. */
+    /**
+     * Logger where to send debug, info, warning, and error messages.
+     */
     final Logger logger;
-    /** The name of the character encoding used for input files as well as output files. */
+
+    /**
+     * The name of the character encoding used for input files as well as output files.
+     */
     String encoding = null;
-    /** The directory where the generated files and compiled shared libraries get written to.
-     *  By default they are placed in the same directory as the {@code .class} file. */
+
+    /**
+     * The directory where the generated files and compiled shared libraries get written to.
+     *  By default they are placed in the same directory as the {@code .class} file.
+     */
     File outputDirectory = null;
-    /** The name of the output generated source file or shared library. This enables single-
-     *  file output mode. By default, the top-level enclosing classes get one file each. */
+
+    /**
+     * The name of the output generated source file or shared library. This enables single-
+     *  file output mode. By default, the top-level enclosing classes get one file each.
+     */
     String outputName = null;
-    /** The name of the directory where to output config files for GraalVM native-image, if not {@code null}. */
+
+    /**
+     * The name of the directory where to output config files for GraalVM native-image, if not {@code null}.
+     */
     File configDirectory = null;
-    /** The name of the JAR file to create, if not {@code null}. */
+
+    /**
+     * The name of the JAR file to create, if not {@code null}.
+     */
     String jarPrefix = null;
-    /** If true, deletes all files from {@link #outputDirectory} before writing anything in it. */
+
+    /**
+     * If true, deletes all files from {@link #outputDirectory} before writing anything in it.
+     */
     boolean clean = false;
-    /** If true, attempts to generate C++ JNI files, but if false, only attempts to parse header files. */
+
+    /**
+     * If true, attempts to generate C++ JNI files, but if false, only attempts to parse header files.
+     */
     boolean generate = true;
-    /** If true, compiles the generated source file to a shared library and deletes source. */
+
+    /**
+     * If true, compiles the generated source file to a shared library and deletes source.
+     */
     boolean compile = true;
-    /** If true, preserves the generated C++ JNI files after compilation. */
+
+    /**
+     * If true, preserves the generated C++ JNI files after compilation.
+     */
     boolean deleteJniFiles = true;
-    /** If true, also generates C++ header files containing declarations of callback functions. */
+
+    /**
+     * If true, also generates C++ header files containing declarations of callback functions.
+     */
     boolean header = false;
-    /** If true, also copies to the output directory dependent shared libraries (link and preload). */
+
+    /**
+     * If true, also copies to the output directory dependent shared libraries (link and preload).
+     */
     boolean copyLibs = false;
-    /** If true, also copies to the output directory resources listed in properties. */
+
+    /**
+     * If true, also copies to the output directory resources listed in properties.
+     */
     boolean copyResources = false;
-    /** Accumulates the various properties loaded from resources, files, command line options, etc. */
+
+    /**
+     * Accumulates the various properties loaded from resources, files, command line options, etc.
+     */
     Properties properties = null;
-    /** The instance of the {@link ClassScanner} that fills up a {@link Collection} of {@link Class} objects to process. */
+
+    /**
+     * The instance of the {@link ClassScanner} that fills up a {@link Collection} of {@link Class} objects to process.
+     */
     ClassScanner classScanner = null;
-    /** A system command for {@link ProcessBuilder} to execute for the build, instead of JavaCPP itself. */
+
+    /**
+     * A system command for {@link ProcessBuilder} to execute for the build, instead of JavaCPP itself.
+     */
     String[] buildCommand = null;
-    /** User specified working directory to execute build subprocesses under. */
+
+    /**
+     * User specified working directory to execute build subprocesses under.
+     */
     File workingDirectory = null;
-    /** User specified environment variables to pass to the native compiler. */
-    Map<String,String> environmentVariables = null;
-    /** Contains additional command line options from the user for the native compiler. */
+
+    /**
+     * User specified environment variables to pass to the native compiler.
+     */
+    Map<String, String> environmentVariables = null;
+
+    /**
+     * Contains additional command line options from the user for the native compiler.
+     */
     Collection<String> compilerOptions = null;
-    /** An alternative CommandExecutor to use to execute commands. */
+
+    /**
+     * An alternative CommandExecutor to use to execute commands.
+     */
     CommandExecutor commandExecutor = null;
 
-    /** Splits argument with {@link File#pathSeparator} and appends result to paths of the {@link #classScanner}. */
+    /**
+     * Splits argument with {@link File#pathSeparator} and appends result to paths of the {@link #classScanner}.
+     */
     public Builder classPaths(String classPaths) {
         classPaths(classPaths == null ? null : classPaths.split(File.pathSeparator));
         return this;
     }
-    /** Appends argument to the paths of the {@link #classScanner}. */
-    public Builder classPaths(String ... classPaths) {
+
+    /**
+     * Appends argument to the paths of the {@link #classScanner}.
+     */
+    public Builder classPaths(String... classPaths) {
         classScanner.getClassLoader().addPaths(classPaths);
         return this;
     }
-    /** Sets the {@link #encoding} field to the argument. */
+
+    /**
+     * Sets the {@link #encoding} field to the argument.
+     */
     public Builder encoding(String encoding) {
         this.encoding = encoding;
         return this;
     }
-    /** Sets the {@link #outputDirectory} field to the argument. */
+
+    /**
+     * Sets the {@link #outputDirectory} field to the argument.
+     */
     public Builder outputDirectory(String outputDirectory) {
         outputDirectory(outputDirectory == null ? null : new File(outputDirectory));
         return this;
     }
-    /** Sets the {@link #outputDirectory} field to the argument. */
+
+    /**
+     * Sets the {@link #outputDirectory} field to the argument.
+     */
     public Builder outputDirectory(File outputDirectory) {
         this.outputDirectory = outputDirectory;
         return this;
     }
-    /** Sets the {@link #clean} field to the argument. */
+
+    /**
+     * Sets the {@link #clean} field to the argument.
+     */
     public Builder clean(boolean clean) {
         this.clean = clean;
         return this;
     }
-    /** Sets the {@link #generate} field to the argument. */
+
+    /**
+     * Sets the {@link #generate} field to the argument.
+     */
     public Builder generate(boolean generate) {
         this.generate = generate;
         return this;
     }
-    /** Sets the {@link #compile} field to the argument. */
+
+    /**
+     * Sets the {@link #compile} field to the argument.
+     */
     public Builder compile(boolean compile) {
         this.compile = compile;
         return this;
     }
-    /** Sets the {@link #deleteJniFiles} field to the argument. */
+
+    /**
+     * Sets the {@link #deleteJniFiles} field to the argument.
+     */
     public Builder deleteJniFiles(boolean deleteJniFiles) {
         this.deleteJniFiles = deleteJniFiles;
         return this;
     }
-    /** Sets the {@link #header} field to the argument. */
+
+    /**
+     * Sets the {@link #header} field to the argument.
+     */
     public Builder header(boolean header) {
         this.header = header;
         return this;
     }
-    /** Sets the {@link #copyLibs} field to the argument. */
+
+    /**
+     * Sets the {@link #copyLibs} field to the argument.
+     */
     public Builder copyLibs(boolean copyLibs) {
         this.copyLibs = copyLibs;
         return this;
     }
-    /** Sets the {@link #copyResources} field to the argument. */
+
+    /**
+     * Sets the {@link #copyResources} field to the argument.
+     */
     public Builder copyResources(boolean copyResources) {
         this.copyResources = copyResources;
         return this;
     }
-    /** Sets the {@link #outputName} field to the argument. */
+
+    /**
+     * Sets the {@link #outputName} field to the argument.
+     */
     public Builder outputName(String outputName) {
         this.outputName = outputName;
         return this;
     }
-    /** Sets the {@link #configDirectory} field to the argument. */
+
+    /**
+     * Sets the {@link #configDirectory} field to the argument.
+     */
     public Builder configDirectory(String configDirectory) {
         configDirectory(configDirectory == null ? null : new File(configDirectory));
         return this;
     }
-    /** Sets the {@link #configDirectory} field to the argument. */
+
+    /**
+     * Sets the {@link #configDirectory} field to the argument.
+     */
     public Builder configDirectory(File configDirectory) {
         this.configDirectory = configDirectory;
         return this;
     }
-    /** Sets the {@link #jarPrefix} field to the argument. */
+
+    /**
+     * Sets the {@link #jarPrefix} field to the argument.
+     */
     public Builder jarPrefix(String jarPrefix) {
         this.jarPrefix = jarPrefix;
         return this;
     }
-    /** Sets the {@link #properties} field to the ones loaded from resources for the specified platform. */
+
+    /**
+     * Sets the {@link #properties} field to the ones loaded from resources for the specified platform.
+     */
     public Builder properties(String platform) {
         if (platform != null) {
             properties = Loader.loadProperties(platform, null);
         }
         return this;
     }
-    /** Adds all the properties of the argument to the {@link #properties} field. */
+
+    /**
+     * Adds all the properties of the argument to the {@link #properties} field.
+     */
     public Builder properties(Properties properties) {
         if (properties != null) {
             for (Map.Entry e : properties.entrySet()) {
-                property((String)e.getKey(), (String)e.getValue());
+                property((String) e.getKey(), (String) e.getValue());
             }
         }
         return this;
     }
-    /** Sets the {@link #properties} field to the ones loaded from the specified file. */
+
+    /**
+     * Sets the {@link #properties} field to the ones loaded from the specified file.
+     */
     public Builder propertyFile(String filename) throws IOException {
         propertyFile(filename == null ? null : new File(filename));
         return this;
     }
-    /** Sets the {@link #properties} field to the ones loaded from the specified file. */
+
+    /**
+     * Sets the {@link #properties} field to the ones loaded from the specified file.
+     */
     public Builder propertyFile(File propertyFile) throws IOException {
         if (propertyFile == null) {
             return this;
@@ -879,32 +969,46 @@ public class Builder {
         fis.close();
         return this;
     }
-    /** Sets a property of the {@link #properties} field, in either "key=value" or "key:value" format. */
+
+    /**
+     * Sets a property of the {@link #properties} field, in either "key=value" or "key:value" format.
+     */
     public Builder property(String keyValue) {
         int equalIndex = keyValue.indexOf('=');
         if (equalIndex < 0) {
             equalIndex = keyValue.indexOf(':');
         }
-        property(keyValue.substring(0, equalIndex),
-                 keyValue.substring(equalIndex + 1));
+        property(keyValue.substring(0, equalIndex), keyValue.substring(equalIndex + 1));
         return this;
     }
-    /** Sets a key/value pair property of the {@link #properties} field. */
+
+    /**
+     * Sets a key/value pair property of the {@link #properties} field.
+     */
     public Builder property(String key, String value) {
         if (key.length() > 0 && value.length() > 0) {
             properties.put(key, value);
         }
         return this;
     }
-    /** Returns {@code properties}. */
+
+    /**
+     * Returns {@code properties}.
+     */
     public Properties getProperties() {
         return properties;
     }
-    /** Returns {@code properties.getProperty(key)}. */
+
+    /**
+     * Returns {@code properties.getProperty(key)}.
+     */
     public String getProperty(String key) {
         return properties.getProperty(key);
     }
-    /** Adds values to a given property key, seperating them with "platform.path.separator". */
+
+    /**
+     * Adds values to a given property key, seperating them with "platform.path.separator".
+     */
     public Builder addProperty(String key, String... values) {
         if (values != null && values.length > 0) {
             String separator = properties.getProperty("platform.path.separator");
@@ -916,44 +1020,66 @@ public class Builder {
         }
         return this;
     }
-    /** Requests the {@link #classScanner} to add a class or all classes from a package.
-     *  A {@code null} argument indicates the unnamed package. */
-    public Builder classesOrPackages(String ... classesOrPackages) throws IOException, ClassNotFoundException, NoClassDefFoundError {
+
+    /**
+     * Requests the {@link #classScanner} to add a class or all classes from a package.
+     *  A {@code null} argument indicates the unnamed package.
+     */
+    public Builder classesOrPackages(String... classesOrPackages) throws IOException, ClassNotFoundException, NoClassDefFoundError {
         if (classesOrPackages == null) {
             classScanner.addPackage(null, true);
-        } else for (String s : classesOrPackages) {
-            classScanner.addClassOrPackage(s);
-        }
+        } else
+            for (String s : classesOrPackages) {
+                classScanner.addClassOrPackage(s);
+            }
         return this;
     }
-    /** Sets the {@link #buildCommand} field to the argument. */
+
+    /**
+     * Sets the {@link #buildCommand} field to the argument.
+     */
     public Builder buildCommand(String[] buildCommand) {
         this.buildCommand = buildCommand;
         return this;
     }
-    /** Sets the {@link #workingDirectory} field to the argument. */
+
+    /**
+     * Sets the {@link #workingDirectory} field to the argument.
+     */
     public Builder workingDirectory(String workingDirectory) {
         workingDirectory(workingDirectory == null ? null : new File(workingDirectory));
         return this;
     }
-    /** Sets the {@link #workingDirectory} field to the argument. */
+
+    /**
+     * Sets the {@link #workingDirectory} field to the argument.
+     */
     public Builder workingDirectory(File workingDirectory) {
         this.workingDirectory = workingDirectory;
         return this;
     }
-    /** Sets the {@link #environmentVariables} field to the argument. */
-    public Builder environmentVariables(Map<String,String> environmentVariables) {
+
+    /**
+     * Sets the {@link #environmentVariables} field to the argument.
+     */
+    public Builder environmentVariables(Map<String, String> environmentVariables) {
         this.environmentVariables = environmentVariables;
         return this;
     }
-    /** Appends arguments to the {@link #compilerOptions} field. */
-    public Builder compilerOptions(String ... options) {
+
+    /**
+     * Appends arguments to the {@link #compilerOptions} field.
+     */
+    public Builder compilerOptions(String... options) {
         if (options != null) {
             compilerOptions.addAll(Arrays.asList(options));
         }
         return this;
     }
-    /** Sets the {@link #commandExecutor} field to the argument. */
+
+    /**
+     * Sets the {@link #commandExecutor} field to the argument.
+     */
     public Builder commandExecutor(CommandExecutor commandExecutor) {
         this.commandExecutor = commandExecutor;
         return this;
@@ -974,7 +1100,6 @@ public class Builder {
             String links = properties.getProperty("platform.linkresource", "");
             String resources = properties.getProperty("platform.buildresource", "");
             String separator = properties.getProperty("platform.path.separator");
-
             // Get all native libraries for classes on the class path.
             List<String> libs = new ArrayList<String>();
             ClassProperties libProperties = null;
@@ -995,12 +1120,11 @@ public class Builder {
             }
             includeJavaPaths(libProperties, header);
             if (environmentVariables == null) {
-                environmentVariables = new HashMap<String,String>();
+                environmentVariables = new HashMap<String, String>();
             }
             for (Map.Entry<String, List<String>> entry : libProperties.entrySet()) {
                 String key = entry.getKey();
                 key = key.toUpperCase().replace('.', '_');
-
                 List<String> values = entry.getValue();
                 String value = "";
                 for (String s : values) {
@@ -1008,7 +1132,6 @@ public class Builder {
                 }
                 environmentVariables.put(key, value);
             }
-
             paths = paths.replace(separator, File.pathSeparator);
             if (paths.length() > 0 || resources.length() > 0) {
                 // Extract the required resources.
@@ -1019,7 +1142,6 @@ public class Builder {
                             paths += File.pathSeparator;
                         }
                         paths += path;
-
                         // Also create symbolic links for native libraries found there.
                         List<String> linkPaths = new ArrayList<String>();
                         for (String s2 : links.split(separator)) {
@@ -1033,15 +1155,14 @@ public class Builder {
                         File[] files = f.listFiles();
                         if (files != null) {
                             for (File file : files) {
-                                Loader.createLibraryLink(file.getAbsolutePath(), libProperties, null,
-                                        linkPaths.toArray(new String[linkPaths.size()]));
+                                Loader.createLibraryLink(file.getAbsolutePath(), libProperties, null, linkPaths.toArray(new String[linkPaths.size()]));
                             }
                         }
                     }
                 }
                 if (paths.length() > 0) {
                     if (environmentVariables == null) {
-                        environmentVariables = new LinkedHashMap<String,String>();
+                        environmentVariables = new LinkedHashMap<String, String>();
                     }
                     environmentVariables.put("BUILD_PATH", paths);
                     environmentVariables.put("BUILD_PATH_SEPARATOR", File.pathSeparator);
@@ -1053,7 +1174,6 @@ public class Builder {
             }
             return null;
         }
-
         List<File> outputFiles = new ArrayList<File>();
         List<String> allNames = new ArrayList<String>();
         if (classScanner.getClasses().isEmpty()) {
@@ -1067,7 +1187,6 @@ public class Builder {
                 return null;
             }
         }
-
         Map<String, LinkedHashSet<Class>> executableMap = new HashMap<String, LinkedHashSet<Class>>();
         Map<String, LinkedHashSet<Class>> libraryMap = new HashMap<String, LinkedHashSet<Class>>();
         for (Class c : classScanner.getClasses()) {
@@ -1079,7 +1198,7 @@ public class Builder {
             if (p.isLoaded()) {
                 if (Arrays.asList(c.getInterfaces()).contains(BuildEnabled.class)) {
                     try {
-                        ((BuildEnabled)c.newInstance()).init(logger, properties, encoding);
+                        ((BuildEnabled) c.newInstance()).init(logger, properties, encoding);
                     } catch (ClassCastException | InstantiationException | IllegalAccessException e) {
                         logger.warn("Could not create an instance of " + c + ": " + e);
                     }
@@ -1108,7 +1227,6 @@ public class Builder {
                 logger.warn("Could not load platform properties for " + c);
                 continue;
             }
-
             List<String> executableNames = p.get("platform.executable");
             for (String executableName : executableNames) {
                 executableName = executableName.split("#")[0];
@@ -1123,7 +1241,6 @@ public class Builder {
                 // has executables -> skip over default libraryName
                 continue;
             }
-
             String libraryName = outputName != null ? outputName : p.getProperty("platform.library", "");
             if (!generate || libraryName.length() == 0) {
                 continue;
@@ -1169,7 +1286,6 @@ public class Builder {
             } else {
                 continue;
             }
-
             if (files != null && files.length > 0) {
                 // files[0] might be null if "jnijavacpp" was not generated and compiled
                 File directory = null;
@@ -1188,7 +1304,6 @@ public class Builder {
                     preloads.addAll(p.get("platform.link"));
                     // ... but we should try to use all the inherited paths!
                     ClassProperties p2 = Loader.loadProperties(classArray, properties, true);
-
                     for (String s : preloads) {
                         if (s.trim().endsWith("#") || s.trim().length() == 0) {
                             // the user specified an empty destination to skip the copy
@@ -1224,8 +1339,7 @@ public class Builder {
                     List<String> resources = p.get("platform.resource");
                     // ... but we should use all the inherited paths!
                     p = Loader.loadProperties(classArray, properties, true);
-                    List<String> paths =  p.get("platform.resourcepath");
-
+                    List<String> paths = p.get("platform.resourcepath");
                     Path directoryPath = directory.toPath();
                     for (String resource : resources) {
                         final Path target = directoryPath.resolve(resource);
@@ -1237,18 +1351,22 @@ public class Builder {
                             if (Files.exists(source)) {
                                 logger.info("Copying " + source);
                                 Files.walkFileTree(source, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new SimpleFileVisitor<Path>() {
-                                    @Override public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+
+                                    @Override
+                                    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
                                         Path targetdir = target.resolve(source.relativize(dir));
                                         try {
                                             Files.copy(dir, targetdir, StandardCopyOption.REPLACE_EXISTING);
                                         } catch (DirectoryNotEmptyException | FileAlreadyExistsException e) {
-                                             if (!Files.isDirectory(targetdir)) {
-                                                 throw e;
-                                             }
+                                            if (!Files.isDirectory(targetdir)) {
+                                                throw e;
+                                            }
                                         }
                                         return FileVisitResult.CONTINUE;
                                     }
-                                    @Override public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+
+                                    @Override
+                                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                                         Files.copy(file, target.resolve(source.relativize(file)), StandardCopyOption.REPLACE_EXISTING);
                                         return FileVisitResult.CONTINUE;
                                     }
@@ -1286,7 +1404,6 @@ public class Builder {
                 outputFiles.add(file);
             }
         }
-
         File[] files = outputFiles.toArray(new File[outputFiles.size()]);
         if (jarPrefix != null && files.length > 0) {
             File jarFile = new File(jarPrefix + "-" + properties.getProperty("platform") + properties.getProperty("platform.extension", "") + ".jar");
@@ -1296,7 +1413,6 @@ public class Builder {
             }
             createJar(jarFile, outputDirectory == null ? classScanner.getClassLoader().getPaths() : null, files);
         }
-
         // reset the load flag to let users load compiled libraries
         System.setProperty("org.bytedeco.javacpp.loadlibraries", "true");
         return files;
@@ -1310,10 +1426,7 @@ public class Builder {
         if (version == null) {
             version = "unknown";
         }
-        System.out.println(
-            "JavaCPP version " + version + "\n" +
-            "Copyright (C) 2011-2022 Samuel Audet <samuel.audet@gmail.com>\n" +
-            "Project site: https://github.com/bytedeco/javacpp");
+        System.out.println("JavaCPP version " + version + "\n" + "Copyright (C) 2011-2022 Samuel Audet <samuel.audet@gmail.com>\n" + "Project site: https://github.com/bytedeco/javacpp");
         System.out.println();
         System.out.println("Usage: java -jar javacpp.jar [options] [class or package (suffixed with .* or .**)] [commands]");
         System.out.println();
@@ -1452,9 +1565,7 @@ public class Builder {
         if (moduleFile != null) {
             Class c = classes.iterator().next();
             String pkg = c.getPackage().getName();
-            String s = "open module " + pkg + "." + builder.properties.getProperty("platform").replace('-', '.') + " {\n"
-                     + "  requires transitive " + pkg + ";\n"
-                     + "}\n";
+            String s = "open module " + pkg + "." + builder.properties.getProperty("platform").replace('-', '.') + " {\n" + "  requires transitive " + pkg + ";\n" + "}\n";
             Path f = Paths.get(moduleFile);
             Path d = f.getParent();
             if (d != null) {

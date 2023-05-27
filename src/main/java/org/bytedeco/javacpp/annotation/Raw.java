@@ -20,9 +20,13 @@ import org.bytedeco.javacpp.tools.Generator;
  *
  * @author Samuel Audet
  */
-@Documented @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD, ElementType.PARAMETER})
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ ElementType.METHOD, ElementType.PARAMETER })
 public @interface Raw {
-    /** If {@code true}, passes the {@code JNIEnv*} as first argument to the native function. */
+
+    /**
+     * If {@code true}, passes the {@code JNIEnv*} as first argument to the native function.
+     */
     boolean withEnv() default false;
 }

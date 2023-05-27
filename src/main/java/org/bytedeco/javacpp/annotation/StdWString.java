@@ -15,9 +15,12 @@ import org.bytedeco.javacpp.tools.Generator;
  *
  * @author Samuel Audet
  */
-@Documented @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD, ElementType.PARAMETER})
-@Cast({"std::basic_string", "&"}) @Adapter("StringAdapter")
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ ElementType.METHOD, ElementType.PARAMETER })
+@Cast({ "std::basic_string", "&" })
+@Adapter("StringAdapter")
 public @interface StdWString {
+
     String value() default "wchar_t";
 }
