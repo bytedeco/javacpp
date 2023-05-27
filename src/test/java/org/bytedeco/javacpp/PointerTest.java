@@ -132,7 +132,7 @@ public class PointerTest {
 
             @Override
             public int call(String s) {
-                return allocatorMax;
+                return getMaxAllocator(s);
             }
         };
         assertNull(f.get());
@@ -143,7 +143,7 @@ public class PointerTest {
 
             @Override
             public int call(String s) {
-                return allocatorMax;
+                return getMaxAllocator(s);
             }
         };
         assertNotNull(f2.get());
@@ -1112,5 +1112,9 @@ public class PointerTest {
         long bytesAfter = Pointer.physicalBytes();
         System.out.println(bytesBefore + " " + bytesAfter);
         assertTrue(Math.abs(bytesAfter - bytesBefore) < 100_000_000 + buffer.get(0));
+    }
+
+    public int getMaxAllocator(String s) {
+        return allocatorMax;
     }
 }

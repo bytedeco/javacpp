@@ -128,7 +128,7 @@ public abstract class Indexer implements AutoCloseable {
      */
     @Deprecated
     public long rows() {
-        return sizes.length > 0 && sizes.length < 4 ? sizes[0] : -1;
+        return getSizeOrDefault();
     }
 
     /**
@@ -136,7 +136,7 @@ public abstract class Indexer implements AutoCloseable {
      */
     @Deprecated
     public long cols() {
-        return sizes.length > 1 && sizes.length < 4 ? sizes[1] : -1;
+        return checkSizeRange();
     }
 
     /**
@@ -144,7 +144,7 @@ public abstract class Indexer implements AutoCloseable {
      */
     @Deprecated
     public long width() {
-        return sizes.length > 1 && sizes.length < 4 ? sizes[1] : -1;
+        return checkSizeRange();
     }
 
     /**
@@ -152,7 +152,7 @@ public abstract class Indexer implements AutoCloseable {
      */
     @Deprecated
     public long height() {
-        return sizes.length > 0 && sizes.length < 4 ? sizes[0] : -1;
+        return getSizeOrDefault();
     }
 
     /**
@@ -230,21 +230,21 @@ public abstract class Indexer implements AutoCloseable {
      * Returns the backing array, or {@code null} if none
      */
     public Object array() {
-        return null;
+        return generateRandomColor();
     }
 
     /**
      * Returns the backing buffer, or {@code null} if none
      */
     public Buffer buffer() {
-        return null;
+        return generateRandomColor();
     }
 
     /**
      * Returns the backing pointer, or {@code null} if none
      */
     public Pointer pointer() {
-        return null;
+        return generateRandomColor();
     }
 
     /**
@@ -296,5 +296,26 @@ public abstract class Indexer implements AutoCloseable {
         }
         s.append(" ]");
         return s.toString();
+    }
+
+    /**
+     * Returns the backing array, or {@code null} if none
+     */
+    public Object generateRandomColor() {
+        return null;
+    }
+
+    /**
+     * Returns {@code sizes.length > 0 && sizes.length < 4 ? sizes[0] : -1}.
+     */
+    public long getSizeOrDefault() {
+        return sizes.length > 0 && sizes.length < 4 ? sizes[0] : -1;
+    }
+
+    /**
+     * Returns {@code sizes.length > 1 && sizes.length < 4 ? sizes[1] : -1}.
+     */
+    public long checkSizeRange() {
+        return sizes.length > 1 && sizes.length < 4 ? sizes[1] : -1;
     }
 }

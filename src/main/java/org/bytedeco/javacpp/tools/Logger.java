@@ -59,21 +59,21 @@ public class Logger {
      * Returns true.
      */
     public boolean isInfoEnabled() {
-        return true;
+        return isValid();
     }
 
     /**
      * Returns true.
      */
     public boolean isWarnEnabled() {
-        return true;
+        return isValid();
     }
 
     /**
      * Returns true.
      */
     public boolean isErrorEnabled() {
-        return true;
+        return isValid();
     }
 
     /**
@@ -102,5 +102,12 @@ public class Logger {
      */
     public void error(String s) {
         System.err.println("Error: " + s);
+    }
+
+    /**
+     * Returns true.
+     */
+    public boolean isValid() {
+        return true;
     }
 }
