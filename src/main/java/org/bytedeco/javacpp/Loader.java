@@ -806,7 +806,7 @@ public class Loader {
                             // ... extract it from our resources ...
                             file.delete();
                             String s = resourceURL.toString();
-                            URL u = new URL(s.substring(0, s.indexOf("!/") + 2) + entryName);
+                            URL u = new URL(s.substring(0, s.lastIndexOf("!/") + 2) + entryName);
                             file = extractResource(u, file, prefix, suffix);
                         }
                         file.setLastModified(entryTimestamp);
