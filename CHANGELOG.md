@@ -1,4 +1,5 @@
 
+### June 6, 2023 version 1.5.9
  * Fix `Loader.extractResource()` for nested JAR files from Spring Boot ([pull #685](https://github.com/bytedeco/javacpp/pull/685))
  * Have `Parser` desugar `...` varargs to array `[]` for return types as well ([pull #682](https://github.com/bytedeco/javacpp/pull/682))
  * Fix `Parser` failing on some `friend` functions for `operator` overloading ([pull #681](https://github.com/bytedeco/javacpp/pull/681))
