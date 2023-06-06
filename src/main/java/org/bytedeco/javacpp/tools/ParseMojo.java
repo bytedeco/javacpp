@@ -19,7 +19,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp.tools;
 
 import org.apache.maven.plugin.MojoExecutionException;
@@ -34,7 +33,9 @@ import org.apache.maven.plugins.annotations.Mojo;
  */
 @Mojo(name = "parse", defaultPhase = LifecyclePhase.GENERATE_SOURCES, threadSafe = true)
 public class ParseMojo extends BuildMojo {
-    @Override public void execute() throws MojoExecutionException {
+
+    @Override
+    public void execute() throws MojoExecutionException {
         generate = false;
         super.execute();
     }

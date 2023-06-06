@@ -19,15 +19,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp.tools;
 
 /**
- *
  * @author Samuel Audet
  */
 public class ParserException extends Exception {
-    public ParserException(String message) { super(message); }
-    public ParserException(String message, Throwable cause) { super(message, cause); }
-    public ParserException(Throwable cause) { super(cause); }
+
+    public ParserException(String message) {
+        super(message);
+    }
+
+    public ParserException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public ParserException(Throwable cause) {
+        super(cause);
+    }
 }

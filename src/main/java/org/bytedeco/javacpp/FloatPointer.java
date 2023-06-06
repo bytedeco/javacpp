@@ -19,7 +19,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp;
 
 import java.nio.FloatBuffer;
@@ -33,6 +32,7 @@ import org.bytedeco.javacpp.tools.Logger;
  */
 @org.bytedeco.javacpp.annotation.Properties(inherit = org.bytedeco.javacpp.presets.javacpp.class)
 public class FloatPointer extends Pointer {
+
     private static final Logger logger = Logger.create(FloatPointer.class);
 
     static {
@@ -51,10 +51,11 @@ public class FloatPointer extends Pointer {
      * @param array the array to copy
      * @see #put(float[])
      */
-    public FloatPointer(float ... array) {
+    public FloatPointer(float... array) {
         this(array.length);
         put(array);
     }
+
     /**
      * For direct buffers, calls {@link Pointer#Pointer(Buffer)}, while for buffers
      * backed with an array, allocates enough memory for the array and copies it.
@@ -72,6 +73,7 @@ public class FloatPointer extends Pointer {
             limit(buffer.limit());
         }
     }
+
     /**
      * Allocates a native {@code float} array of the given size.
      *
@@ -86,43 +88,80 @@ public class FloatPointer extends Pointer {
         } catch (UnsatisfiedLinkError e) {
             throw new RuntimeException("No native JavaCPP library in memory. (Has Loader.load() been called?)", e);
         } catch (OutOfMemoryError e) {
-            OutOfMemoryError e2 = new OutOfMemoryError("Cannot allocate new FloatPointer(" + size + "): "
-                    + "totalBytes = " + formatBytes(totalBytes()) + ", physicalBytes = " + formatBytes(physicalBytes()));
+            OutOfMemoryError e2 = new OutOfMemoryError("Cannot allocate new FloatPointer(" + size + "): " + "totalBytes = " + formatBytes(totalBytes()) + ", physicalBytes = " + formatBytes(physicalBytes()));
             e2.initCause(e);
             throw e2;
         }
     }
-    /** @see Pointer#Pointer() */
-    public FloatPointer() { }
-    /** @see Pointer#Pointer(Pointer) */
-    public FloatPointer(Pointer p) { super(p); }
+
+    /**
+     * @see Pointer#Pointer()
+     */
+    public FloatPointer() {
+    }
+
+    /**
+     * @see Pointer#Pointer(Pointer)
+     */
+    public FloatPointer(Pointer p) {
+        super(p);
+    }
+
     private native void allocateArray(long size);
 
-    /** @see Pointer#position(long) */
-    @Override public FloatPointer position(long position) {
+    /**
+     * @see Pointer#position(long)
+     */
+    @Override
+    public FloatPointer position(long position) {
         return super.position(position);
     }
-    /** @see Pointer#position(long) */
-    @Override public FloatPointer limit(long limit) {
+
+    /**
+     * @see Pointer#position(long)
+     */
+    @Override
+    public FloatPointer limit(long limit) {
         return super.limit(limit);
     }
-    /** @see Pointer#capacity(long) */
-    @Override public FloatPointer capacity(long capacity) {
+
+    /**
+     * @see Pointer#capacity(long)
+     */
+    @Override
+    public FloatPointer capacity(long capacity) {
         return super.capacity(capacity);
     }
-    @Override public int sizeof() {
+
+    @Override
+    public int sizeof() {
         return getClass() == FloatPointer.class ? Float.SIZE / Byte.SIZE : super.sizeof();
     }
-    @Override public FloatPointer getPointer(long i) {
+
+    @Override
+    public FloatPointer getPointer(long i) {
         return new FloatPointer(this).offsetAddress(i);
     }
 
-    /** @return {@code get(0)} */
-    public float get() { return get(0); }
-    /** @return the i-th {@code float} value of a native array */
+    /**
+     * @return {@code get(0)}
+     */
+    public float get() {
+        return get(0);
+    }
+
+    /**
+     * @return the i-th {@code float} value of a native array
+     */
     public native float get(long i);
-    /** @return {@code put(0, f)} */
-    public FloatPointer put(float f) { return put(0, f); }
+
+    /**
+     * @return {@code put(0, f)}
+     */
+    public FloatPointer put(float f) {
+        return put(0, f);
+    }
+
     /**
      * Copies the {@code float} value to the i-th element of a native array.
      *
@@ -132,10 +171,20 @@ public class FloatPointer extends Pointer {
      */
     public native FloatPointer put(long i, float f);
 
-    /** @return {@code get(array, 0, array.length)} */
-    public FloatPointer get(float[] array) { return get(array, 0, array.length); }
-    /** @return {@code put(array, 0, array.length)} */
-    public FloatPointer put(float ... array) { return put(array, 0, array.length); }
+    /**
+     * @return {@code get(array, 0, array.length)}
+     */
+    public FloatPointer get(float[] array) {
+        return get(array, 0, array.length);
+    }
+
+    /**
+     * @return {@code put(array, 0, array.length)}
+     */
+    public FloatPointer put(float... array) {
+        return put(array, 0, array.length);
+    }
+
     /**
      * Reads a portion of the native array into a Java array.
      *
@@ -145,6 +194,7 @@ public class FloatPointer extends Pointer {
      * @return this
      */
     public native FloatPointer get(float[] array, int offset, int length);
+
     /**
      * Writes a portion of a Java array into the native array.
      *
@@ -155,8 +205,11 @@ public class FloatPointer extends Pointer {
      */
     public native FloatPointer put(float[] array, int offset, int length);
 
-    /** @return {@code asByteBuffer().asFloatBuffer()} */
-    @Override public final FloatBuffer asBuffer() {
+    /**
+     * @return {@code asByteBuffer().asFloatBuffer()}
+     */
+    @Override
+    public final FloatBuffer asBuffer() {
         return asByteBuffer().asFloatBuffer();
     }
 }

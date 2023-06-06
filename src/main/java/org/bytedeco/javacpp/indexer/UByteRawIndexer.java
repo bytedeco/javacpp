@@ -19,7 +19,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp.indexer;
 
 import org.bytedeco.javacpp.BytePointer;
@@ -31,29 +30,46 @@ import org.bytedeco.javacpp.Pointer;
  * @author Samuel Audet
  */
 public class UByteRawIndexer extends UByteIndexer {
-    /** The instance for the raw memory interface. */
+
+    /**
+     * The instance for the raw memory interface.
+     */
     protected static final Raw RAW = Raw.getInstance();
-    /** The backing pointer. */
+
+    /**
+     * The backing pointer.
+     */
     protected BytePointer pointer;
-    /** Base address and number of elements accessible. */
+
+    /**
+     * Base address and number of elements accessible.
+     */
     final long base, size;
 
-    /** Calls {@code UByteRawIndexer(pointer, Index.create(pointer.limit() - pointer.position()))}. */
+    /**
+     * Calls {@code UByteRawIndexer(pointer, Index.create(pointer.limit() - pointer.position()))}.
+     */
     public UByteRawIndexer(BytePointer pointer) {
         this(pointer, Index.create(pointer.limit() - pointer.position()));
     }
 
-    /** Calls {@code UByteRawIndexer(pointer, Index.create(sizes))}. */
+    /**
+     * Calls {@code UByteRawIndexer(pointer, Index.create(sizes))}.
+     */
     public UByteRawIndexer(BytePointer pointer, long... sizes) {
         this(pointer, sizes, strides(sizes));
     }
 
-    /** Calls {@code UByteRawIndexer(pointer, Index.create(sizes, strides))}. */
+    /**
+     * Calls {@code UByteRawIndexer(pointer, Index.create(sizes, strides))}.
+     */
     public UByteRawIndexer(BytePointer pointer, long[] sizes, long[] strides) {
         this(pointer, Index.create(sizes, strides));
     }
 
-    /** Constructor to set the {@link #pointer} and {@link #index}. */
+    /**
+     * Constructor to set the {@link #pointer} and {@link #index}.
+     */
     public UByteRawIndexer(BytePointer pointer, Index index) {
         super(index);
         this.pointer = pointer;
@@ -61,42 +77,58 @@ public class UByteRawIndexer extends UByteIndexer {
         this.size = pointer.limit() - pointer.position();
     }
 
-    @Override public Pointer pointer() {
+    @Override
+    public Pointer pointer() {
         return pointer;
     }
 
-    @Override public UByteIndexer reindex(Index index) {
+    @Override
+    public UByteIndexer reindex(Index index) {
         return new UByteRawIndexer(pointer, index);
     }
 
     public int getRaw(long i) {
         return RAW.getByte(base + checkIndex(i, size)) & 0xFF;
     }
-    @Override public int get(long i) {
+
+    @Override
+    public int get(long i) {
         return getRaw(index(i));
     }
-    @Override public UByteIndexer get(long i, int[] b, int offset, int length) {
+
+    @Override
+    public UByteIndexer get(long i, int[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
             b[offset + n] = getRaw(index(i) + n) & 0xFF;
         }
         return this;
     }
-    @Override public int get(long i, long j) {
+
+    @Override
+    public int get(long i, long j) {
         return getRaw(index(i, j)) & 0xFF;
     }
-    @Override public UByteIndexer get(long i, long j, int[] b, int offset, int length) {
+
+    @Override
+    public UByteIndexer get(long i, long j, int[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
             b[offset + n] = getRaw(index(i, j) + n) & 0xFF;
         }
         return this;
     }
-    @Override public int get(long i, long j, long k) {
+
+    @Override
+    public int get(long i, long j, long k) {
         return getRaw(index(i, j, k)) & 0xFF;
     }
-    @Override public int get(long... indices) {
+
+    @Override
+    public int get(long... indices) {
         return getRaw(index(indices)) & 0xFF;
     }
-    @Override public UByteIndexer get(long[] indices, int[] b, int offset, int length) {
+
+    @Override
+    public UByteIndexer get(long[] indices, int[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
             b[offset + n] = getRaw(index(indices) + n) & 0xFF;
         }
@@ -104,43 +136,60 @@ public class UByteRawIndexer extends UByteIndexer {
     }
 
     public UByteIndexer putRaw(long i, int b) {
-        RAW.putByte(base + checkIndex(i, size), (byte)b);
+        RAW.putByte(base + checkIndex(i, size), (byte) b);
         return this;
     }
-    @Override public UByteIndexer put(long i, int b) {
+
+    @Override
+    public UByteIndexer put(long i, int b) {
         putRaw(index(i), b);
         return this;
     }
-    @Override public UByteIndexer put(long i, int[] b, int offset, int length) {
+
+    @Override
+    public UByteIndexer put(long i, int[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
             putRaw(index(i) + n, b[offset + n]);
         }
         return this;
     }
-    @Override public UByteIndexer put(long i, long j, int b) {
+
+    @Override
+    public UByteIndexer put(long i, long j, int b) {
         putRaw(index(i, j), b);
         return this;
     }
-    @Override public UByteIndexer put(long i, long j, int[] b, int offset, int length) {
+
+    @Override
+    public UByteIndexer put(long i, long j, int[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
             putRaw(index(i, j) + n, b[offset + n]);
         }
         return this;
     }
-    @Override public UByteIndexer put(long i, long j, long k, int b) {
+
+    @Override
+    public UByteIndexer put(long i, long j, long k, int b) {
         putRaw(index(i, j, k), b);
         return this;
     }
-    @Override public UByteIndexer put(long[] indices, int b) {
+
+    @Override
+    public UByteIndexer put(long[] indices, int b) {
         putRaw(index(indices), b);
         return this;
     }
-    @Override public UByteIndexer put(long[] indices, int[] b, int offset, int length) {
+
+    @Override
+    public UByteIndexer put(long[] indices, int[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
             putRaw(index(indices) + n, b[offset + n]);
         }
         return this;
     }
 
-    @Override public void release() { pointer = null; }
+    @Override
+    public void release() {
+        pointer = null;
+    }
 }

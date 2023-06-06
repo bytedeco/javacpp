@@ -1,7 +1,6 @@
 package org.bytedeco.javacpp.tools;
 
 import org.bytedeco.javacpp.Pointer;
-
 import javax.management.*;
 import java.lang.management.BufferPoolMXBean;
 import java.lang.management.ManagementFactory;
@@ -9,7 +8,9 @@ import java.lang.management.ManagementFactory;
 public class PointerBufferPoolMXBean implements BufferPoolMXBean {
 
     private static final Logger LOGGER = Logger.create(PointerBufferPoolMXBean.class);
+
     private static final String JAVACPP_MXBEAN_NAME = "javacpp";
+
     private static final ObjectName OBJECT_NAME;
 
     static {

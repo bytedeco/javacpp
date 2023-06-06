@@ -19,7 +19,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp.indexer;
 
 import org.bytedeco.javacpp.IntPointer;
@@ -31,29 +30,46 @@ import org.bytedeco.javacpp.Pointer;
  * @author Samuel Audet
  */
 public class IntRawIndexer extends IntIndexer {
-    /** The instance for the raw memory interface. */
+
+    /**
+     * The instance for the raw memory interface.
+     */
     protected static final Raw RAW = Raw.getInstance();
-    /** The backing pointer. */
+
+    /**
+     * The backing pointer.
+     */
     protected IntPointer pointer;
-    /** Base address and number of elements accessible. */
+
+    /**
+     * Base address and number of elements accessible.
+     */
     final long base, size;
 
-    /** Calls {@code IntRawIndexer(pointer, Index.create(pointer.limit() - pointer.position()))}. */
+    /**
+     * Calls {@code IntRawIndexer(pointer, Index.create(pointer.limit() - pointer.position()))}.
+     */
     public IntRawIndexer(IntPointer pointer) {
         this(pointer, Index.create(pointer.limit() - pointer.position()));
     }
 
-    /** Calls {@code IntRawIndexer(pointer, Index.create(sizes))}. */
+    /**
+     * Calls {@code IntRawIndexer(pointer, Index.create(sizes))}.
+     */
     public IntRawIndexer(IntPointer pointer, long... sizes) {
         this(pointer, Index.create(sizes));
     }
 
-    /** Calls {@code IntRawIndexer(pointer, Index.create(sizes, strides))}. */
+    /**
+     * Calls {@code IntRawIndexer(pointer, Index.create(sizes, strides))}.
+     */
     public IntRawIndexer(IntPointer pointer, long[] sizes, long[] strides) {
         this(pointer, Index.create(sizes, strides));
     }
 
-    /** Constructor to set the {@link #pointer} and {@link #index}. */
+    /**
+     * Constructor to set the {@link #pointer} and {@link #index}.
+     */
     public IntRawIndexer(IntPointer pointer, Index index) {
         super(index);
         this.pointer = pointer;
@@ -61,42 +77,58 @@ public class IntRawIndexer extends IntIndexer {
         this.size = pointer.limit() - pointer.position();
     }
 
-    @Override public Pointer pointer() {
+    @Override
+    public Pointer pointer() {
         return pointer;
     }
 
-    @Override public IntIndexer reindex(Index index) {
+    @Override
+    public IntIndexer reindex(Index index) {
         return new IntRawIndexer(pointer, index);
     }
 
     public int getRaw(long i) {
         return RAW.getInt(base + checkIndex(i, size) * VALUE_BYTES);
     }
-    @Override public int get(long i) {
+
+    @Override
+    public int get(long i) {
         return getRaw(index(i));
     }
-    @Override public IntIndexer get(long i, int[] m, int offset, int length) {
+
+    @Override
+    public IntIndexer get(long i, int[] m, int offset, int length) {
         for (int n = 0; n < length; n++) {
             m[offset + n] = getRaw(index(i) + n);
         }
         return this;
     }
-    @Override public int get(long i, long j) {
+
+    @Override
+    public int get(long i, long j) {
         return getRaw(index(i, j));
     }
-    @Override public IntIndexer get(long i, long j, int[] m, int offset, int length) {
+
+    @Override
+    public IntIndexer get(long i, long j, int[] m, int offset, int length) {
         for (int n = 0; n < length; n++) {
             m[offset + n] = getRaw(index(i, j) + n);
         }
         return this;
     }
-    @Override public int get(long i, long j, long k) {
+
+    @Override
+    public int get(long i, long j, long k) {
         return getRaw(index(i, j, k));
     }
-    @Override public int get(long... indices) {
+
+    @Override
+    public int get(long... indices) {
         return getRaw(index(indices));
     }
-    @Override public IntIndexer get(long[] indices, int[] m, int offset, int length) {
+
+    @Override
+    public IntIndexer get(long[] indices, int[] m, int offset, int length) {
         for (int n = 0; n < length; n++) {
             m[offset + n] = getRaw(index(indices) + n);
         }
@@ -107,39 +139,56 @@ public class IntRawIndexer extends IntIndexer {
         RAW.putInt(base + checkIndex(i, size) * VALUE_BYTES, n);
         return this;
     }
-    @Override public IntIndexer put(long i, int n) {
+
+    @Override
+    public IntIndexer put(long i, int n) {
         return putRaw(index(i), n);
     }
-    @Override public IntIndexer put(long i, int[] m, int offset, int length) {
+
+    @Override
+    public IntIndexer put(long i, int[] m, int offset, int length) {
         for (int n = 0; n < length; n++) {
             putRaw(index(i) + n, m[offset + n]);
         }
         return this;
     }
-    @Override public IntIndexer put(long i, long j, int n) {
+
+    @Override
+    public IntIndexer put(long i, long j, int n) {
         putRaw(index(i, j), n);
         return this;
     }
-    @Override public IntIndexer put(long i, long j, int[] m, int offset, int length) {
+
+    @Override
+    public IntIndexer put(long i, long j, int[] m, int offset, int length) {
         for (int n = 0; n < length; n++) {
             putRaw(index(i, j) + n, m[offset + n]);
         }
         return this;
     }
-    @Override public IntIndexer put(long i, long j, long k, int n) {
+
+    @Override
+    public IntIndexer put(long i, long j, long k, int n) {
         putRaw(index(i, j, k), n);
         return this;
     }
-    @Override public IntIndexer put(long[] indices, int n) {
+
+    @Override
+    public IntIndexer put(long[] indices, int n) {
         putRaw(index(indices), n);
         return this;
     }
-    @Override public IntIndexer put(long[] indices, int[] m, int offset, int length) {
+
+    @Override
+    public IntIndexer put(long[] indices, int[] m, int offset, int length) {
         for (int n = 0; n < length; n++) {
             putRaw(index(indices) + n, m[offset + n]);
         }
         return this;
     }
 
-    @Override public void release() { pointer = null; }
+    @Override
+    public void release() {
+        pointer = null;
+    }
 }

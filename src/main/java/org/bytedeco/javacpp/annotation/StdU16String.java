@@ -8,8 +8,9 @@ import java.lang.annotation.Target;
 
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD, ElementType.PARAMETER})
+@Target({ ElementType.METHOD, ElementType.PARAMETER })
 @Adapter("BasicStringAdapter")
 public @interface StdU16String {
+
     String value() default "unsigned short, char16_t";
 }

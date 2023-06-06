@@ -19,18 +19,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp.tools;
 
 import java.io.File;
 
 /**
- *
  * @author Samuel Audet
  */
 class Token implements Comparable<Token> {
-    Token() { }
-    Token(int type, String value) { this.type = type; this.value = value; }
+
+    Token() {
+    }
+
+    Token(int type, String value) {
+        this.type = type;
+        this.value = value;
+    }
+
     Token(Token t) {
         file = t.file;
         text = t.text;
@@ -40,66 +45,19 @@ class Token implements Comparable<Token> {
         value = t.value;
     }
 
-    static final int
-            INTEGER    = 1,
-            FLOAT      = 2,
-            STRING     = 3,
-            COMMENT    = 4,
-            IDENTIFIER = 5,
-            SYMBOL     = 6;
+    static final int INTEGER = 1, FLOAT = 2, STRING = 3, COMMENT = 4, IDENTIFIER = 5, SYMBOL = 6;
 
-    static final Token
-            EOF       = new Token(-1, "EOF"),
-            AUTO      = new Token(IDENTIFIER, "auto"),
-            CONST     = new Token(IDENTIFIER, "const"),
-            __CONST   = new Token(IDENTIFIER, "__const"),
-            CONSTEXPR = new Token(IDENTIFIER, "constexpr"),
-            DECLTYPE  = new Token(IDENTIFIER, "decltype"),
-            DEFAULT   = new Token(IDENTIFIER, "default"),
-            DEFINE    = new Token(IDENTIFIER, "define"),
-            IF        = new Token(IDENTIFIER, "if"),
-            IFDEF     = new Token(IDENTIFIER, "ifdef"),
-            IFNDEF    = new Token(IDENTIFIER, "ifndef"),
-            ELIF      = new Token(IDENTIFIER, "elif"),
-            ELSE      = new Token(IDENTIFIER, "else"),
-            ENDIF     = new Token(IDENTIFIER, "endif"),
-            UNDEF     = new Token(IDENTIFIER, "undef"),
-            ENUM      = new Token(IDENTIFIER, "enum"),
-            EXPLICIT  = new Token(IDENTIFIER, "explicit"),
-            EXTERN    = new Token(IDENTIFIER, "extern"),
-            FINAL     = new Token(IDENTIFIER, "final"),
-            FRIEND    = new Token(IDENTIFIER, "friend"),
-            INLINE    = new Token(IDENTIFIER, "inline"),
-            STATIC    = new Token(IDENTIFIER, "static"),
-            CLASS     = new Token(IDENTIFIER, "class"),
-            INTERFACE = new Token(IDENTIFIER, "interface"),
-            __INTERFACE = new Token(IDENTIFIER, "__interface"),
-            MUTABLE   = new Token(IDENTIFIER, "mutable"),
-            STRUCT    = new Token(IDENTIFIER, "struct"),
-            UNION     = new Token(IDENTIFIER, "union"),
-            TEMPLATE  = new Token(IDENTIFIER, "template"),
-            TYPEDEF   = new Token(IDENTIFIER, "typedef"),
-            TYPENAME  = new Token(IDENTIFIER, "typename"),
-            USING     = new Token(IDENTIFIER, "using"),
-            NAMESPACE = new Token(IDENTIFIER, "namespace"),
-            NEW       = new Token(IDENTIFIER, "new"),
-            DELETE    = new Token(IDENTIFIER, "delete"),
-            OPERATOR  = new Token(IDENTIFIER, "operator"),
-            OVERRIDE  = new Token(IDENTIFIER, "override"),
-            PRIVATE   = new Token(IDENTIFIER, "private"),
-            PROTECTED = new Token(IDENTIFIER, "protected"),
-            PUBLIC    = new Token(IDENTIFIER, "public"),
-            REGISTER  = new Token(IDENTIFIER, "register"),
-            THREAD_LOCAL = new Token(IDENTIFIER, "thread_local"),
-            VIRTUAL   = new Token(IDENTIFIER, "virtual"),
-            VOLATILE  = new Token(IDENTIFIER, "volatile");
+    static final Token EOF = new Token(-1, "EOF"), AUTO = new Token(IDENTIFIER, "auto"), CONST = new Token(IDENTIFIER, "const"), __CONST = new Token(IDENTIFIER, "__const"), CONSTEXPR = new Token(IDENTIFIER, "constexpr"), DECLTYPE = new Token(IDENTIFIER, "decltype"), DEFAULT = new Token(IDENTIFIER, "default"), DEFINE = new Token(IDENTIFIER, "define"), IF = new Token(IDENTIFIER, "if"), IFDEF = new Token(IDENTIFIER, "ifdef"), IFNDEF = new Token(IDENTIFIER, "ifndef"), ELIF = new Token(IDENTIFIER, "elif"), ELSE = new Token(IDENTIFIER, "else"), ENDIF = new Token(IDENTIFIER, "endif"), UNDEF = new Token(IDENTIFIER, "undef"), ENUM = new Token(IDENTIFIER, "enum"), EXPLICIT = new Token(IDENTIFIER, "explicit"), EXTERN = new Token(IDENTIFIER, "extern"), FINAL = new Token(IDENTIFIER, "final"), FRIEND = new Token(IDENTIFIER, "friend"), INLINE = new Token(IDENTIFIER, "inline"), STATIC = new Token(IDENTIFIER, "static"), CLASS = new Token(IDENTIFIER, "class"), INTERFACE = new Token(IDENTIFIER, "interface"), __INTERFACE = new Token(IDENTIFIER, "__interface"), MUTABLE = new Token(IDENTIFIER, "mutable"), STRUCT = new Token(IDENTIFIER, "struct"), UNION = new Token(IDENTIFIER, "union"), TEMPLATE = new Token(IDENTIFIER, "template"), TYPEDEF = new Token(IDENTIFIER, "typedef"), TYPENAME = new Token(IDENTIFIER, "typename"), USING = new Token(IDENTIFIER, "using"), NAMESPACE = new Token(IDENTIFIER, "namespace"), NEW = new Token(IDENTIFIER, "new"), DELETE = new Token(IDENTIFIER, "delete"), OPERATOR = new Token(IDENTIFIER, "operator"), OVERRIDE = new Token(IDENTIFIER, "override"), PRIVATE = new Token(IDENTIFIER, "private"), PROTECTED = new Token(IDENTIFIER, "protected"), PUBLIC = new Token(IDENTIFIER, "public"), REGISTER = new Token(IDENTIFIER, "register"), THREAD_LOCAL = new Token(IDENTIFIER, "thread_local"), VIRTUAL = new Token(IDENTIFIER, "virtual"), VOLATILE = new Token(IDENTIFIER, "volatile");
 
     File file = null;
+
     String text = null;
+
     int lineNumber = 0, type = -1;
+
     String spacing = "", value = "";
 
-    boolean match(Object ... tokens) {
+    boolean match(Object... tokens) {
         boolean found = false;
         for (Object t : tokens) {
             found = found || equals(t);
@@ -107,11 +65,9 @@ class Token implements Comparable<Token> {
         return found;
     }
 
-    Token expect(Object ... tokens) throws ParserException {
+    Token expect(Object... tokens) throws ParserException {
         if (!match(tokens)) {
-            throw new ParserException(file + ":" + lineNumber + ":"
-                    + (text != null ? "\"" + text + "\": " : "")
-                    + "Unexpected token '" + toString() + "'");
+            throw new ParserException(file + ":" + lineNumber + ":" + (text != null ? "\"" + text + "\": " : "") + "Unexpected token '" + toString() + "'");
         }
         return this;
     }
@@ -120,32 +76,34 @@ class Token implements Comparable<Token> {
         return type == -1 && spacing.isEmpty();
     }
 
-    @Override public boolean equals(Object obj) {
+    @Override
+    public boolean equals(Object obj) {
         if (obj == this) {
             return true;
         } else if (obj == null) {
             return false;
         } else if (obj.getClass() == Integer.class) {
-            return type == (Integer)obj;
+            return type == (Integer) obj;
         } else if (obj.getClass() == Character.class) {
-            return type == (Character)obj;
+            return type == (Character) obj;
         } else if (obj.getClass() == String.class) {
             return obj.equals(value);
         } else if (obj.getClass() == getClass()) {
-            Token other = (Token)obj;
-            return type == other.type && ((value == null && other.value == null) ||
-                                           value != null && value.equals(other.value));
+            Token other = (Token) obj;
+            return type == other.type && ((value == null && other.value == null) || value != null && value.equals(other.value));
         } else {
             return false;
         }
     }
 
-    @Override public int hashCode() {
+    @Override
+    public int hashCode() {
         return type;
     }
 
-    @Override public String toString() {
-        return value != null && value.length() > 0 ? value : String.valueOf((char)type);
+    @Override
+    public String toString() {
+        return value != null && value.length() > 0 ? value : String.valueOf((char) type);
     }
 
     public int compareTo(Token t) {

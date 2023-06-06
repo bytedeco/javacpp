@@ -19,7 +19,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp;
 
 import java.util.ArrayDeque;
@@ -35,41 +34,60 @@ import org.bytedeco.javacpp.tools.Logger;
  * instead of relying on the garbage collector.
  */
 public class PointerScope implements AutoCloseable {
+
     private static final Logger logger = Logger.create(PointerScope.class);
 
-    /** A thread-local stack of {@link PointerScope} objects. Pointer objects attach themselves
-     * automatically on {@link Pointer#init} to the first one they can to on the stack. */
+    /**
+     * A thread-local stack of {@link PointerScope} objects. Pointer objects attach themselves
+     * automatically on {@link Pointer#init} to the first one they can to on the stack.
+     */
     static final ThreadLocal<Deque<PointerScope>> scopeStack = new ThreadLocal<Deque<PointerScope>>() {
-        @Override protected Deque initialValue() {
+
+        @Override
+        protected Deque initialValue() {
             return new ArrayDeque<PointerScope>();
         }
     };
 
-    /** Returns {@code scopeStack.get().peek()}, the last opened scope not yet closed. */
+    /**
+     * Returns {@code scopeStack.get().peek()}, the last opened scope not yet closed.
+     */
     public static PointerScope getInnerScope() {
         return scopeStack.get().peek();
     }
 
-    /** Returns {@code scopeStack.get().iterator()}, all scopes not yet closed. */
+    /**
+     * Returns {@code scopeStack.get().iterator()}, all scopes not yet closed.
+     */
     public static Iterator<PointerScope> getScopeIterator() {
         return scopeStack.get().iterator();
     }
 
-    /** The stack keeping references to attached {@link Pointer} objects. */
+    /**
+     * The stack keeping references to attached {@link Pointer} objects.
+     */
     Deque<Pointer> pointerStack = new ArrayDeque<Pointer>();
 
-    /** When not empty, indicates the classes of objects that are allowed to be attached. */
+    /**
+     * When not empty, indicates the classes of objects that are allowed to be attached.
+     */
     Class<? extends Pointer>[] forClasses = null;
 
-    /** When set to true, the next call to {@link #close()} does not release but resets this variable. */
+    /**
+     * When set to true, the next call to {@link #close()} does not release but resets this variable.
+     */
     boolean extend = false;
 
-    /** Creates a new scope accepting all pointer types and pushes itself on the {@link #scopeStack}. */
+    /**
+     * Creates a new scope accepting all pointer types and pushes itself on the {@link #scopeStack}.
+     */
     public PointerScope() {
-        this((Class<? extends Pointer>[])null);
+        this((Class<? extends Pointer>[]) null);
     }
 
-    /** Initializes {@link #forClasses}, and pushes itself on the {@link #scopeStack}. */
+    /**
+     * Initializes {@link #forClasses}, and pushes itself on the {@link #scopeStack}.
+     */
     public PointerScope(Class<? extends Pointer>... forClasses) {
         if (logger.isDebugEnabled()) {
             logger.debug("Opening " + this);
@@ -82,8 +100,10 @@ public class PointerScope implements AutoCloseable {
         return forClasses;
     }
 
-    /** Pushes the Pointer onto the {@link #pointerStack} of this Scope and calls {@link Pointer#retainReference()}.
-     * @throws IllegalArgumentException when it is not an instance of a class in {@link #forClasses}. */
+    /**
+     * Pushes the Pointer onto the {@link #pointerStack} of this Scope and calls {@link Pointer#retainReference()}.
+     * @throws IllegalArgumentException when it is not an instance of a class in {@link #forClasses}.
+     */
     public PointerScope attach(Pointer p) {
         if (logger.isDebugEnabled()) {
             logger.debug("Attaching " + p + " to " + this);
@@ -105,8 +125,10 @@ public class PointerScope implements AutoCloseable {
         return this;
     }
 
-    /** Removes the Pointer from the {@link #pointerStack} of this Scope
-     * and calls {@link Pointer#releaseReference()}. */
+    /**
+     * Removes the Pointer from the {@link #pointerStack} of this Scope
+     * and calls {@link Pointer#releaseReference()}.
+     */
     public PointerScope detach(Pointer p) {
         if (logger.isDebugEnabled()) {
             logger.debug("Detaching " + p + " from " + this);
@@ -116,8 +138,10 @@ public class PointerScope implements AutoCloseable {
         return this;
     }
 
-    /** Extends the life of this scope past the next call
-     * to {@link #close()} by setting the {@link #extend} flag. */
+    /**
+     * Extends the life of this scope past the next call
+     * to {@link #close()} by setting the {@link #extend} flag.
+     */
     public PointerScope extend() {
         if (logger.isDebugEnabled()) {
             logger.debug("Extending " + this);
@@ -126,11 +150,14 @@ public class PointerScope implements AutoCloseable {
         return this;
     }
 
-    /** Pops from {@link #pointerStack} all attached pointers,
+    /**
+     * Pops from {@link #pointerStack} all attached pointers,
      * calls {@link Pointer#releaseReference()} on them, unless extended,
      * in which case it only resets the {@link #extend} flag instead,
-     * and finally removes itself from {@link #scopeStack}. */
-    @Override public void close() {
+     * and finally removes itself from {@link #scopeStack}.
+     */
+    @Override
+    public void close() {
         if (logger.isDebugEnabled()) {
             logger.debug("Closing " + this);
         }
@@ -144,8 +171,10 @@ public class PointerScope implements AutoCloseable {
         scopeStack.get().remove(this);
     }
 
-    /** Pops from {@link #pointerStack} all attached pointers,
-     * and calls {@link Pointer#deallocate()} on them. */
+    /**
+     * Pops from {@link #pointerStack} all attached pointers,
+     * and calls {@link Pointer#deallocate()} on them.
+     */
     public void deallocate() {
         if (logger.isDebugEnabled()) {
             logger.debug("Deallocating " + this);

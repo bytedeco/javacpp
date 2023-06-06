@@ -1,7 +1,6 @@
 package org.bytedeco.javacpp.annotation;
 
 import org.bytedeco.javacpp.tools.Generator;
-
 import java.lang.annotation.*;
 
 /**
@@ -11,8 +10,9 @@ import java.lang.annotation.*;
  * code will always call the {@code Get/ReleasePrimitiveArrayCritical} methods instead.
  *
  * @see Generator
- *
  */
-@Documented @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE, ElementType.METHOD})
-public @interface CriticalRegion { }
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ ElementType.TYPE, ElementType.METHOD })
+public @interface CriticalRegion {
+}

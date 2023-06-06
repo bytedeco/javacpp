@@ -19,7 +19,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp.indexer;
 
 import java.math.BigDecimal;
@@ -33,7 +32,10 @@ import org.bytedeco.javacpp.LongPointer;
  * @author Samuel Audet
  */
 public abstract class ULongIndexer extends Indexer {
-    /** The number of bytes used to represent a long. */
+
+    /**
+     * The number of bytes used to represent a long.
+     */
     public static final int VALUE_BYTES = 8;
 
     protected ULongIndexer(Index index) {
@@ -44,61 +46,97 @@ public abstract class ULongIndexer extends Indexer {
         super(sizes, strides);
     }
 
-    /** Returns {@code new ULongArrayIndexer(array)} */
+    /**
+     * Returns {@code new ULongArrayIndexer(array)}
+     */
     public static ULongIndexer create(long[] array) {
         return new ULongArrayIndexer(array);
     }
-    /** Returns {@code new ULongBufferIndexer(buffer)} */
+
+    /**
+     * Returns {@code new ULongBufferIndexer(buffer)}
+     */
     public static ULongIndexer create(LongBuffer buffer) {
         return new ULongBufferIndexer(buffer);
     }
-    /** Returns {@code new ULongRawIndexer(pointer)} */
+
+    /**
+     * Returns {@code new ULongRawIndexer(pointer)}
+     */
     public static ULongIndexer create(LongPointer pointer) {
         return new ULongRawIndexer(pointer);
     }
 
-    /** Returns {@code new ULongArrayIndexer(array, index)} */
+    /**
+     * Returns {@code new ULongArrayIndexer(array, index)}
+     */
     public static ULongIndexer create(long[] array, Index index) {
         return new ULongArrayIndexer(array, index);
     }
-    /** Returns {@code new ULongBufferIndexer(buffer, index)} */
+
+    /**
+     * Returns {@code new ULongBufferIndexer(buffer, index)}
+     */
     public static ULongIndexer create(LongBuffer buffer, Index index) {
         return new ULongBufferIndexer(buffer, index);
     }
-    /** Returns {@code new ULongRawIndexer(pointer, index)} */
+
+    /**
+     * Returns {@code new ULongRawIndexer(pointer, index)}
+     */
     public static ULongIndexer create(LongPointer pointer, Index index) {
         return new ULongRawIndexer(pointer, index);
     }
 
-    /** Returns {@code new ULongArrayIndexer(array, sizes)} */
+    /**
+     * Returns {@code new ULongArrayIndexer(array, sizes)}
+     */
     public static ULongIndexer create(long[] array, long... sizes) {
         return new ULongArrayIndexer(array, sizes);
     }
-    /** Returns {@code new ULongBufferIndexer(buffer, sizes)} */
+
+    /**
+     * Returns {@code new ULongBufferIndexer(buffer, sizes)}
+     */
     public static ULongIndexer create(LongBuffer buffer, long... sizes) {
         return new ULongBufferIndexer(buffer, sizes);
     }
-    /** Returns {@code new ULongRawIndexer(pointer, sizes)} */
+
+    /**
+     * Returns {@code new ULongRawIndexer(pointer, sizes)}
+     */
     public static ULongIndexer create(LongPointer pointer, long... sizes) {
         return new ULongRawIndexer(pointer, sizes);
     }
 
-    /** Returns {@code new ULongArrayIndexer(array, sizes, strides)} */
+    /**
+     * Returns {@code new ULongArrayIndexer(array, sizes, strides)}
+     */
     public static ULongIndexer create(long[] array, long[] sizes, long[] strides) {
         return new ULongArrayIndexer(array, sizes, strides);
     }
-    /** Returns {@code new ULongBufferIndexer(buffer, sizes, strides)} */
+
+    /**
+     * Returns {@code new ULongBufferIndexer(buffer, sizes, strides)}
+     */
     public static ULongIndexer create(LongBuffer buffer, long[] sizes, long[] strides) {
         return new ULongBufferIndexer(buffer, sizes, strides);
     }
-    /** Returns {@code new ULongRawIndexer(pointer, sizes, strides)} */
+
+    /**
+     * Returns {@code new ULongRawIndexer(pointer, sizes, strides)}
+     */
     public static ULongIndexer create(LongPointer pointer, long[] sizes, long[] strides) {
         return new ULongRawIndexer(pointer, sizes, strides);
     }
-    /** Returns {@code create(pointer, Index.create(sizes, strides), direct)} */
+
+    /**
+     * Returns {@code create(pointer, Index.create(sizes, strides), direct)}
+     */
     public static ULongIndexer create(final LongPointer pointer, long[] sizes, long[] strides, boolean direct) {
         return create(pointer, Index.create(sizes, strides), direct);
     }
+
     /**
      * Creates a long indexer to access efficiently the data of a pointer.
      *
@@ -109,14 +147,15 @@ public abstract class ULongIndexer extends Indexer {
      */
     public static ULongIndexer create(final LongPointer pointer, Index index, boolean direct) {
         if (direct) {
-            return Raw.getInstance() != null ? new ULongRawIndexer(pointer, index)
-                                             : new ULongBufferIndexer(pointer.asBuffer(), index);
+            return Raw.getInstance() != null ? new ULongRawIndexer(pointer, index) : new ULongBufferIndexer(pointer.asBuffer(), index);
         } else {
             final long position = pointer.position();
-            long[] array = new long[(int)Math.min(pointer.limit() - position, Integer.MAX_VALUE)];
+            long[] array = new long[(int) Math.min(pointer.limit() - position, Integer.MAX_VALUE)];
             pointer.get(array);
             return new ULongArrayIndexer(array, index) {
-                @Override public void release() {
+
+                @Override
+                public void release() {
                     pointer.position(position).put(array);
                     super.release();
                 }
@@ -136,48 +175,125 @@ public abstract class ULongIndexer extends Indexer {
         return l.longValue();
     }
 
-    /** Returns {@code array/buffer[index(i)]} */
+    /**
+     * Returns {@code array/buffer[index(i)]}
+     */
     public abstract BigInteger get(long i);
-    /** Returns {@code this} where {@code l = array/buffer[index(i)]} */
-    public ULongIndexer get(long i, BigInteger[] l) { return get(i, l, 0, l.length); }
-    /** Returns {@code this} where {@code l[offset:offset + length] = array/buffer[index(i)]} */
+
+    /**
+     * Returns {@code this} where {@code l = array/buffer[index(i)]}
+     */
+    public ULongIndexer get(long i, BigInteger[] l) {
+        return get(i, l, 0, l.length);
+    }
+
+    /**
+     * Returns {@code this} where {@code l[offset:offset + length] = array/buffer[index(i)]}
+     */
     public abstract ULongIndexer get(long i, BigInteger[] l, int offset, int length);
-    /** Returns {@code array/buffer[index(i, j)]} */
+
+    /**
+     * Returns {@code array/buffer[index(i, j)]}
+     */
     public abstract BigInteger get(long i, long j);
-    /** Returns {@code this} where {@code l = array/buffer[index(i, j)]} */
-    public ULongIndexer get(long i, long j, BigInteger[] l) { return get(i, j, l, 0, l.length); }
-    /** Returns {@code this} where {@code l[offset:offset + length] = array/buffer[index(i, j)]} */
+
+    /**
+     * Returns {@code this} where {@code l = array/buffer[index(i, j)]}
+     */
+    public ULongIndexer get(long i, long j, BigInteger[] l) {
+        return get(i, j, l, 0, l.length);
+    }
+
+    /**
+     * Returns {@code this} where {@code l[offset:offset + length] = array/buffer[index(i, j)]}
+     */
     public abstract ULongIndexer get(long i, long j, BigInteger[] l, int offset, int length);
-    /** Returns {@code array/buffer[index(i, j, k)]} */
+
+    /**
+     * Returns {@code array/buffer[index(i, j, k)]}
+     */
     public abstract BigInteger get(long i, long j, long k);
-    /** Returns {@code array/buffer[index(indices)]} */
+
+    /**
+     * Returns {@code array/buffer[index(indices)]}
+     */
     public abstract BigInteger get(long... indices);
-    /** Returns {@code this} where {@code l = array/buffer[index(indices)]} */
-    public ULongIndexer get(long[] indices, BigInteger[] l) { return get(indices, l, 0, l.length); }
-    /** Returns {@code this} where {@code l[offset:offset + length] = array/buffer[index(indices)]} */
+
+    /**
+     * Returns {@code this} where {@code l = array/buffer[index(indices)]}
+     */
+    public ULongIndexer get(long[] indices, BigInteger[] l) {
+        return get(indices, l, 0, l.length);
+    }
+
+    /**
+     * Returns {@code this} where {@code l[offset:offset + length] = array/buffer[index(indices)]}
+     */
     public abstract ULongIndexer get(long[] indices, BigInteger[] l, int offset, int length);
 
-    /** Returns {@code this} where {@code array/buffer[index(i)] = l} */
+    /**
+     * Returns {@code this} where {@code array/buffer[index(i)] = l}
+     */
     public abstract ULongIndexer put(long i, BigInteger l);
-    /** Returns {@code this} where {@code array/buffer[index(i)] = l} */
-    public ULongIndexer put(long i, BigInteger... l) { return put(i, l, 0, l.length); }
-    /** Returns {@code this} where {@code array/buffer[index(i)] = l[offset:offset + length]} */
+
+    /**
+     * Returns {@code this} where {@code array/buffer[index(i)] = l}
+     */
+    public ULongIndexer put(long i, BigInteger... l) {
+        return put(i, l, 0, l.length);
+    }
+
+    /**
+     * Returns {@code this} where {@code array/buffer[index(i)] = l[offset:offset + length]}
+     */
     public abstract ULongIndexer put(long i, BigInteger[] l, int offset, int length);
-    /** Returns {@code this} where {@code array/buffer[index(i, j)] = l} */
+
+    /**
+     * Returns {@code this} where {@code array/buffer[index(i, j)] = l}
+     */
     public abstract ULongIndexer put(long i, long j, BigInteger l);
-    /** Returns {@code this} where {@code array/buffer[index(i, j)] = l} */
-    public ULongIndexer put(long i, long j, BigInteger... l) { return put(i, j, l, 0, l.length); }
-    /** Returns {@code this} where {@code array/buffer[index(i, j)] = l[offset:offset + length]} */
+
+    /**
+     * Returns {@code this} where {@code array/buffer[index(i, j)] = l}
+     */
+    public ULongIndexer put(long i, long j, BigInteger... l) {
+        return put(i, j, l, 0, l.length);
+    }
+
+    /**
+     * Returns {@code this} where {@code array/buffer[index(i, j)] = l[offset:offset + length]}
+     */
     public abstract ULongIndexer put(long i, long j, BigInteger[] l, int offset, int length);
-    /** Returns {@code this} where {@code array/buffer[index(i, j, k)] = l} */
+
+    /**
+     * Returns {@code this} where {@code array/buffer[index(i, j, k)] = l}
+     */
     public abstract ULongIndexer put(long i, long j, long k, BigInteger l);
-    /** Returns {@code this} where {@code array/buffer[index(indices)] = l} */
+
+    /**
+     * Returns {@code this} where {@code array/buffer[index(indices)] = l}
+     */
     public abstract ULongIndexer put(long[] indices, BigInteger l);
-    /** Returns {@code this} where {@code array/buffer[index(indices)] = l} */
-    public ULongIndexer put(long[] indices, BigInteger... l) { return put(indices, l, 0, l.length); }
-    /** Returns {@code this} where {@code array/buffer[index(indices)] = l[offset:offset + length]} */
+
+    /**
+     * Returns {@code this} where {@code array/buffer[index(indices)] = l}
+     */
+    public ULongIndexer put(long[] indices, BigInteger... l) {
+        return put(indices, l, 0, l.length);
+    }
+
+    /**
+     * Returns {@code this} where {@code array/buffer[index(indices)] = l[offset:offset + length]}
+     */
     public abstract ULongIndexer put(long[] indices, BigInteger[] l, int offset, int length);
 
-    @Override public double getDouble(long... indices) { return get(indices).doubleValue(); }
-    @Override public ULongIndexer putDouble(long[] indices, double l) { return put(indices, BigDecimal.valueOf(l).toBigInteger()); }
+    @Override
+    public double getDouble(long... indices) {
+        return get(indices).doubleValue();
+    }
+
+    @Override
+    public ULongIndexer putDouble(long[] indices, double l) {
+        return put(indices, BigDecimal.valueOf(l).toBigInteger());
+    }
 }

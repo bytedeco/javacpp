@@ -17,9 +17,13 @@ import org.bytedeco.javacpp.tools.Generator;
  *
  * @author Samuel Audet
  */
-@Documented @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD, ElementType.PARAMETER})
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ ElementType.METHOD, ElementType.PARAMETER })
 public @interface ByVal {
-    /** A C++ expression to use when null is passed. By default {@link NullPointerException} is thrown. */
+
+    /**
+     * A C++ expression to use when null is passed. By default {@link NullPointerException} is thrown.
+     */
     String nullValue() default "";
 }

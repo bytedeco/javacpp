@@ -19,7 +19,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp.indexer;
 
 import java.nio.ShortBuffer;
@@ -33,7 +32,10 @@ import org.bytedeco.javacpp.ShortPointer;
  * @author Samuel Audet
  */
 public abstract class Bfloat16Indexer extends Indexer {
-    /** The number of bytes used to represent a short. */
+
+    /**
+     * The number of bytes used to represent a short.
+     */
     public static final int VALUE_BYTES = 2;
 
     protected Bfloat16Indexer(Index index) {
@@ -44,61 +46,97 @@ public abstract class Bfloat16Indexer extends Indexer {
         super(sizes, strides);
     }
 
-    /** Returns {@code new Bfloat16ArrayIndexer(array)} */
+    /**
+     * Returns {@code new Bfloat16ArrayIndexer(array)}
+     */
     public static Bfloat16Indexer create(short[] array) {
         return new Bfloat16ArrayIndexer(array);
     }
-    /** Returns {@code new Bfloat16BufferIndexer(buffer)} */
+
+    /**
+     * Returns {@code new Bfloat16BufferIndexer(buffer)}
+     */
     public static Bfloat16Indexer create(ShortBuffer buffer) {
         return new Bfloat16BufferIndexer(buffer);
     }
-    /** Returns {@code new Bfloat16RawIndexer(pointer)} */
+
+    /**
+     * Returns {@code new Bfloat16RawIndexer(pointer)}
+     */
     public static Bfloat16Indexer create(ShortPointer pointer) {
         return new Bfloat16RawIndexer(pointer);
     }
 
-    /** Returns {@code new Bfloat16ArrayIndexer(array, index)} */
+    /**
+     * Returns {@code new Bfloat16ArrayIndexer(array, index)}
+     */
     public static Bfloat16Indexer create(short[] array, Index index) {
         return new Bfloat16ArrayIndexer(array, index);
     }
-    /** Returns {@code new Bfloat16BufferIndexer(buffer, index)} */
+
+    /**
+     * Returns {@code new Bfloat16BufferIndexer(buffer, index)}
+     */
     public static Bfloat16Indexer create(ShortBuffer buffer, Index index) {
         return new Bfloat16BufferIndexer(buffer, index);
     }
-    /** Returns {@code new Bfloat16RawIndexer(pointer, index)} */
+
+    /**
+     * Returns {@code new Bfloat16RawIndexer(pointer, index)}
+     */
     public static Bfloat16Indexer create(ShortPointer pointer, Index index) {
         return new Bfloat16RawIndexer(pointer, index);
     }
 
-    /** Returns {@code new Bfloat16ArrayIndexer(array, sizes)} */
+    /**
+     * Returns {@code new Bfloat16ArrayIndexer(array, sizes)}
+     */
     public static Bfloat16Indexer create(short[] array, long... sizes) {
         return new Bfloat16ArrayIndexer(array, sizes);
     }
-    /** Returns {@code new Bfloat16BufferIndexer(buffer, sizes)} */
+
+    /**
+     * Returns {@code new Bfloat16BufferIndexer(buffer, sizes)}
+     */
     public static Bfloat16Indexer create(ShortBuffer buffer, long... sizes) {
         return new Bfloat16BufferIndexer(buffer, sizes);
     }
-    /** Returns {@code new Bfloat16RawIndexer(pointer, sizes)} */
+
+    /**
+     * Returns {@code new Bfloat16RawIndexer(pointer, sizes)}
+     */
     public static Bfloat16Indexer create(ShortPointer pointer, long... sizes) {
         return new Bfloat16RawIndexer(pointer, sizes);
     }
 
-    /** Returns {@code new Bfloat16ArrayIndexer(array, sizes, strides)} */
+    /**
+     * Returns {@code new Bfloat16ArrayIndexer(array, sizes, strides)}
+     */
     public static Bfloat16Indexer create(short[] array, long[] sizes, long[] strides) {
         return new Bfloat16ArrayIndexer(array, sizes, strides);
     }
-    /** Returns {@code new Bfloat16BufferIndexer(buffer, sizes, strides)} */
+
+    /**
+     * Returns {@code new Bfloat16BufferIndexer(buffer, sizes, strides)}
+     */
     public static Bfloat16Indexer create(ShortBuffer buffer, long[] sizes, long[] strides) {
         return new Bfloat16BufferIndexer(buffer, sizes, strides);
     }
-    /** Returns {@code new Bfloat16RawIndexer(pointer, sizes, strides)} */
+
+    /**
+     * Returns {@code new Bfloat16RawIndexer(pointer, sizes, strides)}
+     */
     public static Bfloat16Indexer create(ShortPointer pointer, long[] sizes, long[] strides) {
         return new Bfloat16RawIndexer(pointer, sizes, strides);
     }
-    /** Returns {@code create(pointer, Index.create(sizes, strides), direct)} */
+
+    /**
+     * Returns {@code create(pointer, Index.create(sizes, strides), direct)}
+     */
     public static Bfloat16Indexer create(final ShortPointer pointer, long[] sizes, long[] strides, boolean direct) {
         return create(pointer, Index.create(sizes, strides), direct);
     }
+
     /**
      * Creates a bfloat16 indexer to access efficiently the data of a pointer.
      *
@@ -109,14 +147,15 @@ public abstract class Bfloat16Indexer extends Indexer {
      */
     public static Bfloat16Indexer create(final ShortPointer pointer, Index index, boolean direct) {
         if (direct) {
-            return Raw.getInstance() != null ? new Bfloat16RawIndexer(pointer, index)
-                                             : new Bfloat16BufferIndexer(pointer.asBuffer(), index);
+            return Raw.getInstance() != null ? new Bfloat16RawIndexer(pointer, index) : new Bfloat16BufferIndexer(pointer.asBuffer(), index);
         } else {
             final long position = pointer.position();
-            short[] array = new short[(int)Math.min(pointer.limit() - position, Integer.MAX_VALUE)];
+            short[] array = new short[(int) Math.min(pointer.limit() - position, Integer.MAX_VALUE)];
             pointer.get(array);
             return new Bfloat16ArrayIndexer(array, index) {
-                @Override public void release() {
+
+                @Override
+                public void release() {
                     pointer.position(position).put(array);
                     super.release();
                 }
@@ -124,58 +163,139 @@ public abstract class Bfloat16Indexer extends Indexer {
         }
     }
 
-    /** ignores the higher 16 bits */
+    /**
+     * ignores the higher 16 bits
+     */
     public static float toFloat(int h) {
         return Float.intBitsToFloat(h << 16);
     }
 
-    /** returns all higher 16 bits as 0 for all results */
+    /**
+     * returns all higher 16 bits as 0 for all results
+     */
     public static int fromFloat(float h) {
         return Float.floatToIntBits(h) >>> 16;
     }
 
-    /** Returns {@code array/buffer[index(i)]} */
+    /**
+     * Returns {@code array/buffer[index(i)]}
+     */
     public abstract float get(long i);
-    /** Returns {@code this} where {@code h = array/buffer[index(i)]} */
-    public Bfloat16Indexer get(long i, float[] h) { return get(i, h, 0, h.length); }
-    /** Returns {@code this} where {@code h[offset:offset + length] = array/buffer[index(i)]} */
+
+    /**
+     * Returns {@code this} where {@code h = array/buffer[index(i)]}
+     */
+    public Bfloat16Indexer get(long i, float[] h) {
+        return get(i, h, 0, h.length);
+    }
+
+    /**
+     * Returns {@code this} where {@code h[offset:offset + length] = array/buffer[index(i)]}
+     */
     public abstract Bfloat16Indexer get(long i, float[] h, int offset, int length);
-    /** Returns {@code array/buffer[index(i, j)]} */
+
+    /**
+     * Returns {@code array/buffer[index(i, j)]}
+     */
     public abstract float get(long i, long j);
-    /** Returns {@code this} where {@code h = array/buffer[index(i, j)]} */
-    public Bfloat16Indexer get(long i, long j, float[] h) { return get(i, j, h, 0, h.length); }
-    /** Returns {@code this} where {@code h[offset:offset + length] = array/buffer[index(i, j)]} */
+
+    /**
+     * Returns {@code this} where {@code h = array/buffer[index(i, j)]}
+     */
+    public Bfloat16Indexer get(long i, long j, float[] h) {
+        return get(i, j, h, 0, h.length);
+    }
+
+    /**
+     * Returns {@code this} where {@code h[offset:offset + length] = array/buffer[index(i, j)]}
+     */
     public abstract Bfloat16Indexer get(long i, long j, float[] h, int offset, int length);
-    /** Returns {@code array/buffer[index(i, j, k)]} */
+
+    /**
+     * Returns {@code array/buffer[index(i, j, k)]}
+     */
     public abstract float get(long i, long j, long k);
-    /** Returns {@code array/buffer[index(indices)]} */
+
+    /**
+     * Returns {@code array/buffer[index(indices)]}
+     */
     public abstract float get(long... indices);
-    /** Returns {@code this} where {@code h = array/buffer[index(indices)]} */
-    public Bfloat16Indexer get(long[] indices, float[] h) { return get(indices, h, 0, h.length); }
-    /** Returns {@code this} where {@code h[offset:offset + length] = array/buffer[index(indices)]} */
+
+    /**
+     * Returns {@code this} where {@code h = array/buffer[index(indices)]}
+     */
+    public Bfloat16Indexer get(long[] indices, float[] h) {
+        return get(indices, h, 0, h.length);
+    }
+
+    /**
+     * Returns {@code this} where {@code h[offset:offset + length] = array/buffer[index(indices)]}
+     */
     public abstract Bfloat16Indexer get(long[] indices, float[] h, int offset, int length);
 
-    /** Returns {@code this} where {@code array/buffer[index(i)] = h} */
+    /**
+     * Returns {@code this} where {@code array/buffer[index(i)] = h}
+     */
     public abstract Bfloat16Indexer put(long i, float h);
-    /** Returns {@code this} where {@code array/buffer[index(i)] = h} */
-    public Bfloat16Indexer put(long i, float... h) { return put(i, h, 0, h.length); }
-    /** Returns {@code this} where {@code array/buffer[index(i)] = h[offset:offset + length]} */
+
+    /**
+     * Returns {@code this} where {@code array/buffer[index(i)] = h}
+     */
+    public Bfloat16Indexer put(long i, float... h) {
+        return put(i, h, 0, h.length);
+    }
+
+    /**
+     * Returns {@code this} where {@code array/buffer[index(i)] = h[offset:offset + length]}
+     */
     public abstract Bfloat16Indexer put(long i, float[] h, int offset, int length);
-    /** Returns {@code this} where {@code array/buffer[index(i, j)] = h} */
+
+    /**
+     * Returns {@code this} where {@code array/buffer[index(i, j)] = h}
+     */
     public abstract Bfloat16Indexer put(long i, long j, float h);
-    /** Returns {@code this} where {@code array/buffer[index(i, j)] = h} */
-    public Bfloat16Indexer put(long i, long j, float... h) { return put(i, j, h, 0, h.length); }
-    /** Returns {@code this} where {@code array/buffer[index(i, j)] = h[offset:offset + length]} */
+
+    /**
+     * Returns {@code this} where {@code array/buffer[index(i, j)] = h}
+     */
+    public Bfloat16Indexer put(long i, long j, float... h) {
+        return put(i, j, h, 0, h.length);
+    }
+
+    /**
+     * Returns {@code this} where {@code array/buffer[index(i, j)] = h[offset:offset + length]}
+     */
     public abstract Bfloat16Indexer put(long i, long j, float[] h, int offset, int length);
-    /** Returns {@code this} where {@code array/buffer[index(i, j, k)] = h} */
+
+    /**
+     * Returns {@code this} where {@code array/buffer[index(i, j, k)] = h}
+     */
     public abstract Bfloat16Indexer put(long i, long j, long k, float h);
-    /** Returns {@code this} where {@code array/buffer[index(indices)] = h} */
+
+    /**
+     * Returns {@code this} where {@code array/buffer[index(indices)] = h}
+     */
     public abstract Bfloat16Indexer put(long[] indices, float h);
-    /** Returns {@code this} where {@code array/buffer[index(indices)] = h} */
-    public Bfloat16Indexer put(long[] indices, float... h) { return put(indices, h, 0, h.length); }
-    /** Returns {@code this} where {@code array/buffer[index(indices)] = h[offset:offset + length]} */
+
+    /**
+     * Returns {@code this} where {@code array/buffer[index(indices)] = h}
+     */
+    public Bfloat16Indexer put(long[] indices, float... h) {
+        return put(indices, h, 0, h.length);
+    }
+
+    /**
+     * Returns {@code this} where {@code array/buffer[index(indices)] = h[offset:offset + length]}
+     */
     public abstract Bfloat16Indexer put(long[] indices, float[] h, int offset, int length);
 
-    @Override public double getDouble(long... indices) { return get(indices); }
-    @Override public Bfloat16Indexer putDouble(long[] indices, double h) { return put(indices, (float)h); }
+    @Override
+    public double getDouble(long... indices) {
+        return get(indices);
+    }
+
+    @Override
+    public Bfloat16Indexer putDouble(long[] indices, double h) {
+        return put(indices, (float) h);
+    }
 }

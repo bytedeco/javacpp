@@ -31,22 +31,41 @@ import org.bytedeco.javacpp.tools.Parser;
  *
  * @author Samuel Audet
  */
-@Documented @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE})
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ ElementType.TYPE })
 public @interface Properties {
-    /** A list of classes from which to inherit properties. */
+
+    /**
+     * A list of classes from which to inherit properties.
+     */
     Class[] inherit() default {};
-    /** A list of platform names to be used as default for {@link #value()}. */
+
+    /**
+     * A list of platform names to be used as default for {@link #value()}.
+     */
     String[] names() default {};
-    /** A list of properties for different platforms. */
+
+    /**
+     * A list of properties for different platforms.
+     */
     Platform[] value() default {};
-    /** The target Java source code file of the {@link Parser}, unless {@link #global()} is set,
-        in which case this specifies the target Java package. */
+
+    /**
+     * The target Java source code file of the {@link Parser}, unless {@link #global()} is set,
+     *        in which case this specifies the target Java package.
+     */
     String target() default "";
-    /** The name of a class where to output any global declarations that are not in classes.
-        If left empty, considers the {@link #target()} as a class where to put everything. */
+
+    /**
+     * The name of a class where to output any global declarations that are not in classes.
+     *        If left empty, considers the {@link #target()} as a class where to put everything.
+     */
     String global() default "";
-    /** An optional helper class the {@link Parser} should use as base for the global class.
-        Defaults to the class where this annotation was found. */
+
+    /**
+     * An optional helper class the {@link Parser} should use as base for the global class.
+     *        Defaults to the class where this annotation was found.
+     */
     String helper() default "";
 }

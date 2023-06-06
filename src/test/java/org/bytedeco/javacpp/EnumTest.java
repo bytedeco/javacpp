@@ -27,7 +27,6 @@ import org.bytedeco.javacpp.annotation.Platform;
 import org.bytedeco.javacpp.tools.Builder;
 import org.junit.Test;
 import org.junit.BeforeClass;
-
 import static org.junit.Assert.*;
 
 /**
@@ -39,43 +38,71 @@ import static org.junit.Assert.*;
 public class EnumTest {
 
     public static enum BoolEnum {
+
         BOOL(true);
 
         public final boolean value;
-        private BoolEnum(boolean v) { this.value = v; }
+
+        private BoolEnum(boolean v) {
+            this.value = v;
+        }
     }
 
-    @Name("CharEnum") public static enum ByteEnum {
-        BYTE((byte)123);
+    @Name("CharEnum")
+    public static enum ByteEnum {
+
+        BYTE((byte) 123);
 
         public final byte value;
-        private ByteEnum(byte v) { this.value = v; }
+
+        private ByteEnum(byte v) {
+            this.value = v;
+        }
     }
 
     public static enum ShortEnum {
-        SHORT((short)456);
+
+        SHORT((short) 456);
 
         public final short value;
-        private ShortEnum(short v) { this.value = v; }
+
+        private ShortEnum(short v) {
+            this.value = v;
+        }
     }
 
     public static enum IntEnum {
+
         INT(789);
 
         public final int value;
-        private IntEnum(int v) { this.value = v; }
+
+        private IntEnum(int v) {
+            this.value = v;
+        }
     }
 
     public static enum LongEnum {
+
         LONG(101112);
 
         public final long value;
-        private LongEnum(long v) { this.value = v; }
+
+        private LongEnum(long v) {
+            this.value = v;
+        }
     }
 
     public static class EnumCallback extends FunctionPointer {
-        static { Loader.load(); }
-        protected EnumCallback() { allocate(); }
+
+        static {
+            Loader.load();
+        }
+
+        protected EnumCallback() {
+            allocate();
+        }
+
         private native void allocate();
 
         public LongEnum call(ByteEnum e) {
@@ -85,28 +112,30 @@ public class EnumTest {
     }
 
     public static native BoolEnum Char2Bool(ByteEnum e);
+
     public static native ShortEnum Char2Short(ByteEnum e);
+
     public static native LongEnum Int2Long(IntEnum e);
+
     public static native LongEnum enumCallback(EnumCallback f);
 
-    @BeforeClass public static void setUpClass() throws Exception {
+    @BeforeClass
+    public static void setUpClass() throws Exception {
         System.out.println("Builder");
         Class c = EnumTest.class;
         Builder builder = new Builder().classesOrPackages(c.getName());
         File[] outputFiles = builder.build();
-
         System.out.println("Loader");
         Loader.load(c);
     }
 
-    @Test public void testEnum() {
+    @Test
+    public void testEnum() {
         System.out.println("Enum");
-
         assertEquals(true, Char2Bool(ByteEnum.BYTE).value);
         assertEquals(123, Char2Short(ByteEnum.BYTE).value);
         assertEquals(789, Int2Long(IntEnum.INT).value);
         assertEquals(101112, enumCallback(new EnumCallback()).value);
-
         try {
             Int2Long(null);
             fail("NullPointerException should have been thrown.");

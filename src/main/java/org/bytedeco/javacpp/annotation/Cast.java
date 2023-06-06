@@ -12,7 +12,7 @@ import org.bytedeco.javacpp.tools.Generator;
  * When used with {@link Adapter} a second cast can also be specified making it
  * possible to apply a cast to both the argument and the adapter, in this order.
  * A third "precast" can also be specified, which gets applied before the second one,
-   but also on return values passed to adapters.
+ *   but also on return values passed to adapters.
  * <p>
  * At the moment, {@link Generator} makes use of the simple C-style cast. If one
  * requires a different kind of type conversion, such as the {@code dynamic_cast}
@@ -23,8 +23,10 @@ import org.bytedeco.javacpp.tools.Generator;
  *
  * @author Samuel Audet
  */
-@Documented @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD, ElementType.PARAMETER, ElementType.ANNOTATION_TYPE})
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ ElementType.METHOD, ElementType.PARAMETER, ElementType.ANNOTATION_TYPE })
 public @interface Cast {
+
     String[] value();
 }

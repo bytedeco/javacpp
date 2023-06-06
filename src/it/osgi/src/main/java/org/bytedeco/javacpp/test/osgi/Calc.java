@@ -13,7 +13,6 @@ public class Calc {
         // to load it with the right class loader
         //
         Loader.load();
-
         // This is what we need to happen in the scope
         // of the bundle containing the native code,
         // not the JavaCPP bundle. Note that the call
@@ -25,14 +24,24 @@ public class Calc {
         //System.loadLibrary("jniCalc");
     }
 
-    private Calc() {}
+    private Calc() {
+    }
 
     static class IntValue extends Pointer {
-        IntValue(Pointer p) { super(p); }
-        IntValue() { allocate(); }
+
+        IntValue(Pointer p) {
+            super(p);
+        }
+
+        IntValue() {
+            allocate();
+        }
+
         native void allocate();
 
-        native int value(); native IntValue value(int setter);
+        native int value();
+
+        native IntValue value(int setter);
     }
 
     public static native int add(int a, int b);

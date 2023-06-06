@@ -19,7 +19,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp.tools;
 
 import java.util.ArrayList;
@@ -28,18 +27,25 @@ import java.util.ListIterator;
 import java.util.Scanner;
 
 /**
- *
  * @author Samuel Audet
  */
 class DeclarationList extends ArrayList<Declaration> {
+
     InfoMap infoMap = null;
+
     Context context = null;
+
     TemplateMap templateMap = null;
+
     ListIterator<Info> infoIterator = null;
+
     String spacing = null;
+
     DeclarationList inherited = null;
 
-    DeclarationList() { }
+    DeclarationList() {
+    }
+
     DeclarationList(DeclarationList inherited) {
         this.inherited = inherited;
     }
@@ -59,9 +65,11 @@ class DeclarationList extends ArrayList<Declaration> {
         return text;
     }
 
-    @Override public boolean add(Declaration decl) {
+    @Override
+    public boolean add(Declaration decl) {
         return add(decl, null);
     }
+
     public boolean add(Declaration decl, String fullName) {
         boolean add = true;
         if (templateMap != null && templateMap.empty() && !decl.custom && (decl.type != null || decl.declarator != null)) {
@@ -70,7 +78,7 @@ class DeclarationList extends ArrayList<Declaration> {
             if (infoIterator == null) {
                 Type type = templateMap.type = decl.type;
                 Declarator dcl = templateMap.declarator = decl.declarator;
-                for (String name : new String[] {fullName, dcl != null ? dcl.cppName : type.cppName}) {
+                for (String name : new String[] { fullName, dcl != null ? dcl.cppName : type.cppName }) {
                     if (name == null) {
                         continue;
                     }
@@ -86,32 +94,29 @@ class DeclarationList extends ArrayList<Declaration> {
                 }
             }
             add = false;
-        } else if (infoMap != null && !decl.incomplete && decl.type != null && decl.type.cppName != null) {
-            // check if the user gave us different names for the same type with and without const
-            if (infoIterator == null) {
-                String constName = null, name = null;
-                List<Info> infoList = infoMap.get(decl.type.cppName);
-                List<Info> constInfoList = infoMap.get("const " + decl.type.cppName);
-                if (infoList != null && constInfoList != null && !infoList.equals(constInfoList)) {
-                    for (Info info : infoList) {
-                        if (info.pointerTypes != null && info.pointerTypes.length > 0) {
-                            name = info.pointerTypes[0].substring(info.pointerTypes[0].lastIndexOf(" ") + 1);
-                            break;
-                        }
-                    }
-                    for (Info info : constInfoList) {
-                        if (info.pointerTypes != null && info.pointerTypes.length > 0) {
-                            constName = info.pointerTypes[0].substring(info.pointerTypes[0].lastIndexOf(" ") + 1);
-                            break;
-                        }
+        } else if (infoMap != null && !decl.incomplete && decl.type != null && decl.type.cppName != null && infoIterator == null) {
+            String constName = null, name = null;
+            List<Info> infoList = infoMap.get(decl.type.cppName);
+            List<Info> constInfoList = infoMap.get("const " + decl.type.cppName);
+            if (infoList != null && constInfoList != null && !infoList.equals(constInfoList)) {
+                for (Info info : infoList) {
+                    if (info.pointerTypes != null && info.pointerTypes.length > 0) {
+                        name = info.pointerTypes[0].substring(info.pointerTypes[0].lastIndexOf(" ") + 1);
+                        break;
                     }
                 }
-                if (constName != null && name != null && !constName.equals(name)) {
-                    // if so, let's reparse this twice to create two Java peer classes
-                    infoList.addAll(constInfoList);
-                    infoIterator = infoList.size() > 0 ? infoList.listIterator() : null;
-                    add = false;
+                for (Info info : constInfoList) {
+                    if (info.pointerTypes != null && info.pointerTypes.length > 0) {
+                        constName = info.pointerTypes[0].substring(info.pointerTypes[0].lastIndexOf(" ") + 1);
+                        break;
+                    }
                 }
+            }
+            if (constName != null && name != null && !constName.equals(name)) {
+                // if so, let's reparse this twice to create two Java peer classes
+                infoList.addAll(constInfoList);
+                infoIterator = infoList.size() > 0 ? infoList.listIterator() : null;
+                add = false;
             }
         }
         if (infoMap != null && decl.declarator != null && decl.declarator.type != null) {
@@ -137,32 +142,32 @@ class DeclarationList extends ArrayList<Declaration> {
         if (!add) {
             return false;
         }
-
         // place all definitions prior to the declarations that need them
         List<Declaration> stack = new ArrayList<>();
         ListIterator<Declaration> it = stack.listIterator();
-        it.add(decl); it.previous();
+        it.add(decl);
+        it.previous();
         while (it.hasNext()) {
             decl = it.next();
             Declarator dcl = decl.declarator;
             if (dcl != null && dcl.definition != null) {
-                it.add(dcl.definition); it.previous();
+                it.add(dcl.definition);
+                it.previous();
             }
             if (dcl != null && dcl.parameters != null && dcl.parameters.declarators != null) {
                 for (Declarator d : dcl.parameters.declarators) {
                     if (d != null && d.definition != null) {
-                        it.add(d.definition); it.previous();
+                        it.add(d.definition);
+                        it.previous();
                     }
                 }
             }
         }
-
         add = false;
         while (!stack.isEmpty()) {
             decl = stack.remove(stack.size() - 1);
             if (context != null) {
-                decl.inaccessible = context.inaccessible
-                        && !(context.virtualize && decl.declarator != null && decl.declarator.type != null && decl.declarator.type.virtual);
+                decl.inaccessible = context.inaccessible && !(context.virtualize && decl.declarator != null && decl.declarator.type != null && decl.declarator.type.virtual);
             }
             if (decl.text.length() == 0) {
                 decl.inaccessible = true;

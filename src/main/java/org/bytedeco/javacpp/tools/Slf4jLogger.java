@@ -19,7 +19,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp.tools;
 
 /**
@@ -28,28 +27,77 @@ package org.bytedeco.javacpp.tools;
  * @author Samuel Audet
  */
 public class Slf4jLogger extends org.bytedeco.javacpp.tools.Logger {
+
     final org.slf4j.Logger logger;
 
-    /** Calls {@link org.slf4j.LoggerFactory#getLogger(Class)}. */
+    /**
+     * Calls {@link org.slf4j.LoggerFactory#getLogger(Class)}.
+     */
     public Slf4jLogger(Class cls) {
         logger = org.slf4j.LoggerFactory.getLogger(cls);
     }
 
-    /** Returns {@link org.slf4j.Logger#isDebugEnabled()}. */
-    @Override public boolean isDebugEnabled() { return logger.isDebugEnabled(); }
-    /** Returns {@link org.slf4j.Logger#isInfoEnabled()}. */
-    @Override public boolean isInfoEnabled()  { return logger.isInfoEnabled();  }
-    /** Returns {@link org.slf4j.Logger#isWarnEnabled()}. */
-    @Override public boolean isWarnEnabled()  { return logger.isWarnEnabled();  }
-    /** Returns {@link org.slf4j.Logger#isErrorEnabled()}. */
-    @Override public boolean isErrorEnabled() { return logger.isErrorEnabled(); }
+    /**
+     * Returns {@link org.slf4j.Logger#isDebugEnabled()}.
+     */
+    @Override
+    public boolean isDebugEnabled() {
+        return logger.isDebugEnabled();
+    }
 
-    /** Calls {@link org.slf4j.Logger#debug(String)}. */
-    @Override public void debug(String s) { logger.debug(s); }
-    /** Calls {@link org.slf4j.Logger#info(String)}. */
-    @Override public void info(String s)  { logger.info(s);  }
-    /** Calls {@link org.slf4j.Logger#warn(String)}. */
-    @Override public void warn(String s)  { logger.warn(s);  }
-    /** Calls {@link org.slf4j.Logger#error(String)}. */
-    @Override public void error(String s) { logger.error(s); }
+    /**
+     * Returns {@link org.slf4j.Logger#isInfoEnabled()}.
+     */
+    @Override
+    public boolean isInfoEnabled() {
+        return logger.isInfoEnabled();
+    }
+
+    /**
+     * Returns {@link org.slf4j.Logger#isWarnEnabled()}.
+     */
+    @Override
+    public boolean isWarnEnabled() {
+        return logger.isWarnEnabled();
+    }
+
+    /**
+     * Returns {@link org.slf4j.Logger#isErrorEnabled()}.
+     */
+    @Override
+    public boolean isErrorEnabled() {
+        return logger.isErrorEnabled();
+    }
+
+    /**
+     * Calls {@link org.slf4j.Logger#debug(String)}.
+     */
+    @Override
+    public void debug(String s) {
+        logger.debug(s);
+    }
+
+    /**
+     * Calls {@link org.slf4j.Logger#info(String)}.
+     */
+    @Override
+    public void info(String s) {
+        logger.info(s);
+    }
+
+    /**
+     * Calls {@link org.slf4j.Logger#warn(String)}.
+     */
+    @Override
+    public void warn(String s) {
+        logger.warn(s);
+    }
+
+    /**
+     * Calls {@link org.slf4j.Logger#error(String)}.
+     */
+    @Override
+    public void error(String s) {
+        logger.error(s);
+    }
 }

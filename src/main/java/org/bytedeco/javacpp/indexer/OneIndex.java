@@ -19,7 +19,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp.indexer;
 
 /**
@@ -29,28 +28,42 @@ package org.bytedeco.javacpp.indexer;
  */
 public class OneIndex extends Index {
 
-    /** Constructor to set the {@link #sizes}. */
+    /**
+     * Constructor to set the {@link #sizes}.
+     */
     public OneIndex(long size) {
         super(size);
     }
 
-    /** Returns {@code i}. */
-    @Override public long index(long i) {
+    /**
+     * Returns {@code i}.
+     */
+    @Override
+    public long index(long i) {
         return i;
     }
 
-    /** Throws {@code new UnsupportedOperationException()}. */
-    @Override public long index(long i, long j) {
+    /**
+     * Throws {@code new UnsupportedOperationException()}.
+     */
+    @Override
+    public long index(long i, long j) {
         throw new UnsupportedOperationException();
     }
 
-    /** Throws {@code new UnsupportedOperationException()}. */
-    @Override public long index(long i, long j, long k) {
+    /**
+     * Throws {@code new UnsupportedOperationException()}.
+     */
+    @Override
+    public long index(long i, long j, long k) {
         throw new UnsupportedOperationException();
     }
 
-    /** Returns {@code indices[0]} if {@code indices.length == 1} or throws {@code new UnsupportedOperationException()}. */
-    @Override public long index(long... indices) {
+    /**
+     * Returns {@code indices[0]} if {@code indices.length == 1} or throws {@code new UnsupportedOperationException()}.
+     */
+    @Override
+    public long index(long... indices) {
         if (indices.length == 1) {
             return indices[0];
         }

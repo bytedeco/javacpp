@@ -19,7 +19,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp.tools;
 
 import java.util.ArrayList;
@@ -32,7 +31,9 @@ class Templates {
 
     static final Pattern templatePattern = Pattern.compile("<[^<>=]*>");
 
-    /** Remove template arguments from s, taking care of nested templates, default arguments (xxx<>), operator <=>, ->, etc... */
+    /**
+     * Remove template arguments from s, taking care of nested templates, default arguments (xxx<>), operator <=>, ->, etc...
+     */
     static String strip(String s) {
         Matcher m;
         do {
@@ -42,15 +43,19 @@ class Templates {
         return s;
     }
 
-    /** Returns {@code strip(s).length() == s.length()}. */
+    /**
+     * Returns {@code strip(s).length() == s.length()}.
+     */
     static boolean notExists(String s) {
         return strip(s).length() == s.length();
     }
 
-    /** Split s at ::, but taking care of qualified template arguments */
+    /**
+     * Split s at ::, but taking care of qualified template arguments
+     */
     static List<String> splitNamespace(String s) {
         String sTemplatesMasked = s;
-        for (;;) {
+        for (; ; ) {
             Matcher m = templatePattern.matcher(sTemplatesMasked);
             if (m.find()) {
                 char[] c = new char[m.end() - m.start()];
@@ -62,7 +67,7 @@ class Templates {
         }
         ArrayList<String> comps = new ArrayList<>();
         int start = 0;
-        for (;;) {
+        for (; ; ) {
             int i = sTemplatesMasked.indexOf("::", start);
             if (i >= 0) {
                 comps.add(s.substring(start, i));

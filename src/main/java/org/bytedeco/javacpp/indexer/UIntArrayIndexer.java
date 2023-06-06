@@ -19,7 +19,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp.indexer;
 
 /**
@@ -28,103 +27,145 @@ package org.bytedeco.javacpp.indexer;
  * @author Samuel Audet
  */
 public class UIntArrayIndexer extends UIntIndexer {
-    /** The backing array. */
+
+    /**
+     * The backing array.
+     */
     protected int[] array;
 
-    /** Calls {@code UIntArrayIndexer(array, Index.create(array.length))}. */
+    /**
+     * Calls {@code UIntArrayIndexer(array, Index.create(array.length))}.
+     */
     public UIntArrayIndexer(int[] array) {
         this(array, Index.create(array.length));
     }
 
-    /** Calls {@code UIntArrayIndexer(array, Index.create(sizes))}. */
+    /**
+     * Calls {@code UIntArrayIndexer(array, Index.create(sizes))}.
+     */
     public UIntArrayIndexer(int[] array, long... sizes) {
         this(array, Index.create(sizes));
     }
 
-    /** Calls {@code UIntArrayIndexer(array, Index.create(sizes, strides))}. */
+    /**
+     * Calls {@code UIntArrayIndexer(array, Index.create(sizes, strides))}.
+     */
     public UIntArrayIndexer(int[] array, long[] sizes, long[] strides) {
         this(array, Index.create(sizes, strides));
     }
 
-    /** Constructor to set the {@link #array} and {@link #index}. */
+    /**
+     * Constructor to set the {@link #array} and {@link #index}.
+     */
     public UIntArrayIndexer(int[] array, Index index) {
         super(index);
         this.array = array;
     }
 
-    @Override public int[] array() {
+    @Override
+    public int[] array() {
         return array;
     }
 
-    @Override public UIntIndexer reindex(Index index) {
+    @Override
+    public UIntIndexer reindex(Index index) {
         return new UIntArrayIndexer(array, index);
     }
 
-    @Override public long get(long i) {
-        return array[(int)index(i)] & 0xFFFFFFFFL;
+    @Override
+    public long get(long i) {
+        return array[(int) index(i)] & 0xFFFFFFFFL;
     }
-    @Override public UIntIndexer get(long i, long[] m, int offset, int length) {
+
+    @Override
+    public UIntIndexer get(long i, long[] m, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            m[offset + n] = array[(int)index(i) + n] & 0xFFFFFFFFL;
-        }
-        return this;
-    }
-    @Override public long get(long i, long j) {
-        return array[(int)index(i, j)] & 0xFFFFFFFFL;
-    }
-    @Override public UIntIndexer get(long i, long j, long[] m, int offset, int length) {
-        for (int n = 0; n < length; n++) {
-            m[offset + n] = array[(int)index(i, j) + n] & 0xFFFFFFFFL;
-        }
-        return this;
-    }
-    @Override public long get(long i, long j, long k) {
-        return array[(int)index(i, j, k)] & 0xFFFFFFFFL;
-    }
-    @Override public long get(long... indices) {
-        return array[(int)index(indices)] & 0xFFFFFFFFL;
-    }
-    @Override public UIntIndexer get(long[] indices, long[] m, int offset, int length) {
-        for (int n = 0; n < length; n++) {
-            m[offset + n] = array[(int)index(indices) + n] & 0xFFFFFFFFL;
+            m[offset + n] = array[(int) index(i) + n] & 0xFFFFFFFFL;
         }
         return this;
     }
 
-    @Override public UIntIndexer put(long i, long n) {
-        array[(int)index(i)] = (int)n;
-        return this;
+    @Override
+    public long get(long i, long j) {
+        return array[(int) index(i, j)] & 0xFFFFFFFFL;
     }
-    @Override public UIntIndexer put(long i, long[] m, int offset, int length) {
+
+    @Override
+    public UIntIndexer get(long i, long j, long[] m, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            array[(int)index(i) + n] = (int)m[offset + n];
-        }
-        return this;
-    }
-    @Override public UIntIndexer put(long i, long j, long n) {
-        array[(int)index(i, j)] = (int)n;
-        return this;
-    }
-    @Override public UIntIndexer put(long i, long j, long[] m, int offset, int length) {
-        for (int n = 0; n < length; n++) {
-            array[(int)index(i, j) + n] = (int)m[offset + n];
-        }
-        return this;
-    }
-    @Override public UIntIndexer put(long i, long j, long k, long n) {
-        array[(int)index(i, j, k)] = (int)n;
-        return this;
-    }
-    @Override public UIntIndexer put(long[] indices, long n) {
-        array[(int)index(indices)] = (int)n;
-        return this;
-    }
-    @Override public UIntIndexer put(long[] indices, long[] m, int offset, int length) {
-        for (int n = 0; n < length; n++) {
-            array[(int)index(indices) + n] = (int)m[offset + n];
+            m[offset + n] = array[(int) index(i, j) + n] & 0xFFFFFFFFL;
         }
         return this;
     }
 
-    @Override public void release() { array = null; }
+    @Override
+    public long get(long i, long j, long k) {
+        return array[(int) index(i, j, k)] & 0xFFFFFFFFL;
+    }
+
+    @Override
+    public long get(long... indices) {
+        return array[(int) index(indices)] & 0xFFFFFFFFL;
+    }
+
+    @Override
+    public UIntIndexer get(long[] indices, long[] m, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            m[offset + n] = array[(int) index(indices) + n] & 0xFFFFFFFFL;
+        }
+        return this;
+    }
+
+    @Override
+    public UIntIndexer put(long i, long n) {
+        array[(int) index(i)] = (int) n;
+        return this;
+    }
+
+    @Override
+    public UIntIndexer put(long i, long[] m, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            array[(int) index(i) + n] = (int) m[offset + n];
+        }
+        return this;
+    }
+
+    @Override
+    public UIntIndexer put(long i, long j, long n) {
+        array[(int) index(i, j)] = (int) n;
+        return this;
+    }
+
+    @Override
+    public UIntIndexer put(long i, long j, long[] m, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            array[(int) index(i, j) + n] = (int) m[offset + n];
+        }
+        return this;
+    }
+
+    @Override
+    public UIntIndexer put(long i, long j, long k, long n) {
+        array[(int) index(i, j, k)] = (int) n;
+        return this;
+    }
+
+    @Override
+    public UIntIndexer put(long[] indices, long n) {
+        array[(int) index(indices)] = (int) n;
+        return this;
+    }
+
+    @Override
+    public UIntIndexer put(long[] indices, long[] m, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            array[(int) index(indices) + n] = (int) m[offset + n];
+        }
+        return this;
+    }
+
+    @Override
+    public void release() {
+        array = null;
+    }
 }

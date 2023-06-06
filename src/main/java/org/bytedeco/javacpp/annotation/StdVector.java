@@ -16,11 +16,15 @@ import org.bytedeco.javacpp.tools.Generator;
  *
  * @author Samuel Audet
  */
-@Documented @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD, ElementType.PARAMETER})
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ ElementType.METHOD, ElementType.PARAMETER })
 @Adapter("VectorAdapter")
 public @interface StdVector {
-    /** The template type of {@code VectorAdapter}. If not specified, it is
-     *  inferred from the value type of the {@link Pointer} or Java array. */
+
+    /**
+     * The template type of {@code VectorAdapter}. If not specified, it is
+     *  inferred from the value type of the {@link Pointer} or Java array.
+     */
     String value() default "";
 }

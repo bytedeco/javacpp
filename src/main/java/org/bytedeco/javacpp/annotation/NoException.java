@@ -19,9 +19,13 @@ import org.bytedeco.javacpp.tools.Generator;
  *
  * @author Samuel Audet
  */
-@Documented @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE, ElementType.METHOD})
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ ElementType.TYPE, ElementType.METHOD })
 public @interface NoException {
-    /** On override, indicates whether to use the C++ noexcept specifier or not. */
+
+    /**
+     * On override, indicates whether to use the C++ noexcept specifier or not.
+     */
     boolean value() default false;
 }

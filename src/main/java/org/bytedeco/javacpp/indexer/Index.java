@@ -19,7 +19,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp.indexer;
 
 /**
@@ -33,30 +32,38 @@ package org.bytedeco.javacpp.indexer;
  */
 public abstract class Index {
 
-    /** Returns {@code new OneIndex(size)}. */
+    /**
+     * Returns {@code new OneIndex(size)}.
+     */
     public static Index create(long size) {
         return new OneIndex(size);
     }
 
-    /** Returns {@code new StrideIndex(sizes)}. */
+    /**
+     * Returns {@code new StrideIndex(sizes)}.
+     */
     public static Index create(long... sizes) {
         return new StrideIndex(sizes);
     }
 
-    /** Returns {@code new StrideIndex(sizes, strides)}. */
+    /**
+     * Returns {@code new StrideIndex(sizes, strides)}.
+     */
     public static Index create(long[] sizes, long[] strides) {
         return new StrideIndex(sizes, strides);
     }
 
-    /** Returns {@code new HyperslabIndex(sizes, selectionOffsets, selectionStrides, selectionCounts, selectionBlocks)}. */
-    public static Index create(long[] sizes, long[] selectionOffsets, long[] selectionStrides,
-            long[] selectionCounts, long[] selectionBlocks) {
+    /**
+     * Returns {@code new HyperslabIndex(sizes, selectionOffsets, selectionStrides, selectionCounts, selectionBlocks)}.
+     */
+    public static Index create(long[] sizes, long[] selectionOffsets, long[] selectionStrides, long[] selectionCounts, long[] selectionBlocks) {
         return new HyperslabIndex(sizes, selectionOffsets, selectionStrides, selectionCounts, selectionBlocks);
     }
 
-    /** Returns {@code new HyperslabIndex(sizes, strides, selectionOffsets, selectionStrides, selectionCounts, selectionBlocks)}. */
-    public static Index create(long[] sizes, long[] strides, long[] selectionOffsets, long[] selectionStrides,
-            long[] selectionCounts, long[] selectionBlocks) {
+    /**
+     * Returns {@code new HyperslabIndex(sizes, strides, selectionOffsets, selectionStrides, selectionCounts, selectionBlocks)}.
+     */
+    public static Index create(long[] sizes, long[] strides, long[] selectionOffsets, long[] selectionStrides, long[] selectionCounts, long[] selectionBlocks) {
         return new HyperslabIndex(sizes, strides, selectionOffsets, selectionStrides, selectionCounts, selectionBlocks);
     }
 
@@ -66,39 +73,53 @@ public abstract class Index {
      */
     protected final long[] sizes;
 
-    /** Constructor to set the {@link #sizes}. */
+    /**
+     * Constructor to set the {@link #sizes}.
+     */
     public Index(long... sizes) {
         this.sizes = sizes;
     }
 
-    /** Returns {@code sizes.length}. */
+    /**
+     * Returns {@code sizes.length}.
+     */
     public int rank() {
         return sizes.length;
     }
 
-    /** Returns {@link #sizes}. */
+    /**
+     * Returns {@link #sizes}.
+     */
     public long[] sizes() {
         return sizes;
     }
 
-    /** Returns {@code sizes[i]}. */
+    /**
+     * Returns {@code sizes[i]}.
+     */
     public long size(int i) {
         return sizes[i];
     }
 
-    /** Returns {@code index(new long[] {i})}. */
+    /**
+     * Returns {@code index(new long[] {i})}.
+     */
     public long index(long i) {
-        return index(new long[] {i});
+        return index(new long[] { i });
     }
 
-    /** Returns {@code index(new long[] {i, j})}. */
+    /**
+     * Returns {@code index(new long[] {i, j})}.
+     */
     public long index(long i, long j) {
-        return index(new long[] {i, j});
+        return index(new long[] { i, j });
     }
 
-    /** Returns {@code index(new long[] {i, j, k})}. */
+    /**
+     * Returns {@code index(new long[] {i, j, k})}.
+     */
     public long index(long i, long j, long k) {
-        return index(new long[] {i, j, k});
+        return index(new long[] { i, j, k });
     }
 
     /**

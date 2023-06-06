@@ -19,7 +19,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp.tools;
 
 import java.io.File;
@@ -29,10 +28,10 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 
 /**
- *
  * @author Samuel Audet
  */
 public class EncodingFileWriter extends OutputStreamWriter {
+
     String newline = "\n";
 
     public EncodingFileWriter(File file, String newline) throws IOException {
@@ -49,7 +48,8 @@ public class EncodingFileWriter extends OutputStreamWriter {
         }
     }
 
-    @Override public Writer append(CharSequence text) throws IOException {
-        return super.append(((String)text).replace("\n", newline).replace("\\u", "\\u005Cu"));
+    @Override
+    public Writer append(CharSequence text) throws IOException {
+        return super.append(((String) text).replace("\n", newline).replace("\\u", "\\u005Cu"));
     }
 }

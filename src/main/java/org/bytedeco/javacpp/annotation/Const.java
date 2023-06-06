@@ -23,9 +23,13 @@ import org.bytedeco.javacpp.tools.Generator;
  *
  * @author Samuel Audet
  */
-@Documented @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE, ElementType.METHOD, ElementType.PARAMETER})
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ ElementType.TYPE, ElementType.METHOD, ElementType.PARAMETER })
 public @interface Const {
-    /** If {@code true}, applies {@code const} to the value and to the pointer, respectively. */
-    boolean[] value() default {true, false};
+
+    /**
+     * If {@code true}, applies {@code const} to the value and to the pointer, respectively.
+     */
+    boolean[] value() default { true, false };
 }

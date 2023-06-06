@@ -19,32 +19,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp.tools;
 
 /**
- *
  * @author Samuel Audet
  */
 class Type {
-    Type() { }
-    Type(String name) { cppName = javaName = name; }
+
+    Type() {
+    }
+
+    Type(String name) {
+        cppName = javaName = name;
+    }
 
     int indirections = 0;
-    boolean anonymous = false, constExpr = false, constPointer = false, constValue = false, constructor = false,
-            destructor = false, operator = false, simple = false, staticMember = false, using = false,
-            reference = false, rvalue = false, value = false, friend = false, typedef = false, virtual = false;
+
+    boolean anonymous = false, constExpr = false, constPointer = false, constValue = false, constructor = false, destructor = false, operator = false, simple = false, staticMember = false, using = false, reference = false, rvalue = false, value = false, friend = false, typedef = false, virtual = false;
+
     String annotations = "", cppName = "", javaName = "", javaNames[] = null;
+
     Type[] arguments = null;
+
     Attribute[] attributes = null;
 
-    @Override public boolean equals(Object obj) {
+    @Override
+    public boolean equals(Object obj) {
         if (obj == this) {
             return true;
         } else if (obj == null) {
             return false;
         } else if (obj.getClass() == getClass()) {
-            Type other = (Type)obj;
+            Type other = (Type) obj;
             return cppName.equals(other.cppName) && javaName.equals(other.javaName);
         } else {
             return false;

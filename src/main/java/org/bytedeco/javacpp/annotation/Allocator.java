@@ -29,10 +29,14 @@ import org.bytedeco.javacpp.tools.Generator;
  *
  * @author Samuel Audet
  */
-@Documented @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE, ElementType.METHOD})
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ ElementType.TYPE, ElementType.METHOD })
 public @interface Allocator {
-    /** The maximum number of instances that can be allocated in the case of a {@link FunctionPointer} subclass.
-     *  Does not affect the underlying function object or other {@link Pointer} which have no such allocation limits. */
+
+    /**
+     * The maximum number of instances that can be allocated in the case of a {@link FunctionPointer} subclass.
+     *  Does not affect the underlying function object or other {@link Pointer} which have no such allocation limits.
+     */
     int max() default 10;
 }

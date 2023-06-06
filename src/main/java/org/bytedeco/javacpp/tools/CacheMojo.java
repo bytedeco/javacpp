@@ -19,7 +19,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp.tools;
 
 import java.io.File;
@@ -50,15 +49,18 @@ import org.bytedeco.javacpp.Loader;
  *
  * @author Samuel Audet
  */
-@Mojo(name = "cache", defaultPhase = LifecyclePhase.NONE, threadSafe = true,
-        requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
+@Mojo(name = "cache", defaultPhase = LifecyclePhase.NONE, threadSafe = true, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
 public class CacheMojo extends AbstractMojo {
 
-    /** Process only this class or package (suffixed with .* or .**). */
+    /**
+     * Process only this class or package (suffixed with .* or .**).
+     */
     @Parameter(property = "javacpp.classOrPackageName")
     String classOrPackageName = null;
 
-    /** Process only these classes or packages (suffixed with .* or .**). */
+    /**
+     * Process only these classes or packages (suffixed with .* or .**).
+     */
     @Parameter(property = "javacpp.classOrPackageNames")
     String[] classOrPackageNames = null;
 
@@ -76,21 +78,40 @@ public class CacheMojo extends AbstractMojo {
         return string;
     }
 
-    @Override public void execute() throws MojoExecutionException {
+    @Override
+    public void execute() throws MojoExecutionException {
         final Log log = getLog();
         Logger logger = new Logger() {
-            @Override public void debug(String s) { log.debug(s); }
-            @Override public void info (String s) { log.info(s);  }
-            @Override public void warn (String s) { log.warn(s);  }
-            @Override public void error(String s) { log.error(s); }
+
+            @Override
+            public void debug(String s) {
+                log.debug(s);
+            }
+
+            @Override
+            public void info(String s) {
+                log.info(s);
+            }
+
+            @Override
+            public void warn(String s) {
+                log.warn(s);
+            }
+
+            @Override
+            public void error(String s) {
+                log.error(s);
+            }
         };
         // to filter out the classes that cannot contain the Properties annotation we need
         ClassFilter classFilter = new ClassFilter() {
+
             byte[] s = Generator.signature(org.bytedeco.javacpp.annotation.Properties.class).getBytes(StandardCharsets.UTF_8);
-            @Override public boolean keep(String filename, byte[] data) {
+
+            @Override
+            public boolean keep(String filename, byte[] data) {
                 boolean found = false;
-                next:
-                for (int i = 0; i < data.length; i++) {
+                next: for (int i = 0; i < data.length; i++) {
                     for (int j = 0; i + j < data.length && j < s.length; j++) {
                         if (data[i + j] != s[j]) {
                             continue next;
@@ -107,25 +128,23 @@ public class CacheMojo extends AbstractMojo {
             ArrayList<Class> classes = new ArrayList<Class>();
             UserClassLoader classLoader = new UserClassLoader();
             ClassScanner classScanner = new ClassScanner(logger, classes, classLoader, classFilter);
-
             classLoader.addPaths(plugin.getPluginArtifact().getFile().getAbsolutePath());
             for (Artifact a : artifacts) {
                 classLoader.addPaths(a.getFile().getAbsolutePath());
             }
-
             classOrPackageNames = BuildMojo.merge(classOrPackageNames, classOrPackageName);
             if (classOrPackageNames == null || classOrPackageNames.length == 0) {
                 classScanner.addPackage(null, true);
-            } else for (String s : classOrPackageNames) {
-                classScanner.addClassOrPackage(s);
-            }
-
+            } else
+                for (String s : classOrPackageNames) {
+                    classScanner.addClassOrPackage(s);
+                }
             LinkedHashSet<String> packages = new LinkedHashSet<String>();
             for (Class c : classes) {
                 try {
                     Method cachePackage = c.getMethod("cachePackage");
                     logger.info("Caching " + c);
-                    File f = (File)cachePackage.invoke(c);
+                    File f = (File) cachePackage.invoke(c);
                     if (f != null) {
                         packages.add(Loader.getCanonicalPath(f));
                     }
@@ -133,22 +152,18 @@ public class CacheMojo extends AbstractMojo {
                     // assume this class has no associated packages, skip
                 }
             }
-
             Class<?> loader = Class.forName("org.bytedeco.javacpp.Loader", true, classLoader);
             Method load = loader.getMethod("load", Class[].class);
-            String[] filenames = (String[])load.invoke(loader, new Object[] {classes.toArray(new Class[classes.size()])});
-
+            String[] filenames = (String[]) load.invoke(loader, new Object[] { classes.toArray(new Class[classes.size()]) });
             LinkedHashSet<String> paths = new LinkedHashSet<String>();
             for (String filename : filenames) {
                 if (filename != null) {
                     paths.add(new File(filename).getParent());
                 }
             }
-
             System.out.println("PATH=" + join(File.pathSeparator, paths));
             System.out.println("PACKAGEPATH=" + join(File.pathSeparator, packages));
-        } catch (IOException | ClassNotFoundException | NoClassDefFoundError | NoSuchMethodException
-                | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+        } catch (IOException | ClassNotFoundException | NoClassDefFoundError | NoSuchMethodException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
             log.error("Failed to execute JavaCPP Loader: " + e.getMessage());
             throw new MojoExecutionException("Failed to execute JavaCPP Loader", e);
         }

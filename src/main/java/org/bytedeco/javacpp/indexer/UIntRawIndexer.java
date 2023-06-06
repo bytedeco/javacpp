@@ -19,7 +19,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp.indexer;
 
 import org.bytedeco.javacpp.IntPointer;
@@ -31,29 +30,46 @@ import org.bytedeco.javacpp.Pointer;
  * @author Samuel Audet
  */
 public class UIntRawIndexer extends UIntIndexer {
-    /** The instance for the raw memory interface. */
+
+    /**
+     * The instance for the raw memory interface.
+     */
     protected static final Raw RAW = Raw.getInstance();
-    /** The backing pointer. */
+
+    /**
+     * The backing pointer.
+     */
     protected IntPointer pointer;
-    /** Base address and number of elements accessible. */
+
+    /**
+     * Base address and number of elements accessible.
+     */
     final long base, size;
 
-    /** Calls {@code UIntRawIndexer(pointer, Index.create(pointer.limit() - pointer.position()))}. */
+    /**
+     * Calls {@code UIntRawIndexer(pointer, Index.create(pointer.limit() - pointer.position()))}.
+     */
     public UIntRawIndexer(IntPointer pointer) {
         this(pointer, Index.create(pointer.limit() - pointer.position()));
     }
 
-    /** Calls {@code UIntRawIndexer(pointer, Index.create(sizes))}. */
+    /**
+     * Calls {@code UIntRawIndexer(pointer, Index.create(sizes))}.
+     */
     public UIntRawIndexer(IntPointer pointer, long... sizes) {
         this(pointer, Index.create(sizes));
     }
 
-    /** Calls {@code UIntRawIndexer(pointer, Index.create(sizes, strides))}. */
+    /**
+     * Calls {@code UIntRawIndexer(pointer, Index.create(sizes, strides))}.
+     */
     public UIntRawIndexer(IntPointer pointer, long[] sizes, long[] strides) {
         this(pointer, Index.create(sizes, strides));
     }
 
-    /** Constructor to set the {@link #pointer} and {@link #index}. */
+    /**
+     * Constructor to set the {@link #pointer} and {@link #index}.
+     */
     public UIntRawIndexer(IntPointer pointer, Index index) {
         super(index);
         this.pointer = pointer;
@@ -61,42 +77,58 @@ public class UIntRawIndexer extends UIntIndexer {
         this.size = pointer.limit() - pointer.position();
     }
 
-    @Override public Pointer pointer() {
+    @Override
+    public Pointer pointer() {
         return pointer;
     }
 
-    @Override public UIntIndexer reindex(Index index) {
+    @Override
+    public UIntIndexer reindex(Index index) {
         return new UIntRawIndexer(pointer, index);
     }
 
     public long getRaw(long i) {
         return RAW.getInt(base + checkIndex(i, size) * VALUE_BYTES) & 0xFFFFFFFFL;
     }
-    @Override public long get(long i) {
+
+    @Override
+    public long get(long i) {
         return getRaw(index(i));
     }
-    @Override public UIntIndexer get(long i, long[] m, int offset, int length) {
+
+    @Override
+    public UIntIndexer get(long i, long[] m, int offset, int length) {
         for (int n = 0; n < length; n++) {
             m[offset + n] = getRaw(index(i) + n) & 0xFFFFFFFFL;
         }
         return this;
     }
-    @Override public long get(long i, long j) {
+
+    @Override
+    public long get(long i, long j) {
         return getRaw(index(i, j)) & 0xFFFFFFFFL;
     }
-    @Override public UIntIndexer get(long i, long j, long[] m, int offset, int length) {
+
+    @Override
+    public UIntIndexer get(long i, long j, long[] m, int offset, int length) {
         for (int n = 0; n < length; n++) {
             m[offset + n] = getRaw(index(i, j) + n) & 0xFFFFFFFFL;
         }
         return this;
     }
-    @Override public long get(long i, long j, long k) {
+
+    @Override
+    public long get(long i, long j, long k) {
         return getRaw(index(i, j, k)) & 0xFFFFFFFFL;
     }
-    @Override public long get(long... indices) {
+
+    @Override
+    public long get(long... indices) {
         return getRaw(index(indices)) & 0xFFFFFFFFL;
     }
-    @Override public UIntIndexer get(long[] indices, long[] m, int offset, int length) {
+
+    @Override
+    public UIntIndexer get(long[] indices, long[] m, int offset, int length) {
         for (int n = 0; n < length; n++) {
             m[offset + n] = getRaw(index(indices) + n) & 0xFFFFFFFFL;
         }
@@ -104,42 +136,59 @@ public class UIntRawIndexer extends UIntIndexer {
     }
 
     public UIntIndexer putRaw(long i, long n) {
-        RAW.putInt(base + checkIndex(i, size) * VALUE_BYTES, (int)n);
+        RAW.putInt(base + checkIndex(i, size) * VALUE_BYTES, (int) n);
         return this;
     }
-    @Override public UIntIndexer put(long i, long n) {
+
+    @Override
+    public UIntIndexer put(long i, long n) {
         return putRaw(index(i), n);
     }
-    @Override public UIntIndexer put(long i, long[] m, int offset, int length) {
+
+    @Override
+    public UIntIndexer put(long i, long[] m, int offset, int length) {
         for (int n = 0; n < length; n++) {
             putRaw(index(i) + n, m[offset + n]);
         }
         return this;
     }
-    @Override public UIntIndexer put(long i, long j, long n) {
+
+    @Override
+    public UIntIndexer put(long i, long j, long n) {
         putRaw(index(i, j), n);
         return this;
     }
-    @Override public UIntIndexer put(long i, long j, long[] m, int offset, int length) {
+
+    @Override
+    public UIntIndexer put(long i, long j, long[] m, int offset, int length) {
         for (int n = 0; n < length; n++) {
             putRaw(index(i, j) + n, m[offset + n]);
         }
         return this;
     }
-    @Override public UIntIndexer put(long i, long j, long k, long n) {
+
+    @Override
+    public UIntIndexer put(long i, long j, long k, long n) {
         putRaw(index(i, j, k), n);
         return this;
     }
-    @Override public UIntIndexer put(long[] indices, long n) {
+
+    @Override
+    public UIntIndexer put(long[] indices, long n) {
         putRaw(index(indices), n);
         return this;
     }
-    @Override public UIntIndexer put(long[] indices, long[] m, int offset, int length) {
+
+    @Override
+    public UIntIndexer put(long[] indices, long[] m, int offset, int length) {
         for (int n = 0; n < length; n++) {
             putRaw(index(indices) + n, m[offset + n]);
         }
         return this;
     }
 
-    @Override public void release() { pointer = null; }
+    @Override
+    public void release() {
+        pointer = null;
+    }
 }

@@ -19,7 +19,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp.indexer;
 
 /**
@@ -28,103 +27,145 @@ package org.bytedeco.javacpp.indexer;
  * @author Samuel Audet
  */
 public class DoubleArrayIndexer extends DoubleIndexer {
-    /** The backing array. */
+
+    /**
+     * The backing array.
+     */
     protected double[] array;
 
-    /** Calls {@code DoubleArrayIndexer(array, Index.create(array.length))}. */
+    /**
+     * Calls {@code DoubleArrayIndexer(array, Index.create(array.length))}.
+     */
     public DoubleArrayIndexer(double[] array) {
         this(array, Index.create(array.length));
     }
 
-    /** Calls {@code DoubleArrayIndexer(array, Index.create(sizes))}. */
+    /**
+     * Calls {@code DoubleArrayIndexer(array, Index.create(sizes))}.
+     */
     public DoubleArrayIndexer(double[] array, long... sizes) {
         this(array, Index.create(sizes));
     }
 
-    /** Calls {@code DoubleArrayIndexer(array, Index.create(sizes, strides))}. */
+    /**
+     * Calls {@code DoubleArrayIndexer(array, Index.create(sizes, strides))}.
+     */
     public DoubleArrayIndexer(double[] array, long[] sizes, long[] strides) {
         this(array, Index.create(sizes, strides));
     }
 
-    /** Constructor to set the {@link #array} and {@link #index}. */
+    /**
+     * Constructor to set the {@link #array} and {@link #index}.
+     */
     public DoubleArrayIndexer(double[] array, Index index) {
         super(index);
         this.array = array;
     }
 
-    @Override public double[] array() {
+    @Override
+    public double[] array() {
         return array;
     }
 
-    @Override public DoubleIndexer reindex(Index index) {
+    @Override
+    public DoubleIndexer reindex(Index index) {
         return new DoubleArrayIndexer(array, index);
     }
 
-    @Override public double get(long i) {
-        return array[(int)index(i)];
+    @Override
+    public double get(long i) {
+        return array[(int) index(i)];
     }
-    @Override public DoubleIndexer get(long i, double[] d, int offset, int length) {
+
+    @Override
+    public DoubleIndexer get(long i, double[] d, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            d[offset + n] = array[(int)index(i) + n];
-        }
-        return this;
-    }
-    @Override public double get(long i, long j) {
-        return array[(int)index(i, j)];
-    }
-    @Override public DoubleIndexer get(long i, long j, double[] d, int offset, int length) {
-        for (int n = 0; n < length; n++) {
-            d[offset + n] = array[(int)index(i, j) + n];
-        }
-        return this;
-    }
-    @Override public double get(long i, long j, long k) {
-        return array[(int)index(i, j, k)];
-    }
-    @Override public double get(long... indices) {
-        return array[(int)index(indices)];
-    }
-    @Override public DoubleIndexer get(long[] indices, double[] d, int offset, int length) {
-        for (int n = 0; n < length; n++) {
-            d[offset + n] = array[(int)index(indices) + n];
+            d[offset + n] = array[(int) index(i) + n];
         }
         return this;
     }
 
-    @Override public DoubleIndexer put(long i, double d) {
-        array[(int)index(i)] = d;
-        return this;
+    @Override
+    public double get(long i, long j) {
+        return array[(int) index(i, j)];
     }
-    @Override public DoubleIndexer put(long i, double[] d, int offset, int length) {
+
+    @Override
+    public DoubleIndexer get(long i, long j, double[] d, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            array[(int)index(i) + n] = d[offset + n];
-        }
-        return this;
-    }
-    @Override public DoubleIndexer put(long i, long j, double d) {
-        array[(int)index(i, j)] = d;
-        return this;
-    }
-    @Override public DoubleIndexer put(long i, long j, double[] d, int offset, int length) {
-        for (int n = 0; n < length; n++) {
-            array[(int)index(i, j) + n] = d[offset + n];
-        }
-        return this;
-    }
-    @Override public DoubleIndexer put(long i, long j, long k, double d) {
-        array[(int)index(i, j, k)] = d;
-        return this;
-    }
-    @Override public DoubleIndexer put(long[] indices, double d) {
-        array[(int)index(indices)] = d;
-        return this;
-    }
-    @Override public DoubleIndexer put(long[] indices, double[] d, int offset, int length) {
-        for (int n = 0; n < length; n++) {
-            array[(int)index(indices) + n] = d[offset + n];
+            d[offset + n] = array[(int) index(i, j) + n];
         }
         return this;
     }
 
-    @Override public void release() { array = null; }
+    @Override
+    public double get(long i, long j, long k) {
+        return array[(int) index(i, j, k)];
+    }
+
+    @Override
+    public double get(long... indices) {
+        return array[(int) index(indices)];
+    }
+
+    @Override
+    public DoubleIndexer get(long[] indices, double[] d, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            d[offset + n] = array[(int) index(indices) + n];
+        }
+        return this;
+    }
+
+    @Override
+    public DoubleIndexer put(long i, double d) {
+        array[(int) index(i)] = d;
+        return this;
+    }
+
+    @Override
+    public DoubleIndexer put(long i, double[] d, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            array[(int) index(i) + n] = d[offset + n];
+        }
+        return this;
+    }
+
+    @Override
+    public DoubleIndexer put(long i, long j, double d) {
+        array[(int) index(i, j)] = d;
+        return this;
+    }
+
+    @Override
+    public DoubleIndexer put(long i, long j, double[] d, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            array[(int) index(i, j) + n] = d[offset + n];
+        }
+        return this;
+    }
+
+    @Override
+    public DoubleIndexer put(long i, long j, long k, double d) {
+        array[(int) index(i, j, k)] = d;
+        return this;
+    }
+
+    @Override
+    public DoubleIndexer put(long[] indices, double d) {
+        array[(int) index(indices)] = d;
+        return this;
+    }
+
+    @Override
+    public DoubleIndexer put(long[] indices, double[] d, int offset, int length) {
+        for (int n = 0; n < length; n++) {
+            array[(int) index(indices) + n] = d[offset + n];
+        }
+        return this;
+    }
+
+    @Override
+    public void release() {
+        array = null;
+    }
 }

@@ -19,7 +19,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp.tools;
 
 import java.io.IOException;
@@ -29,32 +28,48 @@ import java.util.HashSet;
 import java.util.List;
 
 /**
- *
  * @author Samuel Audet
  */
 class TokenIndexer {
+
     TokenIndexer(InfoMap infoMap, Token[] array, boolean isCFile) {
         this.infoMap = infoMap;
         this.array = array;
         this.isCFile = isCFile;
     }
 
-    /** Set to true to disable temporarily the preprocessor. */
+    /**
+     * Set to true to disable temporarily the preprocessor.
+     */
     boolean raw = false;
-    /** The set of {@link Info} objects to use during preprocessing. */
+
+    /**
+     * The set of {@link Info} objects to use during preprocessing.
+     */
     InfoMap infoMap = null;
-    /** The token of array, modified by the preprocessor as we go. */
+
+    /**
+     * The token of array, modified by the preprocessor as we go.
+     */
     Token[] array = null;
-    /** The current index, in the array of tokens. Used by {@link #get(int)} and {@link #next()}. */
+
+    /**
+     * The current index, in the array of tokens. Used by {@link #get(int)} and {@link #next()}.
+     */
     int index = 0;
-    /** Whether the file came from the C-include path */
+
+    /**
+     * Whether the file came from the C-include path
+     */
     final boolean isCFile;
-    /** Counter for the special predefined {@code __COUNTER__} macro. */
+
+    /**
+     * Counter for the special predefined {@code __COUNTER__} macro.
+     */
     int counter = 0;
 
     Token[] filter(Token[] array, int index) {
-        if (index + 1 < array.length && array[index].match('#') &&
-                array[index + 1].match(Token.IF, Token.IFDEF, Token.IFNDEF)) {
+        if (index + 1 < array.length && array[index].match('#') && array[index + 1].match(Token.IF, Token.IFDEF, Token.IFNDEF)) {
             // copy the array of tokens up to this point
             List<Token> tokens = new ArrayList<Token>();
             for (int i = 0; i < index; i++) {
@@ -82,42 +97,37 @@ class TokenIndexer {
                 // conditionally fill up the new array of tokens
                 if (keyword != null) {
                     index += 2;
-
                     // keep the directive as comment
                     Token comment = new Token();
                     comment.type = Token.COMMENT;
                     comment.spacing = spacing.substring(0, n);
                     comment.value = "// " + spacing.substring(n) + "#" + keyword.spacing + keyword;
                     tokens.add(comment);
-
                     String value = "";
-                    for ( ; index < array.length; index++) {
+                    for (; index < array.length; index++) {
                         if (array[index].spacing.indexOf('\n') >= 0) {
                             break;
                         }
                         if (!array[index].match(Token.COMMENT)) {
                             value += array[index].spacing + array[index];
                         }
-                        comment.value += array[index].match("\n") ? "\n// "
-                                       : array[index].spacing + array[index].toString().replaceAll("\n", "\n// ");
+                        comment.value += array[index].match("\n") ? "\n// " : array[index].spacing + array[index].toString().replaceAll("\n", "\n// ");
                     }
-
                     if (keyword.match(Token.IF, Token.IFDEF, Token.IFNDEF, Token.ELIF)) {
                         define = info == null || !defined;
                         info = infoMap.getFirst(value);
                         if (info != null) {
                             define = keyword.match(Token.IFNDEF) ? !info.define : info.define;
-                        } else try {
-                            define = Integer.decode(value.trim()) != 0;
-                        } catch (NumberFormatException e) {
-                            /* default define */
-                        }
+                        } else
+                            try {
+                                define = Integer.decode(value.trim()) != 0;
+                            } catch (NumberFormatException e) {
+                                /* default define */
+                            }
                     } else if (keyword.match(Token.ELSE)) {
                         define = info == null || !define;
-                    } else if (keyword.match(Token.ENDIF)) {
-                        if (count == 0) {
-                            break;
-                        }
+                    } else if (keyword.match(Token.ENDIF) && count == 0) {
+                        break;
                     }
                 } else if (define) {
                     tokens.add(array[index++]);
@@ -127,7 +137,7 @@ class TokenIndexer {
                 defined = define || defined;
             }
             // copy the rest of the tokens from this point on
-            for ( ; index < array.length; index++) {
+            for (; index < array.length; index++) {
                 tokens.add(array[index]);
             }
             array = tokens.toArray(new Token[tokens.size()]);
@@ -151,9 +161,7 @@ class TokenIndexer {
             if (info != null && info.cppText != null) {
                 try {
                     Tokenizer tokenizer = new Tokenizer(info.cppText, array[index].file, array[index].lineNumber);
-                    if (!tokenizer.nextToken().match('#')
-                            || !tokenizer.nextToken().match(Token.DEFINE)
-                            || !tokenizer.nextToken().match(info.cppNames[0])) {
+                    if (!tokenizer.nextToken().match('#') || !tokenizer.nextToken().match(Token.DEFINE) || !tokenizer.nextToken().match(info.cppNames[0])) {
                         return array;
                     }
                     // copy the array of tokens up to this point
@@ -199,12 +207,12 @@ class TokenIndexer {
                             } else if (count2 == 0 && token2.match(',') && (!varargs || count + 1 < args.length)) {
                                 count++;
                                 continue;
-                            } else if (token2.match('(','[','{')) {
+                            } else if (token2.match('(', '[', '{')) {
                                 count2++;
-                            } else if (token2.match(')',']','}')) {
+                            } else if (token2.match(')', ']', '}')) {
                                 count2--;
                             } else if (token2.match("]]")) {
-                                count2-=2;
+                                count2 -= 2;
                             }
                             if (count < args.length) {
                                 if (args[count] == null) {
@@ -216,7 +224,8 @@ class TokenIndexer {
                         // expand the arguments of the macros as well
                         for (int i = 0; i < args.length; i++) {
                             if (args[i] == null) {
-                                args[i] = Arrays.asList(); // empty varargs
+                                // empty varargs
+                                args[i] = Arrays.asList();
                             } else if (infoMap.containsKey(args[i].get(0).value)) {
                                 args[i] = Arrays.asList(expand(args[i].toArray(new Token[args[i].size()]), 0, alreadyExpanded));
                             }
@@ -282,13 +291,15 @@ class TokenIndexer {
     }
 
     int preprocess(int index, int count) {
-        for ( ; index < array.length; index++) {
+        for (; index < array.length; index++) {
             Token[] a = null;
             HashSet<String> alreadyExpanded = new HashSet<String>();
             while (a != array) {
                 a = array;
-                array = filter(array, index); // conditionals
-                array = expand(array, index, alreadyExpanded); // macros
+                // conditionals
+                array = filter(array, index);
+                // macros
+                array = expand(array, index, alreadyExpanded);
             }
             // skip comments
             if (!array[index].match(Token.COMMENT) && --count < 0) {
@@ -299,26 +310,34 @@ class TokenIndexer {
         HashSet<String> alreadyExpanded = new HashSet<String>();
         while (a != array) {
             a = array;
-            array = filter(array, index); // conditionals
-            array = expand(array, index, alreadyExpanded); // macros
+            // conditionals
+            array = filter(array, index);
+            // macros
+            array = expand(array, index, alreadyExpanded);
         }
         return index;
     }
 
-    /** Returns {@code get(0)}. */
+    /**
+     * Returns {@code get(0)}.
+     */
     Token get() {
         return get(0);
     }
-    /** Returns {@code array[index + i]}. After preprocessing if {@code raw == false}. */
+
+    /**
+     * Returns {@code array[index + i]}. After preprocessing if {@code raw == false}.
+     */
     Token get(int i) {
         int k = raw ? index + i : preprocess(index, i);
-        return k < array.length ? array[k]
-                : array[array.length - 1].match(Token.EOF) ? array[array.length - 1] : Token.EOF;
+        return k < array.length ? array[k] : array[array.length - 1].match(Token.EOF) ? array[array.length - 1] : Token.EOF;
     }
-    /** Increments {@code index} and returns {@code array[index]}. After preprocessing if {@code raw == false}. */
+
+    /**
+     * Increments {@code index} and returns {@code array[index]}. After preprocessing if {@code raw == false}.
+     */
     Token next() {
         index = raw ? index + 1 : preprocess(index, 1);
-        return index < array.length ? array[index]
-                : array[array.length - 1].match(Token.EOF) ? array[array.length - 1] : Token.EOF;
+        return index < array.length ? array[index] : array[array.length - 1].match(Token.EOF) ? array[array.length - 1] : Token.EOF;
     }
 }

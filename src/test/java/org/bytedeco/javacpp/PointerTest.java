@@ -50,31 +50,42 @@ import static org.junit.Assert.*;
  *
  * @author Samuel Audet
  */
-@Platform(define = {"NATIVE_ALLOCATOR malloc", "NATIVE_DEALLOCATOR free"})
+@Platform(define = { "NATIVE_ALLOCATOR malloc", "NATIVE_DEALLOCATOR free" })
 public class PointerTest {
 
     static final int allocatorMax = 11;
-    static final long maxBytes = 1024 * 1024 * 1024; /* 1g */
 
+    static final long maxBytes = 1024 * 1024 * 1024;
+
+    /* 1g */
     @Allocator(max = allocatorMax)
     static class TestFunction extends FunctionPointer {
-        public TestFunction(Pointer p) { super(p); }
-        public TestFunction() { allocate(); }
+
+        public TestFunction(Pointer p) {
+            super(p);
+        }
+
+        public TestFunction() {
+            allocate();
+        }
+
         private native void allocate();
+
         public native int call(String s);
+
         public native Pointer get();
+
         public native TestFunction put(Pointer address);
     }
 
-    @BeforeClass public static void setUpClass() throws Exception {
+    @BeforeClass
+    public static void setUpClass() throws Exception {
         System.out.println("Builder");
         Class c = PointerTest.class;
         Builder builder = new Builder().classesOrPackages(c.getName());
         File[] outputFiles = builder.build();
-
         System.out.println("Loader");
         Loader.load(c);
-
         int totalProcessors = Loader.totalProcessors();
         int totalCores = Loader.totalCores();
         int totalChips = Loader.totalChips();
@@ -82,33 +93,34 @@ public class PointerTest {
         assertTrue(totalProcessors > 0 && totalProcessors >= Runtime.getRuntime().availableProcessors());
         assertTrue(totalCores > 0 && totalCores <= totalProcessors);
         assertTrue(totalChips > 0 && totalChips <= totalCores);
-
         assertNotEquals(null, Loader.getJavaVM());
-
         Pointer globalRef = Loader.newGlobalRef(c);
         assertNotEquals(null, globalRef);
         assertEquals(null, Loader.newGlobalRef(null));
-        assertEquals(c, (Class)Loader.accessGlobalRef(globalRef));
+        assertEquals(c, (Class) Loader.accessGlobalRef(globalRef));
         Loader.deleteGlobalRef(globalRef);
         Loader.deleteGlobalRef(null);
     }
 
-    @Test public void testFunctionPointer() {
+    @Test
+    public void testFunctionPointer() {
         System.out.println("FunctionPointer");
-
         Pointer address = Loader.addressof("strlen");
         assertNotNull(address);
         TestFunction function = new TestFunction().put(address);
         assertEquals(address, function.get());
         assertEquals(5, function.call("12345"));
         function.deallocate();
-
         TestFunction[] functions = new TestFunction[allocatorMax];
         Pointer prevp = new Pointer();
         for (int i = 0; i < allocatorMax; i++) {
             final int n = i;
             functions[i] = new TestFunction() {
-                @Override public int call(String s) { return n; }
+
+                @Override
+                public int call(String s) {
+                    return n;
+                }
             };
             Pointer p = functions[i].get();
             System.out.println(p);
@@ -116,37 +128,46 @@ public class PointerTest {
             assertNotEquals(prevp, p);
             prevp = p;
         }
-
         TestFunction f = new TestFunction() {
-            @Override public int call(String s) { return allocatorMax; }
+
+            @Override
+            public int call(String s) {
+                return getMaxAllocator(s);
+            }
         };
         assertNull(f.get());
-
         for (int i = 0; i < allocatorMax; i++) {
             functions[i].deallocate();
         }
-
         TestFunction f2 = new TestFunction() {
-            @Override public int call(String s) { return allocatorMax; }
+
+            @Override
+            public int call(String s) {
+                return getMaxAllocator(s);
+            }
         };
         assertNotNull(f2.get());
     }
 
     static Object fieldReference;
 
-    @Test public void testPointer() {
+    @Test
+    public void testPointer() {
         System.out.println("Pointer");
         assertEquals(maxBytes, Pointer.maxBytes);
         assertEquals(3, Pointer.maxRetries);
         assertTrue(new Pointer().equals(null));
-        Pointer p = new Pointer() { { address = 0xDEADBEEF; }};
-        assertEquals(p, new Pointer(p));
+        Pointer p = new Pointer() {
 
+            {
+                address = 0xDEADBEEF;
+            }
+        };
+        assertEquals(p, new Pointer(p));
         Pointer p2 = p.getPointer(Pointer.class, 10);
         assertEquals(p.address() + 10, p2.address());
         assertEquals(0, p2.limit());
         assertEquals(0, p2.capacity());
-
         long physicalBytes = Pointer.physicalBytes();
         long totalPhysicalBytes = Pointer.totalPhysicalBytes();
         long availablePhysicalBytes = Pointer.availablePhysicalBytes();
@@ -156,7 +177,6 @@ public class PointerTest {
         assertTrue(physicalBytes > 0);
         assertTrue(totalPhysicalBytes > 0 && physicalBytes < totalPhysicalBytes);
         assertTrue(availablePhysicalBytes > 0 && availablePhysicalBytes < totalPhysicalBytes);
-
         p = Pointer.malloc(1000);
         assertTrue(!p.isNull());
         p = Pointer.calloc(1000, 1000);
@@ -166,17 +186,15 @@ public class PointerTest {
         Pointer.free(p);
     }
 
-    @Test public void testBytePointer() {
+    @Test
+    public void testBytePointer() {
         System.out.println("BytePointer");
-
         int byteSize = Byte.SIZE / 8;
         assertEquals(byteSize, Loader.sizeof(BytePointer.class));
-
         byte[] array = new byte[8192];
         BytePointer pointer = new BytePointer(array);
         assertEquals(array.length, pointer.limit());
         assertEquals(array.length, pointer.capacity());
-
         BytePointer p2 = pointer.getPointer(10);
         assertEquals(pointer.address() + 10, p2.address());
         assertEquals(array.length - 10, p2.limit());
@@ -185,18 +203,15 @@ public class PointerTest {
         assertEquals(pointer.address() + 20, p3.address());
         assertEquals(1 * array.length - 20, p3.limit());
         assertEquals(1 * array.length - 20, p3.capacity());
-
         for (int i = 0; i < array.length; i++) {
-            array[i] = (byte)i;
-            pointer.put(i, (byte)i);
+            array[i] = (byte) i;
+            pointer.put(i, (byte) i);
             assertEquals(array[i], pointer.get(i));
         }
-
         for (int i = 0; i < array.length; i++) {
             pointer.position(i).put(array[i]);
             assertEquals(array[i], pointer.position(i).get());
         }
-
         short shortValue = 0x0102;
         int intValue = 0x01020304;
         long longValue = 0x0102030405060708L;
@@ -217,24 +232,20 @@ public class PointerTest {
         assertEquals(true, pointer.getBool(1));
         assertEquals(shortValue, pointer.getChar(1));
         assertEquals(Loader.sizeof(Pointer.class) == 4 ? intValue : longValue, pointer.getPointerValue(1).address);
-
         byte[] array2 = new byte[array.length];
         pointer.position(0).get(array2);
         assertArrayEquals(array, array2);
-
         ByteBuffer buffer = pointer.position(5 + 7).asBuffer();
         ByteBuffer arrayBuffer = ByteBuffer.wrap(array, 5, array.length - 5);
-        assertTrue(buffer.compareTo((ByteBuffer)arrayBuffer.position(arrayBuffer.position() + 7)) == 0);
+        assertTrue(buffer.compareTo((ByteBuffer) arrayBuffer.position(arrayBuffer.position() + 7)) == 0);
         assertEquals(pointer.address(), new BytePointer(buffer).address());
         assertEquals(pointer.position(), new BytePointer(buffer).position());
         assertEquals(pointer.limit(), new BytePointer(buffer).limit());
         assertEquals(pointer.capacity(), new BytePointer(buffer).capacity());
-
         int offset = 42;
         pointer.put(array, offset, array.length - offset);
         pointer.get(array2, offset, array.length - offset);
         assertArrayEquals(array, array2);
-
         BytePointer pointer2 = new BytePointer(array.length).zero();
         pointer2.position(10).limit(30).fill(0xFF);
         pointer2.position(20).put(pointer.position(20).limit(30));
@@ -244,14 +255,13 @@ public class PointerTest {
             if (i < 10) {
                 assertEquals(0, pointer2.get(i));
             } else if (i < 20) {
-                assertEquals((byte)0xFF, pointer2.get(i));
+                assertEquals((byte) 0xFF, pointer2.get(i));
             } else if (i < 30) {
                 assertEquals(pointer.get(i), pointer2.get(i));
             } else {
                 assertEquals(0, pointer2.get(i));
             }
         }
-
         assertEquals(maxBytes, Pointer.maxBytes);
         int chunks = 8;
         BytePointer[] pointers = new BytePointer[chunks];
@@ -280,17 +290,15 @@ public class PointerTest {
         System.out.println(Pointer.DeallocatorReference.totalBytes + " " + chunkSize * byteSize);
     }
 
-    @Test public void testShortPointer() {
+    @Test
+    public void testShortPointer() {
         System.out.println("ShortPointer");
-
         int shortSize = Short.SIZE / 8;
         assertEquals(shortSize, Loader.sizeof(ShortPointer.class));
-
         short[] array = new short[8192];
         ShortPointer pointer = new ShortPointer(array);
         assertEquals(array.length, pointer.limit());
         assertEquals(array.length, pointer.capacity());
-
         ShortPointer p2 = pointer.getPointer(10);
         assertEquals(pointer.address() + 20, p2.address());
         assertEquals(array.length - 10, p2.limit());
@@ -299,34 +307,28 @@ public class PointerTest {
         assertEquals(pointer.address() + 20, p3.address());
         assertEquals(2 * array.length - 20, p3.limit());
         assertEquals(2 * array.length - 20, p3.capacity());
-
         for (int i = 0; i < array.length; i++) {
-            array[i] = (short)i;
-            pointer.put(i, (short)i);
+            array[i] = (short) i;
+            pointer.put(i, (short) i);
             assertEquals(array[i], pointer.get(i));
         }
-
         for (int i = 0; i < array.length; i++) {
             pointer.position(i).put(array[i]);
             assertEquals(array[i], pointer.position(i).get());
         }
-
         short[] array2 = new short[array.length];
         pointer.position(0).get(array2);
         assertArrayEquals(array, array2);
-
         ShortBuffer buffer = pointer.position(5 + 7).asBuffer();
         ShortBuffer arrayBuffer = ShortBuffer.wrap(array, 5, array.length - 5);
-        assertTrue(buffer.compareTo((ShortBuffer)arrayBuffer.position(arrayBuffer.position() + 7)) == 0);
+        assertTrue(buffer.compareTo((ShortBuffer) arrayBuffer.position(arrayBuffer.position() + 7)) == 0);
         assertEquals(pointer.address() + arrayBuffer.position() * pointer.sizeof(), new ShortPointer(buffer).address());
         assertEquals(pointer.limit() - arrayBuffer.position(), new ShortPointer(buffer).limit());
         assertEquals(pointer.capacity() - arrayBuffer.position(), new ShortPointer(buffer).capacity());
-
         int offset = 42;
         pointer.put(array, offset, array.length - offset);
         pointer.get(array2, offset, array.length - offset);
         assertArrayEquals(array, array2);
-
         ShortPointer pointer2 = new ShortPointer(array.length).zero();
         pointer2.position(10).limit(30).fill(0xFF);
         pointer2.position(20).put(pointer.position(20).limit(30));
@@ -336,14 +338,13 @@ public class PointerTest {
             if (i < 10) {
                 assertEquals(0, pointer2.get(i));
             } else if (i < 20) {
-                assertEquals((short)0xFFFF, pointer2.get(i));
+                assertEquals((short) 0xFFFF, pointer2.get(i));
             } else if (i < 30) {
                 assertEquals(pointer.get(i), pointer2.get(i));
             } else {
                 assertEquals(0, pointer2.get(i));
             }
         }
-
         assertEquals(maxBytes, Pointer.maxBytes);
         int chunks = 8;
         ShortPointer[] pointers = new ShortPointer[chunks];
@@ -372,17 +373,15 @@ public class PointerTest {
         System.out.println(Pointer.DeallocatorReference.totalBytes + " " + chunkSize * shortSize);
     }
 
-    @Test public void testIntPointer() {
+    @Test
+    public void testIntPointer() {
         System.out.println("IntPointer");
-
         int intSize = Integer.SIZE / 8;
         assertEquals(intSize, Loader.sizeof(IntPointer.class));
-
         int[] array = new int[8192];
         IntPointer pointer = new IntPointer(array);
         assertEquals(array.length, pointer.limit());
         assertEquals(array.length, pointer.capacity());
-
         IntPointer p2 = pointer.getPointer(10);
         assertEquals(pointer.address() + 40, p2.address());
         assertEquals(array.length - 10, p2.limit());
@@ -391,34 +390,28 @@ public class PointerTest {
         assertEquals(pointer.address() + 20, p3.address());
         assertEquals(4 * array.length - 20, p3.limit());
         assertEquals(4 * array.length - 20, p3.capacity());
-
         for (int i = 0; i < array.length; i++) {
             array[i] = i;
             pointer.put(i, i);
             assertEquals(array[i], pointer.get(i));
         }
-
         for (int i = 0; i < array.length; i++) {
             pointer.position(i).put(array[i]);
             assertEquals(array[i], pointer.position(i).get());
         }
-
         int[] array2 = new int[array.length];
         pointer.position(0).get(array2);
         assertArrayEquals(array, array2);
-
         IntBuffer buffer = pointer.position(5 + 7).asBuffer();
         IntBuffer arrayBuffer = IntBuffer.wrap(array, 5, array.length - 5);
-        assertTrue(buffer.compareTo((IntBuffer)arrayBuffer.position(arrayBuffer.position() + 7)) == 0);
+        assertTrue(buffer.compareTo((IntBuffer) arrayBuffer.position(arrayBuffer.position() + 7)) == 0);
         assertEquals(pointer.address() + arrayBuffer.position() * pointer.sizeof(), new IntPointer(buffer).address());
         assertEquals(pointer.limit() - arrayBuffer.position(), new IntPointer(buffer).limit());
         assertEquals(pointer.capacity() - arrayBuffer.position(), new IntPointer(buffer).capacity());
-
         int offset = 42;
         pointer.put(array, offset, array.length - offset);
         pointer.get(array2, offset, array.length - offset);
         assertArrayEquals(array, array2);
-
         IntPointer pointer2 = new IntPointer(array.length).zero();
         pointer2.position(10).limit(30).fill(0xFF);
         pointer2.position(20).put(pointer.position(20).limit(30));
@@ -435,7 +428,6 @@ public class PointerTest {
                 assertEquals(0, pointer2.get(i));
             }
         }
-
         assertEquals(maxBytes, Pointer.maxBytes);
         int chunks = 8;
         IntPointer[] pointers = new IntPointer[chunks];
@@ -464,17 +456,15 @@ public class PointerTest {
         System.out.println(Pointer.DeallocatorReference.totalBytes + " " + chunkSize * intSize);
     }
 
-    @Test public void testLongPointer() {
+    @Test
+    public void testLongPointer() {
         System.out.println("LongPointer");
-
         int longSize = Long.SIZE / 8;
         assertEquals(longSize, Loader.sizeof(LongPointer.class));
-
         long[] array = new long[8192];
         LongPointer pointer = new LongPointer(array);
         assertEquals(array.length, pointer.limit());
         assertEquals(array.length, pointer.capacity());
-
         LongPointer p2 = pointer.getPointer(10);
         assertEquals(pointer.address() + 80, p2.address());
         assertEquals(array.length - 10, p2.limit());
@@ -483,34 +473,28 @@ public class PointerTest {
         assertEquals(pointer.address() + 20, p3.address());
         assertEquals(8 * array.length - 20, p3.limit());
         assertEquals(8 * array.length - 20, p3.capacity());
-
         for (int i = 0; i < array.length; i++) {
             array[i] = i;
             pointer.put(i, i);
             assertEquals(array[i], pointer.get(i));
         }
-
         for (int i = 0; i < array.length; i++) {
             pointer.position(i).put(array[i]);
             assertEquals(array[i], pointer.position(i).get());
         }
-
         long[] array2 = new long[array.length];
         pointer.position(0).get(array2);
         assertArrayEquals(array, array2);
-
         LongBuffer buffer = pointer.position(5 + 7).asBuffer();
         LongBuffer arrayBuffer = LongBuffer.wrap(array, 5, array.length - 5);
-        assertTrue(buffer.compareTo((LongBuffer)arrayBuffer.position(arrayBuffer.position() + 7)) == 0);
+        assertTrue(buffer.compareTo((LongBuffer) arrayBuffer.position(arrayBuffer.position() + 7)) == 0);
         assertEquals(pointer.address() + arrayBuffer.position() * pointer.sizeof(), new LongPointer(buffer).address());
         assertEquals(pointer.limit() - arrayBuffer.position(), new LongPointer(buffer).limit());
         assertEquals(pointer.capacity() - arrayBuffer.position(), new LongPointer(buffer).capacity());
-
         int offset = 42;
         pointer.put(array, offset, array.length - offset);
         pointer.get(array2, offset, array.length - offset);
         assertArrayEquals(array, array2);
-
         LongPointer pointer2 = new LongPointer(array.length).zero();
         pointer2.position(10).limit(30).fill(0xFF);
         pointer2.position(20).put(pointer.position(20).limit(30));
@@ -520,14 +504,13 @@ public class PointerTest {
             if (i < 10) {
                 assertEquals(0, pointer2.get(i));
             } else if (i < 20) {
-                assertEquals((long)-1, pointer2.get(i));
+                assertEquals((long) -1, pointer2.get(i));
             } else if (i < 30) {
                 assertEquals(pointer.get(i), pointer2.get(i));
             } else {
                 assertEquals(0, pointer2.get(i));
             }
         }
-
         assertEquals(maxBytes, Pointer.maxBytes);
         int chunks = 8;
         LongPointer[] pointers = new LongPointer[chunks];
@@ -556,17 +539,15 @@ public class PointerTest {
         System.out.println(Pointer.DeallocatorReference.totalBytes + " " + chunkSize * longSize);
     }
 
-    @Test public void testFloatPointer() {
+    @Test
+    public void testFloatPointer() {
         System.out.println("FloatPointer");
-
         int floatSize = Float.SIZE / 8;
         assertEquals(floatSize, Loader.sizeof(FloatPointer.class));
-
         float[] array = new float[8192];
         FloatPointer pointer = new FloatPointer(array);
         assertEquals(array.length, pointer.limit());
         assertEquals(array.length, pointer.capacity());
-
         FloatPointer p2 = pointer.getPointer(10);
         assertEquals(pointer.address() + 40, p2.address());
         assertEquals(array.length - 10, p2.limit());
@@ -575,34 +556,28 @@ public class PointerTest {
         assertEquals(pointer.address() + 20, p3.address());
         assertEquals(4 * array.length - 20, p3.limit());
         assertEquals(4 * array.length - 20, p3.capacity());
-
         for (int i = 0; i < array.length; i++) {
             array[i] = i;
             pointer.put(i, i);
             assertEquals(array[i], pointer.get(i), 0);
         }
-
         for (int i = 0; i < array.length; i++) {
             pointer.position(i).put(array[i]);
             assertEquals(array[i], pointer.position(i).get(), 0);
         }
-
         float[] array2 = new float[array.length];
         pointer.position(0).get(array2);
         assertArrayEquals(array, array2, 0);
-
         FloatBuffer buffer = pointer.position(5 + 7).asBuffer();
         FloatBuffer arrayBuffer = FloatBuffer.wrap(array, 5, array.length - 5);
-        assertTrue(buffer.compareTo((FloatBuffer)arrayBuffer.position(arrayBuffer.position() + 7)) == 0);
+        assertTrue(buffer.compareTo((FloatBuffer) arrayBuffer.position(arrayBuffer.position() + 7)) == 0);
         assertEquals(pointer.address() + arrayBuffer.position() * pointer.sizeof(), new FloatPointer(buffer).address());
         assertEquals(pointer.limit() - arrayBuffer.position(), new FloatPointer(buffer).limit());
         assertEquals(pointer.capacity() - arrayBuffer.position(), new FloatPointer(buffer).capacity());
-
         int offset = 42;
         pointer.put(array, offset, array.length - offset);
         pointer.get(array2, offset, array.length - offset);
         assertArrayEquals(array, array2, 0);
-
         FloatPointer pointer2 = new FloatPointer(array.length).zero();
         pointer2.position(10).limit(30).fill(0xFF);
         pointer2.position(20).put(pointer.position(20).limit(30));
@@ -619,7 +594,6 @@ public class PointerTest {
                 assertEquals(0, pointer2.get(i), 0);
             }
         }
-
         assertEquals(maxBytes, Pointer.maxBytes);
         int chunks = 8;
         FloatPointer[] pointers = new FloatPointer[chunks];
@@ -648,17 +622,15 @@ public class PointerTest {
         System.out.println(Pointer.DeallocatorReference.totalBytes + " " + chunkSize * floatSize);
     }
 
-    @Test public void testDoublePointer() {
+    @Test
+    public void testDoublePointer() {
         System.out.println("DoublePointer");
-
         int doubleSize = Double.SIZE / 8;
         assertEquals(doubleSize, Loader.sizeof(DoublePointer.class));
-
         double[] array = new double[8192];
         DoublePointer pointer = new DoublePointer(array);
         assertEquals(array.length, pointer.limit());
         assertEquals(array.length, pointer.capacity());
-
         DoublePointer p2 = pointer.getPointer(10);
         assertEquals(pointer.address() + 80, p2.address());
         assertEquals(array.length - 10, p2.limit());
@@ -667,34 +639,28 @@ public class PointerTest {
         assertEquals(pointer.address() + 20, p3.address());
         assertEquals(8 * array.length - 20, p3.limit());
         assertEquals(8 * array.length - 20, p3.capacity());
-
         for (int i = 0; i < array.length; i++) {
             array[i] = i;
             pointer.put(i, i);
             assertEquals(array[i], pointer.get(i), 0);
         }
-
         for (int i = 0; i < array.length; i++) {
             pointer.position(i).put(array[i]);
             assertEquals(array[i], pointer.position(i).get(), 0);
         }
-
         double[] array2 = new double[array.length];
         pointer.position(0).get(array2);
         assertArrayEquals(array, array2, 0);
-
         DoubleBuffer buffer = pointer.position(5 + 7).asBuffer();
         DoubleBuffer arrayBuffer = DoubleBuffer.wrap(array, 5, array.length - 5);
-        assertTrue(buffer.compareTo((DoubleBuffer)arrayBuffer.position(arrayBuffer.position() + 7)) == 0);
+        assertTrue(buffer.compareTo((DoubleBuffer) arrayBuffer.position(arrayBuffer.position() + 7)) == 0);
         assertEquals(pointer.address() + arrayBuffer.position() * pointer.sizeof(), new DoublePointer(buffer).address());
         assertEquals(pointer.limit() - arrayBuffer.position(), new DoublePointer(buffer).limit());
         assertEquals(pointer.capacity() - arrayBuffer.position(), new DoublePointer(buffer).capacity());
-
         int offset = 42;
         pointer.put(array, offset, array.length - offset);
         pointer.get(array2, offset, array.length - offset);
         assertArrayEquals(array, array2, 0);
-
         DoublePointer pointer2 = new DoublePointer(array.length).zero();
         pointer2.position(10).limit(30).fill(0xFF);
         pointer2.position(20).put(pointer.position(20).limit(30));
@@ -704,14 +670,13 @@ public class PointerTest {
             if (i < 10) {
                 assertEquals(0, pointer2.get(i), 0);
             } else if (i < 20) {
-                assertEquals(Double.longBitsToDouble((long)-1), pointer2.get(i), 0);
+                assertEquals(Double.longBitsToDouble((long) -1), pointer2.get(i), 0);
             } else if (i < 30) {
                 assertEquals(pointer.get(i), pointer2.get(i), 0);
             } else {
                 assertEquals(0, pointer2.get(i), 0);
             }
         }
-
         assertEquals(maxBytes, Pointer.maxBytes);
         int chunks = 8;
         DoublePointer[] pointers = new DoublePointer[chunks];
@@ -740,17 +705,15 @@ public class PointerTest {
         System.out.println(Pointer.DeallocatorReference.totalBytes + " " + chunkSize * doubleSize);
     }
 
-    @Test public void testCharPointer() {
+    @Test
+    public void testCharPointer() {
         System.out.println("CharPointer");
-
         int charSize = Character.SIZE / 8;
         assertEquals(charSize, Loader.sizeof(CharPointer.class));
-
         char[] array = new char[8192];
         CharPointer pointer = new CharPointer(array);
         assertEquals(array.length, pointer.limit());
         assertEquals(array.length, pointer.capacity());
-
         CharPointer p2 = pointer.getPointer(10);
         assertEquals(pointer.address() + 20, p2.address());
         assertEquals(array.length - 10, p2.limit());
@@ -759,34 +722,28 @@ public class PointerTest {
         assertEquals(pointer.address() + 20, p3.address());
         assertEquals(2 * array.length - 20, p3.limit());
         assertEquals(2 * array.length - 20, p3.capacity());
-
         for (int i = 0; i < array.length; i++) {
-            array[i] = (char)i;
-            pointer.put(i, (char)i);
+            array[i] = (char) i;
+            pointer.put(i, (char) i);
             assertEquals(array[i], pointer.get(i));
         }
-
         for (int i = 0; i < array.length; i++) {
             pointer.position(i).put(array[i]);
             assertEquals(array[i], pointer.position(i).get());
         }
-
         char[] array2 = new char[array.length];
         pointer.position(0).get(array2);
         assertArrayEquals(array, array2);
-
         CharBuffer buffer = pointer.position(5 + 7).asBuffer();
         CharBuffer arrayBuffer = CharBuffer.wrap(array, 5, array.length - 5);
-        assertTrue(buffer.compareTo((CharBuffer)arrayBuffer.position(arrayBuffer.position() + 7)) == 0);
+        assertTrue(buffer.compareTo((CharBuffer) arrayBuffer.position(arrayBuffer.position() + 7)) == 0);
         assertEquals(pointer.address() + arrayBuffer.position() * pointer.sizeof(), new CharPointer(buffer).address());
         assertEquals(pointer.limit() - arrayBuffer.position(), new CharPointer(buffer).limit());
         assertEquals(pointer.capacity() - arrayBuffer.position(), new CharPointer(buffer).capacity());
-
         int offset = 42;
         pointer.put(array, offset, array.length - offset);
         pointer.get(array2, offset, array.length - offset);
         assertArrayEquals(array, array2);
-
         CharPointer pointer2 = new CharPointer(array.length).zero();
         pointer2.position(10).limit(30).fill(0xFF);
         pointer2.position(20).put(pointer.position(20).limit(30));
@@ -796,14 +753,13 @@ public class PointerTest {
             if (i < 10) {
                 assertEquals(0, pointer2.get(i));
             } else if (i < 20) {
-                assertEquals((char)0xFFFF, pointer2.get(i));
+                assertEquals((char) 0xFFFF, pointer2.get(i));
             } else if (i < 30) {
                 assertEquals(pointer.get(i), pointer2.get(i));
             } else {
                 assertEquals(0, pointer2.get(i));
             }
         }
-
         assertEquals(maxBytes, Pointer.maxBytes);
         int chunks = 8;
         CharPointer[] pointers = new CharPointer[chunks];
@@ -832,17 +788,15 @@ public class PointerTest {
         System.out.println(Pointer.DeallocatorReference.totalBytes + " " + chunkSize * charSize);
     }
 
-    @Test public void testBooleanPointer() {
+    @Test
+    public void testBooleanPointer() {
         System.out.println("BooleanPointer");
-
         int booleanSize = 1;
         assertEquals(booleanSize, Loader.sizeof(BooleanPointer.class));
-
         boolean[] array = new boolean[8192];
         BooleanPointer pointer = new BooleanPointer(array);
         assertEquals(array.length, pointer.limit());
         assertEquals(array.length, pointer.capacity());
-
         BooleanPointer p2 = pointer.getPointer(10);
         assertEquals(pointer.address() + 10, p2.address());
         assertEquals(array.length - 10, p2.limit());
@@ -851,33 +805,27 @@ public class PointerTest {
         assertEquals(pointer.address() + 8 * 20, p3.address());
         assertEquals(array.length / 8 - 20, p3.limit());
         assertEquals(array.length / 8 - 20, p3.capacity());
-
         for (int i = 0; i < array.length; i++) {
             array[i] = i % 2 != 0;
             pointer.put(i, i % 2 != 0);
             assertEquals(array[i], pointer.get(i));
         }
-
         for (int i = 0; i < array.length; i++) {
             pointer.position(i).put(array[i]);
             assertEquals(array[i], pointer.position(i).get());
         }
-
         boolean[] array2 = new boolean[array.length];
         pointer.position(0).get(array2);
         assertArrayEquals(array, array2);
-
         ByteBuffer buffer = pointer.asByteBuffer();
         assertEquals(pointer.address(), new BooleanPointer(buffer).address());
         assertEquals(pointer.position(), new BooleanPointer(buffer).position());
         assertEquals(pointer.limit(), new BooleanPointer(buffer).limit());
         assertEquals(pointer.capacity(), new BooleanPointer(buffer).capacity());
-
         int offset = 42;
         pointer.put(array, offset, array.length - offset);
         pointer.get(array2, offset, array.length - offset);
         assertArrayEquals(array, array2);
-
         BooleanPointer pointer2 = new BooleanPointer(array.length).zero();
         pointer2.position(10).limit(30).fill(0xFF);
         pointer2.position(20).put(pointer.position(20).limit(30));
@@ -894,7 +842,6 @@ public class PointerTest {
                 assertEquals(false, pointer2.get(i));
             }
         }
-
         assertEquals(maxBytes, Pointer.maxBytes);
         int chunks = 8;
         BooleanPointer[] pointers = new BooleanPointer[chunks];
@@ -923,17 +870,15 @@ public class PointerTest {
         System.out.println(Pointer.DeallocatorReference.totalBytes + " " + chunkSize * booleanSize);
     }
 
-    @Test public void testPointerPointer() {
+    @Test
+    public void testPointerPointer() {
         System.out.println("PointerPointer");
-
         int pointerSize = Loader.sizeof(Pointer.class);
         assertEquals(pointerSize, Loader.sizeof(PointerPointer.class));
-
         Pointer[] array = new Pointer[8192];
         PointerPointer pointer = new PointerPointer(array);
         assertEquals(array.length, pointer.limit());
         assertEquals(array.length, pointer.capacity());
-
         PointerPointer p2 = pointer.getPointer(10);
         assertEquals(pointer.address() + 10 * pointerSize, p2.address());
         assertEquals(array.length - 10, p2.limit());
@@ -942,38 +887,37 @@ public class PointerTest {
         assertEquals(pointer.address() + 20, p3.address());
         assertEquals(pointerSize * array.length - 20, p3.limit());
         assertEquals(pointerSize * array.length - 20, p3.capacity());
-
         for (int i = 0; i < array.length; i++) {
             final int j = i;
-            Pointer p = new Pointer() { { address = j; } };
+            Pointer p = new Pointer() {
+
+                {
+                    address = j;
+                }
+            };
             array[i] = p;
             pointer.put(i, p);
             assertEquals(array[i], pointer.get(i));
         }
-
         for (int i = 0; i < array.length; i++) {
             pointer.position(i).put(array[i]);
             assertEquals(array[i], pointer.position(i).get());
         }
-
         Pointer[] array2 = new Pointer[array.length];
         for (int i = 0; i < array2.length; i++) {
             array2[i] = pointer.position(0).get(i);
         }
         assertArrayEquals(array, array2);
-
         PointerPointer stringArray = new PointerPointer("one", "two");
         assertEquals(2, stringArray.capacity());
         assertEquals("one", stringArray.getString(0));
         assertEquals("two", stringArray.getString(1));
-
         int offset = 42;
         for (int i = 0; i < array.length - offset; i++) {
             pointer.put(i, array[offset + i]);
             array2[offset + i] = pointer.get(i);
         }
         assertArrayEquals(array, array2);
-
         PointerPointer pointer2 = new PointerPointer(array.length).zero();
         pointer2.position(10).limit(30).fill(0xFF);
         pointer.position(20);
@@ -994,7 +938,6 @@ public class PointerTest {
                 assertNull(pointer2.get(i));
             }
         }
-
         assertEquals(maxBytes, Pointer.maxBytes);
         int chunks = 8;
         PointerPointer[] pointers = new PointerPointer[chunks];
@@ -1023,17 +966,19 @@ public class PointerTest {
         System.out.println(Pointer.DeallocatorReference.totalBytes + " " + chunkSize * pointerSize);
     }
 
-    @Test public void testDeallocator() throws InterruptedException {
+    @Test
+    public void testDeallocator() throws InterruptedException {
         System.out.println("Deallocator");
         System.out.println("maxBytes = " + Pointer.maxBytes());
         System.out.println("maxPhysicalBytes = " + Pointer.maxPhysicalBytes());
-
         final boolean[] failed = { false };
         ExecutorService pool = Executors.newFixedThreadPool(24);
         long time = System.nanoTime();
         for (int i = 0; i < 24; i++) {
             pool.execute(new Runnable() {
-                @Override public void run() {
+
+                @Override
+                public void run() {
                     try {
                         for (int i = 0; i < 2000; i++) {
                             BytePointer p = new BytePointer(2000000);
@@ -1066,18 +1011,16 @@ public class PointerTest {
         System.out.println("Took " + (System.nanoTime() - time) / 1000000 + " ms");
     }
 
-    @Test public void testPointerScope() {
+    @Test
+    public void testPointerScope() {
         System.out.println("PointerScope");
         IntPointer outside = new IntPointer(1);
         IntPointer attached = new IntPointer(1), detached, inside, inside1, inside2, retained1, retained2, inside5;
-
         try (PointerScope scope = new PointerScope()) {
             scope.attach(attached);
-
             detached = new IntPointer(1);
             detached.retainReference();
             scope.detach(detached);
-
             inside = new IntPointer(1);
             try (PointerScope scope1 = new PointerScope()) {
                 inside1 = new IntPointer(1);
@@ -1092,9 +1035,7 @@ public class PointerTest {
             retained2.retainReference();
             inside5 = new IntPointer(1);
         }
-
         IntPointer outside2 = new IntPointer(1);
-
         assertFalse(outside.isNull());
         assertTrue(attached.isNull());
         assertFalse(detached.isNull());
@@ -1105,19 +1046,16 @@ public class PointerTest {
         assertFalse(retained2.isNull());
         assertTrue(inside5.isNull());
         assertFalse(outside2.isNull());
-
         outside.releaseReference();
         detached.releaseReference();
         retained1.releaseReference();
         retained2.releaseReference();
         outside2.releaseReference();
-
         assertTrue(outside.isNull());
         assertTrue(detached.isNull());
         assertTrue(retained1.isNull());
         assertTrue(retained2.isNull());
         assertTrue(outside2.isNull());
-
         IntPointer intPointer;
         FloatPointer floatPointer;
         try (PointerScope globalScope = new PointerScope()) {
@@ -1125,7 +1063,6 @@ public class PointerTest {
             try (PointerScope localScope = new PointerScope(IntPointer.class)) {
                 intPointer = new IntPointer(1);
                 floatPointer = new FloatPointer(1);
-
                 try {
                     System.out.println("Note: IllegalArgumentException should get thrown here and printed below.");
                     localScope.attach(floatPointer);
@@ -1143,10 +1080,10 @@ public class PointerTest {
         assertTrue(floatPointer.isNull());
     }
 
-    @Test public void testParseBytesWithRelativeUnits() {
+    @Test
+    public void testParseBytesWithRelativeUnits() {
         System.out.println("ParseBytesWithRelativeUnits");
         long arbitraryAmountOfMemory = 300000;
-
         assertEquals(0, Pointer.parseBytes("0%", arbitraryAmountOfMemory));
         assertEquals(arbitraryAmountOfMemory * 10 / 100, Pointer.parseBytes("10%", arbitraryAmountOfMemory));
         try {
@@ -1158,27 +1095,26 @@ public class PointerTest {
         }
     }
 
-    @Test public void testNoFileBytes() throws Exception {
+    @Test
+    public void testNoFileBytes() throws Exception {
         System.out.println("NoFileBytes");
-
         System.gc();
         Thread.sleep(100);
         long bytesBefore = Pointer.physicalBytes();
-
         Path file = Files.createTempFile("javacpp", "tmp");
-        FileChannel channel = FileChannel.open(file,
-                StandardOpenOption.CREATE, StandardOpenOption.DELETE_ON_CLOSE,
-                StandardOpenOption.READ, StandardOpenOption.WRITE);
+        FileChannel channel = FileChannel.open(file, StandardOpenOption.CREATE, StandardOpenOption.DELETE_ON_CLOSE, StandardOpenOption.READ, StandardOpenOption.WRITE);
         MappedByteBuffer buffer = channel.map(FileChannel.MapMode.READ_WRITE, 0, 100_000_000);
         for (int i = 0; i < 100_000_000; i++) {
-            buffer.put(i, (byte)i);
+            buffer.put(i, (byte) i);
         }
-
         System.gc();
         Thread.sleep(100);
         long bytesAfter = Pointer.physicalBytes();
-
         System.out.println(bytesBefore + " " + bytesAfter);
         assertTrue(Math.abs(bytesAfter - bytesBefore) < 100_000_000 + buffer.get(0));
+    }
+
+    public int getMaxAllocator(String s) {
+        return allocatorMax;
     }
 }

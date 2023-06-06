@@ -19,7 +19,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp;
 
 import java.io.File;
@@ -78,23 +77,35 @@ import org.bytedeco.javacpp.tools.Logger;
  */
 @org.bytedeco.javacpp.annotation.Properties(inherit = org.bytedeco.javacpp.presets.javacpp.class)
 public class Loader {
+
     private static final Logger logger = Logger.create(Loader.class);
 
-    /** Value created out of "java.vm.name", "os.name", and "os.arch" system properties.
-     *  Returned by {@link #getPlatform()} and initialized with {@link Detector#getPlatform()}. */
+    /**
+     * Value created out of "java.vm.name", "os.name", and "os.arch" system properties.
+     *  Returned by {@link #getPlatform()} and initialized with {@link Detector#getPlatform()}.
+     */
     private static final String PLATFORM = Detector.getPlatform();
+
     private static final boolean WINDOWS = PLATFORM.startsWith("windows");
 
-    /** Default platform properties loaded and returned by {@link #loadProperties()}. */
+    /**
+     * Default platform properties loaded and returned by {@link #loadProperties()}.
+     */
     private static Properties platformProperties = null;
-    /** The stack of classes currently being loaded to support more than one class loader. */
+
+    /**
+     * The stack of classes currently being loaded to support more than one class loader.
+     */
     private static final ThreadLocal<Deque<Class<?>>> classStack = new ThreadLocal<Deque<Class<?>>>() {
-        @Override protected Deque<Class<?>> initialValue() {
+
+        @Override
+        protected Deque<Class<?>> initialValue() {
             return new ArrayDeque<Class<?>>();
         }
     };
 
     public static class Detector {
+
         /**
          * Returns either the value of the "org.bytedeco.javacpp.platform"
          * system property, or the host platform when the former is not set.
@@ -103,8 +114,8 @@ public class Loader {
          */
         public static String getPlatform() {
             String jvmName = System.getProperty("java.vm.name", "").toLowerCase();
-            String osName  = System.getProperty("os.name", "").toLowerCase();
-            String osArch  = System.getProperty("os.arch", "").toLowerCase();
+            String osName = System.getProperty("os.name", "").toLowerCase();
+            String osArch = System.getProperty("os.arch", "").toLowerCase();
             String abiType = System.getProperty("sun.arch.abi", "").toLowerCase();
             String libPath = System.getProperty("sun.boot.library.path", "").toLowerCase();
             if (jvmName.startsWith("dalvik") && osName.startsWith("linux")) {
@@ -164,10 +175,13 @@ public class Loader {
         return WINDOWS && file.exists() ? file.toPath().toRealPath().toFile() : file.getCanonicalFile();
     }
 
-    /** Returns {@code loadProperties(false)}. */
+    /**
+     * Returns {@code loadProperties(false)}.
+     */
     public static Properties loadProperties() {
         return loadProperties(false);
     }
+
     /**
      * Loads the {@link Properties} associated with the default {@link #getPlatform()}.
      *
@@ -182,6 +196,7 @@ public class Loader {
         }
         return platformProperties = loadProperties(name, null);
     }
+
     /**
      * Loads from resources the default {@link Properties} of the specified platform name.
      * The resource must be at {@code "org/bytedeco/javacpp/properties/" + name + ".properties"}.
@@ -242,8 +257,8 @@ public class Loader {
         }
         for (Map.Entry e : System.getProperties().entrySet()) {
             if (e.getKey() instanceof String && e.getValue() instanceof String) {
-                String key = (String)e.getKey();
-                String value = (String)e.getValue();
+                String key = (String) e.getKey();
+                String value = (String) e.getValue();
                 if (key != null && value != null && key.startsWith("org.bytedeco.javacpp.platform.")) {
                     p.put(key.substring(key.indexOf("platform.")), value);
                 }
@@ -252,14 +267,18 @@ public class Loader {
         return p;
     }
 
-    /** Returns {@code checkVersion(groupId, artifactId, "-", true, getCallerClass(2))}. */
+    /**
+     * Returns {@code checkVersion(groupId, artifactId, "-", true, getCallerClass(2))}.
+     */
     public static boolean checkVersion(String groupId, String artifactId) {
         return checkVersion(groupId, artifactId, "-", true, getCallerClass(2));
     }
 
-    /** Returns {@code getVersion(groupId, artifactId, cls).split(separator)[n].equals(getVersion().split(separator)[0])}
+    /**
+     * Returns {@code getVersion(groupId, artifactId, cls).split(separator)[n].equals(getVersion().split(separator)[0])}
      *  where {@code n = versions.length - (versions[versions.length - 1].equals("SNAPSHOT") ? 2 : 1)} or false on error.
-     *  Also calls {@link Logger#warn(String)} on error when {@code logWarnings && isLoadLibraries()}. */
+     *  Also calls {@link Logger#warn(String)} on error when {@code logWarnings && isLoadLibraries()}.
+     */
     public static boolean checkVersion(String groupId, String artifactId, String separator, boolean logWarnings, Class cls) {
         try {
             String javacppVersion = getVersion();
@@ -286,17 +305,23 @@ public class Loader {
         return false;
     }
 
-    /** Returns {@code getVersion("org.bytedeco", "javacpp")}. */
+    /**
+     * Returns {@code getVersion("org.bytedeco", "javacpp")}.
+     */
     public static String getVersion() throws IOException {
         return getVersion("org.bytedeco", "javacpp");
     }
 
-    /** Returns {@code getVersion(groupId, artifactId, getCallerClass(2))}. */
+    /**
+     * Returns {@code getVersion(groupId, artifactId, getCallerClass(2))}.
+     */
     public static String getVersion(String groupId, String artifactId) throws IOException {
         return getVersion(groupId, artifactId, getCallerClass(2));
     }
 
-    /** Returns version property from {@code cls.getResource("META-INF/maven/" + groupId + "/" + artifactId + "/pom.properties")}. */
+    /**
+     * Returns version property from {@code cls.getResource("META-INF/maven/" + groupId + "/" + artifactId + "/pom.properties")}.
+     */
     public static String getVersion(String groupId, String artifactId, Class cls) throws IOException {
         Properties p = new Properties();
         // Need to call getClassLoader() for non-encapsulated resources under JPMS
@@ -341,11 +366,7 @@ public class Loader {
             }
             if (c.isAnnotationPresent(Platform.class)) {
                 Platform p = c.getAnnotation(Platform.class);
-                if (p.pragma().length > 0 || p.define().length > 0 || p.exclude().length > 0 || p.include().length > 0 || p.cinclude().length > 0
-                    || p.includepath().length > 0 || p.includeresource().length > 0 || p.compiler().length > 0
-                    || p.linkpath().length > 0 || p.linkresource().length > 0 || p.link().length > 0 || p.frameworkpath().length > 0
-                    || p.framework().length > 0 || p.preloadresource().length > 0 || p.preloadpath().length > 0 || p.preload().length > 0
-                    || p.resourcepath().length > 0 || p.resource().length > 0 || p.library().length() > 0) {
+                if (p.pragma().length > 0 || p.define().length > 0 || p.exclude().length > 0 || p.include().length > 0 || p.cinclude().length > 0 || p.includepath().length > 0 || p.includeresource().length > 0 || p.compiler().length > 0 || p.linkpath().length > 0 || p.linkresource().length > 0 || p.link().length > 0 || p.frameworkpath().length > 0 || p.framework().length > 0 || p.preloadresource().length > 0 || p.preloadpath().length > 0 || p.preload().length > 0 || p.resourcepath().length > 0 || p.resource().length > 0 || p.library().length() > 0) {
                     break;
                 }
             }
@@ -353,7 +374,6 @@ public class Loader {
         }
         return c;
     }
-
 
     /**
      * For all the classes, loads all properties from each Class annotations for the given platform.
@@ -368,6 +388,7 @@ public class Loader {
         }
         return cp;
     }
+
     /**
      * Loads all properties from Class annotations for the given platform. The platform
      * of interest needs to be specified as the value of the "platform" key in the
@@ -398,7 +419,9 @@ public class Loader {
         Class[] classContext = null;
         try {
             classContext = new SecurityManager() {
-                @Override public Class[] getClassContext() {
+
+                @Override
+                public Class[] getClassContext() {
                     return super.getClassContext();
                 }
             }.getClassContext();
@@ -408,7 +431,7 @@ public class Loader {
         if (classContext != null) {
             for (int j = 0; j < classContext.length; j++) {
                 if (classContext[j] == Loader.class) {
-                    return classContext[i+j];
+                    return classContext[i + j];
                 }
             }
         } else {
@@ -417,7 +440,7 @@ public class Loader {
                 StackTraceElement[] classNames = Thread.currentThread().getStackTrace();
                 for (int j = 0; j < classNames.length; j++) {
                     if (Class.forName(classNames[j].getClassName()) == Loader.class) {
-                        return Class.forName(classNames[i+j].getClassName());
+                        return Class.forName(classNames[i + j].getClassName());
                     }
                 }
             } catch (ClassNotFoundException e) {
@@ -438,6 +461,7 @@ public class Loader {
         Class cls = getCallerClass(2);
         return cacheResource(cls, name);
     }
+
     /**
      * Extracts a resource using the {@link ClassLoader} of the specified {@link Class},
      * and returns the cached {@link File}.
@@ -462,6 +486,7 @@ public class Loader {
         Class cls = getCallerClass(2);
         return cacheResources(cls, name);
     }
+
     /**
      * Extracts resources using the {@link ClassLoader} of the specified {@link Class},
      * and returns the cached {@link File} objects.
@@ -479,10 +504,13 @@ public class Loader {
         return files;
     }
 
-    /** Returns {@code cacheResource(resourceUrl, null)} */
+    /**
+     * Returns {@code cacheResource(resourceUrl, null)}
+     */
     public static File cacheResource(URL resourceURL) throws IOException {
         return cacheResource(resourceURL, null);
     }
+
     /**
      * Extracts a resource, if the size or last modified timestamp differs from what is in cache,
      * and returns the cached {@link File}. If target is not null, creates instead a symbolic link
@@ -515,8 +543,8 @@ public class Loader {
         boolean noSubdir = s.equals("true") || s.equals("t") || s.equals("");
         URLConnection urlConnection = resourceURL.openConnection();
         if (urlConnection instanceof JarURLConnection) {
-            JarFile jarFile = ((JarURLConnection)urlConnection).getJarFile();
-            JarEntry jarEntry = ((JarURLConnection)urlConnection).getJarEntry();
+            JarFile jarFile = ((JarURLConnection) urlConnection).getJarFile();
+            JarEntry jarEntry = ((JarURLConnection) urlConnection).getJarEntry();
             File jarFileFile = new File(jarFile.getName());
             File jarEntryFile = new File(jarEntry.getName());
             size = jarEntry.getSize();
@@ -540,16 +568,18 @@ public class Loader {
             String p = resourceURL.getPath();
             try {
                 // urlConnection.getContentLength() would work on jrt URL, but not getLastModified()
-                Path path = Paths.get(new URI("jrt", p, null)); // Remove fragment
+                // Remove fragment
+                Path path = Paths.get(new URI("jrt", p, null));
                 try {
-                  size = Files.size(path);
+                    size = Files.size(path);
                 } catch (java.nio.file.NoSuchFileException e) {
-                  // Work around bug JDK-8216553
-                  path = Paths.get(new URI("jrt", "/modules" + p, null));
-                  size = Files.size(path);
+                    // Work around bug JDK-8216553
+                    path = Paths.get(new URI("jrt", "/modules" + p, null));
+                    size = Files.size(path);
                 }
                 timestamp = Files.getLastModifiedTime(path).toMillis();
-            } catch (URISyntaxException e) { // Should not happen
+            } catch (URISyntaxException e) {
+                // Should not happen
                 size = 0;
                 timestamp = 0;
             }
@@ -582,83 +612,37 @@ public class Loader {
         if (canCreateSymbolicLink && target != null && target.length() > 0) {
             // ... create symbolic link to already extracted library or ...
             synchronized (Runtime.getRuntime()) {
-            try {
-                // file is already canonicalized, so normalized
-                Path path = file.toPath(), targetPath = Paths.get(target).normalize();
-                if ((!file.exists() || !Files.isSymbolicLink(path) || !Files.readSymbolicLink(path).equals(targetPath))
-                        && targetPath.isAbsolute() && !targetPath.equals(path) && !targetPath.toRealPath().equals(path)) {
-                    if (logger.isDebugEnabled()) {
-                        logger.debug("Locking " + cacheDir + " to create symbolic link");
-                    }
-                    lockChannel = new FileOutputStream(lockFile).getChannel();
-                    lock = lockChannel.lock();
-                    if ((!file.exists() || !Files.isSymbolicLink(path) || !Files.readSymbolicLink(path).equals(targetPath))
-                            && targetPath.isAbsolute() && !targetPath.equals(path) && !targetPath.toRealPath().equals(path)) {
-                        if (logger.isDebugEnabled()) {
-                            logger.debug("Creating symbolic link " + path + " to " + targetPath);
-                        }
-                        try {
-                            file.getParentFile().mkdirs();
-                            Files.createSymbolicLink(path, targetPath);
-                        } catch (java.nio.file.FileAlreadyExistsException e) {
-                            file.delete();
-                            Files.createSymbolicLink(path, targetPath);
-                        }
-                    }
-                }
-            } catch (IOException | RuntimeException e) {
-                // ... (probably an unsupported operation on Windows, but DLLs never need links,
-                // or other (filesystem?) exception: for example,
-                // "sun.nio.fs.UnixException: No such file or directory" on File.toPath()) ...
-                canCreateSymbolicLink = false;
-                if (logger.isDebugEnabled()) {
-                    logger.debug("Failed to create symbolic link " + file + ": " + e);
-                }
-                return null;
-            } finally {
-                if (lock != null) {
-                    lock.release();
-                }
-                if (lockChannel != null) {
-                    lockChannel.close();
-                }
-            }
-            }
-        } else {
-            if (canCreateSymbolicLink && urlFile.exists() && reference) {
-                // ... try to create a symbolic link to the existing file, if we can, ...
-                synchronized (Runtime.getRuntime()) {
                 try {
                     // file is already canonicalized, so normalized
-                    Path path = file.toPath(), urlPath = urlFile.toPath().normalize();
-                    if ((!file.exists() || !Files.isSymbolicLink(path) || !Files.readSymbolicLink(path).equals(urlPath))
-                            && urlPath.isAbsolute() && !urlPath.equals(path) && !urlPath.toRealPath().equals(path)) {
+                    Path path = file.toPath(), targetPath = Paths.get(target).normalize();
+                    if ((!file.exists() || !Files.isSymbolicLink(path) || !Files.readSymbolicLink(path).equals(targetPath)) && targetPath.isAbsolute() && !targetPath.equals(path) && !targetPath.toRealPath().equals(path)) {
                         if (logger.isDebugEnabled()) {
                             logger.debug("Locking " + cacheDir + " to create symbolic link");
                         }
                         lockChannel = new FileOutputStream(lockFile).getChannel();
                         lock = lockChannel.lock();
-                        if ((!file.exists() || !Files.isSymbolicLink(path) || !Files.readSymbolicLink(path).equals(urlPath))
-                                && urlPath.isAbsolute() && !urlPath.equals(path) && !urlPath.toRealPath().equals(path)) {
+                        if ((!file.exists() || !Files.isSymbolicLink(path) || !Files.readSymbolicLink(path).equals(targetPath)) && targetPath.isAbsolute() && !targetPath.equals(path) && !targetPath.toRealPath().equals(path)) {
                             if (logger.isDebugEnabled()) {
-                                logger.debug("Creating symbolic link " + path + " to " + urlPath);
+                                logger.debug("Creating symbolic link " + path + " to " + targetPath);
                             }
                             try {
                                 file.getParentFile().mkdirs();
-                                Files.createSymbolicLink(path, urlPath);
+                                Files.createSymbolicLink(path, targetPath);
                             } catch (java.nio.file.FileAlreadyExistsException e) {
                                 file.delete();
-                                Files.createSymbolicLink(path, urlPath);
+                                Files.createSymbolicLink(path, targetPath);
                             }
                         }
                     }
-                    return file;
                 } catch (IOException | RuntimeException e) {
-                    // ... (let's try to copy the file instead, such as on Windows) ...
+                    // ... (probably an unsupported operation on Windows, but DLLs never need links,
+                    // or other (filesystem?) exception: for example,
+                    // "sun.nio.fs.UnixException: No such file or directory" on File.toPath()) ...
                     canCreateSymbolicLink = false;
                     if (logger.isDebugEnabled()) {
-                        logger.debug("Could not create symbolic link " + file + ": " + e);
+                        logger.debug("Failed to create symbolic link " + file + ": " + e);
                     }
+                    return null;
                 } finally {
                     if (lock != null) {
                         lock.release();
@@ -667,38 +651,78 @@ public class Loader {
                         lockChannel.close();
                     }
                 }
+            }
+        } else {
+            if (canCreateSymbolicLink && urlFile.exists() && reference) {
+                // ... try to create a symbolic link to the existing file, if we can, ...
+                synchronized (Runtime.getRuntime()) {
+                    try {
+                        // file is already canonicalized, so normalized
+                        Path path = file.toPath(), urlPath = urlFile.toPath().normalize();
+                        if ((!file.exists() || !Files.isSymbolicLink(path) || !Files.readSymbolicLink(path).equals(urlPath)) && urlPath.isAbsolute() && !urlPath.equals(path) && !urlPath.toRealPath().equals(path)) {
+                            if (logger.isDebugEnabled()) {
+                                logger.debug("Locking " + cacheDir + " to create symbolic link");
+                            }
+                            lockChannel = new FileOutputStream(lockFile).getChannel();
+                            lock = lockChannel.lock();
+                            if ((!file.exists() || !Files.isSymbolicLink(path) || !Files.readSymbolicLink(path).equals(urlPath)) && urlPath.isAbsolute() && !urlPath.equals(path) && !urlPath.toRealPath().equals(path)) {
+                                if (logger.isDebugEnabled()) {
+                                    logger.debug("Creating symbolic link " + path + " to " + urlPath);
+                                }
+                                try {
+                                    file.getParentFile().mkdirs();
+                                    Files.createSymbolicLink(path, urlPath);
+                                } catch (java.nio.file.FileAlreadyExistsException e) {
+                                    file.delete();
+                                    Files.createSymbolicLink(path, urlPath);
+                                }
+                            }
+                        }
+                        return file;
+                    } catch (IOException | RuntimeException e) {
+                        // ... (let's try to copy the file instead, such as on Windows) ...
+                        canCreateSymbolicLink = false;
+                        if (logger.isDebugEnabled()) {
+                            logger.debug("Could not create symbolic link " + file + ": " + e);
+                        }
+                    } finally {
+                        if (lock != null) {
+                            lock.release();
+                        }
+                        if (lockChannel != null) {
+                            lockChannel.close();
+                        }
+                    }
                 }
             }
             // ... check if it has not already been extracted, and if not ...
-            if (!file.exists() || file.length() != size || file.lastModified() != timestamp
-                    || (canCreateSymbolicLink && !cacheSubdir.equals(Loader.getCanonicalFile(file).getParentFile()))) {
+            if (!file.exists() || file.length() != size || file.lastModified() != timestamp || (canCreateSymbolicLink && !cacheSubdir.equals(Loader.getCanonicalFile(file).getParentFile()))) {
                 // ... add lock to avoid two JVMs access cacheDir simultaneously and ...
                 synchronized (Runtime.getRuntime()) {
-                try {
-                    if (logger.isDebugEnabled()) {
-                        logger.debug("Locking " + cacheDir + " before extracting");
-                    }
-                    lockChannel = new FileOutputStream(lockFile).getChannel();
-                    lock = lockChannel.lock();
-                    // ... check if other JVM has extracted it before this JVM get the lock ...
-                    if (!file.exists() || file.length() != size || file.lastModified() != timestamp
-                            || (canCreateSymbolicLink && !cacheSubdir.equals(Loader.getCanonicalFile(file).getParentFile()))) {
-                        // ... extract it from our resources ...
+                    try {
                         if (logger.isDebugEnabled()) {
-                            logger.debug("Extracting " + resourceURL);
+                            logger.debug("Locking " + cacheDir + " before extracting");
                         }
-                        file.delete();
-                        extractResource(resourceURL, file, null, null, true);
-                        file.setLastModified(timestamp);
+                        lockChannel = new FileOutputStream(lockFile).getChannel();
+                        lock = lockChannel.lock();
+                        // ... check if other JVM has extracted it before this JVM get the lock ...
+                        if (!file.exists() || file.length() != size || file.lastModified() != timestamp || (canCreateSymbolicLink && !cacheSubdir.equals(Loader.getCanonicalFile(file).getParentFile()))) {
+                            // ... extract it from our resources ...
+                            if (logger.isDebugEnabled()) {
+                                logger.debug("Extracting " + resourceURL);
+                            }
+                            file.delete();
+                            extractResource(resourceURL, file, null, null, true);
+                            file.setLastModified(timestamp);
+                        }
+                    } finally {
+                        if (lock != null) {
+                            lock.release();
+                        }
+                        if (lockChannel != null) {
+                            lockChannel.close();
+                        }
                     }
-                } finally {
-                    if (lock != null) {
-                        lock.release();
-                    }
-                    if (lockChannel != null) {
-                        lockChannel.close();
-                    }
-                }
                 }
             }
         }
@@ -711,11 +735,11 @@ public class Loader {
      * @param name the name of the resource passed to {@link Class#getResource(String)}
      * @see #extractResource(URL, File, String, String)
      */
-    public static File extractResource(String name, File directory,
-            String prefix, String suffix) throws IOException {
+    public static File extractResource(String name, File directory, String prefix, String suffix) throws IOException {
         Class cls = getCallerClass(2);
         return extractResource(cls, name, directory, prefix, suffix);
     }
+
     /**
      * Extracts by name a resource using the {@link ClassLoader} of the specified {@link Class}.
      *
@@ -723,8 +747,7 @@ public class Loader {
      * @param name the name of the resource passed to {@link Class#getResource(String)}
      * @see #extractResource(URL, File, String, String)
      */
-    public static File extractResource(Class cls, String name, File directory,
-            String prefix, String suffix) throws IOException {
+    public static File extractResource(Class cls, String name, File directory, String prefix, String suffix) throws IOException {
         URL u = findResource(cls, name);
         return u != null ? extractResource(u, directory, prefix, suffix) : null;
     }
@@ -735,11 +758,11 @@ public class Loader {
      * @param name of the resources passed to {@link #findResources(Class, String)}
      * @see #extractResources(Class, String, File, String, String)
      */
-    public static File[] extractResources(String name, File directory,
-            String prefix, String suffix) throws IOException {
+    public static File[] extractResources(String name, File directory, String prefix, String suffix) throws IOException {
         Class cls = getCallerClass(2);
         return extractResources(cls, name, directory, prefix, suffix);
     }
+
     /**
      * Extracts by name resources using the {@link ClassLoader} of the specified {@link Class}.
      *
@@ -747,8 +770,7 @@ public class Loader {
      * @param name of the resources passed to {@link #findResources(Class, String)}
      * @see #extractResource(URL, File, String, String)
      */
-    public static File[] extractResources(Class cls, String name, File directory,
-            String prefix, String suffix) throws IOException {
+    public static File[] extractResources(Class cls, String name, File directory, String prefix, String suffix) throws IOException {
         URL[] urls = findResources(cls, name);
         File[] files = new File[urls.length];
         for (int i = 0; i < urls.length; i++) {
@@ -757,9 +779,10 @@ public class Loader {
         return files;
     }
 
-    /** Returns {@code extractResource(resourceURL, directoryOrFile, prefix, suffix, false)}. */
-    public static File extractResource(URL resourceURL, File directoryOrFile,
-            String prefix, String suffix) throws IOException {
+    /**
+     * Returns {@code extractResource(resourceURL, directoryOrFile, prefix, suffix, false)}.
+     */
+    public static File extractResource(URL resourceURL, File directoryOrFile, String prefix, String suffix) throws IOException {
         return extractResource(resourceURL, directoryOrFile, prefix, suffix, false);
     }
 
@@ -777,12 +800,11 @@ public class Loader {
      * @return the File object representing the extracted file
      * @throws IOException if fails to extract resource properly
      */
-    public static File extractResource(URL resourceURL, File directoryOrFile,
-            String prefix, String suffix, boolean cacheDirectory) throws IOException {
+    public static File extractResource(URL resourceURL, File directoryOrFile, String prefix, String suffix, boolean cacheDirectory) throws IOException {
         URLConnection urlConnection = resourceURL != null ? resourceURL.openConnection() : null;
         if (urlConnection instanceof JarURLConnection) {
-            JarFile jarFile = ((JarURLConnection)urlConnection).getJarFile();
-            JarEntry jarEntry = ((JarURLConnection)urlConnection).getJarEntry();
+            JarFile jarFile = ((JarURLConnection) urlConnection).getJarFile();
+            JarEntry jarEntry = ((JarURLConnection) urlConnection).getJarEntry();
             String jarFileName = jarFile.getName();
             String jarEntryName = jarEntry.getName();
             if (!jarEntryName.endsWith("/")) {
@@ -800,9 +822,7 @@ public class Loader {
                         File file = new File(directoryOrFile, entryName.substring(jarEntryName.length()));
                         if (entry.isDirectory()) {
                             file.mkdirs();
-                        } else if (!cacheDirectory || !file.exists() || file.length() != entrySize
-                                || file.lastModified() != entryTimestamp
-                                || (canCreateSymbolicLink && !file.equals(Loader.getCanonicalFile(file)))) {
+                        } else if (!cacheDirectory || !file.exists() || file.length() != entrySize || file.lastModified() != entryTimestamp || (canCreateSymbolicLink && !file.equals(Loader.getCanonicalFile(file)))) {
                             // ... extract it from our resources ...
                             file.delete();
                             String s = resourceURL.toString();
@@ -867,13 +887,17 @@ public class Loader {
         return file;
     }
 
-    /** Returns {@code findResources(cls, name, 1)[0]} or null if none. */
+    /**
+     * Returns {@code findResources(cls, name, 1)[0]} or null if none.
+     */
     public static URL findResource(Class cls, String name) throws IOException {
         URL[] url = findResources(cls, name, 1);
         return url.length > 0 ? url[0] : null;
     }
 
-    /** Returns {@code findResources(cls, name, -1)}. */
+    /**
+     * Returns {@code findResources(cls, name, -1)}.
+     */
     public static URL[] findResources(Class cls, String name) throws IOException {
         return findResources(cls, name, -1);
     }
@@ -896,13 +920,11 @@ public class Loader {
         while (name.contains("//")) {
             name = name.replace("//", "/");
         }
-
         // Under JPMS, Class.getResource() and ClassLoader.getResources() do not return the same URLs
         URL url = cls.getResource(name);
         if (url != null && maxLength == 1) {
-            return new URL[] {url};
+            return new URL[] { url };
         }
-
         String path = "";
         if (!name.startsWith("/")) {
             String s = cls.getName().replace('.', '/');
@@ -941,72 +963,99 @@ public class Loader {
         return array.toArray(new URL[array.size()]);
     }
 
-    /** User-specified cache directory set and returned by {@link #getCacheDir()}. */
+    /**
+     * User-specified cache directory set and returned by {@link #getCacheDir()}.
+     */
     static File cacheDir = null;
-    /** Temporary directory set and returned by {@link #getTempDir()}. */
+
+    /**
+     * Temporary directory set and returned by {@link #getTempDir()}.
+     */
     static File tempDir = null;
-    /** Contains all the URLs of native libraries that we found to avoid searching for them again. */
-    static Map<String,URL[]> foundLibraries = new HashMap<String,URL[]>();
-    /** Contains all the native libraries that we have loaded to avoid reloading them. */
-    static Map<String,String> loadedLibraries = new HashMap<String,String>();
-    /** Will be set to false when symbolic link creation fails, such as on Windows.
-     * Set via "org.bytedeco.javacpp.canCreateSymbolicLink" system property, defaults to false on Windows only. */
+
+    /**
+     * Contains all the URLs of native libraries that we found to avoid searching for them again.
+     */
+    static Map<String, URL[]> foundLibraries = new HashMap<String, URL[]>();
+
+    /**
+     * Contains all the native libraries that we have loaded to avoid reloading them.
+     */
+    static Map<String, String> loadedLibraries = new HashMap<String, String>();
+
+    /**
+     * Will be set to false when symbolic link creation fails, such as on Windows.
+     * Set via "org.bytedeco.javacpp.canCreateSymbolicLink" system property, defaults to false on Windows only.
+     */
     static boolean canCreateSymbolicLink = !WINDOWS;
-    /** Default value for {@code load(..., pathsFirst)} set via "org.bytedeco.javacpp.pathsFirst" system property. */
+
+    /**
+     * Default value for {@code load(..., pathsFirst)} set via "org.bytedeco.javacpp.pathsFirst" system property.
+     */
     static boolean pathsFirst = false;
-    /** Whether to extract libraries to {@link #cacheDir}, set via "org.bytedeco.javacpp.cacheLibraries" system property. */
+
+    /**
+     * Whether to extract libraries to {@link #cacheDir}, set via "org.bytedeco.javacpp.cacheLibraries" system property.
+     */
     static boolean cacheLibraries = true;
-    /** Whether to search libraries in class, module, and library paths, set via "org.bytedeco.javacpp.findLibraries" system property. */
+
+    /**
+     * Whether to search libraries in class, module, and library paths, set via "org.bytedeco.javacpp.findLibraries" system property.
+     */
     static boolean findLibraries = true;
 
     static {
         String s = System.getProperty("org.bytedeco.javacpp.pathsfirst", "false").toLowerCase();
         s = System.getProperty("org.bytedeco.javacpp.pathsFirst", s).toLowerCase();
         pathsFirst = s.equals("true") || s.equals("t") || s.equals("");
-
         s = System.getProperty("org.bytedeco.javacpp.cancreatesymboliclink", WINDOWS ? "false" : "true").toLowerCase();
         s = System.getProperty("org.bytedeco.javacpp.canCreateSymbolicLink", s).toLowerCase();
         canCreateSymbolicLink = s.equals("true") || s.equals("t") || s.equals("");
-
         s = System.getProperty("org.bytedeco.javacpp.cachelibraries", "true").toLowerCase();
         s = System.getProperty("org.bytedeco.javacpp.cacheLibraries", s).toLowerCase();
         cacheLibraries = s.equals("true") || s.equals("t") || s.equals("");
-
         s = System.getProperty("org.bytedeco.javacpp.findlibraries", "true").toLowerCase();
         s = System.getProperty("org.bytedeco.javacpp.findLibraries", s).toLowerCase();
         findLibraries = s.equals("true") || s.equals("t") || s.equals("");
     }
 
-    /** Deletes the directory and all the files in it. */
+    /**
+     * Deletes the directory and all the files in it.
+     */
     public static void deleteDirectory(File directory) throws IOException {
         Files.walkFileTree(directory.toPath(), new SimpleFileVisitor<Path>() {
-            @Override public FileVisitResult postVisitDirectory(Path dir, IOException e) throws IOException {
+
+            @Override
+            public FileVisitResult postVisitDirectory(Path dir, IOException e) throws IOException {
                 if (e != null) {
                     throw e;
                 }
                 Files.delete(dir);
                 return FileVisitResult.CONTINUE;
             }
-            @Override public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                 Files.delete(file);
                 return FileVisitResult.CONTINUE;
             }
         });
     }
 
-    /** Calls {@code deleteDirectory(getCacheDir())}. */
+    /**
+     * Calls {@code deleteDirectory(getCacheDir())}.
+     */
     public static void clearCacheDir() throws IOException {
         logger.info("Deleting " + getCacheDir());
         deleteDirectory(getCacheDir());
     }
 
-    /** Creates and returns {@code System.getProperty("org.bytedeco.javacpp.cachedir")} or {@code ~/.javacpp/cache/} when not set. */
+    /**
+     * Creates and returns {@code System.getProperty("org.bytedeco.javacpp.cachedir")} or {@code ~/.javacpp/cache/} when not set.
+     */
     public static File getCacheDir() throws IOException {
         if (cacheDir == null) {
-            String[] dirNames = {System.getProperty("org.bytedeco.javacpp.cachedir"),
-                                 System.getProperty("org.bytedeco.javacpp.cacheDir"),
-                                 System.getProperty("user.home") + "/.javacpp/cache/",
-                                 System.getProperty("java.io.tmpdir") + "/.javacpp-" + System.getProperty("user.name") + "/cache/"};
+            String[] dirNames = { System.getProperty("org.bytedeco.javacpp.cachedir"), System.getProperty("org.bytedeco.javacpp.cacheDir"), System.getProperty("user.home") + "/.javacpp/cache/", System.getProperty("java.io.tmpdir") + "/.javacpp-" + System.getProperty("user.name") + "/cache/" };
             for (String dirName : dirNames) {
                 if (dirName != null) {
                     File f = new File(dirName);
@@ -1050,13 +1099,17 @@ public class Loader {
         return tempDir;
     }
 
-    /** Returns a Map that relates each library name to the path of the loaded file. */
-    public static synchronized Map<String,String> getLoadedLibraries() {
-        return new HashMap<String,String>(loadedLibraries);
+    /**
+     * Returns a Map that relates each library name to the path of the loaded file.
+     */
+    public static synchronized Map<String, String> getLoadedLibraries() {
+        return new HashMap<String, String>(loadedLibraries);
     }
 
-    /** Returns {@code System.getProperty("org.bytedeco.javacpp.loadlibraries")}.
-     *  Flag set by the {@link Builder} to tell us not to try to load anything. */
+    /**
+     * Returns {@code System.getProperty("org.bytedeco.javacpp.loadlibraries")}.
+     *  Flag set by the {@link Builder} to tell us not to try to load anything.
+     */
     public static boolean isLoadLibraries() {
         String s = System.getProperty("org.bytedeco.javacpp.loadlibraries", "true").toLowerCase();
         s = System.getProperty("org.bytedeco.javacpp.loadLibraries", s).toLowerCase();
@@ -1066,11 +1119,11 @@ public class Loader {
     public static boolean checkPlatform(Class<?> cls, Properties properties) {
         return checkPlatform(cls, properties, false);
     }
+
     public static boolean checkPlatform(Class<?> cls, Properties properties, boolean acceptAllExtensions) {
         // check in priority this class for platform information, before the enclosing class
         Class<?> enclosingClass = Loader.getEnclosingClass(cls);
-        while (!cls.isAnnotationPresent(org.bytedeco.javacpp.annotation.Properties.class)
-                && !cls.isAnnotationPresent(Platform.class) && cls.getSuperclass() != null) {
+        while (!cls.isAnnotationPresent(org.bytedeco.javacpp.annotation.Properties.class) && !cls.isAnnotationPresent(Platform.class) && cls.getSuperclass() != null) {
             if (enclosingClass != null && cls.getSuperclass() == Object.class) {
                 cls = enclosingClass;
                 enclosingClass = null;
@@ -1078,27 +1131,22 @@ public class Loader {
                 cls = cls.getSuperclass();
             }
         }
-
-        org.bytedeco.javacpp.annotation.Properties classProperties =
-                cls.getAnnotation(org.bytedeco.javacpp.annotation.Properties.class);
+        org.bytedeco.javacpp.annotation.Properties classProperties = cls.getAnnotation(org.bytedeco.javacpp.annotation.Properties.class);
         Platform classPlatform = cls.getAnnotation(Platform.class);
         boolean supported = classProperties == null && classPlatform == null;
         if (classProperties != null) {
             Class[] classes = classProperties.inherit();
-
             // get default platform names, searching in inherited classes as well
             String[] defaultNames = classProperties.names();
             Deque<Class> queue = new ArrayDeque<Class>(Arrays.asList(classes));
             while (queue.size() > 0 && (defaultNames == null || defaultNames.length == 0)) {
                 Class<?> c = queue.removeFirst();
-                org.bytedeco.javacpp.annotation.Properties p =
-                        c.getAnnotation(org.bytedeco.javacpp.annotation.Properties.class);
+                org.bytedeco.javacpp.annotation.Properties p = c.getAnnotation(org.bytedeco.javacpp.annotation.Properties.class);
                 if (p != null) {
                     defaultNames = p.names();
                     queue.addAll(Arrays.asList(p.inherit()));
                 }
             }
-
             // check in priority the platforms inside our properties annotation, before inherited ones
             Platform[] platforms = classProperties.value();
             if (platforms != null && platforms.length > 0) {
@@ -1126,6 +1174,7 @@ public class Loader {
     public static boolean checkPlatform(Platform platform, Properties properties) {
         return checkPlatform(platform, properties, false);
     }
+
     public static boolean checkPlatform(Platform platform, Properties properties, boolean acceptAllExtensions, String... defaultNames) {
         if (platform == null) {
             return true;
@@ -1158,10 +1207,13 @@ public class Loader {
         return false;
     }
 
-    /** Returns {@code load(classes, true)}. **/
+    /**
+     * Returns {@code load(classes, true)}. *
+     */
     public static String[] load(Class... classes) {
         return load(classes, true);
     }
+
     /**
      * Calls {@link #load(Class)} on all top-level enclosing classes found in the array.
      *
@@ -1175,7 +1227,6 @@ public class Loader {
         ClassProperties libProperties = null;
         for (int i = 0; i < classes.length; i++) {
             Class c = classes[i];
-
             // only load top-level enclosing classes that can load something by themselves
             if (getEnclosingClass(c) != c) {
                 continue;
@@ -1205,10 +1256,13 @@ public class Loader {
         return filenames;
     }
 
-    /** Returns {@code load(getCallerClass(2), loadProperties(), Loader.pathsFirst)}. */
+    /**
+     * Returns {@code load(getCallerClass(2), loadProperties(), Loader.pathsFirst)}.
+     */
     public static String load() {
         return load(getCallerClass(2), loadProperties(), Loader.pathsFirst);
     }
+
     /**
      * Loads native libraries associated with the {@link Class} of the caller and initializes it.
      *
@@ -1221,18 +1275,28 @@ public class Loader {
         Class cls = getCallerClass(2);
         return load(cls, loadProperties(), pathsFirst);
     }
-    /** Returns {@code load(cls, loadProperties(), Loader.pathsFirst)}. */
+
+    /**
+     * Returns {@code load(cls, loadProperties(), Loader.pathsFirst)}.
+     */
     public static String load(Class cls) {
         return load(cls, loadProperties(), Loader.pathsFirst);
     }
-    /** Returns {@code load(cls, loadProperties(), Loader.pathsFirst, executable)}. */
+
+    /**
+     * Returns {@code load(cls, loadProperties(), Loader.pathsFirst, executable)}.
+     */
     public static String load(Class cls, String executable) {
         return load(cls, loadProperties(), Loader.pathsFirst, executable);
     }
-    /** Returns {@code load(cls, properties, pathsFirst, null)}. */
+
+    /**
+     * Returns {@code load(cls, properties, pathsFirst, null)}.
+     */
     public static String load(Class cls, Properties properties, boolean pathsFirst) {
         return load(cls, properties, pathsFirst, null);
     }
+
     /**
      * Loads native libraries or executables associated with the given {@link Class} and initializes it.
      *
@@ -1251,20 +1315,16 @@ public class Loader {
      */
     public static String load(Class cls, Properties properties, boolean pathsFirst, String executable) {
         Class classToLoad = cls;
-
         if (!isLoadLibraries() || cls == null) {
             return null;
         }
-
         // when no extensions are given by user, but we are in library loading mode, try to load extensions anyway
         if (!checkPlatform(cls, properties, properties.getProperty("platform.extension") == null)) {
             throw new UnsatisfiedLinkError("Platform \"" + properties.getProperty("platform") + "\" not supported by " + cls);
         }
-
         // Find the top enclosing class, to match the library filename
         cls = getEnclosingClass(cls);
         ClassProperties p = loadProperties(cls, properties, true);
-
         // Force initialization of all the target classes in case they need it
         List<String> targets = p.get("global");
         if (targets.isEmpty()) {
@@ -1275,12 +1335,10 @@ public class Loader {
             }
             targets.add(cls.getName());
         }
-
         // Make sure that we also initialize the class that was passed explicitly
         if (!targets.contains(classToLoad.getName())) {
             targets.add(classToLoad.getName());
         }
-
         for (String s : targets) {
             try {
                 if (logger.isDebugEnabled()) {
@@ -1296,7 +1354,6 @@ public class Loader {
                 throw e;
             }
         }
-
         String cacheDir = null;
         try {
             // Checking for findLibraries prevents the creation of an empty useless cache dir
@@ -1304,7 +1361,6 @@ public class Loader {
         } catch (IOException e) {
             // no cache dir, no worries
         }
-
         // Preload native libraries desired by our class
         List<String> preloads = new ArrayList<String>();
         List<String> preloaded = new ArrayList<String>();
@@ -1341,7 +1397,6 @@ public class Loader {
                 preloadError = e;
             }
         }
-
         List<String> executables = p.get("platform.executable");
         LinkedHashMap<String, String> executablePaths = new LinkedHashMap<String, String>();
         // the class has no executables, yet a specific executable is requested
@@ -1399,15 +1454,10 @@ public class Loader {
             } catch (IOException | NoSuchFieldException | IllegalAccessException e) {
                 logger.error("Could not extract executable " + filename + ": " + e);
             }
-
-            return executable != null ? executablePaths.get(executable)
-                 : executablePaths.size() > 0 ? executablePaths.values().iterator().next()
-                 : null;
+            return executable != null ? executablePaths.get(executable) : executablePaths.size() > 0 ? executablePaths.values().iterator().next() : null;
         }
-
         int librarySuffix = -1;
-    tryAgain:
-        while (true) {
+        tryAgain: while (true) {
             try {
                 String library = p.getProperty("platform.library");
                 if (librarySuffix >= 0) {
@@ -1432,8 +1482,7 @@ public class Loader {
             } catch (UnsatisfiedLinkError e) {
                 Throwable t = e;
                 while (t != null) {
-                    if (t instanceof UnsatisfiedLinkError &&
-                            t.getMessage().contains("already loaded in another classloader")) {
+                    if (t instanceof UnsatisfiedLinkError && t.getMessage().contains("already loaded in another classloader")) {
                         librarySuffix++;
                         continue tryAgain;
                     }
@@ -1452,7 +1501,9 @@ public class Loader {
         }
     }
 
-    /** Returns {@code findLibrary(cls, properties, libnameversion, Loader.pathsFirst)}. */
+    /**
+     * Returns {@code findLibrary(cls, properties, libnameversion, Loader.pathsFirst)}.
+     */
     public static URL[] findLibrary(Class cls, ClassProperties properties, String libnameversion) {
         return findLibrary(cls, properties, libnameversion, Loader.pathsFirst);
     }
@@ -1494,9 +1545,8 @@ public class Loader {
         String[] s2 = (reference ? split[1] : split[0]).split("@");
         String libname = s[0];
         String libname2 = s2[0];
-        String version = s.length > 1 ? s[s.length-1] : "";
-        String version2 = s2.length > 1 ? s2[s2.length-1] : "";
-
+        String version = s.length > 1 ? s[s.length - 1] : "";
+        String version2 = s2.length > 1 ? s2[s2.length - 1] : "";
         // If we do not already have the native library file ...
         String platform = properties.getProperty("platform");
         String[] extensions = properties.get("platform.extension").toArray(new String[0]);
@@ -1508,36 +1558,38 @@ public class Loader {
             styles = new String[] { prefix + libname + suffix };
             styles2 = new String[] { prefix + libname2 + suffix };
         } else {
-            styles = new String[] {
-                prefix + libname + suffix + version, // Linux style
-                prefix + libname + version + suffix, // Mac OS X style
-                prefix + libname + suffix            // without version
-            };
-            styles2 = new String[] {
-                prefix + libname2 + suffix + version2, // Linux style
-                prefix + libname2 + version2 + suffix, // Mac OS X style
-                prefix + libname2 + suffix             // without version
-            };
+            styles = new String[] { // Linux style
+            prefix + libname + suffix + version, // Mac OS X style
+            prefix + libname + version + suffix, // without version
+            prefix + libname + suffix };
+            styles2 = new String[] { // Linux style
+            prefix + libname2 + suffix + version2, // Mac OS X style
+            prefix + libname2 + version2 + suffix, // without version
+            prefix + libname2 + suffix };
         }
-
         String[] suffixes = properties.get("platform.library.suffix").toArray(new String[0]);
         if (suffixes.length > 1) {
             styles = new String[3 * suffixes.length];
             styles2 = new String[3 * suffixes.length];
             for (int i = 0; i < suffixes.length; i++) {
-                styles[3 * i    ] = prefix + libname + suffixes[i] + version; // Linux style
-                styles[3 * i + 1] = prefix + libname + version + suffixes[i]; // Mac OS X style
-                styles[3 * i + 2] = prefix + libname + suffixes[i];           // without version
-                styles2[3 * i    ] = prefix + libname2 + suffixes[i] + version2; // Linux style
-                styles2[3 * i + 1] = prefix + libname2 + version2 + suffixes[i]; // Mac OS X style
-                styles2[3 * i + 2] = prefix + libname2 + suffixes[i];            // without version
+                // Linux style
+                styles[3 * i] = prefix + libname + suffixes[i] + version;
+                // Mac OS X style
+                styles[3 * i + 1] = prefix + libname + version + suffixes[i];
+                // without version
+                styles[3 * i + 2] = prefix + libname + suffixes[i];
+                // Linux style
+                styles2[3 * i] = prefix + libname2 + suffixes[i] + version2;
+                // Mac OS X style
+                styles2[3 * i + 1] = prefix + libname2 + version2 + suffixes[i];
+                // without version
+                styles2[3 * i + 2] = prefix + libname2 + suffixes[i];
             }
         }
         if (nostyle) {
-            styles = new String[] {libname};
-            styles2 = new String[] {libname2};
+            styles = new String[] { libname };
+            styles2 = new String[] { libname2 };
         }
-
         List<String> paths = new ArrayList<String>();
         paths.addAll(properties.get("platform.linkpath"));
         paths.addAll(properties.get("platform.preloadpath"));
@@ -1571,8 +1623,7 @@ public class Loader {
                     if (resource != null && !resource.endsWith("/")) {
                         resource += "/";
                     }
-                    String subdir = libraryPath.length() > 0 && libraryPath.equals(resource) ? "/" + libraryPath
-                                  : (resource == null ? "" : "/" + resource) + platform + (extension == null ? "" : extension);
+                    String subdir = libraryPath.length() > 0 && libraryPath.equals(resource) ? "/" + libraryPath : (resource == null ? "" : "/" + resource) + platform + (extension == null ? "" : extension);
                     try {
                         URL u = findResource(cls, subdir + "/" + styles[i]);
                         if (u != null) {
@@ -1622,13 +1673,17 @@ public class Loader {
         return urls.toArray(new URL[urls.size()]);
     }
 
-    /** Returns {@code loadLibrary(getCallerClass(2), libnameversion, preloaded)}. */
-    public static String loadLibrary(String libnameversion, String ... preloaded) {
+    /**
+     * Returns {@code loadLibrary(getCallerClass(2), libnameversion, preloaded)}.
+     */
+    public static String loadLibrary(String libnameversion, String... preloaded) {
         return loadLibrary(getCallerClass(2), libnameversion, preloaded);
     }
 
-    /** Returns {@code loadLibrary(findResources(cls, libnameversion), libnameversion, preloaded)}. */
-    public static String loadLibrary(Class<?> cls, String libnameversion, String ... preloaded) {
+    /**
+     * Returns {@code loadLibrary(findResources(cls, libnameversion), libnameversion, preloaded)}.
+     */
+    public static String loadLibrary(Class<?> cls, String libnameversion, String... preloaded) {
         try {
             return loadLibrary(findResources(cls, libnameversion), libnameversion, preloaded);
         } catch (IOException e) {
@@ -1636,8 +1691,10 @@ public class Loader {
         }
     }
 
-    /** Returns {@code loadLibrary(null, urls, libnameversion, preloaded)}. */
-    public static String loadLibrary(URL[] urls, String libnameversion, String ... preloaded) {
+    /**
+     * Returns {@code loadLibrary(null, urls, libnameversion, preloaded)}.
+     */
+    public static String loadLibrary(URL[] urls, String libnameversion, String... preloaded) {
         return loadLibrary(null, urls, libnameversion, preloaded);
     }
 
@@ -1655,7 +1712,7 @@ public class Loader {
      *         (but {@code if (!isLoadLibraries) { return null; }})
      * @throws UnsatisfiedLinkError on failure or when interrupted
      */
-    public static synchronized String loadLibrary(Class<?> cls, URL[] urls, String libnameversion, String ... preloaded) {
+    public static synchronized String loadLibrary(Class<?> cls, URL[] urls, String libnameversion, String... preloaded) {
         if (!isLoadLibraries()) {
             return null;
         }
@@ -1674,7 +1731,6 @@ public class Loader {
         if (split.length > 1 && split[1].length() > 0) {
             libnameversion2 = split[1];
         }
-
         // If we do not already have the native library file ...
         String filename = loadedLibraries.get(libnameversion2);
         UnsatisfiedLinkError loadError = null;
@@ -1708,7 +1764,6 @@ public class Loader {
                             logger.debug("Failed to access " + uri + ": " + exc2);
                         }
                     }
-
                     // ... create symbolic links to previously loaded libraries as needed on Mac,
                     // at least, and some libraries like MKL on Linux too, ...
                     if (file != null && preloaded != null) {
@@ -1721,8 +1776,7 @@ public class Loader {
                                 try {
                                     Path linkPath = linkFile.toPath().normalize();
                                     Path targetPath = file2.toPath().normalize();
-                                    if ((!linkFile.exists() || !Files.isSymbolicLink(linkPath) || !Files.readSymbolicLink(linkPath).equals(targetPath))
-                                            && targetPath.isAbsolute() && !targetPath.equals(linkPath) && !targetPath.toRealPath().equals(linkPath)) {
+                                    if ((!linkFile.exists() || !Files.isSymbolicLink(linkPath) || !Files.readSymbolicLink(linkPath).equals(targetPath)) && targetPath.isAbsolute() && !targetPath.equals(linkPath) && !targetPath.toRealPath().equals(linkPath)) {
                                         if (logger.isDebugEnabled()) {
                                             logger.debug("Creating symbolic link " + linkPath + " to " + targetPath);
                                         }
@@ -1752,7 +1806,6 @@ public class Loader {
                             logger.debug("Loading " + filename2);
                         }
                         loadedLibraries.put(libnameversion2, filename2);
-
                         boolean loadedByLoad0 = false;
                         if (cls != null && Loader.class.getClassLoader() != cls.getClassLoader()) {
                             try {
@@ -1760,18 +1813,14 @@ public class Loader {
                                 load0.setAccessible(true);
                                 load0.invoke(Runtime.getRuntime(), cls, filename2);
                                 loadedByLoad0 = true;
-                            } catch (IllegalAccessException | IllegalArgumentException
-                                    | NoSuchMethodException | SecurityException cnfe) {
-                                logger.warn("Unable to load the library " + libnameversion2 +
-                                        " within the ClassLoader scope of " + cls.getName());
+                            } catch (IllegalAccessException | IllegalArgumentException | NoSuchMethodException | SecurityException cnfe) {
+                                logger.warn("Unable to load the library " + libnameversion2 + " within the ClassLoader scope of " + cls.getName());
                             } catch (InvocationTargetException ite) {
                                 Throwable target = ite.getTargetException();
                                 if (target instanceof UnsatisfiedLinkError) {
                                     throw (UnsatisfiedLinkError) target;
                                 } else {
-                                    logger.warn("Unable to load the library " + libnameversion2
-                                            + " within the ClassLoader scope of " + cls.getName()
-                                            + " because: " + target.getMessage());
+                                    logger.warn("Unable to load the library " + libnameversion2 + " within the ClassLoader scope of " + cls.getName() + " because: " + target.getMessage());
                                 }
                             }
                         }
@@ -1813,18 +1862,14 @@ public class Loader {
                         load0.setAccessible(true);
                         load0.invoke(Runtime.getRuntime(), cls, libname);
                         loadedByLoadLibrary0 = true;
-                    } catch (IllegalAccessException | IllegalArgumentException
-                            | NoSuchMethodException | SecurityException cnfe) {
-                        logger.warn("Unable to load the library " + libname +
-                                " within the ClassLoader scope of " + cls.getName());
+                    } catch (IllegalAccessException | IllegalArgumentException | NoSuchMethodException | SecurityException cnfe) {
+                        logger.warn("Unable to load the library " + libname + " within the ClassLoader scope of " + cls.getName());
                     } catch (InvocationTargetException ite) {
                         Throwable target = ite.getTargetException();
                         if (target instanceof UnsatisfiedLinkError) {
                             throw (UnsatisfiedLinkError) target;
                         } else {
-                            logger.warn("Unable to load the library " + libname
-                                    + " within the ClassLoader scope of " + cls.getName()
-                                    + " because: " + target.getMessage());
+                            logger.warn("Unable to load the library " + libname + " within the ClassLoader scope of " + cls.getName() + " because: " + target.getMessage());
                         }
                     }
                 }
@@ -1871,7 +1916,7 @@ public class Loader {
      * @param paths where to create links, in addition to the parent directory of filename
      * @return the version-less filename (or null on failure), a symbolic link only if needed
      */
-    public static String createLibraryLink(String filename, ClassProperties properties, String libnameversion, String ... paths) {
+    public static String createLibraryLink(String filename, ClassProperties properties, String libnameversion, String... paths) {
         if (libnameversion != null && libnameversion.startsWith(":")) {
             libnameversion = libnameversion.substring(1);
         } else if (libnameversion != null && libnameversion.contains(":")) {
@@ -1882,19 +1927,16 @@ public class Loader {
         }
         File file = new File(filename);
         String parent = file.getParent(), name = file.getName(), link = null;
-
-        String[] split = libnameversion != null ? libnameversion.split("#") : new String[] {""};
+        String[] split = libnameversion != null ? libnameversion.split("#") : new String[] { "" };
         String[] s = (split.length > 1 && split[1].length() > 0 ? split[1] : split[0]).split("@");
         String libname = s[0];
-        String version = s.length > 1 ? s[s.length-1] : "";
-
+        String version = s.length > 1 ? s[s.length - 1] : "";
         if (!name.contains(libname)) {
             return filename;
         }
         for (String suffix : properties.get("platform.library.suffix")) {
             int n = name.lastIndexOf(suffix);
-            int n2 = version.length() != 0 ? name.lastIndexOf(version)
-                                           : name.indexOf(".");
+            int n2 = version.length() != 0 ? name.lastIndexOf(version) : name.indexOf(".");
             int n3 = name.lastIndexOf(".");
             if (n2 < n && n < n3) {
                 link = name.substring(0, n) + suffix;
@@ -1917,8 +1959,7 @@ public class Loader {
             try {
                 Path linkPath = linkFile.toPath();
                 Path targetPath = Paths.get(name);
-                if ((!linkFile.exists() || !Files.isSymbolicLink(linkPath) || !Files.readSymbolicLink(linkPath).equals(targetPath))
-                        && !targetPath.isAbsolute() && !targetPath.equals(linkPath.getFileName())) {
+                if ((!linkFile.exists() || !Files.isSymbolicLink(linkPath) || !Files.readSymbolicLink(linkPath).equals(targetPath)) && !targetPath.isAbsolute() && !targetPath.equals(linkPath.getFileName())) {
                     if (logger.isDebugEnabled()) {
                         logger.debug("Creating symbolic link " + linkPath);
                     }
@@ -1926,7 +1967,6 @@ public class Loader {
                     Files.createSymbolicLink(linkPath, targetPath);
                 }
                 filename = linkFile.toString();
-
                 for (String parent2 : paths) {
                     if (parent2 == null) {
                         continue;
@@ -1935,8 +1975,7 @@ public class Loader {
                         File linkFile2 = new File(parent2, link2);
                         Path linkPath2 = linkFile2.toPath();
                         Path relativeTarget = Paths.get(parent2).relativize(Paths.get(parent)).resolve(name);
-                        if ((!linkFile2.exists() || !Files.isSymbolicLink(linkPath2) || !Files.readSymbolicLink(linkPath2).equals(relativeTarget))
-                                && !relativeTarget.isAbsolute() && !relativeTarget.equals(linkPath2.getFileName())) {
+                        if ((!linkFile2.exists() || !Files.isSymbolicLink(linkPath2) || !Files.readSymbolicLink(linkPath2).equals(relativeTarget)) && !relativeTarget.isAbsolute() && !relativeTarget.equals(linkPath2.getFileName())) {
                             if (logger.isDebugEnabled()) {
                                 logger.debug("Creating symbolic link " + linkPath2);
                             }
@@ -1965,8 +2004,7 @@ public class Loader {
      * is used to prevent the Loader from hanging onto Class objects the user may
      * be trying to unload.
      */
-    static WeakHashMap<Class<? extends Pointer>,HashMap<String,Integer>> memberOffsets =
-            new WeakHashMap<Class<? extends Pointer>,HashMap<String,Integer>>();
+    static WeakHashMap<Class<? extends Pointer>, HashMap<String, Integer>> memberOffsets = new WeakHashMap<Class<? extends Pointer>, HashMap<String, Integer>>();
 
     static {
         try {
@@ -1991,8 +2029,7 @@ public class Loader {
     static Class putMemberOffset(String typeName, String member, int offset) throws ClassNotFoundException {
         try {
             Class<?> context = classStack.get().peek();
-            Class<?> c = Class.forName(typeName.replace('/', '.'), false,
-                    context != null ? context.getClassLoader() : Loader.class.getClassLoader());
+            Class<?> c = Class.forName(typeName.replace('/', '.'), false, context != null ? context.getClassLoader() : Loader.class.getClassLoader());
             if (member != null) {
                 putMemberOffset(c.asSubclass(Pointer.class), member, offset);
             }
@@ -2002,6 +2039,7 @@ public class Loader {
             return null;
         }
     }
+
     /**
      * Called by native libraries to put {@code offsetof()} and {@code sizeof()} values in {@link #memberOffsets}.
      *
@@ -2010,9 +2048,9 @@ public class Loader {
      * @param offset the value of {@code offsetof()} (or {@code sizeof()} when {@code member.equals("sizeof")})
      */
     static synchronized void putMemberOffset(Class<? extends Pointer> type, String member, int offset) {
-        HashMap<String,Integer> offsets = memberOffsets.get(type);
+        HashMap<String, Integer> offsets = memberOffsets.get(type);
         if (offsets == null) {
-            memberOffsets.put(type, offsets = new HashMap<String,Integer>());
+            memberOffsets.put(type, offsets = new HashMap<String, Integer>());
         }
         offsets.put(member, offset);
     }
@@ -2026,7 +2064,7 @@ public class Loader {
      */
     public static int offsetof(Class<? extends Pointer> type, String member) {
         // Should we synchronize that?
-        HashMap<String,Integer> offsets = memberOffsets.get(type);
+        HashMap<String, Integer> offsets = memberOffsets.get(type);
         while (offsets == null && type.getSuperclass() != null) {
             type = type.getSuperclass().asSubclass(Pointer.class);
             offsets = memberOffsets.get(type);
@@ -2044,37 +2082,68 @@ public class Loader {
         return offsetof(type, "sizeof");
     }
 
+    /**
+     * Returns the number of processors configured according to the operating system, or 0 if unknown.
+     * This value can be greater than {@link Runtime#availableProcessors()} and {@link #totalCores()}.
+     */
+    @Name("JavaCPP_totalProcessors")
+    public static native int totalProcessors();
 
-    /** Returns the number of processors configured according to the operating system, or 0 if unknown.
-     * This value can be greater than {@link Runtime#availableProcessors()} and {@link #totalCores()}. */
-    @Name("JavaCPP_totalProcessors") public static native int totalProcessors();
+    /**
+     * Returns the number of CPU cores usable according to the operating system, or 0 if unknown.
+     * For SMT-capable systems, this value may be less than {@link #totalProcessors()}.
+     */
+    @Name("JavaCPP_totalCores")
+    public static native int totalCores();
 
-    /** Returns the number of CPU cores usable according to the operating system, or 0 if unknown.
-     * For SMT-capable systems, this value may be less than {@link #totalProcessors()}. */
-    @Name("JavaCPP_totalCores") public static native int totalCores();
+    /**
+     * Returns the number of CPU chips installed according to the operating system, or 0 if unknown.
+     * For multi-core processors, this value may be less than {@link #totalCores()}.
+     */
+    @Name("JavaCPP_totalChips")
+    public static native int totalChips();
 
-    /** Returns the number of CPU chips installed according to the operating system, or 0 if unknown.
-     * For multi-core processors, this value may be less than {@link #totalCores()}. */
-    @Name("JavaCPP_totalChips") public static native int totalChips();
+    /**
+     * Returns the address found under the given name in the "dynamic symbol tables" (Linux, Mac OS X, etc)
+     * or the "export tables" (Windows) of all libraries loaded, or null if not found.
+     */
+    @Name("JavaCPP_addressof")
+    public static native Pointer addressof(String symbol);
 
-    /** Returns the address found under the given name in the "dynamic symbol tables" (Linux, Mac OS X, etc)
-     * or the "export tables" (Windows) of all libraries loaded, or null if not found. */
-    @Name("JavaCPP_addressof") public static native Pointer addressof(String symbol);
-
-    /** Loads all symbols from a library globally, that is {@code dlopen(filename, RTLD_LAZY | RTLD_GLOBAL)},
+    /**
+     * Loads all symbols from a library globally, that is {@code dlopen(filename, RTLD_LAZY | RTLD_GLOBAL)},
      * or simply by default with {@code LoadLibrary(filename)} on Windows. If the library name passed to
-     * one of the other load functions in this class ends with "!", this function will get called on them. */
-    @Name("JavaCPP_loadGlobal") @Raw(withEnv = true) public static native void loadGlobal(String filename);
+     * one of the other load functions in this class ends with "!", this function will get called on them.
+     */
+    @Name("JavaCPP_loadGlobal")
+    @Raw(withEnv = true)
+    public static native void loadGlobal(String filename);
 
-    /** Returns the JavaVM JNI object, as required by some APIs for initialization. */
-    @Name("JavaCPP_getJavaVM") public static native @Cast("JavaVM*") Pointer getJavaVM();
+    /**
+     * Returns the JavaVM JNI object, as required by some APIs for initialization.
+     */
+    @Name("JavaCPP_getJavaVM")
+    @Cast("JavaVM*")
+    public static native Pointer getJavaVM();
 
-    /** Returns a JNI global reference stored in a Pointer for the given Object. */
-    @Name("JavaCPP_newGlobalRef") public static native @Cast("jobject") Pointer newGlobalRef(@Raw(withEnv = true) Object object);
+    /**
+     * Returns a JNI global reference stored in a Pointer for the given Object.
+     */
+    @Name("JavaCPP_newGlobalRef")
+    @Cast("jobject")
+    public static native Pointer newGlobalRef(@Raw(withEnv = true) Object object);
 
-    /** Returns an Object from the JNI global reference stored in the Pointer. */
-    @Name("JavaCPP_accessGlobalRef") @Raw(withEnv = true) public static native Object accessGlobalRef(@Cast("jobject") Pointer globalRef);
+    /**
+     * Returns an Object from the JNI global reference stored in the Pointer.
+     */
+    @Name("JavaCPP_accessGlobalRef")
+    @Raw(withEnv = true)
+    public static native Object accessGlobalRef(@Cast("jobject") Pointer globalRef);
 
-    /** Deletes the JNI global reference stored in the Pointer. */
-    @Name("JavaCPP_deleteGlobalRef") @Raw(withEnv = true) public static native void deleteGlobalRef(@Cast("jobject") Pointer globalRef);
+    /**
+     * Deletes the JNI global reference stored in the Pointer.
+     */
+    @Name("JavaCPP_deleteGlobalRef")
+    @Raw(withEnv = true)
+    public static native void deleteGlobalRef(@Cast("jobject") Pointer globalRef);
 }

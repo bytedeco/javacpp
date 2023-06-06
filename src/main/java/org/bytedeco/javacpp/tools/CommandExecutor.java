@@ -19,7 +19,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.bytedeco.javacpp.tools;
 
 import java.io.File;
@@ -34,6 +33,7 @@ import org.bytedeco.javacpp.Loader;
  * @author Samuel Audet
  */
 public class CommandExecutor {
+
     final Logger logger;
 
     public CommandExecutor(Logger logger) {
@@ -51,8 +51,7 @@ public class CommandExecutor {
      * @throws IOException
      * @throws InterruptedException
      */
-    public int executeCommand(List<String> command, File workingDirectory,
-            Map<String,String> environmentVariables) throws IOException, InterruptedException {
+    public int executeCommand(List<String> command, File workingDirectory, Map<String, String> environmentVariables) throws IOException, InterruptedException {
         String platform = Loader.getPlatform();
         boolean windows = platform.startsWith("windows");
         for (int i = 0; i < command.size(); i++) {
@@ -66,7 +65,6 @@ public class CommandExecutor {
             }
             command.set(i, arg);
         }
-
         String text = "";
         for (String s : command) {
             boolean hasSpaces = s.indexOf(" ") > 0 || s.isEmpty();
@@ -80,13 +78,12 @@ public class CommandExecutor {
             text += " ";
         }
         logger.info(text);
-
         ProcessBuilder pb = new ProcessBuilder(command);
         if (workingDirectory != null) {
             pb.directory(workingDirectory);
         }
         if (environmentVariables != null) {
-            for (Map.Entry<String,String> e : environmentVariables.entrySet()) {
+            for (Map.Entry<String, String> e : environmentVariables.entrySet()) {
                 if (e.getKey() != null && e.getValue() != null) {
                     pb.environment().put(e.getKey(), e.getValue());
                 }
