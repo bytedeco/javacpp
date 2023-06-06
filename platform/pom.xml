@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.bytedeco</groupId>
   <artifactId>javacpp-platform</artifactId>
-  <version>1.5.9</version>
+  <version>1.5.10-SNAPSHOT</version>
 
   <name>JavaCPP Platform</name>
   <description>The missing bridge between Java and native C++</description>
@@ -81,24 +81,24 @@
       <artifactId>javacpp</artifactId>
       <version>${project.version}</version>
     </dependency>
-    <dependency>
-      <groupId>org.bytedeco</groupId>
-      <artifactId>javacpp</artifactId>
-      <version>${project.version}</version>
-      <classifier>${javacpp.platform.android-arm}</classifier>
-    </dependency>
+<!--    <dependency>-->
+<!--      <groupId>org.bytedeco</groupId>-->
+<!--      <artifactId>javacpp</artifactId>-->
+<!--      <version>${project.version}</version>-->
+<!--      <classifier>${javacpp.platform.android-arm}</classifier>-->
+<!--    </dependency>-->
     <dependency>
       <groupId>org.bytedeco</groupId>
       <artifactId>javacpp</artifactId>
       <version>${project.version}</version>
       <classifier>${javacpp.platform.android-arm64}</classifier>
     </dependency>
-    <dependency>
-      <groupId>org.bytedeco</groupId>
-      <artifactId>javacpp</artifactId>
-      <version>${project.version}</version>
-      <classifier>${javacpp.platform.android-x86}</classifier>
-    </dependency>
+<!--    <dependency>-->
+<!--      <groupId>org.bytedeco</groupId>-->
+<!--      <artifactId>javacpp</artifactId>-->
+<!--      <version>${project.version}</version>-->
+<!--      <classifier>${javacpp.platform.android-x86}</classifier>-->
+<!--    </dependency>-->
     <dependency>
       <groupId>org.bytedeco</groupId>
       <artifactId>javacpp</artifactId>
@@ -117,12 +117,12 @@
       <version>${project.version}</version>
       <classifier>${javacpp.platform.ios-x86_64}</classifier>
     </dependency>
-    <dependency>
-      <groupId>org.bytedeco</groupId>
-      <artifactId>javacpp</artifactId>
-      <version>${project.version}</version>
-      <classifier>${javacpp.platform.linux-armhf}</classifier>
-    </dependency>
+<!--    <dependency>-->
+<!--      <groupId>org.bytedeco</groupId>-->
+<!--      <artifactId>javacpp</artifactId>-->
+<!--      <version>${project.version}</version>-->
+<!--      <classifier>${javacpp.platform.linux-armhf}</classifier>-->
+<!--    </dependency>-->
     <dependency>
       <groupId>org.bytedeco</groupId>
       <artifactId>javacpp</artifactId>
@@ -135,12 +135,12 @@
       <version>${project.version}</version>
       <classifier>${javacpp.platform.linux-ppc64le}</classifier>
     </dependency>
-    <dependency>
-      <groupId>org.bytedeco</groupId>
-      <artifactId>javacpp</artifactId>
-      <version>${project.version}</version>
-      <classifier>${javacpp.platform.linux-x86}</classifier>
-    </dependency>
+<!--    <dependency>-->
+<!--      <groupId>org.bytedeco</groupId>-->
+<!--      <artifactId>javacpp</artifactId>-->
+<!--      <version>${project.version}</version>-->
+<!--      <classifier>${javacpp.platform.linux-x86}</classifier>-->
+<!--    </dependency>-->
     <dependency>
       <groupId>org.bytedeco</groupId>
       <artifactId>javacpp</artifactId>
@@ -159,12 +159,12 @@
       <version>${project.version}</version>
       <classifier>${javacpp.platform.macosx-x86_64}</classifier>
     </dependency>
-    <dependency>
-      <groupId>org.bytedeco</groupId>
-      <artifactId>javacpp</artifactId>
-      <version>${project.version}</version>
-      <classifier>${javacpp.platform.windows-x86}</classifier>
-    </dependency>
+<!--    <dependency>-->
+<!--      <groupId>org.bytedeco</groupId>-->
+<!--      <artifactId>javacpp</artifactId>-->
+<!--      <version>${project.version}</version>-->
+<!--      <classifier>${javacpp.platform.windows-x86}</classifier>-->
+<!--    </dependency>-->
     <dependency>
       <groupId>org.bytedeco</groupId>
       <artifactId>javacpp</artifactId>
