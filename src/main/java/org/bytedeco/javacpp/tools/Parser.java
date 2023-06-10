@@ -3396,6 +3396,11 @@ public class Parser {
                 }
             }
         }
+        if (typedef && tokens.get().match('(')) {
+            // this is probably a function pointer declaration
+            tokens.index = backIndex;
+            return false;
+        }
         if (typedef && type.indirections > 0) {
             // skip pointer typedef
             while (!tokens.get().match(';', Token.EOF)) {

@@ -1,4 +1,6 @@
 
+ * Fix `Parser` on function pointer declarations starting with `typedef struct` ([pull bytedeco/javacpp-presets#1361](https://github.com/bytedeco/javacpp-presets/pull/1361))
+
 ### June 6, 2023 version 1.5.9
  * Fix `Loader.extractResource()` for nested JAR files from Spring Boot ([pull #685](https://github.com/bytedeco/javacpp/pull/685))
  * Have `Parser` desugar `...` varargs to array `[]` for return types as well ([pull #682](https://github.com/bytedeco/javacpp/pull/682))
