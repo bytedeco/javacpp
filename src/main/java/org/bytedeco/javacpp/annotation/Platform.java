@@ -52,16 +52,22 @@ public @interface Platform {
      *  code, before {@link #define()} macros and any included header files. */
     String[] pragma()      default {};
     /** A list of macros to {@code #define} at the top of the generated code,
-     *  before {@link #include()} and {@link #cinclude()} header files. */
+     *  before {@link #jniinclude()} and {@link #jnicinclude()} header files. */
     String[] define()      default {};
     /** A list of C/C++ header files that should not be included in the generated code,
      *  even when they are inherited from an include list. */
     String[] exclude()     default {};
-    /** A list of C++ header files to include at the top of the generated code. */
+    /** A list of C++ header files read by the parser. */
     String[] include()     default {};
-    /** A list of C header files to include at the top of the generated code. The
-     *  {@code #include} directives will be generated in a {@code extern "C" { } } block.*/
+    /** A list of C header files read by the parser. */
     String[] cinclude()    default {};
+    /** A list of C++ header files included at the top of the generated JNI code. If empty, {@link #include()}
+     * list is included. */
+    String[] jniinclude()     default {};
+    /** A list of C header files included at the top of the generated JNI code. The
+     *  {@code #include} directives will be generated in a {@code extern "C" { } } block.
+     *  If empty, {@link #cinclude()} list is included. */
+    String[] jnicinclude()    default {};
     /** A list of include paths passed to the native compiler. */
     String[] includepath() default {};
     /** A list of include resources passed to the native compiler. */

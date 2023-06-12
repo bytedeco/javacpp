@@ -418,10 +418,13 @@ public class Generator {
 
         if (classes != null) {
             List exclude = clsProperties.get("platform.exclude");
-            List[] include = { clsProperties.get("platform.cinclude"),
-                               clsProperties.get("platform.include") };
-            for (int i = 0; i < include.length; i++) {
-                if (include[i] != null && include[i].size() > 0) {
+            List cinclude = clsProperties.get("platform.jnicinclude");
+            if (cinclude.isEmpty()) cinclude = clsProperties.get("platform.cinclude");
+            List include = clsProperties.get("platform.jniinclude");
+            if (include.isEmpty()) include = clsProperties.get("platform.include");
+            List[] includes = { cinclude, include };
+            for (int i = 0; i < includes.length; i++) {
+                if (includes[i] != null && includes[i].size() > 0) {
                     if (i == 0) {
                         out.println("extern \"C\" {");
                         if (out2 != null) {
@@ -430,7 +433,7 @@ public class Generator {
                             out2.println("#endif");
                         }
                     }
-                    for (String s : (List<String>)include[i]) {
+                    for (String s : (List<String>)includes[i]) {
                         if (exclude.contains(s)) {
                             continue;
                         }
