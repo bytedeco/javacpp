@@ -8,6 +8,7 @@ import java.lang.annotation.Target;
 import org.bytedeco.javacpp.Loader;
 import org.bytedeco.javacpp.tools.Builder;
 import org.bytedeco.javacpp.tools.Generator;
+import org.bytedeco.javacpp.tools.Parser;
 
 /**
  * Defines native properties for a top-level enclosing class as well as indicates
@@ -32,6 +33,7 @@ import org.bytedeco.javacpp.tools.Generator;
  *
  * @see Builder
  * @see Generator
+ * @see Parser
  * @see Loader
  *
  * @author Samuel Audet
@@ -57,16 +59,16 @@ public @interface Platform {
     /** A list of C/C++ header files that should not be included in the generated code,
      *  even when they are inherited from an include list. */
     String[] exclude()     default {};
-    /** A list of C++ header files read by the parser. */
+    /** A list of C++ header files to process by the {@link Parser}. */
     String[] include()     default {};
-    /** A list of C header files read by the parser. */
+    /** A list of C header files to process by the {@link Parser}. */
     String[] cinclude()    default {};
-    /** A list of C++ header files included at the top of the generated JNI code. If empty, {@link #include()}
-     * list is included. */
+    /** A list of C++ header files to include at the top of the generated JNI code.
+     *  If empty, the {@link #include()} list is included. */
     String[] jniinclude()     default {};
-    /** A list of C header files included at the top of the generated JNI code. The
+    /** A list of C header files to include at the top of the generated JNI code. The
      *  {@code #include} directives will be generated in a {@code extern "C" { } } block.
-     *  If empty, {@link #cinclude()} list is included. */
+     *  If empty, the {@link #cinclude()} list is included. */
     String[] jnicinclude()    default {};
     /** A list of include paths passed to the native compiler. */
     String[] includepath() default {};

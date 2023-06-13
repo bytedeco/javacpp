@@ -1,4 +1,5 @@
 
+ * Add `@Platform(jnicinclude=..., jniinclude=...)` properties that `Generator` prioritizes ([pull #689](https://github.com/bytedeco/javacpp/pull/689))
  * Fix `Parser` on function pointer declarations starting with `typedef struct` ([pull bytedeco/javacpp-presets#1361](https://github.com/bytedeco/javacpp-presets/pull/1361))
 
 ### June 6, 2023 version 1.5.9

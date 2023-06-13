@@ -418,11 +418,12 @@ public class Generator {
 
         if (classes != null) {
             List exclude = clsProperties.get("platform.exclude");
-            List cinclude = clsProperties.get("platform.jnicinclude");
-            if (cinclude.isEmpty()) cinclude = clsProperties.get("platform.cinclude");
-            List include = clsProperties.get("platform.jniinclude");
-            if (include.isEmpty()) include = clsProperties.get("platform.include");
-            List[] includes = { cinclude, include };
+            List include = clsProperties.get("platform.include");
+            List cinclude = clsProperties.get("platform.cinclude");
+            List jniinclude = clsProperties.get("platform.jniinclude");
+            List jnicinclude = clsProperties.get("platform.jnicinclude");
+            List[] includes = { jnicinclude.isEmpty() ? cinclude : jnicinclude,
+                                jniinclude.isEmpty() ? include : jniinclude };
             for (int i = 0; i < includes.length; i++) {
                 if (includes[i] != null && includes[i].size() > 0) {
                     if (i == 0) {

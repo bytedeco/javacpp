@@ -61,8 +61,8 @@ public class ClassProperties extends HashMap<String,List<String>> {
             if (v == null || v.length() == 0) {
                 continue;
             }
-            if (k.equals("platform.includepath") || k.equals("platform.includeresource")
-                || k.equals("platform.include") || k.equals("platform.jniinclude")
+            if (k.equals("platform.includepath") || k.equals("platform.includeresource") || k.equals("platform.include")
+                || k.equals("platform.cinclude") || k.equals("platform.jniinclude") || k.equals("platform.jnicinclude")
                 || k.equals("platform.linkpath") || k.equals("platform.linkresource") || k.equals("platform.link")
                 || k.equals("platform.preloadpath") || k.equals("platform.preloadresource") || k.equals("platform.preload")
                 || k.equals("platform.resourcepath") || k.equals("platform.resource")
@@ -204,9 +204,9 @@ public class ClassProperties extends HashMap<String,List<String>> {
         }
         boolean hasPlatformProperties = platforms != null && platforms.length > (classProperties != null && classPlatform != null ? 1 : 0);
 
-        String[] pragma = {}, define = {}, exclude = {}, include = {}, cinclude = {}, jniinclude = {},
-                 jnicinclude = {}, includepath = {}, includeresource = {}, compiler = {},
-                 linkpath = {}, linkresource = {}, link = {}, frameworkpath = {}, framework = {}, preloadpath = {}, preloadresource = {}, preload = {},
+        String[] pragma = {}, define = {}, exclude = {}, include = {}, cinclude = {}, jniinclude = {}, jnicinclude = {},
+                 includepath = {}, includeresource = {}, compiler = {}, linkpath = {}, linkresource = {}, link = {},
+                 frameworkpath = {}, framework = {}, preloadpath = {}, preloadresource = {}, preload = {},
                  resourcepath = {}, resource = {}, extension = {}, executablepath = {}, executable = {};
         String library = "jni" + c.getSimpleName();
         if (hasPlatformProperties) {
@@ -248,8 +248,8 @@ public class ClassProperties extends HashMap<String,List<String>> {
                 if (p.exclude()    .length > 0) { exclude     = p.exclude();     }
                 if (p.include()    .length > 0) { include     = p.include();     }
                 if (p.cinclude()   .length > 0) { cinclude    = p.cinclude();    }
-                if (p.jniinclude() .length > 0) { jniinclude  = p.jniinclude();     }
-                if (p.jnicinclude().length > 0) { jnicinclude = p.jnicinclude();    }
+                if (p.jniinclude() .length > 0) { jniinclude  = p.jniinclude();  }
+                if (p.jnicinclude().length > 0) { jnicinclude = p.jnicinclude(); }
                 if (p.includepath().length > 0) { includepath = p.includepath(); }
                 if (p.includeresource().length > 0) { includeresource = p.includeresource(); }
                 if (p.compiler()   .length > 0) { compiler    = p.compiler();    }
