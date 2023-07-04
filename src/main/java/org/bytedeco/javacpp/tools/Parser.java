@@ -669,6 +669,7 @@ public class Parser {
                     type.cppName += ')';
                     token = tokens.get();
                     if (token.match('<')) {
+                        // probably an actual less than, skip.
                         tokens.next();
                         token = tokens.get();
                     }
