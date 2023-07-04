@@ -638,6 +638,42 @@ public class Parser {
             Type type = type(context);
             arguments.add(type);
             token = tokens.get();
+            if (token.match('(')) {
+                Parameters p = parameters(context, 0, false);
+                if (p != null) {
+                    // Build prototype string, without space after comma
+                    type.cppName += '(';
+                    String separator = "";
+                    for (Declarator d: p.declarators) {
+                        if (d != null) {
+                            String s = d.type.cppName;
+                            if (d.type.constValue && !s.startsWith("const ")) {
+                                s = "const " + s;
+                            }
+                            for (int i = 0; i < d.indirections; i++) {
+                                s += "*";
+                            }
+                            if (d.reference) {
+                                s += "&";
+                            }
+                            if (d.rvalue) {
+                                s += "&&";
+                            }
+                            if (d.type.constPointer && !s.endsWith(" const")) {
+                                s = s + " const";
+                            }
+                            type.cppName += separator + s;
+                            separator = ",";
+                        }
+                    }
+                    type.cppName += ')';
+                    token = tokens.get();
+                    if (token.match('<')) {
+                        tokens.next();
+                        token = tokens.get();
+                    }
+                }
+            }
             if (!token.match(',', '>') && type != null) {
                 // may not actually be a type
                 int count = 0;
