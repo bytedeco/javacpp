@@ -642,9 +642,9 @@ public class Parser {
                 Parameters p = parameters(context, 0, false);
                 if (p != null) {
                     // Build prototype string, without space after comma
-                    type.cppName += '(';
+                    type.cppName += "(";
                     String separator = "";
-                    for (Declarator d: p.declarators) {
+                    for (Declarator d : p.declarators) {
                         if (d != null) {
                             String s = d.type.cppName;
                             if (d.type.constValue && !s.startsWith("const ")) {
@@ -666,7 +666,7 @@ public class Parser {
                             separator = ",";
                         }
                     }
-                    type.cppName += ')';
+                    type.cppName += ")";
                     token = tokens.get();
                     if (token.match('<')) {
                         // probably an actual less than, skip.
