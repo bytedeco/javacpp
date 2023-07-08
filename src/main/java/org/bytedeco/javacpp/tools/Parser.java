@@ -428,6 +428,13 @@ public class Parser {
                         if (indexType != null && !indexType.annotations.contains("@Const") && !indexType.annotations.contains("@Cast") && !indexType.value) {
                             indexType.annotations += "@Const ";
                         }
+                        if (containerName.toLowerCase().endsWith("vector")
+                            || containerName.toLowerCase().endsWith("deque")
+                            || containerName.toLowerCase().endsWith("array")
+                            || containerName.toLowerCase().endsWith("list")) {
+                            decl.text += "    public native " + valueType.annotations + valueType.javaName + " front();\n"
+                                      +  "    public native " + valueType.annotations + valueType.javaName + " back();\n";
+                        }
                         if (!valueType.annotations.contains("@Const") && !valueType.value) {
                             valueType.annotations += "@Const ";
                         }
