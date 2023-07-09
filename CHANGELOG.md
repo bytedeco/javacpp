@@ -1,4 +1,5 @@
 
+ * Let `Parser` map iterators of basic containers systematically ([pull #694](https://github.com/bytedeco/javacpp/pull/694))
  * Fix `Parser` for function parameters contained in template arguments ([pull #693](https://github.com/bytedeco/javacpp/pull/693))
  * Fix `Parser` on function pointer declarations starting with `typedef struct` ([pull bytedeco/javacpp-presets#1361](https://github.com/bytedeco/javacpp-presets/pull/1361))
 
