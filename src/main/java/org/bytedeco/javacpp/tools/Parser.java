@@ -433,10 +433,10 @@ public class Parser {
                         }
                         if (indexType != null) {
                             if (indexType.javaName.equals("long")) {
-                                decl.text += "    public " + valueType.javaName + " front() { return get(0); }\n"
-                                          +  "    public " + valueType.javaName + " back() { return get(size()-1); }\n";
+                                decl.text += "    public " + removeAnnotations(valueType.javaName) + " front() { return get(0); }\n"
+                                          +  "    public " + removeAnnotations(valueType.javaName) + " back() { return get(size()-1); }\n";
                             } else if (containerType.arguments.length == 1) {
-                                decl.text += "    public " + valueType.javaName + " front() { try (Iterator it = begin()) { return it.access(); } }\n";
+                                decl.text += "    public " + removeAnnotations(valueType.javaName) + " front() { try (Iterator it = begin()) { return it.access(); } }\n";
                             }
                         }
                         decl.text += "    public native @ByVal Iterator begin();\n"
