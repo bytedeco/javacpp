@@ -453,6 +453,9 @@ public class Parser {
                                   :
                                          "        public native @Name(\"operator *\") " + valueType.annotations + valueType.javaName + " get();\n")
                                   +  "    }\n";
+                        if (infoMap.getFirst(containerType.cppName + "::" + iteratorType) == null) {
+                            infoMap.put(new Info(containerType.cppName + "::" + iteratorType).pointerTypes(containerType.javaName + ".Iterator"));
+                        }
                     }
                     if (resizable) {
                         valueType.javaName = removeAnnotations(valueType.javaName);
