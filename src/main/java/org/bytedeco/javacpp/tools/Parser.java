@@ -382,8 +382,12 @@ public class Parser {
                     }
                 } else {
                     if (indexType != null) {
-                        decl.text += "\n"
-                                  +  "    @Index" + indexFunction + " public native " + valueType.annotations + valueType.javaName + " get(" + params + ");\n";
+                        decl.text += "\n";
+                        if (dim == 1 && indexType.javaName.equals("long")) {
+                            decl.text += "    public " + removeAnnotations(valueType.javaName) + " front() { return get(0); }\n"
+                                      +  "    public " + removeAnnotations(valueType.javaName) + " back() { return get(size()-1); }\n";
+                        }
+                        decl.text += "    @Index" + indexFunction + " public native " + valueType.annotations + valueType.javaName + " get(" + params + ");\n";
                         if (!constant) {
                             decl.text += "    public native " + containerType.javaName + " put(" + params + separator + removeAnnotations(valueType.javaName) + " value);\n";
                         }
@@ -431,13 +435,8 @@ public class Parser {
                         if (!valueType.annotations.contains("@Const") && !valueType.value) {
                             valueType.annotations += "@Const ";
                         }
-                        if (indexType != null) {
-                            if (indexType.javaName.equals("long")) {
-                                decl.text += "    public " + removeAnnotations(valueType.javaName) + " front() { return get(0); }\n"
-                                          +  "    public " + removeAnnotations(valueType.javaName) + " back() { return get(size()-1); }\n";
-                            } else if (containerType.arguments.length == 1) {
-                                decl.text += "    public " + removeAnnotations(valueType.javaName) + " front() { try (Iterator it = begin()) { return it.access(); } }\n";
-                            }
+                        if (indexType == null || (!indexType.javaName.equals("long") && containerType.arguments.length == 1)) {
+                            decl.text += "    public " + removeAnnotations(valueType.javaName) + " front() { try (Iterator it = begin()) { return it.get(); } }\n";
                         }
                         decl.text += "    public native @ByVal Iterator begin();\n"
                                   +  "    public native @ByVal Iterator end();\n"
