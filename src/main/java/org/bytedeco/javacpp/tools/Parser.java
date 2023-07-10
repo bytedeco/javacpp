@@ -382,8 +382,12 @@ public class Parser {
                     }
                 } else {
                     if (indexType != null) {
-                        decl.text += "\n"
-                                  +  "    @Index" + indexFunction + " public native " + valueType.annotations + valueType.javaName + " get(" + params + ");\n";
+                        decl.text += "\n";
+                        if (dim == 1 && indexType.javaName.equals("long")) {
+                            decl.text += "    public " + removeAnnotations(valueType.javaName) + " front() { return get(0); }\n"
+                                      +  "    public " + removeAnnotations(valueType.javaName) + " back() { return get(size() - 1); }\n";
+                        }
+                        decl.text += "    @Index" + indexFunction + " public native " + valueType.annotations + valueType.javaName + " get(" + params + ");\n";
                         if (!constant) {
                             decl.text += "    public native " + containerType.javaName + " put(" + params + separator + removeAnnotations(valueType.javaName) + " value);\n";
                         }
@@ -413,6 +417,9 @@ public class Parser {
                     }
                     if (dim == 1 && !containerName.toLowerCase().endsWith("bitset") && containerType.arguments.length >= 1 && containerType.arguments[containerType.arguments.length - 1].javaName.length() > 0) {
                         decl.text += "\n";
+                        if (indexType == null || (!indexType.javaName.equals("long") && containerType.arguments.length == 1)) {
+                            decl.text += "    public " + removeAnnotations(valueType.javaName) + " front() { try (Iterator it = begin()) { return it.get(); } }\n";
+                        }
                         if (!constant) {
                             if (list) {
                                 decl.text += "    public native @ByVal Iterator insert(@ByVal Iterator pos, " + valueType.annotations + valueType.javaName + " value);\n"
