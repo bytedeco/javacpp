@@ -399,6 +399,7 @@ public class Parser {
                         for (Type type : containerType.arguments) {
                             if (containerType.arguments.length == 1 && !tuple) {
                                 decl.text += "    public native boolean has_value();\n"
+                                          +  "    public native void reset();\n"
                                           +  "    public native @Name(\"value\") " + type.annotations + type.javaName + " get();\n";
                             } else {
                                 int namespace = containerName.lastIndexOf("::");
