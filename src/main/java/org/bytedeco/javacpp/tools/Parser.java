@@ -97,6 +97,7 @@ public class Parser {
     TokenIndexer tokens = null;
     String lineSeparator = null;
     Set<String> upcasts = new HashSet<>();
+    HashSet<String> polymorphicClasses = new HashSet<>(); // Contains Java names
 
     static String removeAnnotations(String s) {
         return s.substring(s.lastIndexOf(' ') + 1);
@@ -3360,27 +3361,43 @@ public class Parser {
         return true;
     }
 
-    String upcast(Type from, Type to, boolean override) {
-        String ecmn = upcastMethodName(to.javaName);
-        String res = "    " + (override ? "@Override " : "") + "public " + to.javaName + " " + ecmn + "() { return " + ecmn + "(this); }\n"
-                   + "    @Namespace public static native ";
+    String upcast(Type derived, Type base, boolean override) {
+        String ecmn = upcastMethodName(base.javaName);
+        String res = "    " + (override ? "@Override " : "") + "public " + base.javaName + " " + ecmn + "() { return " + ecmn + "(this); }\n"
+            + "    @Namespace public static native ";
         /* We generate the adapter-aware version of the method when the target class has any annotation,
            assuming that this annotation is @SharedPtr or some other adapter storing a share_ptr in owner.
            This is the only use case for now. We can generalize to any adapter if the need arises and call
            some cast function on the adapter instead of static_pointer_cast. */
-        List<String> split = Templates.splitNamespace(to.cppName);
-        String constructorName = to.cppName + "::" + Templates.strip(split.get(split.size() - 1));
+        List<String> split = Templates.splitNamespace(base.cppName);
+        String constructorName = base.cppName + "::" + Templates.strip(split.get(split.size() - 1));
         Info info = infoMap.getFirst(constructorName);
         String annotations = "";
         if (info != null && info.annotations != null) {
             for (String s : info.annotations) {
                 annotations += s + " ";
             }
-            res += annotations + "@Name(\"SHARED_PTR_NAMESPACE::static_pointer_cast<" + to.cppName + ", " + from.cppName + ">\") ";
+            res += annotations + "@Name(\"SHARED_PTR_NAMESPACE::static_pointer_cast<" + base.cppName + ", " + derived.cppName + ">\") ";
         } else {
-            res += "@Name(\"static_cast<" + to.cppName + "*>\") ";
+            res += "@Name(\"static_cast<" + base.cppName + "*>\") ";
         }
-        return res + to.javaName + " " + ecmn + "(" + annotations + from.javaName + " pointer);\n";
+        res += base.javaName + " " + ecmn + "(" + annotations + derived.javaName + " pointer);\n";
+        final String downcastType;
+        if (base.virtual) {
+            if (polymorphicClasses.contains(base.javaName)) {
+                downcastType = "dynamic";
+            } else {
+                return res; // No downcast possible in this case
+            }
+        } else {
+            downcastType = "static";
+        }
+        if (annotations.equals("")) {
+            res += "    @Namespace public static native @Name(\"" + downcastType + "_cast<" + derived.cppName + "*>\") " + derived.javaName + " of(" + base.javaName + " pointer);";
+        } else {
+            res += "    @Namespace public static native " + annotations + "@Name(\"SHARED_PTR_NAMESPACE::" + downcastType + "_pointer_cast<" + derived.cppName + ", " + base.cppName + ">\") " + derived.javaName + " of(" + annotations + base.javaName + " pointer);";
+        }
+        return res;
     }
 
     boolean group(Context context, DeclarationList declList) throws ParserException {
@@ -3423,15 +3440,18 @@ public class Parser {
         boolean anonymous = !typedef && type.cppName.length() == 0, derivedClass = false, skipBase = false;
         if (type.cppName.length() > 0 && tokens.get().match(':')) {
             derivedClass = true;
+            boolean virtualInheritance = false;
+            boolean accessible = !ctx.inaccessible;
             for (Token token = tokens.next(); !token.match(Token.EOF); token = tokens.next()) {
-                boolean accessible = !ctx.inaccessible;
                 if (token.match(Token.VIRTUAL)) {
+                    virtualInheritance = true;
                     continue;
                 } else if (token.match(Token.PRIVATE, Token.PROTECTED, Token.PUBLIC)) {
                     accessible = token.match(Token.PUBLIC);
-                    tokens.next();
+                    continue;
                 }
                 Type t = type(context);
+                t.virtual = virtualInheritance;
                 Info info = infoMap.getFirst(t.cppName);
                 if (info != null && info.skip) {
                     skipBase = true;
@@ -3442,6 +3462,8 @@ public class Parser {
                 if (tokens.get().expect(',', '{').match('{')) {
                     break;
                 }
+                virtualInheritance = false;
+                accessible = !ctx.inaccessible;
             }
         }
         if (typedef && tokens.get().match('(')) {
@@ -3545,10 +3567,21 @@ public class Parser {
             infoMap.put(info = new Info(type.cppName).pointerTypes(type.javaName));
         }
         Type base = new Type("Pointer");
+        boolean polymorphic = info != null && info.polymorphic;
         Iterator<Type> it = baseClasses.iterator();
         while (it.hasNext()) {
             Type next = it.next();
             Info nextInfo = infoMap.getFirst(next.cppName);
+            boolean nextPolymorphic = polymorphicClasses.contains(next.javaName) ||
+                (nextInfo != null && nextInfo.polymorphic);
+            polymorphic |= nextPolymorphic;
+            if (nextPolymorphic && next.virtual && !upcasts.contains(next.javaName)) {
+                // We can detect this only if the superclass is parsed before or
+                // info.polymorphic is set.
+                logger.warn(type.cppName + " virtually inherits from polymorphic class " + next.cppName +
+                    ". Consider adding an upcast Info on " + next.cppName + ".");
+            }
+
             if (nextInfo == null || !nextInfo.flatten) {
                 base = next;
                 it.remove();
@@ -3570,6 +3603,8 @@ public class Parser {
 
         if (upcasts.contains(base.javaName)) {
             casts += upcast(type, base, true);
+        } else if (polymorphicClasses.contains(base.javaName) && base.virtual) {
+            casts += upcast(type, base, false);
         }
 
         decl.signature = type.javaName;
@@ -3670,6 +3705,7 @@ public class Parser {
                 pointerConstructor = false, abstractClass = info != null && info.purify && !ctx.virtualize,
                 allPureConst = true, haveVariables = false;
         for (Declaration d : declList2) {
+            polymorphic |= d.declarator != null && d.declarator.type != null && d.declarator.type.virtual;
             if (d.declarator != null && d.declarator.type != null && d.declarator.type.using && decl.text != null) {
                 // inheriting constructors
                 defaultConstructor |= d.text.contains("private native void allocate();");
@@ -3796,6 +3832,8 @@ public class Parser {
                 decl.custom = true;
             }
         }
+        if (polymorphic) polymorphicClasses.add(type.javaName);
+
         for (Declaration d : declList2) {
             if ((!d.inaccessible || d.declarator != null && d.declarator.type.friend)
                     && (d.declarator == null || d.declarator.type == null

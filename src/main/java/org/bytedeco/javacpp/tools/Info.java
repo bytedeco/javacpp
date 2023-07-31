@@ -61,6 +61,7 @@ public class Info {
         skip = i.skip;
         skipDefaults = i.skipDefaults;
         purify = i.purify;
+        polymorphic = i.polymorphic;
         upcast = i.upcast;
         virtualize = i.virtualize;
         base = i.base;
@@ -120,6 +121,10 @@ public class Info {
     /** Whether a static_cast is needed to upcast a pointer to this cppName.
      * This is necessary for polymorphic classes that are virtually inherited from. */
     boolean upcast = false;
+    /** Inform the parser that a class is polymorphic, if it cannot figure it out by itself.
+     * Knowing that a class is polymorphic is needed to generate proper downcast
+     * methods in case of virtual and multiple inheritance. */
+    boolean polymorphic = false;
     /** Annotates virtual functions with @{@link Virtual} and adds appropriate constructors. */
     boolean virtualize = false;
     /** Allows to override the base class of {@link #pointerTypes}. Defaults to {@link Pointer}. */
@@ -162,6 +167,8 @@ public class Info {
     public Info purify(boolean purify) { this.purify = purify; return this; }
     public Info upcast() { this.upcast = true; return this; }
     public Info upcast(boolean upcast) { this.upcast = upcast; return this; }
+    public Info polymorphic() { this.polymorphic = true; return this; }
+    public Info polymorphic(boolean p) { this.polymorphic = p; return this; }
     public Info virtualize() { this.virtualize = true; return this; }
     public Info virtualize(boolean virtualize) { this.virtualize = virtualize; return this; }
     public Info base(String base) { this.base = base; return this; }
