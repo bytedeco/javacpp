@@ -1,4 +1,5 @@
 
+ * Fix `Parser` failing to place annotations on default constructors ([pull #699](https://github.com/bytedeco/javacpp/pull/699))
  * Let `Parser` output `reset()` methods for basic containers like `std::optional` ([pull #696](https://github.com/bytedeco/javacpp/pull/696))
  * Let `Parser` define `front()` and `back()` for one-dimensional basic containers ([pull #695](https://github.com/bytedeco/javacpp/pull/695))
  * Let `Parser` map iterators of basic containers systematically ([pull #694](https://github.com/bytedeco/javacpp/pull/694))

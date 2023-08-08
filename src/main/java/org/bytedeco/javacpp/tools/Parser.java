@@ -3669,6 +3669,14 @@ public class Parser {
         boolean implicitConstructor = true, arrayConstructor = false, defaultConstructor = false, longConstructor = false,
                 pointerConstructor = false, abstractClass = info != null && info.purify && !ctx.virtualize,
                 allPureConst = true, haveVariables = false;
+
+        String constructorName = Templates.strip(originalName);
+        int constructorNamespace = constructorName.lastIndexOf("::");
+        if (constructorNamespace >= 0) {
+            constructorName = constructorName.substring(constructorNamespace + 2);
+        }
+        Info constructorInfo = infoMap.getFirst(type.cppName + "::" + constructorName);
+
         for (Declaration d : declList2) {
             if (d.declarator != null && d.declarator.type != null && d.declarator.type.using && decl.text != null) {
                 // inheriting constructors
@@ -3735,6 +3743,13 @@ public class Parser {
             decl.text += modifiers + "class " + shortName + " extends " + base.javaName + " {\n" +
                          "    static { Loader.load(); }\n";
 
+            String constructorAnnotations = "";
+            if (constructorInfo != null && constructorInfo.annotations != null) {
+                for (String a: constructorInfo.annotations) {
+                    constructorAnnotations += a + " ";
+                }
+            }
+
             if (implicitConstructor && (info == null || !info.purify) && (!abstractClass || ctx.virtualize)) {
                 constructors += "    /** Default native constructor. */\n" +
                              "    public " + shortName + "() { super((Pointer)null); allocate(); }\n" +
@@ -3742,7 +3757,7 @@ public class Parser {
                              "    public " + shortName + "(long size) { super((Pointer)null); allocateArray(size); }\n" +
                              "    /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */\n" +
                              "    public " + shortName + "(Pointer p) { super(p); }\n" +
-                             "    private native void allocate();\n" +
+                             "    " + constructorAnnotations + "private native void allocate();\n" +
                              "    private native void allocateArray(long size);\n" +
                              "    @Override public " + shortName + " position(long position) {\n" +
                              "        return (" + shortName + ")super.position(position);\n" +
@@ -3807,12 +3822,6 @@ public class Parser {
             }
         }
 
-        String constructorName = Templates.strip(originalName);
-        int namespace2 = constructorName.lastIndexOf("::");
-        if (namespace2 >= 0) {
-            constructorName = constructorName.substring(namespace2 + 2);
-        }
-        Info constructorInfo = infoMap.getFirst(type.cppName + "::" + constructorName);
         if (/*(context.templateMap == null || context.templateMap.full()) &&*/ constructorInfo == null) {
             infoMap.put(constructorInfo = new Info(type.cppName + "::" + constructorName));
         }
