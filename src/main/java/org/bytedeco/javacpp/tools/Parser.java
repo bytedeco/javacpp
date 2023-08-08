@@ -3671,9 +3671,9 @@ public class Parser {
                 allPureConst = true, haveVariables = false;
 
         String constructorName = Templates.strip(originalName);
-        int constructorNameNS = constructorName.lastIndexOf("::");
-        if (constructorNameNS >= 0) {
-            constructorName = constructorName.substring(constructorNameNS + 2);
+        int constructorNamespace = constructorName.lastIndexOf("::");
+        if (constructorNamespace >= 0) {
+            constructorName = constructorName.substring(constructorNamespace + 2);
         }
         Info constructorInfo = infoMap.getFirst(type.cppName + "::" + constructorName);
 
