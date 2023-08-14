@@ -1261,6 +1261,19 @@
     </profile>
 
     <profile>
+      <id>javacpp.platform.custom-linux-loongarch64</id>
+      <activation>
+        <property>
+          <name>javacpp.platform.host</name>
+        </property>
+        <os><name>linux</name><arch>loongarch64</arch></os>
+      </activation>
+      <properties>
+        <javacpp.platform.linux-loongarch64>linux-loongarch64${javacpp.platform.extension}</javacpp.platform.linux-loongarch64>
+      </properties>
+    </profile>
+
+    <profile>
       <id>javacpp.platform.custom-linux-armv8</id>
       <activation>
         <property>
@@ -1502,6 +1515,15 @@
       </activation>
       <properties>
         <os.arch>arm64</os.arch>
+      </properties>
+    </profile>
+    <profile>
+      <id>loongarch64</id>
+      <activation>
+        <os><arch>loongarch64</arch></os>
+      </activation>
+      <properties>
+        <os.arch>loongarch64</os.arch>
       </properties>
     </profile>
     <profile>
