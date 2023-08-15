@@ -57,7 +57,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.build.timestamp.format>yyyyMMddhhmm</maven.build.timestamp.format>
-    <maven.version>3.0</maven.version>
+    <maven.version>3.8.1</maven.version>
     <bnd.version>5.3.0</bnd.version>
     <javacpp.platform.root></javacpp.platform.root>
     <javacpp.platform.suffix></javacpp.platform.suffix>
