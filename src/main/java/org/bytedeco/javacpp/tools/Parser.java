@@ -3567,17 +3567,17 @@ public class Parser {
             infoMap.put(info = new Info(type.cppName).pointerTypes(type.javaName));
         }
         Type base = new Type("Pointer");
-        boolean polymorphic = info != null && info.polymorphic;
+        /* The detection of polymorphism can fail if the base class has not been parsed yet, or is not
+         * parsed at all. We might need to add a "polymorphic" info flag and initialize this variable
+         * to true when info.polymorphic is set, and check nextInfo.polymorphic in the loop. */
+        boolean polymorphic = false;
         Iterator<Type> it = baseClasses.iterator();
         while (it.hasNext()) {
             Type next = it.next();
             Info nextInfo = infoMap.getFirst(next.cppName);
-            boolean nextPolymorphic = polymorphicClasses.contains(next.javaName) ||
-                (nextInfo != null && nextInfo.polymorphic);
+            boolean nextPolymorphic = polymorphicClasses.contains(next.javaName);
             polymorphic |= nextPolymorphic;
             if (nextPolymorphic && next.virtual && !upcasts.contains(next.javaName)) {
-                // We can detect this only if the superclass is parsed before or
-                // info.polymorphic is set.
                 logger.warn(type.cppName + " virtually inherits from polymorphic class " + next.cppName +
                     ". Consider adding an upcast Info on " + next.cppName + ".");
             }
