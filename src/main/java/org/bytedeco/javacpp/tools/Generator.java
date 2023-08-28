@@ -2819,7 +2819,7 @@ public class Generator {
             // special considerations for std::string without adapter
             out.print(");\n" + indent + "rptr = rstr.c_str()");
         }
-        if (!methodInfo.returnType.isPrimitive() && adapterInfo != null) {
+        if ((methodInfo.allocator || methodInfo.arrayAllocator || !methodInfo.returnType.isPrimitive()) && adapterInfo != null) {
             suffix = ")" + suffix;
         }
         if ((Pointer.class.isAssignableFrom(methodInfo.returnType) ||
