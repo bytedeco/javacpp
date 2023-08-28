@@ -2645,11 +2645,16 @@ public class Generator {
                     prefix = "";
                     suffix = "";
                 } else {
-                    out.print((noException(methodInfo.cls, methodInfo.method) ?
-                        "new (std::nothrow) " : "new ") + valueTypeName + typeName[1]);
-                    if (methodInfo.arrayAllocator) {
-                        prefix = "[";
-                        suffix = "]";
+                    if (methodInfo.method.isAnnotationPresent(Name.class)) {
+                        out.print(methodInfo.memberName[0]);
+                        // If method is an array allocator, the function must return a pointer to an array
+                    } else {
+                        out.print((noException(methodInfo.cls, methodInfo.method) ?
+                            "new (std::nothrow) " : "new ") + valueTypeName + typeName[1]);
+                        if (methodInfo.arrayAllocator) {
+                            prefix = "[";
+                            suffix = "]";
+                        }
                     }
                 }
             } else if (Modifier.isStatic(methodInfo.modifiers) || !Pointer.class.isAssignableFrom(methodInfo.cls)) {
@@ -2814,12 +2819,8 @@ public class Generator {
             // special considerations for std::string without adapter
             out.print(");\n" + indent + "rptr = rstr.c_str()");
         }
-        if (adapterInfo != null) {
-            if (methodInfo.allocator || methodInfo.arrayAllocator) {
-                suffix = ", 1, NULL)" + suffix;
-            } else if (!methodInfo.returnType.isPrimitive()) {
-                suffix = ")" + suffix;
-            }
+        if (!methodInfo.returnType.isPrimitive() && adapterInfo != null) {
+            suffix = ")" + suffix;
         }
         if ((Pointer.class.isAssignableFrom(methodInfo.returnType) ||
                 (methodInfo.returnType.isArray() &&
