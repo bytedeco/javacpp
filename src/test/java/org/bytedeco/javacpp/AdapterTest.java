@@ -23,22 +23,8 @@ package org.bytedeco.javacpp;
 
 import java.io.File;
 import java.nio.IntBuffer;
-import org.bytedeco.javacpp.annotation.ByRef;
-import org.bytedeco.javacpp.annotation.Cast;
-import org.bytedeco.javacpp.annotation.Const;
-import org.bytedeco.javacpp.annotation.Function;
-import org.bytedeco.javacpp.annotation.Optional;
-import org.bytedeco.javacpp.annotation.Platform;
-import org.bytedeco.javacpp.annotation.SharedPtr;
-import org.bytedeco.javacpp.annotation.StdBasicString;
-import org.bytedeco.javacpp.annotation.StdMove;
-import org.bytedeco.javacpp.annotation.StdString;
-import org.bytedeco.javacpp.annotation.StdU16String;
-import org.bytedeco.javacpp.annotation.StdU32String;
-import org.bytedeco.javacpp.annotation.StdVector;
-import org.bytedeco.javacpp.annotation.StdWString;
-import org.bytedeco.javacpp.annotation.UniquePtr;
-import org.bytedeco.javacpp.annotation.AsUtf16;
+
+import org.bytedeco.javacpp.annotation.*;
 import org.bytedeco.javacpp.tools.Builder;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -82,7 +68,7 @@ public class AdapterTest {
     static class SharedData extends Pointer {
         SharedData(Pointer p) { super(p); }
         SharedData(int data) { allocate(data); }
-        @SharedPtr native void allocate(int data);
+        @SharedPtr @Name("std::make_shared<SharedData>") native void allocate(int data);
 
         native int data(); native SharedData data(int data);
     }
