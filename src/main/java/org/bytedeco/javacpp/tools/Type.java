@@ -51,6 +51,10 @@ class Type {
         }
     }
 
+    @Override public int hashCode() {
+        return cppName.hashCode() ^ javaName.hashCode();
+    }
+
     String signature() {
         String sig = "";
         for (char c : javaName.substring(javaName.lastIndexOf(' ') + 1).toCharArray()) {

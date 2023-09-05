@@ -32,6 +32,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -96,8 +97,17 @@ public class Parser {
     InfoMap leafInfoMap = null;
     TokenIndexer tokens = null;
     String lineSeparator = null;
-    Set<String> upcasts = new HashSet<>();
+    Set<String> upcasts = new HashSet<>(); // Java names of base classes needing upcast
+    Map<String, Set<Type>> downcasts = new HashMap<>(); // Keys: classes which child classes needs downcast constructor. Values: classes to downcast from.
     HashSet<String> polymorphicClasses = new HashSet<>(); // Contains Java names
+
+    private void addDowncast(String base, Type from) {
+        Set<Type> types = downcasts.get(base);
+        if (types == null) {
+            downcasts.put(base, types = new HashSet<>(1));
+        }
+        types.add(from);
+    }
 
     static String removeAnnotations(String s) {
         return s.substring(s.lastIndexOf(' ') + 1);
@@ -110,6 +120,16 @@ public class Parser {
     static String upcastMethodName(String javaName) {
         String shortName = javaName.substring(javaName.lastIndexOf('.') + 1);
         return "as" + Character.toUpperCase(shortName.charAt(0)) + shortName.substring(1);
+    }
+
+    /** Returns the name of the constructor of class cppName, to be used as keys in infoMap */
+    static String constructorName(String cppName) {
+        String constructorName = Templates.strip(cppName);
+        int namespace = constructorName.lastIndexOf("::");
+        if (namespace >= 0) {
+            constructorName = constructorName.substring(namespace + 2);
+        }
+        return cppName + "::" + constructorName;
     }
 
     String translate(String text) {
@@ -254,7 +274,7 @@ public class Parser {
                     dcl.definition.text = "\n" + dcl.definition.text;
                     decl.declarator = dcl;
                 }
-                LinkedHashSet<Type> typeSet = new LinkedHashSet<>();
+                LinkedList<Type> typeSet = new LinkedList<>();
                 typeSet.addAll(Arrays.asList(firstType, secondType, indexType, valueType));
                 typeSet.addAll(Arrays.asList(containerType.arguments));
                 for (Type type : typeSet) {
@@ -3361,42 +3381,57 @@ public class Parser {
         return true;
     }
 
-    String upcast(Type derived, Type base, boolean override) {
-        String ecmn = upcastMethodName(base.javaName);
-        String res = "    " + (override ? "@Override " : "") + "public " + base.javaName + " " + ecmn + "() { return " + ecmn + "(this); }\n"
-            + "    @Namespace public static native ";
-        /* We generate the adapter-aware version of the method when the target class has any annotation,
-           assuming that this annotation is @SharedPtr or some other adapter storing a share_ptr in owner.
-           This is the only use case for now. We can generalize to any adapter if the need arises and call
-           some cast function on the adapter instead of static_pointer_cast. */
-        List<String> split = Templates.splitNamespace(base.cppName);
-        String constructorName = base.cppName + "::" + Templates.strip(split.get(split.size() - 1));
-        Info info = infoMap.getFirst(constructorName);
-        String annotations = "";
-        if (info != null && info.annotations != null) {
-            for (String s : info.annotations) {
-                annotations += s + " ";
-            }
-            res += annotations + "@Name(\"SHARED_PTR_NAMESPACE::static_pointer_cast<" + base.cppName + ", " + derived.cppName + ">\") ";
-        } else {
-            res += "@Name(\"static_cast<" + base.cppName + "*>\") ";
-        }
-        res += base.javaName + " " + ecmn + "(" + annotations + derived.javaName + " pointer);\n";
+    String downcast(Type derived, Type base) {
         final String downcastType;
         if (base.virtual) {
             if (polymorphicClasses.contains(base.javaName)) {
                 downcastType = "dynamic";
             } else {
-                return res; // No downcast possible in this case
+                return ""; // No downcast possible in this case
             }
         } else {
             downcastType = "static";
         }
-        if (annotations.equals("")) {
-            res += "    @Namespace public static native @Name(\"" + downcastType + "_cast<" + derived.cppName + "*>\") " + derived.javaName + " of(" + base.javaName + " pointer);";
-        } else {
-            res += "    @Namespace public static native " + annotations + "@Name(\"SHARED_PTR_NAMESPACE::" + downcastType + "_pointer_cast<" + derived.cppName + ", " + base.cppName + ">\") " + derived.javaName + " of(" + annotations + base.javaName + " pointer);";
+        /* See upcast() about annotations. */
+        String annotations = "";
+        Info constructorInfo = infoMap.getFirst(constructorName(base.cppName));
+        if (constructorInfo != null && constructorInfo.annotations != null) {
+            for (String s : constructorInfo.annotations) {
+                if (!s.startsWith("@Name")) annotations += s + " ";
+            }
         }
+        String res = "";
+        res += "    /** Downcast constructor. */\n" +
+               "    public " + derived.javaName + "(" + base.javaName + " pointer) { super((Pointer)null); allocate(pointer); }\n";
+        if (annotations.isEmpty()) {
+            res += "    @Namespace private native @Name(\"" + downcastType + "_cast<" + derived.cppName + "*>\") void allocate(" + base.javaName + " pointer);";
+        } else {
+            res += "    @Namespace private native " + annotations + "@Name(\"SHARED_PTR_NAMESPACE::" + downcastType + "_pointer_cast<" + derived.cppName + ", " + base.cppName + ">\") void allocate(" + annotations + base.javaName + " pointer);";
+        }
+        return res;
+    }
+
+    String upcast(Type derived, Type base, boolean override) {
+        String ecmn = upcastMethodName(base.javaName);
+        String res = "    " + (override ? "@Override " : "") + "public " + base.javaName + " " + ecmn + "() { return " + ecmn + "(this); }\n"
+            + "    @Namespace public static native ";
+        /* We generate the adapter-aware version of the method when the base class has any annotation
+           that is not @Name, assuming that this annotation is @SharedPtr or some other adapter storing a
+           shared_ptr in owner. This is the only use case for now. We can generalize to any adapter if the
+           need arises and call some cast function on the adapter instead of static_pointer_cast. */
+        String annotations = "";
+        Info constructorInfo = infoMap.getFirst(constructorName(base.cppName));
+        if (constructorInfo != null && constructorInfo.annotations != null) {
+            for (String s : constructorInfo.annotations) {
+                if (!s.startsWith("@Name")) annotations += s + " ";
+            }
+        }
+        if (annotations.isEmpty()) {
+            res += "@Name(\"static_cast<" + base.cppName + "*>\") ";
+        } else {
+            res += annotations + "@Name(\"SHARED_PTR_NAMESPACE::static_pointer_cast<" + base.cppName + ", " + derived.cppName + ">\") ";
+        }
+        res += base.javaName + " " + ecmn + "(" + annotations + derived.javaName + " pointer);\n";
         return res;
     }
 
@@ -3566,6 +3601,17 @@ public class Parser {
             }
             infoMap.put(info = new Info(type.cppName).pointerTypes(type.javaName));
         }
+
+        /* Propagate the need for downcasting from base classes */
+        for (Type t: baseClasses) {
+            Set<Type> froms = downcasts.get(t.cppName);
+            if (froms != null) {
+                for (Type from: froms) {
+                    addDowncast(type.cppName, from);
+                }
+            }
+        }
+
         Type base = new Type("Pointer");
         /* The detection of polymorphism can fail if the base class has not been parsed yet, or is not
          * parsed at all. We might need to add a "polymorphic" info flag and initialize this variable
@@ -3589,11 +3635,13 @@ public class Parser {
             }
         }
         String casts = "";
-        if (baseClasses.size() > 0) {
+        if (!baseClasses.isEmpty()) {
+            // Base classes from multiple inheritance that we don't inherit from in Java
             for (Type t : baseClasses) {
                 Info baseInfo = infoMap.getFirst(t.cppName);
                 if (!t.javaName.equals("Pointer") && (baseInfo == null || !baseInfo.skip)) {
                     casts += upcast(type, t, false);
+                    addDowncast(t.cppName, t);
                 }
             }
         }
@@ -3602,10 +3650,20 @@ public class Parser {
         }
 
         if (upcasts.contains(base.javaName)) {
+            // Base classes explicitly set as needing upcast in infoMap
             casts += upcast(type, base, true);
+            addDowncast(base.cppName, base);
         } else if (polymorphicClasses.contains(base.javaName) && base.virtual) {
+            // In this case we know we need upcast
             casts += upcast(type, base, false);
+            addDowncast(base.cppName, base);
         }
+
+        Set<Type> froms = downcasts.get(base.cppName);
+        if (froms != null)
+            for (Type t: froms) {
+                casts += downcast(type, t);
+            }
 
         decl.signature = type.javaName;
         tokens.index = startIndex;
@@ -3705,12 +3763,8 @@ public class Parser {
                 pointerConstructor = false, abstractClass = info != null && info.purify && !ctx.virtualize,
                 allPureConst = true, haveVariables = false;
 
-        String constructorName = Templates.strip(originalName);
-        int constructorNamespace = constructorName.lastIndexOf("::");
-        if (constructorNamespace >= 0) {
-            constructorName = constructorName.substring(constructorNamespace + 2);
-        }
-        Info constructorInfo = infoMap.getFirst(type.cppName + "::" + constructorName);
+        String constructorName = constructorName(originalName);
+        Info constructorInfo = infoMap.getFirst(constructorName);
 
         for (Declaration d : declList2) {
             polymorphic |= d.declarator != null && d.declarator.type != null && d.declarator.type.virtual;
@@ -3866,7 +3920,7 @@ public class Parser {
         }
 
         if (/*(context.templateMap == null || context.templateMap.full()) &&*/ constructorInfo == null) {
-            infoMap.put(constructorInfo = new Info(type.cppName + "::" + constructorName));
+            infoMap.put(constructorInfo = new Info(constructorName));
         }
         if (constructorInfo.javaText == null && inheritedConstructors.length() > 0) {
             // save constructors to be able to inherit them with C++11 "using" statements
