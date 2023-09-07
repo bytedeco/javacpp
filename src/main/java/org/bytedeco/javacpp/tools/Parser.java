@@ -3850,46 +3850,45 @@ public class Parser {
                 }
             }
 
-            final boolean addArrayConstructor;
+            final boolean addArrayConstructor, addDefaultConstructor, addPointerCastConstructor;
+            /* Annotations currently used on constructors are @SharedPtr and @Name. @SharedPtr produces
+             * memory corruption if applied to arrays. And @Name needs special versions of the provided
+             * C++ function that return arrays. So for safety we disable arrays for classes with
+             * annotations on constructor.
+             * position and getPointer are incompatible with @SharedPtr, but compatible with @Name.
+             * Since we don't distinguish annotations here, we disable them in both cases. */
             if (implicitConstructor && (info == null || !info.purify) && (!abstractClass || ctx.virtualize)) {
-                constructors += "    /** Default native constructor. */\n" +
-                             "    public " + shortName + "() { super((Pointer)null); allocate(); }\n" +
-                             "    " + constructorAnnotations + "private native void allocate();\n" +
-                             "    /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */\n" +
-                             "    public " + shortName + "(Pointer p) { super(p); }\n";
-
-                /* Annotations currently used on constructors are @SharedPtr and @Name. @SharedPtr produces
-                 * memory corruption if applied to arrays. And @Name needs special versions of the provided
-                 * C++ function that return arrays. So for safety we disable arrays for classes with
-                 * annotations on constructor.
-                 * position and getPointer are incompatible with @SharedPtr, but compatible with @Name.
-                 * Since we don't distinguish annotations here, we disable them in both cases.
-                 */
+                addDefaultConstructor = addPointerCastConstructor = true;
                 addArrayConstructor = constructorAnnotations.isEmpty();
             } else {
                 if ((info == null || !info.purify) && (!abstractClass || ctx.virtualize)) {
                     constructors += inheritedConstructors;
                 }
-
-                if (!pointerConstructor) {
-                    constructors += "    /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */\n" +
-                                 "    public " + shortName + "(Pointer p) { super(p); }\n";
-                }
+                addDefaultConstructor = false;
+                addPointerCastConstructor = !pointerConstructor;
                 addArrayConstructor =  (defaultConstructor && (info == null || !info.purify) && (!abstractClass || ctx.virtualize)
                     && !arrayConstructor && constructorAnnotations.isEmpty());
             }
 
-            if (addArrayConstructor) {
-                constructors += "    /** Native array allocator. Access with {@link Pointer#position(long)}. */\n" +
-                                "    public " + shortName + "(long size) { super((Pointer)null); allocateArray(size); }\n" +
-                                "    private native void allocateArray(long size);\n" +
-                                "    @Override public " + shortName + " position(long position) {\n" +
-                                "        return (" + shortName + ")super.position(position);\n" +
-                                "    }\n" +
-                                "    @Override public " + shortName + " getPointer(long i) {\n" +
-                                "        return new " + shortName + "((Pointer)this).offsetAddress(i);\n" +
-                                "    }\n";
-            }
+            if (addDefaultConstructor)
+              constructors += "    /** Default native constructor. */\n" +
+                              "    public " + shortName + "() { super((Pointer)null); allocate(); }\n";
+            if (addArrayConstructor)
+              constructors +=  "    /** Native array allocator. Access with {@link Pointer#position(long)}. */\n" +
+                               "    public " + shortName + "(long size) { super((Pointer)null); allocateArray(size); }\n";
+            if (addPointerCastConstructor)
+              constructors +=  "    /** Pointer cast constructor. Invokes {@link Pointer#Pointer(Pointer)}. */\n" +
+                               "    public " + shortName + "(Pointer p) { super(p); }\n";
+            if (addDefaultConstructor)
+              constructors +=  "    " + constructorAnnotations + "private native void allocate();\n";
+            if (addArrayConstructor)
+              constructors +=  "    private native void allocateArray(long size);\n" +
+                               "    @Override public " + shortName + " position(long position) {\n" +
+                               "        return (" + shortName + ")super.position(position);\n" +
+                               "    }\n" +
+                               "    @Override public " + shortName + " getPointer(long i) {\n" +
+                               "        return new " + shortName + "((Pointer)this).offsetAddress(i);\n" +
+                               "    }\n";
 
             if (info == null || !info.skipDefaults) {
                 decl.text += constructors;
