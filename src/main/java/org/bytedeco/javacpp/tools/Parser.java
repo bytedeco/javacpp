@@ -97,18 +97,11 @@ public class Parser {
     InfoMap leafInfoMap = null;
     TokenIndexer tokens = null;
     String lineSeparator = null;
-    /**
-     * Java names of classes needing upcast from their subclasses.
-     */
+    /** Java names of classes needing upcast from their subclasses. */
     Set<String> upcasts = new HashSet<>();
-    /**
-     * Classes that have a base class appearing as key in this map need a downcast constructor.
-     * The associated value gives the class to downcast from.
-     */
+    /** Classes that have a base class appearing as key in this map need a downcast constructor. The associated value gives the class to downcast from. */
     Map<String, Set<Type>> downcasts = new HashMap<>();
-    /**
-     * Java names of classes recognized as polymorphic.
-     */
+    /** Java names of classes recognized as polymorphic. */
     Set<String> polymorphicClasses = new HashSet<>();
 
     private void addDowncast(String base, Type from) {
