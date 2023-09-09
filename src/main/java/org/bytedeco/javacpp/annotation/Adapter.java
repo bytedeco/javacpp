@@ -13,7 +13,9 @@ import org.bytedeco.javacpp.tools.Generator;
  * Specifies a C++ class to act as an adapter between a target type and one or more adaptee type(s).
  * Instances of the adapter class are short-living and last only for the duration of a JNI call.
  * <p></p>
- * Six such C++ classes are made available by {@link Generator}:
+ * Six such C++ classes are made available by {@link Generator} to bridge a few differences, for instance,
+ * between {@code std::string} and {@link String}, between {@code std::vector}, Java arrays of
+ *  primitive types, {@link Buffer}, and {@link Pointer}, or between {@code xyz::shared_ptr} and {@link Pointer}:
  * <blockquote>
  * <table width="80%">
  *     <thead>
