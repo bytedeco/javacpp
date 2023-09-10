@@ -32,7 +32,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -277,10 +276,10 @@ public class Parser {
                     dcl.definition.text = "\n" + dcl.definition.text;
                     decl.declarator = dcl;
                 }
-                LinkedList<Type> typeSet = new LinkedList<>();
-                typeSet.addAll(Arrays.asList(firstType, secondType, indexType, valueType));
-                typeSet.addAll(Arrays.asList(containerType.arguments));
-                for (Type type : typeSet) {
+                ArrayList<Type> types = new ArrayList<>(4 + containerType.arguments.length);
+                types.addAll(Arrays.asList(firstType, secondType, indexType, valueType));
+                types.addAll(Arrays.asList(containerType.arguments));
+                for (Type type : types) {
                     if (type == null) {
                         continue;
                     } else if (type.annotations == null || type.annotations.length() == 0) {
