@@ -3406,9 +3406,9 @@ public class Parser {
         res += "    /** Downcast constructor. */\n" +
                "    public " + derived.javaName + "(" + base.javaName + " pointer) { super((Pointer)null); allocate(pointer); }\n";
         if (annotations.isEmpty()) {
-            res += "    @Namespace private native @Name(\"" + downcastType + "_cast<" + derived.cppName + "*>\") void allocate(" + base.javaName + " pointer);";
+            res += "    @Namespace private native @Name(\"" + downcastType + "_cast<" + derived.cppName + "*>\") void allocate(" + base.javaName + " pointer);\n";
         } else {
-            res += "    @Namespace private native " + annotations + "@Name(\"SHARED_PTR_NAMESPACE::" + downcastType + "_pointer_cast<" + derived.cppName + ", " + base.cppName + ">\") void allocate(" + annotations + base.javaName + " pointer);";
+            res += "    @Namespace private native " + annotations + "@Name(\"SHARED_PTR_NAMESPACE::" + downcastType + "_pointer_cast<" + derived.cppName + ", " + base.cppName + ">\") void allocate(" + annotations + base.javaName + " pointer);\n";
         }
         return res;
     }
