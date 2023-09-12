@@ -3428,10 +3428,10 @@ public class Parser {
                 if (!s.startsWith("@Name")) annotations += s + " ";
             }
         }
-        if (annotations.isEmpty()) {
-            res += "@Name(\"static_cast<" + base.cppName + "*>\") ";
-        } else {
+        if (!annotations.isEmpty()) {
             res += annotations + "@Name(\"SHARED_PTR_NAMESPACE::static_pointer_cast<" + base.cppName + ", " + derived.cppName + ">\") ";
+        } else {
+            res += "@Name(\"static_cast<" + base.cppName + "*>\") ";
         }
         res += base.javaName + " " + ecmn + "(" + annotations + derived.javaName + " pointer);\n";
         return res;
@@ -3605,10 +3605,10 @@ public class Parser {
         }
 
         /* Propagate the need for downcasting from base classes */
-        for (Type t: baseClasses) {
+        for (Type t : baseClasses) {
             Set<Type> froms = downcasts.get(t.cppName);
             if (froms != null) {
-                for (Type from: froms) {
+                for (Type from : froms) {
                     addDowncast(type.cppName, from);
                 }
             }
@@ -3885,14 +3885,18 @@ public class Parser {
             }
 
             Set<Type> froms = downcasts.get(base.cppName);
-            if (froms != null)
-                ADD_DOWNCAST:
-                for (Type t: froms) {
-                    for (Declaration d : declList2)
-                        if ((shortName + "_" + t.javaName).equals(d.signature))
-                            break ADD_DOWNCAST;
+            for (Type t : froms != null ? froms : new HashSet<Type>()) {
+                boolean found = false;
+                for (Declaration d : declList2) {
+                    if ((shortName + "_" + t.javaName).equals(d.signature)) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
                     constructors += downcast(type, t);
                 }
+            }
 
             if (info == null || !info.skipDefaults) {
                 decl.text += constructors;
@@ -3919,7 +3923,9 @@ public class Parser {
                 decl.custom = true;
             }
         }
-        if (polymorphic) polymorphicClasses.add(type.javaName);
+        if (polymorphic) {
+            polymorphicClasses.add(type.javaName);
+        }
 
         for (Declaration d : declList2) {
             if ((!d.inaccessible || d.declarator != null && d.declarator.type.friend)

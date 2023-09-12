@@ -14,8 +14,8 @@ import org.bytedeco.javacpp.tools.Generator;
  * Instances of the adapter class are short-living and last only for the duration of a JNI call.
  * <p></p>
  * Six such C++ classes are made available by {@link Generator} to bridge a few differences, for instance,
- * between {@code std::string} and {@link String}, between {@code std::vector}, Java arrays of
- *  primitive types, {@link Buffer}, and {@link Pointer}, or between {@code xyz::shared_ptr} and {@link Pointer}:
+ * between {@code std::string} and {@link String}, between {@code std::vector}, Java arrays of primitive
+ * types, {@link Buffer}, and {@link Pointer}, or between {@code xyz::shared_ptr} and {@link Pointer}:
  * <blockquote>
  * <table width="80%">
  *     <thead>
@@ -69,12 +69,11 @@ import org.bytedeco.javacpp.tools.Generator;
  * When an argument of a method is annotated, an instance of the adapter class is created from
  * the Java object passed as argument, and this instance is passed to the C++ function, thus triggering
  * an implicit cast to the type expected by the function (usually a reference or pointer to the target type).
- * If the argument is also annotated with {@link Cast},
- * the adapter instance is cast to the type(s) specified by the {@link Cast} annotation before being passed
- * to the function.
+ * If the argument is also annotated with {@link Cast}, the adapter instance is cast to the type(s) specified
+ * by the {@link Cast} annotation before being passed to the function.
  * <p></p>
- * When a method is annotated, an instance of the adapter is created from the
- * value (usually a pointer or reference to the target type) returned by the C++ function or by {@code new} if the method is an allocator.
+ * When a method is annotated, an instance of the adapter is created from the value (usually a pointer or
+ * reference to the target type) returned by the C++ function or by {@code new} if the method is an allocator.
  * If the method is also annotated with {@link Cast}, the value returned by the C++ function is
  * cast by value 3 of the {@link Cast} annotation, if any, before instantiation of the adapter.
  * Then a Java object is created from the adapter to be returned by the method.
@@ -88,6 +87,8 @@ import org.bytedeco.javacpp.tools.Generator;
  *  <li> {@code void assign(pointer, size, owner)} functions with the same signature than the constructors accepting 3 arguments
  *  <li> A {@code size} member variable for arrays accessed via pointer
  *  </ul>
+ * To reduce further the amount of coding, this annotation can also be used on
+ * other annotations, such as with {@link StdString}, {@link StdVector}, and {@link SharedPtr}.
  *
  * @see Generator
  *
