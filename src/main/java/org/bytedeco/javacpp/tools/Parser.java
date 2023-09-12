@@ -3661,12 +3661,6 @@ public class Parser {
             addDowncast(base.cppName, base);
         }
 
-        Set<Type> froms = downcasts.get(base.cppName);
-        if (froms != null)
-            for (Type t: froms) {
-                casts += downcast(type, t);
-            }
-
         decl.signature = type.javaName;
         tokens.index = startIndex;
         String shortName = name.substring(name.lastIndexOf('.') + 1);
@@ -3889,6 +3883,17 @@ public class Parser {
                                  "    }\n";
                 }
             }
+
+            Set<Type> froms = downcasts.get(base.cppName);
+            if (froms != null)
+                ADD_DOWNCAST:
+                for (Type t: froms) {
+                    for (Declaration d : declList2)
+                        if ((shortName + "_" + t.javaName).equals(d.signature))
+                            break ADD_DOWNCAST;
+                    constructors += downcast(type, t);
+                }
+
             if (info == null || !info.skipDefaults) {
                 decl.text += constructors;
             }
