@@ -192,6 +192,7 @@ public class Parser {
                        || containerName.toLowerCase().endsWith("tuple")
                        || containerName.toLowerCase().endsWith("function")
                        || containerName.toLowerCase().endsWith("pair") ? 0 : 1;
+                boolean string = containerName.toLowerCase().endsWith("string");
                 boolean constant = info.cppNames[0].startsWith("const "), resizable = !constant;
                 Type containerType = new Parser(this, info.cppNames[0]).type(context),
                         indexType, valueType, firstType = null, secondType = null;
@@ -362,10 +363,15 @@ public class Parser {
                     }
                 }
                 if (!purify) {
-                    decl.text += "    public " + containerType.javaName + "()       { allocate();  }\n" + (!resizable ? ""
-                               : "    public " + containerType.javaName + "(long n) { allocate(n); }\n")
-                               + "    private native void allocate();\n"                                + (!resizable ? ""
-                               : "    private native void allocate(@Cast(\"size_t\") long n);\n")       + (constant   ? "\n\n"
+                    String initArg = "", initParam = "";
+                    if (string) {
+                        initArg = ", (" + removeAnnotations(valueType.javaName) + ")0";
+                        initParam = ", " + removeAnnotations(valueType.javaName) + " value";
+                    }
+                    decl.text += "    public " + containerType.javaName + "()       { allocate();  }\n"            + (!resizable ? ""
+                               : "    public " + containerType.javaName + "(long n) { allocate(n" + initArg + "); }\n")
+                               + "    private native void allocate();\n"                                           + (!resizable ? ""
+                               : "    private native void allocate(@Cast(\"size_t\") long n" + initParam + ");\n") + (constant   ? "\n\n"
                                : "    public native @Name(\"operator =\") @ByRef " + containerType.javaName + " put(@ByRef " + containerType.annotations + containerType.javaName + " x);\n\n");
                 }
 

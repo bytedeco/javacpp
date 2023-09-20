@@ -1,4 +1,5 @@
 
+ * Add support for `std::basic_string` basic container ([issue bytedeco/javacpp-presets#1311](https://github.com/bytedeco/javacpp-presets/issues/1311))
  * Enhance `Parser` by adding downcast constructors for polymorphic classes ([pull #700](https://github.com/bytedeco/javacpp/pull/700))
  * Let `Generator` pick up `@Name` annotations on `allocate()` as well ([pull #700](https://github.com/bytedeco/javacpp/pull/700))
  * Fix `Parser` failing to place annotations on default constructors ([pull #699](https://github.com/bytedeco/javacpp/pull/699))
