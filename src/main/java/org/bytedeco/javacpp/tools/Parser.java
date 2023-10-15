@@ -257,7 +257,7 @@ public class Parser {
                 if (containerName.toLowerCase().endsWith("pair")) {
                     firstType = containerType.arguments[0];
                     secondType = containerType.arguments[1];
-                } else if (valueTemplate >= 0 && valueType.cppName.substring(0, valueTemplate).toLowerCase().endsWith("pair")) {
+                } else if (dim > 0 && valueTemplate >= 0 && valueType.cppName.substring(0, valueTemplate).toLowerCase().endsWith("pair")) {
                     firstType = valueType.arguments[0];
                     secondType = valueType.arguments[1];
                 }
@@ -3408,9 +3408,9 @@ public class Parser {
                 if (!s.startsWith("@Name")) annotations += s + " ";
             }
         }
-        String res = "";
-        res += "    /** Downcast constructor. */\n" +
-               "    public " + derived.javaName + "(" + base.javaName + " pointer) { super((Pointer)null); allocate(pointer); }\n";
+        String shortName = derived.javaName.substring(derived.javaName.lastIndexOf('.') + 1);
+        String res = "    /** Downcast constructor. */\n"
+                   + "    public " + shortName + "(" + base.javaName + " pointer) { super((Pointer)null); allocate(pointer); }\n";
         if (annotations.isEmpty()) {
             res += "    @Namespace private native @Name(\"" + downcastType + "_cast<" + derived.cppName + "*>\") void allocate(" + base.javaName + " pointer);\n";
         } else {
