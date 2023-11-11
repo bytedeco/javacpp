@@ -2875,9 +2875,12 @@ public class Generator {
                     } else if (methodInfo.arrayAllocator) {
                         out.println("&JavaCPP_" + mangle(methodInfo.cls.getName()) + "_deallocateArray);");
                         arrayDeallocators.index(methodInfo.cls);
-                    } else {
+                    } else if (!methodInfo.method.isAnnotationPresent(Name.class)) {
                         out.println("&JavaCPP_" + mangle(methodInfo.cls.getName()) + "_deallocate);");
                         deallocators.index(methodInfo.cls);
+                    } else {
+                        // downcast constructor
+                        out.println("NULL);");
                     }
                 }
                 if (virtualFunctions.containsKey(methodInfo.cls)) {
