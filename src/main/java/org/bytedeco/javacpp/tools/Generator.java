@@ -2083,6 +2083,12 @@ public class Generator {
         }
 
         Method[] methods = cls.getDeclaredMethods();
+        Arrays.sort(methods, new Comparator<Method>() {
+            @Override
+            public int compare(Method m1, Method m2) {
+                return m1.getName().compareTo(m2.getName());
+            }
+        });
         MethodInformation[] methodInfos = new MethodInformation[methods.length];
         for (int i = 0; i < methods.length; i++) {
             methodInfos[i] = methodInformation(methods[i]);
@@ -3635,6 +3641,12 @@ public class Generator {
             return null;
         }
         Method[] methods = cls.getDeclaredMethods();
+        Arrays.sort(methods, new Comparator<Method>() {
+            @Override
+            public int compare(Method m1, Method m2) {
+                return m1.getName().compareTo(m2.getName());
+            }
+        });
         Method[] functionMethods = new Method[3];
         for (int i = 0; i < methods.length; i++) {
             String methodName = methods[i].getName();
