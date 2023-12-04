@@ -1,4 +1,5 @@
 
+ * Fix `Parser` failing on nested initializer lists and on attributes found inside `enum` declarations
  * Fix `Parser` for basic containers like `std::optional<std::pair<int,int> >` ([issue #718](https://github.com/bytedeco/javacpp/issues/718))
  * Add support for `std::basic_string` basic container ([issue bytedeco/javacpp-presets#1311](https://github.com/bytedeco/javacpp-presets/issues/1311))
  * Enhance `Parser` by adding downcast constructors for polymorphic classes ([pull #700](https://github.com/bytedeco/javacpp/pull/700))

@@ -47,6 +47,7 @@ public class InfoMap extends HashMap<String,List<Info>> {
                                                    "std::function", "std::basic_string"))
         .put(new Info("basic/types").cppTypes("signed", "unsigned", "char", "short", "int", "long", "bool", "float", "double",
                                               "__int8", "__int16", "__int32", "__int64", "_Bool", "_Complex", "_Imaginary", "complex", "imaginary"))
+        .put(new Info("deprecated").annotations("@Deprecated"))
         .put(new Info("noexcept").annotations("@NoException(true)"))
 
         .put(new Info("__COUNTER__").cppText("#define __COUNTER__ 0"))

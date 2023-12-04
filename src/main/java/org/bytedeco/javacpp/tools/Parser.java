@@ -2294,8 +2294,8 @@ public class Parser {
                         count--;
                     }
 
-                    // consider { ... } preceded by an identifier or `>` as an initializer list
-                    if (count == 0 && !token.match(Token.IDENTIFIER, '>') && tokens.get(1).match('{')) {
+                    // consider { ... } preceded by an identifier, a comma, or `>` as an initializer list
+                    if (count == 0 && !token.match(Token.IDENTIFIER, ',', '>') && tokens.get(1).match('{')) {
                         tokens.next();
                         break;
                     }
@@ -2426,8 +2426,8 @@ public class Parser {
                         count--;
                     }
 
-                    // consider { ... } preceded by an identifier or `>` as an initializer list
-                    if (count == 0 && !token.match(Token.IDENTIFIER, '>') && tokens.get(1).match('{')) {
+                    // consider { ... } preceded by an identifier, a comma, or `>` as an initializer list
+                    if (count == 0 && !token.match(Token.IDENTIFIER, ',', '>') && tokens.get(1).match('{')) {
                         tokens.next();
                         break;
                     }
@@ -2506,8 +2506,8 @@ public class Parser {
                             count--;
                         }
 
-                        // consider { ... } preceded by an identifier or `>` as an initializer list
-                        if (count == 0 && !token.match(Token.IDENTIFIER, '>') && tokens.get(1).match('{')) {
+                        // consider { ... } preceded by an identifier, a comma, or `>` as an initializer list
+                        if (count == 0 && !token.match(Token.IDENTIFIER, ',', '>') && tokens.get(1).match('{')) {
                             tokens.next();
                             break;
                         }
@@ -4065,8 +4065,15 @@ public class Parser {
             } else if (info == null) {
                 infoMap.put(info = new Info(cppName).cppText("").translate());
             }
+            tokens.next();
+            String annotations = "";
+            Attribute attr = attribute(true);
+            while (attr != null && attr.annotation) {
+                annotations += attr.javaName;
+                attr = attribute(true);
+            }
             String spacing2 = "";
-            if (tokens.next().match('=')) {
+            if (tokens.get().match('=')) {
                 spacing2 = tokens.get().spacing;
                 if (spacing2.length() > 0 && spacing2.charAt(0) == ' ') {
                     spacing2 = spacing2.substring(1);
@@ -4104,7 +4111,6 @@ public class Parser {
                         if (separator.equals(",")) {
                             separator = ";";
                         }
-                        String annotations = "";
                         if (!javaName.equals(cppName)){
                             annotations += "@Name(\"" + cppName + "\") ";
                         } else if (context.namespace != null && context.javaName == null) {
@@ -4142,12 +4148,12 @@ public class Parser {
                 spacing = " ";
             }
             String cast = javaType.equals("byte") || javaType.equals("short") ? "(" + javaType + ")(" : "";
-            text += spacing + javaName + spacing2 + " = " + cast + countPrefix;
+            text += spacing + annotations + javaName + spacing2 + " = " + cast + countPrefix;
             String countPrefix2 = countPrefix;
             for (String key : enumeratorMap.keySet()) {
                 countPrefix2 = countPrefix2.replaceAll("\\b" + key + "\\b", key + ".value");
             }
-            text2 += spacing + javaName + spacing2 + "(" + cast + countPrefix2;
+            text2 += spacing + annotations + javaName + spacing2 + "(" + cast + countPrefix2;
             if (countPrefix.trim().length() > 0) {
                 if (count > 0) {
                     text += " + " + count;
