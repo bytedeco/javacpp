@@ -247,6 +247,9 @@ public class InfoMap extends HashMap<String,List<Info>> {
             if (template >= 0) {
                 name = foundConst ? "const " : "";
                 for (int i = 0; i < template; i++) {
+                    if(tokens[i].match('>') && tokens[i-1].match('>')) {
+                        name += tokens[i].spacing;
+                    }
                     name += tokens[i];
                 }
                 for (int i = parameters; i < n; i++) {
