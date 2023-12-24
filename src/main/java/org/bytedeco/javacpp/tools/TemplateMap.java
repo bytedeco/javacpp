@@ -23,6 +23,7 @@
 package org.bytedeco.javacpp.tools;
 
 import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  *
@@ -66,5 +67,20 @@ class TemplateMap extends LinkedHashMap<String,Type> {
         } else {
             return value;
         }
+    }
+
+    @Override
+    public String toString() {
+        String res = "<";
+        for (Map.Entry<String, Type> e: entrySet()) {
+            if (res.length() > 1) res += ",";
+            Type t = e.getValue();
+            if (t == null)
+                res += e.getKey();
+            else
+                res += t.cppName;
+        }
+        if (res.charAt(res.length()-1) == '>') res += " ";
+        return res + ">";
     }
 }

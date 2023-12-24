@@ -47,8 +47,12 @@ class Templates {
         return strip(s).length() == s.length();
     }
 
-    /** Split s at ::, but taking care of qualified template arguments */
-    static List<String> splitNamespace(String s) {
+    static class SplitResult extends ArrayList<String> {
+        String parameterList;
+    }
+
+    /** Split s at ::, but taking care of qualified template arguments and qualified function parameters, if any. */
+    static SplitResult splitNamespace(String s) {
         String sTemplatesMasked = s;
         for (;;) {
             Matcher m = templatePattern.matcher(sTemplatesMasked);
@@ -60,18 +64,36 @@ class Templates {
                 break;
             }
         }
-        ArrayList<String> comps = new ArrayList<>();
+        SplitResult comps = new SplitResult();
+        int pIndex = sTemplatesMasked.lastIndexOf(')'); // last because of function pointer types like void(*)()
+        if (pIndex > 0) {
+            // Pointer list may contain function pointer types with parentheses
+            int count = 1;
+            for (pIndex--; pIndex >= 0; pIndex--) {
+                char c = sTemplatesMasked.charAt(pIndex);
+                if (c == ')') count++;
+                else if (c == '(') {
+                    count--;
+                    if (count == 0) break;
+                }
+            }
+        }
         int start = 0;
         for (;;) {
             int i = sTemplatesMasked.indexOf("::", start);
-            if (i >= 0) {
+            if (i >= 0 && (i < pIndex || pIndex == -1)) {
                 comps.add(s.substring(start, i));
                 start = i + 2;
             } else {
                 break;
             }
         }
-        comps.add(s.substring(start));
+        if (pIndex >= 0) {
+            comps.add(s.substring(start, pIndex));
+            comps.parameterList = s.substring(pIndex);
+        } else {
+            comps.add(s.substring(start));
+        }
         return comps;
     }
 }

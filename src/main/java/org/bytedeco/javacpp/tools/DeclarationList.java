@@ -70,7 +70,7 @@ class DeclarationList extends ArrayList<Declaration> {
             if (infoIterator == null) {
                 Type type = templateMap.type = decl.type;
                 Declarator dcl = templateMap.declarator = decl.declarator;
-                for (String name : new String[] {fullName, dcl != null ? dcl.cppName : type.cppName}) {
+                for (String name : new String[] {fullName, dcl != null ? (dcl.type.constructor ? Parser.constructorName(dcl.cppName) : dcl.cppName) : type.cppName}) {
                     if (name == null) {
                         continue;
                     }

@@ -185,6 +185,19 @@ public class InfoMap extends HashMap<String,List<Info>> {
         if (name == null || name.length() == 0 || name.startsWith("basic/")) {
             return name;
         }
+        if (untemplate) {
+            // Remove template arguments in the last NS component only, and not in parameters, if any
+            Templates.SplitResult comps = Templates.splitNamespace(name);
+            int last = comps.size()-1;
+            String lastComp = comps.get(last);
+            comps.set(last, Templates.strip(lastComp));
+            name = comps.get(0);
+            for (int i = 1; i <= last; i++)
+              name += "::" + comps.get(i);
+            if (comps.parameterList != null)
+                name += comps.parameterList;
+            if (name.isEmpty()) return name;
+        }
         boolean foundConst = false, simpleType = true;
         String prefix = null;
         Token[] tokens = new Tokenizer(name, null, 0).tokenize();
@@ -215,43 +228,6 @@ public class InfoMap extends HashMap<String,List<Info>> {
             name = (foundConst ? "const " : "") + tokens[0].value;
             for (int i = 1; i < n; i++) {
                 name += " " + tokens[i].value;
-            }
-        } else if (untemplate) {
-            int count = 0, lastColon = -1, template = -1, parameters = n;
-            for (int i = 0; i < n; i++) {
-                if (tokens[i].match('<')) {
-                    count++;
-                } else if (tokens[i].match('>')) {
-                    count--;
-                }
-                if (count == 0 && tokens[i].match("::")) {
-                    lastColon = i;
-                } else if (count == 0 && tokens[i].match('(')) {
-                    parameters = i;
-                    break;
-                }
-            }
-            for (int i = lastColon + 1; i < parameters; i++) {
-                if (tokens[i].match('<')) {
-                    if (count == 0) {
-                        template = i;
-                    }
-                    count++;
-                } else if (tokens[i].match('>')) {
-                    count--;
-                    if (count == 0 && i + 1 != parameters) {
-                        template = -1;
-                    }
-                }
-            }
-            if (template >= 0) {
-                name = foundConst ? "const " : "";
-                for (int i = 0; i < template; i++) {
-                    name += tokens[i];
-                }
-                for (int i = parameters; i < n; i++) {
-                    name += tokens[i].spacing + tokens[i];
-                }
             }
         }
         if (unconst && foundConst) {
