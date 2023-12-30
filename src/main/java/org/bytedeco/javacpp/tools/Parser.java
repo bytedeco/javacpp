@@ -2439,9 +2439,6 @@ public class Parser {
             // with the class info. Kept for now for backwards compatibility.
             if (info == null) {
                 info = infoMap.getFirst(dcl.cppName + templateArgs);
-                if (info == null && !templateArgs.isEmpty()) {
-                    info = infoMap.getFirst(dcl.cppName);
-                }
             }
             if (!type.constructor && !type.destructor && !type.operator && (context.templateMap == null || context.templateMap.full())) {
                 infoMap.put(info != null ? new Info(info).cppNames(fullname).javaNames(null) : new Info(fullname));
