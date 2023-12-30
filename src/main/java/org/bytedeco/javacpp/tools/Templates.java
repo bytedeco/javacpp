@@ -47,12 +47,16 @@ class Templates {
         return strip(s).length() == s.length();
     }
 
-    static class SplitResult extends ArrayList<String> {
-        String parameterList;
+    static List<String> splitNamespace(String s) {
+        return splitNamespace(s, false);
     }
 
-    /** Split s at ::, but taking care of qualified template arguments and qualified function parameters, if any. */
-    static SplitResult splitNamespace(String s) {
+    /**
+     * Split s at ::, but taking care of qualified template arguments and qualified function parameters.
+     * If returnParams is true, returned list contains an extra element with function parameters, or the empty
+     * string if none are present.
+     */
+    static List<String> splitNamespace(String s, boolean returnParams) {
         String sTemplatesMasked = s;
         for (;;) {
             Matcher m = templatePattern.matcher(sTemplatesMasked);
@@ -64,7 +68,7 @@ class Templates {
                 break;
             }
         }
-        SplitResult comps = new SplitResult();
+        ArrayList<String> comps = new ArrayList<>();
         int pIndex = sTemplatesMasked.lastIndexOf(')'); // last because of function pointer types like void(*)()
         if (pIndex > 0) {
             // Pointer list may contain function pointer types with parentheses
@@ -88,12 +92,15 @@ class Templates {
                 break;
             }
         }
+        String params;
         if (pIndex >= 0) {
             comps.add(s.substring(start, pIndex));
-            comps.parameterList = s.substring(pIndex);
+            params = s.substring(pIndex);
         } else {
             comps.add(s.substring(start));
+            params = "";
         }
+        if (returnParams) comps.add(params);
         return comps;
     }
 }

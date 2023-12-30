@@ -990,19 +990,20 @@ public class Parser {
 
         // perform template substitution
         if (context.templateMap != null) {
-            Templates.SplitResult types = Templates.splitNamespace(type.cppName);
+            List<String> types = Templates.splitNamespace(type.cppName, true);
             String separator = "";
             type.cppName = "";
             List<Type> arguments = new ArrayList<>();
-            for (String t : types) {
-                Type t2 = context.templateMap.get(t);
-                type.cppName += separator + (t2 != null ? t2.cppName : t);
+            int paramsIdx = types.size() - 1;
+            for (int i = 0; i < paramsIdx; i++) {
+                Type t2 = context.templateMap.get(types.get(i));
+                type.cppName += separator + (t2 != null ? t2.cppName : types.get(i));
                 if (t2 != null && t2.arguments != null) {
                     arguments.addAll(Arrays.asList(t2.arguments));
                 }
                 separator = "::";
             }
-            if (types.parameterList != null) type.cppName += types.parameterList;
+            type.cppName += types.get(paramsIdx);
             if (arguments.size() > 0) {
                 type.arguments = arguments.toArray(new Type[0]);
             }
@@ -2154,15 +2155,16 @@ public class Parser {
                     // perform template substitution
                     String cppName = token.value;
                     if (context.templateMap != null) {
-                        Templates.SplitResult types = Templates.splitNamespace(cppName);
+                        List<String> types = Templates.splitNamespace(cppName, true);
                         String separator = "";
                         cppName = "";
-                        for (String t : types) {
-                            Type t2 = context.templateMap.get(t);
-                            cppName += separator + (t2 != null ? t2.cppName : t);
+                        int paramsIdx = types.size() - 1;
+                        for (int i = 0; i < paramsIdx; i++) {
+                            Type t2 = context.templateMap.get(types.get(i));
+                            cppName += separator + (t2 != null ? t2.cppName : types.get(i));
                             separator = "::";
                         }
-                        if (types.parameterList != null) cppName += types.parameterList;
+                        cppName += types.get(paramsIdx);
                     }
 
                     // try to qualify all the identifiers

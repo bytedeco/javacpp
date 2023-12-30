@@ -187,15 +187,14 @@ public class InfoMap extends HashMap<String,List<Info>> {
         }
         if (untemplate) {
             // Remove template arguments in the last NS component only, and not in parameters, if any
-            Templates.SplitResult comps = Templates.splitNamespace(name);
-            int last = comps.size()-1;
-            String lastComp = comps.get(last);
-            comps.set(last, Templates.strip(lastComp));
+            List<String> comps = Templates.splitNamespace(name, true);
+            int paramsIdx = comps.size() - 1;
+            String lastComp = comps.get(paramsIdx - 1);
+            comps.set(paramsIdx - 1, Templates.strip(lastComp));
             name = comps.get(0);
-            for (int i = 1; i <= last; i++)
-              name += "::" + comps.get(i);
-            if (comps.parameterList != null)
-                name += comps.parameterList;
+            for (int i = 1; i < paramsIdx; i++)
+                name += "::" + comps.get(i);
+            name += comps.get(paramsIdx);
             if (name.isEmpty()) return name;
         }
         boolean foundConst = false, simpleType = true;
