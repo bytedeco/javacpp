@@ -2512,7 +2512,12 @@ public class Parser {
 
         type = functionAfter(context, decl, dcl, type);
         context = new Context(context);
-        context.virtualize = (context.virtualize && type.virtual) || (info != null && info.virtualize);
+
+        // Virtualize the function if class is virtualized and C++ function is virtual
+        // or if function is explicitly virtualized with info.
+        // Exclude constructor case since we may have looked up the info of the class in lieu of
+        // the info of the constructor, and constructors cannot be virtualized.
+        context.virtualize = (context.virtualize && type.virtual) || (info != null && info.virtualize && !type.constructor);
 
         List<Declarator> prevDcl = new ArrayList<Declarator>();
         boolean first = true;
