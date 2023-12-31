@@ -47,7 +47,6 @@ public class InfoMap extends HashMap<String,List<Info>> {
                                                    "std::function", "std::basic_string"))
         .put(new Info("basic/types").cppTypes("signed", "unsigned", "char", "short", "int", "long", "bool", "float", "double",
                                               "__int8", "__int16", "__int32", "__int64", "_Bool", "_Complex", "_Imaginary", "complex", "imaginary"))
-        .put(new Info("deprecated").annotations("@Deprecated"))
         .put(new Info("noexcept").annotations("@NoException(true)"))
 
         .put(new Info("__COUNTER__").cppText("#define __COUNTER__ 0"))
@@ -192,10 +191,13 @@ public class InfoMap extends HashMap<String,List<Info>> {
             String lastComp = comps.get(paramsIdx - 1);
             comps.set(paramsIdx - 1, Templates.strip(lastComp));
             name = comps.get(0);
-            for (int i = 1; i < paramsIdx; i++)
+            for (int i = 1; i < paramsIdx; i++) {
                 name += "::" + comps.get(i);
+            }
             name += comps.get(paramsIdx);
-            if (name.isEmpty()) return name;
+            if (name.isEmpty()) {
+                return name;
+            }
         }
         boolean foundConst = false, simpleType = true;
         String prefix = null;

@@ -47,6 +47,7 @@ class Templates {
         return strip(s).length() == s.length();
     }
 
+    /** Returns {@code splitNamespace(s, false)}. */
     static List<String> splitNamespace(String s) {
         return splitNamespace(s, false);
     }
@@ -75,10 +76,13 @@ class Templates {
             int count = 1;
             for (pIndex--; pIndex >= 0; pIndex--) {
                 char c = sTemplatesMasked.charAt(pIndex);
-                if (c == ')') count++;
-                else if (c == '(') {
+                if (c == ')') {
+                    count++;
+                } else if (c == '(') {
                     count--;
-                    if (count == 0) break;
+                    if (count == 0) {
+                        break;
+                    }
                 }
             }
         }
@@ -100,7 +104,9 @@ class Templates {
             comps.add(s.substring(start));
             params = "";
         }
-        if (returnParams) comps.add(params);
+        if (returnParams) {
+            comps.add(params);
+        }
         return comps;
     }
 }

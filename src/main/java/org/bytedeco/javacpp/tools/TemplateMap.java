@@ -71,16 +71,17 @@ class TemplateMap extends LinkedHashMap<String,Type> {
 
     @Override
     public String toString() {
-        String res = "<";
-        for (Map.Entry<String, Type> e: entrySet()) {
-            if (res.length() > 1) res += ",";
+        String s = "<";
+        for (Map.Entry<String, Type> e : entrySet()) {
+            if (s.length() > 1) {
+                s += ",";
+            }
             Type t = e.getValue();
-            if (t == null)
-                res += e.getKey();
-            else
-                res += t.cppName;
+            s += t != null ? t.cppName : e.getKey();
         }
-        if (res.charAt(res.length()-1) == '>') res += " ";
-        return res + ">";
+        if (s.endsWith(">")) {
+            s += " ";
+        }
+        return s + ">";
     }
 }
