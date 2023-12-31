@@ -66,7 +66,7 @@ class DeclarationList extends ArrayList<Declaration> {
         boolean add = true;
         if (templateMap != null && templateMap.empty() && !decl.custom && (decl.type != null || decl.declarator != null)) {
             // method templates cannot be declared in Java, but make sure to make their
-            // info available on request (when Info.javaNames is set) to be able to create instances
+            // info available on request (when Info.javaNames or Info.define is set) to be able to create instances
             if (infoIterator == null) {
                 Type type = templateMap.type = decl.type;
                 Declarator dcl = templateMap.declarator = decl.declarator;
@@ -75,12 +75,12 @@ class DeclarationList extends ArrayList<Declaration> {
                         continue;
                     }
                     List<Info> infoList = infoMap.get(name);
-                    boolean hasJavaName = false;
+                    boolean hasJavaNameOrDefine = false;
                     for (Info info : infoList) {
-                        hasJavaName |= info.javaNames != null && info.javaNames.length > 0;
+                        hasJavaNameOrDefine |= info.javaNames != null && info.javaNames.length > 0 || info.define;
                     }
-                    if (!decl.function || hasJavaName) {
-                        infoIterator = infoList.size() > 0 ? infoList.listIterator() : null;
+                    if (!decl.function || hasJavaNameOrDefine) {
+                        infoIterator = infoList.size() > 0 ? new ArrayList<>(infoList).listIterator() : null;
                         break;
                     }
                 }
