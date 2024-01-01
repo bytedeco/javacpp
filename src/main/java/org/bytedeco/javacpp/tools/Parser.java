@@ -124,7 +124,17 @@ public class Parser {
         return "as" + Character.toUpperCase(shortName.charAt(0)) + shortName.substring(1);
     }
 
-    /** Returns the name of the constructor of class cppName, to be used as keys in infoMap */
+    /**
+     * Constructors have 2 kinds of fully qualified name:
+     * the calling name of a constructor, used when calling the constructor, e.g.:
+     * NS::CN(int)
+     * and the declaration name, used when defining the constructor outside its class or when referencing a constructor
+     * with using to inherit constructors of base class.
+     * NS::CN::CN(int)
+     * Declarator.cppName contains the calling name, and this method returns the declaration name.
+     * Keys in info map should use the declaration name, because the calling name cannot specify
+     * arguments in case of constructor templates, and to avoid confusion between classes and constructores info.
+     */
     static String constructorName(String cppName) {
         String constructorName = Templates.strip(cppName);
         int namespace = constructorName.lastIndexOf("::");
@@ -752,6 +762,28 @@ public class Parser {
         return arguments.toArray(new Type[0]);
     }
 
+    /**
+     *  Read and return the operator following an operator keyword:
+     *  any of new, delete, + - * / % ^ & | ~ ! = < > += -= *= /= %= ^= &= |= << >> >>= <<= == != <= >= <=>(since C++20) && || ++ -- , ->* -> ( ) [ ]
+     *  taking care of template arguments, if any.
+     */
+    private String operator(Context context) throws ParserException {
+        String res = tokens.get().toString(); // Can be '('
+        int lenFirstToken = res.length();
+        String s = "";
+        tokens.next();
+        int backIndex = tokens.index;
+        for (Token token = tokens.get(); !token.match('(', ';', Token.EOF); token = tokens.next()) {
+            s += token;
+        }
+        s = Templates.strip(s);
+        tokens.index = backIndex;
+        for (Token token = tokens.get(); s.length() > res.length() - lenFirstToken; token = tokens.next()) {
+            res += token;
+        }
+        return res;
+    }
+
     Type type(Context context) throws ParserException {
         return type(context, false);
     }
@@ -865,7 +897,8 @@ public class Parser {
                 } else if (type.cppName.endsWith("::")) {
                     type.operator = true;
                     tokens.next();
-                    break;
+                    type.cppName += operator(context);
+                    continue;
                 } else {
                     break;
                 }
@@ -957,18 +990,20 @@ public class Parser {
 
         // perform template substitution
         if (context.templateMap != null) {
-            List<String> types = Templates.splitNamespace(type.cppName);
+            List<String> types = Templates.splitNamespace(type.cppName, true);
             String separator = "";
             type.cppName = "";
             List<Type> arguments = new ArrayList<>();
-            for (String t : types) {
-                Type t2 = context.templateMap.get(t);
-                type.cppName += separator + (t2 != null ? t2.cppName : t);
+            int paramsIdx = types.size() - 1;
+            for (int i = 0; i < paramsIdx; i++) {
+                Type t2 = context.templateMap.get(types.get(i));
+                type.cppName += separator + (t2 != null ? t2.cppName : types.get(i));
                 if (t2 != null && t2.arguments != null) {
                     arguments.addAll(Arrays.asList(t2.arguments));
                 }
                 separator = "::";
             }
+            type.cppName += types.get(paramsIdx);
             if (arguments.size() > 0) {
                 type.arguments = arguments.toArray(new Type[0]);
             }
@@ -1109,22 +1144,15 @@ public class Parser {
             }
         }
         if (context.cppName != null && type.javaName.length() > 0) {
-            String cppName = type.cppName;
-            String groupName = context.cppName;
-            String cppNameStripped = Templates.strip(cppName);
-            String groupNameStripped = Templates.strip(groupName);
-            if (cppNameStripped.length() == cppName.length() && groupNameStripped.length() != groupName.length()) {
-                groupName = groupNameStripped;
-            } else if (cppNameStripped.length() != cppName.length() && groupNameStripped.length() == groupName.length()) {
-                cppName = cppNameStripped;
-            }
+            String cppName = Templates.strip(type.cppName);
+            String groupName = Templates.strip(context.cppName);
             List<String> cppNameSplit = Templates.splitNamespace(cppName);
             List<String> groupNameSplit = Templates.splitNamespace(groupName);
             if (cppNameSplit.size() == 1 && groupNameSplit.size() > 1)
                 groupName = groupNameSplit.get(groupNameSplit.size() - 1);
             else if (cppNameSplit.size() > 1 && groupNameSplit.size() == 1)
                 cppName = cppNameSplit.get(cppNameSplit.size() - 1);
-            if (cppName.equals(groupName) || groupName.startsWith(cppName + "<")) {
+            if (cppName.equals(groupName)) {
                 type.constructor = !type.destructor && !type.operator
                         && type.indirections == 0 && !type.reference && tokens.get().match('(', ':');
             }
@@ -1347,11 +1375,8 @@ public class Parser {
                 } else if (token.match(Token.OPERATOR)) {
                     dcl.operator = true;
                     if (!tokens.get(1).match(Token.IDENTIFIER) || tokens.get(1).match(Token.NEW, Token.DELETE)) {
-                        // assume we can have any symbols until the first open parenthesis
-                        dcl.cppName += "operator " + tokens.next();
-                        for (token = tokens.next(); !token.match(Token.EOF, '('); token = tokens.next()) {
-                            dcl.cppName += token;
-                        }
+                        tokens.next();
+                        dcl.cppName += "operator " + operator(context);
                         break;
                     }
                 } else if (token.match('<')) {
@@ -2130,14 +2155,16 @@ public class Parser {
                     // perform template substitution
                     String cppName = token.value;
                     if (context.templateMap != null) {
-                        List<String> types = Templates.splitNamespace(cppName);
+                        List<String> types = Templates.splitNamespace(cppName, true);
                         String separator = "";
                         cppName = "";
-                        for (String t : types) {
-                            Type t2 = context.templateMap.get(t);
-                            cppName += separator + (t2 != null ? t2.cppName : t);
+                        int paramsIdx = types.size() - 1;
+                        for (int i = 0; i < paramsIdx; i++) {
+                            Type t2 = context.templateMap.get(types.get(i));
+                            cppName += separator + (t2 != null ? t2.cppName : types.get(i));
                             separator = "::";
                         }
+                        cppName += types.get(paramsIdx);
                     }
 
                     // try to qualify all the identifiers
@@ -2343,14 +2370,16 @@ public class Parser {
         }
 
         boolean isQualified = Templates.splitNamespace(dcl.cppName).size() > 1;
-        if (context.namespace != null && !isQualified) {
+        if (context.namespace != null && !isQualified && !(type.constructor || type.destructor)) {
             dcl.cppName = context.namespace + "::" + dcl.cppName;
         }
         Info info = null, fullInfo = null;
-        String fullname = dcl.cppName, fullname2 = dcl.cppName;
+        String templateArgs = declList.templateMap != null ?  declList.templateMap.toString() : "";
+        String fullname = dcl.cppName + templateArgs;
+        String param1 = "", param2 = "";
         if (dcl.parameters != null) {
-            fullname += "(";
-            fullname2 += "(";
+            param1 = "(";
+            param2 = "(";
             String separator = "";
             for (Declarator d : dcl.parameters.declarators) {
                 if (d != null) {
@@ -2376,25 +2405,42 @@ public class Parser {
                     if (d.type.constPointer && !s.endsWith(" const")) {
                         s = s + " const";
                     }
-                    fullname += separator + s;
-                    fullname2 += separator + s2;
+                    param1 += separator + s;
+                    param2 += separator + s2;
                     separator = ", ";
                 }
             }
-            info = fullInfo = infoMap.getFirst(fullname += ")", false);
+            param1 += ")";
+            param2 += ")";
+            fullname += param1;
+            info = fullInfo = infoMap.getFirst(fullname, false);
             if (info == null) {
-                info = infoMap.getFirst(fullname2 += ")", false);
+                info = infoMap.getFirst(dcl.cppName + templateArgs + param2, false);
+                if (info == null && !templateArgs.isEmpty()) {
+                    info = infoMap.getFirst(dcl.cppName + param1, false);
+                    if (info == null) {
+                        info = infoMap.getFirst(dcl.cppName + param2, false);
+                    }
+                }
             }
         }
         if (info == null) {
             if (type.constructor) {
                 // get Info explicitly associated with all constructors
-                List<String> cppNameSplit = Templates.splitNamespace(dcl.cppName);
-                String name = Templates.strip(cppNameSplit.get(cppNameSplit.size() - 1));
-                info = fullInfo = infoMap.getFirst(dcl.cppName + "::" + name);
+                String name = constructorName(dcl.cppName);
+                fullname = name + templateArgs + param1;
+                info = fullInfo = infoMap.getFirst(fullname);
+                if (info == null) {
+                    info = fullInfo = infoMap.getFirst(name + templateArgs + param2);
+                    if (info == null) {
+                        info = fullInfo = infoMap.getFirst(name + templateArgs);
+                    }
+                }
             }
+            // For constructor, we'd better not make this lookup, because of confusion
+            // with the class info. Kept for now for backwards compatibility.
             if (info == null) {
-                info = infoMap.getFirst(dcl.cppName);
+                info = infoMap.getFirst(dcl.cppName + templateArgs);
             }
             if (!type.constructor && !type.destructor && !type.operator && (context.templateMap == null || context.templateMap.full())) {
                 infoMap.put(info != null ? new Info(info).cppNames(fullname).javaNames(null) : new Info(fullname));
@@ -2466,7 +2512,12 @@ public class Parser {
 
         type = functionAfter(context, decl, dcl, type);
         context = new Context(context);
-        context.virtualize = (context.virtualize && type.virtual) || (info != null && info.virtualize);
+
+        // Virtualize the function if class is virtualized and C++ function is virtual
+        // or if function is explicitly virtualized with info.
+        // Exclude constructor case since we may have looked up the info of the class in lieu of
+        // the info of the constructor, and constructors cannot be virtualized.
+        context.virtualize = (context.virtualize && type.virtual) || (info != null && info.virtualize && !type.constructor);
 
         List<Declarator> prevDcl = new ArrayList<Declarator>();
         boolean first = true;
@@ -2526,8 +2577,7 @@ public class Parser {
             }
 
             // use Java names that we may get here but that declarator() did not catch
-            String parameters = fullname.substring(dcl.cppName.length());
-            for (String name : context.qualify(dcl.cppName, parameters)) {
+            for (String name : context.qualify(dcl.cppName, param1)) {
                 if ((infoMap.getFirst(name, false)) != null) {
                     dcl.cppName = name;
                     break;
@@ -2539,8 +2589,8 @@ public class Parser {
             if (context.namespace != null && localName2.startsWith(context.namespace + "::")) {
                 localName2 = dcl.cppName.substring(context.namespace.length() + 2);
             }
-            if (localName2.endsWith(parameters)) {
-                localName2 = localName2.substring(0, localName2.length() - parameters.length());
+            if (localName2.endsWith(param1)) {
+                localName2 = localName2.substring(0, localName2.length() - param1.length());
             }
             if (fullInfo != null && fullInfo.javaNames != null && fullInfo.javaNames.length > 0) {
                 dcl.javaName = fullInfo.javaNames[0];
