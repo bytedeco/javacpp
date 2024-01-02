@@ -3657,7 +3657,10 @@ public class Parser {
             if (type.javaName.length() > 0 && context.javaName != null) {
                 type.javaName = context.javaName + "." + type.javaName;
             }
-            infoMap.put(info = new Info(type.cppName).pointerTypes(type.javaName));
+            // Adding this info allows proper ns resolution for next declarations, but
+            // we don't want it to trigger template instantiation, so we untemplate the
+            // name first.
+            infoMap.put(info = new Info(Templates.strip(type.cppName)).pointerTypes(type.javaName));
         }
 
         /* Propagate the need for downcasting from base classes */
