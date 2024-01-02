@@ -1381,18 +1381,14 @@ public class Parser {
                     }
                 } else if (token.match('<')) {
                     // template arguments
-                    dcl.cppName += token;
-                    int count2 = 0;
-                    for (token = tokens.next(); !token.match(Token.EOF); token = tokens.next()) {
-                        dcl.cppName += token;
-                        if (count2 == 0 && token.match('>')) {
-                            break;
-                        } else if (token.match('<')) {
-                            count2++;
-                        } else if (token.match('>')) {
-                            count2--;
-                        }
+                    Type[] types = templateArguments(context);
+                    dcl.cppName += "<";
+                    for (int i = 0; i<types.length; i++) {
+                        if (i > 0) dcl.cppName += ",";
+                        dcl.cppName += types[i].cppName;
                     }
+                    if (dcl.cppName.endsWith(">")) dcl.cppName += " ";
+                    dcl.cppName += ">";
                 } else if (token.match(Token.IDENTIFIER) &&
                         (dcl.cppName.length() == 0 || dcl.cppName.endsWith("::"))) {
                     dcl.cppName += token;
@@ -1640,7 +1636,7 @@ public class Parser {
         // pick the Java name from the InfoMap if appropriate
         String originalName = fieldPointer ? groupInfo.pointerTypes[0] : dcl.javaName;
         if (attr == null && defaultName == null && info != null && info.javaNames != null && info.javaNames.length > 0
-                && (dcl.operator || Templates.notExists(info.cppNames[0]) || (context.templateMap != null && context.templateMap.type == null))) {
+            && (dcl.operator || Templates.notExists(info.cppNames[0]) || dcl.cppName.equals(info.cppNames[0]))) {
             dcl.javaName = info.javaNames[0];
         }
 
@@ -1813,6 +1809,12 @@ public class Parser {
                 localName = dcl.cppName.substring(context.namespace.length() + 2);
             }
             String simpleName = Templates.strip(localName);
+            if (dcl.type.friend) {
+                /* Friend functions are called with ADL, but ADL is not performed when a function is called
+                with explicit template arguments. So we remove template arguments from @Name and bet that
+                the compiler will be able to locate the proper instance. */
+                localName = simpleName;
+            }
             if (!localName.equals(dcl.javaName) && (!simpleName.contains("::") || context.javaName == null)) {
                 type.annotations += "@Name(\"" + localName + "\") ";
             }
