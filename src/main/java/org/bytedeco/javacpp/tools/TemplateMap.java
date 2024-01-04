@@ -48,7 +48,7 @@ class TemplateMap extends LinkedHashMap<String,Type> {
                 return false;
             }
         }
-        return !isEmpty();
+        return true;
     }
 
     boolean full() {
