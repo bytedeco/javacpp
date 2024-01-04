@@ -4436,7 +4436,7 @@ public class Parser {
                         continue;
                     }
                     Type type = new Parser(this, info.cppNames[0]).type(context);
-                    if (type.arguments == null) {
+                    if (type.arguments == null || type.arguments.length > map.size()) {
                         continue;
                     }
                     int count = 0;
