@@ -2701,10 +2701,12 @@ public class Parser {
             if (context.namespace != null && context.javaName == null) {
                 decl.text += "@Namespace(\"" + context.namespace + "\") ";
             }
-            // append annotations specified for a full function declaration only to avoid overlap with type.annotations
+            // append annotations specified for a full function declaration only, to avoid overlap with type.annotations
             if (fullInfo != null && fullInfo.annotations != null) {
                 for (String s : fullInfo.annotations) {
-                    type.annotations += s + " ";
+                    if (!type.annotations.contains(s)) { // We can still have overlap since fullinfo are created dynamically from partial info
+                        type.annotations += s + " ";
+                    }
                 }
             }
             if (type.constructor && params != null) {
