@@ -1777,7 +1777,7 @@ public class Parser {
                 if (info != null && info.javaText != null) {
                     definition.signature = definition.text = info.javaText;
                     definition.declarator = null;
-                    definition.custom = true;
+                    definition.custom = !info.define;
                 }
                 if (info == null || !info.skip) {
                     dcl.definition = definition;
@@ -2749,7 +2749,7 @@ public class Parser {
             if (info != null && info.javaText != null) {
                 if (first) {
                     decl.signature = decl.text = info.javaText;
-                    decl.custom = true;
+                    decl.custom = !info.define;
                 } else {
                     break;
                 }
@@ -2992,7 +2992,7 @@ public class Parser {
             if (info != null && info.javaText != null) {
                 decl.signature = decl.text = info.javaText;
                 decl.declarator = null;
-                decl.custom = true;
+                decl.custom = !info.define;
             }
             int count = 0;
             for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.next()) {
@@ -3232,7 +3232,7 @@ public class Parser {
                 }
                 if (info != null && info.javaText != null) {
                     decl.signature = decl.text = info.javaText;
-                    decl.custom = true;
+                    decl.custom = !info.define;
                     break;
                 }
             }
@@ -3392,7 +3392,7 @@ public class Parser {
 
             if (info != null && info.javaText != null) {
                 decl.signature = decl.text = info.javaText;
-                decl.custom = true;
+                decl.custom = !info.define;
             }
             String comment = commentAfter();
             decl.text = comment + decl.text;
@@ -3431,7 +3431,7 @@ public class Parser {
             // inherit constructors
             decl.signature = decl.text = info.javaText;
             decl.declarator = dcl;
-            decl.custom = true;
+            decl.custom = !info.define;
         }
         String comment = commentAfter();
         decl.text = comment + decl.text;
@@ -3981,7 +3981,7 @@ public class Parser {
                 }
                 int end = text.lastIndexOf('}');
                 decl.text += text.substring(start, end).replace(base2.javaName, type.javaName);
-                decl.custom = true;
+                decl.custom = !info.define;
             }
         }
         if (polymorphic) {
@@ -4019,7 +4019,7 @@ public class Parser {
         decl.type = type;
         if (info != null && info.javaText != null) {
             decl.signature = decl.text = info.javaText;
-            decl.custom = true;
+            decl.custom = !info.define;
         } else if (info != null && info.flatten) {
             info.javaText = decl.text;
         }
