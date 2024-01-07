@@ -98,17 +98,40 @@ public class Parser {
     String lineSeparator = null;
     /** Java names of classes needing upcast from their subclasses. */
     Set<String> upcasts = new HashSet<>();
-    /** Classes that have a base class appearing as key in this map need a downcast constructor. The associated value gives the class to downcast from. */
-    Map<String, Set<Type>> downcasts = new HashMap<>();
+
+    static private class Inheritance {
+        Type base;
+        boolean virtual;
+
+        public Inheritance(Type b, boolean v) {
+            base = b;
+            virtual = v;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            Inheritance i = (Inheritance) o;
+            return i != null && i.base.equals(base) && i.virtual == virtual;
+        }
+
+        @Override
+        public int hashCode() {
+            return base.hashCode() + (virtual ? 1 : 0);
+        }
+    }
+
+    /** Classes that have a base class appearing as a key in this map need a downcast constructor.
+     * The associated value gives the class to downcast from and whether the inheritance is virtual. */
+    Map<String, Set<Inheritance>> downcasts = new HashMap<>();
     /** Java names of classes recognized as polymorphic. */
     Set<String> polymorphicClasses = new HashSet<>();
 
-    private void addDowncast(String base, Type from) {
-        Set<Type> types = downcasts.get(base);
-        if (types == null) {
-            downcasts.put(base, types = new HashSet<>(1));
+    private void addDowncast(String base, Type from, boolean virtual) {
+        Set<Inheritance> inh = downcasts.get(base);
+        if (inh == null) {
+            downcasts.put(base, inh = new HashSet<>(1));
         }
-        types.add(from);
+        inh.add(new Inheritance(from, virtual));
     }
 
     static String removeAnnotations(String s) {
@@ -3450,9 +3473,9 @@ public class Parser {
         return true;
     }
 
-    String downcast(Type derived, Type base) {
+    String downcast(Type derived, Type base, boolean virtual) {
         final String downcastType;
-        if (base.virtual) {
+        if (virtual) {
             if (polymorphicClasses.contains(base.javaName)) {
                 downcastType = "dynamic";
             } else {
@@ -3676,10 +3699,10 @@ public class Parser {
 
         /* Propagate the need for downcasting from base classes */
         for (Type t : baseClasses) {
-            Set<Type> froms = downcasts.get(t.cppName);
+            Set<Inheritance> froms = downcasts.get(t.cppName);
             if (froms != null) {
-                for (Type from : froms) {
-                    addDowncast(type.cppName, from);
+                for (Inheritance from : froms) {
+                    addDowncast(type.cppName, from.base, t.virtual || from.virtual);
                 }
             }
         }
@@ -3713,7 +3736,7 @@ public class Parser {
                 Info baseInfo = infoMap.getFirst(t.cppName);
                 if (!t.javaName.equals("Pointer") && (baseInfo == null || !baseInfo.skip)) {
                     casts += upcast(type, t, false);
-                    addDowncast(t.cppName, t);
+                    addDowncast(t.cppName, t, false);
                 }
             }
         }
@@ -3724,11 +3747,11 @@ public class Parser {
         if (upcasts.contains(base.javaName)) {
             // Base classes explicitly set as needing upcast in infoMap
             casts += upcast(type, base, true);
-            addDowncast(base.cppName, base);
+            addDowncast(base.cppName, base, false);
         } else if (polymorphicClasses.contains(base.javaName) && base.virtual) {
             // In this case we know we need upcast
             casts += upcast(type, base, false);
-            addDowncast(base.cppName, base);
+            addDowncast(base.cppName, base, false);
         }
 
         decl.signature = type.javaName;
@@ -3954,17 +3977,17 @@ public class Parser {
                 }
             }
 
-            Set<Type> froms = downcasts.get(base.cppName);
-            for (Type t : froms != null ? froms : new HashSet<Type>()) {
+            Set<Inheritance> froms = downcasts.get(base.cppName);
+            for (Inheritance i : froms != null ? froms : new HashSet<Inheritance>()) {
                 boolean found = false;
                 for (Declaration d : declList2) {
-                    if ((shortName + "_" + t.javaName).equals(d.signature)) {
+                    if ((shortName + "_" + i.base.javaName).equals(d.signature)) {
                         found = true;
                         break;
                     }
                 }
                 if (!found) {
-                    constructors += downcast(type, t);
+                    constructors += downcast(type, i.base, i.virtual || base.virtual);
                 }
             }
 
