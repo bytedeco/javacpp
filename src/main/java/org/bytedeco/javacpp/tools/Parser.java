@@ -1406,11 +1406,15 @@ public class Parser {
                     // template arguments
                     Type[] types = templateArguments(context);
                     dcl.cppName += "<";
-                    for (int i = 0; i<types.length; i++) {
-                        if (i > 0) dcl.cppName += ",";
+                    for (int i = 0; i < types.length; i++) {
+                        if (i > 0) {
+                            dcl.cppName += ",";
+                        }
                         dcl.cppName += types[i].cppName;
                     }
-                    if (dcl.cppName.endsWith(">")) dcl.cppName += " ";
+                    if (dcl.cppName.endsWith(">")) {
+                        dcl.cppName += " ";
+                    }
                     dcl.cppName += ">";
                 } else if (token.match(Token.IDENTIFIER) &&
                         (dcl.cppName.length() == 0 || dcl.cppName.endsWith("::"))) {
@@ -1659,7 +1663,7 @@ public class Parser {
         // pick the Java name from the InfoMap if appropriate
         String originalName = fieldPointer ? groupInfo.pointerTypes[0] : dcl.javaName;
         if (attr == null && defaultName == null && info != null && info.javaNames != null && info.javaNames.length > 0
-            && (dcl.operator || Templates.notExists(info.cppNames[0]) || dcl.cppName.equals(info.cppNames[0]))) {
+                && (dcl.operator || Templates.notExists(info.cppNames[0]) || dcl.cppName.equals(info.cppNames[0]))) {
             dcl.javaName = info.javaNames[0];
         }
 
