@@ -2377,7 +2377,10 @@ public class Parser {
         }
         Info info = null, fullInfo = null;
         String templateArgs = declList.templateMap != null ?  declList.templateMap.toString() : "";
-        String fullname = dcl.cppName + templateArgs;
+        String fullname = dcl.cppName;
+        if (!fullname.endsWith(">")) {
+            fullname += templateArgs;
+        }
         String param1 = "", param2 = "";
         if (dcl.parameters != null) {
             param1 = "(";
@@ -2417,8 +2420,12 @@ public class Parser {
             fullname += param1;
             info = fullInfo = infoMap.getFirst(fullname, false);
             if (info == null) {
-                info = infoMap.getFirst(dcl.cppName + templateArgs + param2, false);
-                if (info == null && !templateArgs.isEmpty()) {
+                String cppName = dcl.cppName;
+                if (!cppName.endsWith(">")) {
+                    cppName += templateArgs;
+                }
+                info = infoMap.getFirst(cppName + param2, false);
+                if (info == null && !cppName.equals(dcl.cppName)) {
                     info = infoMap.getFirst(dcl.cppName + param1, false);
                     if (info == null) {
                         info = infoMap.getFirst(dcl.cppName + param2, false);
@@ -2442,7 +2449,7 @@ public class Parser {
             // For constructor, we'd better not make this lookup, because of confusion
             // with the class info. Kept for now for backwards compatibility.
             if (info == null) {
-                info = infoMap.getFirst(dcl.cppName + templateArgs);
+                info = infoMap.getFirst(dcl.cppName + (dcl.cppName.endsWith(">") ? "" : templateArgs));
             }
             if (!type.constructor && !type.destructor && !type.operator && (context.templateMap == null || context.templateMap.full())) {
                 infoMap.put(info != null ? new Info(info).cppNames(fullname).javaNames(null) : new Info(fullname));
