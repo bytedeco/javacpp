@@ -99,39 +99,19 @@ public class Parser {
     /** Java names of classes needing upcast from their subclasses. */
     Set<String> upcasts = new HashSet<>();
 
-    static private class Inheritance {
-        Type base;
-        boolean virtual;
-
-        public Inheritance(Type b, boolean v) {
-            base = b;
-            virtual = v;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            Inheritance i = (Inheritance) o;
-            return i != null && i.base.equals(base) && i.virtual == virtual;
-        }
-
-        @Override
-        public int hashCode() {
-            return base.hashCode() + (virtual ? 1 : 0);
-        }
-    }
-
     /** Classes that have a base class appearing as a key in this map need a downcast constructor.
      * The associated value gives the class to downcast from and whether the inheritance is virtual. */
-    Map<String, Set<Inheritance>> downcasts = new HashMap<>();
+    Map<String, Map<Type, Boolean>> downcasts = new HashMap<>();
+
     /** Java names of classes recognized as polymorphic. */
     Set<String> polymorphicClasses = new HashSet<>();
 
     private void addDowncast(String base, Type from, boolean virtual) {
-        Set<Inheritance> inh = downcasts.get(base);
-        if (inh == null) {
-            downcasts.put(base, inh = new HashSet<>(1));
+        Map<Type, Boolean> inheritance = downcasts.get(base);
+        if (inheritance == null) {
+            downcasts.put(base, inheritance = new HashMap<>(1));
         }
-        inh.add(new Inheritance(from, virtual));
+        inheritance.put(from, virtual);
     }
 
     static String removeAnnotations(String s) {
@@ -3703,10 +3683,10 @@ public class Parser {
 
         /* Propagate the need for downcasting from base classes */
         for (Type t : baseClasses) {
-            Set<Inheritance> froms = downcasts.get(t.cppName);
+            Map<Type, Boolean> froms = downcasts.get(t.cppName);
             if (froms != null) {
-                for (Inheritance from : froms) {
-                    addDowncast(type.cppName, from.base, t.virtual || from.virtual);
+                for (Map.Entry<Type, Boolean> from: froms.entrySet()) {
+                    addDowncast(type.cppName, from.getKey(), t.virtual || from.getValue());
                 }
             }
         }
@@ -3981,17 +3961,19 @@ public class Parser {
                 }
             }
 
-            Set<Inheritance> froms = downcasts.get(base.cppName);
-            for (Inheritance i : froms != null ? froms : new HashSet<Inheritance>()) {
-                boolean found = false;
-                for (Declaration d : declList2) {
-                    if ((shortName + "_" + i.base.javaName).equals(d.signature)) {
-                        found = true;
-                        break;
+            Map<Type, Boolean> froms = downcasts.get(base.cppName);
+            if (froms != null) {
+                for (Map.Entry<Type, Boolean> i : froms.entrySet()) {
+                    boolean found = false;
+                    for (Declaration d : declList2) {
+                        if ((shortName + "_" + i.getKey().javaName).equals(d.signature)) {
+                            found = true;
+                            break;
+                        }
                     }
-                }
-                if (!found) {
-                    constructors += downcast(type, i.base, i.virtual || base.virtual);
+                    if (!found) {
+                        constructors += downcast(type, i.getKey(), i.getValue() || base.virtual);
+                    }
                 }
             }
 
