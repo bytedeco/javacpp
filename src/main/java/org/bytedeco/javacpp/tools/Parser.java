@@ -688,6 +688,9 @@ public class Parser {
         }
         List<Type> arguments = new ArrayList<>();
         for (Token token = tokens.next(); !token.match(Token.EOF); token = tokens.next()) {
+            if (token.match('>')) {
+                break;
+            }
             Type type = type(context);
             arguments.add(type);
             token = tokens.get();
