@@ -767,7 +767,7 @@ public class Parser {
 
     /**
      *  Read and return the operator following an operator keyword:
-     *  any of new, delete, + - * / % ^ & | ~ ! = < > += -= *= /= %= ^= &= |= << >> >>= <<= == != <= >= <=>(since C++20) && || ++ -- , ->* -> ( ) [ ]
+     *  any of {@code new, delete, + - * / % ^ & | ~ ! = < > += -= *= /= %= ^= &= |= << >> >>= <<= == != <= >= <=>(since C++20) && || ++ -- , ->* -> ( ) [ ]}
      *  taking care of template arguments, if any.
      */
     private String operator(Context context) throws ParserException {
