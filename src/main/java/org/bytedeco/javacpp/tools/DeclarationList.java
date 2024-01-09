@@ -67,6 +67,8 @@ class DeclarationList extends ArrayList<Declaration> {
         if (templateMap != null && templateMap.empty() && !decl.custom && (decl.type != null || decl.declarator != null)) {
             // method templates cannot be declared in Java, but make sure to make their
             // info available on request (when Info.javaNames or Info.define is set) to be able to create instances
+            // decl.custom is true when info has a javaText and define is false. This allows to apply a javaText
+            // to a template without instantiating it. define forces instantiation.
             if (infoIterator == null) {
                 Type type = templateMap.type = decl.type;
                 Declarator dcl = templateMap.declarator = decl.declarator;

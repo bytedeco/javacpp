@@ -98,17 +98,20 @@ public class Parser {
     String lineSeparator = null;
     /** Java names of classes needing upcast from their subclasses. */
     Set<String> upcasts = new HashSet<>();
-    /** Classes that have a base class appearing as key in this map need a downcast constructor. The associated value gives the class to downcast from. */
-    Map<String, Set<Type>> downcasts = new HashMap<>();
+
+    /** Classes that have a base class appearing as a key in this map need a downcast constructor.
+     * The associated value gives the class to downcast from and whether the inheritance is virtual. */
+    Map<String, Map<Type, Boolean>> downcasts = new HashMap<>();
+
     /** Java names of classes recognized as polymorphic. */
     Set<String> polymorphicClasses = new HashSet<>();
 
-    private void addDowncast(String base, Type from) {
-        Set<Type> types = downcasts.get(base);
-        if (types == null) {
-            downcasts.put(base, types = new HashSet<>(1));
+    private void addDowncast(String base, Type from, boolean virtual) {
+        Map<Type, Boolean> inheritance = downcasts.get(base);
+        if (inheritance == null) {
+            downcasts.put(base, inheritance = new HashMap<>(1));
         }
-        types.add(from);
+        inheritance.put(from, virtual);
     }
 
     static String removeAnnotations(String s) {
@@ -685,6 +688,9 @@ public class Parser {
         }
         List<Type> arguments = new ArrayList<>();
         for (Token token = tokens.next(); !token.match(Token.EOF); token = tokens.next()) {
+            if (token.match('>')) {
+                break;
+            }
             Type type = type(context);
             arguments.add(type);
             token = tokens.get();
@@ -764,7 +770,7 @@ public class Parser {
 
     /**
      *  Read and return the operator following an operator keyword:
-     *  any of new, delete, + - * / % ^ & | ~ ! = < > += -= *= /= %= ^= &= |= << >> >>= <<= == != <= >= <=>(since C++20) && || ++ -- , ->* -> ( ) [ ]
+     *  any of {@code new, delete, + - * / % ^ & | ~ ! = < > += -= *= /= %= ^= &= |= << >> >>= <<= == != <= >= <=>(since C++20) && || ++ -- , ->* -> ( ) [ ]}
      *  taking care of template arguments, if any.
      */
     private String operator(Context context) throws ParserException {
@@ -1381,18 +1387,18 @@ public class Parser {
                     }
                 } else if (token.match('<')) {
                     // template arguments
-                    dcl.cppName += token;
-                    int count2 = 0;
-                    for (token = tokens.next(); !token.match(Token.EOF); token = tokens.next()) {
-                        dcl.cppName += token;
-                        if (count2 == 0 && token.match('>')) {
-                            break;
-                        } else if (token.match('<')) {
-                            count2++;
-                        } else if (token.match('>')) {
-                            count2--;
+                    Type[] types = templateArguments(context);
+                    dcl.cppName += "<";
+                    for (int i = 0; i < types.length; i++) {
+                        if (i > 0) {
+                            dcl.cppName += ",";
                         }
+                        dcl.cppName += types[i].cppName;
                     }
+                    if (dcl.cppName.endsWith(">")) {
+                        dcl.cppName += " ";
+                    }
+                    dcl.cppName += ">";
                 } else if (token.match(Token.IDENTIFIER) &&
                         (dcl.cppName.length() == 0 || dcl.cppName.endsWith("::"))) {
                     dcl.cppName += token;
@@ -1640,7 +1646,7 @@ public class Parser {
         // pick the Java name from the InfoMap if appropriate
         String originalName = fieldPointer ? groupInfo.pointerTypes[0] : dcl.javaName;
         if (attr == null && defaultName == null && info != null && info.javaNames != null && info.javaNames.length > 0
-                && (dcl.operator || Templates.notExists(info.cppNames[0]) || (context.templateMap != null && context.templateMap.type == null))) {
+                && (dcl.operator || Templates.notExists(info.cppNames[0]) || dcl.cppName.equals(info.cppNames[0]))) {
             dcl.javaName = info.javaNames[0];
         }
 
@@ -1781,7 +1787,7 @@ public class Parser {
                 if (info != null && info.javaText != null) {
                     definition.signature = definition.text = info.javaText;
                     definition.declarator = null;
-                    definition.custom = true;
+                    definition.custom = !info.define;
                 }
                 if (info == null || !info.skip) {
                     dcl.definition = definition;
@@ -1813,6 +1819,12 @@ public class Parser {
                 localName = dcl.cppName.substring(context.namespace.length() + 2);
             }
             String simpleName = Templates.strip(localName);
+            if (dcl.type.friend) {
+                /* Friend functions are called with ADL, but ADL is not performed when a function is called
+                with explicit template arguments. So we remove template arguments from @Name and bet that
+                the compiler will be able to locate the proper instance. */
+                localName = simpleName;
+            }
             if (!localName.equals(dcl.javaName) && (!simpleName.contains("::") || context.javaName == null)) {
                 type.annotations += "@Name(\"" + localName + "\") ";
             }
@@ -2375,7 +2387,10 @@ public class Parser {
         }
         Info info = null, fullInfo = null;
         String templateArgs = declList.templateMap != null ?  declList.templateMap.toString() : "";
-        String fullname = dcl.cppName + templateArgs;
+        String fullname = dcl.cppName;
+        if (!fullname.endsWith(">")) {
+            fullname += templateArgs;
+        }
         String param1 = "", param2 = "";
         if (dcl.parameters != null) {
             param1 = "(";
@@ -2415,8 +2430,12 @@ public class Parser {
             fullname += param1;
             info = fullInfo = infoMap.getFirst(fullname, false);
             if (info == null) {
-                info = infoMap.getFirst(dcl.cppName + templateArgs + param2, false);
-                if (info == null && !templateArgs.isEmpty()) {
+                String cppName = dcl.cppName;
+                if (!cppName.endsWith(">")) {
+                    cppName += templateArgs;
+                }
+                info = infoMap.getFirst(cppName + param2, false);
+                if (info == null && !cppName.equals(dcl.cppName)) {
                     info = infoMap.getFirst(dcl.cppName + param1, false);
                     if (info == null) {
                         info = infoMap.getFirst(dcl.cppName + param2, false);
@@ -2440,7 +2459,7 @@ public class Parser {
             // For constructor, we'd better not make this lookup, because of confusion
             // with the class info. Kept for now for backwards compatibility.
             if (info == null) {
-                info = infoMap.getFirst(dcl.cppName + templateArgs);
+                info = infoMap.getFirst(dcl.cppName + (dcl.cppName.endsWith(">") ? "" : templateArgs));
             }
             if (!type.constructor && !type.destructor && !type.operator && (context.templateMap == null || context.templateMap.full())) {
                 infoMap.put(info != null ? new Info(info).cppNames(fullname).javaNames(null) : new Info(fullname));
@@ -2699,10 +2718,12 @@ public class Parser {
             if (context.namespace != null && context.javaName == null) {
                 decl.text += "@Namespace(\"" + context.namespace + "\") ";
             }
-            // append annotations specified for a full function declaration only to avoid overlap with type.annotations
+            // append annotations specified for a full function declaration only, to avoid overlap with type.annotations
             if (fullInfo != null && fullInfo.annotations != null) {
                 for (String s : fullInfo.annotations) {
-                    type.annotations += s + " ";
+                    if (!type.annotations.contains(s)) { // We can still have overlap since fullinfo are created dynamically from partial info
+                        type.annotations += s + " ";
+                    }
                 }
             }
             if (type.constructor && params != null) {
@@ -2747,7 +2768,7 @@ public class Parser {
             if (info != null && info.javaText != null) {
                 if (first) {
                     decl.signature = decl.text = info.javaText;
-                    decl.custom = true;
+                    decl.custom = !info.define;
                 } else {
                     break;
                 }
@@ -2990,7 +3011,7 @@ public class Parser {
             if (info != null && info.javaText != null) {
                 decl.signature = decl.text = info.javaText;
                 decl.declarator = null;
-                decl.custom = true;
+                decl.custom = !info.define;
             }
             int count = 0;
             for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.next()) {
@@ -3230,7 +3251,7 @@ public class Parser {
                 }
                 if (info != null && info.javaText != null) {
                     decl.signature = decl.text = info.javaText;
-                    decl.custom = true;
+                    decl.custom = !info.define;
                     break;
                 }
             }
@@ -3390,7 +3411,7 @@ public class Parser {
 
             if (info != null && info.javaText != null) {
                 decl.signature = decl.text = info.javaText;
-                decl.custom = true;
+                decl.custom = !info.define;
             }
             String comment = commentAfter();
             decl.text = comment + decl.text;
@@ -3429,7 +3450,7 @@ public class Parser {
             // inherit constructors
             decl.signature = decl.text = info.javaText;
             decl.declarator = dcl;
-            decl.custom = true;
+            decl.custom = !info.define;
         }
         String comment = commentAfter();
         decl.text = comment + decl.text;
@@ -3439,9 +3460,9 @@ public class Parser {
         return true;
     }
 
-    String downcast(Type derived, Type base) {
+    String downcast(Type derived, Type base, boolean virtual) {
         final String downcastType;
-        if (base.virtual) {
+        if (virtual) {
             if (polymorphicClasses.contains(base.javaName)) {
                 downcastType = "dynamic";
             } else {
@@ -3657,15 +3678,18 @@ public class Parser {
             if (type.javaName.length() > 0 && context.javaName != null) {
                 type.javaName = context.javaName + "." + type.javaName;
             }
-            infoMap.put(info = new Info(type.cppName).pointerTypes(type.javaName));
+            // Adding this info allows proper ns resolution for next declarations, but
+            // we don't want it to trigger template instantiation, so we untemplate the
+            // name first.
+            infoMap.put(info = new Info(Templates.strip(type.cppName)).pointerTypes(type.javaName));
         }
 
         /* Propagate the need for downcasting from base classes */
         for (Type t : baseClasses) {
-            Set<Type> froms = downcasts.get(t.cppName);
+            Map<Type, Boolean> froms = downcasts.get(t.cppName);
             if (froms != null) {
-                for (Type from : froms) {
-                    addDowncast(type.cppName, from);
+                for (Map.Entry<Type, Boolean> from: froms.entrySet()) {
+                    addDowncast(type.cppName, from.getKey(), t.virtual || from.getValue());
                 }
             }
         }
@@ -3699,7 +3723,7 @@ public class Parser {
                 Info baseInfo = infoMap.getFirst(t.cppName);
                 if (!t.javaName.equals("Pointer") && (baseInfo == null || !baseInfo.skip)) {
                     casts += upcast(type, t, false);
-                    addDowncast(t.cppName, t);
+                    addDowncast(t.cppName, t, false);
                 }
             }
         }
@@ -3710,11 +3734,11 @@ public class Parser {
         if (upcasts.contains(base.javaName)) {
             // Base classes explicitly set as needing upcast in infoMap
             casts += upcast(type, base, true);
-            addDowncast(base.cppName, base);
+            addDowncast(base.cppName, base, false);
         } else if (polymorphicClasses.contains(base.javaName) && base.virtual) {
             // In this case we know we need upcast
             casts += upcast(type, base, false);
-            addDowncast(base.cppName, base);
+            addDowncast(base.cppName, base, false);
         }
 
         decl.signature = type.javaName;
@@ -3940,17 +3964,19 @@ public class Parser {
                 }
             }
 
-            Set<Type> froms = downcasts.get(base.cppName);
-            for (Type t : froms != null ? froms : new HashSet<Type>()) {
-                boolean found = false;
-                for (Declaration d : declList2) {
-                    if ((shortName + "_" + t.javaName).equals(d.signature)) {
-                        found = true;
-                        break;
+            Map<Type, Boolean> froms = downcasts.get(base.cppName);
+            if (froms != null) {
+                for (Map.Entry<Type, Boolean> i : froms.entrySet()) {
+                    boolean found = false;
+                    for (Declaration d : declList2) {
+                        if ((shortName + "_" + i.getKey().javaName).equals(d.signature)) {
+                            found = true;
+                            break;
+                        }
                     }
-                }
-                if (!found) {
-                    constructors += downcast(type, t);
+                    if (!found) {
+                        constructors += downcast(type, i.getKey(), i.getValue() || base.virtual);
+                    }
                 }
             }
 
@@ -3976,7 +4002,7 @@ public class Parser {
                 }
                 int end = text.lastIndexOf('}');
                 decl.text += text.substring(start, end).replace(base2.javaName, type.javaName);
-                decl.custom = true;
+                decl.custom = !info.define;
             }
         }
         if (polymorphic) {
@@ -4014,7 +4040,7 @@ public class Parser {
         decl.type = type;
         if (info != null && info.javaText != null) {
             decl.signature = decl.text = info.javaText;
-            decl.custom = true;
+            decl.custom = !info.define;
         } else if (info != null && info.flatten) {
             info.javaText = decl.text;
         }
@@ -4431,7 +4457,7 @@ public class Parser {
                         continue;
                     }
                     Type type = new Parser(this, info.cppNames[0]).type(context);
-                    if (type.arguments == null) {
+                    if (type.arguments == null || type.arguments.length > map.size()) {
                         continue;
                     }
                     int count = 0;

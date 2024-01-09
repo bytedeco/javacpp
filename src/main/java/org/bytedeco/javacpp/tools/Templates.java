@@ -32,7 +32,7 @@ class Templates {
 
     static final Pattern templatePattern = Pattern.compile("<[^<>=]*>");
 
-    /** Remove template arguments from s, taking care of nested templates, default arguments (xxx<>), operator <=>, ->, etc... */
+    /** Remove template arguments from s, taking care of nested templates, default arguments {@code (xxx<>), operator <=>, ->}, etc */
     static String strip(String s) {
         Matcher m;
         do {

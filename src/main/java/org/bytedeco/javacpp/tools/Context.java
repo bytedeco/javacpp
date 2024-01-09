@@ -99,24 +99,26 @@ class Context {
                 name = name.substring(0, name.length() - parameters.length());
             }
             TemplateMap map = templateMap;
-            while (map != null) {
-                String name2 = map.getName();
-                if (parameters != null && name2 != null && name2.endsWith(parameters)) {
-                    name2 = name2.substring(0, name2.length() - parameters.length());
-                }
-                if (name.equals(name2)) {
-                    String args = "<", separator = "";
-                    for (Type t : map.values()) {
-                        // assume that missing arguments have default values
-                        if (t != null) {
-                            args += separator + t.cppName;
-                            separator = ",";
-                        }
+            if (!name.endsWith(">")) {
+                while (map != null) {
+                    String name2 = map.getName();
+                    if (parameters != null && name2 != null && name2.endsWith(parameters)) {
+                        name2 = name2.substring(0, name2.length() - parameters.length());
                     }
-                    names.add(name + args + (args.endsWith(">") ? " >" : ">") + (parameters != null ? parameters : ""));
-                    break;
+                    if (name.equals(name2)) {
+                        String args = "<", separator = "";
+                        for (Type t : map.values()) {
+                            // assume that missing arguments have default values
+                            if (t != null) {
+                                args += separator + t.cppName;
+                                separator = ",";
+                            }
+                        }
+                        names.add(name + args + (args.endsWith(">") ? " >" : ">") + (parameters != null ? parameters : ""));
+                        break;
+                    }
+                    map = map.parent;
                 }
-                map = map.parent;
             }
             names.add(name);
 
