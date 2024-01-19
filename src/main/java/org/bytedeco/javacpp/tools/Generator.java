@@ -1408,7 +1408,7 @@ public class Generator {
             out.println("        return (typename UNIQUE_PTR_NAMESPACE::remove_const<T>::type*)ptr;");
             out.println("    }");
             out.println("    operator U&() const { return uniquePtr; }");
-            out.println("    operator U&&() { return UNIQUE_PTR_NAMESPACE::move(uniquePtr); }");
+            out.println("    operator U&&() { owner = NULL; return UNIQUE_PTR_NAMESPACE::move(uniquePtr); }");
             out.println("    operator U*() { return &uniquePtr; }");
             out.println("    T* ptr;");
             out.println("    size_t size;");
@@ -1437,7 +1437,7 @@ public class Generator {
             out.println("        return ptr;");
             out.println("    }");
             out.println("    operator const T*() { return ptr; }");
-            out.println("    operator T&&() { return MOVE_NAMESPACE::move(movedPtr); }");
+            out.println("    operator T&&() { owner = NULL; return MOVE_NAMESPACE::move(movedPtr); }");
             out.println("    T* ptr;");
             out.println("    size_t size;");
             out.println("    void* owner;");
