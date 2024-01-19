@@ -1,4 +1,5 @@
 
+ * Fix `MoveAdapter` and `UniquePtrAdapter` causing double free on function calls ([pull #738](https://github.com/bytedeco/javacpp/pull/738))
  * Fix `Parser` handling of `template` specialization and their `friend` declarations ([pull #733](https://github.com/bytedeco/javacpp/pull/733))
  * Improve `Parser` capabilities for `operator` and function templates ([pull #732](https://github.com/bytedeco/javacpp/pull/732))
  * Fix `Parser` failing on nested initializer lists and on attributes found inside `enum` declarations
