@@ -136,7 +136,7 @@ public class Parser {
      * NS::CN::CN(int)
      * Declarator.cppName contains the calling name, and this method returns the declaration name.
      * Keys in info map should use the declaration name, because the calling name cannot specify
-     * arguments in case of constructor templates, and to avoid confusion between classes and constructores info.
+     * arguments in case of constructor templates, and to avoid confusion between classes and constructors info.
      */
     static String constructorName(String cppName) {
         String constructorName = Templates.strip(cppName);
@@ -1161,6 +1161,7 @@ public class Parser {
             if (cppName.equals(groupName)) {
                 type.constructor = !type.destructor && !type.operator
                         && type.indirections == 0 && !type.reference && tokens.get().match('(', ':');
+                if (type.constructor) type.cppName = context.cppName; // Fix potential qualification errors
             }
             type.javaName = context.shorten(type.javaName);
         }
@@ -2593,17 +2594,18 @@ public class Parser {
                 if (context.namespace != null && !isQualified) {
                     dcl.cppName = context.namespace + "::" + dcl.cppName;
                 }
-            }
 
-            // use Java names that we may get here but that declarator() did not catch
-            for (String name : context.qualify(dcl.cppName, param1)) {
-                if ((infoMap.getFirst(name, false)) != null) {
-                    dcl.cppName = name;
-                    break;
-                } else if (infoMap.getFirst(name) != null) {
-                    dcl.cppName = name;
+                // use Java names that we may get here but that declarator() did not catch
+                for (String name : context.qualify(dcl.cppName, param1)) {
+                    if ((infoMap.getFirst(name, false)) != null) {
+                        dcl.cppName = name;
+                        break;
+                    } else if (infoMap.getFirst(name) != null) {
+                        dcl.cppName = name;
+                    }
                 }
             }
+
             String localName2 = dcl.cppName;
             if (context.namespace != null && localName2.startsWith(context.namespace + "::")) {
                 localName2 = dcl.cppName.substring(context.namespace.length() + 2);
