@@ -154,7 +154,7 @@ public class Generator {
     static enum LongEnum { LONG; long value; }
     static final String JNI_VERSION = "JNI_VERSION_1_6";
     static final List<Class> baseClasses = Arrays.asList(new Class[] {
-            Loader.class,
+            Loader.Helper.class,
             Pointer.class,
             //FunctionPointer.class,
             BytePointer.class,
@@ -2065,6 +2065,7 @@ public class Generator {
         Set<String> memberList = members.get(cls);
         if (!cls.isAnnotationPresent(Opaque.class) && cls != Loader.class
                 && !FunctionPointer.class.isAssignableFrom(cls)
+                && cls.getEnclosingClass() != Loader.class
                 && cls.getEnclosingClass() != Pointer.class) {
             if (memberList == null) {
                 members.put(cls, memberList = new LinkedHashSet<String>());
