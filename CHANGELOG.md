@@ -1,4 +1,5 @@
 
+ * Fix `Parser` failing to pick up `Info` for constructors with template arguments ([pull #739](https://github.com/bytedeco/javacpp/pull/739))
  * Fix `MoveAdapter` and `UniquePtrAdapter` causing double free on function calls ([pull #738](https://github.com/bytedeco/javacpp/pull/738))
  * Fix `Parser` handling of `template` specialization and their `friend` declarations ([pull #733](https://github.com/bytedeco/javacpp/pull/733))
  * Improve `Parser` capabilities for `operator` and function templates ([pull #732](https://github.com/bytedeco/javacpp/pull/732))
