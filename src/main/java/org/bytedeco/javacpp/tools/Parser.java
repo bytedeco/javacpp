@@ -181,6 +181,12 @@ public class Parser {
         return text;
     }
 
+    /** De-deduplicate an array of strings, keeping order. */
+    private static String[] uniq(String[] a) {
+        if (a == null || a.length <= 1) return a;
+        return new LinkedHashSet<>(Arrays.asList(a)).toArray(new String[0]);
+    }
+
     void containers(Context context, DeclarationList declList) throws ParserException {
         List<String> basicContainers = new ArrayList<>();
         for (Info info : infoMap.get("basic/containers")) {
@@ -339,8 +345,8 @@ public class Parser {
                         + "    public " + containerType.javaName + "(Pointer p) { super(p); }\n";
                 boolean purify = info != null && info.purify;
                 if (!constant && !purify && (dim == 0 || (containerType.arguments.length == 1 && indexType != null)) && firstType != null && secondType != null) {
-                    String[] firstNames = firstType.javaNames != null ? firstType.javaNames : new String[] {firstType.javaName};
-                    String[] secondNames = secondType.javaNames != null ? secondType.javaNames : new String[] {secondType.javaName};
+                    String[] firstNames = firstType.javaNames != null ? uniq(firstType.javaNames) : new String[] {firstType.javaName};
+                    String[] secondNames = secondType.javaNames != null ? uniq(secondType.javaNames) : new String[] {secondType.javaName};
                     String brackets = arrayBrackets + (dim > 0 ? "[]" : "");
                     for (int n = 0; n < firstNames.length || n < secondNames.length; n++) {
                         decl.text += "    public " + containerType.javaName + "(" + firstNames[Math.min(n, firstNames.length - 1)] + brackets + " firstValue, "
@@ -348,7 +354,7 @@ public class Parser {
                                   +  "{ this(" + (dim > 0 ? "Math.min(firstValue.length, secondValue.length)" : "") + "); put(firstValue, secondValue); }\n";
                     }
                 } else if (resizable && !purify && firstType == null && secondType == null) {
-                    for (String javaName : valueType.javaNames != null ? valueType.javaNames : new String[] {valueType.javaName}) {
+                    for (String javaName : valueType.javaNames != null ? uniq(valueType.javaNames) : new String[] {valueType.javaName}) {
                         if (dim < 2 && !javaName.equals("int") && !javaName.equals("long")) {
                             decl.text += "    public " + containerType.javaName + "(" + javaName + " value) { this(1); put(0, value); }\n";
                         }
@@ -363,7 +369,7 @@ public class Parser {
                             valueNames2 += separator + "value" + n;
                             separator = ", ";
                             n++;
-                        } else for (String javaName : type.javaNames != null ? type.javaNames : new String[] {type.javaName}) {
+                        } else for (String javaName : type.javaNames != null ? uniq(type.javaNames) : new String[] {type.javaName}) {
                             // variant, optional, etc
                             if (!javaName.substring(javaName.indexOf(' ') + 1).equals("Pointer")) {
                                 decl.text += "    public " + containerType.javaName + "(" + javaName + " value) { this(); put(value); }\n";
@@ -416,6 +422,8 @@ public class Parser {
                               +  " public native " + containerType.javaName + " first(" + params + separator + removeAnnotations(firstType.javaName) + " first);\n"
                               +  "    " + indexAnnotation + "public native " + secondType.annotations + secondType.javaName + " second(" + params + "); "
                               +  " public native " + containerType.javaName + " second(" + params + separator + removeAnnotations(secondType.javaName) + " second);\n";
+                    firstType.javaNames = uniq(firstType.javaNames);
+                    secondType.javaNames = uniq(secondType.javaNames);
                     for (int i = 1; !constant && firstType.javaNames != null && i < firstType.javaNames.length; i++) {
                         decl.text += "    @MemberSetter @Index" + indexFunction + " public native " + containerType.javaName + " first(" + params + separator + firstType.annotations + firstType.javaNames[i] + " first);\n";
                     }
@@ -433,6 +441,7 @@ public class Parser {
                         if (!constant) {
                             decl.text += "    public native " + containerType.javaName + " put(" + params + separator + removeAnnotations(valueType.javaName) + " value);\n";
                         }
+                        valueType.javaNames = uniq(valueType.javaNames);
                         for (int i = 1; !constant && valueType.javaNames != null && i < valueType.javaNames.length; i++) {
                             decl.text += "    @ValueSetter @Index" + indexFunction + " public native " + containerType.javaName + " put(" + params + separator + valueType.annotations + valueType.javaNames[i] + " value);\n";
                         }
@@ -452,6 +461,7 @@ public class Parser {
                             if (!constant && !tuple) {
                                 decl.text += "    @ValueSetter public native " + containerType.javaName + " put(" + type.annotations + type.javaName + " value);\n";
                             }
+                            type.javaNames = uniq(type.javaNames);
                             for (int i = 1; !constant && !tuple && type.javaNames != null && i < type.javaNames.length; i++) {
                                 decl.text += "    @ValueSetter public native " + containerType.javaName + " put(" + type.annotations + type.javaNames[i] + " value);\n";
                             }
@@ -532,8 +542,8 @@ public class Parser {
                 }
 
                 if (!constant && (dim == 0 || (containerType.arguments.length == 1 && indexType != null)) && firstType != null && secondType != null) {
-                    String[] firstNames = firstType.javaNames != null ? firstType.javaNames : new String[] {firstType.javaName};
-                    String[] secondNames = secondType.javaNames != null ? secondType.javaNames : new String[] {secondType.javaName};
+                    String[] firstNames = firstType.javaNames != null ? uniq(firstType.javaNames) : new String[] {firstType.javaName};
+                    String[] secondNames = secondType.javaNames != null ? uniq(secondType.javaNames) : new String[] {secondType.javaName};
                     String brackets = arrayBrackets + (dim > 0 ? "[]" : "");
                     for (int n = 0; n < firstNames.length || n < secondNames.length; n++) {
                         String firstName = firstNames[Math.min(n, firstNames.length - 1)];
@@ -566,7 +576,7 @@ public class Parser {
                     }
                 } else if (resizable && firstType == null && secondType == null) {
                     boolean first = true;
-                    for (String javaName : valueType.javaNames != null ? valueType.javaNames : new String[] {valueType.javaName}) {
+                    for (String javaName : valueType.javaNames != null ? uniq(valueType.javaNames) : new String[] {valueType.javaName}) {
                         javaName = removeAnnotations(javaName);
                         decl.text += "\n";
                         if (dim < 2) {
