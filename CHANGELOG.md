@@ -1,4 +1,10 @@
 
+### January 29, 2024 version 1.5.10
+ * Move native `Loader` methods to `Helper` class to avoid deadlocks ([issue #737](https://github.com/bytedeco/javacpp/issues/737))
+ * Fix `Parser` failing to pick up `Info` for constructors with template arguments ([pull #739](https://github.com/bytedeco/javacpp/pull/739))
+ * Fix `MoveAdapter` and `UniquePtrAdapter` causing double free on function calls ([pull #738](https://github.com/bytedeco/javacpp/pull/738))
+ * Fix `Parser` handling of `template` specialization and their `friend` declarations ([pull #733](https://github.com/bytedeco/javacpp/pull/733))
+ * Improve `Parser` capabilities for `operator` and function templates ([pull #732](https://github.com/bytedeco/javacpp/pull/732))
  * Fix `Parser` failing on nested initializer lists and on attributes found inside `enum` declarations
  * Fix `Parser` for basic containers like `std::optional<std::pair<int,int> >` ([issue #718](https://github.com/bytedeco/javacpp/issues/718))
  * Add support for `std::basic_string` basic container ([issue bytedeco/javacpp-presets#1311](https://github.com/bytedeco/javacpp-presets/issues/1311))

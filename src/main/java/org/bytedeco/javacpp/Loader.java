@@ -1968,16 +1968,6 @@ public class Loader {
     static WeakHashMap<Class<? extends Pointer>,HashMap<String,Integer>> memberOffsets =
             new WeakHashMap<Class<? extends Pointer>,HashMap<String,Integer>>();
 
-    static {
-        try {
-            Loader.load();
-        } catch (Throwable t) {
-            if (logger.isDebugEnabled()) {
-                logger.debug("Could not load Loader: " + t);
-            }
-        }
-    }
-
     /**
      * Called by native libraries to put {@code offsetof()} and {@code sizeof()} values in {@link #memberOffsets}.
      * Tries to load the Class object for typeName using the {@link ClassLoader} of the Loader.
@@ -2044,37 +2034,75 @@ public class Loader {
         return offsetof(type, "sizeof");
     }
 
+    public static class Helper {
+        static {
+            try {
+                Loader.load();
+            } catch (Throwable t) {
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Could not load Loader.Helper: " + t);
+                }
+            }
+        }
 
-    /** Returns the number of processors configured according to the operating system, or 0 if unknown.
-     * This value can be greater than {@link Runtime#availableProcessors()} and {@link #totalCores()}. */
-    @Name("JavaCPP_totalProcessors") public static native int totalProcessors();
+        /** Returns the number of processors configured according to the operating system, or 0 if unknown.
+         * This value can be greater than {@link Runtime#availableProcessors()} and {@link #totalCores()}. */
+        @Name("JavaCPP_totalProcessors") public static native int totalProcessors();
 
-    /** Returns the number of CPU cores usable according to the operating system, or 0 if unknown.
-     * For SMT-capable systems, this value may be less than {@link #totalProcessors()}. */
-    @Name("JavaCPP_totalCores") public static native int totalCores();
+        /** Returns the number of CPU cores usable according to the operating system, or 0 if unknown.
+         * For SMT-capable systems, this value may be less than {@link #totalProcessors()}. */
+        @Name("JavaCPP_totalCores") public static native int totalCores();
 
-    /** Returns the number of CPU chips installed according to the operating system, or 0 if unknown.
-     * For multi-core processors, this value may be less than {@link #totalCores()}. */
-    @Name("JavaCPP_totalChips") public static native int totalChips();
+        /** Returns the number of CPU chips installed according to the operating system, or 0 if unknown.
+         * For multi-core processors, this value may be less than {@link #totalCores()}. */
+        @Name("JavaCPP_totalChips") public static native int totalChips();
 
-    /** Returns the address found under the given name in the "dynamic symbol tables" (Linux, Mac OS X, etc)
-     * or the "export tables" (Windows) of all libraries loaded, or null if not found. */
-    @Name("JavaCPP_addressof") public static native Pointer addressof(String symbol);
+        /** Returns the address found under the given name in the "dynamic symbol tables" (Linux, Mac OS X, etc)
+         * or the "export tables" (Windows) of all libraries loaded, or null if not found. */
+        @Name("JavaCPP_addressof") public static native Pointer addressof(String symbol);
 
-    /** Loads all symbols from a library globally, that is {@code dlopen(filename, RTLD_LAZY | RTLD_GLOBAL)},
-     * or simply by default with {@code LoadLibrary(filename)} on Windows. If the library name passed to
-     * one of the other load functions in this class ends with "!", this function will get called on them. */
-    @Name("JavaCPP_loadGlobal") @Raw(withEnv = true) public static native void loadGlobal(String filename);
+        /** Loads all symbols from a library globally, that is {@code dlopen(filename, RTLD_LAZY | RTLD_GLOBAL)},
+         * or simply by default with {@code LoadLibrary(filename)} on Windows. If the library name passed to
+         * one of the other load functions in this class ends with "!", this function will get called on them. */
+        @Name("JavaCPP_loadGlobal") @Raw(withEnv = true) public static native void loadGlobal(String filename);
 
-    /** Returns the JavaVM JNI object, as required by some APIs for initialization. */
-    @Name("JavaCPP_getJavaVM") public static native @Cast("JavaVM*") Pointer getJavaVM();
+        /** Returns the JavaVM JNI object, as required by some APIs for initialization. */
+        @Name("JavaCPP_getJavaVM") public static native @Cast("JavaVM*") Pointer getJavaVM();
 
-    /** Returns a JNI global reference stored in a Pointer for the given Object. */
-    @Name("JavaCPP_newGlobalRef") public static native @Cast("jobject") Pointer newGlobalRef(@Raw(withEnv = true) Object object);
+        /** Returns a JNI global reference stored in a Pointer for the given Object. */
+        @Name("JavaCPP_newGlobalRef") public static native @Cast("jobject") Pointer newGlobalRef(@Raw(withEnv = true) Object object);
 
-    /** Returns an Object from the JNI global reference stored in the Pointer. */
-    @Name("JavaCPP_accessGlobalRef") @Raw(withEnv = true) public static native Object accessGlobalRef(@Cast("jobject") Pointer globalRef);
+        /** Returns an Object from the JNI global reference stored in the Pointer. */
+        @Name("JavaCPP_accessGlobalRef") @Raw(withEnv = true) public static native Object accessGlobalRef(@Cast("jobject") Pointer globalRef);
 
-    /** Deletes the JNI global reference stored in the Pointer. */
-    @Name("JavaCPP_deleteGlobalRef") @Raw(withEnv = true) public static native void deleteGlobalRef(@Cast("jobject") Pointer globalRef);
+        /** Deletes the JNI global reference stored in the Pointer. */
+        @Name("JavaCPP_deleteGlobalRef") @Raw(withEnv = true) public static native void deleteGlobalRef(@Cast("jobject") Pointer globalRef);
+    }
+
+    /** Returns {@link Helper#totalProcessors()}. */
+    public static int totalProcessors() { return Helper.totalProcessors(); }
+
+    /** Returns {@link Helper#totalCores()}. */
+    public static int totalCores() { return Helper.totalCores(); }
+
+    /** Returns {@link Helper#totalChips()}. */
+    public static int totalChips() { return Helper.totalChips(); }
+
+    /** Returns {@link Helper#addressof(String)}. */
+    public static Pointer addressof(String symbol) { return Helper.addressof(symbol); }
+
+    /** Calls {@link Helper#loadGlobal(String)}. */
+    public static void loadGlobal(String filename) { Helper.loadGlobal(filename); }
+
+    /** Returns {@link Helper#getJavaVM()}. */
+    public static Pointer getJavaVM() { return Helper.getJavaVM(); }
+
+    /** Returns {@link Helper#newGlobalRef(Object)}. */
+    public static Pointer newGlobalRef(Object object) { return Helper.newGlobalRef(object); }
+
+    /** Returns {@link Helper#accessGlobalRef(Pointer)}. */
+    public static Object accessGlobalRef(Pointer globalRef) { return Helper.accessGlobalRef(globalRef); }
+
+    /** Calls {@link Helper#deleteGlobalRef(Pointer)}. */
+    public static void deleteGlobalRef(Pointer globalRef) { Helper.deleteGlobalRef(globalRef); }
 }
