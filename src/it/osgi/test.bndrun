@@ -1,10 +1,10 @@
 -runrequires: bnd.identity;id='javacpp-tests-osgi'
--runfw: org.apache.felix.framework;version='[6.0.5,6.0.5]'
+-runfw: org.apache.felix.framework;version='[7.0.5,7.0.5]'
 -runee: JavaSE-1.8
 -runbundles: \
 	org.bytedeco.javacpp;version='0.0.0',\
 	org.bytedeco.javacpp.${os.name}-${os.arch};version='0.0.0',\
 	javacpp-tests-osgi;version='0.0.0',\
 	org.apache.servicemix.bundles.junit;version='[4.13.2,4.13.3)',\
-	slf4j.api;version='[1.7.32,1.7.33)',\
-	slf4j.simple;version='[1.7.32,1.7.33)'
+	slf4j.api;version='[1.7.36,1.7.37)',\
+	slf4j.simple;version='[1.7.36,1.7.37)'
