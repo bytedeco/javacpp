@@ -1,4 +1,6 @@
 
+ * Prevent `Parser` from producing duplicate declarations for basic containers ([pull #741](https://github.com/bytedeco/javacpp/pull/741))
+
 ### January 29, 2024 version 1.5.10
  * Move native `Loader` methods to `Helper` class to avoid deadlocks ([issue #737](https://github.com/bytedeco/javacpp/issues/737))
  * Fix `Parser` failing to pick up `Info` for constructors with template arguments ([pull #739](https://github.com/bytedeco/javacpp/pull/739))
