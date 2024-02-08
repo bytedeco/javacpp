@@ -654,6 +654,8 @@ public class Parser {
                     String key = t.value;
                     map.put(key, map.get(key));
                     token = tokens.next();
+                } else {
+                    map.put("[" + (map.size() + 1) + "]", null); // Anonymous type
                 }
             } else if (token.match(Token.IDENTIFIER)) {
                 Type type = type(context); // ignore?
