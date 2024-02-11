@@ -1,4 +1,5 @@
 
+ * Let `Parser` support templates with unnamed type parameters ([pull #742](https://github.com/bytedeco/javacpp/pull/742))
  * Prevent `Parser` from producing duplicate declarations for basic containers ([pull #741](https://github.com/bytedeco/javacpp/pull/741))
 
 ### January 29, 2024 version 1.5.10
