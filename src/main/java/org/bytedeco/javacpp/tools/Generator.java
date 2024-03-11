@@ -812,7 +812,7 @@ public class Generator {
             out.println("static JavaCPP_noinline jclass JavaCPP_getClass(JNIEnv* env, int i);");
             out.println("static inline void JavaCPP_loadGlobal(JNIEnv* env, jclass cls, const char* filename) {");
             out.println("#ifdef _WIN32");
-            out.println("    HMODULE handle = LoadLibrary(filename);");
+            out.println("    HMODULE handle = LoadLibraryA(filename);");
             out.println("    if (handle == NULL) {");
             out.println("        char temp[256];");
             out.println("        sprintf(temp, \"LoadLibrary() failed with 0x%lx\", GetLastError());");

@@ -313,7 +313,9 @@ public class ClassProperties extends HashMap<String,List<String>> {
         }
         addAll("platform.executablepath", executablepath);
         addAll("platform.executable", executable);
-        setProperty("platform.library", library);
+        if (hasPlatformProperties || getProperty("platform.library", "").length() == 0) {
+            setProperty("platform.library", library);
+        }
 
         if (LoadEnabled.class.isAssignableFrom(c)) {
             try {
