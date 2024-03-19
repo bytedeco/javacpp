@@ -19,7 +19,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.bytedeco.javacpp.indexer;
+package org.bytedeco.javacpp;
 
 import java.lang.reflect.Field;
 import sun.misc.Unsafe;
@@ -37,7 +37,7 @@ class UnsafeRaw extends Raw {
         Unsafe o;
         long offset;
         try {
-            Class c = Class.forName("sun.misc.Unsafe");
+            Class<?> c = Class.forName("sun.misc.Unsafe");
             Field f = c.getDeclaredField("theUnsafe");
             c.getDeclaredMethod("getByte", long.class);
             c.getDeclaredMethod("getShort", long.class);
@@ -61,6 +61,9 @@ class UnsafeRaw extends Raw {
 
     static boolean isAvailable() { return UNSAFE != null; }
 
+    @Override long allocateMemory(long capacity) { return UNSAFE.allocateMemory(capacity); }
+    @Override void freeMemory(long address) { UNSAFE.freeMemory(address); }
+
     @Override byte getByte(long address) { return UNSAFE.getByte(address); }
     @Override void putByte(long address, byte b) { UNSAFE.putByte(address, b); }
     @Override short getShort(long address) { return UNSAFE.getShort(address); }
@@ -77,6 +80,12 @@ class UnsafeRaw extends Raw {
     @Override void putChar(long address, char c) { UNSAFE.putChar(address, c); }
     @Override boolean getBoolean(long address) { return UNSAFE.getByte(address) != 0; }
     @Override void putBoolean(long address, boolean b) { UNSAFE.putByte(address, b ? (byte)1 : (byte)0); }
+    @Override boolean getBool(long address) { throw new UnsupportedOperationException(); }
+    @Override void putBool(long address, boolean b) { throw new UnsupportedOperationException(); }
+    @Override long getCLong(long address) { throw new UnsupportedOperationException(); }
+    @Override void putCLong(long address, long l) { throw new UnsupportedOperationException(); }
+    @Override long getSizeT(long address) { throw new UnsupportedOperationException(); }
+    @Override void putSizeT(long address, long st) { throw new UnsupportedOperationException(); }
 
     @Override byte getByte(byte[] array, long offset) { return UNSAFE.getByte(array, arrayOffset + offset); }
     @Override void putByte(byte[] array, long offset, byte b) { UNSAFE.putByte(array, arrayOffset + offset, b); }

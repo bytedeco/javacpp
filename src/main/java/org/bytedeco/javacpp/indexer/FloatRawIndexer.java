@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2019 Samuel Audet
+ * Copyright (C) 2014-2019 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -25,22 +25,19 @@ package org.bytedeco.javacpp.indexer;
 import org.bytedeco.javacpp.FloatPointer;
 import org.bytedeco.javacpp.Pointer;
 
+
 /**
- * An indexer for a {@link FloatPointer} using the {@link Raw} instance.
+ * An indexer for a {@link FloatPointer}.
  *
  * @author Samuel Audet
  */
 public class FloatRawIndexer extends FloatIndexer {
-    /** The instance for the raw memory interface. */
-    protected static final Raw RAW = Raw.getInstance();
     /** The backing pointer. */
     protected FloatPointer pointer;
-    /** Base address and number of elements accessible. */
-    final long base, size;
 
-    /** Calls {@code FloatRawIndexer(pointer, Index.create(pointer.limit() - pointer.position()))}. */
+    /** Calls {@code FloatRawIndexer(pointer, Index.create(pointer.limit()))}. */
     public FloatRawIndexer(FloatPointer pointer) {
-        this(pointer, Index.create(pointer.limit() - pointer.position()));
+        this(pointer, Index.create(pointer.limit()));
     }
 
     /** Calls {@code FloatRawIndexer(pointer, Index.create(sizes))}. */
@@ -57,8 +54,6 @@ public class FloatRawIndexer extends FloatIndexer {
     public FloatRawIndexer(FloatPointer pointer, Index index) {
         super(index);
         this.pointer = pointer;
-        this.base = pointer.address() + pointer.position() * VALUE_BYTES;
-        this.size = pointer.limit() - pointer.position();
     }
 
     @Override public Pointer pointer() {
@@ -69,74 +64,68 @@ public class FloatRawIndexer extends FloatIndexer {
         return new FloatRawIndexer(pointer, index);
     }
 
-    public float getRaw(long i) {
-        return RAW.getFloat(base + checkIndex(i, size) * VALUE_BYTES);
-    }
     @Override public float get(long i) {
-        return getRaw(index(i));
+        return pointer.get(index(i));
     }
     @Override public FloatIndexer get(long i, float[] f, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            f[offset + n] = getRaw(index(i) + n);
+            f[offset + n] = pointer.get(index(i) + n);
         }
         return this;
     }
     @Override public float get(long i, long j) {
-        return getRaw(index(i, j));
+        return pointer.get(index(i, j));
     }
     @Override public FloatIndexer get(long i, long j, float[] f, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            f[offset + n] = getRaw(index(i, j) + n);
+            f[offset + n] = pointer.get(index(i, j) + n);
         }
         return this;
     }
     @Override public float get(long i, long j, long k) {
-        return getRaw(index(i, j, k));
+        return pointer.get(index(i, j, k));
     }
     @Override public float get(long... indices) {
-        return getRaw(index(indices));
+        return pointer.get(index(indices));
     }
     @Override public FloatIndexer get(long[] indices, float[] f, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            f[offset + n] = getRaw(index(indices) + n);
+            f[offset + n] = pointer.get(index(indices) + n);
         }
         return this;
     }
 
-    public FloatIndexer putRaw(long i, float f) {
-        RAW.putFloat(base + checkIndex(i, size) * VALUE_BYTES, f);
-        return this;
-    }
     @Override public FloatIndexer put(long i, float f) {
-        return putRaw(index(i), f);
+        pointer.put(index(i), f);
+        return this;
     }
     @Override public FloatIndexer put(long i, float[] f, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            putRaw(index(i) + n, f[offset + n]);
+            pointer.put(index(i) + n, f[offset + n]);
         }
         return this;
     }
     @Override public FloatIndexer put(long i, long j, float f) {
-        putRaw(index(i, j), f);
+        pointer.put(index(i, j), f);
         return this;
     }
     @Override public FloatIndexer put(long i, long j, float[] f, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            putRaw(index(i, j) + n, f[offset + n]);
+            pointer.put(index(i, j) + n, f[offset + n]);
         }
         return this;
     }
     @Override public FloatIndexer put(long i, long j, long k, float f) {
-        putRaw(index(i, j, k), f);
+        pointer.put(index(i, j, k), f);
         return this;
     }
     @Override public FloatIndexer put(long[] indices, float f) {
-        putRaw(index(indices), f);
+        pointer.put(index(indices), f);
         return this;
     }
     @Override public FloatIndexer put(long[] indices, float[] f, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            putRaw(index(indices) + n, f[offset + n]);
+            pointer.put(index(indices) + n, f[offset + n]);
         }
         return this;
     }
