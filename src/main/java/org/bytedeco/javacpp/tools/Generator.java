@@ -1001,6 +1001,17 @@ public class Generator {
         out.println("        env->SetLongField(obj, JavaCPP_capacityFID, (jlong)size);");
         out.println("    }");
         out.println("}");
+
+        // This is needed because char_traits<unsigned_short>::length is deprecated:
+        // warning: 'char_traits' is deprecated: char_traits for T not equal to char,
+        // wchar_t, char8_t, char16_t or char32_t is non-standard and is provided for
+        // a temporary period. It will be removed in LLVM 18, so please migrate off of it.
+        out.println("static JavaCPP_noinline size_t JavaCPP_stringLength(const unsigned short* ptr) {");
+        out.println("    for(size_t i = 0; ; ++i) {");
+        out.println("        if (ptr[i] == 0) return i;");
+        out.println("    }");
+        out.println("}");
+
         out.println();
         if (handleExceptions || convertStrings) {
             out.println("#include <string>");
@@ -1041,7 +1052,7 @@ public class Generator {
             out.println("    if (ptr == NULL) {");
             out.println("        return NULL;");
             out.println("    }");
-            out.println("    return JavaCPP_createStringFromUTF16(env, ptr, std::char_traits<unsigned short>::length(ptr));");
+            out.println("    return JavaCPP_createStringFromUTF16(env, ptr, JavaCPP_stringLength(ptr));");
             out.println("}");
             out.println();
         }
@@ -2568,7 +2579,7 @@ public class Generator {
                 // special considerations for char arrays as strings
                 if (asUtf16(methodInfo, k)) {
                     out.print(indent + "memcpy(");
-                    suffix = ", (std::char_traits<unsigned short>::length(ptr" + k + ") + 1) * sizeof(unsigned short))";
+                    suffix = ", (JavaCPP_stringLength(ptr" + k + ") + 1) * sizeof(unsigned short))";
                 } else {
                     out.print(indent + "strcpy((char*)");
                 }
@@ -3027,7 +3038,7 @@ public class Generator {
             if ("void*".equals(typeName[0]) && !methodInfo.parameterTypes[j].isAnnotationPresent(Opaque.class)) {
                 typeName[0] = "char*";
             }
-            
+
             // If const array, then use JNI_ABORT to avoid copying unmodified data back to JVM
             final String releaseArrayFlag;
             if (cast.contains(" const *") || cast.startsWith("(const ")) {
@@ -4035,7 +4046,7 @@ public class Generator {
                                 cast2 = c.value()[2];
                             }
                         }
-                    } catch (Exception ex) { 
+                    } catch (Exception ex) {
                         logger.warn("Could not invoke the value() method on annotation \"" + a + "\": " + ex);
                     }
                     if (valueTypeName != null && valueTypeName.length() > 0) {
