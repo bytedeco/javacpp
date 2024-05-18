@@ -56,13 +56,15 @@ import org.bytedeco.javacpp.annotation.Properties;
             value = "windows-x86",
             preloadpath = {"C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/redist/x86/Microsoft.VC140.CRT/",
                            "C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/redist/x86/Microsoft.VC140.OpenMP/",
-                           "C:/Program Files (x86)/Windows Kits/10/Redist/ucrt/DLLs/x86/"}
+                           "C:/Program Files (x86)/Windows Kits/10/Redist/ucrt/DLLs/x86/"},
+            preload = {"libomp140.i386"}
         ),
         @Platform(
             value = "windows-x86_64",
             preloadpath = {"C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/redist/x64/Microsoft.VC140.CRT/",
                            "C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/redist/x64/Microsoft.VC140.OpenMP/",
-                           "C:/Program Files (x86)/Windows Kits/10/Redist/ucrt/DLLs/x64/"}
+                           "C:/Program Files (x86)/Windows Kits/10/Redist/ucrt/DLLs/x64/"},
+            preload = {"libomp140.x86_64"}
         ),
     },
     global = "org.bytedeco.javacpp.presets.javacpp"
