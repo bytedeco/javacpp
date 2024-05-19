@@ -50,21 +50,19 @@ import org.bytedeco.javacpp.annotation.Properties;
                        "api-ms-win-core-sysinfo-l1-1-0", "api-ms-win-core-synch-l1-2-0", "api-ms-win-core-console-l1-1-0", "api-ms-win-core-debug-l1-1-0",
                        "api-ms-win-core-rtlsupport-l1-1-0", "api-ms-win-core-processthreads-l1-1-1", "api-ms-win-core-file-l1-2-0", "api-ms-win-core-profile-l1-1-0",
                        "api-ms-win-core-memory-l1-1-0", "api-ms-win-core-util-l1-1-0", "api-ms-win-core-interlocked-l1-1-0", "ucrtbase",
-                       "vcruntime140", "vcruntime140_1", "msvcp140", "msvcp140_1", "concrt140", "vcomp140"}
+                       "vcruntime140", "vcruntime140_1", "msvcp140", "msvcp140_1", "concrt140", "vcomp140", "libomp140.i386", "libomp140.x86_64"}
         ),
         @Platform(
             value = "windows-x86",
             preloadpath = {"C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/redist/x86/Microsoft.VC140.CRT/",
                            "C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/redist/x86/Microsoft.VC140.OpenMP/",
-                           "C:/Program Files (x86)/Windows Kits/10/Redist/ucrt/DLLs/x86/"},
-            preload = {"libomp140.i386"}
+                           "C:/Program Files (x86)/Windows Kits/10/Redist/ucrt/DLLs/x86/"}
         ),
         @Platform(
             value = "windows-x86_64",
             preloadpath = {"C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/redist/x64/Microsoft.VC140.CRT/",
                            "C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC/redist/x64/Microsoft.VC140.OpenMP/",
-                           "C:/Program Files (x86)/Windows Kits/10/Redist/ucrt/DLLs/x64/"},
-            preload = {"libomp140.x86_64"}
+                           "C:/Program Files (x86)/Windows Kits/10/Redist/ucrt/DLLs/x64/"}
         ),
     },
     global = "org.bytedeco.javacpp.presets.javacpp"
