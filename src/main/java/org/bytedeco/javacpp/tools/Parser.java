@@ -89,15 +89,6 @@ public class Parser {
         this.lineSeparator = p.lineSeparator;
     }
 
-    /** Reserved keywords than cannot be used for Java identifier, but could be for C++ identifiers. */
-    static final HashSet<String> JAVA_KEYWORDS = new HashSet<>();
-    static {
-        JAVA_KEYWORDS.addAll(Arrays.asList(new String[] {
-            "abstract", "assert", "boolean", "byte", "extends", "final", "finally", "implements", "import",
-            "instanceof", "interface", "native", "package", "strictfp", "super", "synchronized", "throws", "transient"
-        }));
-    }
-
     final Logger logger;
     final Properties properties;
     final String encoding;
@@ -1671,8 +1662,6 @@ public class Parser {
             dcl.javaName = info.javaNames[0];
         }
 
-        if (JAVA_KEYWORDS.contains(dcl.javaName)) dcl.javaName += '_';
-
         if (info != null && info.annotations != null) {
             for (String s : info.annotations) {
                 if (!type.annotations.contains(s)) {
@@ -1835,8 +1824,8 @@ public class Parser {
             }
         }
 
-        // annotate with @Name if the Java name doesn't match with the C++ name, and if we are not parsing a function parameter
-        if (dcl.cppName != null && defaultName == null) {
+        // annotate with @Name if the Java name doesn't match with the C++ name
+        if (dcl.cppName != null) {
             String localName = dcl.cppName;
             if (context.namespace != null && localName.startsWith(context.namespace + "::")) {
                 localName = dcl.cppName.substring(context.namespace.length() + 2);
