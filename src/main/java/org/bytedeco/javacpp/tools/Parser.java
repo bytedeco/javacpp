@@ -357,7 +357,7 @@ public class Parser {
                         if (dim < 2 && !javaName.equals("int") && !javaName.equals("long")) {
                             decl.text += "    public " + containerType.javaName + "(" + javaName + " value) { this(1); put(0, value); }\n";
                         }
-                        decl.text += "    public " + containerType.javaName + "(" + javaName + arrayBrackets + " ... array) { this(array.length); put(array); }\n";
+                        decl.text += "    public " + containerType.javaName + "(" + desugarVarargs(javaName) + arrayBrackets + " ... array) { this(array.length); put(array); }\n";
                     }
                 } else if (indexType == null && dim == 0 && !constant && !purify) {
                     int n = 0;
@@ -597,7 +597,7 @@ public class Parser {
                                       +  "        return put(0, value);\n"
                                       +  "    }\n";
                         }
-                        decl.text += "    public " + containerType.javaName + " put(" + javaName + arrayBrackets + " ... array) {\n";
+                        decl.text += "    public " + containerType.javaName + " put(" + desugarVarargs(javaName) + arrayBrackets + " ... array) {\n";
                         String indent = "        ", indices = "", args = "";
                         separator = "";
                         for (int i = 0; i < dim; i++) {
