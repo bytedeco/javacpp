@@ -127,6 +127,10 @@ public class Parser {
         return s.trim().endsWith("...") ? s.trim().substring(0, s.length() - 3) + "[]" : s;
     }
 
+    static String filterJavaAnnotations(String s) {
+        return s.contains("@Deprecated") ? "@Deprecated " : "";
+    }
+
     static String upcastMethodName(String javaName) {
         String shortName = javaName.substring(javaName.lastIndexOf('.') + 1);
         return "as" + Character.toUpperCase(shortName.charAt(0)) + shortName.substring(1);
@@ -2740,7 +2744,7 @@ public class Parser {
                 }
             }
             if (type.constructor && params != null) {
-                decl.text += "public " + context.shorten(context.javaName) + dcl.parameters.list + " { super((Pointer)null); allocate" + params.names + "; }\n" +
+                decl.text += filterJavaAnnotations(type.annotations) + "public " + context.shorten(context.javaName) + dcl.parameters.list + " { super((Pointer)null); allocate" + params.names + "; }\n" +
                              type.annotations + "private native void allocate" + dcl.parameters.list + ";\n";
             } else {
                 String modifiers2 = modifiers;
@@ -3494,7 +3498,7 @@ public class Parser {
         }
         String shortName = derived.javaName.substring(derived.javaName.lastIndexOf('.') + 1);
         String res = "    /** Downcast constructor. */\n"
-                   + "    public " + shortName + "(" + base.javaName + " pointer) { super((Pointer)null); allocate(pointer); }\n";
+                   + "    " + filterJavaAnnotations(annotations) + "public " + shortName + "(" + base.javaName + " pointer) { super((Pointer)null); allocate(pointer); }\n";
         if (annotations.isEmpty()) {
             res += "    @Namespace private native @Name(\"" + downcastType + "_cast<" + derived.cppName + "*>\") void allocate(" + base.javaName + " pointer);\n";
         } else {
@@ -3931,7 +3935,7 @@ public class Parser {
 
             if (implicitConstructor && (info == null || !info.purify) && (!abstractClass || ctx.virtualize)) {
                 constructors += "    /** Default native constructor. */\n" +
-                             "    public " + shortName + "() { super((Pointer)null); allocate(); }\n";
+                             "    " + filterJavaAnnotations(constructorAnnotations) + "public " + shortName + "() { super((Pointer)null); allocate(); }\n";
                 if (constructorAnnotations.isEmpty()) {
                     constructors += "    /** Native array allocator. Access with {@link Pointer#position(long)}. */\n" +
                                  "    public " + shortName + "(long size) { super((Pointer)null); allocateArray(size); }\n";
