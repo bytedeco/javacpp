@@ -1,6 +1,7 @@
 
  * Let `Parser` annotate Java constructors with `@Deprecated` when appropriate ([pull #757](https://github.com/bytedeco/javacpp/pull/757))
  * Add to `InfoMap.defaults` more names that are reserved in Java, but not in C++ ([pull #757](https://github.com/bytedeco/javacpp/pull/757))
+ * Bundle `libomp` from Visual Studio to fix presets using OpenMP on Windows ([pull #755](https://github.com/bytedeco/javacpp/pull/755))
  * Fix inconsistencies when using `@Platform(inherit=..., library=...)` together ([pull #747](https://github.com/bytedeco/javacpp/pull/747))
  * Let `Parser` support templates with unnamed type parameters ([pull #742](https://github.com/bytedeco/javacpp/pull/742))
  * Prevent `Parser` from producing duplicate declarations for basic containers ([pull #741](https://github.com/bytedeco/javacpp/pull/741))
