@@ -23,6 +23,8 @@
 package org.bytedeco.javacpp.indexer;
 
 import java.nio.ShortBuffer;
+
+import org.bytedeco.javacpp.Raw;
 import org.bytedeco.javacpp.ShortPointer;
 
 /**
