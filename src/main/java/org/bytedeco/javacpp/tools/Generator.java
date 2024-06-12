@@ -1041,7 +1041,7 @@ public class Generator {
             out.println("    if (ptr == NULL) {");
             out.println("        return NULL;");
             out.println("    }");
-            out.println("    return JavaCPP_createStringFromUTF16(env, ptr, std::char_traits<unsigned short>::length(ptr));");
+            out.println("    return JavaCPP_createStringFromUTF16(env, ptr, strlen(reinterpret_cast<const char*>(ptr)));");
             out.println("}");
             out.println();
         }
