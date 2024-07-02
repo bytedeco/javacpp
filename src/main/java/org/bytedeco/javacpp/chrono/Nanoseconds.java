@@ -19,6 +19,12 @@ public class Nanoseconds extends Pointer {
     private native void allocate(@Const @ByRef Minutes d);
     public Nanoseconds(Hours d) { allocate(d); }
     private native void allocate(@Const @ByRef Hours d);
+    public Nanoseconds(SystemDuration d) {  super((Pointer)null); allocate(d); };
+    private native void allocate(@Const @ByRef SystemDuration d);
+    public Nanoseconds(HighResolutionDuration d) {  super((Pointer)null); allocate(d); };
+    private native void allocate(@Const @ByRef HighResolutionDuration d);
+    public Nanoseconds(SteadyDuration d) {  super((Pointer)null); allocate(d); };
+    private native void allocate(@Const @ByRef SteadyDuration d);
 
     public native @Name("operator=") @ByRef Nanoseconds put(@Const @ByRef Nanoseconds other);
     public native @Name("operator-") @ByVal Nanoseconds negate();
