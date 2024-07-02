@@ -365,6 +365,7 @@ public class Generator {
         out.println("#include <exception>");
         out.println("#include <memory>");
         out.println("#include <new>");
+        out.println("#include <chrono>");
         if (baseLoadSuffix == null || baseLoadSuffix.isEmpty()) {
             out.println();
             out.println("#if defined(NATIVE_ALLOCATOR) && defined(NATIVE_DEALLOCATOR)");
