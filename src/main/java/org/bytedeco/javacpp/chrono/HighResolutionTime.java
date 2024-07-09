@@ -8,8 +8,8 @@ public class HighResolutionTime extends Pointer {
     public HighResolutionTime() { allocate(); }
     private native void allocate();
 
-    public HighResolutionTime(SystemDuration d) { allocate(d); }
-    private native void allocate(@Const @ByRef SystemDuration d);
+    public HighResolutionTime(HighResolutionDuration d) { allocate(d); }
+    private native void allocate(@Const @ByRef HighResolutionDuration d);
 
     public native @ByVal HighResolutionTime time_since_epoch();
 
