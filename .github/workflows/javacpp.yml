@@ -26,11 +26,11 @@ jobs:
     steps:
       - uses: bytedeco/javacpp-presets/.github/actions/deploy-ubuntu@actions
   ios-arm64:
-    runs-on: macos-11
+    runs-on: macos-14
     steps:
       - uses: bytedeco/javacpp-presets/.github/actions/deploy-macosx@actions
   ios-x86_64:
-    runs-on: macos-11
+    runs-on: macos-12
     steps:
       - uses: bytedeco/javacpp-presets/.github/actions/deploy-macosx@actions
 #  linux-armhf:
@@ -56,11 +56,11 @@ jobs:
     steps:
       - uses: bytedeco/javacpp-presets/.github/actions/deploy-ubuntu@actions
   macosx-arm64:
-    runs-on: macos-11
+    runs-on: macos-14
     steps:
       - uses: bytedeco/javacpp-presets/.github/actions/deploy-macosx@actions
   macosx-x86_64:
-    runs-on: macos-11
+    runs-on: macos-12
     env:
       CI_DEPLOY_OPTIONS: "" # to not skip tests
     steps:
