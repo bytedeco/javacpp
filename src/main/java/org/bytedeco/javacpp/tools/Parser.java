@@ -3539,13 +3539,13 @@ public class Parser {
         Context ctx = new Context(context);
         Token[] prefixes = {Token.CLASS, Token.INTERFACE, Token.__INTERFACE, Token.STRUCT, Token.UNION};
         for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.next()) {
-            if (token.match(prefixes)) {
+            if (token.match((Object[]) prefixes)) {
                 foundGroup = true;
                 ctx.inaccessible = token.match(Token.CLASS);
                 break;
             } else if (token.match(Token.FRIEND)) {
                 friend = true;
-                if (!tokens.get(1).match(prefixes)) {
+                if (!tokens.get(1).match((Object[]) prefixes)) {
                     // assume group name follows
                     foundGroup = true;
                     break;
