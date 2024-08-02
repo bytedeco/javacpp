@@ -3,7 +3,7 @@ package org.bytedeco.javacpp.chrono;
 import org.bytedeco.javacpp.Pointer;
 import org.bytedeco.javacpp.annotation.*;
 
-@Name("std::chrono::time_point<std::chrono::steady_clock>") @Properties(inherit = org.bytedeco.javacpp.presets.javacpp.class)
+@Name("std::chrono::time_point<std::chrono::steady_clock>") @Properties(inherit = org.bytedeco.javacpp.presets.chrono.class)
 public class SteadyTime extends Pointer {
     public SteadyTime() { allocate(); }
     private native void allocate();

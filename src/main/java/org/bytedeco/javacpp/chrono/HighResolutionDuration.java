@@ -3,7 +3,7 @@ package org.bytedeco.javacpp.chrono;
 import org.bytedeco.javacpp.Pointer;
 import org.bytedeco.javacpp.annotation.*;
 
-@Name("std::chrono::high_resolution_clock::duration") @Properties(inherit = org.bytedeco.javacpp.presets.javacpp.class)
+@Name("std::chrono::high_resolution_clock::duration") @Properties(inherit = org.bytedeco.javacpp.presets.chrono.class)
 public class HighResolutionDuration extends Pointer {
     public HighResolutionDuration() { allocate(); }
     private native void allocate();

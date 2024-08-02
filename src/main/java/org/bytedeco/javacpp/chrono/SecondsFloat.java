@@ -3,7 +3,7 @@ package org.bytedeco.javacpp.chrono;
 import org.bytedeco.javacpp.Pointer;
 import org.bytedeco.javacpp.annotation.*;
 
-@Name("std::chrono::duration<float>") @Properties(inherit = org.bytedeco.javacpp.presets.javacpp.class)
+@Name("std::chrono::duration<float>") @Properties(inherit = org.bytedeco.javacpp.presets.chrono.class)
 public class SecondsFloat extends Pointer {
     public SecondsFloat() { allocate(); }
     private native void allocate();
