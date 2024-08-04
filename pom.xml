@@ -461,6 +461,7 @@ Import-Package: \
                 <argument>-Dplatform.compiler=${javacpp.platform.compiler}</argument>
                 <argument>org.bytedeco.javacpp.Pointer</argument>
                 <argument>org.bytedeco.javacpp.presets.javacpp</argument>
+                <argument>org.bytedeco.javacpp.chrono.*</argument>
                 <argument>-mod</argument>
                 <argument>${project.build.directory}/generated-sources/java9/module-info.java</argument>
               </arguments>
