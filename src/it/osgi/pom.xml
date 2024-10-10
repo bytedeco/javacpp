@@ -74,6 +74,15 @@
       </properties>
     </profile>
     <profile>
+      <id>riscv64</id>
+      <activation>
+        <os><arch>riscv64</arch></os>
+      </activation>
+      <properties>
+        <os.arch>riscv64</os.arch>
+      </properties>
+    </profile>
+    <profile>
       <id>armv8</id>
       <activation>
         <os><arch>armv8</arch></os>
