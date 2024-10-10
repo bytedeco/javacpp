@@ -41,6 +41,10 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: bytedeco/javacpp-presets/.github/actions/deploy-ubuntu@actions
+  linux-riscv64:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: bytedeco/javacpp-presets/.github/actions/deploy-ubuntu@actions
   linux-ppc64le:
     runs-on: ubuntu-20.04
     steps:
@@ -77,7 +81,7 @@ jobs:
       - uses: bytedeco/javacpp-presets/.github/actions/deploy-windows@actions
   redeploy:
 #    needs: [android-arm, android-arm64, android-x86, android-x86_64, ios-arm64, ios-x86_64, linux-armhf, linux-arm64, linux-ppc64le, linux-x86, linux-x86_64, macosx-arm64, macosx-x86_64, windows-x86, windows-x86_64]
-    needs: [android-arm64, android-x86_64, ios-arm64, ios-x86_64, linux-arm64, linux-ppc64le, linux-x86_64, macosx-arm64, macosx-x86_64, windows-x86_64]
+    needs: [android-arm64, android-x86_64, ios-arm64, ios-x86_64, linux-arm64, linux-riscv64, linux-ppc64le, linux-x86_64, macosx-arm64, macosx-x86_64, windows-x86_64]
     runs-on: ubuntu-20.04
     steps:
       - uses: bytedeco/javacpp-presets/.github/actions/redeploy@actions

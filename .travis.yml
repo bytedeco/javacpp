@@ -58,6 +58,17 @@ jobs:
       script:
         - mvn clean $MAVEN_PHASE -B -V -U -s $HOME/settings.xml -Djavacpp.platform=linux-ppc64le
     - os: linux
+      arch: riscv64
+      language: java
+      addons:
+        apt:
+          packages: openjdk-8-jdk-headless maven
+      env: PLATFORMS="linux-riscv64"
+      install:
+        - export JAVA_HOME="/usr/lib/jvm/java-8-openjdk-riscv64"
+      script:
+        - mvn clean $MAVEN_PHASE -B -V -U -s $HOME/settings.xml -Djavacpp.platform=linux-riscv64
+    - os: linux
       arch: amd64
       language: java
       jdk: openjdk8
