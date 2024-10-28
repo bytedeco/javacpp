@@ -1,4 +1,5 @@
 
+ * Fix `Generator` flakiness caused by calls to `Class.getDeclaredMethods()` ([pull #784](https://github.com/bytedeco/javacpp/pull/784))
  * Add minimal mappings for `std::chrono` from C++11 ([pull #766](https://github.com/bytedeco/javacpp/pull/766))
  * Let `Parser` annotate Java constructors with `@Deprecated` when appropriate ([pull #757](https://github.com/bytedeco/javacpp/pull/757))
  * Add to `InfoMap.defaults` more names that are reserved in Java, but not in C++ ([pull #757](https://github.com/bytedeco/javacpp/pull/757))
