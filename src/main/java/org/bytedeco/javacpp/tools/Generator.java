@@ -2116,7 +2116,7 @@ public class Generator {
             c = c.getSuperclass();
         }
         boolean[] callbackAllocators = new boolean[methods.length];
-        Method[] functionMethods = functionMethods(cls, callbackAllocators);
+        Method[] functionMethods = functionMethods(cls, methods, callbackAllocators);
         boolean firstCallback = true;
         for (int i = 0; i < methods.length; i++) {
             if (!Loader.checkPlatform(methods[i].getAnnotation(Platform.class), properties)) {
@@ -3636,11 +3636,10 @@ public class Generator {
         return name != null ? name.value()[0] : "JavaCPP_" + mangle(cls.getName());
     }
 
-    static Method[] functionMethods(Class<?> cls, boolean[] callbackAllocators) {
+    static Method[] functionMethods(Class<?> cls, Method[] methods, boolean[] callbackAllocators) {
         if (!FunctionPointer.class.isAssignableFrom(cls)) {
             return null;
         }
-        Method[] methods = cls.getDeclaredMethods();
         Method[] functionMethods = new Method[3];
         for (int i = 0; i < methods.length; i++) {
             String methodName = methods[i].getName();
@@ -4386,7 +4385,7 @@ public class Generator {
         } else if (type.isPrimitive()) {
             prefix = type.getName();
         } else if (FunctionPointer.class.isAssignableFrom(type)) {
-            Method[] functionMethods = functionMethods(type, null);
+            Method[] functionMethods = functionMethods(type, type.getDeclaredMethods(), null);
             String[] prefixSuffix = cppFunctionTypeName(functionMethods);
             if (prefixSuffix != null) {
                 return prefixSuffix;
