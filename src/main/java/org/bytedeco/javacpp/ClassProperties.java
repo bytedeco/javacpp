@@ -22,16 +22,11 @@
 
 package org.bytedeco.javacpp;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
 import org.bytedeco.javacpp.annotation.Platform;
 import org.bytedeco.javacpp.tools.Logger;
+
+import java.io.File;
+import java.util.*;
 
 /**
  * Does the heavy lifting of collecting values off Properties annotations found
@@ -41,14 +36,15 @@ import org.bytedeco.javacpp.tools.Logger;
  *
  * @see Loader#loadProperties(Class, java.util.Properties, boolean)
  */
-public class ClassProperties extends HashMap<String,List<String>> {
+public class ClassProperties extends HashMap<String, List<String>> {
     private static final Logger logger = Logger.create(ClassProperties.class);
 
     public ClassProperties() { }
+
     public ClassProperties(Properties properties) {
-        platform      = properties.getProperty("platform");
+        platform = properties.getProperty("platform");
         platformExtension = properties.getProperty("platform.extension");
-        platformRoot  = properties.getProperty("platform.root");
+        platformRoot = properties.getProperty("platform.root");
         pathSeparator = properties.getProperty("platform.path.separator");
         if (platformRoot == null || platformRoot.length() == 0) {
             platformRoot = ".";
@@ -57,17 +53,11 @@ public class ClassProperties extends HashMap<String,List<String>> {
             platformRoot += File.separator;
         }
         for (Map.Entry e : properties.entrySet()) {
-            String k = (String)e.getKey(), v = (String)e.getValue();
+            String k = (String) e.getKey(), v = (String) e.getValue();
             if (v == null || v.length() == 0) {
                 continue;
             }
-            if (k.equals("platform.includepath") || k.equals("platform.includeresource") || k.equals("platform.include")
-                || k.equals("platform.linkpath") || k.equals("platform.linkresource") || k.equals("platform.link")
-                || k.equals("platform.preloadpath") || k.equals("platform.preloadresource") || k.equals("platform.preload")
-                || k.equals("platform.resourcepath") || k.equals("platform.resource")
-                || k.equals("platform.frameworkpath") || k.equals("platform.framework")
-                || k.equals("platform.executablepath") || k.equals("platform.executable")
-                || k.equals("platform.compiler.*") || k.equals("platform.library.suffix") || k.equals("platform.extension")) {
+            if (k.equals("platform.includepath") || k.equals("platform.includeresource") || k.equals("platform.include") || k.equals("platform.linkpath") || k.equals("platform.linkresource") || k.equals("platform.link") || k.equals("platform.preloadpath") || k.equals("platform.preloadresource") || k.equals("platform.preload") || k.equals("platform.resourcepath") || k.equals("platform.resource") || k.equals("platform.frameworkpath") || k.equals("platform.framework") || k.equals("platform.executablepath") || k.equals("platform.executable") || k.equals("platform.compiler.*") || k.equals("platform.library.suffix") || k.equals("platform.extension")) {
                 addAll(k, v.split(pathSeparator));
             } else {
                 setProperty(k, v);
@@ -84,21 +74,21 @@ public class ClassProperties extends HashMap<String,List<String>> {
     public List<String> get(String key) {
         List<String> list = super.get(key);
         if (list == null) {
-            put((String)key, list = new ArrayList<String>());
+            put((String) key, list = new ArrayList<String>());
         }
         return list;
     }
 
-    public void addAll(String key, String ... values) {
+    public void addAll(String key, String... values) {
         if (values != null) {
             addAll(key, Arrays.asList(values));
         }
     }
+
     public void addAll(String key, Collection<String> values) {
         if (values != null) {
             String root = null;
-            if (key.equals("platform.compiler") || key.equals("platform.sysroot") || key.equals("platform.toolchain") ||
-                    key.equals("platform.includepath") || key.equals("platform.linkpath")) {
+            if (key.equals("platform.compiler") || key.equals("platform.sysroot") || key.equals("platform.toolchain") || key.equals("platform.includepath") || key.equals("platform.linkpath")) {
                 root = platformRoot;
             }
 
@@ -107,8 +97,7 @@ public class ClassProperties extends HashMap<String,List<String>> {
                 if (value == null) {
                     continue;
                 }
-                if (root != null && !new File(value).isAbsolute() &&
-                        new File(root + value).exists()) {
+                if (root != null && !new File(value).isAbsolute() && new File(root + value).exists()) {
                     value = root + value;
                 }
                 if (!values2.contains(value)) {
@@ -121,10 +110,12 @@ public class ClassProperties extends HashMap<String,List<String>> {
     public String getProperty(String key) {
         return getProperty(key, null);
     }
+
     public String getProperty(String key, String defaultValue) {
         List<String> values = get(key);
         return values.isEmpty() ? defaultValue : values.get(0);
     }
+
     public String setProperty(String key, String value) {
         List<String> values = get(key);
         String oldValue = values.isEmpty() ? null : values.get(0);
@@ -137,17 +128,14 @@ public class ClassProperties extends HashMap<String,List<String>> {
         Class<?> c = Loader.getEnclosingClass(cls);
         List<Class> classList = new ArrayList<Class>();
         classList.add(0, c);
-        while (!c.isAnnotationPresent(org.bytedeco.javacpp.annotation.Properties.class)
-                && !c.isAnnotationPresent(Platform.class) && c.getSuperclass() != null
-                && c.getSuperclass() != Object.class && c.getSuperclass() != Pointer.class) {
+        while (!c.isAnnotationPresent(org.bytedeco.javacpp.annotation.Properties.class) && !c.isAnnotationPresent(Platform.class) && c.getSuperclass() != null && c.getSuperclass() != Object.class && c.getSuperclass() != Pointer.class) {
             // accumulate superclasses to process native methods from those as well
             classList.add(0, c = c.getSuperclass());
         }
         if (effectiveClasses == null) {
             effectiveClasses = classList;
         }
-        org.bytedeco.javacpp.annotation.Properties classProperties =
-                c.getAnnotation(org.bytedeco.javacpp.annotation.Properties.class);
+        org.bytedeco.javacpp.annotation.Properties classProperties = c.getAnnotation(org.bytedeco.javacpp.annotation.Properties.class);
         Platform classPlatform = c.getAnnotation(Platform.class);
         Platform[] platforms = null;
         String ourTarget = null;
@@ -195,7 +183,7 @@ public class ClassProperties extends HashMap<String,List<String>> {
         }
         if (classPlatform != null) {
             if (platforms == null) {
-                platforms = new Platform[] { classPlatform };
+                platforms = new Platform[]{classPlatform};
             } else {
                 platforms = Arrays.copyOf(platforms, platforms.length + 1);
                 platforms[platforms.length - 1] = classPlatform;
@@ -203,9 +191,7 @@ public class ClassProperties extends HashMap<String,List<String>> {
         }
         boolean hasPlatformProperties = platforms != null && platforms.length > (classProperties != null && classPlatform != null ? 1 : 0);
 
-        String[] pragma = {}, define = {}, exclude = {}, include = {}, cinclude = {}, includepath = {}, includeresource = {}, compiler = {},
-                 linkpath = {}, linkresource = {}, link = {}, frameworkpath = {}, framework = {}, preloadpath = {}, preloadresource = {}, preload = {},
-                 resourcepath = {}, resource = {}, extension = {}, executablepath = {}, executable = {};
+        String[] exceptionMappings = {}, pragma = {}, define = {}, exclude = {}, include = {}, cinclude = {}, includepath = {}, includeresource = {}, compiler = {}, linkpath = {}, linkresource = {}, link = {}, frameworkpath = {}, framework = {}, preloadpath = {}, preloadresource = {}, preload = {}, resourcepath = {}, resource = {}, extension = {}, executablepath = {}, executable = {};
         String library = "jni" + c.getSimpleName();
         if (hasPlatformProperties) {
             if (ourTarget != null && ourTarget.length() > 0) {
@@ -219,8 +205,8 @@ public class ClassProperties extends HashMap<String,List<String>> {
             }
         }
         for (Platform p : platforms != null ? platforms : new Platform[0]) {
-            String[][] names = { p.value().length > 0 ? p.value() : defaultNames, p.not(), p.pattern() };
-            boolean[] matches = { false, false, false };
+            String[][] names = {p.value().length > 0 ? p.value() : defaultNames, p.not(), p.pattern()};
+            boolean[] matches = {false, false, false};
             for (int i = 0; i < names.length; i++) {
                 for (String s : names[i]) {
                     if ((i < 2 && platform.startsWith(s)) || (s.length() > 0 && platform.matches(s))) {
@@ -241,28 +227,29 @@ public class ClassProperties extends HashMap<String,List<String>> {
                 if (!match) {
                     continue;
                 }
-                if (p.pragma()     .length > 0) { pragma      = p.pragma();      }
-                if (p.define()     .length > 0) { define      = p.define();      }
-                if (p.exclude()    .length > 0) { exclude     = p.exclude();     }
-                if (p.include()    .length > 0) { include     = p.include();     }
-                if (p.cinclude()   .length > 0) { cinclude    = p.cinclude();    }
+                if (p.exceptionMappings().length > 0) { exceptionMappings = p.exceptionMappings(); }
+                if (p.pragma().length > 0) { pragma = p.pragma(); }
+                if (p.define().length > 0) { define = p.define(); }
+                if (p.exclude().length > 0) { exclude = p.exclude(); }
+                if (p.include().length > 0) { include = p.include(); }
+                if (p.cinclude().length > 0) { cinclude = p.cinclude(); }
                 if (p.includepath().length > 0) { includepath = p.includepath(); }
                 if (p.includeresource().length > 0) { includeresource = p.includeresource(); }
-                if (p.compiler()   .length > 0) { compiler    = p.compiler();    }
-                if (p.linkpath()   .length > 0) { linkpath    = p.linkpath();    }
-                if (p.linkresource()   .length > 0) { linkresource    = p.linkresource();    }
-                if (p.link()       .length > 0) { link        = p.link();        }
+                if (p.compiler().length > 0) { compiler = p.compiler(); }
+                if (p.linkpath().length > 0) { linkpath = p.linkpath(); }
+                if (p.linkresource().length > 0) { linkresource = p.linkresource(); }
+                if (p.link().length > 0) { link = p.link(); }
                 if (p.frameworkpath().length > 0) { frameworkpath = p.frameworkpath(); }
-                if (p.framework()  .length > 0) { framework   = p.framework();   }
+                if (p.framework().length > 0) { framework = p.framework(); }
                 if (p.preloadresource().length > 0) { preloadresource = p.preloadresource(); }
                 if (p.preloadpath().length > 0) { preloadpath = p.preloadpath(); }
-                if (p.preload()    .length > 0) { preload     = p.preload();     }
+                if (p.preload().length > 0) { preload = p.preload(); }
                 if (p.resourcepath().length > 0) { resourcepath = p.resourcepath(); }
-                if (p.resource()    .length > 0) { resource     = p.resource();     }
-                if (p.extension()   .length > 0) { extension    = p.extension();    }
+                if (p.resource().length > 0) { resource = p.resource(); }
+                if (p.extension().length > 0) { extension = p.extension(); }
                 if (p.executablepath().length > 0) { executablepath = p.executablepath(); }
-                if (p.executable()  .length > 0) { executable   = p.executable();   }
-                if (p.library().length() > 0)   { library     = p.library();     }
+                if (p.executable().length > 0) { executable = p.executable(); }
+                if (p.library().length() > 0) { library = p.library(); }
             }
         }
         for (int i = 0; i < includeresource.length; i++) {
@@ -289,6 +276,8 @@ public class ClassProperties extends HashMap<String,List<String>> {
                 linkresource[i] = "/" + name;
             }
         }
+
+        addAll("platform.exceptionMappings", exceptionMappings);
         addAll("platform.pragma", pragma);
         addAll("platform.define", define);
         addAll("platform.exclude", exclude);
@@ -319,7 +308,7 @@ public class ClassProperties extends HashMap<String,List<String>> {
 
         if (LoadEnabled.class.isAssignableFrom(c)) {
             try {
-                ((LoadEnabled)c.newInstance()).init(this);
+                ((LoadEnabled) c.newInstance()).init(this);
             } catch (ClassCastException | InstantiationException | IllegalAccessException e) {
                 logger.warn("Could not create an instance of " + c + ": " + e);
             }
