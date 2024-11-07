@@ -181,7 +181,7 @@ public @interface Platform {
 
     /**
      * Mappings for custom exceptions.
-     * // TODO(Fitor) finish doc, also see whether you can replace String[] with a more fitting datatype (needs to be turned into String[] in {@link org.bytedeco.javacpp.ClassProperties eventually}
+     * @return An array of {@link ExceptionMapper}, which determines the mapping of custom native exceptions to any javaException.
      */
-    String[] exceptionMappings() default "";
+    ExceptionMapper[] exceptionMappings() default {};
 }

@@ -251,11 +251,6 @@ public class Generator {
             out.println("#define " + s);
         }
 
-        out.println("FITORR");
-        for(String s : clsProperties.get("platform.exceptionMappings")) {
-            out.println(s);
-        }
-
         out.println();
         out.println("#ifdef _WIN32");
         out.println("    #define _JAVASOFT_JNI_MD_H_");
@@ -1089,7 +1084,31 @@ public class Generator {
         out.println("};");
         out.println();
 
+        //////////////////// EXCEPTION HANDLER ////////////////////
         if (handleExceptions) {
+            // Build a function which maps custom java Exceptions to corresponding native exceptions.
+            out.println("static JavaCPP_noinline jclass JavaCPP_mapCustomExceptions(JNIEnv *env, const std::exception& e) {");
+
+            final String ifCondition = "  if(dynamic_cast<const %s*>(&e)){";
+            final String elifCondition = "  else if(dynamic_cast<const %s*>(&e)){";
+            final String returnVal = "      return env->FindClass(\"%s\");";
+
+            List<String> exceptionMappings = clsProperties.get("platform.exceptionMappings");
+            for (int i = 0; i < exceptionMappings.size(); i += 2) {
+                final String cppException = exceptionMappings.get(i);
+                final String javaException = exceptionMappings.get(i + 1);
+
+                out.println(i == 0 ?
+                        String.format(ifCondition, cppException) :
+                        String.format(elifCondition, cppException));
+
+                out.println(String.format(returnVal, javaException));
+                out.println("   }");
+            }
+            out.println("   return nullptr;");
+            out.println("}");
+
+            // "Import" the remaining exception-specific functions.
             try (InputStream inputStream = Generator.class.getResourceAsStream("/org/bytedeco/javacpp/jniTemplates/JNIExceptionHandler.h");
                  BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
 
@@ -1101,6 +1120,7 @@ public class Generator {
                 throw new RuntimeException("Unable to find template 'JNIExceptionHandler'", e);
             }
         }
+        //////////////////// EXCEPTION HANDLER ////////////////////
 
         Class deallocator, nativeDeallocator;
         try {

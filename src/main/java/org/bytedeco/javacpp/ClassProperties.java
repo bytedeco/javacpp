@@ -22,6 +22,7 @@
 
 package org.bytedeco.javacpp;
 
+import org.bytedeco.javacpp.annotation.ExceptionMapper;
 import org.bytedeco.javacpp.annotation.Platform;
 import org.bytedeco.javacpp.tools.Logger;
 
@@ -227,7 +228,19 @@ public class ClassProperties extends HashMap<String, List<String>> {
                 if (!match) {
                     continue;
                 }
-                if (p.exceptionMappings().length > 0) { exceptionMappings = p.exceptionMappings(); }
+
+                if (p.exceptionMappings().length > 0) {
+                    List<String> exceptionMappingsList = new LinkedList<>();
+                    for (ExceptionMapper mapper : p.exceptionMappings()) {
+                        final String cppException = mapper.cppException();
+                        final String javaException = mapper.javaExceptionClass().getName().replace('.', '/');
+
+                        exceptionMappingsList.add(cppException);
+                        exceptionMappingsList.add(javaException);
+                    }
+                    exceptionMappings = exceptionMappingsList.toArray(new String[0]);
+                }
+
                 if (p.pragma().length > 0) { pragma = p.pragma(); }
                 if (p.define().length > 0) { define = p.define(); }
                 if (p.exclude().length > 0) { exclude = p.exclude(); }

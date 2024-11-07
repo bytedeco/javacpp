@@ -1,3 +1,4 @@
+// Function finds the right java-exception to the most common native std::exceptions
 static JavaCPP_noinline jclass JavaCPP_mapJavaExceptions(JNIEnv *env, const std::exception& e){
         if (dynamic_cast<const std::invalid_argument*>(&e)) {
             return env->FindClass("java/lang/IllegalArgumentException");
@@ -10,9 +11,11 @@ static JavaCPP_noinline jclass JavaCPP_mapJavaExceptions(JNIEnv *env, const std:
         }
         return env->FindClass("java/lang/Exception");
 }
-
+// Function creates a jobject (extends Throwable) from the passed std::exception
 static JavaCPP_noinline jthrowable JavaCPP_createJavaException(JNIEnv *env, const std::exception& e, jthrowable cause = nullptr) {
-    jclass exClass = JavaCPP_mapJavaExceptions(env, e);
+    jclass exClass = JavaCPP_mapCustomExceptions(env, e);
+    exClass = exClass ? exClass : JavaCPP_mapJavaExceptions(env, e);
+
     jstring message = env->NewStringUTF(e.what());
     jmethodID constructor = env->GetMethodID(exClass, "<init>", "(Ljava/lang/String;)V");
 
@@ -24,7 +27,7 @@ static JavaCPP_noinline jthrowable JavaCPP_createJavaException(JNIEnv *env, cons
     }
     return  static_cast<jthrowable>(env->NewObject(exClass, constructor, message));
 }
-
+// Function unrolls native exceptions and builds the corresponding java exception
 static JavaCPP_noinline jthrowable JavaCPP_handleException(JNIEnv *env, const std::exception& e) {
         try {
             std::rethrow_if_nested(e);
