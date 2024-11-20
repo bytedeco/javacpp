@@ -10,19 +10,19 @@ env:
   STAGING_REPOSITORY: ${{ secrets.STAGING_REPOSITORY }}
 jobs:
 #  android-arm:
-#    runs-on: ubuntu-20.04
+#    runs-on: ubuntu-22.04
 #    steps:
 #      - uses: bytedeco/javacpp-presets/.github/actions/deploy-ubuntu@actions
   android-arm64:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: bytedeco/javacpp-presets/.github/actions/deploy-ubuntu@actions
 #  android-x86:
-#    runs-on: ubuntu-20.04
+#    runs-on: ubuntu-22.04
 #    steps:
 #      - uses: bytedeco/javacpp-presets/.github/actions/deploy-ubuntu@actions
   android-x86_64:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: bytedeco/javacpp-presets/.github/actions/deploy-ubuntu@actions
   ios-arm64:
@@ -30,31 +30,31 @@ jobs:
     steps:
       - uses: bytedeco/javacpp-presets/.github/actions/deploy-macosx@actions
   ios-x86_64:
-    runs-on: macos-12
+    runs-on: macos-13
     steps:
       - uses: bytedeco/javacpp-presets/.github/actions/deploy-macosx@actions
 #  linux-armhf:
-#    runs-on: ubuntu-20.04
+#    runs-on: ubuntu-22.04
 #    steps:
 #      - uses: bytedeco/javacpp-presets/.github/actions/deploy-ubuntu@actions
   linux-arm64:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: bytedeco/javacpp-presets/.github/actions/deploy-ubuntu@actions
   linux-riscv64:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: bytedeco/javacpp-presets/.github/actions/deploy-ubuntu@actions
   linux-ppc64le:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: bytedeco/javacpp-presets/.github/actions/deploy-ubuntu@actions
 #  linux-x86:
-#    runs-on: ubuntu-20.04
+#    runs-on: ubuntu-22.04
 #    steps:
 #      - uses: bytedeco/javacpp-presets/.github/actions/deploy-ubuntu@actions
   linux-x86_64:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     env:
       CI_DEPLOY_OPTIONS: "" # to not skip tests
     steps:
@@ -64,7 +64,7 @@ jobs:
     steps:
       - uses: bytedeco/javacpp-presets/.github/actions/deploy-macosx@actions
   macosx-x86_64:
-    runs-on: macos-12
+    runs-on: macos-13
     env:
       CI_DEPLOY_OPTIONS: "" # to not skip tests
     steps:
@@ -82,6 +82,6 @@ jobs:
   redeploy:
 #    needs: [android-arm, android-arm64, android-x86, android-x86_64, ios-arm64, ios-x86_64, linux-armhf, linux-arm64, linux-ppc64le, linux-x86, linux-x86_64, macosx-arm64, macosx-x86_64, windows-x86, windows-x86_64]
     needs: [android-arm64, android-x86_64, ios-arm64, ios-x86_64, linux-arm64, linux-riscv64, linux-ppc64le, linux-x86_64, macosx-arm64, macosx-x86_64, windows-x86_64]
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: bytedeco/javacpp-presets/.github/actions/redeploy@actions
