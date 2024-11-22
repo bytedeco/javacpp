@@ -1,4 +1,6 @@
 
+ * Add support for `linux-riscv64` with `linux-riscv64.properties` ([pull #781](https://github.com/bytedeco/javacpp/pull/781))
+
 ### November 16, 2024 version 1.5.11
  * Fix `Generator` flakiness caused by calls to `Class.getDeclaredMethods()` ([pull #784](https://github.com/bytedeco/javacpp/pull/784))
  * Add minimal mappings for `std::chrono` from C++11 ([pull #766](https://github.com/bytedeco/javacpp/pull/766))
