@@ -66,8 +66,8 @@
     <javacpp.platform.ios-x86_64>ios-x86_64${javacpp.platform.extension}</javacpp.platform.ios-x86_64>
     <javacpp.platform.linux-armhf>linux-armhf${javacpp.platform.extension}</javacpp.platform.linux-armhf>
     <javacpp.platform.linux-arm64>linux-arm64${javacpp.platform.extension}</javacpp.platform.linux-arm64>
-    <javacpp.platform.linux-riscv64>linux-riscv64${javacpp.platform.extension}</javacpp.platform.linux-riscv64>
     <javacpp.platform.linux-ppc64le>linux-ppc64le${javacpp.platform.extension}</javacpp.platform.linux-ppc64le>
+    <javacpp.platform.linux-riscv64>linux-riscv64${javacpp.platform.extension}</javacpp.platform.linux-riscv64>
     <javacpp.platform.linux-x86>linux-x86${javacpp.platform.extension}</javacpp.platform.linux-x86>
     <javacpp.platform.linux-x86_64>linux-x86_64${javacpp.platform.extension}</javacpp.platform.linux-x86_64>
     <javacpp.platform.macosx-arm64>macosx-arm64${javacpp.platform.extension}</javacpp.platform.macosx-arm64>
@@ -134,13 +134,13 @@
       <groupId>org.bytedeco</groupId>
       <artifactId>javacpp</artifactId>
       <version>${project.version}</version>
-      <classifier>${javacpp.platform.linux-riscv64}</classifier>
+      <classifier>${javacpp.platform.linux-ppc64le}</classifier>
     </dependency>
     <dependency>
       <groupId>org.bytedeco</groupId>
       <artifactId>javacpp</artifactId>
       <version>${project.version}</version>
-      <classifier>${javacpp.platform.linux-ppc64le}</classifier>
+      <classifier>${javacpp.platform.linux-riscv64}</classifier>
     </dependency>
 <!--    <dependency>-->
 <!--      <groupId>org.bytedeco</groupId>-->
@@ -247,7 +247,7 @@
             <configuration>
               <archive>
                 <manifestEntries>
-                  <Class-Path>javacpp.jar javacpp-linux-armhf.jar javacpp-linux-arm64.jar javacpp-linux-riscv64.jar javacpp-linux-ppc64le.jar javacpp-linux-x86.jar javacpp-linux-x86_64.jar javacpp-macosx-arm64.jar javacpp-macosx-x86_64.jar javacpp-windows-x86.jar javacpp-windows-x86_64.jar</Class-Path>
+                  <Class-Path>javacpp.jar javacpp-linux-armhf.jar javacpp-linux-arm64.jar javacpp-linux-ppc64le.jar javacpp-linux-riscv64.jar javacpp-linux-x86.jar javacpp-linux-x86_64.jar javacpp-macosx-arm64.jar javacpp-macosx-x86_64.jar javacpp-windows-x86.jar javacpp-windows-x86_64.jar</Class-Path>
                 </manifestEntries>
               </archive>
             </configuration>
@@ -307,8 +307,8 @@
                       requires static org.bytedeco.javacpp.ios.x86_64;
                       requires static org.bytedeco.javacpp.linux.armhf;
                       requires static org.bytedeco.javacpp.linux.arm64;
-                      requires static org.bytedeco.javacpp.linux.riscv64;
                       requires static org.bytedeco.javacpp.linux.ppc64le;
+                      requires static org.bytedeco.javacpp.linux.riscv64;
                       requires static org.bytedeco.javacpp.linux.x86;
                       requires static org.bytedeco.javacpp.linux.x86_64;
                       requires static org.bytedeco.javacpp.macosx.arm64;
@@ -432,8 +432,8 @@
         <javacpp.platform.ios-x86_64>${javacpp.platform}${javacpp.platform.extension}</javacpp.platform.ios-x86_64>
         <javacpp.platform.linux-armhf>${javacpp.platform}${javacpp.platform.extension}</javacpp.platform.linux-armhf>
         <javacpp.platform.linux-arm64>${javacpp.platform}${javacpp.platform.extension}</javacpp.platform.linux-arm64>
-        <javacpp.platform.linux-riscv64>${javacpp.platform}${javacpp.platform.extension}</javacpp.platform.linux-riscv64>
         <javacpp.platform.linux-ppc64le>${javacpp.platform}${javacpp.platform.extension}</javacpp.platform.linux-ppc64le>
+        <javacpp.platform.linux-riscv64>${javacpp.platform}${javacpp.platform.extension}</javacpp.platform.linux-riscv64>
         <javacpp.platform.linux-x86>${javacpp.platform}${javacpp.platform.extension}</javacpp.platform.linux-x86>
         <javacpp.platform.linux-x86_64>${javacpp.platform}${javacpp.platform.extension}</javacpp.platform.linux-x86_64>
         <javacpp.platform.macosx-arm64>${javacpp.platform}${javacpp.platform.extension}</javacpp.platform.macosx-arm64>
@@ -462,8 +462,8 @@
         <javacpp.platform.ios-x86_64>${os.name}-${os.arch}${javacpp.platform.extension}</javacpp.platform.ios-x86_64>
         <javacpp.platform.linux-armhf>${os.name}-${os.arch}${javacpp.platform.extension}</javacpp.platform.linux-armhf>
         <javacpp.platform.linux-arm64>${os.name}-${os.arch}${javacpp.platform.extension}</javacpp.platform.linux-arm64>
-        <javacpp.platform.linux-riscv64>${os.name}-${os.arch}${javacpp.platform.extension}</javacpp.platform.linux-riscv64>
         <javacpp.platform.linux-ppc64le>${os.name}-${os.arch}${javacpp.platform.extension}</javacpp.platform.linux-ppc64le>
+        <javacpp.platform.linux-riscv64>${os.name}-${os.arch}${javacpp.platform.extension}</javacpp.platform.linux-riscv64>
         <javacpp.platform.linux-x86>${os.name}-${os.arch}${javacpp.platform.extension}</javacpp.platform.linux-x86>
         <javacpp.platform.linux-x86_64>${os.name}-${os.arch}${javacpp.platform.extension}</javacpp.platform.linux-x86_64>
         <javacpp.platform.macosx-arm64>${os.name}-${os.arch}${javacpp.platform.extension}</javacpp.platform.macosx-arm64>
@@ -492,8 +492,8 @@
         <javacpp.platform.ios-x86_64></javacpp.platform.ios-x86_64>
         <javacpp.platform.linux-armhf></javacpp.platform.linux-armhf>
         <javacpp.platform.linux-arm64></javacpp.platform.linux-arm64>
-        <javacpp.platform.linux-riscv64></javacpp.platform.linux-riscv64>
         <javacpp.platform.linux-ppc64le></javacpp.platform.linux-ppc64le>
+        <javacpp.platform.linux-riscv64></javacpp.platform.linux-riscv64>
         <javacpp.platform.linux-x86></javacpp.platform.linux-x86>
         <javacpp.platform.linux-x86_64></javacpp.platform.linux-x86_64>
         <javacpp.platform.macosx-arm64></javacpp.platform.macosx-arm64>
@@ -522,8 +522,8 @@
         <javacpp.platform.ios-x86_64></javacpp.platform.ios-x86_64>
         <javacpp.platform.linux-armhf></javacpp.platform.linux-armhf>
         <javacpp.platform.linux-arm64></javacpp.platform.linux-arm64>
-        <javacpp.platform.linux-riscv64></javacpp.platform.linux-riscv64>
         <javacpp.platform.linux-ppc64le></javacpp.platform.linux-ppc64le>
+        <javacpp.platform.linux-riscv64></javacpp.platform.linux-riscv64>
         <javacpp.platform.linux-x86></javacpp.platform.linux-x86>
         <javacpp.platform.linux-x86_64></javacpp.platform.linux-x86_64>
         <javacpp.platform.macosx-arm64></javacpp.platform.macosx-arm64>
@@ -553,8 +553,8 @@
         <javacpp.platform.ios-x86_64></javacpp.platform.ios-x86_64>
         <javacpp.platform.linux-armhf></javacpp.platform.linux-armhf>
         <javacpp.platform.linux-arm64></javacpp.platform.linux-arm64>
-        <javacpp.platform.linux-riscv64></javacpp.platform.linux-riscv64>
         <javacpp.platform.linux-ppc64le></javacpp.platform.linux-ppc64le>
+        <javacpp.platform.linux-riscv64></javacpp.platform.linux-riscv64>
         <javacpp.platform.linux-x86></javacpp.platform.linux-x86>
         <javacpp.platform.linux-x86_64></javacpp.platform.linux-x86_64>
         <javacpp.platform.macosx-arm64></javacpp.platform.macosx-arm64>
@@ -583,8 +583,8 @@
         <javacpp.platform.ios-x86_64></javacpp.platform.ios-x86_64>
         <javacpp.platform.linux-armhf></javacpp.platform.linux-armhf>
         <javacpp.platform.linux-arm64></javacpp.platform.linux-arm64>
-        <javacpp.platform.linux-riscv64></javacpp.platform.linux-riscv64>
         <javacpp.platform.linux-ppc64le></javacpp.platform.linux-ppc64le>
+        <javacpp.platform.linux-riscv64></javacpp.platform.linux-riscv64>
         <javacpp.platform.linux-x86></javacpp.platform.linux-x86>
         <javacpp.platform.linux-x86_64></javacpp.platform.linux-x86_64>
         <javacpp.platform.macosx-arm64></javacpp.platform.macosx-arm64>
@@ -613,8 +613,8 @@
         <javacpp.platform.ios-x86_64></javacpp.platform.ios-x86_64>
         <javacpp.platform.linux-armhf></javacpp.platform.linux-armhf>
         <javacpp.platform.linux-arm64></javacpp.platform.linux-arm64>
-        <javacpp.platform.linux-riscv64></javacpp.platform.linux-riscv64>
         <javacpp.platform.linux-ppc64le></javacpp.platform.linux-ppc64le>
+        <javacpp.platform.linux-riscv64></javacpp.platform.linux-riscv64>
         <javacpp.platform.linux-x86></javacpp.platform.linux-x86>
         <javacpp.platform.linux-x86_64></javacpp.platform.linux-x86_64>
         <javacpp.platform.macosx-arm64></javacpp.platform.macosx-arm64>
@@ -643,8 +643,8 @@
         <javacpp.platform.ios-x86_64></javacpp.platform.ios-x86_64>
         <javacpp.platform.linux-armhf></javacpp.platform.linux-armhf>
         <javacpp.platform.linux-arm64></javacpp.platform.linux-arm64>
-        <javacpp.platform.linux-riscv64></javacpp.platform.linux-riscv64>
         <javacpp.platform.linux-ppc64le></javacpp.platform.linux-ppc64le>
+        <javacpp.platform.linux-riscv64></javacpp.platform.linux-riscv64>
         <javacpp.platform.linux-x86></javacpp.platform.linux-x86>
         <javacpp.platform.linux-x86_64></javacpp.platform.linux-x86_64>
         <javacpp.platform.macosx-arm64></javacpp.platform.macosx-arm64>
@@ -673,8 +673,8 @@
         <javacpp.platform.ios-x86_64></javacpp.platform.ios-x86_64>
         <javacpp.platform.linux-armhf></javacpp.platform.linux-armhf>
         <javacpp.platform.linux-arm64></javacpp.platform.linux-arm64>
-        <javacpp.platform.linux-riscv64></javacpp.platform.linux-riscv64>
         <javacpp.platform.linux-ppc64le></javacpp.platform.linux-ppc64le>
+        <javacpp.platform.linux-riscv64></javacpp.platform.linux-riscv64>
         <javacpp.platform.linux-x86></javacpp.platform.linux-x86>
         <javacpp.platform.linux-x86_64></javacpp.platform.linux-x86_64>
         <javacpp.platform.macosx-arm64></javacpp.platform.macosx-arm64>
@@ -703,8 +703,8 @@
         <javacpp.platform.ios-x86_64></javacpp.platform.ios-x86_64>
         <javacpp.platform.linux-armhf></javacpp.platform.linux-armhf>
         <javacpp.platform.linux-arm64></javacpp.platform.linux-arm64>
-        <javacpp.platform.linux-riscv64></javacpp.platform.linux-riscv64>
         <javacpp.platform.linux-ppc64le></javacpp.platform.linux-ppc64le>
+        <javacpp.platform.linux-riscv64></javacpp.platform.linux-riscv64>
         <javacpp.platform.linux-x86></javacpp.platform.linux-x86>
         <javacpp.platform.linux-x86_64></javacpp.platform.linux-x86_64>
         <javacpp.platform.macosx-arm64></javacpp.platform.macosx-arm64>
@@ -733,8 +733,8 @@
         <javacpp.platform.ios-x86_64></javacpp.platform.ios-x86_64>
         <javacpp.platform.linux-armhf></javacpp.platform.linux-armhf>
         <javacpp.platform.linux-arm64></javacpp.platform.linux-arm64>
-        <javacpp.platform.linux-riscv64></javacpp.platform.linux-riscv64>
         <javacpp.platform.linux-ppc64le></javacpp.platform.linux-ppc64le>
+        <javacpp.platform.linux-riscv64></javacpp.platform.linux-riscv64>
         <javacpp.platform.linux-x86></javacpp.platform.linux-x86>
         <javacpp.platform.linux-x86_64></javacpp.platform.linux-x86_64>
         <javacpp.platform.macosx-arm64></javacpp.platform.macosx-arm64>
@@ -763,8 +763,8 @@
         <javacpp.platform.ios-x86_64>${javacpp.platform}${javacpp.platform.extension}</javacpp.platform.ios-x86_64>
         <javacpp.platform.linux-armhf></javacpp.platform.linux-armhf>
         <javacpp.platform.linux-arm64></javacpp.platform.linux-arm64>
-        <javacpp.platform.linux-riscv64></javacpp.platform.linux-riscv64>
         <javacpp.platform.linux-ppc64le></javacpp.platform.linux-ppc64le>
+        <javacpp.platform.linux-riscv64></javacpp.platform.linux-riscv64>
         <javacpp.platform.linux-x86></javacpp.platform.linux-x86>
         <javacpp.platform.linux-x86_64></javacpp.platform.linux-x86_64>
         <javacpp.platform.macosx-arm64></javacpp.platform.macosx-arm64>
@@ -793,8 +793,8 @@
         <javacpp.platform.ios-x86_64></javacpp.platform.ios-x86_64>
         <javacpp.platform.linux-armhf>${javacpp.platform}${javacpp.platform.extension}</javacpp.platform.linux-armhf>
         <javacpp.platform.linux-arm64></javacpp.platform.linux-arm64>
-        <javacpp.platform.linux-riscv64></javacpp.platform.linux-riscv64>
         <javacpp.platform.linux-ppc64le></javacpp.platform.linux-ppc64le>
+        <javacpp.platform.linux-riscv64></javacpp.platform.linux-riscv64>
         <javacpp.platform.linux-x86></javacpp.platform.linux-x86>
         <javacpp.platform.linux-x86_64></javacpp.platform.linux-x86_64>
         <javacpp.platform.macosx-arm64></javacpp.platform.macosx-arm64>
@@ -823,38 +823,8 @@
         <javacpp.platform.ios-x86_64></javacpp.platform.ios-x86_64>
         <javacpp.platform.linux-armhf></javacpp.platform.linux-armhf>
         <javacpp.platform.linux-arm64>${javacpp.platform}${javacpp.platform.extension}</javacpp.platform.linux-arm64>
+        <javacpp.platform.linux-ppc64le></javacpp.platform.linux-ppc64le>
         <javacpp.platform.linux-riscv64></javacpp.platform.linux-riscv64>
-        <javacpp.platform.linux-ppc64le></javacpp.platform.linux-ppc64le>
-        <javacpp.platform.linux-x86></javacpp.platform.linux-x86>
-        <javacpp.platform.linux-x86_64></javacpp.platform.linux-x86_64>
-        <javacpp.platform.macosx-arm64></javacpp.platform.macosx-arm64>
-        <javacpp.platform.macosx-x86_64></javacpp.platform.macosx-x86_64>
-        <javacpp.platform.windows-x86></javacpp.platform.windows-x86>
-        <javacpp.platform.windows-x86_64></javacpp.platform.windows-x86_64>
-      </properties>
-    </profile>
-
-    <profile>
-      <id>javacpp-platform-linux-riscv64</id>
-      <activation>
-        <property>
-          <name>javacpp.platform</name>
-          <value>linux-riscv64</value>
-        </property>
-      </activation>
-      <properties>
-        <javacpp.platform.android-arm></javacpp.platform.android-arm>
-        <javacpp.platform.android-arm64></javacpp.platform.android-arm64>
-        <javacpp.platform.android-x86></javacpp.platform.android-x86>
-        <javacpp.platform.android-x86_64></javacpp.platform.android-x86_64>
-        <javacpp.platform.ios-arm></javacpp.platform.ios-arm>
-        <javacpp.platform.ios-arm64></javacpp.platform.ios-arm64>
-        <javacpp.platform.ios-x86></javacpp.platform.ios-x86>
-        <javacpp.platform.ios-x86_64></javacpp.platform.ios-x86_64>
-        <javacpp.platform.linux-armhf></javacpp.platform.linux-armhf>
-        <javacpp.platform.linux-arm64></javacpp.platform.linux-arm64>
-        <javacpp.platform.linux-riscv64>${javacpp.platform}${javacpp.platform.extension}</javacpp.platform.linux-riscv64>
-        <javacpp.platform.linux-ppc64le></javacpp.platform.linux-ppc64le>
         <javacpp.platform.linux-x86></javacpp.platform.linux-x86>
         <javacpp.platform.linux-x86_64></javacpp.platform.linux-x86_64>
         <javacpp.platform.macosx-arm64></javacpp.platform.macosx-arm64>
@@ -883,8 +853,38 @@
         <javacpp.platform.ios-x86_64></javacpp.platform.ios-x86_64>
         <javacpp.platform.linux-armhf></javacpp.platform.linux-armhf>
         <javacpp.platform.linux-arm64></javacpp.platform.linux-arm64>
-        <javacpp.platform.linux-riscv64></javacpp.platform.linux-riscv64>
         <javacpp.platform.linux-ppc64le>${javacpp.platform}${javacpp.platform.extension}</javacpp.platform.linux-ppc64le>
+        <javacpp.platform.linux-riscv64></javacpp.platform.linux-riscv64>
+        <javacpp.platform.linux-x86></javacpp.platform.linux-x86>
+        <javacpp.platform.linux-x86_64></javacpp.platform.linux-x86_64>
+        <javacpp.platform.macosx-arm64></javacpp.platform.macosx-arm64>
+        <javacpp.platform.macosx-x86_64></javacpp.platform.macosx-x86_64>
+        <javacpp.platform.windows-x86></javacpp.platform.windows-x86>
+        <javacpp.platform.windows-x86_64></javacpp.platform.windows-x86_64>
+      </properties>
+    </profile>
+
+    <profile>
+      <id>javacpp-platform-linux-riscv64</id>
+      <activation>
+        <property>
+          <name>javacpp.platform</name>
+          <value>linux-riscv64</value>
+        </property>
+      </activation>
+      <properties>
+        <javacpp.platform.android-arm></javacpp.platform.android-arm>
+        <javacpp.platform.android-arm64></javacpp.platform.android-arm64>
+        <javacpp.platform.android-x86></javacpp.platform.android-x86>
+        <javacpp.platform.android-x86_64></javacpp.platform.android-x86_64>
+        <javacpp.platform.ios-arm></javacpp.platform.ios-arm>
+        <javacpp.platform.ios-arm64></javacpp.platform.ios-arm64>
+        <javacpp.platform.ios-x86></javacpp.platform.ios-x86>
+        <javacpp.platform.ios-x86_64></javacpp.platform.ios-x86_64>
+        <javacpp.platform.linux-armhf></javacpp.platform.linux-armhf>
+        <javacpp.platform.linux-arm64></javacpp.platform.linux-arm64>
+        <javacpp.platform.linux-ppc64le></javacpp.platform.linux-ppc64le>
+        <javacpp.platform.linux-riscv64>${javacpp.platform}${javacpp.platform.extension}</javacpp.platform.linux-riscv64>
         <javacpp.platform.linux-x86></javacpp.platform.linux-x86>
         <javacpp.platform.linux-x86_64></javacpp.platform.linux-x86_64>
         <javacpp.platform.macosx-arm64></javacpp.platform.macosx-arm64>
@@ -913,8 +913,8 @@
         <javacpp.platform.ios-x86_64></javacpp.platform.ios-x86_64>
         <javacpp.platform.linux-armhf></javacpp.platform.linux-armhf>
         <javacpp.platform.linux-arm64></javacpp.platform.linux-arm64>
-        <javacpp.platform.linux-riscv64></javacpp.platform.linux-riscv64>
         <javacpp.platform.linux-ppc64le></javacpp.platform.linux-ppc64le>
+        <javacpp.platform.linux-riscv64></javacpp.platform.linux-riscv64>
         <javacpp.platform.linux-x86>${javacpp.platform}${javacpp.platform.extension}</javacpp.platform.linux-x86>
         <javacpp.platform.linux-x86_64></javacpp.platform.linux-x86_64>
         <javacpp.platform.macosx-arm64></javacpp.platform.macosx-arm64>
@@ -943,8 +943,8 @@
         <javacpp.platform.ios-x86_64></javacpp.platform.ios-x86_64>
         <javacpp.platform.linux-armhf></javacpp.platform.linux-armhf>
         <javacpp.platform.linux-arm64></javacpp.platform.linux-arm64>
-        <javacpp.platform.linux-riscv64></javacpp.platform.linux-riscv64>
         <javacpp.platform.linux-ppc64le></javacpp.platform.linux-ppc64le>
+        <javacpp.platform.linux-riscv64></javacpp.platform.linux-riscv64>
         <javacpp.platform.linux-x86></javacpp.platform.linux-x86>
         <javacpp.platform.linux-x86_64>${javacpp.platform}${javacpp.platform.extension}</javacpp.platform.linux-x86_64>
         <javacpp.platform.macosx-arm64></javacpp.platform.macosx-arm64>
@@ -973,8 +973,8 @@
         <javacpp.platform.ios-x86_64></javacpp.platform.ios-x86_64>
         <javacpp.platform.linux-armhf></javacpp.platform.linux-armhf>
         <javacpp.platform.linux-arm64></javacpp.platform.linux-arm64>
-        <javacpp.platform.linux-riscv64></javacpp.platform.linux-riscv64>
         <javacpp.platform.linux-ppc64le></javacpp.platform.linux-ppc64le>
+        <javacpp.platform.linux-riscv64></javacpp.platform.linux-riscv64>
         <javacpp.platform.linux-x86></javacpp.platform.linux-x86>
         <javacpp.platform.linux-x86_64></javacpp.platform.linux-x86_64>
         <javacpp.platform.macosx-arm64>${javacpp.platform}${javacpp.platform.extension}</javacpp.platform.macosx-arm64>
@@ -1003,8 +1003,8 @@
         <javacpp.platform.ios-x86_64></javacpp.platform.ios-x86_64>
         <javacpp.platform.linux-armhf></javacpp.platform.linux-armhf>
         <javacpp.platform.linux-arm64></javacpp.platform.linux-arm64>
-        <javacpp.platform.linux-riscv64></javacpp.platform.linux-riscv64>
         <javacpp.platform.linux-ppc64le></javacpp.platform.linux-ppc64le>
+        <javacpp.platform.linux-riscv64></javacpp.platform.linux-riscv64>
         <javacpp.platform.linux-x86></javacpp.platform.linux-x86>
         <javacpp.platform.linux-x86_64></javacpp.platform.linux-x86_64>
         <javacpp.platform.macosx-arm64></javacpp.platform.macosx-arm64>
@@ -1033,8 +1033,8 @@
         <javacpp.platform.ios-x86_64></javacpp.platform.ios-x86_64>
         <javacpp.platform.linux-armhf></javacpp.platform.linux-armhf>
         <javacpp.platform.linux-arm64></javacpp.platform.linux-arm64>
-        <javacpp.platform.linux-riscv64></javacpp.platform.linux-riscv64>
         <javacpp.platform.linux-ppc64le></javacpp.platform.linux-ppc64le>
+        <javacpp.platform.linux-riscv64></javacpp.platform.linux-riscv64>
         <javacpp.platform.linux-x86></javacpp.platform.linux-x86>
         <javacpp.platform.linux-x86_64></javacpp.platform.linux-x86_64>
         <javacpp.platform.macosx-arm64></javacpp.platform.macosx-arm64>
@@ -1063,8 +1063,8 @@
         <javacpp.platform.ios-x86_64></javacpp.platform.ios-x86_64>
         <javacpp.platform.linux-armhf></javacpp.platform.linux-armhf>
         <javacpp.platform.linux-arm64></javacpp.platform.linux-arm64>
-        <javacpp.platform.linux-riscv64></javacpp.platform.linux-riscv64>
         <javacpp.platform.linux-ppc64le></javacpp.platform.linux-ppc64le>
+        <javacpp.platform.linux-riscv64></javacpp.platform.linux-riscv64>
         <javacpp.platform.linux-x86></javacpp.platform.linux-x86>
         <javacpp.platform.linux-x86_64></javacpp.platform.linux-x86_64>
         <javacpp.platform.macosx-arm64></javacpp.platform.macosx-arm64>
@@ -1197,18 +1197,6 @@
     </profile>
 
     <profile>
-      <id>javacpp.platform.linux-riscv64-true</id>
-      <activation>
-        <property>
-          <name>javacpp.platform.linux-riscv64</name>
-        </property>
-      </activation>
-      <properties>
-        <javacpp.platform.linux-riscv64>linux-riscv64${javacpp.platform.extension}</javacpp.platform.linux-riscv64>
-      </properties>
-    </profile>
-
-    <profile>
       <id>javacpp.platform.linux-ppc64le-true</id>
       <activation>
         <property>
@@ -1217,6 +1205,18 @@
       </activation>
       <properties>
         <javacpp.platform.linux-ppc64le>linux-ppc64le${javacpp.platform.extension}</javacpp.platform.linux-ppc64le>
+      </properties>
+    </profile>
+
+    <profile>
+      <id>javacpp.platform.linux-riscv64-true</id>
+      <activation>
+        <property>
+          <name>javacpp.platform.linux-riscv64</name>
+        </property>
+      </activation>
+      <properties>
+        <javacpp.platform.linux-riscv64>linux-riscv64${javacpp.platform.extension}</javacpp.platform.linux-riscv64>
       </properties>
     </profile>
 
@@ -1358,19 +1358,6 @@
     </profile>
 
     <profile>
-      <id>javacpp.platform.custom-linux-riscv64</id>
-      <activation>
-        <property>
-          <name>javacpp.platform.host</name>
-        </property>
-        <os><name>linux</name><arch>riscv64</arch></os>
-      </activation>
-      <properties>
-        <javacpp.platform.linux-riscv64>linux-riscv64${javacpp.platform.extension}</javacpp.platform.linux-riscv64>
-      </properties>
-    </profile>
-
-    <profile>
       <id>javacpp.platform.custom-linux-ppc64le</id>
       <activation>
         <property>
@@ -1380,6 +1367,19 @@
       </activation>
       <properties>
         <javacpp.platform.linux-ppc64le>linux-ppc64le${javacpp.platform.extension}</javacpp.platform.linux-ppc64le>
+      </properties>
+    </profile>
+
+    <profile>
+      <id>javacpp.platform.custom-linux-riscv64</id>
+      <activation>
+        <property>
+          <name>javacpp.platform.host</name>
+        </property>
+        <os><name>linux</name><arch>riscv64</arch></os>
+      </activation>
+      <properties>
+        <javacpp.platform.linux-riscv64>linux-riscv64${javacpp.platform.extension}</javacpp.platform.linux-riscv64>
       </properties>
     </profile>
 
@@ -1589,21 +1589,21 @@
       </properties>
     </profile>
     <profile>
-      <id>riscv64</id>
-      <activation>
-        <os><arch>riscv64</arch></os>
-      </activation>
-      <properties>
-        <os.arch>riscv64</os.arch>
-      </properties>
-    </profile>
-    <profile>
       <id>armv8</id>
       <activation>
         <os><arch>armv8</arch></os>
       </activation>
       <properties>
         <os.arch>arm64</os.arch>
+      </properties>
+    </profile>
+    <profile>
+      <id>riscv64</id>
+      <activation>
+        <os><arch>riscv64</arch></os>
+      </activation>
+      <properties>
+        <os.arch>riscv64</os.arch>
       </properties>
     </profile>
     <profile>
