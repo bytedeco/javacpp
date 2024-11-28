@@ -11,7 +11,8 @@ static JavaCPP_noinline jclass JavaCPP_mapJavaExceptions(JNIEnv *env, const std:
         }
         return env->FindClass("java/lang/Exception");
 }
-// Function creates a jobject (extends Throwable) from the passed std::exception
+
+// Function creates a jobject (extends Throwable) from the passed std::exception (with causes)
 static JavaCPP_noinline jthrowable JavaCPP_createJavaException(JNIEnv *env, const std::exception& e, jthrowable cause = nullptr) {
     jclass exClass = JavaCPP_mapCustomExceptions(env, e);
     exClass = exClass ? exClass : JavaCPP_mapJavaExceptions(env, e);
