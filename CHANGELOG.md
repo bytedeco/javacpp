@@ -1,10 +1,13 @@
 
+ * Add support for `linux-riscv64` with `linux-riscv64.properties` ([pull #781](https://github.com/bytedeco/javacpp/pull/781))
+
+### November 16, 2024 version 1.5.11
  * Fix `Generator` flakiness caused by calls to `Class.getDeclaredMethods()` ([pull #784](https://github.com/bytedeco/javacpp/pull/784))
  * Add minimal mappings for `std::chrono` from C++11 ([pull #766](https://github.com/bytedeco/javacpp/pull/766))
  * Let `Parser` annotate Java constructors with `@Deprecated` when appropriate ([pull #757](https://github.com/bytedeco/javacpp/pull/757))
  * Add to `InfoMap.defaults` more names that are reserved in Java, but not in C++ ([pull #757](https://github.com/bytedeco/javacpp/pull/757))
  * Bundle `libomp` from Visual Studio to fix presets using OpenMP on Windows ([pull #755](https://github.com/bytedeco/javacpp/pull/755))
- * Fix inconsistencies when using `@Platform(inherit=..., library=...)` together ([pull #747](https://github.com/bytedeco/javacpp/pull/747))
+ * Fix inconsistencies when using `@Platform(inherit=..., library=...)` together ([issue #747](https://github.com/bytedeco/javacpp/issues/747))
  * Let `Parser` support templates with unnamed type parameters ([pull #742](https://github.com/bytedeco/javacpp/pull/742))
  * Prevent `Parser` from producing duplicate declarations for basic containers ([pull #741](https://github.com/bytedeco/javacpp/pull/741))
 
