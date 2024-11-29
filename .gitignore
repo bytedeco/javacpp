@@ -13,3 +13,4 @@
 # IntelliJ
 *.iml
 .idea
+**/out/**

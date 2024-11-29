@@ -1,3 +1,5 @@
+#include <stdexcept>
+
 // Function finds the right java-exception to the most common native std::exceptions
 static JavaCPP_noinline jclass JavaCPP_mapJavaExceptions(JNIEnv *env, const std::exception& e){
         if (dynamic_cast<const std::invalid_argument*>(&e)) {
