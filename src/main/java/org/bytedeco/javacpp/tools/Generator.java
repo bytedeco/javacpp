@@ -1086,6 +1086,7 @@ public class Generator {
 
         //////////////////// EXCEPTION HANDLER ////////////////////
         if (handleExceptions) {
+            out.println("#include <stdexcept>");
             // Build a function which maps custom java Exceptions to corresponding native exceptions.
             out.println("static JavaCPP_noinline jclass JavaCPP_mapCustomExceptions(JNIEnv *env, const std::exception& e) {");
 
