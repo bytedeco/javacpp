@@ -2173,11 +2173,12 @@ public class Generator {
 
                     if (!mappingFilePath.isEmpty()) {
                         String fileContent = getFileContentFromOther(mappingFilePath);
+                        fileContent = fileContent.replace("$funcName", "ptr->" + methodInfo.name);
                         out.println(fileContent);
                     } else {
-                        out.println(mapper.customMapping());
+                        String content = mapper.customMapping().replace("$funcName", "ptr->" + methodInfo.name);
+                        out.println(content);
                     }
-
                     break;
                 }
             }
