@@ -149,13 +149,16 @@ public class Generator {
             // first pass using a null writer to fill up the IndexedSet objects
             out = new PrintWriter(new Writer() {
                 @Override
-                public void write(char[] cbuf, int off, int len) { }
+                public void write(char[] cbuf, int off, int len) {
+                }
 
                 @Override
-                public void flush() { }
+                public void flush() {
+                }
 
                 @Override
-                public void close() { }
+                public void close() {
+                }
             });
             out2 = jniConfigOut = reflectConfigOut = null;
             callbacks = new LinkedHashMap<String, String>();
@@ -2171,12 +2174,22 @@ public class Generator {
                     CustomMapper mapper = (CustomMapper) annotation;
                     final String mappingFilePath = mapper.filePath();
 
+                    int paramCount = methodInfo.parameterTypes.length;
+                    StringBuilder argsString = new StringBuilder();
+                    for (int currentParamCount = 0; currentParamCount < paramCount; currentParamCount++) {
+                        if (currentParamCount > 0) {
+                            argsString.append(", "); // Add comma separator for all but the first argument
+                        }
+                        argsString.append("arg").append(currentParamCount); // Append arg0, arg1, etc.
+                    }
+                    String functionName = String.format("ptr->%s(%s)", methodInfo.name, argsString);
+
                     if (!mappingFilePath.isEmpty()) {
                         String fileContent = getFileContentFromOther(mappingFilePath);
-                        fileContent = fileContent.replace("$funcName", "ptr->" + methodInfo.name);
+                        fileContent = fileContent.replace("$funcName", functionName);
                         out.println(fileContent);
                     } else {
-                        String content = mapper.customMapping().replace("$funcName", "ptr->" + methodInfo.name);
+                        String content = mapper.customMapping().replace("$funcName", functionName);
                         out.println(content);
                     }
                     break;
