@@ -3077,14 +3077,23 @@ public class Generator {
                 if (needUsing) {
                     member += usingLine + "\n    ";
                 }
-                member += "virtual " + returnType[0] + (returnConvention.length > 1 ? returnConvention[1] : "") + methodInfo.memberName[0] + parameterDeclaration + returnType[1] + " JavaCPP_override;\n    " + returnType[0] + "super_" + methodInfo.name + nonconstParamDeclaration + returnType[1] + " { ";
+
+
+                boolean isConstMember = false;
+                for (Annotation annotation : methodInfo.annotations) {
+                    if (annotation.annotationType().equals(ConstMember.class)) {
+                        isConstMember = true;
+                    }
+                }
+
+                member += "virtual " + returnType[0] + (returnConvention.length > 1 ? returnConvention[1] : "") + methodInfo.memberName[0] + parameterDeclaration + returnType[1] + (isConstMember ? " const" : "") + " JavaCPP_override;\n    " + returnType[0] + "super_" + methodInfo.name + nonconstParamDeclaration + returnType[1] + " { ";
                 if (methodInfo.method.getAnnotation(Virtual.class).value()) {
                     member += "throw JavaCPP_exception(\"Cannot call pure virtual function " + valueTypeName + "::" + methodInfo.memberName[0] + "().\"); }";
                 } else {
                     member += (callbackReturnType != void.class ? "return " : "") + valueTypeName + "::" + methodInfo.memberName[0] + "(";
                     member += callbackArguments + "); }";
                 }
-                firstLine = returnType[0] + (returnConvention.length > 1 ? returnConvention[1] : "") + subType + "::" + methodInfo.memberName[0] + parameterDeclaration + returnType[1] + " {";
+                firstLine = returnType[0] + (returnConvention.length > 1 ? returnConvention[1] : "") + subType + "::" + methodInfo.memberName[0] + parameterDeclaration + returnType[1] + (isConstMember ? " const" : "") +" {";
                 functionList.add(fieldName);
             }
             memberList.add(member);
@@ -3119,7 +3128,6 @@ public class Generator {
                     out.println(",");
                 }
             }
-            out.println(" };");
 
             firstLine = returnType[0] + instanceTypeName + "::operator()" + parameterDeclaration + returnType[1] + " {";
         }
@@ -3127,6 +3135,7 @@ public class Generator {
         if (!needDefinition) {
             return;
         }
+
         out.println(firstLine);
 
         String returnPrefix = "";
