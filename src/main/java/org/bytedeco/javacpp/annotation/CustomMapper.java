@@ -25,4 +25,15 @@ public @interface CustomMapper {
      * @return The filePath of the file, which contains the mapping.
      */
     String filePath() default "";
+
+    /**
+     * @return True if the CType of the parameters shall be used instead of the jType, to feed the calling function.
+     */
+    boolean passCTypeParams() default false;
+
+    /**
+     *
+     * @return True if the parameter of the function shall be dereferenced.
+     */
+    boolean dereferenceParams() default false;
 }

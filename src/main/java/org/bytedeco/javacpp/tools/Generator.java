@@ -2166,6 +2166,8 @@ public class Generator {
             parametersBefore(methodInfo);
             String returnPrefix = returnBefore(methodInfo);
 
+            // ByPtr || ByPtrRef || (ByRef && std::string)
+
             boolean containsCustomMapping = false;
             for (Annotation annotation : methodInfo.annotations) {
                 if (annotation.annotationType().equals(CustomMapper.class)) {
@@ -2180,7 +2182,7 @@ public class Generator {
                         if (currentParamCount > 0) {
                             argsString.append(", "); // Add comma separator for all but the first argument
                         }
-                        argsString.append("arg").append(currentParamCount); // Append arg0, arg1, etc.
+                        argsString.append(mapper.dereferenceParams() ? "*" : "").append(mapper.passCTypeParams() ? "ptr" : "arg").append(currentParamCount); // Append arg0, arg1, etc.
                     }
                     String functionName = String.format("ptr->%s(%s)", methodInfo.name, argsString);
 
