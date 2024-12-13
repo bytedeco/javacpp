@@ -180,6 +180,13 @@ public @interface Platform {
     String library() default "";
 
     /**
+     * Allows the user to add custom JNI Code from resources.
+     *
+     * @return An Array of all the files (from resources) which contain custom JNI code.
+     */
+    String[] addCustomJNIFrom() default {};
+
+    /**
      * Mappings for custom exceptions.
      * @return An array of {@link ExceptionMapper}, which determines the mapping of custom native exceptions to any javaException.
      */

@@ -1087,6 +1087,15 @@ public class Generator {
         out.println("};");
         out.println();
 
+        //////////////////// CUSTOM JNI CODE ////////////////////
+        List<String> customJNIFilePaths = clsProperties.get("platform.addCustomJNIFrom");
+        for(String customJNIFilePath : customJNIFilePaths) {
+            String fileContent = getFileContentFromOther(customJNIFilePath);
+            out.println(fileContent);
+        }
+        //////////////////// CUSTOM JNI CODE ////////////////////
+
+
         //////////////////// EXCEPTION HANDLER ////////////////////
         if (handleExceptions) {
             out.println("#include <stdexcept>");
@@ -2194,7 +2203,6 @@ public class Generator {
                         String content = mapper.customMapping().replace("$funcName", functionName);
                         out.println(content);
                     }
-                    break;
                 }
             }
 

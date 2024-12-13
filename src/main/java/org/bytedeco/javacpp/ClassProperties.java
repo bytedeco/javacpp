@@ -192,7 +192,7 @@ public class ClassProperties extends HashMap<String, List<String>> {
         }
         boolean hasPlatformProperties = platforms != null && platforms.length > (classProperties != null && classPlatform != null ? 1 : 0);
 
-        String[] exceptionMappings = {}, pragma = {}, define = {}, exclude = {}, include = {}, cinclude = {}, includepath = {}, includeresource = {}, compiler = {}, linkpath = {}, linkresource = {}, link = {}, frameworkpath = {}, framework = {}, preloadpath = {}, preloadresource = {}, preload = {}, resourcepath = {}, resource = {}, extension = {}, executablepath = {}, executable = {};
+        String[] addCustomJNIFrom = {}, exceptionMappings = {}, pragma = {}, define = {}, exclude = {}, include = {}, cinclude = {}, includepath = {}, includeresource = {}, compiler = {}, linkpath = {}, linkresource = {}, link = {}, frameworkpath = {}, framework = {}, preloadpath = {}, preloadresource = {}, preload = {}, resourcepath = {}, resource = {}, extension = {}, executablepath = {}, executable = {};
         String library = "jni" + c.getSimpleName();
         if (hasPlatformProperties) {
             if (ourTarget != null && ourTarget.length() > 0) {
@@ -240,7 +240,7 @@ public class ClassProperties extends HashMap<String, List<String>> {
                     }
                     exceptionMappings = exceptionMappingsList.toArray(new String[0]);
                 }
-
+                if (p.addCustomJNIFrom().length > 0) { addCustomJNIFrom = p.addCustomJNIFrom(); }
                 if (p.pragma().length > 0) { pragma = p.pragma(); }
                 if (p.define().length > 0) { define = p.define(); }
                 if (p.exclude().length > 0) { exclude = p.exclude(); }
@@ -291,6 +291,7 @@ public class ClassProperties extends HashMap<String, List<String>> {
         }
 
         addAll("platform.exceptionMappings", exceptionMappings);
+        addAll("platform.addCustomJNIFrom", addCustomJNIFrom);
         addAll("platform.pragma", pragma);
         addAll("platform.define", define);
         addAll("platform.exclude", exclude);
