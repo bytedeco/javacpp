@@ -26,6 +26,8 @@ public @interface CustomMapper {
      */
     String filePath() default "";
 
+    String deallocatorName() default "";
+
     /**
      * @return True if the CType of the parameters shall be used instead of the jType, to feed the calling function.
      */

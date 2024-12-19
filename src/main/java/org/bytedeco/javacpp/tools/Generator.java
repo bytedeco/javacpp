@@ -2180,6 +2180,7 @@ public class Generator {
             String functionName = "";
             String nativeFunction;
             String fileContent = "";
+            String deallocator = "";
 
             for (Annotation annotation : methodInfo.annotations) {
                 if (annotation.annotationType().equals(CustomMapper.class)) {
@@ -2187,6 +2188,7 @@ public class Generator {
 
                     CustomMapper mapper = (CustomMapper) annotation;
                     final String mappingFilePath = mapper.filePath();
+                    deallocator = mapper.deallocatorName();
 
                     int paramCount = methodInfo.parameterTypes.length;
                     argsString = new StringBuilder();
@@ -2208,12 +2210,32 @@ public class Generator {
 
             // ignore the default mapping if the customMapping has been enabled
             if (containsCustomMapping) {
+                if (fileContent.contains("$initPointer") && deallocator.isEmpty()) {
+                    throw new IllegalStateException("You must specify the deallocator name, when using the $initPointer placeholder");
+                }
+
+
+                StringBuilder initPointer = new StringBuilder();
+                initPointer.append("        if (rptr != NULL) {\n");
+                initPointer.append("            if (JavaCPP_haveAllocObject) {\n");
+                initPointer.append("                rarg = env->AllocObject(env->FindClass(\"" + methodInfo.returnType.getName().replace('.', '/') + "\"));\n");
+                initPointer.append("            }\n\n");
+                initPointer.append("            if (rarg != NULL) {\n");
+                initPointer.append("                jlong rcapacity = 1;\n");
+                initPointer.append("                JavaCPP_initPointer(env, rarg, rptr, rcapacity, rptr, &" + deallocator + ");\n");
+                initPointer.append("            }\n");
+                initPointer.append("        }\n");
+
+
                 if(functionName.isEmpty()) {
                     functionName = methodInfo.name;
                 }
                 nativeFunction = String.format("ptr->%s(%s)", functionName, argsString);
                 fileContent = fileContent.replace("$funcName", nativeFunction);
+                fileContent = fileContent.replace("$initPointer", initPointer.toString());
                 out.println(fileContent);
+
+
             } else {
                 call(methodInfo, returnPrefix, false);
                 returnAfter(methodInfo);
