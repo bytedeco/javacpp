@@ -2175,9 +2175,12 @@ public class Generator {
             parametersBefore(methodInfo);
             String returnPrefix = returnBefore(methodInfo);
 
-            // ByPtr || ByPtrRef || (ByRef && std::string)
-
             boolean containsCustomMapping = false;
+            StringBuilder argsString = new StringBuilder();
+            String functionName = "";
+            String nativeFunction;
+            String fileContent = "";
+
             for (Annotation annotation : methodInfo.annotations) {
                 if (annotation.annotationType().equals(CustomMapper.class)) {
                     containsCustomMapping = true;
@@ -2186,28 +2189,32 @@ public class Generator {
                     final String mappingFilePath = mapper.filePath();
 
                     int paramCount = methodInfo.parameterTypes.length;
-                    StringBuilder argsString = new StringBuilder();
+                    argsString = new StringBuilder();
                     for (int currentParamCount = 0; currentParamCount < paramCount; currentParamCount++) {
                         if (currentParamCount > 0) {
                             argsString.append(", "); // Add comma separator for all but the first argument
                         }
                         argsString.append(mapper.dereferenceParams() ? "*" : "").append(mapper.passCTypeParams() ? "ptr" : "arg").append(currentParamCount); // Append arg0, arg1, etc.
                     }
-                    String functionName = String.format("ptr->%s(%s)", methodInfo.name, argsString);
-
                     if (!mappingFilePath.isEmpty()) {
-                        String fileContent = getFileContentFromOther(mappingFilePath);
-                        fileContent = fileContent.replace("$funcName", functionName);
-                        out.println(fileContent);
+                        fileContent = getFileContentFromOther(mappingFilePath);
                     } else {
-                        String content = mapper.customMapping().replace("$funcName", functionName);
-                        out.println(content);
+                        fileContent = mapper.customMapping();
                     }
+                } else if(annotation.annotationType().equals(Name.class)) {
+                    functionName = ((Name) annotation).value()[0];
                 }
             }
 
             // ignore the default mapping if the customMapping has been enabled
-            if (!containsCustomMapping) {
+            if (containsCustomMapping) {
+                if(functionName.isEmpty()) {
+                    functionName = methodInfo.name;
+                }
+                nativeFunction = String.format("ptr->%s(%s)", functionName, argsString);
+                fileContent = fileContent.replace("$funcName", nativeFunction);
+                out.println(fileContent);
+            } else {
                 call(methodInfo, returnPrefix, false);
                 returnAfter(methodInfo);
             }
