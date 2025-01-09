@@ -17,16 +17,19 @@ public @interface CustomMapper {
      *
      * @return A String which will be directly used for the mapping.
      */
-    String customMapping() default "// do Nothing";
+    String customMapping() default "";
 
     /**
      * FilePath of the file, which contains the mapping.
      *
      * @return The filePath of the file, which contains the mapping.
      */
-    String filePath() default "";
+    String[] filePaths() default {};
 
-    String deallocatorName() default "";
+    /**
+     * Set the name of the function to be called
+     */
+    String functionCall() default "";
 
     /**
      * @return True if the CType of the parameters shall be used instead of the jType, to feed the calling function.

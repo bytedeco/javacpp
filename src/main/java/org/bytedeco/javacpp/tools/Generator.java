@@ -2176,66 +2176,38 @@ public class Generator {
             String returnPrefix = returnBefore(methodInfo);
 
             boolean containsCustomMapping = false;
-            StringBuilder argsString = new StringBuilder();
-            String functionName = "";
-            String nativeFunction;
-            String fileContent = "";
-            String deallocator = "";
+            String functionCall = "";
+            StringBuilder fileContent = new StringBuilder();
 
             for (Annotation annotation : methodInfo.annotations) {
                 if (annotation.annotationType().equals(CustomMapper.class)) {
                     containsCustomMapping = true;
-
                     CustomMapper mapper = (CustomMapper) annotation;
-                    final String mappingFilePath = mapper.filePath();
-                    deallocator = mapper.deallocatorName();
+
+                    final String[] mappingFilePaths = mapper.filePaths();
 
                     int paramCount = methodInfo.parameterTypes.length;
-                    argsString = new StringBuilder();
+                    StringBuilder argsString = new StringBuilder();
                     for (int currentParamCount = 0; currentParamCount < paramCount; currentParamCount++) {
                         if (currentParamCount > 0) {
                             argsString.append(", "); // Add comma separator for all but the first argument
                         }
                         argsString.append(mapper.dereferenceParams() ? "*" : "").append(mapper.passCTypeParams() ? "ptr" : "arg").append(currentParamCount); // Append arg0, arg1, etc.
                     }
-                    if (!mappingFilePath.isEmpty()) {
-                        fileContent = getFileContentFromOther(mappingFilePath);
-                    } else {
-                        fileContent = mapper.customMapping();
+
+                    functionCall = mapper.functionCall().isEmpty() ? String.format("ptr->%s(%s)", methodInfo.name, argsString) : mapper.functionCall();
+                    fileContent = new StringBuilder(mapper.customMapping());
+
+                    for (String path : mappingFilePaths) {
+                        fileContent.append(getFileContentFromOther(path));
                     }
-                } else if(annotation.annotationType().equals(Name.class)) {
-                    functionName = ((Name) annotation).value()[0];
                 }
             }
 
             // ignore the default mapping if the customMapping has been enabled
             if (containsCustomMapping) {
-                if (fileContent.contains("$initPointer") && deallocator.isEmpty()) {
-                    throw new IllegalStateException("You must specify the deallocator name, when using the $initPointer placeholder");
-                }
-
-
-                StringBuilder initPointer = new StringBuilder();
-                initPointer.append("        if (rptr != NULL) {\n");
-                initPointer.append("            if (JavaCPP_haveAllocObject) {\n");
-                initPointer.append("                rarg = env->AllocObject(env->FindClass(\"" + methodInfo.returnType.getName().replace('.', '/') + "\"));\n");
-                initPointer.append("            }\n\n");
-                initPointer.append("            if (rarg != NULL) {\n");
-                initPointer.append("                jlong rcapacity = 1;\n");
-                initPointer.append("                JavaCPP_initPointer(env, rarg, rptr, rcapacity, rptr, &" + deallocator + ");\n");
-                initPointer.append("            }\n");
-                initPointer.append("        }\n");
-
-
-                if(functionName.isEmpty()) {
-                    functionName = methodInfo.name;
-                }
-                nativeFunction = String.format("ptr->%s(%s)", functionName, argsString);
-                fileContent = fileContent.replace("$funcName", nativeFunction);
-                fileContent = fileContent.replace("$initPointer", initPointer.toString());
+                fileContent = new StringBuilder(fileContent.toString().replace("$funcName", functionCall));
                 out.println(fileContent);
-
-
             } else {
                 call(methodInfo, returnPrefix, false);
                 returnAfter(methodInfo);
