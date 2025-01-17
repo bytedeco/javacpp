@@ -24,7 +24,6 @@ package org.bytedeco.javacpp.tools;
 
 import org.bytedeco.javacpp.ClassProperties;
 import org.bytedeco.javacpp.Loader;
-import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.net.URI;
@@ -45,9 +44,6 @@ import java.util.zip.ZipEntry;
  * @author Samuel Audet
  */
 public class Builder {
-
-    private static final org.slf4j.Logger log = LoggerFactory.getLogger(Builder.class);
-
     /**
      * Deletes {@link #outputDirectory} if {@link #clean} is true.
      * @throws IOException
@@ -1483,7 +1479,6 @@ public class Builder {
             command.add(c.getCanonicalName());
             command.addAll(Arrays.asList(execArgs));
 
-            log.info("RUNNING COMMAND: " + Arrays.toString(command.toArray(new String[0])));
             System.exit(builder.commandExecutor.executeCommand(command, builder.workingDirectory, builder.environmentVariables));
 
         } else if (builder.compileSingleDll) {
@@ -1498,7 +1493,7 @@ public class Builder {
 
             ClassProperties classProperties = Loader.loadProperties(classes.toArray(new Class[0]), builder.properties, true);
             List<String> actualCommand = builder.getActualCommand(outputFilesList.toArray(new String[0]), filenamePrefix + outputFilename + filenameSuffix, classProperties);
-            log.info("RUNNING COMMAND TO BUILD SINGLE DLL: " + Arrays.toString(actualCommand.toArray(new String[0])));
+            System.out.println("RUNNING COMMAND TO BUILD SINGLE DLL: " + Arrays.toString(actualCommand.toArray(new String[0])));
             System.exit(builder.commandExecutor.executeCommand(actualCommand, new File("build"), builder.environmentVariables));
         }
     }
