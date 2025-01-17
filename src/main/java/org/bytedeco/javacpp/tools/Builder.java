@@ -22,43 +22,19 @@
 
 package org.bytedeco.javacpp.tools;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import org.bytedeco.javacpp.ClassProperties;
+import org.bytedeco.javacpp.Loader;
+import org.slf4j.LoggerFactory;
+
+import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.DirectoryNotEmptyException;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.FileVisitOption;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
-
-import org.bytedeco.javacpp.ClassProperties;
-import org.bytedeco.javacpp.Loader;
 
 /**
  * The Builder is responsible for coordinating efforts between the Parser, the
@@ -69,6 +45,8 @@ import org.bytedeco.javacpp.Loader;
  * @author Samuel Audet
  */
 public class Builder {
+
+    private static final org.slf4j.Logger log = LoggerFactory.getLogger(Builder.class);
 
     /**
      * Deletes {@link #outputDirectory} if {@link #clean} is true.
@@ -192,17 +170,7 @@ public class Builder {
         }
     }
 
-    /**
-     * Launches and waits for the native compiler to produce a native shared library.
-     *
-     * @param sourceFilenames the C++ source filenames
-     * @param outputFilename the output filename of the shared library
-     * @param properties the Properties detailing the compiler options to use
-     * @return the result of {@link Process#waitFor()}
-     * @throws IOException
-     * @throws InterruptedException
-     */
-    int compile(String[] sourceFilenames, String outputFilename, ClassProperties properties, File workingDirectory)
+    List<String> getActualCommand(String[] sourceFilenames, String outputFilename, ClassProperties properties)
             throws IOException, InterruptedException {
         ArrayList<String> command = new ArrayList<String>();
 
@@ -268,9 +236,11 @@ public class Builder {
             }
         }
 
+        Set<String> sourceFilenamesSet = new HashSet<>();
         for (int i = sourceFilenames.length - 1; i >= 0; i--) {
-            command.add(sourceFilenames[i]);
+            sourceFilenamesSet.add(sourceFilenames[i]);
         }
+        command.addAll(sourceFilenamesSet);
 
         List<String> allOptions = properties.get("platform.compiler.*");
         if (!allOptions.contains("!default") && !allOptions.contains("default")) {
@@ -441,9 +411,31 @@ public class Builder {
             command.set(i, arg);
         }
 
+        return command;
+    }
+
+
+    int compile(List<String> command, File workingDirectory) throws IOException, InterruptedException {
         // Use the library output path as the working directory so that all
         // build files, including intermediate ones from MSVC, are dumped there
         return commandExecutor.executeCommand(command, workingDirectory, environmentVariables);
+    }
+
+    /**
+     * Launches and waits for the native compiler to produce a native shared library.
+     *
+     * @param sourceFilenames the C++ source filenames
+     * @param outputFilename  the output filename of the shared library
+     * @param properties      the Properties detailing the compiler options to use
+     * @return the result of {@link Process#waitFor()}
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    int compile(String[] sourceFilenames, String outputFilename, ClassProperties properties, File workingDirectory) throws IOException, InterruptedException {
+        List<String> actualCommand = getActualCommand(sourceFilenames, outputFilename, properties);
+        // Use the library output path as the working directory so that all
+        // build files, including intermediate ones from MSVC, are dumped there
+        return commandExecutor.executeCommand(actualCommand, workingDirectory, environmentVariables);
     }
 
     /**
@@ -585,7 +577,7 @@ public class Builder {
             }
         }
         if (generated) {
-            if (compile) {
+            if (compile && !compileSingleDll) {
                 int exitValue = 0;
                 String s = properties.getProperty("platform.library.static", "false").toLowerCase();
                 if (s.equals("true") || s.equals("t") || s.equals("")) {
@@ -722,6 +714,8 @@ public class Builder {
 
     /** Logger where to send debug, info, warning, and error messages. */
     final Logger logger;
+    /** Flag allows the user to compile the generated files into a single .dll/.so instead of multiple different ones */
+    boolean compileSingleDll = false;
     /** The name of the character encoding used for input files as well as output files. */
     String encoding = null;
     /** The directory where the generated files and compiled shared libraries get written to.
@@ -803,6 +797,15 @@ public class Builder {
         this.compile = compile;
         return this;
     }
+
+    /**
+     * Sets the {@link #compileSingleDll} field to the argument.
+     */
+    public Builder compileSingleDll(boolean compileSingleDll) {
+        this.compileSingleDll = compileSingleDll;
+        return this;
+    }
+
     /** Sets the {@link #deleteJniFiles} field to the argument. */
     public Builder deleteJniFiles(boolean deleteJniFiles) {
         this.deleteJniFiles = deleteJniFiles;
@@ -1326,6 +1329,7 @@ public class Builder {
         System.out.println("    -clean                 Delete the output directory before generating anything in it");
         System.out.println("    -nogenerate            Do not try to generate C++ source files, only try to parse header files");
         System.out.println("    -nocompile             Do not compile or delete the generated C++ source files");
+        System.out.println("    -compile-single-dll    Compile the generated C++ source files, to a single linked library");
         System.out.println("    -nodelete              Do not delete generated C++ JNI files after compilation");
         System.out.println("    -header                Generate header file with declarations of callbacks functions");
         System.out.println("    -copylibs              Copy to output directory dependent libraries (link and preload)");
@@ -1407,6 +1411,10 @@ public class Builder {
                 i = args.length;
             } else if ("-print".equals(args[i])) {
                 printPath = args[++i];
+
+            } else if ("-compile-single-dll".equals(args[i])) {
+                builder.compileSingleDll(true);
+
             } else if (args[i].startsWith("-")) {
                 builder.logger.error("Invalid option \"" + args[i] + "\"");
                 printHelp();
@@ -1462,6 +1470,8 @@ public class Builder {
             }
             Files.write(f, s.getBytes(), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
         }
+
+
         if (outputFiles != null && outputFiles.length > 0 && !classes.isEmpty() && execArgs != null) {
             Class c = classes.iterator().next();
             ArrayList<String> command = new ArrayList<String>(Arrays.asList("java", "-cp"));
@@ -1472,7 +1482,24 @@ public class Builder {
             command.add(paths);
             command.add(c.getCanonicalName());
             command.addAll(Arrays.asList(execArgs));
+
+            log.info("RUNNING COMMAND: " + Arrays.toString(command.toArray(new String[0])));
             System.exit(builder.commandExecutor.executeCommand(command, builder.workingDirectory, builder.environmentVariables));
+
+        } else if (builder.compileSingleDll) {
+            List<String> outputFilesList = new ArrayList<>();
+            for (File file : outputFiles) {
+                outputFilesList.add(file.getAbsolutePath());
+            }
+
+            final String filenamePrefix = builder.properties.getProperty("platform.library.prefix");
+            final String filenameSuffix = builder.properties.getProperty("platform.library.suffix");
+            String outputFilename = "javaCpp_single";
+
+            ClassProperties classProperties = Loader.loadProperties(classes.toArray(new Class[0]), builder.properties, true);
+            List<String> actualCommand = builder.getActualCommand(outputFilesList.toArray(new String[0]), filenamePrefix + outputFilename + filenameSuffix, classProperties);
+            log.info("RUNNING COMMAND TO BUILD SINGLE DLL: " + Arrays.toString(actualCommand.toArray(new String[0])));
+            System.exit(builder.commandExecutor.executeCommand(actualCommand, new File("build"), builder.environmentVariables));
         }
     }
 }
