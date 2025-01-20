@@ -1031,14 +1031,14 @@ public class Generator {
             out.println("    return JavaCPP_createStringFromBytes(env, ptr, std::char_traits<char>::length(ptr));");
             out.println("}");
             out.println();
-            out.println("static JavaCPP_noinline jstring JavaCPP_createStringFromUTF16(JNIEnv* env, const unsigned short* ptr, size_t length) {");
+            out.println("static JavaCPP_noinline jstring JavaCPP_createStringFromUTF16(JNIEnv* env, const char16_t* ptr, size_t length) {");
             out.println("    if (ptr == NULL) {");
             out.println("        return NULL;");
             out.println("    }");
             out.println("    return env->NewString(ptr, length);");
             out.println("}");
             out.println();
-            out.println("static JavaCPP_noinline jstring JavaCPP_createStringFromUTF16(JNIEnv* env, const unsigned short* ptr) {");
+            out.println("static JavaCPP_noinline jstring JavaCPP_createStringFromUTF16(JNIEnv* env, const char16_t* ptr) {");
             out.println("    if (ptr == NULL) {");
             out.println("        return NULL;");
             out.println("    }");
