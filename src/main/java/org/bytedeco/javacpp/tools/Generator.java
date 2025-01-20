@@ -1042,7 +1042,7 @@ public class Generator {
             out.println("    if (ptr == NULL) {");
             out.println("        return NULL;");
             out.println("    }");
-            out.println("    return JavaCPP_createStringFromUTF16(env, ptr, std::char_traits<unsigned short>::length(ptr));");
+            out.println("    return JavaCPP_createStringFromUTF16(env, ptr, std::char_traits<char16_t>::length(ptr));");
             out.println("}");
             out.println();
         }
@@ -2569,7 +2569,7 @@ public class Generator {
                 // special considerations for char arrays as strings
                 if (asUtf16(methodInfo, k)) {
                     out.print(indent + "memcpy(");
-                    suffix = ", (std::char_traits<unsigned short>::length(ptr" + k + ") + 1) * sizeof(unsigned short))";
+                    suffix = ", (std::char_traits<char16_t>::length(ptr" + k + ") + 1) * sizeof(unsigned short))";
                 } else {
                     out.print(indent + "strcpy((char*)");
                 }
