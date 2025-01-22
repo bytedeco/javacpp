@@ -1035,7 +1035,7 @@ public class Generator {
             out.println("    if (ptr == NULL) {");
             out.println("        return NULL;");
             out.println("    }");
-            out.println("    return env->NewString(ptr, length);");
+            out.println("    return env->NewString(reinterpret_cast<const jchar*>(ptr), length);");
             out.println("}");
             out.println();
             out.println("static JavaCPP_noinline jstring JavaCPP_createStringFromUTF16(JNIEnv* env, const char16_t* ptr) {");
@@ -2569,7 +2569,7 @@ public class Generator {
                 // special considerations for char arrays as strings
                 if (asUtf16(methodInfo, k)) {
                     out.print(indent + "memcpy(");
-                    suffix = ", (std::char_traits<char16_t>::length(ptr" + k + ") + 1) * sizeof(unsigned short))";
+                    suffix = ", (std::char_traits<char16_t>::length(ptr" + k + ") + 1) * sizeof(char16_t))";
                 } else {
                     out.print(indent + "strcpy((char*)");
                 }
