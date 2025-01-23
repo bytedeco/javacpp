@@ -4512,6 +4512,8 @@ public class Generator {
             }
         } catch (IOException e) {
             throw new RuntimeException("Unable to load file: " + filePath, e);
+        } catch (NullPointerException e) {
+            throw new RuntimeException("Null pointer exception thrown for file: " + filePath, e);
         }
 
         return result.toString();
