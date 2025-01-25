@@ -3036,6 +3036,7 @@ public class Generator {
 
         String instanceTypeName = functionClassName(cls);
         String[] callbackTypeName = cppFunctionTypeName(callbackMethod);
+
         String[] returnConvention = callbackTypeName[0].split("\\(");
         String[] returnType = {returnConvention[0] + (returnConvention.length > 2 ? "(*" : ""), returnConvention.length > 2 ? ")(" + returnConvention[2] : ""};
         if (returnConvention.length > 2) {
@@ -3062,6 +3063,11 @@ public class Generator {
                 callbackArguments += ", ";
             }
         }
+
+        Virtual virtualAnnotation = null;
+        String customReturnType = "";
+        String customMethodName = "";
+        String[] customParamTypes = {};
 
         String firstLine = "";
         if (methodInfo != null) {
@@ -3105,14 +3111,33 @@ public class Generator {
                     }
                 }
 
-                member += "virtual " + returnType[0] + (returnConvention.length > 1 ? returnConvention[1] : "") + methodInfo.memberName[0] + parameterDeclaration + returnType[1] + (isConstMember ? " const" : "") + " JavaCPP_override;\n    " + returnType[0] + "super_" + methodInfo.name + nonconstParamDeclaration + returnType[1] + " { ";
+                virtualAnnotation = methodInfo.method.getAnnotation(Virtual.class);
+                customReturnType = virtualAnnotation.returnType();
+                customMethodName = virtualAnnotation.methodName();
+                customParamTypes = virtualAnnotation.callbackParameterTypes();
+
+                String customParams = "(";
+                for (int i = 0; i < customParamTypes.length; ++i) {
+                    customParams += customParamTypes[i] + "arg" + i;
+                    if (i < customParamTypes.length - 1) { customParams += ", "; }
+                }
+                customParams += ")";
+
+                StringBuilder memberBuilder = new StringBuilder();
+                memberBuilder.append("virtual ").append(customReturnType.isEmpty() ? returnType[0] : customReturnType).append(returnConvention.length > 1 ? returnConvention[1] : "").append(customMethodName.isEmpty() ? methodInfo.memberName[0] : customMethodName).append(customParamTypes.length == 0 ? parameterDeclaration + returnType[1] : customParams).append(isConstMember ? " const" : "").append(" JavaCPP_override;\n    ").append(customReturnType.isEmpty() ? returnType[0] : customReturnType).append("super_" + (customMethodName.isEmpty() ? methodInfo.name : customMethodName)).append(customParamTypes.length == 0 ? nonconstParamDeclaration + returnType[1] : customParams).append(" { ");
+                member += memberBuilder.toString();
+
                 if (methodInfo.method.getAnnotation(Virtual.class).value()) {
                     member += "throw JavaCPP_exception(\"Cannot call pure virtual function " + valueTypeName + "::" + methodInfo.memberName[0] + "().\"); }";
                 } else {
                     member += (callbackReturnType != void.class ? "return " : "") + valueTypeName + "::" + methodInfo.memberName[0] + "(";
                     member += callbackArguments + "); }";
                 }
-                firstLine = returnType[0] + (returnConvention.length > 1 ? returnConvention[1] : "") + subType + "::" + methodInfo.memberName[0] + parameterDeclaration + returnType[1] + (isConstMember ? " const" : "") +" {";
+
+                StringBuilder firstLineBuilder = new StringBuilder();
+                firstLineBuilder.append(customReturnType.isEmpty() ? returnType[0] + (returnConvention.length > 1 ? returnConvention[1] : "") : customReturnType).append(subType + "::").append(customMethodName.isEmpty() ? methodInfo.memberName[0] : customMethodName).append(customParamTypes.length == 0 ? parameterDeclaration + returnType[1] : customParams).append(isConstMember ? " const" : "").append(" {");
+
+                firstLine = firstLineBuilder.toString();
                 functionList.add(fieldName);
             }
             memberList.add(member);
@@ -3182,7 +3207,8 @@ public class Generator {
         out.println("    }");
         out.println("{");
         if (callbackParameterTypes.length > 0) {
-            out.println("    jvalue args[" + callbackParameterTypes.length + "];");
+
+            out.println("    jvalue args[" + (customParamTypes.length == 0 ? callbackParameterTypes.length : customParamTypes.length) + "];");
             for (int j = 0; j < callbackParameterTypes.length; j++) {
                 Annotation passBy = by(callbackParameterAnnotations[j]);
                 if (callbackParameterTypes[j].isPrimitive()) {
@@ -3224,7 +3250,14 @@ public class Generator {
                             valueTypeName = subType;
                         }
                         out.println("    " + jniTypeName(callbackParameterTypes[j]) + " obj" + j + " = NULL;");
-                        out.println("    " + typeName[0] + " ptr" + j + typeName[1] + " = NULL;");
+
+                        String paramType = typeName[0];
+                        try {
+                            paramType = customParamTypes[j].replace('&', '*').replace("const", "");
+                        } catch (IndexOutOfBoundsException e) {
+                            // do nothing
+                        }
+                        out.println("    " + paramType + " ptr" + j + typeName[1] + " = NULL;");
                         if (FunctionPointer.class.isAssignableFrom(callbackParameterTypes[j])) {
                             out.println("    ptr" + j + " = new (std::nothrow) " + valueTypeName + ";");
                             out.println("    if (ptr" + j + " != NULL) {");
@@ -3243,6 +3276,13 @@ public class Generator {
                             out.println("        ptr" + j + " = " + cast + "*arg" + j + ";");
                             out.println("    }");
                         } else { // ByPtr || ByPtrRef
+                            try {
+                                cast = customParamTypes[j];
+                                if (cast.contains("&")) { cast = "(" + cast.replace("&", "*)&").replace("const", ""); }
+                            } catch (IndexOutOfBoundsException e) {
+                                // do nothing
+                            }
+
                             out.println("    ptr" + j + " = " + cast + "arg" + j + ";");
                         }
                     }
@@ -3268,6 +3308,7 @@ public class Generator {
                         adapterInfo = adapterInformation(true, valueTypeName, callbackParameterAnnotations[j]);
                         if (adapterInfo != null || passBy instanceof ByPtrPtr || passBy instanceof ByPtrRef) {
                             out.println(s);
+
                         } else {
                             out.println("    if (ptr" + j + " != NULL) { ");
                             out.println("    " + s);
@@ -3357,16 +3398,26 @@ public class Generator {
         out.println("    } else if (mid == NULL) {");
         out.println("        JavaCPP_log(\"Error getting method ID of function caller \\\"" + callbackMethod + "\\\" for callback.\");");
         out.println("    } else {");
+
+
         String s = "Object";
         if (callbackReturnType.isPrimitive()) {
             s = callbackReturnType.getName();
             s = Character.toUpperCase(s.charAt(0)) + s.substring(1);
         }
-        out.println("        " + returnPrefix + "env->Call" + s + "MethodA(obj, mid, " + (callbackParameterTypes.length == 0 ? "NULL);" : "args);"));
-        if (throwsExceptions) {
-            out.println("        if ((exc = env->ExceptionOccurred()) != NULL) {");
-            out.println("            env->ExceptionClear();");
-            out.println("        }");
+
+        if (virtualAnnotation != null && virtualAnnotation.customCallbackFilepath().length > 0) {
+            for (String path : virtualAnnotation.customCallbackFilepath()) {
+                out.println(getFileContentFromOther(path));
+            }
+        } else {
+
+            out.println("        " + returnPrefix + "env->Call" + s + "MethodA(obj, mid, " + (callbackParameterTypes.length == 0 ? "NULL);" : "args);"));
+            if (throwsExceptions) {
+                out.println("        if ((exc = env->ExceptionOccurred()) != NULL) {");
+                out.println("            env->ExceptionClear();");
+                out.println("        }");
+            }
         }
         out.println("    }");
 
@@ -3411,6 +3462,12 @@ public class Generator {
         }
         out.println("}");
         out.println("end:");
+
+        if (virtualAnnotation != null) {
+            for (String path : virtualAnnotation.customCallbackEndFilepath()) {
+                out.println(getFileContentFromOther(path));
+            }
+        }
 
         if (callbackReturnType != void.class) {
             if ("void*".equals(returnTypeName[0]) && !callbackReturnType.isAnnotationPresent(Opaque.class)) {
