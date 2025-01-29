@@ -3253,7 +3253,8 @@ public class Generator {
 
                         String paramType = typeName[0];
                         try {
-                            paramType = customParamTypes[j].replace('&', '*').replace("const", "");
+                            paramType = customParamTypes[j].replace("&", "");
+                            paramType = (paramType + "*").replace("const", "");
                         } catch (IndexOutOfBoundsException e) {
                             // do nothing
                         }
@@ -3279,11 +3280,15 @@ public class Generator {
                             try {
                                 cast = customParamTypes[j];
                                 if (cast.contains("&")) { cast = "(" + cast.replace("&", "*)&").replace("const", ""); }
+                                else if(cast.contains("*")) { cast = "(" + cast + ")"; }
+                                else {
+                                    cast = ("   new " + cast + "(*(" + cast + "*)&arg" + j + ");").replace("const", "");
+                                    out.println(cast);
+                                }
                             } catch (IndexOutOfBoundsException e) {
-                                // do nothing
+                                out.println("    ptr" + j + " = " + cast + "arg" + j + ";");
                             }
 
-                            out.println("    ptr" + j + " = " + cast + "arg" + j + ";");
                         }
                     }
 
