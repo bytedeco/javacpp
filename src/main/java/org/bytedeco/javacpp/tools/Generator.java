@@ -448,7 +448,12 @@ public class Generator {
         }
         out.println(" };");
         out.println("static jclass JavaCPP_classes[" + jclasses.size() + "] = { NULL };");
+
+        out.println("#include <mutex>");
         if (baseLoadSuffix != null && !baseLoadSuffix.isEmpty()) {
+            out.println("extern jobject gClassLoader;");
+            out.println("extern std::mutex gClassLoaderMutex;");
+
             out.println("extern JavaVM* JavaCPP_vm;");
             out.println("extern bool JavaCPP_haveAllocObject;");
             out.println("extern bool JavaCPP_haveNonvirtual;");
@@ -478,9 +483,12 @@ public class Generator {
 
         // only in javacpp.cpp
         } else {
-            out.println("extern JavaVM* JavaCPP_vm = NULL;");
-            out.println("extern bool JavaCPP_haveAllocObject = false;");
-            out.println("extern bool JavaCPP_haveNonvirtual = false;");
+            out.println("jobject gClassLoader = nullptr;");
+            out.println("std::mutex gClassLoaderMutex;");
+
+            out.println("JavaVM* JavaCPP_vm = NULL;");
+            out.println("bool JavaCPP_haveAllocObject = false;");
+            out.println("bool JavaCPP_haveNonvirtual = false;");
 
             out.println("jfieldID JavaCPP_addressFID = NULL;");
             out.println("jfieldID JavaCPP_positionFID = NULL;");
@@ -1767,7 +1775,16 @@ public class Generator {
             out.println();
             out.println("JNIEXPORT jint JNICALL JNI_OnLoad" + "(JavaVM* vm, void* reserved);");
             out.println("JNIEXPORT void JNICALL JNI_OnUnload" + "(JavaVM* vm, void* reserved);");
+
+            out.println("jclass findNVDClass(JNIEnv *env, const char *className);");
+            out.println("void ensureContextClassLoader(JNIEnv *env);");
+            out.println("void setClassLoader(jobject classLoader);");
+
         } else {
+            out.println();
+            out.println(getFileContentFromLocal("/org/bytedeco/javacpp/jniTemplates/JNIClassLoader.h"));
+            out.println();
+
             out.println(); // XXX: JNI_OnLoad() should ideally be protected by some mutex
             out.println("JNIEXPORT jint JNICALL JNI_OnLoad" + "(JavaVM* vm, void* reserved) {");
             out.println("    JNIEnv* env;");
