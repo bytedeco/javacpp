@@ -41,4 +41,11 @@ public @interface CustomMapper {
      * @return True if the parameter of the function shall be dereferenced.
      */
     boolean dereferenceParams() default false;
+
+    /**
+     * @return The values which should be replaced with (replaces index 0 with 1, 2 with 3...)
+     */
+    String[] replacements() default {};
+
+    String typename() default "";
 }

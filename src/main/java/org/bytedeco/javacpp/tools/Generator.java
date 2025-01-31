@@ -2175,6 +2175,16 @@ public class Generator {
                     typeName[0] = functionClassName(cls) + "*";
                     typeName[1] = "";
                 }
+
+                for (Annotation annotation : methodInfo.annotations) {
+                    if (annotation.annotationType().equals(CustomMapper.class)) {
+                        CustomMapper mapper = (CustomMapper) annotation;
+                        if (!mapper.typename().isEmpty()) {
+                            typeName[0] = mapper.typename();
+                        }
+                    }
+                }
+
                 out.println("    " + typeName[0] + " ptr" + typeName[1] + " = (" + typeName[0] + typeName[1] + ")jlong_to_ptr(env->GetLongField(obj, JavaCPP_addressFID));");
                 out.println("    if (ptr == NULL) {");
                 out.println("        env->ThrowNew(JavaCPP_getClass(env, " + jclasses.index(NullPointerException.class) + "), \"This pointer address is NULL.\");");
@@ -2203,10 +2213,11 @@ public class Generator {
             boolean containsCustomMapping = false;
             String functionCall = "";
             StringBuilder fileContent = new StringBuilder();
+            String[] replacements = {};
+            String customTypename = "";
 
             for (Annotation annotation : methodInfo.annotations) {
                 if (annotation.annotationType().equals(CustomMapper.class)) {
-                    containsCustomMapping = true;
                     CustomMapper mapper = (CustomMapper) annotation;
 
                     final String[] mappingFilePaths = mapper.filePaths();
@@ -2226,16 +2237,34 @@ public class Generator {
                     for (String path : mappingFilePaths) {
                         fileContent.append(getFileContentFromOther(path));
                     }
+
+                    replacements = mapper.replacements();
+                    containsCustomMapping = !fileContent.toString().isEmpty();
                 }
             }
 
             // ignore the default mapping if the customMapping has been enabled
             if (containsCustomMapping) {
+
                 fileContent = new StringBuilder(fileContent.toString().replace("$funcName", functionCall));
-                out.println(fileContent);
+                String actualContent = fileContent.toString();
+
+                if (replacements.length >= 2) {
+                    actualContent = replaceStrings(replacements, actualContent);
+                }
+                out.println(actualContent);
+
             } else {
-                call(methodInfo, returnPrefix, false);
-                returnAfter(methodInfo);
+                String call = callString(methodInfo, returnPrefix, false);
+                String returnAfter = returnAfterString(methodInfo);
+
+                if (replacements.length >= 2) {
+                    call = replaceStrings(replacements, call);
+                    returnAfter = replaceStrings(replacements, returnAfter);
+                }
+
+                out.println(call);
+                out.println(returnAfter);
             }
 
             parametersAfter(methodInfo);
@@ -2527,7 +2556,14 @@ public class Generator {
         return returnPrefix;
     }
 
-    void call(MethodInformation methodInfo, String returnPrefix, boolean secondCall) {
+    public void call(MethodInformation methodInfo, String returnPrefix, boolean secondCall) {
+        out.println(callString(methodInfo, returnPrefix, secondCall));
+    }
+
+    public String callString(MethodInformation methodInfo, String returnPrefix, boolean secondCall) {
+        StringWriter localSW = new StringWriter();
+        PrintWriter localPW = new PrintWriter(localSW);
+
         boolean needSecondCall = false;
         String indent = secondCall ? "" : methodInfo.throwsException != null ? "        " : "    ";
         String prefix = "(";
@@ -2538,68 +2574,70 @@ public class Generator {
             index = methodInfo.pairedMethod.getAnnotation(Index.class);
         }
         if (methodInfo.deallocator) {
-            out.println(indent + "void* allocatedAddress = jlong_to_ptr(arg0);");
-            out.println(indent + "void (*deallocatorAddress)(void*) = (void(*)(void*))jlong_to_ptr(arg1);");
-            out.println(indent + "if (deallocatorAddress != NULL && allocatedAddress != NULL) {");
-            out.println(indent + "    (*deallocatorAddress)(allocatedAddress);");
-            out.println(indent + "}");
-            return; // nothing else should be appended here for deallocator
+            localPW.println(indent + "void* allocatedAddress = jlong_to_ptr(arg0);");
+            localPW.println(indent + "void (*deallocatorAddress)(void*) = (void(*)(void*))jlong_to_ptr(arg1);");
+            localPW.println(indent + "if (deallocatorAddress != NULL && allocatedAddress != NULL) {");
+            localPW.println(indent + "    (*deallocatorAddress)(allocatedAddress);");
+            localPW.println(indent + "}");
+
+            localPW.flush();
+            return localSW.toString();
         } else if (!FunctionPointer.class.isAssignableFrom(methodInfo.cls) && (methodInfo.valueGetter || methodInfo.valueSetter || methodInfo.memberGetter || methodInfo.memberSetter)) {
             boolean wantsPointer = false;
             int k = methodInfo.parameterTypes.length - 1;
             if ((methodInfo.valueSetter || methodInfo.memberSetter) && !(by(methodInfo, k) instanceof ByRef) && adapterInformation(false, methodInfo, k) == null && methodInfo.parameterTypes[k] == String.class) {
                 // special considerations for char arrays as strings
                 if (asUtf16(methodInfo, k)) {
-                    out.print(indent + "memcpy(");
+                    localPW.print(indent + "memcpy(");
                     suffix = ", (std::char_traits<unsigned short>::length(ptr" + k + ") + 1) * sizeof(unsigned short))";
                 } else {
-                    out.print(indent + "strcpy((char*)");
+                    localPW.print(indent + "strcpy((char*)");
                 }
                 wantsPointer = true;
                 prefix = ", ";
             } else if (k >= 1 && methodInfo.parameterTypes[0].isArray() && methodInfo.parameterTypes[0].getComponentType().isPrimitive() && (methodInfo.parameterTypes[1] == int.class || methodInfo.parameterTypes[1] == long.class)) {
                 // special considerations for primitive arrays
-                out.print(indent + "memcpy(");
+                localPW.print(indent + "memcpy(");
                 wantsPointer = true;
                 prefix = ", ";
                 if (methodInfo.memberGetter || methodInfo.valueGetter) {
-                    out.print("ptr0 + arg1, ");
+                    localPW.print("ptr0 + arg1, ");
                 } else { // methodInfo.memberSetter || methodInfo.valueSetter
                     prefix += "ptr0 + arg1, ";
                 }
                 skipParameters = 2;
                 suffix = " * sizeof(*ptr0)" + suffix;
             } else {
-                out.print(indent + returnPrefix);
+                localPW.print(indent + returnPrefix);
                 prefix = methodInfo.valueGetter || methodInfo.memberGetter ? "" : " = ";
                 suffix = "";
             }
             if (Modifier.isStatic(methodInfo.modifiers) || !Pointer.class.isAssignableFrom(methodInfo.cls)) {
-                out.print(cppScopeName(methodInfo));
+                localPW.print(cppScopeName(methodInfo));
             } else if (methodInfo.memberGetter || methodInfo.memberSetter) {
                 if (index != null) {
-                    out.print("(*ptr)");
+                    localPW.print("(*ptr)");
                     prefix = "." + methodInfo.memberName[0] + prefix;
                 } else {
-                    out.print("ptr->" + methodInfo.memberName[0]);
+                    localPW.print("ptr->" + methodInfo.memberName[0]);
                 }
             } else { // methodInfo.valueGetter || methodInfo.valueSetter
                 String cast = cast(methodInfo.returnType, methodInfo.annotations);
                 if (index == null && cast.length() > 0) {
                     // make sure to cast the returned pointer and not the value
-                    out.print("*(" + cast.substring(1, cast.length() - 1) + "*)&");
+                    localPW.print("*(" + cast.substring(1, cast.length() - 1) + "*)&");
                 }
-                out.print(index != null ? "(*ptr)" : methodInfo.dim > 0 || wantsPointer ? "ptr" : "*ptr");
+                localPW.print(index != null ? "(*ptr)" : methodInfo.dim > 0 || wantsPointer ? "ptr" : "*ptr");
             }
         } else if (methodInfo.bufferGetter) {
-            out.print(indent + returnPrefix + "ptr");
+            localPW.print(indent + returnPrefix + "ptr");
             prefix = "";
             suffix = "";
         } else { // function call
-            out.print(indent + returnPrefix);
+            localPW.print(indent + returnPrefix);
             if (FunctionPointer.class.isAssignableFrom(methodInfo.cls)) {
                 if (methodInfo.cls.isAnnotationPresent(Namespace.class)) {
-                    out.print("(ptr0->*(ptr->ptr))");
+                    localPW.print("(ptr0->*(ptr->ptr))");
                     skipParameters = 1;
                     if (methodInfo.valueGetter || methodInfo.valueSetter) {
                         // this is get/put for a field pointer, not a real function
@@ -2608,11 +2646,11 @@ public class Generator {
                     }
                 } else {
                     if (methodInfo.valueGetter || methodInfo.valueSetter) {
-                        out.print("ptr->ptr");
+                        localPW.print("ptr->ptr");
                         prefix = methodInfo.valueGetter ? "" : " = ";
                         suffix = "";
                     } else {
-                        out.print("(*ptr->ptr)");
+                        localPW.print("(*ptr->ptr)");
                     }
                 }
             } else if (methodInfo.allocator) {
@@ -2628,10 +2666,10 @@ public class Generator {
                     suffix = "";
                 } else {
                     if (methodInfo.method.isAnnotationPresent(Name.class)) {
-                        out.print(methodInfo.memberName[0]);
+                        localPW.print(methodInfo.memberName[0]);
                         // If method is an array allocator, the function must return a pointer to an array
                     } else {
-                        out.print((noException(methodInfo.cls, methodInfo.method) ? "new (std::nothrow) " : "new ") + valueTypeName + typeName[1]);
+                        localPW.print((noException(methodInfo.cls, methodInfo.method) ? "new (std::nothrow) " : "new ") + valueTypeName + typeName[1]);
                         if (methodInfo.arrayAllocator) {
                             prefix = "[";
                             suffix = "]";
@@ -2639,7 +2677,7 @@ public class Generator {
                     }
                 }
             } else if (Modifier.isStatic(methodInfo.modifiers) || !Pointer.class.isAssignableFrom(methodInfo.cls)) {
-                out.print(cppScopeName(methodInfo));
+                localPW.print(cppScopeName(methodInfo));
             } else {
                 String name = methodInfo.memberName[0];
                 String[] typeName = cppTypeName(methodInfo.cls);
@@ -2648,28 +2686,28 @@ public class Generator {
                     String subType = "JavaCPP_" + mangle(valueTypeName);
                     if (Modifier.isPublic(methodInfo.method.getModifiers())) {
                         // non-protected method that could be from any subclass, so check for ours
-                        out.print("(dynamic_cast<" + subType + "*>(ptr) != NULL ? ");
+                        localPW.print("(dynamic_cast<" + subType + "*>(ptr) != NULL ? ");
                         needSecondCall = true;
                     }
                     if (methodInfo.method.isAnnotationPresent(Virtual.class)) {
                         name = "super_" + methodInfo.name;
                     }
-                    out.print("((" + subType + "*)ptr)->" + name);
+                    localPW.print("((" + subType + "*)ptr)->" + name);
                 } else if (secondCall && methodInfo.method.getDeclaringClass() != methodInfo.cls) {
                     // we may have a protected virtual method that isn't protected in the superclass, so let's cast
                     String[] typeName2 = cppTypeName(methodInfo.method.getDeclaringClass());
-                    out.print("((" + typeName2[0] + typeName2[1] + ")ptr)->" + name);
+                    localPW.print("((" + typeName2[0] + typeName2[1] + ")ptr)->" + name);
                 } else if (index != null) {
-                    out.print("(*ptr)");
+                    localPW.print("(*ptr)");
                     prefix = "." + name + prefix;
                 } else {
                     String op = name.startsWith("operator") ? name.substring(8).trim() : "";
                     if (methodInfo.parameterTypes.length > 0 && (op.equals("=") || op.equals("+") || op.equals("-") || op.equals("*") || op.equals("/") || op.equals("%") || op.equals("==") || op.equals("!=") || op.equals("<") || op.equals(">") || op.equals("<=") || op.equals(">="))) {
-                        out.print("((*ptr)");
+                        localPW.print("((*ptr)");
                         prefix = op + prefix;
                         suffix += ")";
                     } else {
-                        out.print("ptr->" + name);
+                        localPW.print("ptr->" + name);
                     }
                 }
             }
@@ -2678,13 +2716,13 @@ public class Generator {
         for (int j = skipParameters; j <= methodInfo.parameterTypes.length; j++) {
             if (j == skipParameters + methodInfo.dim) {
                 if (methodInfo.memberName.length > 1) {
-                    out.print(methodInfo.memberName[1]);
+                    localPW.print(methodInfo.memberName[1]);
                 }
-                out.print(prefix);
+                localPW.print(prefix);
                 if (methodInfo.withEnv) {
-                    out.print(Modifier.isStatic(methodInfo.modifiers) ? "env, cls" : "env, obj");
+                    localPW.print(Modifier.isStatic(methodInfo.modifiers) ? "env, cls" : "env, obj");
                     if (methodInfo.parameterTypes.length - skipParameters - methodInfo.dim > 0) {
-                        out.print(", ");
+                        localPW.print(", ");
                     }
                 }
             }
@@ -2695,9 +2733,9 @@ public class Generator {
                 // print array indices to access array members, or whatever
                 // the C++ operator does with them when the Index annotation is present
                 if (index == null || index.function().length() == 0) {
-                    out.print("[");
+                    localPW.print("[");
                 } else {
-                    out.print("." + index.function() + "(");
+                    localPW.print("." + index.function() + "(");
                 }
             }
             Annotation passBy = by(methodInfo, j);
@@ -2710,16 +2748,16 @@ public class Generator {
             }
             if (Enum.class.isAssignableFrom(methodInfo.parameterTypes[j])) {
                 accessesEnums = true;
-                out.print(cast + "val" + j);
+                localPW.print(cast + "val" + j);
             } else if (("(void*)".equals(cast) || "(void *)".equals(cast)) && methodInfo.parameterTypes[j] == long.class) {
-                out.print("jlong_to_ptr(arg" + j + ")");
+                localPW.print("jlong_to_ptr(arg" + j + ")");
             } else if (methodInfo.parameterTypes[j].isPrimitive()) {
                 if (passBy instanceof ByPtr || passBy instanceof ByPtrRef) {
-                    out.print("&");
+                    localPW.print("&");
                 } else if ((passBy instanceof ByVal || passBy instanceof ByRef) && cast.endsWith("*)")) {
-                    out.print("*");
+                    localPW.print("*");
                 }
-                out.print(cast + "arg" + j);
+                localPW.print(cast + "arg" + j);
             } else if (adapterInfo != null) {
                 cast = adapterInfo.cast.trim();
                 if (cast.length() > 0 && !cast.startsWith("(") && !cast.endsWith(")")) {
@@ -2729,54 +2767,60 @@ public class Generator {
                 if (cast2.length() > 0 && !cast2.startsWith("(") && !cast2.endsWith(")")) {
                     cast2 = "(" + cast2 + ")";
                 }
-                out.print(cast + cast2 + "adapter" + j);
+                localPW.print(cast + cast2 + "adapter" + j);
                 j += adapterInfo.argc - 1;
             } else if (FunctionPointer.class.isAssignableFrom(methodInfo.parameterTypes[j]) && (!(passBy instanceof ByVal || passBy instanceof ByRef) || cast.length() > 0)) {
                 if (passBy instanceof ByPtrRef) {
-                    out.print(cast + "(ptr" + j + "->ptr)");
+                    localPW.print(cast + "(ptr" + j + "->ptr)");
                 } else {
                     if (passBy instanceof ByVal || passBy instanceof ByRef) {
-                        out.print("*");
+                        localPW.print("*");
                     }
-                    out.print(cast + "(ptr" + j + " == NULL ? NULL : " + (passBy instanceof ByPtrPtr ? "&ptr" : "ptr") + j + "->ptr)");
+                    localPW.print(cast + "(ptr" + j + " == NULL ? NULL : " + (passBy instanceof ByPtrPtr ? "&ptr" : "ptr") + j + "->ptr)");
                 }
             } else if (passBy instanceof ByVal || (passBy instanceof ByRef && methodInfo.parameterTypes[j] != String.class)) {
                 boolean rvalue = passBy instanceof ByRef ? ((ByRef) passBy).value() : false;
                 String nullValue = passBy instanceof ByVal ? ((ByVal) passBy).nullValue() : passBy instanceof ByRef ? ((ByRef) passBy).nullValue() : "";
                 if (rvalue) {
-                    out.print("std::move(");
+                    localPW.print("std::move(");
                 }
-                out.print((nullValue.length() > 0 ? "ptr" + j + " == NULL ? " + nullValue + " : " : "") + "*" + cast + "ptr" + j);
+                localPW.print((nullValue.length() > 0 ? "ptr" + j + " == NULL ? " + nullValue + " : " : "") + "*" + cast + "ptr" + j);
                 if (rvalue) {
-                    out.print(")");
+                    localPW.print(")");
                 }
             } else if (passBy instanceof ByPtrPtr) {
-                out.print(cast + "(arg" + j + " == NULL ? NULL : &ptr" + j + ")");
+                localPW.print(cast + "(arg" + j + " == NULL ? NULL : &ptr" + j + ")");
             } else { // ByPtr || ByPtrRef || (ByRef && std::string)
-                out.print(cast + "ptr" + j);
+                localPW.print(cast + "ptr" + j);
             }
 
             if (j < skipParameters + methodInfo.dim) {
                 if (index == null || index.function().length() == 0) {
-                    out.print("]");
+                    localPW.print("]");
                 } else {
-                    out.print(")");
+                    localPW.print(")");
                 }
             } else if (j < methodInfo.parameterTypes.length - 1) {
-                out.print(", ");
+                localPW.print(", ");
             }
         }
-        out.print(suffix);
+        localPW.print(suffix);
         if (methodInfo.memberName.length > 2) {
-            out.print(methodInfo.memberName[2]);
+            localPW.print(methodInfo.memberName[2]);
         }
         if (needSecondCall) {
-            call(methodInfo, " : ", true);
-            out.print(")");
+            localPW.print(callString(methodInfo, " : ", true));
+            localPW.print(")");
         }
+
+        localPW.flush();
+        return localSW.toString();
     }
 
-    void returnAfter(MethodInformation methodInfo) {
+    public String returnAfterString(MethodInformation methodInfo) {
+        StringWriter localSW = new StringWriter();
+        PrintWriter localPW = new PrintWriter(localSW);
+
         String indent = methodInfo.throwsException != null ? "        " : "    ";
         String[] typeName = methodInfo.allocator || methodInfo.arrayAllocator ? cppTypeName(methodInfo.cls) : methodInfo.returnRaw ? new String[]{""} : cppCastTypeName(methodInfo.returnType, methodInfo.annotations);
         Annotation returnBy = by(methodInfo.annotations);
@@ -2785,7 +2829,7 @@ public class Generator {
         String suffix = methodInfo.deallocator ? "" : ";";
         if (by(methodInfo.annotations) instanceof ByRef && methodInfo.returnType == String.class && adapterInfo == null) {
             // special considerations for std::string without adapter
-            out.print(");\n" + indent + "rptr = rstr.c_str()");
+            localPW.print(");\n" + indent + "rptr = rstr.c_str()");
         }
         if ((methodInfo.allocator || methodInfo.arrayAllocator || !methodInfo.returnType.isPrimitive()) && adapterInfo != null) {
             suffix = ")" + suffix;
@@ -2794,17 +2838,17 @@ public class Generator {
             if ((returnBy instanceof ByVal || (returnBy instanceof ByRef && ((ByRef) returnBy).value())) && adapterInfo == null) {
                 suffix = ")" + suffix;
             } else if (returnBy instanceof ByPtrPtr) {
-                out.println(suffix);
+                localPW.println(suffix);
                 suffix = "";
-                out.println(indent + "if (rptrptr == NULL) {");
-                out.println(indent + "    env->ThrowNew(JavaCPP_getClass(env, " + jclasses.index(NullPointerException.class) + "), \"Return pointer address is NULL.\");");
-                out.println(indent + "} else {");
+                localPW.println(indent + "if (rptrptr == NULL) {");
+                localPW.println(indent + "    env->ThrowNew(JavaCPP_getClass(env, " + jclasses.index(NullPointerException.class) + "), \"Return pointer address is NULL.\");");
+                localPW.println(indent + "} else {");
                 if (FunctionPointer.class.isAssignableFrom(methodInfo.returnType)) {
-                    out.println(indent + "    rptr->ptr = *rptrptr;");
+                    localPW.println(indent + "    rptr->ptr = *rptrptr;");
                 } else {
-                    out.println(indent + "    rptr = *rptrptr;");
+                    localPW.println(indent + "    rptr = *rptrptr;");
                 }
-                out.println(indent + "}");
+                localPW.println(indent + "}");
             }
             if (adapterInfo != null && methodInfo.returnType.isArray() && methodInfo.returnType.getComponentType().isPrimitive()) {
                 // data will get copied out anyway
@@ -2813,150 +2857,156 @@ public class Generator {
                 }
             }
         }
-        out.println(suffix);
+        localPW.println(suffix);
 
 
         if (methodInfo.returnType == void.class) {
             if (methodInfo.allocator || methodInfo.arrayAllocator) {
                 boolean noDeallocator = methodInfo.cls == Pointer.class || methodInfo.cls.isAnnotationPresent(NoDeallocator.class) || methodInfo.method.isAnnotationPresent(NoDeallocator.class);
                 if (adapterInfo != null) {
-                    out.println(indent + typeName[0] + " rptr" + typeName[1] + " = radapter;");
-                    out.println(indent + "jlong rcapacity = (jlong)radapter.size;");
-                    out.println(indent + "void* rowner = radapter.owner;");
-                    if (noDeallocator) out.println(indent + "void (*deallocator)(void*) = 0;");
+                    localPW.println(indent + typeName[0] + " rptr" + typeName[1] + " = radapter;");
+                    localPW.println(indent + "jlong rcapacity = (jlong)radapter.size;");
+                    localPW.println(indent + "void* rowner = radapter.owner;");
+                    if (noDeallocator) localPW.println(indent + "void (*deallocator)(void*) = 0;");
                     else
-                        out.println(indent + "void (*deallocator)(void*) = rowner != NULL ? &" + adapterInfo.name + "::deallocate : 0;");
-                    out.println(indent + "JavaCPP_initPointer(env, obj, rptr, rcapacity, rowner, deallocator);");
+                        localPW.println(indent + "void (*deallocator)(void*) = rowner != NULL ? &" + adapterInfo.name + "::deallocate : 0;");
+                    localPW.println(indent + "JavaCPP_initPointer(env, obj, rptr, rcapacity, rowner, deallocator);");
                 } else {
-                    out.println(indent + "jlong rcapacity = " + (methodInfo.arrayAllocator ? "arg0;" : "1;"));
-                    out.print(indent + "JavaCPP_initPointer(env, obj, rptr, rcapacity, rptr, ");
+                    localPW.println(indent + "jlong rcapacity = " + (methodInfo.arrayAllocator ? "arg0;" : "1;"));
+                    localPW.print(indent + "JavaCPP_initPointer(env, obj, rptr, rcapacity, rptr, ");
                     if (noDeallocator) {
-                        out.println("NULL);");
+                        localPW.println("NULL);");
                     } else if (methodInfo.arrayAllocator) {
-                        out.println("&JavaCPP_" + mangle(methodInfo.cls.getName()) + "_deallocateArray);");
+                        localPW.println("&JavaCPP_" + mangle(methodInfo.cls.getName()) + "_deallocateArray);");
                         arrayDeallocators.index(methodInfo.cls);
                     } else if (!methodInfo.method.isAnnotationPresent(Name.class)) {
-                        out.println("&JavaCPP_" + mangle(methodInfo.cls.getName()) + "_deallocate);");
+                        localPW.println("&JavaCPP_" + mangle(methodInfo.cls.getName()) + "_deallocate);");
                         deallocators.index(methodInfo.cls);
                     } else {
                         // downcast constructor
-                        out.println("NULL);");
+                        localPW.println("NULL);");
                     }
                 }
                 if (virtualFunctions.containsKey(methodInfo.cls)) {
                     valueTypeName = valueTypeName(typeName);
                     String subType = "JavaCPP_" + mangle(valueTypeName);
-                    out.println(indent + "((" + subType + "*)rptr)->obj = env->NewWeakGlobalRef(obj);");
+                    localPW.println(indent + "((" + subType + "*)rptr)->obj = env->NewWeakGlobalRef(obj);");
                 }
             }
         } else {
             if (methodInfo.valueSetter || methodInfo.memberSetter || methodInfo.noReturnGetter) {
                 // nothing
             } else if (methodInfo.returnType.isPrimitive()) {
-                out.println(indent + "rarg = (" + jniTypeName(methodInfo.returnType) + ")rval;");
+                localPW.println(indent + "rarg = (" + jniTypeName(methodInfo.returnType) + ")rval;");
             } else if (methodInfo.returnRaw) {
-                out.println(indent + "rarg = rptr;");
+                localPW.println(indent + "rarg = rptr;");
             } else if (Enum.class.isAssignableFrom(methodInfo.returnType)) {
                 accessesEnums = true;
                 String s = enumValueType(methodInfo.returnType);
                 if (s != null) {
                     String S = Character.toUpperCase(s.charAt(0)) + s.substring(1);
-                    out.println(indent + "if (rarg != NULL) {");
-                    out.println(indent + "    env->Set" + S + "Field(rarg, JavaCPP_" + s + "ValueFID, (j" + s + ")rval);");
-                    out.println(indent + "}");
+                    localPW.println(indent + "if (rarg != NULL) {");
+                    localPW.println(indent + "    env->Set" + S + "Field(rarg, JavaCPP_" + s + "ValueFID, (j" + s + ")rval);");
+                    localPW.println(indent + "}");
                 }
             } else {
                 boolean needInit = false;
                 if (adapterInfo != null) {
-                    out.println(indent + "rptr = radapter;");
+                    localPW.println(indent + "rptr = radapter;");
                     if (methodInfo.returnType != String.class) {
-                        out.println(indent + "jlong rcapacity = (jlong)radapter.size;");
+                        localPW.println(indent + "jlong rcapacity = (jlong)radapter.size;");
                         if (Pointer.class.isAssignableFrom(methodInfo.returnType)) {
-                            out.println(indent + "void* rowner = radapter.owner;");
-                            out.println(indent + "void (*deallocator)(void*) = rowner != NULL ? &" + adapterInfo.name + "::deallocate : 0;");
+                            localPW.println(indent + "void* rowner = radapter.owner;");
+                            localPW.println(indent + "void (*deallocator)(void*) = rowner != NULL ? &" + adapterInfo.name + "::deallocate : 0;");
                         } else {
-                            out.println(indent + "void (*deallocator)(void*) = 0;");
+                            localPW.println(indent + "void (*deallocator)(void*) = 0;");
                         }
                     }
                     needInit = true;
                 } else if (returnBy instanceof ByVal || FunctionPointer.class.isAssignableFrom(methodInfo.returnType)) {
-                    out.println(indent + "jlong rcapacity = 1;");
-                    out.println(indent + "void* rowner = (void*)rptr;");
-                    out.println(indent + "void (*deallocator)(void*) = &JavaCPP_" + mangle(methodInfo.returnType.getName()) + "_deallocate;");
+                    localPW.println(indent + "jlong rcapacity = 1;");
+                    localPW.println(indent + "void* rowner = (void*)rptr;");
+                    localPW.println(indent + "void (*deallocator)(void*) = &JavaCPP_" + mangle(methodInfo.returnType.getName()) + "_deallocate;");
                     deallocators.index(methodInfo.returnType);
                     needInit = true;
                 }
 
                 if (Pointer.class.isAssignableFrom(methodInfo.returnType)) {
-                    out.print(indent);
+                    localPW.print(indent);
                     if (!(returnBy instanceof ByVal)) {
                         // check if we can reuse one of the Pointer objects from the arguments
                         if (Modifier.isStatic(methodInfo.modifiers) && methodInfo.parameterTypes.length > 0) {
                             for (int i = 0; i < methodInfo.parameterTypes.length; i++) {
                                 String cast = cast(methodInfo, i);
                                 if (Arrays.equals(methodInfo.parameterAnnotations[i], methodInfo.annotations) && methodInfo.parameterTypes[i] == methodInfo.returnType && !(returnBy instanceof ByPtrPtr) && !(returnBy instanceof ByPtrRef)) {
-                                    out.println("if (rptr == " + cast + "ptr" + i + ") {");
-                                    out.println(indent + "    rarg = arg" + i + ";");
-                                    out.print(indent + "} else ");
+                                    localPW.println("if (rptr == " + cast + "ptr" + i + ") {");
+                                    localPW.println(indent + "    rarg = arg" + i + ";");
+                                    localPW.print(indent + "} else ");
                                 }
                             }
                         } else if (!Modifier.isStatic(methodInfo.modifiers) && methodInfo.cls == methodInfo.returnType) {
-                            out.println("if (rptr == ptr) {");
-                            out.println(indent + "    rarg = obj;");
-                            out.print(indent + "} else ");
+                            localPW.println("if (rptr == ptr) {");
+                            localPW.println(indent + "    rarg = obj;");
+                            localPW.print(indent + "} else ");
                         }
                     }
-                    out.println("if (rptr != NULL) {");
-                    out.println(indent + "    rarg = JavaCPP_createPointer(env, " + jclasses.index(methodInfo.returnType) + (methodInfo.parameterTypes.length > 0 && methodInfo.parameterTypes[0] == Class.class ? ", arg0);" : ");"));
-                    out.println(indent + "    if (rarg != NULL) {");
+                    localPW.println("if (rptr != NULL) {");
+                    localPW.println(indent + "    rarg = JavaCPP_createPointer(env, " + jclasses.index(methodInfo.returnType) + (methodInfo.parameterTypes.length > 0 && methodInfo.parameterTypes[0] == Class.class ? ", arg0);" : ");"));
+                    localPW.println(indent + "    if (rarg != NULL) {");
                     if (needInit) {
-                        out.println(indent + "        JavaCPP_initPointer(env, rarg, rptr, rcapacity, rowner, deallocator);");
+                        localPW.println(indent + "        JavaCPP_initPointer(env, rarg, rptr, rcapacity, rowner, deallocator);");
                     } else {
-                        out.println(indent + "        env->SetLongField(rarg, JavaCPP_addressFID, ptr_to_jlong(rptr));");
+                        localPW.println(indent + "        env->SetLongField(rarg, JavaCPP_addressFID, ptr_to_jlong(rptr));");
                     }
-                    out.println(indent + "    }");
-                    out.println(indent + "}");
+                    localPW.println(indent + "    }");
+                    localPW.println(indent + "}");
                 } else if (methodInfo.returnType == String.class) {
                     passesStrings = true;
-                    out.println(indent + "if (rptr != NULL) {");
-                    out.println(indent + "    rarg = " + createString("rptr", (adapterInfo != null ? "radapter" : null), asUtf16(methodInfo.annotations)));
-                    out.println(indent + "}");
+                    localPW.println(indent + "if (rptr != NULL) {");
+                    localPW.println(indent + "    rarg = " + createString("rptr", (adapterInfo != null ? "radapter" : null), asUtf16(methodInfo.annotations)));
+                    localPW.println(indent + "}");
                 } else if (methodInfo.returnType.isArray() && methodInfo.returnType.getComponentType().isPrimitive()) {
                     if (adapterInfo == null && !(returnBy instanceof ByVal)) {
-                        out.println(indent + "jlong rcapacity = rptr != NULL ? 1 : 0;");
+                        localPW.println(indent + "jlong rcapacity = rptr != NULL ? 1 : 0;");
                     }
                     String componentName = methodInfo.returnType.getComponentType().getName();
                     String componentNameUpperCase = Character.toUpperCase(componentName.charAt(0)) + componentName.substring(1);
-                    out.println(indent + "if (rptr != NULL) {");
-                    out.println(indent + "    rarg = env->New" + componentNameUpperCase + "Array(rcapacity < INT_MAX ? rcapacity : INT_MAX);");
-                    out.println(indent + "    env->Set" + componentNameUpperCase + "ArrayRegion(rarg, 0, rcapacity < INT_MAX ? rcapacity : INT_MAX, (j" + componentName + "*)rptr);");
-                    out.println(indent + "}");
+                    localPW.println(indent + "if (rptr != NULL) {");
+                    localPW.println(indent + "    rarg = env->New" + componentNameUpperCase + "Array(rcapacity < INT_MAX ? rcapacity : INT_MAX);");
+                    localPW.println(indent + "    env->Set" + componentNameUpperCase + "ArrayRegion(rarg, 0, rcapacity < INT_MAX ? rcapacity : INT_MAX, (j" + componentName + "*)rptr);");
+                    localPW.println(indent + "}");
                     if (adapterInfo != null) {
-                        out.println(indent + "if (deallocator != 0 && rptr != NULL) {");
-                        out.println(indent + "    (*(void(*)(void*))jlong_to_ptr(deallocator))((void*)rptr);");
-                        out.println(indent + "}");
+                        localPW.println(indent + "if (deallocator != 0 && rptr != NULL) {");
+                        localPW.println(indent + "    (*(void(*)(void*))jlong_to_ptr(deallocator))((void*)rptr);");
+                        localPW.println(indent + "}");
                     }
                 } else if (Buffer.class.isAssignableFrom(methodInfo.returnType)) {
                     if (methodInfo.bufferGetter) {
-                        out.println(indent + "jlong rposition = position;");
-                        out.println(indent + "jlong rlimit = limit;");
-                        out.println(indent + "jlong rcapacity = capacity;");
+                        localPW.println(indent + "jlong rposition = position;");
+                        localPW.println(indent + "jlong rlimit = limit;");
+                        localPW.println(indent + "jlong rcapacity = capacity;");
                     } else if (adapterInfo == null && !(returnBy instanceof ByVal)) {
-                        out.println(indent + "jlong rcapacity = rptr != NULL ? 1 : 0;");
+                        localPW.println(indent + "jlong rcapacity = rptr != NULL ? 1 : 0;");
                     }
-                    out.println(indent + "if (rptr != NULL) {");
-                    out.println(indent + "    jlong rcapacityptr = rcapacity * sizeof(rptr[0]);");
-                    out.println(indent + "    rarg = env->NewDirectByteBuffer((void*)rptr, rcapacityptr < INT_MAX ? rcapacityptr : INT_MAX);");
+                    localPW.println(indent + "if (rptr != NULL) {");
+                    localPW.println(indent + "    jlong rcapacityptr = rcapacity * sizeof(rptr[0]);");
+                    localPW.println(indent + "    rarg = env->NewDirectByteBuffer((void*)rptr, rcapacityptr < INT_MAX ? rcapacityptr : INT_MAX);");
                     if (methodInfo.bufferGetter) {
-                        out.println(indent + "    jlong rpositionptr = rposition * sizeof(rptr[0]);");
-                        out.println(indent + "    jlong rlimitptr = rlimit * sizeof(rptr[0]);");
-                        out.println(indent + "    env->SetIntField(rarg, JavaCPP_bufferPositionFID, rpositionptr < INT_MAX ? rpositionptr : INT_MAX);");
-                        out.println(indent + "    env->SetIntField(rarg, JavaCPP_bufferLimitFID, rlimitptr < INT_MAX ? rlimitptr : INT_MAX);");
+                        localPW.println(indent + "    jlong rpositionptr = rposition * sizeof(rptr[0]);");
+                        localPW.println(indent + "    jlong rlimitptr = rlimit * sizeof(rptr[0]);");
+                        localPW.println(indent + "    env->SetIntField(rarg, JavaCPP_bufferPositionFID, rpositionptr < INT_MAX ? rpositionptr : INT_MAX);");
+                        localPW.println(indent + "    env->SetIntField(rarg, JavaCPP_bufferLimitFID, rlimitptr < INT_MAX ? rlimitptr : INT_MAX);");
                     }
-                    out.println(indent + "}");
+                    localPW.println(indent + "}");
                 }
             }
         }
+        localPW.flush();
+        return localSW.toString();
+    }
+
+    void returnAfter(MethodInformation methodInfo) {
+        out.println(returnAfterString(methodInfo));
     }
 
     void parametersAfter(MethodInformation methodInfo) {
@@ -4596,5 +4646,19 @@ public class Generator {
         }
 
         return result.toString();
+    }
+
+    private String replaceStrings(String[] replacements, String source) {
+        String replacedString = "";
+
+        if (replacements.length % 2 != 0 && replacements.length < 2) {
+            throw new IllegalArgumentException("Invalid replacement Strings.");
+        }
+
+        for (int i = 0; i < replacements.length; i = i + 2) {
+            replacedString = source.replace(replacements[i], replacements[i + 1]);
+        }
+
+        return replacedString;
     }
 }
