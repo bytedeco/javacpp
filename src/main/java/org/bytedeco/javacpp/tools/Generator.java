@@ -1083,12 +1083,12 @@ public class Generator {
             out.println("#endif");
             out.println("}");
             out.println();
-            out.println("static JavaCPP_noinline const unsigned short* JavaCPP_getStringUTF16(JNIEnv* env, jstring str) {");
+            out.println("static JavaCPP_noinline const char16_t* JavaCPP_getStringUTF16(JNIEnv* env, jstring str) {");
             out.println("    if (str == NULL) {");
             out.println("        return NULL;");
             out.println("    }");
             out.println("    const jsize length = env->GetStringLength(str);");
-            out.println("    unsigned short* ptr = new (std::nothrow) unsigned short[length + 1];");
+            out.println("    char16_t* ptr = new (std::nothrow) char16_t[length + 1];");
             out.println("    if (ptr != NULL) {");
             out.println("        env->GetStringRegion(str, 0, length, ptr);");
             out.println("        ptr[length] = 0;");
@@ -1096,7 +1096,7 @@ public class Generator {
             out.println("    return ptr;");
             out.println("}");
             out.println();
-            out.println("static JavaCPP_noinline void JavaCPP_releaseStringUTF16(JNIEnv*, const unsigned short* ptr) {");
+            out.println("static JavaCPP_noinline void JavaCPP_releaseStringUTF16(JNIEnv*, const char16_t* ptr) {");
             out.println("    delete[] ptr;");
             out.println("}");
             out.println();
@@ -1205,7 +1205,7 @@ public class Generator {
             out.println("        str2(ptr ? (T*)ptr : \"\", ptr ? (size > 0 ? size : strlen((char*)ptr)) : 0), str(str2) { }");
             out.println("    StringAdapter(const       wchar_t* ptr, typename std::basic_string<T>::size_type size, void* owner) : ptr((T*)ptr), size(size), owner(owner),");
             out.println("        str2(ptr ? (T*)ptr : L\"\", ptr ? (size > 0 ? size : wcslen((wchar_t*)ptr)) : 0), str(str2) { }");
-            out.println("    StringAdapter(const unsigned short* ptr, typename std::basic_string<T>::size_type size, void* owner) : ptr((T*)ptr), size(size), owner(owner),");
+            out.println("    StringAdapter(const char16_t* ptr, typename std::basic_string<T>::size_type size, void* owner) : ptr((T*)ptr), size(size), owner(owner),");
             out.println("        str2(ptr ? (T*)ptr : L\"\", ptr ? (size > 0 ? size : wcslen((wchar_t*)ptr)) : 0), str(str2) { }");
             out.println("    StringAdapter(const   signed   int* ptr, typename std::basic_string<T>::size_type size, void* owner) : ptr((T*)ptr), size(size), owner(owner),");
             out.println("        str2(ptr ? (T*)ptr : L\"\", ptr ? (size > 0 ? size : wcslen((wchar_t*)ptr)) : 0), str(str2) { }");
@@ -1228,7 +1228,7 @@ public class Generator {
             out.println("        str.assign(ptr ? ptr : L\"\", ptr ? (size > 0 ? size : wcslen((wchar_t*)ptr)) : 0);");
             out.println("    }");
             out.println("    void assign(const        wchar_t* ptr, typename std::basic_string<T>::size_type size, void* owner) { assign((wchar_t*)ptr, size, owner); }");
-            out.println("    void assign(const unsigned short* ptr, typename std::basic_string<T>::size_type size, void* owner) { assign((wchar_t*)ptr, size, owner); }");
+            out.println("    void assign(const char16_t* ptr, typename std::basic_string<T>::size_type size, void* owner) { assign((wchar_t*)ptr, size, owner); }");
             out.println("    void assign(const   signed   int* ptr, typename std::basic_string<T>::size_type size, void* owner) { assign((wchar_t*)ptr, size, owner); }");
             out.println("    static void deallocate(void* owner) { delete[] (T*)owner; }");
             out.println("    operator char*() {");
@@ -1264,10 +1264,10 @@ public class Generator {
             out.println("        owner = ptr;");
             out.println("        return ptr;");
             out.println("    }");
-            out.println("    operator     unsigned   short*() { return (unsigned short*)(operator wchar_t*)(); }");
+            out.println("    operator             char16_t*() { return (char16_t*)(operator wchar_t*)(); }");
             out.println("    operator       signed     int*() { return (  signed   int*)(operator wchar_t*)(); }");
             out.println("    operator const        wchar_t*() { size = str.size(); return                  str.c_str(); }");
-            out.println("    operator const unsigned short*() { size = str.size(); return (unsigned short*)str.c_str(); }");
+            out.println("    operator const char16_t*() { size = str.size(); return (char16_t*)str.c_str(); }");
             out.println("    operator const   signed   int*() { size = str.size(); return (  signed   int*)str.c_str(); }");
             out.println("    operator         std::basic_string<T>&() { return str; }");
             out.println("    operator         std::basic_string<T>*() { return ptr ? &str : 0; }");
@@ -4363,14 +4363,14 @@ public class Generator {
         } else if (type == double[].class || type == DoubleBuffer.class || type == DoublePointer.class) {
             prefix = "double*";
         } else if (type == char[].class || type == CharBuffer.class || type == CharPointer.class) {
-            prefix = "unsigned short*";
+            prefix = "char16_t*";
         } else if (type == boolean[].class || type == BooleanPointer.class) {
             prefix = "unsigned char*";
         } else if (type == PointerPointer.class) {
             prefix = "void**";
         } else if (type == String.class) {
             if (asUtf16(annotations)) {
-                prefix = "const unsigned short*";
+                prefix = "const char16_t*";
             } else {
                 prefix = "const char*";
             }
@@ -4379,7 +4379,7 @@ public class Generator {
         } else if (type == long.class) {
             prefix = "jlong";
         } else if (type == char.class) {
-            prefix = "unsigned short";
+            prefix = "char16_t";
         } else if (type == boolean.class) {
             prefix = "unsigned char";
         } else if (type.isPrimitive()) {
