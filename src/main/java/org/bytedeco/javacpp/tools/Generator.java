@@ -365,6 +365,7 @@ public class Generator {
         out.println("#include <exception>");
         out.println("#include <memory>");
         out.println("#include <new>");
+        out.println("#include <chrono>");
         if (baseLoadSuffix == null || baseLoadSuffix.isEmpty()) {
             out.println();
             out.println("#if defined(NATIVE_ALLOCATOR) && defined(NATIVE_DEALLOCATOR)");
@@ -812,7 +813,7 @@ public class Generator {
             out.println("static JavaCPP_noinline jclass JavaCPP_getClass(JNIEnv* env, int i);");
             out.println("static inline void JavaCPP_loadGlobal(JNIEnv* env, jclass cls, const char* filename) {");
             out.println("#ifdef _WIN32");
-            out.println("    HMODULE handle = LoadLibrary(filename);");
+            out.println("    HMODULE handle = LoadLibraryA(filename);");
             out.println("    if (handle == NULL) {");
             out.println("        char temp[256];");
             out.println("        sprintf(temp, \"LoadLibrary() failed with 0x%lx\", GetLastError());");
@@ -2115,7 +2116,7 @@ public class Generator {
             c = c.getSuperclass();
         }
         boolean[] callbackAllocators = new boolean[methods.length];
-        Method[] functionMethods = functionMethods(cls, callbackAllocators);
+        Method[] functionMethods = functionMethods(cls, methods, callbackAllocators);
         boolean firstCallback = true;
         for (int i = 0; i < methods.length; i++) {
             if (!Loader.checkPlatform(methods[i].getAnnotation(Platform.class), properties)) {
@@ -3635,11 +3636,10 @@ public class Generator {
         return name != null ? name.value()[0] : "JavaCPP_" + mangle(cls.getName());
     }
 
-    static Method[] functionMethods(Class<?> cls, boolean[] callbackAllocators) {
+    static Method[] functionMethods(Class<?> cls, Method[] methods, boolean[] callbackAllocators) {
         if (!FunctionPointer.class.isAssignableFrom(cls)) {
             return null;
         }
-        Method[] methods = cls.getDeclaredMethods();
         Method[] functionMethods = new Method[3];
         for (int i = 0; i < methods.length; i++) {
             String methodName = methods[i].getName();
@@ -4385,7 +4385,7 @@ public class Generator {
         } else if (type.isPrimitive()) {
             prefix = type.getName();
         } else if (FunctionPointer.class.isAssignableFrom(type)) {
-            Method[] functionMethods = functionMethods(type, null);
+            Method[] functionMethods = functionMethods(type, type.getDeclaredMethods(), null);
             String[] prefixSuffix = cppFunctionTypeName(functionMethods);
             if (prefixSuffix != null) {
                 return prefixSuffix;

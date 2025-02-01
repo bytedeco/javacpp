@@ -50,7 +50,7 @@ import org.bytedeco.javacpp.annotation.Properties;
                        "api-ms-win-core-sysinfo-l1-1-0", "api-ms-win-core-synch-l1-2-0", "api-ms-win-core-console-l1-1-0", "api-ms-win-core-debug-l1-1-0",
                        "api-ms-win-core-rtlsupport-l1-1-0", "api-ms-win-core-processthreads-l1-1-1", "api-ms-win-core-file-l1-2-0", "api-ms-win-core-profile-l1-1-0",
                        "api-ms-win-core-memory-l1-1-0", "api-ms-win-core-util-l1-1-0", "api-ms-win-core-interlocked-l1-1-0", "ucrtbase",
-                       "vcruntime140", "vcruntime140_1", "msvcp140", "msvcp140_1", "concrt140", "vcomp140"}
+                       "vcruntime140", "vcruntime140_1", "msvcp140", "msvcp140_1", "concrt140", "vcomp140", "libomp140.i386", "libomp140.x86_64"}
         ),
         @Platform(
             value = "windows-x86",

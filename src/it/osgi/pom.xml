@@ -83,6 +83,15 @@
       </properties>
     </profile>
     <profile>
+      <id>riscv64</id>
+      <activation>
+        <os><arch>riscv64</arch></os>
+      </activation>
+      <properties>
+        <os.arch>riscv64</os.arch>
+      </properties>
+    </profile>
+    <profile>
       <id>i386</id>
       <activation>
         <os><arch>i386</arch></os>

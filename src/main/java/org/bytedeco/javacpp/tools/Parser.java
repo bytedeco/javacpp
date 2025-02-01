@@ -127,6 +127,10 @@ public class Parser {
         return s.trim().endsWith("...") ? s.trim().substring(0, s.length() - 3) + "[]" : s;
     }
 
+    static String filterJavaAnnotations(String s) {
+        return s.contains("@Deprecated") ? "@Deprecated " : "";
+    }
+
     static String upcastMethodName(String javaName) {
         String shortName = javaName.substring(javaName.lastIndexOf('.') + 1);
         return "as" + Character.toUpperCase(shortName.charAt(0)) + shortName.substring(1);
@@ -357,7 +361,7 @@ public class Parser {
                         if (dim < 2 && !javaName.equals("int") && !javaName.equals("long")) {
                             decl.text += "    public " + containerType.javaName + "(" + javaName + " value) { this(1); put(0, value); }\n";
                         }
-                        decl.text += "    public " + containerType.javaName + "(" + javaName + arrayBrackets + " ... array) { this(array.length); put(array); }\n";
+                        decl.text += "    public " + containerType.javaName + "(" + desugarVarargs(javaName) + arrayBrackets + " ... array) { this(array.length); put(array); }\n";
                     }
                 } else if (indexType == null && dim == 0 && !constant && !purify) {
                     int n = 0;
@@ -597,7 +601,7 @@ public class Parser {
                                       +  "        return put(0, value);\n"
                                       +  "    }\n";
                         }
-                        decl.text += "    public " + containerType.javaName + " put(" + javaName + arrayBrackets + " ... array) {\n";
+                        decl.text += "    public " + containerType.javaName + " put(" + desugarVarargs(javaName) + arrayBrackets + " ... array) {\n";
                         String indent = "        ", indices = "", args = "";
                         separator = "";
                         for (int i = 0; i < dim; i++) {
@@ -2740,7 +2744,7 @@ public class Parser {
                 }
             }
             if (type.constructor && params != null) {
-                decl.text += "public " + context.shorten(context.javaName) + dcl.parameters.list + " { super((Pointer)null); allocate" + params.names + "; }\n" +
+                decl.text += filterJavaAnnotations(type.annotations) + "public " + context.shorten(context.javaName) + dcl.parameters.list + " { super((Pointer)null); allocate" + params.names + "; }\n" +
                              type.annotations + "private native void allocate" + dcl.parameters.list + ";\n";
             } else {
                 String modifiers2 = modifiers;
@@ -3494,7 +3498,7 @@ public class Parser {
         }
         String shortName = derived.javaName.substring(derived.javaName.lastIndexOf('.') + 1);
         String res = "    /** Downcast constructor. */\n"
-                   + "    public " + shortName + "(" + base.javaName + " pointer) { super((Pointer)null); allocate(pointer); }\n";
+                   + "    " + filterJavaAnnotations(annotations) + "public " + shortName + "(" + base.javaName + " pointer) { super((Pointer)null); allocate(pointer); }\n";
         if (annotations.isEmpty()) {
             res += "    @Namespace private native @Name(\"" + downcastType + "_cast<" + derived.cppName + "*>\") void allocate(" + base.javaName + " pointer);\n";
         } else {
@@ -3535,13 +3539,13 @@ public class Parser {
         Context ctx = new Context(context);
         Token[] prefixes = {Token.CLASS, Token.INTERFACE, Token.__INTERFACE, Token.STRUCT, Token.UNION};
         for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.next()) {
-            if (token.match(prefixes)) {
+            if (token.match((Object[]) prefixes)) {
                 foundGroup = true;
                 ctx.inaccessible = token.match(Token.CLASS);
                 break;
             } else if (token.match(Token.FRIEND)) {
                 friend = true;
-                if (!tokens.get(1).match(prefixes)) {
+                if (!tokens.get(1).match((Object[]) prefixes)) {
                     // assume group name follows
                     foundGroup = true;
                     break;
@@ -3931,7 +3935,7 @@ public class Parser {
 
             if (implicitConstructor && (info == null || !info.purify) && (!abstractClass || ctx.virtualize)) {
                 constructors += "    /** Default native constructor. */\n" +
-                             "    public " + shortName + "() { super((Pointer)null); allocate(); }\n";
+                             "    " + filterJavaAnnotations(constructorAnnotations) + "public " + shortName + "() { super((Pointer)null); allocate(); }\n";
                 if (constructorAnnotations.isEmpty()) {
                     constructors += "    /** Native array allocator. Access with {@link Pointer#position(long)}. */\n" +
                                  "    public " + shortName + "(long size) { super((Pointer)null); allocateArray(size); }\n";
