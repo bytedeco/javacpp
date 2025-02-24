@@ -1,3 +1,5 @@
+#include <stdexcept>
+
 jclass findNVDClass(JNIEnv *env, const char *className) {
     if (gClassLoader == nullptr) { return nullptr; }
 
