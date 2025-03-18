@@ -22,4 +22,10 @@ public @interface Virtual {
     boolean value() default false;
     boolean subclasses() default true;
     String method() default "";
+
+    String returnType() default "";
+    String methodName() default "";
+    String[] callbackParameterTypes() default {};
+    String[] customCallbackFilepath() default {};
+    String[] customCallbackEndFilepath() default {};
 }
