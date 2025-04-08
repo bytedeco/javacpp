@@ -2327,7 +2327,7 @@ public class Generator {
                     String s = methodInfo.parameterTypes[j].getComponentType().getName();
                     if (methodInfo.criticalRegion || methodInfo.valueGetter || methodInfo.valueSetter ||
                             methodInfo.memberGetter || methodInfo.memberSetter) {
-                        out.println("reinterpret_cast<" + typeName[0] + ">(env->GetPrimitiveArrayCritical(arg" + j + ", NULL));");
+                        out.println("(" + typeName[0] + typeName[1] + ")env->GetPrimitiveArrayCritical(arg" + j + ", NULL);");
                     } else {
                         s = Character.toUpperCase(s.charAt(0)) + s.substring(1);
                         out.println("env->Get" + s + "ArrayElements(arg" + j + ", NULL);");
