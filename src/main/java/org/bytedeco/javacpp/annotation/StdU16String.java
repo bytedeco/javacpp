@@ -11,5 +11,5 @@ import java.lang.annotation.Target;
 @Target({ElementType.METHOD, ElementType.PARAMETER})
 @Adapter("BasicStringAdapter")
 public @interface StdU16String {
-    String value() default "unsigned short, char16_t";
+    String value() default "char16_t";
 }

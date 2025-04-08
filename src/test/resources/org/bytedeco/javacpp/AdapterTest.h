@@ -33,11 +33,11 @@ char *testCharString(const char *str) {
     // memory leak...
 }
 
-const unsigned short *testShortString(const unsigned short *str) {
+const char16_t *testShortString(const char16_t *str) {
     return str;
 }
 
-unsigned short *testShortString(unsigned short *str) {
+char16_t *testShortString(char16_t *str) {
     return str;
 }
 
