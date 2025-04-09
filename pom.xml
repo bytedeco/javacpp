@@ -148,8 +148,8 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.12.1</version>
         <configuration>
-          <source>1.8</source>
-          <target>1.8</target>
+          <source>1.7</source>
+          <target>1.7</target>
         </configuration>
       </plugin>
       <plugin>
@@ -568,8 +568,8 @@ Import-Package: \
                 <localRepositoryPath>${project.build.directory}/integration-test/repo</localRepositoryPath> -->
                 <properties>
                   <!-- <org.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener>warn</org.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener> -->
-                  <maven.compiler.source>1.8</maven.compiler.source>
-                  <maven.compiler.target>1.8</maven.compiler.target>
+                  <maven.compiler.source>1.7</maven.compiler.source>
+                  <maven.compiler.target>1.7</maven.compiler.target>
                 </properties>
                 <goals>
                   <goal>verify</goal>
