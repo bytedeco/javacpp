@@ -95,7 +95,7 @@ public class ThreadTest {
 
             assertEquals(cbThread1, cbThread2);
         }
-        
+
         // thread should be automatically detached upon completion
         assertFalse(threadRefs.get(0).isAlive());
     }

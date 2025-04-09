@@ -33,7 +33,7 @@ import org.bytedeco.javacpp.tools.Generator;
  *         <tr>
  *             <td valign="top">{@code StringAdapter<T>}</td>
  *             <td valign="top">{@code std::basic_string<T>}</td>
- *             <td valign="top">{@code char}<br>{@code signed char}<br>{@code unsigned char}<br>{@code wchar_t}<br>{@code unsigned short}<br>{@code signed int}</td>
+ *             <td valign="top">{@code char}<br>{@code signed char}<br>{@code unsigned char}<br>{@code wchar_t}<br>{@code char16_t}<br>{@code signed int}</td>
  *             <td valign="top">{@link StdString}</td>
  *         </tr>
  *         <tr>
