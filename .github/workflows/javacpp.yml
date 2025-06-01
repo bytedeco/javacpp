@@ -70,11 +70,11 @@ jobs:
     steps:
       - uses: bytedeco/javacpp-presets/.github/actions/deploy-macosx@actions
 #  windows-x86:
-#    runs-on: windows-2019
+#    runs-on: windows-2022
 #    steps:
 #      - uses: bytedeco/javacpp-presets/.github/actions/deploy-windows@actions
   windows-x86_64:
-    runs-on: windows-2019
+    runs-on: windows-2022
     env:
       CI_DEPLOY_OPTIONS: "" # to not skip tests
     steps:

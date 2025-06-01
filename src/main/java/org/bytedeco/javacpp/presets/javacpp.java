@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Samuel Audet
+ * Copyright (C) 2020-2025 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -50,7 +50,7 @@ import org.bytedeco.javacpp.annotation.Properties;
                        "api-ms-win-core-sysinfo-l1-1-0", "api-ms-win-core-synch-l1-2-0", "api-ms-win-core-console-l1-1-0", "api-ms-win-core-debug-l1-1-0",
                        "api-ms-win-core-rtlsupport-l1-1-0", "api-ms-win-core-processthreads-l1-1-1", "api-ms-win-core-file-l1-2-0", "api-ms-win-core-profile-l1-1-0",
                        "api-ms-win-core-memory-l1-1-0", "api-ms-win-core-util-l1-1-0", "api-ms-win-core-interlocked-l1-1-0", "ucrtbase",
-                       "vcruntime140", "vcruntime140_1", "msvcp140", "msvcp140_1", "concrt140", "vcomp140", "libomp140.i386", "libomp140.x86_64"}
+                       "vcruntime140", "vcruntime140_1", "vcruntime140_threads", "msvcp140", "msvcp140_1", "msvcp140_2", "concrt140", "vcomp140", "libomp140.i386", "libomp140.x86_64"}
         ),
         @Platform(
             value = "windows-x86",
@@ -92,16 +92,20 @@ public class javacpp implements LoadEnabled {
         if (vcredistdir != null && vcredistdir.length() > 0) {
             switch (platform) {
                 case "windows-x86":
-                    preloadpaths.add(0, vcredistdir + "\\x86\\Microsoft.VC142.CRT");
-                    preloadpaths.add(1, vcredistdir + "\\x86\\Microsoft.VC142.OpenMP");
-                    preloadpaths.add(2, vcredistdir + "\\x86\\Microsoft.VC141.CRT");
-                    preloadpaths.add(3, vcredistdir + "\\x86\\Microsoft.VC141.OpenMP");
+                    preloadpaths.add(0, vcredistdir + "\\x86\\Microsoft.VC143.CRT");
+                    preloadpaths.add(1, vcredistdir + "\\x86\\Microsoft.VC143.OpenMP");
+                    preloadpaths.add(2, vcredistdir + "\\x86\\Microsoft.VC142.CRT");
+                    preloadpaths.add(3, vcredistdir + "\\x86\\Microsoft.VC142.OpenMP");
+                    preloadpaths.add(4, vcredistdir + "\\x86\\Microsoft.VC141.CRT");
+                    preloadpaths.add(5, vcredistdir + "\\x86\\Microsoft.VC141.OpenMP");
                     break;
                 case "windows-x86_64":
-                    preloadpaths.add(0, vcredistdir + "\\x64\\Microsoft.VC142.CRT");
-                    preloadpaths.add(1, vcredistdir + "\\x64\\Microsoft.VC142.OpenMP");
-                    preloadpaths.add(2, vcredistdir + "\\x64\\Microsoft.VC141.CRT");
-                    preloadpaths.add(3, vcredistdir + "\\x64\\Microsoft.VC141.OpenMP");
+                    preloadpaths.add(0, vcredistdir + "\\x64\\Microsoft.VC143.CRT");
+                    preloadpaths.add(1, vcredistdir + "\\x64\\Microsoft.VC143.OpenMP");
+                    preloadpaths.add(2, vcredistdir + "\\x64\\Microsoft.VC142.CRT");
+                    preloadpaths.add(3, vcredistdir + "\\x64\\Microsoft.VC142.OpenMP");
+                    preloadpaths.add(4, vcredistdir + "\\x64\\Microsoft.VC141.CRT");
+                    preloadpaths.add(5, vcredistdir + "\\x64\\Microsoft.VC141.OpenMP");
                     break;
                 default:
                     // not Windows

@@ -2330,7 +2330,7 @@ public class Generator {
                         out.println("(" + typeName[0] + typeName[1] + ")env->GetPrimitiveArrayCritical(arg" + j + ", NULL);");
                     } else {
                         s = Character.toUpperCase(s.charAt(0)) + s.substring(1);
-                        out.println("env->Get" + s + "ArrayElements(arg" + j + ", NULL);");
+                        out.println("(" + typeName[0] + typeName[1] + ")env->Get" + s + "ArrayElements(arg" + j + ", NULL);");
                     }
                     if (adapterInfo != null || prevAdapterInfo != null) {
                         out.println("    jlong size" + j +
@@ -2361,8 +2361,8 @@ public class Generator {
                             out.println("            ptr" + j + " = arr" + j + " == NULL ? NULL : (" + typeName[0] + typeName[1]
                                     + ")env->GetPrimitiveArrayCritical(arr" + j + ", NULL) + offset" + j + ";");
                         } else {
-                            out.println("            ptr" + j + " = arr" + j + " == NULL ? NULL : env->Get"
-                                    + paramName + "ArrayElements(arr" + j + ", NULL) + offset" + j + ";");
+                            out.println("            ptr" + j + " = arr" + j + " == NULL ? NULL : (" + typeName[0] + typeName[1]
+                                    + ")env->Get" + paramName + "ArrayElements(arr" + j + ", NULL) + offset" + j + ";");
                         }
                         out.println("        }");
                         out.println("    }");
