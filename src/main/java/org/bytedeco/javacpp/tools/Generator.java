@@ -570,7 +570,7 @@ public class Generator {
             out.println("static inline jboolean JavaCPP_trimMemory() {");
             out.println("#if defined(__linux__) && !defined(__ANDROID__)");
 //            out.println("    return (jboolean)malloc_trim(0);");
-            out.println("    return 0");
+            out.println("    return 0;");
             out.println("#else");
             out.println("    return 0;");
             out.println("#endif");
