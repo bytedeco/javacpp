@@ -278,8 +278,10 @@ public class Generator {
         out.println("#endif");
         out.println();
         out.println("#include <jni.h>");
+        out.println("#define MODIFIED_UTF8_STRING");
         if (out2 != null) {
             out2.println("#include <jni.h>");
+            out2.println("#define MODIFIED_UTF8_STRING");
         }
         out.println();
         out.println("#ifdef __ANDROID__");
