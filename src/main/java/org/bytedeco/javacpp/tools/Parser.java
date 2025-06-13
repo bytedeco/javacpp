@@ -3100,7 +3100,7 @@ public class Parser {
             Token first = tokens.next();
             boolean hasArgs = first.spacing.length() == 0 && first.match('(');
             List<Info> infoList = infoMap.get(macroName);
-            for (Info info : infoList.size() > 0 ? infoList : Arrays.asList(new Info[] { null })) {
+            for (Info info : infoList.size() > 0 ? new ArrayList<Info>(infoList) : Arrays.asList(new Info[] { null })) {
                 if (info != null && info.skip) {
                     break;
                 } else if ((info == null && (hasArgs || beginIndex + 1 == endIndex))

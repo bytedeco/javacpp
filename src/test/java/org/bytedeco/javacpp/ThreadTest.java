@@ -61,7 +61,7 @@ public class ThreadTest {
         Loader.load(c);
     }
 
-    @Test public void testJNIThreadAttachFromNativeCallbacks() {
+    @Test public void testJNIThreadAttachFromNativeCallbacks() throws Exception {
         final int count = 10;
         final List<Integer> callbackValueRefs = new ArrayList<>();
         final List<Thread> threadRefs = new ArrayList<>();
@@ -95,6 +95,8 @@ public class ThreadTest {
 
             assertEquals(cbThread1, cbThread2);
         }
+
+        Thread.sleep(1000);
 
         // thread should be automatically detached upon completion
         assertFalse(threadRefs.get(0).isAlive());

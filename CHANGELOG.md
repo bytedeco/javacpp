@@ -1,4 +1,5 @@
 
+ * Fix `Tokenizer` not skipping over BOM characters at beginning of files
  * Replace `unsigned short` with `char16_t` when mapping `jchar` ([pull #800](https://github.com/bytedeco/javacpp/pull/800))
  * Add support for `linux-riscv64` with `linux-riscv64.properties` ([pull #781](https://github.com/bytedeco/javacpp/pull/781))
 

@@ -55,6 +55,11 @@ class Tokenizer implements Closeable {
         this.file = file;
         FileInputStream fis = new FileInputStream(file);
         this.reader = new BufferedReader(encoding != null ? new InputStreamReader(fis, encoding) : new InputStreamReader(fis));
+        reader.mark(1);
+        if (reader.read() != 0xFEFF) {
+            // no BOM to skip, reset
+            reader.reset();
+        }
     }
 
     public void filterLines(String[] patterns, boolean skip) throws IOException {
