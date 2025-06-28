@@ -2,7 +2,7 @@ name: javacpp
 on: [push, pull_request, workflow_dispatch]
 env:
   CI_DEPLOY_MODULE: .
-  CI_DEPLOY_OPTIONS: -Dmaven.javadoc.skip -Dmaven.test.skip -Dinvoker.skip
+  CI_DEPLOY_OPTIONS: -Dmaven.test.skip -Dinvoker.skip
   CI_DEPLOY_PLATFORM: ${{ github.job }}
   CI_DEPLOY_SETTINGS: ${{ secrets.CI_DEPLOY_SETTINGS }}
   CI_DEPLOY_USERNAME: ${{ secrets.CI_DEPLOY_USERNAME }}

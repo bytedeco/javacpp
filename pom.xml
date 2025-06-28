@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.bytedeco</groupId>
   <artifactId>javacpp</artifactId>
-  <version>1.5.12-SNAPSHOT</version>
+  <version>1.5.12</version>
 
   <name>JavaCPP</name>
   <description>The missing bridge between Java and native C++</description>
@@ -300,16 +300,6 @@
           </execution>
         </executions>
       </plugin>
-      <plugin>
-        <groupId>org.sonatype.central</groupId>
-        <artifactId>central-publishing-maven-plugin</artifactId>
-        <version>0.8.0</version>
-        <extensions>true</extensions>
-        <configuration>
-          <publishingServerId>central</publishingServerId>
-          <autoPublish>false</autoPublish>
-        </configuration>
-      </plugin>
       <!--
         Process the OSGi annotations and generate a suitable
         MANIFEST.MF file for this bundle. This will be merged
@@ -409,6 +399,29 @@ Import-Package: \
             <configuration>
               <passphrase>${env.GPG_PASSPHRASE}</passphrase>
               <useAgent>false</useAgent>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <id>central-publishing</id>
+      <activation>
+        <property>
+          <name>!altDeploymentRepository</name>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.sonatype.central</groupId>
+            <artifactId>central-publishing-maven-plugin</artifactId>
+            <version>0.8.0</version>
+            <extensions>true</extensions>
+            <configuration>
+              <publishingServerId>central</publishingServerId>
+              <autoPublish>false</autoPublish>
             </configuration>
           </plugin>
         </plugins>
