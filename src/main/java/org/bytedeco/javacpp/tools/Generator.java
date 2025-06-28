@@ -3031,7 +3031,7 @@ public class Generator {
 
             // If const array, then use JNI_ABORT to avoid copying unmodified data back to JVM
             final String releaseArrayFlag;
-            if (cast.contains(" const *") || cast.startsWith("(const ")) {
+            if (cast.contains("* const") || cast.endsWith("const)")) {
                 releaseArrayFlag = "JNI_ABORT";
             } else {
                 releaseArrayFlag = "0";
