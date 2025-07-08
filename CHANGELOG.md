@@ -1,4 +1,6 @@
 
+ * Make `Pointer.trimMemory()` public to reclaim manually system memory on Linux ([issue bytedeco/javacv#2334](https://github.com/bytedeco/javacv/issues/2334))
+
 ### June 30, 2025 version 1.5.12
  * Fix `Tokenizer` not skipping over BOM characters at beginning of files
  * Replace `unsigned short` with `char16_t` when mapping `jchar` ([pull #800](https://github.com/bytedeco/javacpp/pull/800))
