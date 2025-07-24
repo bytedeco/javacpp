@@ -1,4 +1,5 @@
 
+ * Add support for `windows-arm64` with `windows-arm64.properties` ([pull #813](https://github.com/bytedeco/javacpp/pull/813))
  * Make `Pointer.trimMemory()` public to reclaim manually system memory on Linux ([issue bytedeco/javacv#2334](https://github.com/bytedeco/javacv/issues/2334))
 
 ### June 30, 2025 version 1.5.12
