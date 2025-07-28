@@ -67,8 +67,12 @@ import org.bytedeco.javacpp.tools.Logger;
  */
 @org.bytedeco.javacpp.annotation.Properties(inherit = org.bytedeco.javacpp.presets.javacpp.class)
 public class Pointer implements AutoCloseable {
-    /** Default constructor that does nothing. */
-    public Pointer() {}
+    /** Default constructor */
+    public Pointer() {
+        if (logger.isDebugEnabled()) {
+            createdLocation = captureCreationLocation(this.getClass());
+        }
+    }
     /**
      * Copies the address, position, limit, and capacity of another Pointer.
      * Also keeps a reference to it to prevent its memory from getting deallocated.
@@ -87,6 +91,9 @@ public class Pointer implements AutoCloseable {
             if (p.deallocator != null) {
                 deallocator = new ProxyDeallocator(this, p);
             }
+        }
+        if (logger.isDebugEnabled()) {
+            createdLocation = captureCreationLocation(this.getClass());
         }
     }
 
@@ -107,6 +114,9 @@ public class Pointer implements AutoCloseable {
             capacity = b.capacity();
             deallocator = new ProxyDeallocator(this, b);
         }
+        if (logger.isDebugEnabled()) {
+            createdLocation = captureCreationLocation(this.getClass());
+        }
     }
     private native void allocate(Buffer b);
 
@@ -125,6 +135,9 @@ public class Pointer implements AutoCloseable {
         capacity = allocatedCapacity;
         if (ownerAddress != 0 && deallocatorAddress != 0) {
             deallocator(new NativeDeallocator(this, ownerAddress, deallocatorAddress));
+        }
+        if (logger.isDebugEnabled()) {
+            createdLocation = captureCreationLocation(this.getClass());
         }
     }
 
@@ -237,8 +250,9 @@ public class Pointer implements AutoCloseable {
         private native void deallocate(long ownerAddress, long deallocatorAddress);
 
         @Override public String toString() {
-            return getClass().getName() + "[ownerAddress=0x" + Long.toHexString(ownerAddress)
-                    + ",deallocatorAddress=0x" + Long.toHexString(deallocatorAddress) + "]";
+            return getClass().getName() + "[ownerAddress=0x" + Long.toHexString(ownerAddress) +
+                    ",deallocatorAddress=0x" + Long.toHexString(deallocatorAddress) +
+                    ",createdLocation=" + createdLocation + "]";
         }
     }
 
@@ -289,6 +303,7 @@ public class Pointer implements AutoCloseable {
             this.deallocator = deallocator;
             this.bytes = p.capacity != 0 && referenceQueue != null ? p.capacity * p.sizeof() : 0;
             this.count = new AtomicInteger(0);
+            this.createdLocation = p.createdLocation;
         }
 
         static volatile DeallocatorReference head = null;
@@ -300,6 +315,8 @@ public class Pointer implements AutoCloseable {
         long bytes;
 
         AtomicInteger count;
+
+        String createdLocation = null;
 
         final void add() {
             synchronized (DeallocatorReference.class) {
@@ -372,7 +389,8 @@ public class Pointer implements AutoCloseable {
         }
 
         @Override public String toString() {
-            return getClass().getName() + "[deallocator=" + deallocator + ",count=" + count + "]";
+            return getClass().getName() + "[deallocator=" + deallocator + ",count=" + count +
+                    ",createdLocation=" + createdLocation + "]";
         }
     }
 
@@ -467,6 +485,44 @@ public class Pointer implements AutoCloseable {
             default: throw new NumberFormatException("Cannot parse into bytes: " + string);
         }
         return size;
+    }
+
+
+    /**
+     * Captures the location in the source code where an instance creation occurs.
+     * The method extracts the file name and line number information from the stack trace,
+     * skipping frames related to the Pointer class and constructor calls to identify
+     * the actual call site where the object instantiation was initiated.
+     *
+     * @param createdClass the class of the object being created
+     * @return the string representing the file name and line number in the format "FileName:LineNumber",
+     *         or null if the location could not be determined.
+     */
+    private static String captureCreationLocation(Class<?> createdClass) {
+        StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+        boolean foundConstructor = false;
+
+        for (int i = 2; i < stackTrace.length; i++) {
+            StackTraceElement element = stackTrace[i];
+            String elementMethod = element.getMethodName();
+            Class<?> elementClass = null;
+
+            try {
+                elementClass = Class.forName(element.getClassName());
+            } catch (ClassNotFoundException ignored) {
+                continue;
+            }
+
+            if (elementMethod.equals("<init>") || elementMethod.equals("init")) {
+                if (createdClass == elementClass) {
+                    foundConstructor = true;
+                }
+            } else if (foundConstructor || !Pointer.class.isAssignableFrom(elementClass)) {
+                return String.format("%s:%d", element.getFileName(), element.getLineNumber());
+            }
+        }
+
+        return null;
     }
 
     static {
@@ -604,6 +660,8 @@ public class Pointer implements AutoCloseable {
     protected long capacity = 0;
     /** The deallocator associated with this Pointer that should be called on garbage collection. */
     private Deallocator deallocator = null;
+    /** The string where the pointer was created location is recorded. */
+    private String createdLocation = null;
 
     /** Returns {@code p == null || p.address == 0}. */
     public static boolean isNull(Pointer p) {
@@ -1071,6 +1129,7 @@ public class Pointer implements AutoCloseable {
      * {@link #position}, {@link #limit}, {@link #capacity}, and {@link #deallocator}. */
     @Override public String toString() {
         return getClass().getName() + "[address=0x" + Long.toHexString(address) +
-                ",position=" + position + ",limit=" + limit + ",capacity=" + capacity + ",deallocator=" + deallocator + "]";
+                ",position=" + position + ",limit=" + limit + ",capacity=" + capacity + ",deallocator=" + deallocator +
+                ",createdLocation=" + createdLocation + "]";
     }
 }
