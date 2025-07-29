@@ -562,7 +562,7 @@ public class Pointer implements AutoCloseable {
 
         s = System.getProperty("org.bytedeco.javacpp.nativeallocationtracer", "false").toLowerCase();
         s = System.getProperty("org.bytedeco.javacpp.nativeAllocationTracer", s).toLowerCase();
-        nativeAllocationTracerEnabled = s.equals("true") || s.equals("t") || true;
+        nativeAllocationTracerEnabled = s.equals("true") || s.equals("t");
     }
 
     /** Calls {@code deallocatorThread.interrupt()}. */
