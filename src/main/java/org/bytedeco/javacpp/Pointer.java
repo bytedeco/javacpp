@@ -119,6 +119,9 @@ public class Pointer implements AutoCloseable {
      * @see NativeDeallocator
      */
     void init(long allocatedAddress, long allocatedCapacity, long ownerAddress, long deallocatorAddress) {
+        if (nativeAllocationTracerEnabled) {
+            NativeAllocationTracer.markPointer(this);
+        }
         address = allocatedAddress;
         position = 0;
         limit = allocatedCapacity;
@@ -219,6 +222,10 @@ public class Pointer implements AutoCloseable {
             this.deallocator = this;
             this.ownerAddress = ownerAddress;
             this.deallocatorAddress = deallocatorAddress;
+            if (nativeAllocationTracerEnabled) {
+                NativeAllocationTracer.markDeallocator(this, p);
+                NativeAllocationTracer.recordAllocation(this, this.bytes);
+            }
         }
 
         private long ownerAddress;
@@ -231,6 +238,9 @@ public class Pointer implements AutoCloseable {
             if (ownerAddress != 0 && deallocatorAddress != 0) {
                 deallocate(ownerAddress, deallocatorAddress);
                 ownerAddress = deallocatorAddress = 0;
+                if (nativeAllocationTracerEnabled) {
+                    NativeAllocationTracer.recordDeallocation(this, this.bytes);
+                }
             }
         }
 
@@ -389,6 +399,13 @@ public class Pointer implements AutoCloseable {
             try {
                 while (true) {
                     DeallocatorReference r = (DeallocatorReference)referenceQueue.remove();
+                    if (nativeAllocationTracerEnabled && r.deallocator instanceof NativeDeallocator) {
+                        NativeDeallocator deallocator = (NativeDeallocator) r.deallocator;
+                        // Check if native memory is already deallocated
+                        if (deallocator.ownerAddress != 0 && deallocator.deallocatorAddress != 0) {
+                            NativeAllocationTracer.recordCollection(deallocator, r.bytes);
+                        }
+                    }
                     r.clear();
                     r.remove();
                 }
@@ -424,6 +441,13 @@ public class Pointer implements AutoCloseable {
      * Set via "org.bytedeco.javacpp.maxRetries" system property, defaults to 10, where each retry is followed
      * by a call to {@code Thread.sleep(100)} and {@code Pointer.trimMemory()}. */
     static final int maxRetries;
+
+    /** Enable tracking of native memory allocation sites and usage statistics.
+     * Set via "org.bytedeco.javacpp.nativeAllocationTracer" system property, defaults to false.
+     * When enabled, tracks the creation location of pointers that allocate native memory,
+     * and provides memory allocation amounts, live memory usage, and garbage collected
+     * memory statistics for each allocation site. */
+     static final boolean nativeAllocationTracerEnabled;
 
     /** Truncates and formats the number of bytes to a human readable string ending with "T", "G", "M", or "K" (as multiples of 1024). */
     public static String formatBytes(long bytes) {
@@ -535,6 +559,10 @@ public class Pointer implements AutoCloseable {
                 logger.warn("Could not register PointerBufferPoolMXBean: " + e);
             }
         }
+
+        s = System.getProperty("org.bytedeco.javacpp.nativeallocationtracer", "false").toLowerCase();
+        s = System.getProperty("org.bytedeco.javacpp.nativeAllocationTracer", s).toLowerCase();
+        nativeAllocationTracerEnabled = s.equals("true") || s.equals("t") || true;
     }
 
     /** Calls {@code deallocatorThread.interrupt()}. */
