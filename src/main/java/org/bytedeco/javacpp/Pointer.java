@@ -120,18 +120,18 @@ public class Pointer implements AutoCloseable {
      * @see NativeDeallocator
      */
     void init(long allocatedAddress, long allocatedCapacity, long ownerAddress, long deallocatorAddress) {
-        if (nativeAllocationTracerEnabled) {
-            try {
-                tracerMarkPointerMethod.invoke(null, this);
-            } catch (IllegalAccessException | InvocationTargetException exception) {
-                logger.error("Unable to invoke native allocation tracer method via reflection: " + exception);
-            }
-        }
         address = allocatedAddress;
         position = 0;
         limit = allocatedCapacity;
         capacity = allocatedCapacity;
         if (ownerAddress != 0 && deallocatorAddress != 0) {
+            if (nativeAllocationTracerEnabled) {
+                try {
+                    tracerMarkPointerMethod.invoke(null, this);
+                } catch (IllegalAccessException | InvocationTargetException exception) {
+                    logger.error("Unable to invoke native allocation tracer method via reflection: " + exception);
+                }
+            }
             deallocator(new NativeDeallocator(this, ownerAddress, deallocatorAddress));
         }
     }

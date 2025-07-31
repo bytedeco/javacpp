@@ -132,6 +132,8 @@ public class NativeAllocationTracer {
     public static final class Site {
         /** Source code location where allocations occur */
         private final Location location;
+        /** Type of pointer objects allocated at this location **/
+        private final Class<? extends Pointer> pointerType;
 
         /** Total number of allocated at this location */
         private final AtomicLong totalCounts;
@@ -146,8 +148,9 @@ public class NativeAllocationTracer {
         /** Bytes of memory that have been garbage collected (non-manually deallocated) */
         private final AtomicLong collectedBytes;
 
-        Site(Location location) {
+        Site(Location location, Class<? extends Pointer> pointerType) {
             this.location = location;
+            this.pointerType = pointerType;
 
             this.totalCounts = new AtomicLong(0);
             this.totalBytes = new AtomicLong(0);
@@ -162,6 +165,13 @@ public class NativeAllocationTracer {
          */
         public Location getLocation() {
             return location;
+        }
+
+        /**
+         * @return the type of pointer objects allocated at this location
+         */
+        public Class<? extends Pointer> getPointerType() {
+            return pointerType;
         }
 
         /**
@@ -220,7 +230,7 @@ public class NativeAllocationTracer {
 
         @Override
         public String toString() {
-            return "Site[location=" + location.toString() +
+            return "Site[location=" + location.toString() + ",pointerType=" + pointerType.getName() +
                     ",totalCounts=" + totalCounts.get() + ",totalBytes=" + totalBytes.get() +
                     ",liveCounts=" + liveCounts.get() + ",liveBytes=" + liveBytes.get() +
                     ",collectedCounts=" + collectedCounts.get() + ",collectedBytes=" + collectedBytes.get() + "]";
@@ -250,20 +260,19 @@ public class NativeAllocationTracer {
      *
      * @param pointer the Pointer object to be marked and tracked
      */
-    private static void markPointer(Pointer pointer) {
+    private static synchronized void markPointer(Pointer pointer) {
         Location location = captureCreationLocation(pointer.getClass());
 
         if (location == null) {
-            if (logger.isWarnEnabled()) {
-                logger.warn("Could not capture creation location for " + pointer);
+            if (logger.isDebugEnabled()) {
+                logger.debug("Could not capture creation location for " + pointer);
             }
-
             return;
         }
 
         synchronized (NativeAllocationTracer.class) {
             if (!sites.containsKey(location)) {
-                Site site = new Site(location);
+                Site site = new Site(location, pointer.getClass());
                 sites.put(location, site);
             }
 
@@ -283,31 +292,30 @@ public class NativeAllocationTracer {
      * @param pointerReference the phantom reference to be marked and tracked
      * @param pointer the Pointer object associated with the phantom reference
      */
-    private static void markReference(PhantomReference<Pointer> pointerReference, Pointer pointer) {
+    private static synchronized void markReference(PhantomReference<Pointer> pointerReference, Pointer pointer) {
         Location location = pointerLocations.get(pointer);
 
         if (location == null) {
             location = captureCreationLocation(pointer.getClass());
 
             if (location == null) {
-                if (logger.isWarnEnabled()) {
-                    logger.warn("Could not get creation location for " + pointerReference);
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Could not get creation location for " + pointerReference);
                 }
+                return;
             }
         }
 
-        synchronized (NativeAllocationTracer.class) {
-            if (!sites.containsKey(location)) {
-                Site site = new Site(location);
-                sites.put(location, site);
-            }
-
-            if (logger.isDebugEnabled()) {
-                logger.debug("Mark location for " + pointerReference + ": " + location);
-            }
-
-            pointerReferenceLocations.put(pointerReference, location);
+        if (!sites.containsKey(location)) {
+            Site site = new Site(location, pointer.getClass());
+            sites.put(location, site);
         }
+
+        if (logger.isDebugEnabled()) {
+            logger.debug("Mark location for " + pointerReference + ": " + location);
+        }
+
+        pointerReferenceLocations.put(pointerReference, location);
     }
 
     /**
@@ -316,13 +324,13 @@ public class NativeAllocationTracer {
      * @param pointerReference the phantom reference associated with the allocation
      * @param size the number of bytes allocated
      */
-    private static void recordAllocation(PhantomReference<Pointer> pointerReference, long size) {
+    private static synchronized void recordAllocation(PhantomReference<Pointer> pointerReference, long size) {
         Location location = pointerReferenceLocations.get(pointerReference);
         Site site = sites.get(location);
 
         if (site == null) {
-            if (logger.isWarnEnabled()) {
-                logger.warn("Could not find allocation site for " + pointerReference + ": " + location);
+            if (logger.isDebugEnabled()) {
+                logger.debug("Could not find allocation site for " + pointerReference + ": " + location);
             }
             return;
         }
@@ -339,13 +347,13 @@ public class NativeAllocationTracer {
      * @param pointerReference the phantom reference associated with the deallocation
      * @param size the number of bytes deallocated
      */
-    private static void recordDeallocation(PhantomReference<Pointer> pointerReference, long size) {
+    private static synchronized void recordDeallocation(PhantomReference<Pointer> pointerReference, long size) {
         Location location = pointerReferenceLocations.get(pointerReference);
         Site site = sites.get(location);
 
         if (site == null) {
-            if (logger.isWarnEnabled()) {
-                logger.warn("Could not find allocation site for " + pointerReference + ": " + location);
+            if (logger.isDebugEnabled()) {
+                logger.debug("Could not find allocation site for " + pointerReference + ": " + location);
             }
             return;
         }
@@ -360,13 +368,13 @@ public class NativeAllocationTracer {
      * @param pointerReference the phantom reference associated with the garbage collected memory
      * @param size the number of bytes garbage collected
      */
-    private static void recordCollection(PhantomReference<Pointer> pointerReference, long size) {
+    private static synchronized void recordCollection(PhantomReference<Pointer> pointerReference, long size) {
         Location location = pointerReferenceLocations.get(pointerReference);
         Site site = sites.get(location);
 
         if (site == null) {
-            if (logger.isWarnEnabled()) {
-                logger.warn("Could not find allocation site for " + pointerReference + ": " + location);
+            if (logger.isDebugEnabled()) {
+                logger.debug("Could not find allocation site for " + pointerReference + ": " + location);
             }
             return;
         }
@@ -387,8 +395,9 @@ public class NativeAllocationTracer {
      */
     private static Location captureCreationLocation(Class<?> createdClass) {
         StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+        boolean found = false;
 
-        for (int i = 2; i < stackTrace.length - 1; i++) {
+        for (int i = 2; i < stackTrace.length; i++) {
             StackTraceElement element = stackTrace[i];
             String elementMethod = element.getMethodName();
             Class<?> elementClass = null;
@@ -399,10 +408,23 @@ public class NativeAllocationTracer {
                 continue;
             }
 
-            if (elementMethod.equals("<init>") || elementMethod.equals("init")) {
-                if (elementClass == createdClass) {
-                    return new Location(stackTrace[i + 1]);
+            if (elementMethod.equals("<init>") && elementClass == createdClass) {
+                found = true;
+            } else if (elementMethod.equals("init")) {
+                found = true;
+            } else if (found) {
+                if (element.isNativeMethod()) {
+                    continue;
                 }
+
+                return new Location(element);
+            }
+        }
+
+        if (logger.isDebugEnabled()) {
+            logger.debug("###### StackTraceElement for " + createdClass + " ######");
+            for (StackTraceElement element : stackTrace) {
+                logger.debug(element.toString());
             }
         }
 
