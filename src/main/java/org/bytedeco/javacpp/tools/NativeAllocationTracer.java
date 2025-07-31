@@ -250,7 +250,7 @@ public class NativeAllocationTracer {
      *
      * @param pointer the Pointer object to be marked and tracked
      */
-    public static void markPointer(Pointer pointer) {
+    private static void markPointer(Pointer pointer) {
         Location location = captureCreationLocation(pointer.getClass());
 
         if (location == null) {
@@ -276,14 +276,14 @@ public class NativeAllocationTracer {
     }
 
     /**
-     * Associates a NativeDeallocator with its allocation location for tracking during GC.
+     * Associates a Pointer Reference with its allocation location for tracking during GC.
      * First attempts to retrieve the location from the associated Pointer, then falls back
      * to capturing the current stack frame location if not found.
      *
      * @param pointerReference the phantom reference to be marked and tracked
      * @param pointer the Pointer object associated with the phantom reference
      */
-    public static void markDeallocator(PhantomReference<Pointer> pointerReference, Pointer pointer) {
+    private static void markReference(PhantomReference<Pointer> pointerReference, Pointer pointer) {
         Location location = pointerLocations.get(pointer);
 
         if (location == null) {
@@ -316,7 +316,7 @@ public class NativeAllocationTracer {
      * @param pointerReference the phantom reference associated with the allocation
      * @param size the number of bytes allocated
      */
-    public static void recordAllocation(PhantomReference<Pointer> pointerReference, long size) {
+    private static void recordAllocation(PhantomReference<Pointer> pointerReference, long size) {
         Location location = pointerReferenceLocations.get(pointerReference);
         Site site = sites.get(location);
 
@@ -339,7 +339,7 @@ public class NativeAllocationTracer {
      * @param pointerReference the phantom reference associated with the deallocation
      * @param size the number of bytes deallocated
      */
-    public static void recordDeallocation(PhantomReference<Pointer> pointerReference, long size) {
+    private static void recordDeallocation(PhantomReference<Pointer> pointerReference, long size) {
         Location location = pointerReferenceLocations.get(pointerReference);
         Site site = sites.get(location);
 
@@ -360,7 +360,7 @@ public class NativeAllocationTracer {
      * @param pointerReference the phantom reference associated with the garbage collected memory
      * @param size the number of bytes garbage collected
      */
-    public static void recordCollection(PhantomReference<Pointer> pointerReference, long size) {
+    private static void recordCollection(PhantomReference<Pointer> pointerReference, long size) {
         Location location = pointerReferenceLocations.get(pointerReference);
         Site site = sites.get(location);
 
@@ -387,9 +387,8 @@ public class NativeAllocationTracer {
      */
     private static Location captureCreationLocation(Class<?> createdClass) {
         StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-        boolean foundConstructor = false;
 
-        for (int i = 3; i < stackTrace.length; i++) {
+        for (int i = 2; i < stackTrace.length - 1; i++) {
             StackTraceElement element = stackTrace[i];
             String elementMethod = element.getMethodName();
             Class<?> elementClass = null;
@@ -402,14 +401,8 @@ public class NativeAllocationTracer {
 
             if (elementMethod.equals("<init>") || elementMethod.equals("init")) {
                 if (elementClass == createdClass) {
-                    foundConstructor = true;
+                    return new Location(stackTrace[i + 1]);
                 }
-            } else if (foundConstructor || !Pointer.class.isAssignableFrom(elementClass)) {
-                if (elementClass == NativeAllocationTracer.class) {
-                    continue;
-                }
-
-                return new Location(element);
             }
         }
 
