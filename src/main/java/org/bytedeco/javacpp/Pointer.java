@@ -36,6 +36,7 @@ import org.bytedeco.javacpp.annotation.Name;
 import org.bytedeco.javacpp.annotation.Raw;
 import org.bytedeco.javacpp.tools.Generator;
 import org.bytedeco.javacpp.tools.Logger;
+import org.bytedeco.javacpp.tools.NativeAllocationTracer;
 
 /**
  * All peer classes to native types must be descended from Pointer, the topmost class.

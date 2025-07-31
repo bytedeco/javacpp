@@ -20,10 +20,11 @@
  * limitations under the License.
  */
 
-package org.bytedeco.javacpp;
+package org.bytedeco.javacpp.tools;
 
-import org.bytedeco.javacpp.tools.Logger;
+import org.bytedeco.javacpp.Pointer;
 
+import java.lang.ref.PhantomReference;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Objects;
@@ -226,14 +227,14 @@ public class NativeAllocationTracer {
         }
     }
 
-    private static final Logger logger = Logger.create(SizeTPointer.class);
+    private static final Logger logger = Logger.create(NativeAllocationTracer.class);
 
     /** Maps source code locations to their allocation statistics */
     private static final HashMap<Location, Site> sites = new HashMap<>();
     /** Maps for remember where each Pointer object was created */
     private static final WeakHashMap<Pointer, Location> pointerLocations = new WeakHashMap<>();
-    /** Maps deallocators to allocation sites for GC-time tracking */
-    private static final WeakHashMap<Pointer.NativeDeallocator, Location> nativeDeallocatorLocations = new WeakHashMap<>();
+    /** Maps phantom references to allocation sites for GC-time tracking */
+    private static final WeakHashMap<PhantomReference<Pointer>, Location> pointerReferenceLocations = new WeakHashMap<>();
 
     /**
      * Retrieves a collection of all currently tracked allocation sites.
@@ -249,7 +250,7 @@ public class NativeAllocationTracer {
      *
      * @param pointer the Pointer object to be marked and tracked
      */
-    static void markPointer(Pointer pointer) {
+    public static void markPointer(Pointer pointer) {
         Location location = captureCreationLocation(pointer.getClass());
 
         if (location == null) {
@@ -279,10 +280,10 @@ public class NativeAllocationTracer {
      * First attempts to retrieve the location from the associated Pointer, then falls back
      * to capturing the current stack frame location if not found.
      *
-     * @param nativeDeallocator the native deallocator to be marked
-     * @param pointer the Pointer object associated with the deallocator
+     * @param pointerReference the phantom reference to be marked and tracked
+     * @param pointer the Pointer object associated with the phantom reference
      */
-    static void markDeallocator(Pointer.NativeDeallocator nativeDeallocator, Pointer pointer) {
+    public static void markDeallocator(PhantomReference<Pointer> pointerReference, Pointer pointer) {
         Location location = pointerLocations.get(pointer);
 
         if (location == null) {
@@ -290,7 +291,7 @@ public class NativeAllocationTracer {
 
             if (location == null) {
                 if (logger.isWarnEnabled()) {
-                    logger.warn("Could not get creation location for " + nativeDeallocator);
+                    logger.warn("Could not get creation location for " + pointerReference);
                 }
             }
         }
@@ -302,26 +303,26 @@ public class NativeAllocationTracer {
             }
 
             if (logger.isDebugEnabled()) {
-                logger.debug("Mark location for " + nativeDeallocator + ": " + location);
+                logger.debug("Mark location for " + pointerReference + ": " + location);
             }
 
-            nativeDeallocatorLocations.put(nativeDeallocator, location);
+            pointerReferenceLocations.put(pointerReference, location);
         }
     }
 
     /**
      * Records when native memory is allocated, updating total and live statistics.
      *
-     * @param nativeDeallocator the deallocator associated with the allocation
+     * @param pointerReference the phantom reference associated with the allocation
      * @param size the number of bytes allocated
      */
-    static void recordAllocation(Pointer.NativeDeallocator nativeDeallocator, long size) {
-        Location location = nativeDeallocatorLocations.get(nativeDeallocator);
+    public static void recordAllocation(PhantomReference<Pointer> pointerReference, long size) {
+        Location location = pointerReferenceLocations.get(pointerReference);
         Site site = sites.get(location);
 
         if (site == null) {
             if (logger.isWarnEnabled()) {
-                logger.warn("Could not find allocation site for " + nativeDeallocator + ": " + location);
+                logger.warn("Could not find allocation site for " + pointerReference + ": " + location);
             }
             return;
         }
@@ -335,16 +336,16 @@ public class NativeAllocationTracer {
     /**
      * Records when native memory is manually deallocated, updating live statistics.
      *
-     * @param nativeDeallocator the deallocator associated with the deallocation
+     * @param pointerReference the phantom reference associated with the deallocation
      * @param size the number of bytes deallocated
      */
-    static void recordDeallocation(Pointer.NativeDeallocator nativeDeallocator, long size) {
-        Location location = nativeDeallocatorLocations.get(nativeDeallocator);
+    public static void recordDeallocation(PhantomReference<Pointer> pointerReference, long size) {
+        Location location = pointerReferenceLocations.get(pointerReference);
         Site site = sites.get(location);
 
         if (site == null) {
             if (logger.isWarnEnabled()) {
-                logger.warn("Could not find allocation site for " + nativeDeallocator + ": " + location);
+                logger.warn("Could not find allocation site for " + pointerReference + ": " + location);
             }
             return;
         }
@@ -356,16 +357,16 @@ public class NativeAllocationTracer {
     /**
      * Records when native memory is garbage collected, updating collection statistics.
      *
-     * @param nativeDeallocator the deallocator associated with the collected memory
+     * @param pointerReference the phantom reference associated with the garbage collected memory
      * @param size the number of bytes garbage collected
      */
-    static void recordCollection(Pointer.NativeDeallocator nativeDeallocator, long size) {
-        Location location = nativeDeallocatorLocations.get(nativeDeallocator);
+    public static void recordCollection(PhantomReference<Pointer> pointerReference, long size) {
+        Location location = pointerReferenceLocations.get(pointerReference);
         Site site = sites.get(location);
 
         if (site == null) {
             if (logger.isWarnEnabled()) {
-                logger.warn("Could not find allocation site for " + nativeDeallocator + ": " + location);
+                logger.warn("Could not find allocation site for " + pointerReference + ": " + location);
             }
             return;
         }
