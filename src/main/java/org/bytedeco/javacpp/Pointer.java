@@ -128,7 +128,7 @@ public class Pointer implements AutoCloseable {
                 try {
                     tracerMarkPointerMethod.invoke(null, this);
                 } catch (ReflectiveOperationException exception) {
-                    logger.error("Unable to invoke native allocation tracer method via reflection: " + exception);
+                    logger.error("Unable to invoke NativeAllocationTracer method via reflection: " + exception);
                 }
             }
             deallocator(new NativeDeallocator(this, ownerAddress, deallocatorAddress));
@@ -231,7 +231,7 @@ public class Pointer implements AutoCloseable {
                     tracerMarkReferenceMethod.invoke(null, this, p);
                     tracerRecordAllocationMethod.invoke(null, this, this.bytes);
                 } catch (ReflectiveOperationException exception) {
-                    logger.error("Unable to invoke native allocation tracer method via reflection: " + exception);
+                    logger.error("Unable to invoke NativeAllocationTracer method via reflection: " + exception);
                 }
             }
         }
@@ -250,7 +250,7 @@ public class Pointer implements AutoCloseable {
                     try {
                         tracerRecordDeallocationMethod.invoke(null, this, this.bytes);
                     } catch (ReflectiveOperationException exception) {
-                        logger.error("Unable to invoke native allocation tracer method via reflection: " + exception);
+                        logger.error("Unable to invoke NativeAllocationTracer method via reflection: " + exception);
                     }
                 }
             }
@@ -418,7 +418,7 @@ public class Pointer implements AutoCloseable {
                             try {
                                 tracerRecordCollectionMethod.invoke(null, deallocator, r.bytes);
                             } catch (ReflectiveOperationException exception) {
-                                logger.error("Unable to invoke native allocation tracer method via reflection: " + exception);
+                                logger.error("Unable to invoke NativeAllocationTracer method via reflection: " + exception);
                             }
                         }
                     }
