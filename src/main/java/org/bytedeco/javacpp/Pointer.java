@@ -25,7 +25,6 @@ package org.bytedeco.javacpp;
 import java.lang.ref.PhantomReference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.Buffer;
@@ -128,7 +127,7 @@ public class Pointer implements AutoCloseable {
             if (nativeAllocationTracerEnabled) {
                 try {
                     tracerMarkPointerMethod.invoke(null, this);
-                } catch (IllegalAccessException | InvocationTargetException exception) {
+                } catch (ReflectiveOperationException exception) {
                     logger.error("Unable to invoke native allocation tracer method via reflection: " + exception);
                 }
             }
@@ -231,7 +230,7 @@ public class Pointer implements AutoCloseable {
                 try {
                     tracerMarkReferenceMethod.invoke(null, this, p);
                     tracerRecordAllocationMethod.invoke(null, this, this.bytes);
-                } catch (IllegalAccessException | InvocationTargetException exception) {
+                } catch (ReflectiveOperationException exception) {
                     logger.error("Unable to invoke native allocation tracer method via reflection: " + exception);
                 }
             }
@@ -250,7 +249,7 @@ public class Pointer implements AutoCloseable {
                 if (nativeAllocationTracerEnabled) {
                     try {
                         tracerRecordDeallocationMethod.invoke(null, this, this.bytes);
-                    } catch (IllegalAccessException | InvocationTargetException exception) {
+                    } catch (ReflectiveOperationException exception) {
                         logger.error("Unable to invoke native allocation tracer method via reflection: " + exception);
                     }
                 }
@@ -418,7 +417,7 @@ public class Pointer implements AutoCloseable {
                         if (deallocator.ownerAddress != 0 && deallocator.deallocatorAddress != 0) {
                             try {
                                 tracerRecordCollectionMethod.invoke(null, deallocator, r.bytes);
-                            } catch (IllegalAccessException | InvocationTargetException exception) {
+                            } catch (ReflectiveOperationException exception) {
                                 logger.error("Unable to invoke native allocation tracer method via reflection: " + exception);
                             }
                         }
