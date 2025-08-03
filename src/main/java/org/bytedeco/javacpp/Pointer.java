@@ -124,6 +124,13 @@ public class Pointer implements AutoCloseable {
         limit = allocatedCapacity;
         capacity = allocatedCapacity;
         if (ownerAddress != 0 && deallocatorAddress != 0) {
+            if (nativeAllocationTracerEnabled) {
+                try {
+                    tracerMarkPointerMethod.invoke(null, this);
+                } catch (ReflectiveOperationException exception) {
+                    logger.error("Unable to invoke NativeAllocationTracer method via reflection: " + exception);
+                }
+            }
             deallocator(new NativeDeallocator(this, ownerAddress, deallocatorAddress));
         }
     }
@@ -219,6 +226,14 @@ public class Pointer implements AutoCloseable {
             this.deallocator = this;
             this.ownerAddress = ownerAddress;
             this.deallocatorAddress = deallocatorAddress;
+            if (nativeAllocationTracerEnabled) {
+                try {
+                    tracerMarkReferenceMethod.invoke(null, this, p);
+                    tracerRecordAllocationMethod.invoke(null, this, this.bytes);
+                } catch (ReflectiveOperationException exception) {
+                    logger.error("Unable to invoke NativeAllocationTracer method via reflection: " + exception);
+                }
+            }
         }
 
         private long ownerAddress;
@@ -231,6 +246,13 @@ public class Pointer implements AutoCloseable {
             if (ownerAddress != 0 && deallocatorAddress != 0) {
                 deallocate(ownerAddress, deallocatorAddress);
                 ownerAddress = deallocatorAddress = 0;
+                if (nativeAllocationTracerEnabled) {
+                    try {
+                        tracerRecordDeallocationMethod.invoke(null, this, this.bytes);
+                    } catch (ReflectiveOperationException exception) {
+                        logger.error("Unable to invoke NativeAllocationTracer method via reflection: " + exception);
+                    }
+                }
             }
         }
 
@@ -389,6 +411,17 @@ public class Pointer implements AutoCloseable {
             try {
                 while (true) {
                     DeallocatorReference r = (DeallocatorReference)referenceQueue.remove();
+                    if (nativeAllocationTracerEnabled && r.deallocator instanceof NativeDeallocator) {
+                        NativeDeallocator deallocator = (NativeDeallocator) r.deallocator;
+                        // Check if native memory is already deallocated
+                        if (deallocator.ownerAddress != 0 && deallocator.deallocatorAddress != 0) {
+                            try {
+                                tracerRecordCollectionMethod.invoke(null, deallocator, r.bytes);
+                            } catch (ReflectiveOperationException exception) {
+                                logger.error("Unable to invoke NativeAllocationTracer method via reflection: " + exception);
+                            }
+                        }
+                    }
                     r.clear();
                     r.remove();
                 }
@@ -424,6 +457,18 @@ public class Pointer implements AutoCloseable {
      * Set via "org.bytedeco.javacpp.maxRetries" system property, defaults to 10, where each retry is followed
      * by a call to {@code Thread.sleep(100)} and {@code Pointer.trimMemory()}. */
     static final int maxRetries;
+
+    /** Enable tracking of native memory allocation sites and usage statistics.
+     * Set via "org.bytedeco.javacpp.nativeAllocationTracer" system property, defaults to false.
+     * When enabled, tracks the creation location of pointers that allocate native memory,
+     * and provides memory allocation amounts, live memory usage, and garbage collected
+     * memory statistics for each allocation site. */
+    static final boolean nativeAllocationTracerEnabled;
+    static final Method tracerMarkPointerMethod;
+    static final Method tracerMarkReferenceMethod;
+    static final Method tracerRecordAllocationMethod;
+    static final Method tracerRecordDeallocationMethod;
+    static final Method tracerRecordCollectionMethod;
 
     /** Truncates and formats the number of bytes to a human readable string ending with "T", "G", "M", or "K" (as multiples of 1024). */
     public static String formatBytes(long bytes) {
@@ -534,6 +579,44 @@ public class Pointer implements AutoCloseable {
             } catch (ReflectiveOperationException e) {
                 logger.warn("Could not register PointerBufferPoolMXBean: " + e);
             }
+        }
+
+        s = System.getProperty("org.bytedeco.javacpp.nativeallocationtracer", "false").toLowerCase();
+        s = System.getProperty("org.bytedeco.javacpp.nativeAllocationTracer", s).toLowerCase();
+        {
+            boolean enabled = s.equals("true") || s.equals("t");
+            Method markPointerMethod = null;
+            Method markReferenceMethod = null;
+            Method recordAllocationMethod = null;
+            Method recordDeallocationMethod = null;
+            Method recordCollectionMethod = null;
+
+            if (enabled) {
+                try {
+                    Class<?> tracerClass = Class.forName("org.bytedeco.javacpp.tools.NativeAllocationTracer");
+
+                    markPointerMethod = tracerClass.getDeclaredMethod("markPointer", Pointer.class);
+                    markReferenceMethod = tracerClass.getDeclaredMethod("markReference", PhantomReference.class, Pointer.class);
+                    recordAllocationMethod = tracerClass.getDeclaredMethod("recordAllocation", PhantomReference.class, long.class);
+                    recordDeallocationMethod = tracerClass.getDeclaredMethod("recordDeallocation", PhantomReference.class, long.class);
+                    recordCollectionMethod = tracerClass.getDeclaredMethod("recordCollection", PhantomReference.class, long.class);
+                    markPointerMethod.setAccessible(true);
+                    markReferenceMethod.setAccessible(true);
+                    recordAllocationMethod.setAccessible(true);
+                    recordDeallocationMethod.setAccessible(true);
+                    recordCollectionMethod.setAccessible(true);
+                } catch (ReflectiveOperationException exception) {
+                    logger.error("Could not enable NativeAllocationTracer: " + exception);
+                    enabled = false;
+                }
+            }
+
+            nativeAllocationTracerEnabled = enabled;
+            tracerMarkPointerMethod = markPointerMethod;
+            tracerMarkReferenceMethod = markReferenceMethod;
+            tracerRecordAllocationMethod = recordAllocationMethod;
+            tracerRecordDeallocationMethod = recordDeallocationMethod;
+            tracerRecordCollectionMethod = recordCollectionMethod;
         }
     }
 

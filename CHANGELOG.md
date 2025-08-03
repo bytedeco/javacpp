@@ -1,4 +1,5 @@
 
+ * Add `NativeAllocationTracer` to track allocations and deallocations of `Pointer` ([pull #816](https://github.com/bytedeco/javacpp/pull/816))
  * Fix Android platform properties for NDK r28 ([pull #812](https://github.com/bytedeco/javacpp/pull/812))
  * Add support for `windows-arm64` with `windows-arm64.properties` ([pull #813](https://github.com/bytedeco/javacpp/pull/813))
  * Make `Pointer.trimMemory()` public to reclaim manually system memory on Linux ([issue bytedeco/javacv#2334](https://github.com/bytedeco/javacv/issues/2334))
