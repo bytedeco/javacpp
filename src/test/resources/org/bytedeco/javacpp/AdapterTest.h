@@ -4,7 +4,7 @@
 #include <optional>
 #include <functional>
 
-std::string testStdString(std::string str) {
+std::string testStdString(const std::string &str) {
     return str;
 }
 
