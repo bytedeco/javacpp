@@ -39,9 +39,14 @@ import org.bytedeco.javacpp.annotation.Virtual;
  * @author Samuel Audet
  */
 public class Info {
-    public Info() { }
-    public Info(String... cppNames) { this.cppNames = cppNames; }
+    private final static Info def = new Info();
+    public static Info getDefault() {
+        return def;
+    }
+    public Info() { this(def); }
+    public Info(String... cppNames) { this(def); this.cppNames = cppNames; }
     public Info(Info i) {
+        if (i == null) return;
         cppNames = i.cppNames != null ? i.cppNames.clone() : null;
         javaNames = i.javaNames != null ? i.javaNames.clone() : null;
         annotations = i.annotations != null ? i.annotations.clone() : null;
