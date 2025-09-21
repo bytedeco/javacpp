@@ -106,7 +106,6 @@ public class CharPointer extends Pointer {
     public CharPointer() { }
     /** @see Pointer#Pointer(Pointer) */
     public CharPointer(Pointer p) { super(p); }
-    private native void allocateArray(long size);
 
     /** @see Pointer#position(long) */
     @Override public CharPointer position(long position) {
@@ -171,7 +170,7 @@ public class CharPointer extends Pointer {
     /** @return {@code get(0)} */
     public char get() { return get(0); }
     /** @return the i-th {@code char} value of a native array */
-    public native char get(long i);
+    public char get(long i) { return Raw.getInstance().getChar(address + i * sizeof()); }
     /** @return {@code put(0, c)} */
     public CharPointer put(char c) { return put(0, c); }
     /**
@@ -181,7 +180,10 @@ public class CharPointer extends Pointer {
      * @param c the {@code char} value to copy
      * @return this
      */
-    public native CharPointer put(long i, char c);
+    public CharPointer put(long i, char c) {
+        Raw.getInstance().putChar(address + i * sizeof(), c);
+        return this;
+    }
 
     /** @return {@code get(array, 0, array.length)} */
     public CharPointer get(char[] array) { return get(array, 0, array.length); }

@@ -96,7 +96,6 @@ public class DoublePointer extends Pointer {
     public DoublePointer() { }
     /** @see Pointer#Pointer(Pointer) */
     public DoublePointer(Pointer p) { super(p); }
-    private native void allocateArray(long size);
 
     /** @see Pointer#position(long) */
     @Override public DoublePointer position(long position) {
@@ -120,7 +119,7 @@ public class DoublePointer extends Pointer {
     /** @return {@code get(0)} */
     public double get() { return get(0); }
     /** @return the i-th {@code double} value of a native array */
-    public native double get(long i);
+    public double get(long i) { return Raw.getInstance().getDouble(address + i * sizeof()); }
     /** @return {@code put(0, d)} */
     public DoublePointer put(double d) { return put(0, d); }
     /**
@@ -130,7 +129,10 @@ public class DoublePointer extends Pointer {
      * @param d the {@code double} value to copy
      * @return this
      */
-    public native DoublePointer put(long i, double d);
+    public DoublePointer put(long i, double d) {
+        Raw.getInstance().putDouble(address + i * sizeof(), d);
+        return this;
+    }
 
     /** @return {@code get(array, 0, array.length)} */
     public DoublePointer get(double[] array) { return get(array, 0, array.length); }
