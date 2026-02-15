@@ -331,6 +331,18 @@ public class Generator {
         out.println("    #include <dlfcn.h>");
         out.println("    #include <link.h>");
         out.println("    #include <pthread.h>");
+        out.println("#elif defined(__FreeBSD__)");
+        out.println("    #include <sys/types.h>");
+        out.println("    #include <sys/stat.h>");
+        out.println("    #include <sys/sysctl.h>");
+        out.println("    #include <sys/user.h>");
+        out.println("    #include <fcntl.h>");
+        out.println("    #include <unistd.h>");
+        out.println("    #include <dlfcn.h>");
+        out.println("    #include <link.h>");
+        out.println("    #include <pthread.h>");
+        out.println("    #include <pthread_np.h>");
+        out.println("    #include <malloc_np.h>");
         out.println("#elif defined(__APPLE__)");
         out.println("    #include <sys/types.h>");
         out.println("    #include <sys/sysctl.h>");
@@ -540,7 +552,7 @@ public class Generator {
         out.println("           }");
         out.println("       }");
         out.println("   } JavaCPP_thread_local; ");
-        out.println("#elif !defined(NO_JNI_DETACH_THREAD) && (defined(__linux__) || defined(__APPLE__))");
+        out.println("#elif !defined(NO_JNI_DETACH_THREAD) && (defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__))");
         out.println("    static pthread_key_t JavaCPP_current_env;");
         out.println("    static JavaCPP_noinline void JavaCPP_detach_env(void *data) {");
         out.println("        if (JavaCPP_vm) {");
@@ -556,6 +568,8 @@ public class Generator {
             out.println("static inline jboolean JavaCPP_trimMemory() {");
             out.println("#if defined(__linux__) && !defined(__ANDROID__)");
             out.println("    return (jboolean)malloc_trim(0);");
+            out.println("#elif defined(__FreeBSD__)");
+            out.println("    return (jboolean)(mallctl(\"arena.0.purge\", NULL, NULL, NULL, 0) == 0);");
             out.println("#else");
             out.println("    return 0;");
             out.println("#endif");
@@ -577,6 +591,13 @@ public class Generator {
             out.println("        }");
             out.println("        size *= (jlong)getpagesize();");
             out.println("        // no close(fd);");
+            out.println("    }");
+            out.println("#elif defined(__FreeBSD__)");
+            out.println("    struct kinfo_proc kp;");
+            out.println("    size_t length = sizeof(kp);");
+            out.println("    int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_PID, getpid()};");
+            out.println("    if (sysctl(mib, 4, &kp, &length, NULL, 0) == 0) {");
+            out.println("        size = (jlong)(kp.ki_dsize + kp.ki_ssize) * getpagesize();");
             out.println("    }");
             out.println("#elif defined(__APPLE__)");
             out.println("    task_vm_info_data_t info;");
@@ -621,6 +642,10 @@ public class Generator {
             out.println("#elif defined(__APPLE__)");
             out.println("    size_t length = sizeof(size);");
             out.println("    sysctlbyname(\"hw.memsize\", &size, &length, NULL, 0);");
+            out.println("#elif defined(__FreeBSD__)");
+            out.println("    size_t length = sizeof(size);");
+            out.println("    int mib[2] = {CTL_HW,HW_PHYSMEM};");
+            out.println("    sysctl(mib, 2, &size, &length, NULL, 0);");
             out.println("#elif defined(_WIN32)");
             out.println("    MEMORYSTATUSEX status;");
             out.println("    status.dwLength = sizeof(status);");
@@ -650,6 +675,13 @@ public class Generator {
             out.println("            size = (jlong)info.freeram * info.mem_unit;");
             out.println("        }");
             out.println("    }");
+            out.println("#elif defined(__FreeBSD__)");
+            out.println("    uint32_t free_count, inactive_count;");
+            out.println("    size_t length = sizeof(uint32_t);");
+            out.println("    if (sysctlbyname(\"vm.stats.vm.v_free_count\", &free_count, &length, NULL, 0) == 0 &&");
+            out.println("        sysctlbyname(\"vm.stats.vm.v_inactive_count\", &inactive_count, &length, NULL, 0) == 0) {");
+            out.println("        size = (jlong)(free_count + inactive_count) * getpagesize();");
+            out.println("    }");
             out.println("#elif defined(__APPLE__)");
             out.println("    vm_statistics_data_t info;");
             out.println("    mach_msg_type_number_t count = HOST_VM_INFO_COUNT;");
@@ -674,6 +706,12 @@ public class Generator {
             out.println("    jint total = 0;");
             out.println("#ifdef __linux__");
             out.println("    total = sysconf(_SC_NPROCESSORS_CONF);");
+            out.println("#elif defined(__FreeBSD__)");
+            out.println("    size_t length = sizeof(total);");
+            out.println("    int mib[2] = {CTL_HW, HW_NCPU};");
+            out.println("    if (sysctl(mib, 2, &total, &length, NULL, 0) == -1) {");
+            out.println("        total = 0;");
+            out.println("    }");
             out.println("#elif defined(__APPLE__)");
             out.println("    size_t length = sizeof(total);");
             out.println("    sysctlbyname(\"hw.logicalcpu_max\", &total, &length, NULL, 0);");
@@ -719,6 +757,22 @@ public class Generator {
             out.println("            cids[total] = cid;");
             out.println("            total++;");
             out.println("        }");
+            out.println("    }");
+            out.println("#elif defined(__FreeBSD__)");
+            out.println("    uint32_t ncpu, allowed = 0;");
+            out.println("    uint32_t threads_per_core = 1;");
+            out.println("    size_t length = sizeof(ncpu);");
+            out.println("    int mib[2] = {CTL_HW, HW_NCPU};");
+            out.println("    // Get total logical CPUs");
+            out.println("    if (sysctl(mib, 2, &ncpu, &length, NULL, 0) == 0) {");
+            out.println("        size_t t_length = sizeof(threads_per_core);");
+            out.println("        size_t t_lengthallowed = sizeof(allowed);");
+            out.println("        if (sysctlbyname(\"machdep.hyperthreading_allowed\", &allowed, &t_lengthallowed, NULL, 0) == 0 &&");
+            out.println("            sysctlbyname(\"kern.smp.threads_per_core\", &threads_per_core, &t_length, NULL, 0) != 0){");
+            out.println("            // Fallback for some architectures/versions");
+            out.println("            threads_per_core = 1; ");
+            out.println("        }");
+            out.println("        total = ncpu / (allowed == 1 ? (threads_per_core > 0 ? threads_per_core : 1) : 1);");
             out.println("    }");
             out.println("#elif defined(__APPLE__)");
             out.println("    size_t length = sizeof(total);");
@@ -774,6 +828,8 @@ public class Generator {
             out.println("#elif defined(__APPLE__)");
             out.println("    size_t length = sizeof(total);");
             out.println("    sysctlbyname(\"hw.packages\", &total, &length, NULL, 0);");
+            out.println("#elif defined(__FreeBSD__)");
+            out.println("    total = 1;");
             out.println("#elif defined(_WIN32)");
             out.println("    SYSTEM_LOGICAL_PROCESSOR_INFORMATION *info = NULL;");
             out.println("    DWORD length = 0;");
@@ -795,7 +851,7 @@ public class Generator {
             out.println("    return total;");
             out.println("}");
             out.println();
-            out.println("#if defined(__linux__) && !(defined(__ANDROID__) && defined(__arm__))");
+            out.println("#if (defined(__linux__) && !(defined(__ANDROID__) && defined(__arm__))) || defined (__FreeBSD__)");
             out.println("static int JavaCPP_dlcallback(dl_phdr_info *info, size_t size, void *data) {");
             out.println("    void *handle = dlopen(info->dlpi_name, RTLD_LAZY);");
             out.println("    if (handle != NULL) {");
@@ -829,7 +885,7 @@ public class Generator {
             out.println();
             out.println("static inline void* JavaCPP_addressof(const char* name) {");
             out.println("    void *address = NULL;");
-            out.println("#ifdef __linux__");
+            out.println("#if defined(__linux__) || defined(__FreeBSD__)");
             out.println("    address = dlsym(RTLD_DEFAULT, name);");
             out.println("#if !(defined(__ANDROID__) && defined(__arm__))");
             out.println("    if (address == NULL) {");
@@ -1481,7 +1537,7 @@ public class Generator {
             out.println("#endif");
         }
         if (!functions.isEmpty() || !virtualFunctions.isEmpty()) {
-            out.println("#if !defined(NO_JNI_DETACH_THREAD) && (defined(__linux__) || defined(__APPLE__))");
+            out.println("#if !defined(NO_JNI_DETACH_THREAD) && (defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__))");
             out.println("  static pthread_once_t JavaCPP_once = PTHREAD_ONCE_INIT;");
             out.println("#endif");
             out.println();
@@ -1522,7 +1578,7 @@ public class Generator {
             out.println("        attached = true;");
             out.println("        goto done;");
             out.println("    }");
-            out.println("#elif !defined(NO_JNI_DETACH_THREAD) && (defined(__linux__) || defined(__APPLE__))");
+            out.println("#elif !defined(NO_JNI_DETACH_THREAD) && (defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__))");
             out.println("    pthread_once(&JavaCPP_once, JavaCPP_create_pthread_key);");
             out.println("    if ((*env = (JNIEnv *)pthread_getspecific(JavaCPP_current_env)) != NULL) {");
             out.println("        attached = true;");
@@ -1545,6 +1601,8 @@ public class Generator {
             out.println("        sprintf(name, \"JavaCPP Thread ID %u\", pthread_mach_thread_np(pthread_self()));");
             out.println("#elif defined(__linux__)");
             out.println("        sprintf(name, \"JavaCPP Thread ID %ld\", syscall(SYS_gettid));");
+            out.println("#elif defined(__FreeBSD__)");
+            out.println("        sprintf(name, \"JavaCPP Thread ID %ld\", (long)pthread_getthreadid_np());");
             out.println("#endif");
             out.println("        args.name = name;");
             out.println("        if (vm->AttachCurrentThreadAsDaemon(env2, &args) != JNI_OK) {");
