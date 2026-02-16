@@ -93,7 +93,7 @@ public class ThreadTest {
             Thread cbThread1 = threadRefs.get(i - 1);
             Thread cbThread2 = threadRefs.get(i);
 
-            if (Loader.getPlatform().equals("freebsd-x86_64")) {
+            if (Loader.getPlatform().contains("freebsd")) {
                 assertTrue(cbThread1.getName().contains(cbThread2.getName().split("ID ")[1]));
             } else {
                 assertEquals(cbThread1, cbThread2);
