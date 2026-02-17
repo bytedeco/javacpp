@@ -95,12 +95,12 @@
       <version>${project.version}</version>
       <classifier>${javacpp.platform.android-x86_64}</classifier>
     </dependency>
-    <dependency>
-      <groupId>org.bytedeco</groupId>
-      <artifactId>javacpp</artifactId>
-      <version>${project.version}</version>
-      <classifier>${javacpp.platform.freebsd-x86_64}</classifier>
-    </dependency>
+<!--    <dependency>-->
+<!--      <groupId>org.bytedeco</groupId>-->
+<!--      <artifactId>javacpp</artifactId>-->
+<!--      <version>${project.version}</version>-->
+<!--      <classifier>${javacpp.platform.freebsd-x86_64}</classifier>-->
+<!--    </dependency>-->
     <dependency>
       <groupId>org.bytedeco</groupId>
       <artifactId>javacpp</artifactId>
@@ -304,7 +304,7 @@
 //                      requires static org.bytedeco.javacpp.android.arm64;
 //                      requires static org.bytedeco.javacpp.android.x86;
 //                      requires static org.bytedeco.javacpp.android.x86_64;
-                      requires static org.bytedeco.javacpp.freebsd.x86_64;
+//                      requires static org.bytedeco.javacpp.freebsd.x86_64;
                       requires static org.bytedeco.javacpp.ios.arm64;
                       requires static org.bytedeco.javacpp.ios.x86_64;
                       requires static org.bytedeco.javacpp.linux.armhf;
