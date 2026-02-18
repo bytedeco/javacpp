@@ -2,6 +2,7 @@
 
 class Callback {
 public:
+    virtual ~Callback() { } // polymorphic deletion
     virtual void callback(int value) = 0;
 };
 
