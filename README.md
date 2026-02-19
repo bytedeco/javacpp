@@ -26,27 +26,27 @@ We can also have everything downloaded and installed automatically with:
   <dependency>
     <groupId>org.bytedeco</groupId>
     <artifactId>javacpp</artifactId>
-    <version>1.5.12</version>
+    <version>1.5.13</version>
   </dependency>
 ```
 
  * Gradle (inside the `build.gradle.kts` or `build.gradle` file)
 ```groovy
   dependencies {
-    implementation("org.bytedeco:javacpp:1.5.12")
+    implementation("org.bytedeco:javacpp:1.5.13")
   }
 ```
 
  * Leiningen (inside the `project.clj` file)
 ```clojure
   :dependencies [
-    [org.bytedeco/javacpp "1.5.12"]
+    [org.bytedeco/javacpp "1.5.13"]
   ]
 ```
 
  * sbt (inside the `build.sbt` file)
 ```scala
-  libraryDependencies += "org.bytedeco" % "javacpp" % "1.5.12"
+  libraryDependencies += "org.bytedeco" % "javacpp" % "1.5.13"
 ```
 
 Another option available to Gradle users is [Gradle JavaCPP](https://github.com/bytedeco/gradle-javacpp), and similarly for Scala users there is [SBT-JavaCPP](https://github.com/bytedeco/sbt-javacpp).
@@ -56,20 +56,21 @@ Required Software
 -----------------
 To use JavaCPP, you will need to download and install the following software:
 
- * An implementation of Java SE 7 or newer:
+ * An implementation of Java SE 8 or newer:
    * OpenJDK  http://openjdk.java.net/install/  or
    * Oracle JDK  http://www.oracle.com/technetwork/java/javase/downloads/  or
-   * IBM JDK  http://www.ibm.com/developerworks/java/jdk/
- * A C++ compiler, out of which these have been tested:
+   * IBM JDK  http://www.ibm.com/developerworks/java/jdk/  or
+   * Microsoft JDK  https://www.microsoft.com/openjdk  etc
+ * A C++11 compiler, out of which these have been tested:
    * GNU C/C++ Compiler (Linux, etc.)  http://gcc.gnu.org/
      * For Windows x86 and x64  http://mingw-w64.org/
    * LLVM Clang (Mac OS X, etc.)  http://clang.llvm.org/
    * Microsoft C/C++ Compiler, part of Visual Studio  https://visualstudio.microsoft.com/
      * https://docs.microsoft.com/en-us/cpp/build/walkthrough-compiling-a-native-cpp-program-on-the-command-line
 
-To produce binary files for Android 4.0 or newer, you will also have to install:
+To produce binary files for Android 7.0 or newer, you will also have to install:
 
- * Android NDK r7 or newer  http://developer.android.com/ndk/downloads/
+ * Android NDK r18 or newer  http://developer.android.com/ndk/downloads/
 
 And similarly to target iOS, you will need to install either:
 
@@ -83,7 +84,6 @@ To modify the source code, please note that the project files were created for:
 Finally, because we are dealing with native code, bugs can easily crash the virtual machine. Luckily, the HotSpot VM provides some tools to help us debug under those circumstances:
 
  * Troubleshooting Guide for Java SE with HotSpot VM
-   * http://docs.oracle.com/javase/7/docs/webnotes/tsg/TSG-VM/html/
    * http://docs.oracle.com/javase/8/docs/technotes/guides/troubleshoot/
 
 

@@ -61,6 +61,8 @@ jobs:
       - uses: bytedeco/javacpp-presets/.github/actions/deploy-ubuntu@actions
   macosx-arm64:
     runs-on: macos-15
+    env:
+      CI_DEPLOY_OPTIONS: "" # to not skip tests
     steps:
       - uses: bytedeco/javacpp-presets/.github/actions/deploy-macosx@actions
   macosx-x86_64:
