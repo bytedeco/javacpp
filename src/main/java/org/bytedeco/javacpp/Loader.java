@@ -62,7 +62,6 @@ import org.bytedeco.javacpp.annotation.Cast;
 import org.bytedeco.javacpp.annotation.Name;
 import org.bytedeco.javacpp.annotation.Platform;
 import org.bytedeco.javacpp.annotation.Raw;
-import org.bytedeco.javacpp.tools.Builder;
 import org.bytedeco.javacpp.tools.Logger;
 
 /**
@@ -1056,7 +1055,7 @@ public class Loader {
     }
 
     /** Returns {@code System.getProperty("org.bytedeco.javacpp.loadlibraries")}.
-     *  Flag set by the {@link Builder} to tell us not to try to load anything. */
+     *  Flag set by the {@link org.bytedeco.javacpp.tools.Builder} to tell us not to try to load anything. */
     public static boolean isLoadLibraries() {
         String s = System.getProperty("org.bytedeco.javacpp.loadlibraries", "true").toLowerCase();
         s = System.getProperty("org.bytedeco.javacpp.loadLibraries", s).toLowerCase();

@@ -5,7 +5,6 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import org.bytedeco.javacpp.tools.Generator;
 
 /**
  * Encloses the scope of a Java class inside the scope of the given C++ namespace.
@@ -18,7 +17,7 @@ import org.bytedeco.javacpp.tools.Generator;
  * Further, a namespace annotation with an empty value can be used to indicate
  * that the identifier does not support namespaces (such as macros).
  *
- * @see Generator
+ * @see org.bytedeco.javacpp.tools.Generator
  *
  * @author Samuel Audet
  */

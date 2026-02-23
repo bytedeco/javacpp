@@ -5,13 +5,11 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import org.bytedeco.javacpp.FunctionPointer;
-import org.bytedeco.javacpp.tools.Generator;
 
 /**
- * Specifies the calling convention of a {@link FunctionPointer}.
+ * Specifies the calling convention of a {@link org.bytedeco.javacpp.FunctionPointer}.
  *
- * @see Generator
+ * @see org.bytedeco.javacpp.tools.Generator
  *
  * @author Samuel Audet
  */
