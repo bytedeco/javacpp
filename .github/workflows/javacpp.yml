@@ -38,7 +38,9 @@ jobs:
 #    steps:
 #      - uses: bytedeco/javacpp-presets/.github/actions/deploy-ubuntu@actions
   linux-arm64:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-22.04-arm
+    env:
+      CI_DEPLOY_OPTIONS: "" # to not skip tests
     steps:
       - uses: bytedeco/javacpp-presets/.github/actions/deploy-ubuntu@actions
   linux-ppc64le:
