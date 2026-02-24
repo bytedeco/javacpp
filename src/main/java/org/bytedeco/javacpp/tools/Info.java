@@ -22,10 +22,6 @@
 
 package org.bytedeco.javacpp.tools;
 
-import org.bytedeco.javacpp.annotation.ByVal;
-import org.bytedeco.javacpp.annotation.Cast;
-import org.bytedeco.javacpp.annotation.Virtual;
-
 /**
  * Holds information useful to the {@link Parser} and associated with C++ identifiers.
  * Info objects are meant to be added by the user to an {@link InfoMap} passed as
@@ -80,7 +76,7 @@ public class Info {
      * variable-like macros for which the type is guessed based on the expression. */
     String[] cppTypes = null;
     /** A list of (usually) primitive Java types to be used to map C++ value types.
-     * By default, {@link #pointerTypes} prefixed with @{@link ByVal} are used. */
+     * By default, {@link #pointerTypes} prefixed with @{@link org.bytedeco.javacpp.annotation.ByVal} are used. */
     String[] valueTypes = null;
     /** A list of (usually) {@link org.bytedeco.javacpp.Pointer} Java subclasses to be used to map C++ pointer types.
      * By default, the names of the C++ types {@link #cppNames} are used. */
@@ -88,7 +84,7 @@ public class Info {
     /** A list of regular expressions (start1, end1, start2, end2, ...) that are matched against lines
      * in header files, where only the ones in between each pair are parsed (or not if {@link #skip} is true). */
     String[] linePatterns = null;
-    /** Annotates Java identifiers with @{@link Cast} containing C++ identifier names {@link #cppNames}. */
+    /** Annotates Java identifiers with @{@link org.bytedeco.javacpp.annotation.Cast} containing C++ identifier names {@link #cppNames}. */
     boolean cast = false;
     /** Indicates expressions of conditional macro groups to parse, or templates to specialize. */
     boolean define = false;
@@ -119,7 +115,7 @@ public class Info {
     /** Whether a static_cast is needed to upcast a pointer to this cppName.
      * This is necessary for polymorphic classes that are virtually inherited from. */
     boolean upcast = false;
-    /** Annotates virtual functions with @{@link Virtual} and adds appropriate constructors. */
+    /** Annotates virtual functions with @{@link org.bytedeco.javacpp.annotation.Virtual} and adds appropriate constructors. */
     boolean virtualize = false;
     /** Allows to override the base class of {@link #pointerTypes}. Defaults to {@link org.bytedeco.javacpp.Pointer}. */
     String base = null;
