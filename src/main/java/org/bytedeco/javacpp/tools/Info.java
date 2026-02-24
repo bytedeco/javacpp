@@ -22,7 +22,6 @@
 
 package org.bytedeco.javacpp.tools;
 
-import org.bytedeco.javacpp.Pointer;
 import org.bytedeco.javacpp.annotation.ByVal;
 import org.bytedeco.javacpp.annotation.Cast;
 import org.bytedeco.javacpp.annotation.Virtual;
@@ -83,7 +82,7 @@ public class Info {
     /** A list of (usually) primitive Java types to be used to map C++ value types.
      * By default, {@link #pointerTypes} prefixed with @{@link ByVal} are used. */
     String[] valueTypes = null;
-    /** A list of (usually) {@link Pointer} Java subclasses to be used to map C++ pointer types.
+    /** A list of (usually) {@link org.bytedeco.javacpp.Pointer} Java subclasses to be used to map C++ pointer types.
      * By default, the names of the C++ types {@link #cppNames} are used. */
     String[] pointerTypes = null;
     /** A list of regular expressions (start1, end1, start2, end2, ...) that are matched against lines
@@ -122,7 +121,7 @@ public class Info {
     boolean upcast = false;
     /** Annotates virtual functions with @{@link Virtual} and adds appropriate constructors. */
     boolean virtualize = false;
-    /** Allows to override the base class of {@link #pointerTypes}. Defaults to {@link Pointer}. */
+    /** Allows to override the base class of {@link #pointerTypes}. Defaults to {@link org.bytedeco.javacpp.Pointer}. */
     String base = null;
     /** Replaces the code associated with the declaration of C++ identifiers, before parsing. */
     String cppText = null;
