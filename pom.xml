@@ -133,7 +133,7 @@
       </plugin>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.12.1</version>
+        <version>3.15.0</version>
         <configuration>
           <source>1.8</source>
           <target>1.8</target>
@@ -141,7 +141,7 @@
       </plugin>
       <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>3.2.5</version>
+        <version>3.5.5</version>
         <configuration>
           <systemProperties>
             <property>
@@ -174,7 +174,7 @@
       </plugin>
       <plugin>
         <artifactId>maven-jar-plugin</artifactId>
-        <version>3.3.0</version>
+        <version>3.5.0</version>
         <configuration>
           <archive>
             <!-- Pull in the bnd generated manifest -->
@@ -205,7 +205,7 @@
       <plugin>
         <groupId>org.moditect</groupId>
         <artifactId>moditect-maven-plugin</artifactId>
-        <version>1.1.0</version>
+        <version>1.3.0</version>
         <configuration>
           <jvmVersion>9</jvmVersion>
           <overwriteExistingFiles>true</overwriteExistingFiles>
@@ -231,14 +231,14 @@
       </plugin>
       <plugin>
         <artifactId>maven-install-plugin</artifactId>
-        <version>3.1.1</version>
+        <version>3.1.4</version>
         <configuration>
           <createChecksum>true</createChecksum>
         </configuration>
       </plugin>
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
-        <version>3.6.0</version>
+        <version>3.8.0</version>
         <configuration>
           <attach>false</attach>
           <descriptors>
@@ -257,7 +257,7 @@
       </plugin>
       <plugin>
         <artifactId>maven-source-plugin</artifactId>
-        <version>3.3.0</version>
+        <version>3.4.0</version>
         <executions>
           <execution>
             <id>attach-sources</id>
@@ -273,7 +273,7 @@
       </plugin>
       <plugin>
         <artifactId>maven-javadoc-plugin</artifactId>
-        <version>3.6.3</version>
+        <version>3.12.0</version>
         <executions>
           <execution>
             <id>attach-javadocs</id>
@@ -386,7 +386,7 @@ Import-Package: \
         <plugins>
           <plugin>
             <artifactId>maven-gpg-plugin</artifactId>
-            <version>3.1.0</version>
+            <version>3.2.8</version>
             <executions>
               <execution>
                 <id>sign-artifacts</id>
@@ -442,7 +442,7 @@ Import-Package: \
           <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>exec-maven-plugin</artifactId>
-            <version>3.1.1</version>
+            <version>3.6.3</version>
             <executions>
               <execution>
                 <phase>process-classes</phase>
@@ -558,7 +558,7 @@ Import-Package: \
           </plugin>
           <plugin>
             <artifactId>maven-invoker-plugin</artifactId>
-            <version>3.6.0</version>
+            <version>3.9.1</version>
               <configuration>
                 <cloneProjectsTo>${project.build.directory}/integration-test/projects</cloneProjectsTo>
                 <cloneClean>true</cloneClean>
