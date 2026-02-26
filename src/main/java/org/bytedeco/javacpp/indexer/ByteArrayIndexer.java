@@ -22,6 +22,8 @@
 
 package org.bytedeco.javacpp.indexer;
 
+import org.bytedeco.javacpp.Raw;
+
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
