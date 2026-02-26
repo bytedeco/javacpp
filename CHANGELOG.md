@@ -1,4 +1,6 @@
 
+ * Compile classes with `parameters` bumping minimum requirements to Java SE 8 and Android 7.0 ([issue bytedeco/javacpp-presets#1739](https://github.com/bytedeco/javacpp-presets/issues/1739))
+
 ### February 22, 2026 version 1.5.13
  * Add support for `freebsd-x86_64` with `freebsd-x86_64.properties` ([pull #824](https://github.com/bytedeco/javacpp/pull/824))
  * Use `-mno-outline-atomics` in `linux-arm64.properties` to work around linker bug ([issue bytedeco/javacpp-presets#1671](https://github.com/bytedeco/javacpp-presets/issues/1671))
