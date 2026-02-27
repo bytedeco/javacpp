@@ -5,8 +5,6 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import org.bytedeco.javacpp.Pointer;
-import org.bytedeco.javacpp.tools.Generator;
 
 /**
  * A shorthand for {@code @Adapter("UniquePtrAdapter<type>")}.
@@ -14,7 +12,7 @@ import org.bytedeco.javacpp.tools.Generator;
  * to something like {@code boost::movelib} instead of the default {@code std}.
  *
  * @see Adapter
- * @see Generator
+ * @see org.bytedeco.javacpp.tools.Generator
  *
  * @author Samuel Audet
  */
@@ -23,6 +21,6 @@ import org.bytedeco.javacpp.tools.Generator;
 @Adapter("UniquePtrAdapter")
 public @interface UniquePtr {
     /** The template type of {@code UniquePtrAdapter}. If not specified, it is
-     *  inferred from the value type of the {@link Pointer} or Java array. */
+     *  inferred from the value type of the {@link org.bytedeco.javacpp.Pointer} or Java array. */
     String value() default "";
 }

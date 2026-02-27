@@ -34,14 +34,13 @@ import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.bytedeco.javacpp.annotation.Name;
 import org.bytedeco.javacpp.annotation.Raw;
-import org.bytedeco.javacpp.tools.Generator;
 import org.bytedeco.javacpp.tools.Logger;
 
 /**
  * All peer classes to native types must be descended from Pointer, the topmost class.
  * It can be thought as mapping the native C++ {@code void*}, which can point to any
  * {@code struct}, {@code class}, or {@code union}. All Pointer classes get parsed
- * by {@link Generator} to produce proper wrapping JNI code, but this base class also
+ * by {@link org.bytedeco.javacpp.tools.Generator} to produce proper wrapping JNI code, but this base class also
  * provides functionality to access native array elements as well as utility methods
  * and classes to let users benefit not only from from garbage collection, but also the
  * try-with-resources statement, since it implements the {@link AutoCloseable} interface.

@@ -5,9 +5,6 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import org.bytedeco.javacpp.FunctionPointer;
-import org.bytedeco.javacpp.Pointer;
-import org.bytedeco.javacpp.tools.Generator;
 
 /**
  * An annotation indicating that a method should behave like an allocator.
@@ -18,21 +15,21 @@ import org.bytedeco.javacpp.tools.Generator;
  * native C++ constructors.
  * <p>
  * In a nutshell, an allocator uses the C++ {@code new} operator along with all
- * the given arguments, and initializes the {@link Pointer#address} as well as
- * the {@link Pointer#deallocator} with {@code NativeDeallocator}, based on the
+ * the given arguments, and initializes the {@link org.bytedeco.javacpp.Pointer#address} as well as
+ * the {@link org.bytedeco.javacpp.Pointer#deallocator} with {@code NativeDeallocator}, based on the
  * {@code delete} operator, if not additionally annotated with {@link NoDeallocator}.
  * <p>
  * Can also be used on classes to set the {@link #max} value for enclosed function pointers.
  *
- * @see Pointer#init(long, long, long, long)
- * @see Generator
+ * @see org.bytedeco.javacpp.Pointer#init(long, long, long, long)
+ * @see org.bytedeco.javacpp.tools.Generator
  *
  * @author Samuel Audet
  */
 @Documented @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE, ElementType.METHOD})
 public @interface Allocator {
-    /** The maximum number of instances that can be allocated in the case of a {@link FunctionPointer} subclass.
-     *  Does not affect the underlying function object or other {@link Pointer} which have no such allocation limits. */
+    /** The maximum number of instances that can be allocated in the case of a {@link org.bytedeco.javacpp.FunctionPointer} subclass.
+     *  Does not affect the underlying function object or other {@link org.bytedeco.javacpp.Pointer} which have no such allocation limits. */
     int max() default 10;
 }

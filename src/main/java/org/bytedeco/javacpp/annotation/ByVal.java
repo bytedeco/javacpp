@@ -5,15 +5,13 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import org.bytedeco.javacpp.FunctionPointer;
-import org.bytedeco.javacpp.tools.Generator;
 
 /**
  * Indicates that an argument gets passed or returned by value. When used
- * alongside {@link FunctionPointer}, the {@link Generator} passes the underlying
+ * alongside {@link org.bytedeco.javacpp.FunctionPointer}, the {@link org.bytedeco.javacpp.tools.Generator} passes the underlying
  * C++ function object (aka functor) instead of a function pointer.
  *
- * @see Generator
+ * @see org.bytedeco.javacpp.tools.Generator
  *
  * @author Samuel Audet
  */

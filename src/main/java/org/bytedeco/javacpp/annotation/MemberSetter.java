@@ -5,7 +5,6 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import org.bytedeco.javacpp.tools.Generator;
 
 /**
  * An annotation indicating that a method should behave like a member setter.
@@ -21,7 +20,7 @@ import org.bytedeco.javacpp.tools.Generator;
  * the assignment of a member variable could potentially work with this annotation.
  * All but the last argument are considered as indices to access a member array.
  *
- * @see Generator
+ * @see org.bytedeco.javacpp.tools.Generator
  *
  * @author Samuel Audet
  */

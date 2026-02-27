@@ -5,7 +5,6 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import org.bytedeco.javacpp.tools.Generator;
 
 /**
  * Indicates a type cast required on the argument to satisfy the native compiler.
@@ -14,12 +13,12 @@ import org.bytedeco.javacpp.tools.Generator;
  * A third "precast" can also be specified, which gets applied before the second one,
    but also on return values passed to adapters.
  * <p>
- * At the moment, {@link Generator} makes use of the simple C-style cast. If one
+ * At the moment, {@link org.bytedeco.javacpp.tools.Generator} makes use of the simple C-style cast. If one
  * requires a different kind of type conversion, such as the {@code dynamic_cast}
  * operator, those can be accessed as if they were functions (with the {@link Name}
  * annotation to specify the type) because they have the same syntax.
  *
- * @see Generator
+ * @see org.bytedeco.javacpp.tools.Generator
  *
  * @author Samuel Audet
  */
