@@ -836,7 +836,8 @@ public class Parser {
                 }
                 tokens.next();
                 break;
-            } else if (token.match('<')) {
+            // If it is an operator, it is probably `operator<<`, not start of a template
+            } else if (token.match('<') && !type.operator) {
                 type.arguments = templateArguments(context);
                 type.cppName += "<";
                 String separator = "";
