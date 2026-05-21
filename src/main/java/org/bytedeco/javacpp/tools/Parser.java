@@ -812,6 +812,7 @@ public class Parser {
     Type type(Context context, boolean definition) throws ParserException {
         Type type = new Type();
         List<Attribute> attributes = new ArrayList<>();
+        Token prevToken = new Token();
         for (Token token = tokens.get(); !token.match(Token.EOF); token = tokens.get()) {
             if (token.match("::")) {
                 Info info = infoMap.getFirst(type.cppName, false);
@@ -836,7 +837,8 @@ public class Parser {
                 }
                 tokens.next();
                 break;
-            } else if (token.match('<')) {
+            // If it is an operator, it is probably `operator<<`, not start of a template
+            } else if (token.match('<') && !prevToken.match(Token.OPERATOR, '<')) {
                 type.arguments = templateArguments(context);
                 type.cppName += "<";
                 String separator = "";
@@ -913,10 +915,12 @@ public class Parser {
             } else if (token.match(Token.OPERATOR)) {
                 if (type.cppName.length() == 0) {
                     type.operator = true;
+                    prevToken = token;
                     tokens.next();
                     continue;
                 } else if (type.cppName.endsWith("::")) {
                     type.operator = true;
+                    prevToken = token;
                     tokens.next();
                     type.cppName += operator(context);
                     continue;
@@ -934,6 +938,7 @@ public class Parser {
             } else if (token.match(Token.ENUM, Token.EXPLICIT, Token.EXTERN, Token.INLINE, Token.CLASS, Token.FINAL,
                                    Token.INTERFACE, Token.__INTERFACE, Token.MUTABLE, Token.NAMESPACE, Token.STRUCT, Token.UNION,
                                    Token.TYPENAME, Token.REGISTER, Token.THREAD_LOCAL, Token.VOLATILE)) {
+                prevToken = token;
                 tokens.next();
                 continue;
             } else if (token.match((Object[])infoMap.getFirst("basic/types").cppTypes) && !tokens.get(1).match('<') && (type.cppName.length() == 0 || type.simple)) {
@@ -945,6 +950,7 @@ public class Parser {
                 if (attr != null && (attr.annotation || token.match("[["))) {
                     type.annotations += attr.javaName;
                     attributes.add(attr);
+                    prevToken = token;
                     continue;
                 } else {
                     tokens.index = backIndex;
@@ -968,6 +974,7 @@ public class Parser {
                 }
                 break;
             }
+            prevToken = token;
             tokens.next();
         }
         if (attributes.size() > 0) {
