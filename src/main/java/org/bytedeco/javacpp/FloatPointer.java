@@ -96,7 +96,6 @@ public class FloatPointer extends Pointer {
     public FloatPointer() { }
     /** @see Pointer#Pointer(Pointer) */
     public FloatPointer(Pointer p) { super(p); }
-    private native void allocateArray(long size);
 
     /** @see Pointer#position(long) */
     @Override public FloatPointer position(long position) {
@@ -120,7 +119,7 @@ public class FloatPointer extends Pointer {
     /** @return {@code get(0)} */
     public float get() { return get(0); }
     /** @return the i-th {@code float} value of a native array */
-    public native float get(long i);
+    public float get(long i) { return Raw.getInstance().getFloat(address + i * sizeof()); }
     /** @return {@code put(0, f)} */
     public FloatPointer put(float f) { return put(0, f); }
     /**
@@ -130,7 +129,10 @@ public class FloatPointer extends Pointer {
      * @param f the {@code float} value to copy
      * @return this
      */
-    public native FloatPointer put(long i, float f);
+    public FloatPointer put(long i, float f) {
+        Raw.getInstance().putFloat(address + i * sizeof(), f);
+        return this;
+    }
 
     /** @return {@code get(array, 0, array.length)} */
     public FloatPointer get(float[] array) { return get(array, 0, array.length); }

@@ -24,6 +24,7 @@ package org.bytedeco.javacpp.indexer;
 
 import java.nio.ByteBuffer;
 import org.bytedeco.javacpp.BytePointer;
+import org.bytedeco.javacpp.Raw;
 
 /**
  * Abstract indexer for the {@code byte} primitive type, treated as unsigned.

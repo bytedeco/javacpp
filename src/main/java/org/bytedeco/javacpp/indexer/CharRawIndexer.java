@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2019 Samuel Audet
+ * Copyright (C) 2014-2019 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -26,21 +26,17 @@ import org.bytedeco.javacpp.CharPointer;
 import org.bytedeco.javacpp.Pointer;
 
 /**
- * An indexer for a {@link CharPointer} using the {@link Raw} instance.
+ * An indexer for a {@link CharPointer}.
  *
  * @author Samuel Audet
  */
 public class CharRawIndexer extends CharIndexer {
-    /** The instance for the raw memory interface. */
-    protected static final Raw RAW = Raw.getInstance();
     /** The backing pointer. */
     protected CharPointer pointer;
-    /** Base address and number of elements accessible. */
-    final long base, size;
 
-    /** Calls {@code CharRawIndexer(pointer, Index.create(pointer.limit() - pointer.position()))}. */
+    /** Calls {@code CharRawIndexer(pointer, Index.create(pointer.limit()))}. */
     public CharRawIndexer(CharPointer pointer) {
-        this(pointer, Index.create(pointer.limit() - pointer.position()));
+        this(pointer, Index.create(pointer.limit()));
     }
 
     /** Calls {@code CharRawIndexer(pointer, Index.create(sizes))}. */
@@ -57,8 +53,6 @@ public class CharRawIndexer extends CharIndexer {
     public CharRawIndexer(CharPointer pointer, Index index) {
         super(index);
         this.pointer = pointer;
-        this.base = pointer.address() + pointer.position() * VALUE_BYTES;
-        this.size = pointer.limit() - pointer.position();
     }
 
     @Override public Pointer pointer() {
@@ -69,74 +63,68 @@ public class CharRawIndexer extends CharIndexer {
         return new CharRawIndexer(pointer, index);
     }
 
-    public char getRaw(long i) {
-        return RAW.getChar(base + checkIndex(i, size) * VALUE_BYTES);
-    }
     @Override public char get(long i) {
-        return getRaw(index(i));
+        return pointer.get((int)index(i));
     }
     @Override public CharIndexer get(long i, char[] c, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            c[offset + n] = getRaw(index(i) + n);
+            c[offset + n] = pointer.get((int)index(i) + n);
         }
         return this;
     }
     @Override public char get(long i, long j) {
-        return getRaw(index(i, j));
+        return pointer.get((int)index(i, j));
     }
     @Override public CharIndexer get(long i, long j, char[] c, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            c[offset + n] = getRaw(index(i, j) + n);
+            c[offset + n] = pointer.get((int)index(i, j) + n);
         }
         return this;
     }
     @Override public char get(long i, long j, long k) {
-        return getRaw(index(i, j, k));
+        return pointer.get((int)index(i, j, k));
     }
     @Override public char get(long... indices) {
-        return getRaw(index(indices));
+        return pointer.get((int)index(indices));
     }
     @Override public CharIndexer get(long[] indices, char[] c, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            c[offset + n] = getRaw(index(indices) + n);
+            c[offset + n] = pointer.get((int)index(indices) + n);
         }
         return this;
     }
 
-    public CharIndexer putRaw(long i, char c) {
-        RAW.putChar(base + checkIndex(i, size) * VALUE_BYTES, c);
-        return this;
-    }
     @Override public CharIndexer put(long i, char c) {
-        return putRaw(index(i), c);
+        pointer.put((int)index(i), c);
+        return this;
     }
     @Override public CharIndexer put(long i, char[] c, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            putRaw(index(i) + n, c[offset + n]);
+            pointer.put((int)index(i) + n, c[offset + n]);
         }
         return this;
     }
     @Override public CharIndexer put(long i, long j, char c) {
-        putRaw(index(i, j), c);
+        pointer.put((int)index(i, j), c);
         return this;
     }
     @Override public CharIndexer put(long i, long j, char[] c, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            putRaw(index(i, j) + n, c[offset + n]);
+            pointer.put((int)index(i, j) + n, c[offset + n]);
         }
         return this;
     }
     @Override public CharIndexer put(long i, long j, long k, char c) {
-        putRaw(index(i, j, k), c);
+        pointer.put((int)index(i, j, k), c);
         return this;
     }
     @Override public CharIndexer put(long[] indices, char c) {
-        putRaw(index(indices), c);
+        pointer.put((int)index(indices), c);
         return this;
     }
     @Override public CharIndexer put(long[] indices, char[] c, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            putRaw(index(indices) + n, c[offset + n]);
+            pointer.put((int)index(indices) + n, c[offset + n]);
         }
         return this;
     }

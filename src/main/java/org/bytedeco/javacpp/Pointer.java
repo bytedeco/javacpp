@@ -110,6 +110,10 @@ public class Pointer implements AutoCloseable {
     }
     private native void allocate(Buffer b);
 
+    protected void allocateArray(long size) {
+        this.address = Raw.getInstance().allocateMemory(size * sizeof());
+    }
+
     /**
      * Called by native libraries to initialize the object fields.
      *

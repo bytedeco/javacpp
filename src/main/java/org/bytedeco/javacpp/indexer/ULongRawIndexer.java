@@ -27,21 +27,17 @@ import org.bytedeco.javacpp.LongPointer;
 import org.bytedeco.javacpp.Pointer;
 
 /**
- * An indexer for a {@link LongPointer} using the {@link Raw} instance, treated as unsigned.
+ * An indexer for a {@link LongPointer}, treated as unsigned.
  *
  * @author Samuel Audet
  */
 public class ULongRawIndexer extends ULongIndexer {
-    /** The instance for the raw memory interface. */
-    protected static final Raw RAW = Raw.getInstance();
     /** The backing pointer. */
     protected LongPointer pointer;
-    /** Base address and number of elements accessible. */
-    final long base, size;
 
-    /** Calls {@code ULongRawIndexer(pointer, Index.create(pointer.limit() - pointer.position()))}. */
+    /** Calls {@code ULongRawIndexer(pointer, Index.create(pointer.limit()))}. */
     public ULongRawIndexer(LongPointer pointer) {
-        this(pointer, Index.create(pointer.limit() - pointer.position()));
+        this(pointer, Index.create(pointer.limit()));
     }
 
     /** Calls {@code ULongRawIndexer(pointer, Index.create(sizes))}. */
@@ -58,8 +54,6 @@ public class ULongRawIndexer extends ULongIndexer {
     public ULongRawIndexer(LongPointer pointer, Index index) {
         super(index);
         this.pointer = pointer;
-        this.base = pointer.address() + pointer.position() * VALUE_BYTES;
-        this.size = pointer.limit() - pointer.position();
     }
 
     @Override public Pointer pointer() {
@@ -70,74 +64,68 @@ public class ULongRawIndexer extends ULongIndexer {
         return new ULongRawIndexer(pointer, index);
     }
 
-    public BigInteger getRaw(long i) {
-        return toBigInteger(RAW.getLong(base + checkIndex(i, size) * VALUE_BYTES));
-    }
     @Override public BigInteger get(long i) {
-        return getRaw(index(i));
+        return toBigInteger(pointer.get((int)index(i)));
     }
     @Override public ULongIndexer get(long i, BigInteger[] l, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            l[offset + n] = getRaw(index(i) + n);
+            l[offset + n] = toBigInteger(pointer.get((int)index(i) + n));
         }
         return this;
     }
     @Override public BigInteger get(long i, long j) {
-        return getRaw(index(i, j));
+        return toBigInteger(pointer.get((int)index(i, j)));
     }
     @Override public ULongIndexer get(long i, long j, BigInteger[] l, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            l[offset + n] = getRaw(index(i, j) + n);
+            l[offset + n] = toBigInteger(pointer.get((int)index(i, j) + n));
         }
         return this;
     }
     @Override public BigInteger get(long i, long j, long k) {
-        return getRaw(index(i, j, k));
+        return toBigInteger(pointer.get((int)index(i, j, k)));
     }
     @Override public BigInteger get(long... indices) {
-        return getRaw(index(indices));
+        return toBigInteger(pointer.get((int)index(indices)));
     }
     @Override public ULongIndexer get(long[] indices, BigInteger[] l, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            l[offset + n] = getRaw(index(indices) + n);
+            l[offset + n] = toBigInteger(pointer.get((int)index(indices) + n));
         }
         return this;
     }
 
-    public ULongIndexer putRaw(long i, BigInteger l) {
-        RAW.putLong(base + checkIndex(i, size) * VALUE_BYTES, fromBigInteger(l));
-        return this;
-    }
     @Override public ULongIndexer put(long i, BigInteger l) {
-        return putRaw(index(i), l);
+        pointer.put((int)index(i), fromBigInteger(l));
+        return this;
     }
     @Override public ULongIndexer put(long i, BigInteger[] l, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            putRaw(index(i) + n, l[offset + n]);
+            pointer.put((int)index(i) + n, fromBigInteger(l[offset + n]));
         }
         return this;
     }
     @Override public ULongIndexer put(long i, long j, BigInteger l) {
-        putRaw(index(i, j), l);
+        pointer.put((int)index(i, j), fromBigInteger(l));
         return this;
     }
     @Override public ULongIndexer put(long i, long j, BigInteger[] l, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            putRaw(index(i, j) + n, l[offset + n]);
+            pointer.put((int)index(i, j) + n, fromBigInteger(l[offset + n]));
         }
         return this;
     }
     @Override public ULongIndexer put(long i, long j, long k, BigInteger l) {
-        putRaw(index(i, j, k), l);
+        pointer.put((int)index(i, j, k), fromBigInteger(l));
         return this;
     }
     @Override public ULongIndexer put(long[] indices, BigInteger l) {
-        putRaw(index(indices), l);
+        pointer.put((int)index(indices), fromBigInteger(l));
         return this;
     }
     @Override public ULongIndexer put(long[] indices, BigInteger[] l, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            putRaw(index(indices) + n, l[offset + n]);
+            pointer.put((int)index(indices) + n, fromBigInteger(l[offset + n]));
         }
         return this;
     }

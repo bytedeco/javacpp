@@ -106,7 +106,6 @@ public class IntPointer extends Pointer {
     public IntPointer() { }
     /** @see Pointer#Pointer(Pointer) */
     public IntPointer(Pointer p) { super(p); }
-    private native void allocateArray(long size);
 
     /** @see Pointer#position(long) */
     @Override public IntPointer position(long position) {
@@ -175,7 +174,7 @@ public class IntPointer extends Pointer {
     /** @return {@code get(0)} */
     public int get() { return get(0); }
     /** @return the i-th {@code int} value of a native array */
-    public native int get(long i);
+    public int get(long i) { return Raw.getInstance().getInt(address + i * sizeof()); }
     /** @return {@code put(0, j)} */
     public IntPointer put(int j) { return put(0, j); }
     /**
@@ -185,7 +184,10 @@ public class IntPointer extends Pointer {
      * @param j the {@code int} value to copy
      * @return this
      */
-    public native IntPointer put(long i, int j);
+    public IntPointer put(long i, int j) {
+        Raw.getInstance().putInt(address + i * sizeof(), j);
+        return this;
+    }
 
     /** @return {@code get(array, 0, array.length)} */
     public IntPointer get(int[] array) { return get(array, 0, array.length); }
