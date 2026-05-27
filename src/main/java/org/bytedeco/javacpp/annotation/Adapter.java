@@ -6,16 +6,14 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.nio.Buffer;
-import org.bytedeco.javacpp.Pointer;
-import org.bytedeco.javacpp.tools.Generator;
 
 /**
  * Specifies a C++ class to act as an adapter between a target type and one or more adaptee type(s).
  * Instances of the adapter class are short-living and last only for the duration of a JNI call.
  * <p></p>
- * Six such C++ classes are made available by {@link Generator} to bridge a few differences, for instance,
+ * Six such C++ classes are made available by {@link org.bytedeco.javacpp.tools.Generator} to bridge a few differences, for instance,
  * between {@code std::string} and {@link String}, between {@code std::vector}, Java arrays of primitive
- * types, {@link Buffer}, and {@link Pointer}, or between {@code xyz::shared_ptr} and {@link Pointer}:
+ * types, {@link Buffer}, and {@link org.bytedeco.javacpp.Pointer}, or between {@code xyz::shared_ptr} and {@link org.bytedeco.javacpp.Pointer}:
  * <blockquote>
  * <table width="80%">
  *     <thead>
@@ -90,7 +88,7 @@ import org.bytedeco.javacpp.tools.Generator;
  * To reduce further the amount of coding, this annotation can also be used on
  * other annotations, such as with {@link StdString}, {@link StdVector}, and {@link SharedPtr}.
  *
- * @see Generator
+ * @see org.bytedeco.javacpp.tools.Generator
  *
  * @author Samuel Audet
  */
@@ -99,7 +97,7 @@ import org.bytedeco.javacpp.tools.Generator;
 public @interface Adapter {
     /** The name of the C++ adapter class. */
     String value();
-    /** The number of arguments that {@link Generator} takes from the method as
+    /** The number of arguments that {@link org.bytedeco.javacpp.tools.Generator} takes from the method as
      *  arguments to the adapter constructor. */
     int argc() default 1;
 }

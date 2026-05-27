@@ -1,14 +1,12 @@
 package org.bytedeco.javacpp.annotation;
 
-import org.bytedeco.javacpp.tools.Generator;
-
 import java.lang.annotation.*;
 
 /**
  * Indicates that {@link java.lang.String} should be mapped to array of UTF-16
  * code units ({@code char16_t*}) instead of byte array ({@code const char*}).
  *
- * @see Generator
+ * @see org.bytedeco.javacpp.tools.Generator
  *
  * @author Alexey Rochev
  */

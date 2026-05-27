@@ -5,7 +5,6 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import org.bytedeco.javacpp.tools.Generator;
 
 /**
  * By default, all allocators attach a deallocator to the peer object on creation.
@@ -18,7 +17,7 @@ import org.bytedeco.javacpp.tools.Generator;
  *
  * @see Allocator
  * @see ArrayAllocator
- * @see Generator
+ * @see org.bytedeco.javacpp.tools.Generator
  *
  * @author Samuel Audet
  */

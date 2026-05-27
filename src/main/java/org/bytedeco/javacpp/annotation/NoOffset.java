@@ -5,19 +5,17 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import org.bytedeco.javacpp.Loader;
-import org.bytedeco.javacpp.tools.Generator;
 
 /**
- * By default, {@link Generator} applies {@code offsetof()} to all member variables.
- * For each value returned {@link Loader#putMemberOffset(String, String, int)}
+ * By default, {@link org.bytedeco.javacpp.tools.Generator} applies {@code offsetof()} to all member variables.
+ * For each value returned {@link org.bytedeco.javacpp.Loader#putMemberOffset(String, String, int)}
  * gets called, allowing to query efficiently those values from Java at a later
- * point by calling {@link Loader#offsetof(Class, String)}. However, this is
+ * point by calling {@link org.bytedeco.javacpp.Loader#offsetof(Class, String)}. However, this is
  * only guaranteed to work on plain old data (POD) {@code struct}. To prevent
  * the C++ compiler from complaining in other cases, we can add this annotation
  * to the peer class declaration.
  *
- * @see Generator
+ * @see org.bytedeco.javacpp.tools.Generator
  *
  * @author Samuel Audet
  */
