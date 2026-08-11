@@ -26,11 +26,10 @@ import org.bytedeco.javacpp.annotation.ByPtr;
 import org.bytedeco.javacpp.annotation.ByRef;
 import org.bytedeco.javacpp.annotation.ByVal;
 import org.bytedeco.javacpp.annotation.ValueSetter;
-import org.bytedeco.javacpp.tools.Generator;
 
 /**
  * All peer classes to function pointers must derive from FunctionPointer.
- * Defining a subclass lets {@link Generator} create a native function type.
+ * Defining a subclass lets {@link org.bytedeco.javacpp.tools.Generator} create a native function type.
  * A C++ function object gets instantiated for each call to {@code allocate()}
  * as well. That function object can be accessed by annotating any method
  * parameter with {@link ByVal} or {@link ByRef}. By default, an actual
@@ -47,7 +46,7 @@ import org.bytedeco.javacpp.tools.Generator;
  * along with {@code native} declarations for {@code allocate()} and {@code call()}.
  * After allocating the object and setting the value, we can be call it from Java.
  *
- * @see Generator
+ * @see org.bytedeco.javacpp.tools.Generator
  *
  * @author Samuel Audet
  */

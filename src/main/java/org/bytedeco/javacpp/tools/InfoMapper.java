@@ -22,7 +22,6 @@
 
 package org.bytedeco.javacpp.tools;
 
-import org.bytedeco.javacpp.annotation.Properties;
 import org.osgi.annotation.versioning.ConsumerType;
 
 /**
@@ -31,7 +30,7 @@ import org.osgi.annotation.versioning.ConsumerType;
  * will create an instance of the class before calling the {@link #map(InfoMap)}
  * method, to be filled in with {@link Info} objects defined by the user.
  * <p>
- * A class further annotated with {@link Properties#target()} gets detected by
+ * A class further annotated with {@link org.bytedeco.javacpp.annotation.Properties#target()} gets detected by
  * the {@link Builder}, which then delegates it to the {@link Parser}.
  * <p>
  * Note that this interface is intended to be implemented by users of JavaCPP and so is marked

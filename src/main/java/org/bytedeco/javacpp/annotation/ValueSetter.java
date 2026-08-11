@@ -5,7 +5,6 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import org.bytedeco.javacpp.tools.Generator;
 
 /**
  * An annotation indicating that a method should behave like a value setter.
@@ -22,7 +21,7 @@ import org.bytedeco.javacpp.tools.Generator;
  * assignment of a dereferenced pointer could potentially work with this annotation.
  * All but the last argument are considered as indices to access a value array.
  *
- * @see Generator
+ * @see org.bytedeco.javacpp.tools.Generator
  *
  * @author Samuel Audet
  */

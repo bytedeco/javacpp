@@ -5,13 +5,12 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import org.bytedeco.javacpp.tools.Generator;
 
 /**
  * Indicates that an argument gets passed or returned by a reference to a pointer.
  * In C++, such a beast looks like {@code *&}, usually to output pointers via parameters.
  *
- * @see Generator
+ * @see org.bytedeco.javacpp.tools.Generator
  *
  * @author Samuel Audet
  */

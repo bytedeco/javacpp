@@ -1,7 +1,5 @@
 package org.bytedeco.javacpp.annotation;
 
-import org.bytedeco.javacpp.Pointer;
-
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -14,6 +12,6 @@ import java.lang.annotation.Target;
 @Adapter("BasicStringAdapter")
 public @interface StdBasicString {
     /** The template type of {@code BasicStringAdapter}. If not specified, it is
-     *  inferred from the value type of the {@link Pointer} or Java array. */
+     *  inferred from the value type of the {@link org.bytedeco.javacpp.Pointer} or Java array. */
     String value() default "";
 }
