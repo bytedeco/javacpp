@@ -24,6 +24,7 @@ package org.bytedeco.javacpp.indexer;
 
 import java.nio.IntBuffer;
 import org.bytedeco.javacpp.IntPointer;
+import org.bytedeco.javacpp.Raw;
 
 /**
  * Abstract indexer for the {@code int} primitive type.

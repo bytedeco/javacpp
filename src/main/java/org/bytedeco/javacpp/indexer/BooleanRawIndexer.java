@@ -22,43 +22,37 @@
 
 package org.bytedeco.javacpp.indexer;
 
-import org.bytedeco.javacpp.BooleanPointer;
+import org.bytedeco.javacpp.BytePointer;
 import org.bytedeco.javacpp.Pointer;
 
 /**
- * An indexer for a {@link BooleanPointer} using the {@link Raw} instance.
+ * An indexer for a {@link BytePointer} as {@code boolean} values.
  *
  * @author Samuel Audet
  */
 public class BooleanRawIndexer extends BooleanIndexer {
-    /** The instance for the raw memory interface. */
-    protected static final Raw RAW = Raw.getInstance();
     /** The backing pointer. */
-    protected BooleanPointer pointer;
-    /** Base address and number of elements accessible. */
-    final long base, size;
+    protected BytePointer pointer;
 
-    /** Calls {@code BooleanRawIndexer(pointer, Index.create(pointer.limit() - pointer.position()))}. */
-    public BooleanRawIndexer(BooleanPointer pointer) {
-        this(pointer, Index.create(pointer.limit() - pointer.position()));
+    /** Calls {@code BooleanRawIndexer(pointer, Index.create(pointer.limit()))}. */
+    public BooleanRawIndexer(BytePointer pointer) {
+        this(pointer, Index.create(pointer.limit()));
     }
 
     /** Calls {@code BooleanRawIndexer(pointer, Index.create(sizes))}. */
-    public BooleanRawIndexer(BooleanPointer pointer, long... sizes) {
-        this(pointer, sizes, strides(sizes));
+    public BooleanRawIndexer(BytePointer pointer, long... sizes) {
+        this(pointer, Index.create(sizes));
     }
 
     /** Calls {@code BooleanRawIndexer(pointer, Index.create(sizes, strides))}. */
-    public BooleanRawIndexer(BooleanPointer pointer, long[] sizes, long[] strides) {
+    public BooleanRawIndexer(BytePointer pointer, long[] sizes, long[] strides) {
         this(pointer, Index.create(sizes, strides));
     }
 
     /** Constructor to set the {@link #pointer} and {@link #index}. */
-    public BooleanRawIndexer(BooleanPointer pointer, Index index) {
+    public BooleanRawIndexer(BytePointer pointer, Index index) {
         super(index);
         this.pointer = pointer;
-        this.base = pointer.address() + pointer.position() * VALUE_BYTES;
-        this.size = pointer.limit() - pointer.position();
     }
 
     @Override public Pointer pointer() {
@@ -69,74 +63,68 @@ public class BooleanRawIndexer extends BooleanIndexer {
         return new BooleanRawIndexer(pointer, index);
     }
 
-    public boolean getRaw(long i) {
-        return RAW.getBoolean(base + checkIndex(i, size) * VALUE_BYTES);
-    }
     @Override public boolean get(long i) {
-        return getRaw(index(i));
+        return pointer.get((int)index(i)) != 0;
     }
     @Override public BooleanIndexer get(long i, boolean[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            b[offset + n] = getRaw(index(i) + n);
+            b[offset + n] = pointer.get((int)index(i) + n) != 0;
         }
         return this;
     }
     @Override public boolean get(long i, long j) {
-        return getRaw(index(i, j));
+        return pointer.get((int)index(i, j)) != 0;
     }
     @Override public BooleanIndexer get(long i, long j, boolean[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            b[offset + n] = getRaw(index(i, j) + n);
+            b[offset + n] = pointer.get((int)index(i, j) + n) != 0;
         }
         return this;
     }
     @Override public boolean get(long i, long j, long k) {
-        return getRaw(index(i, j, k));
+        return pointer.get((int)index(i, j, k)) != 0;
     }
     @Override public boolean get(long... indices) {
-        return getRaw(index(indices));
+        return pointer.get((int)index(indices)) != 0;
     }
     @Override public BooleanIndexer get(long[] indices, boolean[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            b[offset + n] = getRaw(index(indices) + n);
+            b[offset + n] = pointer.get((int)index(indices) + n) != 0;
         }
         return this;
     }
 
-    public BooleanIndexer putRaw(long i, boolean b) {
-        RAW.putBoolean(base + checkIndex(i, size) * VALUE_BYTES, b);
-        return this;
-    }
     @Override public BooleanIndexer put(long i, boolean b) {
-        return putRaw(index(i), b);
+        pointer.put((int)index(i), b ? (byte)1 : (byte)0);
+        return this;
     }
     @Override public BooleanIndexer put(long i, boolean[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            putRaw(index(i) + n, b[offset + n]);
+            pointer.put((int)index(i) + n, b[offset + n] ? (byte)1 : (byte)0);
         }
         return this;
     }
     @Override public BooleanIndexer put(long i, long j, boolean b) {
-        putRaw(index(i, j), b);
+        pointer.put((int)index(i, j), b ? (byte)1 : (byte)0);
         return this;
     }
     @Override public BooleanIndexer put(long i, long j, boolean[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            putRaw(index(i, j) + n, b[offset + n]);
+            pointer.put((int)index(i, j) + n, b[offset + n] ? (byte)1 : (byte)0);
         }
         return this;
     }
     @Override public BooleanIndexer put(long i, long j, long k, boolean b) {
-        putRaw(index(i, j, k), b);
+        pointer.put((int)index(i, j, k), b ? (byte)1 : (byte)0);
         return this;
     }
     @Override public BooleanIndexer put(long[] indices, boolean b) {
-        putRaw(index(indices), b);
+        pointer.put((int)index(indices), b ? (byte)1 : (byte)0);
         return this;
     }
     @Override public BooleanIndexer put(long[] indices, boolean[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            putRaw(index(indices) + n, b[offset + n]);
+            pointer.put((int)index(indices) + n, b[offset + n] ? (byte)1 : (byte)0);
         }
         return this;
     }

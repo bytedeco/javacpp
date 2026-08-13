@@ -96,7 +96,6 @@ public class ShortPointer extends Pointer {
     public ShortPointer() { }
     /** @see Pointer#Pointer(Pointer) */
     public ShortPointer(Pointer p) { super(p); }
-    private native void allocateArray(long size);
 
     /** @see Pointer#position(long) */
     @Override public ShortPointer position(long position) {
@@ -120,7 +119,7 @@ public class ShortPointer extends Pointer {
     /** @return {@code get(0)} */
     public short get() { return get(0); }
     /** @return the i-th {@code short} value of a native array */
-    public native short get(long i);
+    public short get(long i) { return Raw.getInstance().getShort(address + i * sizeof()); }
     /** @return {@code put(0, s)} */
     public ShortPointer put(short s) { return put(0, s); }
     /**
@@ -130,7 +129,10 @@ public class ShortPointer extends Pointer {
      * @param s the {@code short} value to copy
      * @return this
      */
-    public native ShortPointer put(long i, short s);
+    public ShortPointer put(long i, short s) {
+        Raw.getInstance().putShort(address + i * sizeof(), s);
+        return this;
+    }
 
     /** @return {@code get(array, 0, array.length)} */
     public ShortPointer get(short[] array) { return get(array, 0, array.length); }

@@ -19,7 +19,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.bytedeco.javacpp.indexer;
+package org.bytedeco.javacpp;
 
 /**
  * A raw memory interface based on {@link UnsafeRaw} that swaps the bytes.

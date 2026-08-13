@@ -26,21 +26,17 @@ import org.bytedeco.javacpp.IntPointer;
 import org.bytedeco.javacpp.Pointer;
 
 /**
- * An indexer for a {@link IntPointer} using the {@link Raw} instance, treated as unsigned.
+ * An indexer for a {@link IntPointer}, treated as unsigned.
  *
  * @author Samuel Audet
  */
 public class UIntRawIndexer extends UIntIndexer {
-    /** The instance for the raw memory interface. */
-    protected static final Raw RAW = Raw.getInstance();
     /** The backing pointer. */
     protected IntPointer pointer;
-    /** Base address and number of elements accessible. */
-    final long base, size;
 
-    /** Calls {@code UIntRawIndexer(pointer, Index.create(pointer.limit() - pointer.position()))}. */
+    /** Calls {@code UIntRawIndexer(pointer, Index.create(pointer.limit()))}. */
     public UIntRawIndexer(IntPointer pointer) {
-        this(pointer, Index.create(pointer.limit() - pointer.position()));
+        this(pointer, Index.create(pointer.limit()));
     }
 
     /** Calls {@code UIntRawIndexer(pointer, Index.create(sizes))}. */
@@ -57,8 +53,6 @@ public class UIntRawIndexer extends UIntIndexer {
     public UIntRawIndexer(IntPointer pointer, Index index) {
         super(index);
         this.pointer = pointer;
-        this.base = pointer.address() + pointer.position() * VALUE_BYTES;
-        this.size = pointer.limit() - pointer.position();
     }
 
     @Override public Pointer pointer() {
@@ -69,74 +63,68 @@ public class UIntRawIndexer extends UIntIndexer {
         return new UIntRawIndexer(pointer, index);
     }
 
-    public long getRaw(long i) {
-        return RAW.getInt(base + checkIndex(i, size) * VALUE_BYTES) & 0xFFFFFFFFL;
-    }
     @Override public long get(long i) {
-        return getRaw(index(i));
+        return pointer.get((int)index(i)) & 0xFFFFFFFFL;
     }
     @Override public UIntIndexer get(long i, long[] m, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            m[offset + n] = getRaw(index(i) + n) & 0xFFFFFFFFL;
+            m[offset + n] = pointer.get((int)index(i) + n) & 0xFFFFFFFFL;
         }
         return this;
     }
     @Override public long get(long i, long j) {
-        return getRaw(index(i, j)) & 0xFFFFFFFFL;
+        return pointer.get((int)index(i, j)) & 0xFFFFFFFFL;
     }
     @Override public UIntIndexer get(long i, long j, long[] m, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            m[offset + n] = getRaw(index(i, j) + n) & 0xFFFFFFFFL;
+            m[offset + n] = pointer.get((int)index(i, j) + n) & 0xFFFFFFFFL;
         }
         return this;
     }
     @Override public long get(long i, long j, long k) {
-        return getRaw(index(i, j, k)) & 0xFFFFFFFFL;
+        return pointer.get((int)index(i, j, k)) & 0xFFFFFFFFL;
     }
     @Override public long get(long... indices) {
-        return getRaw(index(indices)) & 0xFFFFFFFFL;
+        return pointer.get((int)index(indices)) & 0xFFFFFFFFL;
     }
     @Override public UIntIndexer get(long[] indices, long[] m, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            m[offset + n] = getRaw(index(indices) + n) & 0xFFFFFFFFL;
+            m[offset + n] = pointer.get((int)index(indices) + n) & 0xFFFFFFFFL;
         }
         return this;
     }
 
-    public UIntIndexer putRaw(long i, long n) {
-        RAW.putInt(base + checkIndex(i, size) * VALUE_BYTES, (int)n);
-        return this;
-    }
     @Override public UIntIndexer put(long i, long n) {
-        return putRaw(index(i), n);
+        pointer.put((int)index(i), (int)n);
+        return this;
     }
     @Override public UIntIndexer put(long i, long[] m, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            putRaw(index(i) + n, m[offset + n]);
+            pointer.put((int)index(i) + n, (int)m[offset + n]);
         }
         return this;
     }
     @Override public UIntIndexer put(long i, long j, long n) {
-        putRaw(index(i, j), n);
+        pointer.put((int)index(i, j), (int)n);
         return this;
     }
     @Override public UIntIndexer put(long i, long j, long[] m, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            putRaw(index(i, j) + n, m[offset + n]);
+            pointer.put((int)index(i, j) + n, (int)m[offset + n]);
         }
         return this;
     }
     @Override public UIntIndexer put(long i, long j, long k, long n) {
-        putRaw(index(i, j, k), n);
+        pointer.put((int)index(i, j, k), (int)n);
         return this;
     }
     @Override public UIntIndexer put(long[] indices, long n) {
-        putRaw(index(indices), n);
+        pointer.put((int)index(indices), (int)n);
         return this;
     }
     @Override public UIntIndexer put(long[] indices, long[] m, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            putRaw(index(indices) + n, m[offset + n]);
+            pointer.put((int)index(indices) + n, (int)m[offset + n]);
         }
         return this;
     }

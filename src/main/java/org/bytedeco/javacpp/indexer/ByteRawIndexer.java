@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2019 Samuel Audet
+ * Copyright (C) 2014-2019 Samuel Audet
  *
  * Licensed either under the Apache License, Version 2.0, or (at your option)
  * under the terms of the GNU General Public License as published by
@@ -26,26 +26,22 @@ import org.bytedeco.javacpp.BytePointer;
 import org.bytedeco.javacpp.Pointer;
 
 /**
- * An indexer for a {@link BytePointer} using the {@link Raw} instance.
+ * An indexer for a {@link BytePointer}.
  *
  * @author Samuel Audet
  */
 public class ByteRawIndexer extends ByteIndexer {
-    /** The instance for the raw memory interface. */
-    protected static final Raw RAW = Raw.getInstance();
     /** The backing pointer. */
     protected BytePointer pointer;
-    /** Base address and number of elements accessible. */
-    final long base, size;
 
-    /** Calls {@code ByteRawIndexer(pointer, Index.create(pointer.limit() - pointer.position()))}. */
+    /** Calls {@code ByteRawIndexer(pointer, Index.create(pointer.limit()))}. */
     public ByteRawIndexer(BytePointer pointer) {
-        this(pointer, Index.create(pointer.limit() - pointer.position()));
+        this(pointer, Index.create(pointer.limit()));
     }
 
     /** Calls {@code ByteRawIndexer(pointer, Index.create(sizes))}. */
     public ByteRawIndexer(BytePointer pointer, long... sizes) {
-        this(pointer, sizes, strides(sizes));
+        this(pointer, Index.create(sizes));
     }
 
     /** Calls {@code ByteRawIndexer(pointer, Index.create(sizes, strides))}. */
@@ -57,8 +53,6 @@ public class ByteRawIndexer extends ByteIndexer {
     public ByteRawIndexer(BytePointer pointer, Index index) {
         super(index);
         this.pointer = pointer;
-        this.base = pointer.address() + pointer.position();
-        this.size = pointer.limit() - pointer.position();
     }
 
     @Override public Pointer pointer() {
@@ -69,131 +63,125 @@ public class ByteRawIndexer extends ByteIndexer {
         return new ByteRawIndexer(pointer, index);
     }
 
-    public byte getRaw(long i) {
-        return RAW.getByte(base + checkIndex(i, size));
-    }
     @Override public byte get(long i) {
-        return getRaw(index(i));
+        return pointer.get((int)index(i));
     }
     @Override public ByteIndexer get(long i, byte[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            b[offset + n] = getRaw(index(i) + n);
+            b[offset + n] = pointer.get((int)index(i) + n);
         }
         return this;
     }
     @Override public byte get(long i, long j) {
-        return getRaw(index(i, j));
+        return pointer.get((int)index(i, j));
     }
     @Override public ByteIndexer get(long i, long j, byte[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            b[offset + n] = getRaw(index(i, j) + n);
+            b[offset + n] = pointer.get((int)index(i, j) + n);
         }
         return this;
     }
     @Override public byte get(long i, long j, long k) {
-        return getRaw(index(i, j, k));
+        return pointer.get((int)index(i, j, k));
     }
     @Override public byte get(long... indices) {
-        return getRaw(index(indices));
+        return pointer.get((int)index(indices));
     }
     @Override public ByteIndexer get(long[] indices, byte[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            b[offset + n] = getRaw(index(indices) + n);
+            b[offset + n] = pointer.get((int)index(indices) + n);
         }
         return this;
     }
 
-    public ByteIndexer putRaw(long i, byte b) {
-        RAW.putByte(base + checkIndex(i, size), b);
-        return this;
-    }
     @Override public ByteIndexer put(long i, byte b) {
-        return putRaw(index(i), b);
+        pointer.put((int)index(i), b);
+        return this;
     }
     @Override public ByteIndexer put(long i, byte[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            putRaw(index(i) + n, b[offset + n]);
+            pointer.put((int)index(i) + n, b[offset + n]);
         }
         return this;
     }
     @Override public ByteIndexer put(long i, long j, byte b) {
-        putRaw(index(i, j), b);
+        pointer.put((int)index(i, j), b);
         return this;
     }
     @Override public ByteIndexer put(long i, long j, byte[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            putRaw(index(i, j) + n, b[offset + n]);
+            pointer.put((int)index(i, j) + n, b[offset + n]);
         }
         return this;
     }
     @Override public ByteIndexer put(long i, long j, long k, byte b) {
-        putRaw(index(i, j, k), b);
+        pointer.put((int)index(i, j, k), b);
         return this;
     }
     @Override public ByteIndexer put(long[] indices, byte b) {
-        putRaw(index(indices), b);
+        pointer.put((int)index(indices), b);
         return this;
     }
     @Override public ByteIndexer put(long[] indices, byte[] b, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            putRaw(index(indices) + n, b[offset + n]);
+            pointer.put((int)index(indices) + n, b[offset + n]);
         }
         return this;
     }
 
     @Override public byte getByte(long i) {
-        return RAW.getByte(base + checkIndex(i, size - 1));
+        return pointer.get((int)i);
     }
     @Override public ByteIndexer putByte(long i, byte b) {
-        RAW.putByte(base + checkIndex(i, size - 1), b);
+        pointer.put((int)i, b);
         return this;
     }
 
     @Override public short getShort(long i) {
-        return RAW.getShort(base + checkIndex(i, size - 1));
+        return pointer.getShort((int)i);
     }
     @Override public ByteIndexer putShort(long i, short s) {
-        RAW.putShort(base + checkIndex(i, size - 1), s);
+        pointer.putShort((int)i, s);
         return this;
     }
 
     @Override public int getInt(long i) {
-        return RAW.getInt(base + checkIndex(i, size - 3));
+        return pointer.getInt((int)i);
     }
     @Override public ByteIndexer putInt(long i, int j) {
-        RAW.putInt(base + checkIndex(i, size - 3), j);
+        pointer.putInt((int)i, j);
         return this;
     }
 
     @Override public long getLong(long i) {
-        return RAW.getLong(base + checkIndex(i, size - 7));
+        return pointer.getLong((int)i);
     }
     @Override public ByteIndexer putLong(long i, long j) {
-        RAW.putLong(base + checkIndex(i, size - 7), j);
+        pointer.putLong((int)i, j);
         return this;
     }
 
     @Override public float getFloat(long i) {
-        return RAW.getFloat(base + checkIndex(i, size - 3));
+        return pointer.getFloat((int)i);
     }
     @Override public ByteIndexer putFloat(long i, float f) {
-        RAW.putFloat(base + checkIndex(i, size - 3), f);
+        pointer.putFloat((int)i, f);
         return this;
     }
 
     @Override public double getDouble(long i) {
-        return RAW.getDouble(base + checkIndex(i, size - 7));
+        return pointer.getDouble((int)i);
     }
     @Override public ByteIndexer putDouble(long i, double d) {
-        RAW.putDouble(base + checkIndex(i, size - 7), d);
+        pointer.putDouble((int)i, d);
         return this;
     }
 
     @Override public char getChar(long i) {
-        return RAW.getChar(base + checkIndex(i, size - 1));
+        return pointer.getChar((int)i);
     }
     @Override public ByteIndexer putChar(long i, char c) {
-        RAW.putChar(base + checkIndex(i, size - 1), c);
+        pointer.putChar((int)i, c);
         return this;
     }
 

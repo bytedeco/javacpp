@@ -24,6 +24,7 @@ package org.bytedeco.javacpp.indexer;
 
 import java.nio.Buffer;
 import org.bytedeco.javacpp.Pointer;
+import org.bytedeco.javacpp.Raw;
 
 /**
  * Top-level class of all data indexers, providing easy-to-use and efficient

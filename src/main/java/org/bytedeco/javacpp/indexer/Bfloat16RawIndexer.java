@@ -26,21 +26,17 @@ import org.bytedeco.javacpp.Pointer;
 import org.bytedeco.javacpp.ShortPointer;
 
 /**
- * An indexer for a {@link ShortPointer} using the {@link Raw} instance, treated as bfloat16.
+ * An indexer for a {@link ShortPointer}, treated as bfloat16.
  *
  * @author Samuel Audet
  */
 public class Bfloat16RawIndexer extends Bfloat16Indexer {
-    /** The instance for the raw memory interface. */
-    protected static final Raw RAW = Raw.getInstance();
     /** The backing pointer. */
     protected ShortPointer pointer;
-    /** Base address and number of elements accessible. */
-    final long base, size;
 
-    /** Calls {@code Bfloat16RawIndexer(pointer, Index.create(pointer.limit() - pointer.position()))}. */
+    /** Calls {@code Bfloat16RawIndexer(pointer, Index.create(pointer.limit()))}. */
     public Bfloat16RawIndexer(ShortPointer pointer) {
-        this(pointer, Index.create(pointer.limit() - pointer.position()));
+        this(pointer, Index.create(pointer.limit()));
     }
 
     /** Calls {@code Bfloat16RawIndexer(pointer, Index.create(sizes))}. */
@@ -57,8 +53,6 @@ public class Bfloat16RawIndexer extends Bfloat16Indexer {
     public Bfloat16RawIndexer(ShortPointer pointer, Index index) {
         super(index);
         this.pointer = pointer;
-        this.base = pointer.address() + pointer.position() * VALUE_BYTES;
-        this.size = pointer.limit() - pointer.position();
     }
 
     @Override public Pointer pointer() {
@@ -69,74 +63,68 @@ public class Bfloat16RawIndexer extends Bfloat16Indexer {
         return new Bfloat16RawIndexer(pointer, index);
     }
 
-    public float getRaw(long i) {
-        return toFloat(RAW.getShort(base + checkIndex(i, size) * VALUE_BYTES));
-    }
     @Override public float get(long i) {
-        return getRaw(index(i));
+        return toFloat(pointer.get((int)index(i)));
     }
     @Override public Bfloat16Indexer get(long i, float[] h, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            h[offset + n] = getRaw(index(i) + n);
+            h[offset + n] = toFloat(pointer.get((int)index(i) + n));
         }
         return this;
     }
     @Override public float get(long i, long j) {
-        return getRaw(index(i, j));
+        return toFloat(pointer.get((int)index(i, j)));
     }
     @Override public Bfloat16Indexer get(long i, long j, float[] h, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            h[offset + n] = getRaw(index(i, j) + n);
+            h[offset + n] = toFloat(pointer.get((int)index(i, j) + n));
         }
         return this;
     }
     @Override public float get(long i, long j, long k) {
-        return getRaw(index(i, j, k));
+        return toFloat(pointer.get((int)index(i, j, k)));
     }
     @Override public float get(long... indices) {
-        return getRaw(index(indices));
+        return toFloat(pointer.get((int)index(indices)));
     }
     @Override public Bfloat16Indexer get(long[] indices, float[] h, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            h[offset + n] = getRaw(index(indices) + n);
+            h[offset + n] = toFloat(pointer.get((int)index(indices) + n));
         }
         return this;
     }
 
-    public Bfloat16Indexer putRaw(long i, float h) {
-        RAW.putShort(base + checkIndex(i, size) * VALUE_BYTES, (short)fromFloat(h));
-        return this;
-    }
     @Override public Bfloat16Indexer put(long i, float h) {
-        return putRaw(index(i), h);
+        pointer.put((int)index(i), (short)fromFloat(h));
+        return this;
     }
     @Override public Bfloat16Indexer put(long i, float[] h, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            putRaw(index(i) + n, h[offset + n]);
+            pointer.put((int)index(i) + n, (short)fromFloat(h[offset + n]));
         }
         return this;
     }
     @Override public Bfloat16Indexer put(long i, long j, float h) {
-        putRaw(index(i, j), h);
+        pointer.put((int)index(i, j), (short)fromFloat(h));
         return this;
     }
     @Override public Bfloat16Indexer put(long i, long j, float[] h, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            putRaw(index(i, j) + n, h[offset + n]);
+            pointer.put((int)index(i, j) + n, (short)fromFloat(h[offset + n]));
         }
         return this;
     }
     @Override public Bfloat16Indexer put(long i, long j, long k, float h) {
-        putRaw(index(i, j, k), h);
+        pointer.put((int)index(i, j, k), (short)fromFloat(h));
         return this;
     }
     @Override public Bfloat16Indexer put(long[] indices, float h) {
-        putRaw(index(indices), h);
+        pointer.put((int)index(indices), (short)fromFloat(h));
         return this;
     }
     @Override public Bfloat16Indexer put(long[] indices, float[] h, int offset, int length) {
         for (int n = 0; n < length; n++) {
-            putRaw(index(indices) + n, h[offset + n]);
+            pointer.put((int)index(indices) + n, (short)fromFloat(h[offset + n]));
         }
         return this;
     }
