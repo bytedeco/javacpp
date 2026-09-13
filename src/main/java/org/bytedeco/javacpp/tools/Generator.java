@@ -2529,8 +2529,10 @@ public class Generator {
                         valueTypeName = valueTypeName(typeName);
                     }
                     if (returnBy instanceof ByVal || (returnBy instanceof ByRef && ((ByRef)returnBy).value())) {
+                        boolean rvalue = returnBy instanceof ByRef && ((ByRef)returnBy).value();
                         returnPrefix += (noException(methodInfo.returnType, methodInfo.method) ?
-                            "new (std::nothrow) " : "new ") + valueTypeName + typeName[1] + "(";
+                            "new (std::nothrow) " : "new ") + valueTypeName + typeName[1] +
+                            (rvalue ? "(std::move(" : "(");
                     } else if (returnBy instanceof ByRef) {
                         returnPrefix += "&";
                     } else if (returnBy instanceof ByPtrPtr) {
@@ -2889,7 +2891,7 @@ public class Generator {
                 Buffer.class.isAssignableFrom(methodInfo.returnType)) ||
                 methodInfo.returnType == String.class) {
             if ((returnBy instanceof ByVal || (returnBy instanceof ByRef && ((ByRef)returnBy).value())) && adapterInfo == null) {
-                suffix = ")" + suffix;
+                suffix = returnBy instanceof ByRef && ((ByRef)returnBy).value() ? "))" + suffix : ")" + suffix;
             } else if (returnBy instanceof ByPtrPtr) {
                 out.println(suffix);
                 suffix = "";
@@ -2981,6 +2983,7 @@ public class Generator {
                     }
                     needInit = true;
                 } else if (returnBy instanceof ByVal ||
+                        (returnBy instanceof ByRef && ((ByRef)returnBy).value()) ||
                         FunctionPointer.class.isAssignableFrom(methodInfo.returnType)) {
                     out.println(indent + "jlong rcapacity = 1;");
                     out.println(indent + "void* rowner = (void*)rptr;");

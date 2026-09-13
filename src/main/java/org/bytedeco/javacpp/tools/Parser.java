@@ -584,10 +584,19 @@ public class Parser {
                         decl.text += "\n";
                         if (dim < 2) {
                             if (first) {
+                                boolean byReference = valueType.annotations.contains("@ByRef ");
+                                if (byReference) {
+                                    // Mark the accessor as an rvalue reference so Generator emits
+                                    // std::move() before pop_back() destroys the element's storage.
+                                    String byMoveAnnotations = valueType.annotations.replace("@ByRef ", "@ByRef(true) ");
+                                    decl.text += "    // Move the element before pop_back() destroys the storage it occupied.\n";
+                                    decl.text += "    @Name(\"at\") @Index" + indexFunction + " private native " + byMoveAnnotations + javaName + " getByMove(" + params + ");\n";
+                                }
+                                decl.text += "    @Name(\"pop_back\") private native void popBackNative();\n";
                                 decl.text += "    public " + javaName + " pop_back() {\n"
                                           +  "        long size = size();\n"
-                                          +  "        " + javaName + " value = get(size - 1);\n"
-                                          +  "        resize(size - 1);\n"
+                                          +  "        " + javaName + " value = " + (byReference ? "getByMove" : "get") + "(size - 1);\n"
+                                          +  "        popBackNative();\n"
                                           +  "        return value;\n"
                                           +  "    }\n";
                             }

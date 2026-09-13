@@ -126,6 +126,30 @@ public class AdapterTest {
     static native @StdMove MovedData getMovedData();
     static native void putMovedData(@StdMove MovedData m);
 
+    static class MoveOnlyData extends Pointer {
+        MoveOnlyData(Pointer p) { super(p); }
+        native int data();
+    }
+
+    static native @ByRef(true) MoveOnlyData getMoveOnlyData();
+
+    @Name("std::vector<MoveOnlyData>")
+    static class MoveOnlyDataVector extends Pointer {
+        MoveOnlyDataVector(Pointer p) { super(p); }
+        private native @Name("at") @ByRef(true) MoveOnlyData getByMove(long index);
+        @Name("pop_back") private native void popBackNative();
+        public native long size();
+
+        public MoveOnlyData pop_back() {
+            long size = size();
+            MoveOnlyData value = getByMove(size - 1);
+            popBackNative();
+            return value;
+        }
+    }
+
+    static native @ByRef MoveOnlyDataVector getMoveOnlyDataVector();
+
     static native @Optional IntPointer testOptionalInt(@Optional IntPointer o);
 
     static class SharedFunction extends FunctionPointer {
@@ -395,6 +419,25 @@ public class AdapterTest {
         assertNotNull(m2.deallocator());
         m.deallocate();
         m2.deallocate();
+    }
+
+    @Test public void testByRefMove() {
+        System.out.println("ByRefMove");
+        MoveOnlyData m = getMoveOnlyData();
+        assertEquals(13, m.data());
+        assertNotNull(m.deallocator());
+        m.deallocate();
+    }
+
+    @Test public void testMoveOnlyVectorPopBack() {
+        System.out.println("MoveOnlyVectorPopBack");
+        MoveOnlyDataVector v = getMoveOnlyDataVector();
+        assertEquals(2, v.size());
+        MoveOnlyData m = v.pop_back();
+        assertEquals(23, m.data());
+        assertNotNull(m.deallocator());
+        assertEquals(1, v.size());
+        m.deallocate();
     }
 
     @Test public void testOptional() {
